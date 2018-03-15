@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.accession.variant.VariantAccessioningService;
 import uk.ac.ebi.ampt2d.accession.variant.VariantModel;
-import uk.ac.ebi.ampt2d.commons.rest.BasicRestController;
+import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 @RestController
 @RequestMapping(value = "/v1/variant")

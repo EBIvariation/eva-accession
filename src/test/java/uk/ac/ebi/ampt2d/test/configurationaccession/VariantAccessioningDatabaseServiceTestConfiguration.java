@@ -24,8 +24,8 @@ import uk.ac.ebi.ampt2d.accession.variant.VariantAccessioningService;
 import uk.ac.ebi.ampt2d.accession.variant.VariantModel;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningDatabaseService;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningRepository;
-import uk.ac.ebi.ampt2d.commons.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.commons.generators.monotonic.persistence.service.ContiguousIdBlockService;
+import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.persistence.service.ContiguousIdBlockService;
 
 @TestConfiguration
 public class VariantAccessioningDatabaseServiceTestConfiguration {
