@@ -15,19 +15,29 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant;
+package uk.ac.ebi.eva.accession;
 
-public class VariantModelSummaryFunction implements java.util.function.Function<VariantModel, String> {
+import uk.ac.ebi.eva.accession.variant.VariantAccessioningProperties;
 
-    @Override
-    public String apply(VariantModel model) {
-        return new StringBuilder()
-                .append(model.getAssemblyAccession())
-                .append(model.getChromosome())
-                .append(model.getProjectAccession())
-                .append(model.getStart())
-                .append(model.getType())
-                .toString();
+public class ApplicationProperties {
+
+    private String instanceId;
+
+    private VariantAccessioningProperties variant;
+
+    public String getInstanceId() {
+        return instanceId;
     }
 
+    public VariantAccessioningProperties getVariant() {
+        return variant;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
+    public void setVariant(VariantAccessioningProperties variant) {
+        this.variant = variant;
+    }
 }

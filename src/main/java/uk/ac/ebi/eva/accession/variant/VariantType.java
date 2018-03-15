@@ -15,14 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession;
+package uk.ac.ebi.eva.accession.variant;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+public enum VariantType {
 
-@SpringBootApplication
-public class EvaAccessionApplication {
-    public static void main(String[] args) throws Exception {
-        SpringApplication.run(EvaAccessionApplication.class, args);
-    }
+    SNV, DIV, HETEROZYGOUS, STR, NAMEDVARIANT, NOVARIATION, MIXED, MNV
+
 }

@@ -15,10 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant.persistence;
+package uk.ac.ebi.eva.accession.variant.persistence;
 
 
-import uk.ac.ebi.ampt2d.accession.variant.VariantModel;
+import uk.ac.ebi.eva.accession.variant.VariantModel;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.BasicSpringDataRepositoryDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.MonotonicDatabaseService;

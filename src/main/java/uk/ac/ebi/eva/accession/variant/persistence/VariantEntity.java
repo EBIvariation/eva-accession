@@ -15,15 +15,14 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant.persistence;
+package uk.ac.ebi.eva.accession.variant.persistence;
 
-import uk.ac.ebi.ampt2d.accession.variant.VariantModel;
-import uk.ac.ebi.ampt2d.accession.variant.VariantType;
+import uk.ac.ebi.eva.accession.variant.VariantModel;
+import uk.ac.ebi.eva.accession.variant.VariantType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.validation.constraints.Size;
 
 @Entity
 public class VariantEntity implements VariantModel {

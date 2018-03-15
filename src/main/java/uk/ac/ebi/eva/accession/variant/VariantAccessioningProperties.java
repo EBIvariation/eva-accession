@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant;
+package uk.ac.ebi.eva.accession.variant;
 
 public class VariantAccessioningProperties {
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant;
+package uk.ac.ebi.eva.accession.variant;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -23,18 +23,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import uk.ac.ebi.ampt2d.accession.ApplicationProperties;
-import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningDatabaseService;
-import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.ApplicationProperties;
+import uk.ac.ebi.eva.accession.variant.persistence.VariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.variant.persistence.VariantAccessioningRepository;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.persistence.service.ContiguousIdBlockService;
 
 @Configuration
 @EnableSpringDataContiguousIdService
-@EntityScan({"uk.ac.ebi.ampt2d.accession.variant.persistence"})
+@EntityScan({"uk.ac.ebi.eva.accession.variant.persistence"})
 @EnableJpaRepositories(
-        basePackages = {"uk.ac.ebi.ampt2d.accession.variant.persistence"}
+        basePackages = {"uk.ac.ebi.eva.accession.variant.persistence"}
 )
 public class VariantAccessioningConfiguration {
 

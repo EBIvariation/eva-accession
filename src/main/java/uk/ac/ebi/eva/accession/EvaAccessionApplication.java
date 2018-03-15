@@ -15,29 +15,14 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession;
+package uk.ac.ebi.eva.accession;
 
-import uk.ac.ebi.ampt2d.accession.variant.VariantAccessioningProperties;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public class ApplicationProperties {
-
-    private String instanceId;
-
-    private VariantAccessioningProperties variant;
-
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    public VariantAccessioningProperties getVariant() {
-        return variant;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
-    }
-
-    public void setVariant(VariantAccessioningProperties variant) {
-        this.variant = variant;
+@SpringBootApplication
+public class EvaAccessionApplication {
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(EvaAccessionApplication.class, args);
     }
 }

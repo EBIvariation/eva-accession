@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant;
+package uk.ac.ebi.eva.accession.variant;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,8 +27,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningRepository;
-import uk.ac.ebi.ampt2d.accession.variant.rest.VariantDTO;
+import uk.ac.ebi.eva.accession.variant.persistence.VariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.variant.rest.VariantDTO;
 
 import java.util.List;
 import java.util.Map;

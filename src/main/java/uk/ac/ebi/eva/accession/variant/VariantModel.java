@@ -15,14 +15,17 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant;
+package uk.ac.ebi.eva.accession.variant;
+
+import uk.ac.ebi.eva.accession.variant.persistence.VariantEntity;
+import uk.ac.ebi.eva.accession.variant.rest.VariantDTO;
 
 /**
  * Abstract representation of the fields that uniquely identify an accessioned submitted variant.
  * <p>
  * Implemented by the entity serialized into the database
- * {@link uk.ac.ebi.ampt2d.accession.variant.persistence.VariantEntity} and the message provided via
- * the REST API {@link uk.ac.ebi.ampt2d.accession.variant.rest.VariantDTO}.
+ * {@link VariantEntity} and the message provided via
+ * the REST API {@link VariantDTO}.
  */
 public interface VariantModel {
 

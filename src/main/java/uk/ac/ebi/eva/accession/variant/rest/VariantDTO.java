@@ -15,10 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant.rest;
+package uk.ac.ebi.eva.accession.variant.rest;
 
-import uk.ac.ebi.ampt2d.accession.variant.VariantModel;
-import uk.ac.ebi.ampt2d.accession.variant.VariantType;
+import uk.ac.ebi.eva.accession.variant.VariantModel;
+import uk.ac.ebi.eva.accession.variant.VariantType;
 
 public class VariantDTO implements VariantModel {
 

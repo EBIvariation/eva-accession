@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant.persistence;
+package uk.ac.ebi.eva.accession.variant.persistence;
 
 import org.springframework.stereotype.Repository;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningRepository;
