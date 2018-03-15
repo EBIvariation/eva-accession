@@ -15,12 +15,27 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.variant.persistence;
+package uk.ac.ebi.ampt2d.accession.variant;
 
-import org.springframework.stereotype.Repository;
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningRepository;
+public class VariantAccessioningProperties {
 
-@Repository
-public interface VariantAccessioningRepository extends AccessioningRepository<VariantEntity, String, Long> {
+    private String categoryId;
 
+    private long blockSize;
+
+    public String getCategoryId() {
+        return categoryId;
+    }
+
+    public long getBlockSize() {
+        return blockSize;
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public void setBlockSize(long blockSize) {
+        this.blockSize = blockSize;
+    }
 }

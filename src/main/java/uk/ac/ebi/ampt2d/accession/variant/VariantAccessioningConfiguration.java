@@ -18,13 +18,12 @@
 package uk.ac.ebi.ampt2d.accession.variant;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import uk.ac.ebi.ampt2d.accession.ApplicationConstants;
+import uk.ac.ebi.ampt2d.accession.ApplicationProperties;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningDatabaseService;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningRepository;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
@@ -32,7 +31,6 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessio
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.persistence.service.ContiguousIdBlockService;
 
 @Configuration
-@ConditionalOnProperty(name = "services", havingValue = "variant-accession")
 @EnableSpringDataContiguousIdService
 @EntityScan({"uk.ac.ebi.ampt2d.accession.variant.persistence"})
 @EnableJpaRepositories(
@@ -40,23 +38,17 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.persistence.servi
 )
 public class VariantAccessioningConfiguration {
 
-    @Value("${" + ApplicationConstants.VARIANT_BLOCK_SIZE + "}")
-    private long blockSize;
-
-    @Value("${" + ApplicationConstants.VARIANT_ID + "}")
-    private String variantId;
-
-    @Value("${" + ApplicationConstants.APPLICATION_INSTANCE_ID + "}")
-    private String applicationInstanceId;
-
-    @Autowired
-    private ContiguousIdBlockService contiguousIdBlockService;
-
     @Autowired
     private VariantAccessioningRepository repository;
 
     @Autowired
     private ContiguousIdBlockService service;
+
+    @Bean
+    @ConfigurationProperties(prefix = "accessioning")
+    public ApplicationProperties applicationProperties() {
+        return new ApplicationProperties();
+    }
 
     @Bean
     public VariantAccessioningService variantAccessionService() {
@@ -70,7 +62,12 @@ public class VariantAccessioningConfiguration {
 
     @Bean
     public MonotonicAccessionGenerator<VariantModel> variantAccessionGenerator() {
-        return new MonotonicAccessionGenerator<>(blockSize, variantId, applicationInstanceId, service);
+        ApplicationProperties properties = applicationProperties();
+        return new MonotonicAccessionGenerator<>(
+                properties.getVariant().getBlockSize(),
+                properties.getVariant().getCategoryId(),
+                properties.getInstanceId(),
+                service);
     }
 
 }

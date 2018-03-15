@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ampt2d.accession.variant.rest;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.accession.variant.VariantAccessioningService;
@@ -26,7 +25,6 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 @RestController
 @RequestMapping(value = "/v1/variant")
-@ConditionalOnProperty(name = "services", havingValue = "variant-accession")
 public class VariantAccessioningRestController extends BasicRestController<VariantModel, VariantDTO, Long> {
 
     public VariantAccessioningRestController(VariantAccessioningService service) {

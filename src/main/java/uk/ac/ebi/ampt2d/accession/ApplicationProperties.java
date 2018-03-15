@@ -17,11 +17,27 @@
  */
 package uk.ac.ebi.ampt2d.accession;
 
-public class ApplicationConstants {
+import uk.ac.ebi.ampt2d.accession.variant.VariantAccessioningProperties;
 
-    public static final String APPLICATION_INSTANCE_ID = "accessioning.instance.id";
+public class ApplicationProperties {
 
-    public static final String VARIANT_BLOCK_SIZE = "accessioning.variant.block.size";
-    public static final String VARIANT_ID = "accessioning.variant.id";
+    private String instanceId;
 
+    private VariantAccessioningProperties variant;
+
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    public VariantAccessioningProperties getVariant() {
+        return variant;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
+    public void setVariant(VariantAccessioningProperties variant) {
+        this.variant = variant;
+    }
 }
