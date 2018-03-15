@@ -27,10 +27,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import uk.ac.ebi.ampt2d.accession.ApplicationConstants;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningDatabaseService;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningRepository;
-import uk.ac.ebi.ampt2d.accessioning.commons.autoconfigure.EnableSpringDataContiguousIdService;
-import uk.ac.ebi.ampt2d.accessioning.commons.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.accessioning.commons.generators.monotonic.persistence.repositories.ContiguousIdBlockRepository;
-import uk.ac.ebi.ampt2d.accessioning.commons.generators.monotonic.persistence.service.ContiguousIdBlockService;
+import uk.ac.ebi.ampt2d.commons.autoconfigure.EnableSpringDataContiguousIdService;
+import uk.ac.ebi.ampt2d.commons.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.generators.monotonic.persistence.service.ContiguousIdBlockService;
 
 @Configuration
 @ConditionalOnProperty(name = "services", havingValue = "variant-accession")
@@ -50,12 +49,14 @@ public class VariantAccessioningConfiguration {
     @Value("${" + ApplicationConstants.APPLICATION_INSTANCE_ID + "}")
     private String applicationInstanceId;
 
+    @Autowired
+    private ContiguousIdBlockService contiguousIdBlockService;
 
     @Autowired
     private VariantAccessioningRepository repository;
 
     @Autowired
-    private ContiguousIdBlockRepository contiguousIdBlockRepository;
+    private ContiguousIdBlockService service;
 
     @Bean
     public VariantAccessioningService variantAccessionService() {
@@ -69,13 +70,7 @@ public class VariantAccessioningConfiguration {
 
     @Bean
     public MonotonicAccessionGenerator<VariantModel> variantAccessionGenerator() {
-        return new MonotonicAccessionGenerator<>(blockSize, variantId, applicationInstanceId,
-                contiguousIdBlockService());
-    }
-
-    @Bean
-    public ContiguousIdBlockService contiguousIdBlockService(){
-        return new ContiguousIdBlockService(contiguousIdBlockRepository);
+        return new MonotonicAccessionGenerator<>(blockSize, variantId, applicationInstanceId, service);
     }
 
 }

@@ -18,17 +18,14 @@
 package uk.ac.ebi.ampt2d.test.configurationaccession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import uk.ac.ebi.ampt2d.accession.ApplicationConstants;
 import uk.ac.ebi.ampt2d.accession.variant.VariantAccessioningService;
 import uk.ac.ebi.ampt2d.accession.variant.VariantModel;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningDatabaseService;
 import uk.ac.ebi.ampt2d.accession.variant.persistence.VariantAccessioningRepository;
-import uk.ac.ebi.ampt2d.accessioning.commons.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.accessioning.commons.generators.monotonic.persistence.repositories.ContiguousIdBlockRepository;
-import uk.ac.ebi.ampt2d.accessioning.commons.generators.monotonic.persistence.service.ContiguousIdBlockService;
+import uk.ac.ebi.ampt2d.commons.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.generators.monotonic.persistence.service.ContiguousIdBlockService;
 
 @TestConfiguration
 public class VariantAccessioningDatabaseServiceTestConfiguration {
@@ -37,7 +34,7 @@ public class VariantAccessioningDatabaseServiceTestConfiguration {
     private VariantAccessioningRepository repository;
 
     @Autowired
-    private ContiguousIdBlockRepository contiguousIdBlockRepository;
+    private ContiguousIdBlockService service;
 
     @Bean
     public VariantAccessioningService variantAccessionService() {
@@ -51,13 +48,7 @@ public class VariantAccessioningDatabaseServiceTestConfiguration {
 
     @Bean
     public MonotonicAccessionGenerator<VariantModel> variantAccessionGenerator() {
-        return new MonotonicAccessionGenerator<>(1000L, "var-test", "test-inst",
-                contiguousIdBlockService());
-    }
-
-    @Bean
-    public ContiguousIdBlockService contiguousIdBlockService(){
-        return new ContiguousIdBlockService(contiguousIdBlockRepository);
+        return new MonotonicAccessionGenerator<>(1000L, "var-test", "test-inst", service);
     }
 
 }

@@ -19,7 +19,7 @@ package uk.ac.ebi.ampt2d.accession.variant.persistence;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
-import uk.ac.ebi.ampt2d.accessioning.commons.accessioning.AccessioningRepository;
+import uk.ac.ebi.ampt2d.commons.core.AccessioningRepository;
 
 @Repository
 @ConditionalOnProperty(name = "services", havingValue = "variant-accession")
