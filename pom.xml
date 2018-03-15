@@ -7,8 +7,8 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>accessioning-service</name>
-    <url>http://github.com/EBIvariation/amp-t2d-accession</url>
+    <name>eva-accession</name>
+    <url>http://github.com/EBIvariation/eva-accession</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
