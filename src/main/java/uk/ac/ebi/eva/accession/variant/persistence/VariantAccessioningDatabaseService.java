@@ -21,7 +21,7 @@ package uk.ac.ebi.eva.accession.variant.persistence;
 import uk.ac.ebi.eva.accession.variant.VariantModel;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.BasicSpringDataRepositoryDatabaseService;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.MonotonicDatabaseService;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.MonotonicDatabaseService;
 
 import java.util.Collection;
 
