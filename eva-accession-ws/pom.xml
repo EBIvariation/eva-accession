@@ -1,34 +1,21 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <groupId>uk.ac.ebi.eva</groupId>
-    <artifactId>eva-accession</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-
-    <name>eva-accession</name>
-    <url>http://github.com/EBIvariation/eva-accession</url>
-
-    <modules>
-        <module>eva-accession-core</module>
-        <module>eva-accession-ws</module>
-    </modules>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.10.RELEASE</version>
+        <groupId>uk.ac.ebi.eva</groupId>
+        <artifactId>eva-accession</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
+
+    <artifactId>eva-accession-ws</artifactId>
+    <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>uk.ac.ebi.ampt2d</groupId>
-            <artifactId>accessioning-commons</artifactId>
+            <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>eva-accession-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
@@ -36,10 +23,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
+
         <dependency>
             <!--https://docs.spring.io/spring-boot/docs/1.5.3.RELEASE/reference/html/configuration-metadata.html#
             configuration-metadata-annotation-processor-->
@@ -47,20 +31,10 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.2.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -92,7 +66,7 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
- <!--           <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -109,7 +83,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
         </plugins>
     </build>
 

@@ -2,40 +2,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>uk.ac.ebi.eva</groupId>
-    <artifactId>eva-accession</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-
-    <name>eva-accession</name>
-    <url>http://github.com/EBIvariation/eva-accession</url>
-
-    <modules>
-        <module>eva-accession-core</module>
-        <module>eva-accession-ws</module>
-    </modules>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.10.RELEASE</version>
+        <groupId>uk.ac.ebi.eva</groupId>
+        <artifactId>eva-accession</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
+    <artifactId>eva-accession-core</artifactId>
+    <packaging>jar</packaging>
+
     <dependencies>
-        <dependency>
+<!--        <dependency>
             <groupId>uk.ac.ebi.ampt2d</groupId>
             <artifactId>accessioning-commons</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
+        </dependency>-->
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -55,7 +36,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.2</version>
         </dependency>
 
         <dependency>
