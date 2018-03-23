@@ -15,29 +15,12 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant;
+package uk.ac.ebi.eva.accession.core.persistence;
 
-import uk.ac.ebi.eva.accession.variant.VariantAccessioningProperties;
+import org.springframework.stereotype.Repository;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningRepository;
 
-public class ApplicationProperties {
+@Repository
+public interface VariantAccessioningRepository extends AccessioningRepository<VariantEntity, String, Long> {
 
-    private String instanceId;
-
-    private VariantAccessioningProperties variant;
-
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    public VariantAccessioningProperties getVariant() {
-        return variant;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
-    }
-
-    public void setVariant(VariantAccessioningProperties variant) {
-        this.variant = variant;
-    }
 }

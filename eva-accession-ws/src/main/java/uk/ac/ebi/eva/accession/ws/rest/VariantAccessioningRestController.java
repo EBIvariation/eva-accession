@@ -15,12 +15,12 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant.rest;
+package uk.ac.ebi.eva.accession.ws.rest;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.ac.ebi.eva.accession.variant.VariantAccessioningService;
-import uk.ac.ebi.eva.accession.variant.VariantModel;
+import uk.ac.ebi.eva.accession.core.VariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.VariantModel;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 @RestController

@@ -15,19 +15,27 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant;
+package uk.ac.ebi.eva.accession.core.configuration;
 
-public class VariantModelSummaryFunction implements java.util.function.Function<VariantModel, String> {
+public class VariantAccessioningProperties {
 
-    @Override
-    public String apply(VariantModel model) {
-        return new StringBuilder()
-                .append(model.getAssemblyAccession())
-                .append(model.getChromosome())
-                .append(model.getProjectAccession())
-                .append(model.getStart())
-                .append(model.getType())
-                .toString();
+    private String categoryId;
+
+    private long blockSize;
+
+    public String getCategoryId() {
+        return categoryId;
     }
 
+    public long getBlockSize() {
+        return blockSize;
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public void setBlockSize(long blockSize) {
+        this.blockSize = blockSize;
+    }
 }

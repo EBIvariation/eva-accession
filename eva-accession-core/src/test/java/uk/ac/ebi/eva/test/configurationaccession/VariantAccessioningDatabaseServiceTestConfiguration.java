@@ -20,10 +20,10 @@ package uk.ac.ebi.eva.test.configurationaccession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import uk.ac.ebi.eva.accession.variant.VariantAccessioningService;
-import uk.ac.ebi.eva.accession.variant.VariantModel;
-import uk.ac.ebi.eva.accession.variant.persistence.VariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.variant.persistence.VariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.VariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.VariantModel;
+import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningRepository;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.ContiguousIdBlockService;
 

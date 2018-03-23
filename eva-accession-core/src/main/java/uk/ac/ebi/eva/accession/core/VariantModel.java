@@ -15,10 +15,24 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant;
+package uk.ac.ebi.eva.accession.core;
 
-public enum VariantType {
+import uk.ac.ebi.eva.accession.core.persistence.VariantEntity;
 
-    SNV, DIV, HETEROZYGOUS, STR, NAMEDVARIANT, NOVARIATION, MIXED, MNV
+/**
+ * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
+ * entity serialized into the database {@link VariantEntity} and the message/DTO used by the REST API.
+ */
+public interface VariantModel {
+
+    String getAssemblyAccession();
+
+    String getProjectAccession();
+
+    String getChromosome();
+
+    long getStart();
+
+    VariantType getType();
 
 }

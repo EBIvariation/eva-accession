@@ -15,27 +15,52 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant.rest;
+package uk.ac.ebi.eva.accession.core.persistence;
 
-import uk.ac.ebi.eva.accession.variant.VariantModel;
-import uk.ac.ebi.eva.accession.variant.VariantType;
+import uk.ac.ebi.eva.accession.core.VariantModel;
+import uk.ac.ebi.eva.accession.core.VariantType;
 
-public class VariantDTO implements VariantModel {
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
+@Entity
+public class VariantEntity implements VariantModel {
+
+    @Id
+    @Column(nullable = false, unique = true, updatable = false)
+    private Long accession;
+
+    @Column(nullable = false, unique = true)
+    private String hashedMessage;
+
+    @Column(nullable = false)
     private String assemblyAccession;
 
+    @Column(nullable = false)
     private String projectAccession;
 
+    @Column(nullable = false)
     private String chromosome;
 
+    @Column(nullable = false)
     private long start;
 
+    @Column(nullable = false)
     private VariantType type;
 
-    VariantDTO() {
+    VariantEntity() {
     }
 
-    public VariantDTO(String assemblyAccession, String projectAccession, String chromosome, long start, VariantType type) {
+    public VariantEntity(Long accession, String hashedMessage, VariantModel model) {
+        this(accession, hashedMessage, model.getAssemblyAccession(), model.getProjectAccession(),
+                model.getChromosome(), model.getStart(), model.getType());
+    }
+
+    public VariantEntity(Long accession, String hashedMessage, String assemblyAccession, String projectAccession,
+                         String chromosome, long start, VariantType type) {
+        this.accession = accession;
+        this.hashedMessage = hashedMessage;
         this.assemblyAccession = assemblyAccession;
         this.projectAccession = projectAccession;
         this.chromosome = chromosome;
@@ -43,29 +68,31 @@ public class VariantDTO implements VariantModel {
         this.type = type;
     }
 
-    @Override
+    public Long getAccession() {
+        return this.accession;
+    }
+
+    public String getHashedMessage() {
+        return hashedMessage;
+    }
+
     public String getAssemblyAccession() {
         return assemblyAccession;
     }
 
-    @Override
     public String getProjectAccession() {
         return projectAccession;
     }
 
-    @Override
     public String getChromosome() {
         return chromosome;
     }
 
-    @Override
     public long getStart() {
         return start;
     }
 
-    @Override
     public VariantType getType() {
         return type;
     }
-
 }

@@ -15,27 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant;
+package uk.ac.ebi.eva.accession.core;
 
-public class VariantAccessioningProperties {
+public enum VariantType {
 
-    private String categoryId;
+    SNV, DIV, HETEROZYGOUS, STR, NAMEDVARIANT, NOVARIATION, MIXED, MNV
 
-    private long blockSize;
-
-    public String getCategoryId() {
-        return categoryId;
-    }
-
-    public long getBlockSize() {
-        return blockSize;
-    }
-
-    public void setCategoryId(String categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public void setBlockSize(long blockSize) {
-        this.blockSize = blockSize;
-    }
 }

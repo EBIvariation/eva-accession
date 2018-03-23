@@ -15,24 +15,19 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant;
+package uk.ac.ebi.eva.accession.core;
 
-import uk.ac.ebi.eva.accession.variant.persistence.VariantEntity;
+public class VariantModelSummaryFunction implements java.util.function.Function<VariantModel, String> {
 
-/**
- * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
- * entity serialized into the database {@link VariantEntity} and the message/DTO used by the REST API.
- */
-public interface VariantModel {
-
-    String getAssemblyAccession();
-
-    String getProjectAccession();
-
-    String getChromosome();
-
-    long getStart();
-
-    VariantType getType();
+    @Override
+    public String apply(VariantModel model) {
+        return new StringBuilder()
+                .append(model.getAssemblyAccession())
+                .append(model.getChromosome())
+                .append(model.getProjectAccession())
+                .append(model.getStart())
+                .append(model.getType())
+                .toString();
+    }
 
 }

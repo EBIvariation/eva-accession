@@ -15,9 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant;
+package uk.ac.ebi.eva.accession.core;
 
-import uk.ac.ebi.eva.accession.variant.persistence.VariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningDatabaseService;
+
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicMonotonicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;

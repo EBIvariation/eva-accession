@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.variant;
+package uk.ac.ebi.eva.accession.ws;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,8 +27,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.eva.accession.variant.persistence.VariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.variant.rest.VariantDTO;
+
+import uk.ac.ebi.eva.accession.core.VariantType;
+import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.ws.rest.VariantDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -51,8 +53,8 @@ public class VariantAccessioningRestControllerTest {
         String url = "/v1/variant";
         HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assert.assertEquals(2, response.getBody().size());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(2, response.getBody().size());
     }
 
     @Test
@@ -60,15 +62,15 @@ public class VariantAccessioningRestControllerTest {
         String url = "/v1/variant";
         HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assert.assertEquals(2, response.getBody().size());
-        Assert.assertEquals(2, accessioningObjectRepository.count());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(2, response.getBody().size());
+        assertEquals(2, accessioningObjectRepository.count());
 
         //Accessing Post Request again with same files
         response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-        Assert.assertEquals(HttpStatus.OK, response.getStatusCode());
-        Assert.assertEquals(2, response.getBody().size());
-        Assert.assertEquals(2, accessioningObjectRepository.count());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(2, response.getBody().size());
+        assertEquals(2, accessioningObjectRepository.count());
     }
 
     @Test
@@ -77,13 +79,13 @@ public class VariantAccessioningRestControllerTest {
         HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
         ResponseEntity<Map> getAccessionsResponse = testRestTemplate.exchange(getAccessionsUrl, HttpMethod.POST,
                 requestEntity, Map.class);
-        Assert.assertEquals(HttpStatus.OK, getAccessionsResponse.getStatusCode());
-        Assert.assertEquals(2, getAccessionsResponse.getBody().size());
+        assertEquals(HttpStatus.OK, getAccessionsResponse.getStatusCode());
+        assertEquals(2, getAccessionsResponse.getBody().size());
         Object[] accessions = getAccessionsResponse.getBody().keySet().toArray();
         String getVariantsUrl = "/v1/variant/" + accessions[0] + "," + accessions[1];
         ResponseEntity<Map> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, Map.class);
-        Assert.assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        Assert.assertEquals(2, getVariantsResponse.getBody().size());
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(2, getVariantsResponse.getBody().size());
     }
 
     public List<VariantDTO> getListOfVariantMessages() {
