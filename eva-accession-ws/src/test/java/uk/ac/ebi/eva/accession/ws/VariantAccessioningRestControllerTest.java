@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -29,8 +30,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.VariantType;
+import uk.ac.ebi.eva.accession.core.configuration.VariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.ws.rest.VariantDTO;
+import uk.ac.ebi.eva.test.configurationaccession.VariantAccessioningDatabaseServiceTestConfiguration;
 
 import java.util.List;
 import java.util.Map;
@@ -40,6 +43,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import({VariantAccessioningDatabaseServiceTestConfiguration.class, VariantAccessioningConfiguration.class})
 public class VariantAccessioningRestControllerTest {
 
     @Autowired
