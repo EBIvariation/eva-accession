@@ -17,15 +17,14 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
-import uk.ac.ebi.eva.accession.core.VariantModel;
-import uk.ac.ebi.eva.accession.core.VariantType;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Entity
-public class VariantEntity implements VariantModel {
+public class SubmittedVariantEntity implements SubmittedVariantModel {
 
     @Id
     @Column(nullable = false, unique = true, updatable = false)
@@ -38,34 +37,44 @@ public class VariantEntity implements VariantModel {
     private String assemblyAccession;
 
     @Column(nullable = false)
+    private String taxonomyAccession;
+
+    @Column(nullable = false)
     private String projectAccession;
 
     @Column(nullable = false)
-    private String chromosome;
+    private String contig;
 
     @Column(nullable = false)
-    private long start;
+    private Long start;
 
     @Column(nullable = false)
-    private VariantType type;
+    private String referenceAllele;
 
-    VariantEntity() {
+    @Column(nullable = false)
+    private String alternateAllele;
+
+    SubmittedVariantEntity() {
     }
 
-    public VariantEntity(Long accession, String hashedMessage, VariantModel model) {
-        this(accession, hashedMessage, model.getAssemblyAccession(), model.getProjectAccession(),
-                model.getChromosome(), model.getStart(), model.getType());
+    public SubmittedVariantEntity(Long accession, String hashedMessage, SubmittedVariantModel model) {
+        this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
+             model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
+             model.getAlternateAllele());
     }
 
-    public VariantEntity(Long accession, String hashedMessage, String assemblyAccession, String projectAccession,
-                         String chromosome, long start, VariantType type) {
+    public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
+                                  String taxonomyAccession, String projectAccession, String contig, Long start,
+                                  String referenceAllele, String alternateAllele) {
         this.accession = accession;
         this.hashedMessage = hashedMessage;
         this.assemblyAccession = assemblyAccession;
+        this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
-        this.chromosome = chromosome;
+        this.contig = contig;
         this.start = start;
-        this.type = type;
+        this.referenceAllele = referenceAllele;
+        this.alternateAllele = alternateAllele;
     }
 
     public Long getAccession() {
@@ -76,23 +85,38 @@ public class VariantEntity implements VariantModel {
         return hashedMessage;
     }
 
+    @Override
     public String getAssemblyAccession() {
         return assemblyAccession;
     }
 
+    @Override
+    public String getTaxonomyAccession() {
+        return taxonomyAccession;
+    }
+
+    @Override
     public String getProjectAccession() {
         return projectAccession;
     }
 
-    public String getChromosome() {
-        return chromosome;
+    @Override
+    public String getContig() {
+        return contig;
     }
 
+    @Override
     public long getStart() {
         return start;
     }
 
-    public VariantType getType() {
-        return type;
+    @Override
+    public String getReferenceAllele() {
+        return referenceAllele;
+    }
+
+    @Override
+    public String getAlternateAllele() {
+        return alternateAllele;
     }
 }

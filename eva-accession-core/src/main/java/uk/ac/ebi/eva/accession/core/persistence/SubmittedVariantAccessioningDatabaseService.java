@@ -18,24 +18,24 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 
-import uk.ac.ebi.eva.accession.core.VariantModel;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.BasicSpringDataRepositoryDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.MonotonicDatabaseService;
 
 import java.util.Collection;
 
-public class VariantAccessioningDatabaseService
-        extends BasicSpringDataRepositoryDatabaseService<VariantModel, VariantEntity, String, Long>
-        implements MonotonicDatabaseService<VariantModel, String> {
+public class SubmittedVariantAccessioningDatabaseService
+        extends BasicSpringDataRepositoryDatabaseService<SubmittedVariantModel, SubmittedVariantEntity, String, Long>
+        implements MonotonicDatabaseService<SubmittedVariantModel, String> {
 
-    public VariantAccessioningDatabaseService(VariantAccessioningRepository repository) {
+    public SubmittedVariantAccessioningDatabaseService(SubmittedVariantAccessioningRepository repository) {
         super(repository,
-              variantModelHashAccession -> new VariantEntity(variantModelHashAccession.accession(),
-                                                             variantModelHashAccession.hash(),
-                                                             variantModelHashAccession.model()),
-              variantEntity -> variantEntity.getAccession(),
-              variantEntity -> variantEntity.getHashedMessage());
+              variantModelHashAccession -> new SubmittedVariantEntity(variantModelHashAccession.accession(),
+                                                                      variantModelHashAccession.hash(),
+                                                                      variantModelHashAccession.model()),
+              SubmittedVariantEntity::getAccession,
+              SubmittedVariantEntity::getHashedMessage);
     }
 
     @Override

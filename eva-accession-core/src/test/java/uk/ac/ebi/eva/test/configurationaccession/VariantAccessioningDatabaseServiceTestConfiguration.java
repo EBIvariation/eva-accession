@@ -20,10 +20,10 @@ package uk.ac.ebi.eva.test.configurationaccession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import uk.ac.ebi.eva.accession.core.VariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.VariantModel;
-import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.ContiguousIdBlockService;
 
@@ -31,23 +31,23 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.Contiguo
 public class VariantAccessioningDatabaseServiceTestConfiguration {
 
     @Autowired
-    private VariantAccessioningRepository repository;
+    private SubmittedVariantAccessioningRepository repository;
 
     @Autowired
     private ContiguousIdBlockService service;
 
     @Bean
-    public VariantAccessioningService variantAccessionService() {
-        return new VariantAccessioningService(variantAccessionGenerator(), variantAccessioningDatabaseService());
+    public SubmittedVariantAccessioningService variantAccessionService() {
+        return new SubmittedVariantAccessioningService(variantAccessionGenerator(), variantAccessioningDatabaseService());
     }
 
     @Bean
-    public VariantAccessioningDatabaseService variantAccessioningDatabaseService() {
-        return new VariantAccessioningDatabaseService(repository);
+    public SubmittedVariantAccessioningDatabaseService variantAccessioningDatabaseService() {
+        return new SubmittedVariantAccessioningDatabaseService(repository);
     }
 
     @Bean
-    public MonotonicAccessionGenerator<VariantModel> variantAccessionGenerator() {
+    public MonotonicAccessionGenerator<SubmittedVariantModel> variantAccessionGenerator() {
         return new MonotonicAccessionGenerator<>(1000L, "var-test", "test-inst", service);
     }
 

@@ -17,12 +17,13 @@
  */
 package uk.ac.ebi.eva.accession.ws.rest;
 
-import uk.ac.ebi.eva.accession.core.VariantModel;
-import uk.ac.ebi.eva.accession.core.VariantType;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
 
-public class VariantDTO implements VariantModel {
+public class SubmittedVariantDTO implements SubmittedVariantModel {
 
     private String assemblyAccession;
+
+    private String taxonomyAccession;
 
     private String projectAccession;
 
@@ -30,17 +31,22 @@ public class VariantDTO implements VariantModel {
 
     private long start;
 
-    private VariantType type;
+    private String referenceAllele;
 
-    VariantDTO() {
+    private String alternateAllele;
+
+    SubmittedVariantDTO() {
     }
 
-    public VariantDTO(String assemblyAccession, String projectAccession, String chromosome, long start, VariantType type) {
+    public SubmittedVariantDTO(String assemblyAccession, String taxonomyAccession, String projectAccession,
+                               String chromosome, long start, String referenceAllele, String alternateAllele) {
         this.assemblyAccession = assemblyAccession;
+        this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
         this.chromosome = chromosome;
         this.start = start;
-        this.type = type;
+        this.referenceAllele = referenceAllele;
+        this.alternateAllele = alternateAllele;
     }
 
     @Override
@@ -49,12 +55,17 @@ public class VariantDTO implements VariantModel {
     }
 
     @Override
+    public String getTaxonomyAccession() {
+        return taxonomyAccession;
+    }
+
+    @Override
     public String getProjectAccession() {
         return projectAccession;
     }
 
     @Override
-    public String getChromosome() {
+    public String getContig() {
         return chromosome;
     }
 
@@ -64,8 +75,14 @@ public class VariantDTO implements VariantModel {
     }
 
     @Override
-    public VariantType getType() {
-        return type;
+    public String getReferenceAllele() {
+        return referenceAllele;
     }
+
+    @Override
+    public String getAlternateAllele() {
+        return alternateAllele;
+    }
+
 
 }

@@ -24,10 +24,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.VariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.VariantModel;
-import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.ContiguousIdBlockService;
@@ -38,10 +38,10 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.Contiguo
 @EnableJpaRepositories(
         basePackages = {"uk.ac.ebi.eva.accession.core.persistence"}
 )
-public class VariantAccessioningConfiguration {
+public class SubmittedVariantAccessioningConfiguration {
 
     @Autowired
-    private VariantAccessioningRepository repository;
+    private SubmittedVariantAccessioningRepository repository;
 
     @Autowired
     private ContiguousIdBlockService service;
@@ -53,17 +53,18 @@ public class VariantAccessioningConfiguration {
     }
 
     @Bean
-    public VariantAccessioningService variantAccessionService() {
-        return new VariantAccessioningService(variantAccessionGenerator(), variantAccessioningDatabaseService());
+    public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
+        return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
+                                                       submittedVariantAccessioningDatabaseService());
     }
 
     @Bean
-    public VariantAccessioningDatabaseService variantAccessioningDatabaseService() {
-        return new VariantAccessioningDatabaseService(repository);
+    public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
+        return new SubmittedVariantAccessioningDatabaseService(repository);
     }
 
     @Bean
-    public MonotonicAccessionGenerator<VariantModel> variantAccessionGenerator() {
+    public MonotonicAccessionGenerator<SubmittedVariantModel> submittedVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties();
         return new MonotonicAccessionGenerator<>(
                 properties.getVariant().getBlockSize(),
