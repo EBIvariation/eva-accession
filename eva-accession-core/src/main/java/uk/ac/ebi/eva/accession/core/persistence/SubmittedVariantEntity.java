@@ -46,7 +46,7 @@ public class SubmittedVariantEntity implements SubmittedVariantModel {
     private String contig;
 
     @Column(nullable = false)
-    private Long start;
+    private long start;
 
     @Column(nullable = false)
     private String referenceAllele;
@@ -54,18 +54,21 @@ public class SubmittedVariantEntity implements SubmittedVariantModel {
     @Column(nullable = false)
     private String alternateAllele;
 
+    @Column(nullable = false)
+    private boolean supportedByEvidence;
+
     SubmittedVariantEntity() {
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, SubmittedVariantModel model) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
-             model.getAlternateAllele());
+             model.getAlternateAllele(), model.isSupportedByEvidence());
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
-                                  String taxonomyAccession, String projectAccession, String contig, Long start,
-                                  String referenceAllele, String alternateAllele) {
+                                  String taxonomyAccession, String projectAccession, String contig, long start,
+                                  String referenceAllele, String alternateAllele, boolean isSupportedByEvidence) {
         this.accession = accession;
         this.hashedMessage = hashedMessage;
         this.assemblyAccession = assemblyAccession;
@@ -75,6 +78,7 @@ public class SubmittedVariantEntity implements SubmittedVariantModel {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
+        this.supportedByEvidence = isSupportedByEvidence;
     }
 
     public Long getAccession() {
@@ -118,5 +122,10 @@ public class SubmittedVariantEntity implements SubmittedVariantModel {
     @Override
     public String getAlternateAllele() {
         return alternateAllele;
+    }
+
+    @Override
+    public boolean isSupportedByEvidence() {
+        return supportedByEvidence;
     }
 }

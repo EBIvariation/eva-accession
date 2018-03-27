@@ -34,7 +34,8 @@ public class VariantAccessioningRestController extends BasicRestController<Submi
                                                         model.getContig(),
                                                         model.getStart(),
                                                         model.getReferenceAllele(),
-                                                        model.getAlternateAllele()));
+                                                        model.getAlternateAllele(),
+                                                        model.isSupportedByEvidence()));
     }
 
 }

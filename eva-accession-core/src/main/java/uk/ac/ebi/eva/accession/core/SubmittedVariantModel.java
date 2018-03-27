@@ -38,4 +38,9 @@ public interface SubmittedVariantModel {
     String getReferenceAllele();
 
     String getAlternateAllele();
+
+    /**
+     * @return True if this submitted variant is supported by genotypes or frequencies
+     */
+    boolean isSupportedByEvidence();
 }

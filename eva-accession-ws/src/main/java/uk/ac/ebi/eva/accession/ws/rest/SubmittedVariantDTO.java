@@ -27,7 +27,7 @@ public class SubmittedVariantDTO implements SubmittedVariantModel {
 
     private String projectAccession;
 
-    private String chromosome;
+    private String contig;
 
     private long start;
 
@@ -35,18 +35,22 @@ public class SubmittedVariantDTO implements SubmittedVariantModel {
 
     private String alternateAllele;
 
+    private boolean supportedByEvidence;
+
     SubmittedVariantDTO() {
     }
 
     public SubmittedVariantDTO(String assemblyAccession, String taxonomyAccession, String projectAccession,
-                               String chromosome, long start, String referenceAllele, String alternateAllele) {
+                               String contig, long start, String referenceAllele, String alternateAllele,
+                               boolean supportedByEvidence) {
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
-        this.chromosome = chromosome;
+        this.contig = contig;
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
+        this.supportedByEvidence = supportedByEvidence;
     }
 
     @Override
@@ -66,7 +70,7 @@ public class SubmittedVariantDTO implements SubmittedVariantModel {
 
     @Override
     public String getContig() {
-        return chromosome;
+        return contig;
     }
 
     @Override
@@ -84,5 +88,8 @@ public class SubmittedVariantDTO implements SubmittedVariantModel {
         return alternateAllele;
     }
 
-
+    @Override
+    public boolean isSupportedByEvidence() {
+        return supportedByEvidence;
+    }
 }
