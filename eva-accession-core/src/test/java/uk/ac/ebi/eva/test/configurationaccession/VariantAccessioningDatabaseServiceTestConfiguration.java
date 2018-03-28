@@ -18,8 +18,8 @@
 package uk.ac.ebi.eva.test.configurationaccession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.ContiguousIdBlockService;
@@ -29,7 +29,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 
-@TestConfiguration
+@Configuration
 public class VariantAccessioningDatabaseServiceTestConfiguration {
 
     @Autowired
