@@ -13,6 +13,7 @@
     <modules>
         <module>eva-accession-core</module>
         <module>eva-accession-ws</module>
+        <module>eva-accession-pipeline</module>
     </modules>
 
     <properties>
