@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.core.configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -39,6 +41,8 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.Contiguo
         basePackages = {"uk.ac.ebi.eva.accession.core.persistence"}
 )
 public class SubmittedVariantAccessioningConfiguration {
+
+    private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningConfiguration.class);
 
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
@@ -66,6 +70,7 @@ public class SubmittedVariantAccessioningConfiguration {
     @Bean
     public MonotonicAccessionGenerator<SubmittedVariantModel> submittedVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties();
+        logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(
                 properties.getVariant().getBlockSize(),
                 properties.getVariant().getCategoryId(),

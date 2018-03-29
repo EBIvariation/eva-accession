@@ -38,4 +38,12 @@ public class VariantAccessioningProperties {
     public void setBlockSize(long blockSize) {
         this.blockSize = blockSize;
     }
+
+    @Override
+    public String toString() {
+        return "VariantAccessioningProperties{" +
+                "categoryId='" + categoryId + '\'' +
+                ", blockSize=" + blockSize +
+                '}';
+    }
 }

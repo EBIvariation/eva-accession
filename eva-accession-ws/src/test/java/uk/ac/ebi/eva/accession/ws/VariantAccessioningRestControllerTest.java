@@ -27,12 +27,13 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
-import uk.ac.ebi.eva.test.configurationaccession.VariantAccessioningDatabaseServiceTestConfiguration;
 
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,8 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({VariantAccessioningDatabaseServiceTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class})
+@TestPropertySource("classpath:accession-ws-test.properties")
 public class VariantAccessioningRestControllerTest {
 
     @Autowired
