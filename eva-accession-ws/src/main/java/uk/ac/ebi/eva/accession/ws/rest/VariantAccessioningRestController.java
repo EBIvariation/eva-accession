@@ -20,22 +20,15 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 @RestController
 @RequestMapping(value = "/v1/variant")
-public class VariantAccessioningRestController extends BasicRestController<SubmittedVariantModel, SubmittedVariantDTO, Long> {
+public class VariantAccessioningRestController extends BasicRestController<ISubmittedVariant, SubmittedVariantDTO, Long> {
 
     public VariantAccessioningRestController(SubmittedVariantAccessioningService service) {
-        super(service, model -> new SubmittedVariantDTO(model.getAssemblyAccession(),
-                                                        model.getTaxonomyAccession(),
-                                                        model.getProjectAccession(),
-                                                        model.getContig(),
-                                                        model.getStart(),
-                                                        model.getReferenceAllele(),
-                                                        model.getAlternateAllele(),
-                                                        model.isSupportedByEvidence()));
+        super(service, SubmittedVariantDTO::new);
     }
 
 }

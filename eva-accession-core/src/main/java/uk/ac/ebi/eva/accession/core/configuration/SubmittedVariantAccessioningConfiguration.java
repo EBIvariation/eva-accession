@@ -28,7 +28,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
@@ -68,7 +68,7 @@ public class SubmittedVariantAccessioningConfiguration {
     }
 
     @Bean
-    public MonotonicAccessionGenerator<SubmittedVariantModel> submittedVariantAccessionGenerator() {
+    public MonotonicAccessionGenerator<ISubmittedVariant> submittedVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties();
         logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(

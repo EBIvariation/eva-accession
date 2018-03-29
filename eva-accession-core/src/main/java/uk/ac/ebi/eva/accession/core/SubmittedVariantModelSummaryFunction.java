@@ -19,18 +19,18 @@ package uk.ac.ebi.eva.accession.core;
 
 import java.util.function.Function;
 
-public class SubmittedVariantModelSummaryFunction implements Function<SubmittedVariantModel, String> {
+public class SubmittedVariantModelSummaryFunction implements Function<ISubmittedVariant, String> {
 
     @Override
-    public String apply(SubmittedVariantModel model) {
+    public String apply(ISubmittedVariant model) {
         return new StringBuilder()
                 .append(model.getAssemblyAccession())
-                .append(model.getTaxonomyAccession())
-                .append(model.getProjectAccession())
-                .append(model.getContig())
-                .append(model.getStart())
-                .append(model.getReferenceAllele())
-                .append(model.getAlternateAllele())
+                .append("_").append(model.getTaxonomyAccession())
+                .append("_").append(model.getProjectAccession())
+                .append("_").append(model.getContig())
+                .append("_").append(model.getStart())
+                .append("_").append(model.getReferenceAllele())
+                .append("_").append(model.getAlternateAllele())
                 .toString();
     }
 

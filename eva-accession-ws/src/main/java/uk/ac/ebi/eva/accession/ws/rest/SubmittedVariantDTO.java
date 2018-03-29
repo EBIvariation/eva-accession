@@ -17,9 +17,9 @@
  */
 package uk.ac.ebi.eva.accession.ws.rest;
 
-import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
-public class SubmittedVariantDTO implements SubmittedVariantModel {
+public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private String assemblyAccession;
 
@@ -38,6 +38,11 @@ public class SubmittedVariantDTO implements SubmittedVariantModel {
     private boolean supportedByEvidence;
 
     SubmittedVariantDTO() {
+    }
+
+    public SubmittedVariantDTO(ISubmittedVariant model) {
+        this(model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getProjectAccession(), model.getContig(),
+             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.isSupportedByEvidence());
     }
 
     public SubmittedVariantDTO(String assemblyAccession, String taxonomyAccession, String projectAccession,

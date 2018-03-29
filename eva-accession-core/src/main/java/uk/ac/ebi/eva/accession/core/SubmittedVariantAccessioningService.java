@@ -23,9 +23,9 @@ import uk.ac.ebi.ampt2d.commons.accession.core.BasicMonotonicAccessioningService
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-public class SubmittedVariantAccessioningService extends BasicMonotonicAccessioningService<SubmittedVariantModel, String> {
+public class SubmittedVariantAccessioningService extends BasicMonotonicAccessioningService<ISubmittedVariant, String> {
 
-    public SubmittedVariantAccessioningService(MonotonicAccessionGenerator<SubmittedVariantModel> accessionGenerator,
+    public SubmittedVariantAccessioningService(MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
                                                SubmittedVariantAccessioningDatabaseService dbService) {
         super(accessionGenerator, dbService, new SubmittedVariantModelSummaryFunction(), new SHA1HashingFunction());
     }

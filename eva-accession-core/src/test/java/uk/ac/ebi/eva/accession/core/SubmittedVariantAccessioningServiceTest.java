@@ -53,8 +53,8 @@ public class SubmittedVariantAccessioningServiceTest {
                                            "project", "contig_2", 100, "ref",
                                            "alt", true));
 
-        Map<Long, SubmittedVariantModel> generatedAccessions = service.getOrCreateAccessions(variants);
-        Map<Long, SubmittedVariantModel> retrievedAccessions = service.getOrCreateAccessions(variants);
+        Map<Long, ISubmittedVariant> generatedAccessions = service.getOrCreateAccessions(variants);
+        Map<Long, ISubmittedVariant> retrievedAccessions = service.getOrCreateAccessions(variants);
 
         assertEquals(generatedAccessions, retrievedAccessions);
     }

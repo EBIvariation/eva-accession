@@ -17,14 +17,14 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
-import uk.ac.ebi.eva.accession.core.SubmittedVariantModel;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Entity
-public class SubmittedVariantEntity implements SubmittedVariantModel {
+public class SubmittedVariantEntity implements ISubmittedVariant {
 
     @Id
     @Column(nullable = false, unique = true, updatable = false)
@@ -60,7 +60,7 @@ public class SubmittedVariantEntity implements SubmittedVariantModel {
     SubmittedVariantEntity() {
     }
 
-    public SubmittedVariantEntity(Long accession, String hashedMessage, SubmittedVariantModel model) {
+    public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
              model.getAlternateAllele(), model.isSupportedByEvidence());
