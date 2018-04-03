@@ -3,13 +3,13 @@ package uk.ac.ebi.eva.accession.pipeline.steps.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
 
-public class VariantProcessor implements ItemProcessor<Variant, ISubmittedVariant> {
+public class VariantProcessor implements ItemProcessor<IVariant, SubmittedVariantEntity> {
 
     @Override
-    public ISubmittedVariant process(Variant variant) throws Exception {
+    public SubmittedVariantEntity process(IVariant variant) throws Exception {
         // TODO: implement
         return null;
     }

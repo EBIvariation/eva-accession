@@ -1,9 +1,9 @@
 package uk.ac.ebi.eva.accession.pipeline.io;
 
-import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.support.CompositeItemWriter;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
-public class SummaryFileWriter extends FlatFileItemWriter<ISubmittedVariant>{
+public class SummaryFileWriter extends CompositeItemWriter<~> {
     // TODO: implement
 }
