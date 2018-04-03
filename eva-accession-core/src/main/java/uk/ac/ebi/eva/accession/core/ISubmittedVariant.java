@@ -17,22 +17,30 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import uk.ac.ebi.eva.accession.core.persistence.VariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
 /**
  * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
- * entity serialized into the database {@link VariantEntity} and the message/DTO used by the REST API.
+ * entity serialized into the database {@link SubmittedVariantEntity} and the message/DTO used by the REST API.
  */
-public interface VariantModel {
+public interface ISubmittedVariant {
 
     String getAssemblyAccession();
 
+    String getTaxonomyAccession();
+
     String getProjectAccession();
 
-    String getChromosome();
+    String getContig();
 
     long getStart();
 
-    VariantType getType();
+    String getReferenceAllele();
 
+    String getAlternateAllele();
+
+    /**
+     * @return True if this submitted variant is supported by genotypes or frequencies
+     */
+    boolean isSupportedByEvidence();
 }

@@ -17,16 +17,20 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-public class VariantModelSummaryFunction implements java.util.function.Function<VariantModel, String> {
+import java.util.function.Function;
+
+public class SubmittedVariantModelSummaryFunction implements Function<ISubmittedVariant, String> {
 
     @Override
-    public String apply(VariantModel model) {
+    public String apply(ISubmittedVariant model) {
         return new StringBuilder()
                 .append(model.getAssemblyAccession())
-                .append(model.getChromosome())
-                .append(model.getProjectAccession())
-                .append(model.getStart())
-                .append(model.getType())
+                .append("_").append(model.getTaxonomyAccession())
+                .append("_").append(model.getProjectAccession())
+                .append("_").append(model.getContig())
+                .append("_").append(model.getStart())
+                .append("_").append(model.getReferenceAllele())
+                .append("_").append(model.getAlternateAllele())
                 .toString();
     }
 

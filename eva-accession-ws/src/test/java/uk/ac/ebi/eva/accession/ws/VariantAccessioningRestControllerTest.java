@@ -27,13 +27,13 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.core.VariantType;
-import uk.ac.ebi.eva.accession.core.configuration.VariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.persistence.VariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.ws.rest.VariantDTO;
-import uk.ac.ebi.eva.test.configurationaccession.VariantAccessioningDatabaseServiceTestConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -43,14 +43,15 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({VariantAccessioningDatabaseServiceTestConfiguration.class, VariantAccessioningConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class})
+@TestPropertySource("classpath:accession-ws-test.properties")
 public class VariantAccessioningRestControllerTest {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
 
     @Autowired
-    private VariantAccessioningRepository accessioningObjectRepository;
+    private SubmittedVariantAccessioningRepository accessioningRepository;
 
     @Test
     public void testRestApi() {
@@ -68,13 +69,13 @@ public class VariantAccessioningRestControllerTest {
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(2, response.getBody().size());
-        assertEquals(2, accessioningObjectRepository.count());
+        assertEquals(2, accessioningRepository.count());
 
         //Accessing Post Request again with same files
         response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(2, response.getBody().size());
-        assertEquals(2, accessioningObjectRepository.count());
+        assertEquals(2, accessioningRepository.count());
     }
 
     @Test
@@ -92,9 +93,11 @@ public class VariantAccessioningRestControllerTest {
         assertEquals(2, getVariantsResponse.getBody().size());
     }
 
-    public List<VariantDTO> getListOfVariantMessages() {
-        VariantDTO variant1 = new VariantDTO("ASMACC01", "PROJACC01", "CHROM1", 1234, VariantType.DIV);
-        VariantDTO variant2 = new VariantDTO("ASMACC02", "PROJACC02", "CHROM2", 1234, VariantType.DIV);
+    public List<SubmittedVariantDTO> getListOfVariantMessages() {
+        SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", "TAXACC01", "PROJACC01", "CHROM1", 1234,
+                                                               "REF", "ALT", false);
+        SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", "TAXACC02", "PROJACC02", "CHROM2", 1234,
+                                                               "REF", "ALT", false);
         return asList(variant1, variant2);
     }
 }

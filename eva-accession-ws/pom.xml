@@ -18,15 +18,6 @@
             <artifactId>eva-accession-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <!-- This is required to reuse a class that contains test configurations
-            (uk.ac.ebi.eva.test.configurationaccession.VariantAccessioningDatabaseServiceTestConfiguration) -->
-            <groupId>uk.ac.ebi.eva</groupId>
-            <artifactId>eva-accession-core</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>test</scope>
-            <type>test-jar</type>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

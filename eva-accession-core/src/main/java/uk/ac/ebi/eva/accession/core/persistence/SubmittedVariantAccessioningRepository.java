@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningRepository;
 
 @Repository
-public interface VariantAccessioningRepository extends AccessioningRepository<VariantEntity, String, Long> {
+public interface SubmittedVariantAccessioningRepository
+        extends AccessioningRepository<SubmittedVariantEntity, String, Long> {
 
 }

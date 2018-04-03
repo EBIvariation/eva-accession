@@ -38,4 +38,12 @@ public class ApplicationProperties {
     public void setVariant(VariantAccessioningProperties variant) {
         this.variant = variant;
     }
+
+    @Override
+    public String toString() {
+        return "ApplicationProperties{" +
+                "instanceId='" + instanceId + '\'' +
+                ", variant=" + variant +
+                '}';
+    }
 }
