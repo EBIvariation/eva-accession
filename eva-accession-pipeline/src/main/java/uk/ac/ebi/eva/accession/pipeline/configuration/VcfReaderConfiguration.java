@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.pipeline.io;
+package uk.ac.ebi.eva.accession.pipeline.configuration;
 
-import org.springframework.batch.item.support.CompositeItemWriter;
-
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
-
-public class SummaryFileWriter extends CompositeItemWriter<SubmittedVariantEntity> {
-    // TODO: implement
+public class VcfReaderConfiguration {
 }
