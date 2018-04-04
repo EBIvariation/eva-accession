@@ -18,10 +18,13 @@ package uk.ac.ebi.eva.accession.pipeline.utils;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
@@ -36,6 +39,10 @@ public class FileUtils {
             resource = new FileSystemResource(file);
         }
         return resource;
+    }
+
+    public static File getResourceFile(String resourcePath) {
+        return new File(FileUtils.class.getResource(resourcePath).getFile());
     }
 
     public static boolean isGzip(String file) throws IOException {
@@ -56,6 +63,34 @@ public class FileUtils {
         Properties properties = new Properties();
         properties.load(propertiesInputStream);
         return properties;
+    }
+
+    public static void uncompress(String inputCompressedFile, File outputFile) throws IOException {
+        GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(inputCompressedFile));
+        FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
+
+        byte[] buffer = new byte[1024];
+        final int offset = 0;
+        int length;
+        while ((length = gzipInputStream.read(buffer)) > 0) {
+            fileOutputStream.write(buffer, offset, length);
+        }
+
+        gzipInputStream.close();
+        fileOutputStream.close();
+    }
+
+    public static long countNonCommentLines(InputStream in) throws IOException {
+        BufferedReader file = new BufferedReader(new InputStreamReader(in));
+        long lines = 0;
+        String line;
+        while ((line = file.readLine()) != null) {
+            if (line.charAt(0) != '#') {
+                lines++;
+            }
+        }
+        file.close();
+        return lines;
     }
 
 }
