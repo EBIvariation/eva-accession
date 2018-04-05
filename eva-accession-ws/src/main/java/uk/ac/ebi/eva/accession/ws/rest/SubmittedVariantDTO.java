@@ -23,7 +23,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private String assemblyAccession;
 
-    private String taxonomyAccession;
+    private int taxonomyAccession;
 
     private String projectAccession;
 
@@ -45,7 +45,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
              model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.isSupportedByEvidence());
     }
 
-    public SubmittedVariantDTO(String assemblyAccession, String taxonomyAccession, String projectAccession,
+    public SubmittedVariantDTO(String assemblyAccession, int taxonomyAccession, String projectAccession,
                                String contig, long start, String referenceAllele, String alternateAllele,
                                boolean supportedByEvidence) {
         this.assemblyAccession = assemblyAccession;
@@ -64,7 +64,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     }
 
     @Override
-    public String getTaxonomyAccession() {
+    public int getTaxonomyAccession() {
         return taxonomyAccession;
     }
 

@@ -17,13 +17,15 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
+import org.springframework.util.Assert;
+
 import java.util.Objects;
 
 public class SubmittedVariant implements ISubmittedVariant {
 
     private String assemblyAccession;
 
-    private String taxonomyAccession;
+    private int taxonomyAccession;
 
     private String projectAccession;
 
@@ -37,10 +39,11 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private boolean supportedByEvidence;
 
-    public SubmittedVariant(String assemblyAccession, String taxonomyAccession,
-                            String projectAccession, String contig, long start,
-                            String referenceAllele, String alternateAllele,
-                            boolean supportedByEvidence) {
+    public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
+                            long start, String referenceAllele, String alternateAllele, boolean supportedByEvidence) {
+        Assert.hasText(assemblyAccession, "Assembly sccession is required");
+        Assert.hasText(projectAccession, "Project accession is required");
+
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
@@ -61,11 +64,11 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public String getTaxonomyAccession() {
+    public int getTaxonomyAccession() {
         return taxonomyAccession;
     }
 
-    public void setTaxonomyAccession(String taxonomyAccession) {
+    public void setTaxonomyAccession(int taxonomyAccession) {
         this.taxonomyAccession = taxonomyAccession;
     }
 
@@ -141,6 +144,6 @@ public class SubmittedVariant implements ISubmittedVariant {
     @Override
     public int hashCode() {
         return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession,
-                contig, start, referenceAllele, alternateAllele, supportedByEvidence);
+                            contig, start, referenceAllele, alternateAllele, supportedByEvidence);
     }
 }

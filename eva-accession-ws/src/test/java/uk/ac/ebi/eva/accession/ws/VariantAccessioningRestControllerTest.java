@@ -94,9 +94,9 @@ public class VariantAccessioningRestControllerTest {
     }
 
     public List<SubmittedVariantDTO> getListOfVariantMessages() {
-        SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", "TAXACC01", "PROJACC01", "CHROM1", 1234,
+        SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234,
                                                                "REF", "ALT", false);
-        SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", "TAXACC02", "PROJACC02", "CHROM2", 1234,
+        SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234,
                                                                "REF", "ALT", false);
         return asList(variant1, variant2);
     }
