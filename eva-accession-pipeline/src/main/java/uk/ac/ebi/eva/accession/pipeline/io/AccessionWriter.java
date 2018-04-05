@@ -15,10 +15,24 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
-import org.springframework.batch.item.support.CompositeItemWriter;
+import org.springframework.batch.item.ItemWriter;
 
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 
-public class SummaryFileWriter extends CompositeItemWriter<SubmittedVariantEntity> {
-    // TODO: implement
+import java.util.List;
+import java.util.Map;
+
+public class AccessionWriter implements ItemWriter<ISubmittedVariant> {
+
+    private SubmittedVariantAccessioningService service;
+
+    public AccessionWriter(SubmittedVariantAccessioningService service) {
+        this.service = service;
+    }
+
+    @Override
+    public void write(List<? extends ISubmittedVariant> variants) throws Exception {
+        Map<Long, ISubmittedVariant> accessions = service.getOrCreateAccessions(variants);
+    }
 }

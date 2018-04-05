@@ -37,7 +37,6 @@ import java.io.IOException;
 @Configuration
 public class VcfReaderConfiguration {
 
-
     private static final String VARIANT_READER = "VARIANT_READER";
 
     @Bean(VARIANT_READER)
