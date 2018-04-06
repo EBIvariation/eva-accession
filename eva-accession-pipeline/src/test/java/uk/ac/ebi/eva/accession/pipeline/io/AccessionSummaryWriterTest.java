@@ -88,15 +88,28 @@ public class AccessionSummaryWriterTest {
     }
 
     @Test
-    public void writeIndelWithAccession() throws IOException {
+    public void writeInsertionWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, "",
                                                         ALTERNATE, false);
 
         accessionWriter.write(Collections.singletonMap(RS_ID, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START), "rs" + RS_ID,
-                            CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
-                            ".", ".", "."),
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), "rs" + RS_ID,
+                                 CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
+                                 ".", ".", "."),
+                     getFirstVariantLine());
+    }
+
+    @Test
+    public void writeDeletionWithAccession() throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, REFERENCE,
+                                                        "", false);
+
+        accessionWriter.write(Collections.singletonMap(RS_ID, variant));
+
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), "rs" + RS_ID,
+                                 CONTEXT_BASE + REFERENCE, CONTEXT_BASE,
+                                 ".", ".", "."),
                      getFirstVariantLine());
     }
 }

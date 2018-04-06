@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.pipeline.io;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -57,7 +58,8 @@ public class AccessionSummaryWriter {
         fileWriter.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
     }
 
-    private void writeVariant(Long id, ISubmittedVariant variant) throws IOException {
+    private void writeVariant(Long id, ISubmittedVariant normalizedVariant) throws IOException {
+        ISubmittedVariant variant = denormalizeVariant(normalizedVariant);
         String variantLine = String.join("\t",
                                          variant.getContig(),
                                          Long.toString(variant.getStart()),
@@ -66,5 +68,28 @@ public class AccessionSummaryWriter {
                                          variant.getAlternateAllele(),
                                          ".", ".", ".");
         fileWriter.write(variantLine + "\n");
+    }
+
+    private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
+        if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
+            if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
+                long newStart = normalizedVariant.getStart() - 1;
+                String contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
+                return new SubmittedVariant(normalizedVariant.getAssemblyAccession(),
+                                            normalizedVariant.getTaxonomyAccession(),
+                                            normalizedVariant.getProjectAccession(),
+                                            normalizedVariant.getContig(),
+                                            newStart,
+                                            contextBase + normalizedVariant.getReferenceAllele(),
+                                            contextBase + normalizedVariant.getAlternateAllele(),
+                                            normalizedVariant.isSupportedByEvidence());
+
+            } else {
+                throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
+                                                           + "' does not appear in the fasta file ");
+            }
+        } else {
+            return normalizedVariant;
+        }
     }
 }
