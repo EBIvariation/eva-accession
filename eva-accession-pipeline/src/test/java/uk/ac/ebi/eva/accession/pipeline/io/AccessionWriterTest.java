@@ -1,4 +1,4 @@
-package uk.ac.ebi.eva.accession.pipeline.io;/*
+/*
  * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,7 @@ package uk.ac.ebi.eva.accession.pipeline.io;/*
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package uk.ac.ebi.eva.accession.pipeline.io;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,8 +24,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
 
 import java.util.Collections;
@@ -38,6 +39,8 @@ import static org.junit.Assert.assertEquals;
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
+    private static final int TAXONOMY = 3880;
+
     @Autowired
     private AccessionWriter accessionWriter;
 
@@ -46,17 +49,14 @@ public class AccessionWriterTest {
 
     @Test
     public void saveSingleAccession() throws Exception {
-        ISubmittedVariant variant =
-                // TODO: change to SubmittedVariant
-                new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project",
-                                                                    "contig", 100, "reference", "alternate", false);
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
+                                                         "alternate", false);
 
         accessionWriter.write(Collections.singletonList(variant));
 
         Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
         assertEquals(1, accessions.size());
 
-        // TODO: SubmittedVariant::equals will work with savedVariant?
         ISubmittedVariant savedVariant = accessions.values().iterator().next();
         assertEquals(variant.getAssemblyAccession(), savedVariant.getAssemblyAccession());
         assertEquals(variant.getTaxonomyAccession(), savedVariant.getTaxonomyAccession());
