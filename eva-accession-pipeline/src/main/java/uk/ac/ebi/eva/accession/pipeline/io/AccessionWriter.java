@@ -27,12 +27,16 @@ public class AccessionWriter implements ItemWriter<ISubmittedVariant> {
 
     private SubmittedVariantAccessioningService service;
 
-    public AccessionWriter(SubmittedVariantAccessioningService service) {
+    private AccessionSummaryWriter accessionSummaryWriter;
+
+    public AccessionWriter(SubmittedVariantAccessioningService service, AccessionSummaryWriter accessionSummaryWriter) {
         this.service = service;
+        this.accessionSummaryWriter = accessionSummaryWriter;
     }
 
     @Override
     public void write(List<? extends ISubmittedVariant> variants) throws Exception {
         Map<Long, ISubmittedVariant> accessions = service.getOrCreateAccessions(variants);
+        accessionSummaryWriter.write(accessions);
     }
 }

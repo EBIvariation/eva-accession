@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.io.AccessionSummaryWriter;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 
 import java.io.IOException;
@@ -36,7 +37,15 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION
 public class AccessionWriterConfiguration {
 
     @Bean(ACCESSION_WRITER)
-    public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service) throws IOException {
-        return new AccessionWriter(service);
+    public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service,
+                                           AccessionSummaryWriter accessionSummaryWriter) throws IOException {
+        return new AccessionWriter(service, accessionSummaryWriter);
     }
+
+    @Bean
+    AccessionSummaryWriter accessionSummaryWriter() {
+        return new AccessionSummaryWriter();
+    }
+
+
 }
