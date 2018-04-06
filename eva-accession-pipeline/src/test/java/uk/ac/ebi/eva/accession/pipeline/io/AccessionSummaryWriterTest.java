@@ -53,6 +53,8 @@ public class AccessionSummaryWriterTest {
 
     private File output;
 
+    private static final long RS_ID = 100L;
+
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
@@ -67,9 +69,9 @@ public class AccessionSummaryWriterTest {
                 new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project", CONTIG, START, REFERENCE,
                                            ALTERNATE, false);
 
-        accessionWriter.write(Collections.singletonMap(100L, variant));
+        accessionWriter.write(Collections.singletonMap(RS_ID, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START), "rs0", REFERENCE, ALTERNATE),
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START), "rs" + RS_ID, REFERENCE, ALTERNATE, ".", ".", "."),
                      getFirstVariantLine());
     }
 
@@ -88,12 +90,14 @@ public class AccessionSummaryWriterTest {
     public void writeIndelWithAccession() throws IOException {
         ISubmittedVariant variant =
                 // TODO: change to SubmittedVariant
-                new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project", CONTIG, START, REFERENCE,
+                new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project", CONTIG, START, "",
                                            ALTERNATE, false);
 
-        accessionWriter.write(Collections.singletonMap(100L, variant));
+        accessionWriter.write(Collections.singletonMap(RS_ID, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START), "rs0", CONTEXT_BASE, CONTEXT_BASE + ALTERNATE),
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START), "rs" + RS_ID,
+                            CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
+                            ".", ".", "."),
                      getFirstVariantLine());
     }
 }

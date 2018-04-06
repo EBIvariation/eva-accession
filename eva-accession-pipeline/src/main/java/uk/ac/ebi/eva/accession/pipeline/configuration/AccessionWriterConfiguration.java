@@ -44,7 +44,7 @@ public class AccessionWriterConfiguration {
     }
 
     @Bean
-    AccessionSummaryWriter accessionSummaryWriter(InputParameters inputParameters) {
+    AccessionSummaryWriter accessionSummaryWriter(InputParameters inputParameters) throws IOException {
         return new AccessionSummaryWriter(inputParameters.getFasta(), inputParameters.getOutputVcf());
     }
 
