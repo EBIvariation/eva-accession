@@ -17,8 +17,6 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import org.springframework.util.Assert;
-
 import java.util.Objects;
 
 public class SubmittedVariant implements ISubmittedVariant {
@@ -41,8 +39,21 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
                             long start, String referenceAllele, String alternateAllele, boolean supportedByEvidence) {
-        Assert.hasText(assemblyAccession, "Assembly sccession is required");
-        Assert.hasText(projectAccession, "Project accession is required");
+        if(Objects.isNull(assemblyAccession)) {
+            throw new IllegalArgumentException("Assembly accession is required");
+        }
+        if(Objects.isNull(projectAccession)) {
+            throw new IllegalArgumentException("Project accession is required");
+        }
+        if(Objects.isNull(contig)) {
+            throw new IllegalArgumentException("Contig is required");
+        }
+        if(Objects.isNull(referenceAllele)) {
+            throw new IllegalArgumentException("Reference allele is required");
+        }
+        if(Objects.isNull(alternateAllele)) {
+            throw new IllegalArgumentException("Alternate allele is required");
+        }
 
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;

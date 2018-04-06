@@ -27,28 +27,63 @@ import static org.junit.Assert.assertEquals;
 
 public class VariantProcessorTest {
 
+    private static final String ASSEMBLY = "assembly";
+
+    private static final int TAXONOMY = 1111;
+
+    private static final String PROJECT = "project";
+
+    private static final String CONTIG = "contig";
+
+    private static final long START = 1000;
+
+    private static final String REFERENCE_ALLELE = "A";
+
+    private static final String ALTERNATE_ALLELE = "T";
+
     private VariantProcessor processor;
 
     @Before
     public void setUp() {
-        processor = new VariantProcessor("assembly", 1111, "project");
+        processor = new VariantProcessor(ASSEMBLY, TAXONOMY, PROJECT);
     }
 
     @Test
     public void process() throws Exception {
-        Variant variant = new Variant("contig", 1000, 1001, "A", "T");
+        Variant variant = new Variant(CONTIG, START, 1001, REFERENCE_ALLELE, ALTERNATE_ALLELE);
         SubmittedVariant processed = processor.process(variant);
-        SubmittedVariant expected = new SubmittedVariant("assembly", 1111, "project", "contig", 1000, "A", "T", true);
+        SubmittedVariant expected = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE,
+                                                         ALTERNATE_ALLELE, true);
         assertEquals(expected, processed);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowExceptionContigNull() {
-        SubmittedVariant submittedVariant = new SubmittedVariant(null, 11, "project", "contig", 1000, "A", "T", true);
+    public void shouldThrowExceptionAssemblyNull() {
+        SubmittedVariant submittedVariant = new SubmittedVariant(null, TAXONOMY, PROJECT, CONTIG, START,
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionProjectNull() {
-        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", 11, null, "contig", 1000, "A", "T", true);
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, null, CONTIG, START,
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowExceptionContigNull() {
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, null, START,
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowExceptionReferenceNull() {
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
+                                                                 null, ALTERNATE_ALLELE, true);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowExceptionAlternateNull() {
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
+                                                                 REFERENCE_ALLELE, null, true);
     }
 }
