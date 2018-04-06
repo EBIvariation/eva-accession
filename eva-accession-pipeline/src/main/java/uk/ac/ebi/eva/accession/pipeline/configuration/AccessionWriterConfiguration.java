@@ -23,6 +23,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionSummaryWriter;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
+import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
 import java.io.IOException;
 
@@ -33,7 +34,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION
  * Configuration to inject a VcfReader as a Variant Reader bean.
  */
 @Configuration
-@Import(SubmittedVariantAccessioningConfiguration.class)
+@Import({SubmittedVariantAccessioningConfiguration.class, InputParameters.class})
 public class AccessionWriterConfiguration {
 
     @Bean(ACCESSION_WRITER)
@@ -43,8 +44,8 @@ public class AccessionWriterConfiguration {
     }
 
     @Bean
-    AccessionSummaryWriter accessionSummaryWriter() {
-        return new AccessionSummaryWriter();
+    AccessionSummaryWriter accessionSummaryWriter(InputParameters inputParameters) {
+        return new AccessionSummaryWriter(inputParameters.getFasta(), inputParameters.getOutputVcf());
     }
 
 

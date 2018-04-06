@@ -1,4 +1,4 @@
-package uk.ac.ebi.eva.accession.pipeline.io;/*
+/*
  * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,49 +13,55 @@ package uk.ac.ebi.eva.accession.pipeline.io;/*
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package uk.ac.ebi.eva.accession.pipeline.io;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
-import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class AccessionSummaryWriterTest {
 
     private static final String CONTIG = "contig";
 
-    private static final int START = 100;
+    private static final int START = 10;
 
-    private static final String REFERENCE = "reference";
+    private static final String REFERENCE = "T";
 
-    private static final String ALTERNATE = "alternate";
+    private static final String ALTERNATE = "A";
+
+    private static final String CONTEXT_BASE = "G";
 
     private AccessionSummaryWriter accessionWriter;
 
     @Rule
-    private TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
     private File output;
 
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
-        accessionWriter = new AccessionSummaryWriter(output, new FastaSequenceReader(Paths.get("mock.fa")));
+        Path fastaPath = Paths.get(AccessionSummaryWriterTest.class.getResource("/input-files/mock.fa").getFile());
+        accessionWriter = new AccessionSummaryWriter(output, new FastaSequenceReader(fastaPath));
     }
 
     @Test
-    public void writeVariantWithAccession() {
+    public void writeSnpWithAccession() throws IOException {
         ISubmittedVariant variant =
                 // TODO: change to SubmittedVariant
                 new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project", CONTIG, START, REFERENCE,
@@ -67,8 +73,27 @@ public class AccessionSummaryWriterTest {
                      getFirstVariantLine());
     }
 
-    private String getFirstVariantLine() {
-        output.
+    private String getFirstVariantLine() throws IOException {
+        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
+            String line;
+        while ((line = fileInputStream.readLine()) != null) {
+            if (!line.startsWith("#")) {
+                return line;
+            }
+        }
+        throw new IllegalStateException("VCF didn't have any data lines");
+    }
 
+    @Test
+    public void writeIndelWithAccession() throws IOException {
+        ISubmittedVariant variant =
+                // TODO: change to SubmittedVariant
+                new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project", CONTIG, START, REFERENCE,
+                                           ALTERNATE, false);
+
+        accessionWriter.write(Collections.singletonMap(100L, variant));
+
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START), "rs0", CONTEXT_BASE, CONTEXT_BASE + ALTERNATE),
+                     getFirstVariantLine());
     }
 }
