@@ -37,7 +37,7 @@ public class SubmittedVariantEntity implements ISubmittedVariant {
     private String assemblyAccession;
 
     @Column(nullable = false)
-    private String taxonomyAccession;
+    private int taxonomyAccession;
 
     @Column(nullable = false)
     private String projectAccession;
@@ -67,7 +67,7 @@ public class SubmittedVariantEntity implements ISubmittedVariant {
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
-                                  String taxonomyAccession, String projectAccession, String contig, long start,
+                                  int taxonomyAccession, String projectAccession, String contig, long start,
                                   String referenceAllele, String alternateAllele, boolean isSupportedByEvidence) {
         this.accession = accession;
         this.hashedMessage = hashedMessage;
@@ -95,7 +95,7 @@ public class SubmittedVariantEntity implements ISubmittedVariant {
     }
 
     @Override
-    public String getTaxonomyAccession() {
+    public int getTaxonomyAccession() {
         return taxonomyAccession;
     }
 

@@ -27,7 +27,7 @@ public interface ISubmittedVariant {
 
     String getAssemblyAccession();
 
-    String getTaxonomyAccession();
+    int getTaxonomyAccession();
 
     String getProjectAccession();
 

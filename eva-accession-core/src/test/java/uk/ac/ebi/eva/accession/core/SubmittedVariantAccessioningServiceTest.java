@@ -46,13 +46,12 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void sameAccessionsAreReturnedForIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
         List<SubmittedVariantEntity> variants = Arrays.asList(
-                new SubmittedVariantEntity(null, null, "assembly", "taxonomy",
+                new SubmittedVariantEntity(null, null, "assembly", 1111,
                                            "project", "contig_1", 100, "ref",
                                            "alt", true),
-                new SubmittedVariantEntity(null, null, "assembly", "taxonomy",
+                new SubmittedVariantEntity(null, null, "assembly", 1111,
                                            "project", "contig_2", 100, "ref",
                                            "alt", true));
-
         Map<Long, ISubmittedVariant> generatedAccessions = service.getOrCreateAccessions(variants);
         Map<Long, ISubmittedVariant> retrievedAccessions = service.getOrCreateAccessions(variants);
 
