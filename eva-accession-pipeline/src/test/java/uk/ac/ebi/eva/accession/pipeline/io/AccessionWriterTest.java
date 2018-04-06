@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
 import java.util.Collections;
 import java.util.Map;
@@ -35,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
-@ContextConfiguration(classes = {AccessionWriterConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
@@ -44,10 +48,17 @@ public class AccessionWriterTest {
     private static final long EXPECTED_ACCESSION = 0L;
 
     @Autowired
-    private AccessionWriter accessionWriter;
+    private SubmittedVariantAccessioningService service;
 
     @Autowired
-    private SubmittedVariantAccessioningService service;
+    private InputParameters inputParameters;
+
+    private AccessionWriter accessionWriter;
+
+    @Before
+    public void setUp() throws Exception {
+        accessionWriter = new AccessionWriter(service);
+    }
 
     @Test
     public void saveSingleAccession() throws Exception {
