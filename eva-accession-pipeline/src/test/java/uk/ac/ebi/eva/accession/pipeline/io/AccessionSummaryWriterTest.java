@@ -47,14 +47,16 @@ public class AccessionSummaryWriterTest {
 
     private static final int TAXONOMY = 3880;
 
+    private static final String ACCESSION_PREFIX = "ss";
+
     private AccessionSummaryWriter accessionWriter;
+
+    private static final long ACCESSION = 100L;
 
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
     private File output;
-
-    private static final long RS_ID = 100L;
 
     @Before
     public void setUp() throws Exception {
@@ -68,13 +70,14 @@ public class AccessionSummaryWriterTest {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, REFERENCE,
                                                         ALTERNATE, false);
 
-        accessionWriter.write(Collections.singletonMap(RS_ID, variant));
+        accessionWriter.write(Collections.singletonMap(ACCESSION, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START), "rs" + RS_ID, REFERENCE, ALTERNATE, ".", ".", "."),
-                     getFirstVariantLine());
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START), ACCESSION_PREFIX + ACCESSION,
+                                 REFERENCE, ALTERNATE, ".", ".", "."),
+                     getFirstVariantLine(output));
     }
 
-    private String getFirstVariantLine() throws IOException {
+    public static String getFirstVariantLine(File output) throws IOException {
         BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
             String line;
         while ((line = fileInputStream.readLine()) != null) {
@@ -90,12 +93,12 @@ public class AccessionSummaryWriterTest {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, "",
                                                         ALTERNATE, false);
 
-        accessionWriter.write(Collections.singletonMap(RS_ID, variant));
+        accessionWriter.write(Collections.singletonMap(ACCESSION, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), "rs" + RS_ID,
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
                                  ".", ".", "."),
-                     getFirstVariantLine());
+                     getFirstVariantLine(output));
     }
 
     @Test
@@ -103,11 +106,11 @@ public class AccessionSummaryWriterTest {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, REFERENCE,
                                                         "", false);
 
-        accessionWriter.write(Collections.singletonMap(RS_ID, variant));
+        accessionWriter.write(Collections.singletonMap(ACCESSION, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), "rs" + RS_ID,
+        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE + REFERENCE, CONTEXT_BASE,
                                  ".", ".", "."),
-                     getFirstVariantLine());
+                     getFirstVariantLine(output));
     }
 }

@@ -19,15 +19,13 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 
 public class AccessionSummaryWriter {
 
-    private File output;
+    private static final String VCF_MISSING_VALUE = ".";
 
     private FastaSequenceReader fastaSequenceReader;
 
@@ -35,11 +33,21 @@ public class AccessionSummaryWriter {
 
     private final FileWriter fileWriter;
 
+    private String accessionPrefix;
+
     public AccessionSummaryWriter(File output, FastaSequenceReader fastaSequenceReader) throws IOException {
-        this.output = output;
         this.fastaSequenceReader = fastaSequenceReader;
         this.headerWritten = false;
         this.fileWriter = new FileWriter(output);
+        this.accessionPrefix = "ss";
+    }
+
+    public String getAccessionPrefix() {
+        return accessionPrefix;
+    }
+
+    public void setAccessionPrefix(String accessionPrefix) {
+        this.accessionPrefix = accessionPrefix;
     }
 
     public void write(Map<Long, ISubmittedVariant> accessions) throws IOException {
@@ -60,30 +68,14 @@ public class AccessionSummaryWriter {
 
     private void writeVariant(Long id, ISubmittedVariant normalizedVariant) throws IOException {
         ISubmittedVariant variant = denormalizeVariant(normalizedVariant);
-        String variantLine = String.join("\t",
-                                         variant.getContig(),
-                                         Long.toString(variant.getStart()),
-                                         "rs" + Long.toString(id),
-                                         variant.getReferenceAllele(),
-                                         variant.getAlternateAllele(),
-                                         ".", ".", ".");
-        fileWriter.write(variantLine + "\n");
+        String vcfLine = variantToVcfLine(id, variant);
+        fileWriter.write(vcfLine);
     }
 
     private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
         if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
             if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
-                long newStart = normalizedVariant.getStart() - 1;
-                String contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
-                return new SubmittedVariant(normalizedVariant.getAssemblyAccession(),
-                                            normalizedVariant.getTaxonomyAccession(),
-                                            normalizedVariant.getProjectAccession(),
-                                            normalizedVariant.getContig(),
-                                            newStart,
-                                            contextBase + normalizedVariant.getReferenceAllele(),
-                                            contextBase + normalizedVariant.getAlternateAllele(),
-                                            normalizedVariant.isSupportedByEvidence());
-
+                return createVariantWithContextBase(normalizedVariant);
             } else {
                 throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
                                                            + "' does not appear in the fasta file ");
@@ -91,5 +83,44 @@ public class AccessionSummaryWriter {
         } else {
             return normalizedVariant;
         }
+    }
+
+    private ISubmittedVariant createVariantWithContextBase(ISubmittedVariant normalizedVariant) {
+        long newStart;
+        String newReference;
+        String newAlternate;
+        if (normalizedVariant.getStart() == 1) {
+            // VCF 4.3 section 1.6.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
+            // event occurs at position 1 on the contig in which case it must include the base after the event"
+            newStart = normalizedVariant.getStart() + 1;
+            String contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
+            newReference = normalizedVariant.getReferenceAllele() + contextBase;
+            newAlternate = normalizedVariant.getAlternateAllele() + contextBase;
+        } else {
+            newStart = normalizedVariant.getStart() - 1;
+            String contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
+            newReference = contextBase + normalizedVariant.getReferenceAllele();
+            newAlternate = contextBase + normalizedVariant.getAlternateAllele();
+        }
+
+        return new SubmittedVariant(normalizedVariant.getAssemblyAccession(),
+                                    normalizedVariant.getTaxonomyAccession(),
+                                    normalizedVariant.getProjectAccession(),
+                                    normalizedVariant.getContig(),
+                                    newStart,
+                                    newReference,
+                                    newAlternate,
+                                    normalizedVariant.isSupportedByEvidence());
+    }
+
+    protected String variantToVcfLine(Long id, ISubmittedVariant variant) {
+        String variantLine = String.join("\t",
+                                         variant.getContig(),
+                                         Long.toString(variant.getStart()),
+                                         accessionPrefix + Long.toString(id),
+                                         variant.getReferenceAllele(),
+                                         variant.getAlternateAllele(),
+                                         VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
+        return variantLine + "\n";
     }
 }

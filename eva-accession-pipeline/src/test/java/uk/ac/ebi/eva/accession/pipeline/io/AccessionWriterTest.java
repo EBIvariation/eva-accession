@@ -59,6 +59,14 @@ public class AccessionWriterTest {
 
     private static final int START_2 = 200;
 
+    private static final String ALTERNATE_ALLELE = "T";
+
+    private static final String REFERENCE_ALLELE = "A";
+
+    private static final int ACCESSION_COLUMN = 2;
+
+    private static final String ACCESSION_PREFIX = "ss";
+
     @Autowired
     private SubmittedVariantAccessioningService service;
 
@@ -143,7 +151,7 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void testSaveInitializesCreatedDate() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", START_1, "reference",
                                                         "alternate", false);
         LocalDateTime beforeSave = LocalDateTime.now();
         accessionWriter.write(Collections.singletonList(variant));
@@ -152,5 +160,20 @@ public class AccessionWriterTest {
         assertEquals(1, accessions.size());
         ISubmittedVariant savedVariant = accessions.values().iterator().next();
         assertTrue(beforeSave.isBefore(savedVariant.getCreatedDate()));
+    }
+
+    @Test
+    public void createAccessionAndItAppearsInTheReportVcf() throws Exception {
+        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
+                                                        REFERENCE_ALLELE, ALTERNATE_ALLELE, false);
+
+        accessionWriter.write(Arrays.asList(variant, variant));
+
+        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        assertEquals(1, accessions.size());
+
+        String vcfLine = AccessionSummaryWriterTest.getFirstVariantLine(new File(inputParameters.getOutputVcf()));
+        assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN], ACCESSION_PREFIX + accessions.keySet().iterator().next());
+
     }
 }
