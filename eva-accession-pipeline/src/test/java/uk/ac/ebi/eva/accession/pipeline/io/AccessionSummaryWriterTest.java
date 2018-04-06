@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
 import java.io.BufferedReader;
@@ -46,6 +47,8 @@ public class AccessionSummaryWriterTest {
 
     private static final String CONTEXT_BASE = "G";
 
+    private static final int TAXONOMY = 3880;
+
     private AccessionSummaryWriter accessionWriter;
 
     @Rule
@@ -64,10 +67,8 @@ public class AccessionSummaryWriterTest {
 
     @Test
     public void writeSnpWithAccession() throws IOException {
-        ISubmittedVariant variant =
-                // TODO: change to SubmittedVariant
-                new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project", CONTIG, START, REFERENCE,
-                                           ALTERNATE, false);
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, REFERENCE,
+                                                        ALTERNATE, false);
 
         accessionWriter.write(Collections.singletonMap(RS_ID, variant));
 
@@ -88,10 +89,8 @@ public class AccessionSummaryWriterTest {
 
     @Test
     public void writeIndelWithAccession() throws IOException {
-        ISubmittedVariant variant =
-                // TODO: change to SubmittedVariant
-                new SubmittedVariantEntity(null, null, "accession", "taxonomy", "project", CONTIG, START, "",
-                                           ALTERNATE, false);
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, "",
+                                                        ALTERNATE, false);
 
         accessionWriter.write(Collections.singletonMap(RS_ID, variant));
 
