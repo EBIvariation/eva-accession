@@ -20,9 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -61,7 +59,7 @@ public class AccessionSummaryWriterTest {
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
-        Path fastaPath = Paths.get(AccessionSummaryWriterTest.class.getResource("/input-files/mock.fa").getFile());
+        Path fastaPath = Paths.get(AccessionSummaryWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
         accessionWriter = new AccessionSummaryWriter(output, new FastaSequenceReader(fastaPath));
     }
 
