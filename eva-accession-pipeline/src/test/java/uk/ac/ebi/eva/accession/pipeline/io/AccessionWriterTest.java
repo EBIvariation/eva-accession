@@ -41,6 +41,8 @@ public class AccessionWriterTest {
 
     private static final int TAXONOMY = 3880;
 
+    private static final long EXPECTED_ACCESSION = 0L;
+
     @Autowired
     private AccessionWriter accessionWriter;
 
@@ -56,6 +58,7 @@ public class AccessionWriterTest {
 
         Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
         assertEquals(1, accessions.size());
+        assertEquals(EXPECTED_ACCESSION, (long)accessions.keySet().iterator().next());
 
         ISubmittedVariant savedVariant = accessions.values().iterator().next();
         assertEquals(variant.getAssemblyAccession(), savedVariant.getAssemblyAccession());
