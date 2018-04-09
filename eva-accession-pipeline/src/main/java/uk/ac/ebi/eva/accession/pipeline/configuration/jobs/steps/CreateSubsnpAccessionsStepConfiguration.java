@@ -31,6 +31,7 @@ import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
@@ -42,13 +43,17 @@ public class CreateSubsnpAccessionsStepConfiguration {
     @Qualifier(VARIANT_READER)
     private ItemReader<Variant> variantReader;
 
+    @Autowired
+    @Qualifier(VARIANT_PROCESSOR)
+    private VariantProcessor variantProcessor;
+
     @Bean(CREATE_SUBSNP_ACCESSION_STEP)
     public Step VcfToSubmittedVariant(StepBuilderFactory stepBuilderFactory,
                                       SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         return stepBuilderFactory.get(CREATE_SUBSNP_ACCESSION_STEP)
                 .<IVariant, SubmittedVariant>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
-                .processor(new VariantProcessor("", 0, "")) //Modify this
+                .processor(variantProcessor)
                 .writer(null) //Call writer when it is merged
                 .build();
     }

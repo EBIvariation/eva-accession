@@ -20,6 +20,8 @@ public class BeanNames {
 
     public static final String VARIANT_READER = "variant-reader";
 
+    public static final String VARIANT_PROCESSOR = "variant-processor";
+
     public static final String CREATE_SUBSNP_ACCESSION_STEP = "create-subsnp-accession-step";
 
     public static final String CREATE_SUBSNP_ACCESSION_JOB = "create-subsnp-accession-job";

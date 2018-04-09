@@ -20,6 +20,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -34,13 +35,13 @@ public class CreateSubsnpAccessionsJobConfiguration {
 
     @Autowired
     @Qualifier(CREATE_SUBSNP_ACCESSION_STEP)
-    private Step vcfToSubmittedVariantStep;
+    private Step createSubsnpAccessionStep;
 
     @Bean(CREATE_SUBSNP_ACCESSION_JOB)
-    public Job vcfToSubmittedVariantJob(JobBuilderFactory jobBuilderFactory) {
+    public Job createSubsnpAccessionJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CREATE_SUBSNP_ACCESSION_JOB)
-                                //.incrementer()
-                                .flow(vcfToSubmittedVariantStep)
+                                .incrementer(new RunIdIncrementer())
+                                .flow(createSubsnpAccessionStep)
                                 .end()
                                 .build();
     }
