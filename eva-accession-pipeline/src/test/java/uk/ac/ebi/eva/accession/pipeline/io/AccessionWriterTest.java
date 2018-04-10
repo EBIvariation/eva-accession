@@ -45,7 +45,7 @@ public class AccessionWriterTest {
 
     private static final int TAXONOMY = 3880;
 
-    private static final long EXPECTED_ACCESSION = 0L;
+    private static final long EXPECTED_ACCESSION = 10000000000L;
 
     @Autowired
     private SubmittedVariantAccessioningService service;
