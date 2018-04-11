@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_PROCESSOR;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_PROCESSOR;
 
 /**
  * Configuration to inject a VariantProcessor as a Variant Processor bean.
@@ -15,12 +15,12 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_P
 @Configuration
 public class VariantProcessorConfiguration {
 
-    @Bean(VARIANT_PROCESSOR)
+    @Bean(ACCESSION_PROCESSOR)
     @StepScope
     public VariantProcessor variantProcessor(InputParameters inputParameters) {
-        String assemblyAccession = "assembly"; //inputParameters.getAssemblyAccession();
-        int taxonomyAccession = 1111; //inputParameters.geTaxonomyAccession();
-        String projectAccession = "project"; //inputParameters.getProjectAccession();
+        String assemblyAccession = inputParameters.getAssemblyAccession();
+        int taxonomyAccession = inputParameters.getTaxonomyAccession();
+        String projectAccession = inputParameters.getProjectAccession();
 
         return new VariantProcessor(assemblyAccession, taxonomyAccession, projectAccession);
     }

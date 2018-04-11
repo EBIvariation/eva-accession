@@ -27,12 +27,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_PROCESSOR;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_READER;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_PROCESSOR;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
 @Configuration
@@ -40,21 +42,25 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SU
 public class CreateSubsnpAccessionsStepConfiguration {
 
     @Autowired
-    @Qualifier(VARIANT_READER)
+    @Qualifier(ACCESSION_READER)
     private ItemReader<Variant> variantReader;
 
     @Autowired
-    @Qualifier(VARIANT_PROCESSOR)
+    @Qualifier(ACCESSION_PROCESSOR)
     private VariantProcessor variantProcessor;
 
+    @Autowired
+    @Qualifier(ACCESSION_WRITER)
+    private AccessionWriter accessionWriter;
+
     @Bean(CREATE_SUBSNP_ACCESSION_STEP)
-    public Step VcfToSubmittedVariant(StepBuilderFactory stepBuilderFactory,
-                                      SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+    public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
+                                          SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         return stepBuilderFactory.get(CREATE_SUBSNP_ACCESSION_STEP)
                 .<IVariant, SubmittedVariant>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)
-                .writer(null) //Call writer when it is merged
+                .writer(accessionWriter)
                 .build();
     }
 }

@@ -18,11 +18,13 @@ package uk.ac.ebi.eva.accession.pipeline.configuration;
 
 public class BeanNames {
 
-    public static final String VARIANT_READER = "variant-reader";
+    public static final String ACCESSION_READER = "VARIANT_READER";
 
-    public static final String VARIANT_PROCESSOR = "variant-processor";
+    public static final String ACCESSION_PROCESSOR = "ACCESSION_PROCESSOR";
 
-    public static final String CREATE_SUBSNP_ACCESSION_STEP = "create-subsnp-accession-step";
+    public static final String ACCESSION_WRITER = "ACCESSION_WRITER";
 
-    public static final String CREATE_SUBSNP_ACCESSION_JOB = "create-subsnp-accession-job";
+    public static final String CREATE_SUBSNP_ACCESSION_STEP = "CREATE_SUBSNP_ACCESSION_STEP";
+
+    public static final String CREATE_SUBSNP_ACCESSION_JOB = "CREATE_SUBSNP_ACCESSION_JOB";
 }

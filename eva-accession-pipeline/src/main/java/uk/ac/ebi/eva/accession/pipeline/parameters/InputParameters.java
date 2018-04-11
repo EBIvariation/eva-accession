@@ -31,6 +31,14 @@ public class InputParameters {
 
     private String outputVcf;
 
+    private String assemblyAccession;
+
+    private int taxonomyAccession;
+
+    private String projectAccession;
+
+    private int chunkSize;
+
     public String getStudyId() {
         return studyId;
     }
@@ -77,5 +85,37 @@ public class InputParameters {
 
     public void setOutputVcf(String outputVcf) {
         this.outputVcf = outputVcf;
+    }
+
+    public String getAssemblyAccession() {
+        return assemblyAccession;
+    }
+
+    public void setAssemblyAccession(String assemblyAccession) {
+        this.assemblyAccession = assemblyAccession;
+    }
+
+    public int getTaxonomyAccession() {
+        return taxonomyAccession;
+    }
+
+    public void setTaxonomyAccession(int taxonomyAccession) {
+        this.taxonomyAccession = taxonomyAccession;
+    }
+
+    public String getProjectAccession() {
+        return projectAccession;
+    }
+
+    public void setProjectAccession(String projectAccession) {
+        this.projectAccession = projectAccession;
+    }
+
+    public int getChunkSize() {
+        return chunkSize;
+    }
+
+    public void setChunkSize(int chunkSize) {
+        this.chunkSize = chunkSize;
     }
 }
