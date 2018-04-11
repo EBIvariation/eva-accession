@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.pipeline.steps.processors;
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -51,39 +52,39 @@ public class VariantProcessorTest {
     @Test
     public void process() throws Exception {
         Variant variant = new Variant(CONTIG, START, 1001, REFERENCE_ALLELE, ALTERNATE_ALLELE);
-        SubmittedVariant processed = processor.process(variant);
-        SubmittedVariant expected = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE,
-                                                         ALTERNATE_ALLELE, true);
+        ISubmittedVariant processed = processor.process(variant);
+        ISubmittedVariant expected = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE,
+                                                         ALTERNATE_ALLELE, true, null);
         assertEquals(expected, processed);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionAssemblyNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(null, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionProjectNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, null, CONTIG, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionContigNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, null, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionReferenceNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 null, ALTERNATE_ALLELE, true);
+                                                                 null, ALTERNATE_ALLELE, true, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionAlternateNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 REFERENCE_ALLELE, null, true);
+                                                                 REFERENCE_ALLELE, null, true, null);
     }
 }

@@ -19,6 +19,8 @@ package uk.ac.ebi.eva.accession.core;
 
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
+import java.time.LocalDateTime;
+
 /**
  * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
  * entity serialized into the database {@link SubmittedVariantEntity} and the message/DTO used by the REST API.
@@ -43,4 +45,6 @@ public interface ISubmittedVariant {
      * @return True if this submitted variant is supported by genotypes or frequencies
      */
     boolean isSupportedByEvidence();
+
+    LocalDateTime getCreatedDate();
 }

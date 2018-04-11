@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -28,14 +29,15 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -61,9 +63,10 @@ public class AccessionWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void saveSingleAccession() throws Exception {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
-                                                         "alternate", false);
+                                                        "alternate", false, null);
 
         accessionWriter.write(Collections.singletonList(variant));
 
@@ -80,5 +83,19 @@ public class AccessionWriterTest {
         assertEquals(variant.getReferenceAllele(), savedVariant.getReferenceAllele());
         assertEquals(variant.getAlternateAllele(), savedVariant.getAlternateAllele());
         assertEquals(variant.isSupportedByEvidence(), savedVariant.isSupportedByEvidence());
+    }
+
+    @Test
+    @DirtiesContext
+    public void testSaveInitializesCreatedDate() throws Exception {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
+                                                        "alternate", false, null);
+        LocalDateTime beforeSave = LocalDateTime.now();
+        accessionWriter.write(Collections.singletonList(variant));
+
+        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        assertEquals(1, accessions.size());
+        ISubmittedVariant savedVariant = accessions.values().iterator().next();
+        assertTrue(beforeSave.isBefore(savedVariant.getCreatedDate()));
     }
 }
