@@ -57,7 +57,7 @@ public class VcfReaderConfiguration {
     @Bean
     @StepScope
     public VcfReader vcfReader(InputParameters parameters) throws IOException {
-        String fileId = parameters.getVcfId();
+        String fileId = parameters.getStudyId();
         String studyId = parameters.getStudyId();
         File vcfFile = new File(parameters.getVcf());
         Aggregation vcfAggregation = parameters.getVcfAggregation();

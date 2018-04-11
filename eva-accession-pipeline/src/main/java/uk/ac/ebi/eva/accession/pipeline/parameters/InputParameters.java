@@ -17,11 +17,7 @@ package uk.ac.ebi.eva.accession.pipeline.parameters;
 
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
 
-import java.io.File;
-
 public class InputParameters {
-
-    private String vcfId;
 
     private String studyId;
 
@@ -34,18 +30,6 @@ public class InputParameters {
     private String fasta;
 
     private String outputVcf;
-
-    /**
-     * TODO: discuss if this should be a parameter or can be hardcoded. The VcfReader needs it, but we won't use this
-     * field from the resulting variants.
-     */
-    public String getVcfId() {
-        return vcfId;
-    }
-
-    public void setVcfId(String vcfId) {
-        this.vcfId = vcfId;
-    }
 
     public String getStudyId() {
         return studyId;
