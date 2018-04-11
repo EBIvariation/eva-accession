@@ -19,27 +19,63 @@ import uk.ac.ebi.eva.commons.core.models.Aggregation;
 
 public class InputParameters {
 
-    /**
-     * TODO: discuss if this should be a parameter or can be hardcoded. The VcfReader needs it, but we won't use this
-     * field from the resulting variants.
-     */
-    public String getVcfId() {
-        throw new UnsupportedOperationException("not implemented yet");
-    }
+    private String studyId;
+
+    private String vcf;
+
+    private Aggregation vcfAggregation;
+
+    private String aggregatedMappingFile;
+
+    private String fasta;
+
+    private String outputVcf;
 
     public String getStudyId() {
-        throw new UnsupportedOperationException("not implemented yet");
+        return studyId;
+    }
+
+    public void setStudyId(String studyId) {
+        this.studyId = studyId;
     }
 
     public String getVcf() {
-        throw new UnsupportedOperationException("not implemented yet");
+        return vcf;
+    }
+
+    public void setVcf(String vcf) {
+        this.vcf = vcf;
     }
 
     public Aggregation getVcfAggregation() {
-        throw new UnsupportedOperationException("not implemented yet");
+        return vcfAggregation;
+    }
+
+    public void setVcfAggregation(Aggregation vcfAggregation) {
+        this.vcfAggregation = vcfAggregation;
     }
 
     public String getAggregatedMappingFile() {
-        throw new UnsupportedOperationException("not implemented yet");
+        return aggregatedMappingFile;
+    }
+
+    public void setAggregatedMappingFile(String aggregatedMappingFile) {
+        this.aggregatedMappingFile = aggregatedMappingFile;
+    }
+
+    public String getFasta() {
+        return fasta;
+    }
+
+    public void setFasta(String fasta) {
+        this.fasta = fasta;
+    }
+
+    public String getOutputVcf() {
+        return outputVcf;
+    }
+
+    public void setOutputVcf(String outputVcf) {
+        this.outputVcf = outputVcf;
     }
 }

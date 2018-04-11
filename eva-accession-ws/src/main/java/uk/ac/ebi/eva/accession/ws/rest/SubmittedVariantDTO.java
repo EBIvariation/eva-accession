@@ -19,6 +19,8 @@ package uk.ac.ebi.eva.accession.ws.rest;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
+import java.time.LocalDateTime;
+
 public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private String assemblyAccession;
@@ -37,17 +39,20 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private boolean supportedByEvidence;
 
+    private LocalDateTime createdDate;
+
     SubmittedVariantDTO() {
     }
 
     public SubmittedVariantDTO(ISubmittedVariant model) {
         this(model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getProjectAccession(), model.getContig(),
-             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.isSupportedByEvidence());
+             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.isSupportedByEvidence(),
+             model.getCreatedDate());
     }
 
     public SubmittedVariantDTO(String assemblyAccession, int taxonomyAccession, String projectAccession,
                                String contig, long start, String referenceAllele, String alternateAllele,
-                               boolean supportedByEvidence) {
+                               boolean supportedByEvidence, LocalDateTime createdDate) {
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
@@ -56,6 +61,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.supportedByEvidence = supportedByEvidence;
+        this.createdDate = createdDate;
     }
 
     @Override
@@ -96,5 +102,10 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     @Override
     public boolean isSupportedByEvidence() {
         return supportedByEvidence;
+    }
+
+    @Override
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
     }
 }

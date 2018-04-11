@@ -17,13 +17,19 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Id;
+import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 public class SubmittedVariantEntity implements ISubmittedVariant {
 
     @Id
@@ -56,6 +62,10 @@ public class SubmittedVariantEntity implements ISubmittedVariant {
 
     @Column(nullable = false)
     private boolean supportedByEvidence;
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdDate;
 
     SubmittedVariantEntity() {
     }
@@ -127,5 +137,10 @@ public class SubmittedVariantEntity implements ISubmittedVariant {
     @Override
     public boolean isSupportedByEvidence() {
         return supportedByEvidence;
+    }
+
+    @Override
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
     }
 }

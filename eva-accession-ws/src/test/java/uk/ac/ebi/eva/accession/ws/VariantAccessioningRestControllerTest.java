@@ -27,7 +27,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -95,9 +94,9 @@ public class VariantAccessioningRestControllerTest {
 
     public List<SubmittedVariantDTO> getListOfVariantMessages() {
         SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234,
-                                                               "REF", "ALT", false);
+                                                               "REF", "ALT", false, null);
         SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234,
-                                                               "REF", "ALT", false);
+                                                               "REF", "ALT", false, null);
         return asList(variant1, variant2);
     }
 }

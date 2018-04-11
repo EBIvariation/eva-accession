@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class SubmittedVariant implements ISubmittedVariant {
@@ -36,6 +37,8 @@ public class SubmittedVariant implements ISubmittedVariant {
     private String alternateAllele;
 
     private boolean supportedByEvidence;
+
+    private LocalDateTime createdDate;
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
                             long start, String referenceAllele, String alternateAllele, boolean supportedByEvidence) {
@@ -63,6 +66,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.supportedByEvidence = supportedByEvidence;
+        this.createdDate = null;
     }
 
     @Override
@@ -138,6 +142,15 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -149,12 +162,13 @@ public class SubmittedVariant implements ISubmittedVariant {
                 Objects.equals(projectAccession, that.projectAccession) &&
                 Objects.equals(contig, that.contig) &&
                 Objects.equals(referenceAllele, that.referenceAllele) &&
-                Objects.equals(alternateAllele, that.alternateAllele);
+                Objects.equals(alternateAllele, that.alternateAllele) &&
+                Objects.equals(createdDate, that.createdDate);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession,
-                            contig, start, referenceAllele, alternateAllele, supportedByEvidence);
+                            contig, start, referenceAllele, alternateAllele, supportedByEvidence, createdDate);
     }
 }

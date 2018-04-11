@@ -19,6 +19,7 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
@@ -35,8 +36,8 @@ import java.io.IOException;
  * Configuration to inject a VcfReader as a Variant Reader bean.
  */
 @Configuration
+@Import(InputParameters.class)
 public class VcfReaderConfiguration {
-
 
     private static final String VARIANT_READER = "VARIANT_READER";
 
@@ -56,7 +57,7 @@ public class VcfReaderConfiguration {
     @Bean
     @StepScope
     public VcfReader vcfReader(InputParameters parameters) throws IOException {
-        String fileId = parameters.getVcfId();
+        String fileId = parameters.getStudyId();
         String studyId = parameters.getStudyId();
         File vcfFile = new File(parameters.getVcf());
         Aggregation vcfAggregation = parameters.getVcfAggregation();

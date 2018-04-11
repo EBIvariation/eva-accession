@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
@@ -40,6 +41,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.Contiguo
 @EnableJpaRepositories(
         basePackages = {"uk.ac.ebi.eva.accession.core.persistence"}
 )
+@EnableJpaAuditing
 public class SubmittedVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningConfiguration.class);
