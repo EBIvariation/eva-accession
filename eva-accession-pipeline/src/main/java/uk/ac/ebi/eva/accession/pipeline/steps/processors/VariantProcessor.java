@@ -40,7 +40,6 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
     @Override
     public ISubmittedVariant process(final IVariant variant) throws Exception {
         return new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession, variant.getChromosome(),
-                                    variant.getStart(), variant.getReference(), variant.getAlternate(), true,
-                                    null);
+                                    variant.getStart(), variant.getReference(), variant.getAlternate(), true);
     }
 }

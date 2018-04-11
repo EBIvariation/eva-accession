@@ -66,7 +66,7 @@ public class AccessionWriterTest {
     @DirtiesContext
     public void saveSingleAccession() throws Exception {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
-                                                        "alternate", false, null);
+                                                        "alternate", false);
 
         accessionWriter.write(Collections.singletonList(variant));
 
@@ -89,7 +89,7 @@ public class AccessionWriterTest {
     @DirtiesContext
     public void testSaveInitializesCreatedDate() throws Exception {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
-                                                        "alternate", false, null);
+                                                        "alternate", false);
         LocalDateTime beforeSave = LocalDateTime.now();
         accessionWriter.write(Collections.singletonList(variant));
 

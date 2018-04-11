@@ -41,8 +41,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     private LocalDateTime createdDate;
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
-                            long start, String referenceAllele, String alternateAllele, boolean supportedByEvidence,
-                            LocalDateTime createdDate) {
+                            long start, String referenceAllele, String alternateAllele, boolean supportedByEvidence) {
         if(Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
@@ -67,7 +66,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.supportedByEvidence = supportedByEvidence;
-        this.createdDate = createdDate;
+        this.createdDate = null;
     }
 
     @Override
