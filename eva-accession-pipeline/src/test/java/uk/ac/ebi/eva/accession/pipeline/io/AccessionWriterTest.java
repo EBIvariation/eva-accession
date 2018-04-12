@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 

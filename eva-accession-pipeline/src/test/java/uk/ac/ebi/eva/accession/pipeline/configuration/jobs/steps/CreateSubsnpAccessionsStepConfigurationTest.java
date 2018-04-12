@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {InputParametersConfiguration.class, BatchTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
-@DataJpaTest
 public class CreateSubsnpAccessionsStepConfigurationTest {
 
     @Autowired
