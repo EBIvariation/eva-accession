@@ -20,6 +20,7 @@ import org.springframework.batch.item.ItemWriter;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -34,5 +35,7 @@ public class AccessionWriter implements ItemWriter<ISubmittedVariant> {
     @Override
     public void write(List<? extends ISubmittedVariant> variants) throws Exception {
         Map<Long, ISubmittedVariant> accessions = service.getOrCreateAccessions(variants);
+        Map<Long, ISubmittedVariant> byAccessions = service.getByAccessions(Collections.singletonList(10000000000L));
+        byAccessions.size();
     }
 }

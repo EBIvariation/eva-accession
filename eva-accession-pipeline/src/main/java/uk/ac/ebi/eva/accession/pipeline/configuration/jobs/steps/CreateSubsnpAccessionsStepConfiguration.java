@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
@@ -56,11 +58,12 @@ public class CreateSubsnpAccessionsStepConfiguration {
     @Bean(CREATE_SUBSNP_ACCESSION_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        return stepBuilderFactory.get(CREATE_SUBSNP_ACCESSION_STEP)
-                .<IVariant, SubmittedVariant>chunk(chunkSizeCompletionPolicy)
+        TaskletStep step = stepBuilderFactory.get(CREATE_SUBSNP_ACCESSION_STEP)
+                .<IVariant, ISubmittedVariant>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)
                 .build();
+        return step;
     }
 }

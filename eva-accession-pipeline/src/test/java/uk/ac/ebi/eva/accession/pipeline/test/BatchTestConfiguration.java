@@ -1,4 +1,4 @@
-package uk.ac.ebi.eva.accession.pipeline.configuration;
+package uk.ac.ebi.eva.accession.pipeline.test;
 
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.repository.JobRepository;
@@ -11,14 +11,23 @@ import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.VariantProcessorConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.VcfReaderConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CreateSubsnpAccessionsStepConfiguration;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -27,13 +36,11 @@ import javax.sql.DataSource;
 @AutoConfigureDataJpa
 @EnableBatchProcessing
 @EnableConfigurationProperties(value=BatchProperties.class)
-@ComponentScan(basePackages = {"uk.ac.ebi.eva.accession"})
+@Import({CreateSubsnpAccessionsJobConfiguration.class, CreateSubsnpAccessionsStepConfiguration.class,
+        VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
+        ChunkSizeCompletionPolicyConfiguration.class})
+//@ComponentScan(basePackages = {"uk.ac.ebi.eva.accession"})
 public class BatchTestConfiguration {
-
-    @Bean("JOB-LAUNCHER")
-    public JobLauncherTestUtils jobLauncherTestUtils() {
-        return new JobLauncherTestUtils();
-    }
 
     @Autowired
     private BatchProperties properties;
@@ -47,6 +54,11 @@ public class BatchTestConfiguration {
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
 
+    @Bean
+    public JobLauncherTestUtils jobLauncherTestUtils() {
+        return new JobLauncherTestUtils();
+    }
+
     @PostConstruct
     protected void initialize() {
         if (this.properties.getInitializer().isEnabled()) {
@@ -59,29 +71,4 @@ public class BatchTestConfiguration {
             DatabasePopulatorUtils.execute(populator, dataSource);
         }
     }
-
-    @Bean
-    public JobRepository jobRepository() throws Exception {
-        JobRepositoryFactoryBean jobRepositoryFactoryBean = new JobRepositoryFactoryBean();
-        jobRepositoryFactoryBean.setDataSource(dataSource);
-        jobRepositoryFactoryBean.setTransactionManager(platformTransactionManager);
-        jobRepositoryFactoryBean.setDatabaseType("h2");
-        return jobRepositoryFactoryBean.getObject();
-    }
-
-    /*@Bean("TRANSACTION_MANAGER")
-    public PlatformTransactionManager inMemoryTransactionManager() {
-        return new ResourcelessTransactionManager();
-    }*/
-
-    /*@Bean
-    @Primary
-    public DataSource inMemoryDatasource() {
-        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
-        dataSourceBuilder.driverClassName("org.h2.Driver");
-        dataSourceBuilder.url("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
-        dataSourceBuilder.username("sa");
-        dataSourceBuilder.password("");
-        return dataSourceBuilder.build();
-    }*/
 }
