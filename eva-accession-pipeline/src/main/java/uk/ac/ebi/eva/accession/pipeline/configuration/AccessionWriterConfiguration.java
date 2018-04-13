@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.io.AccessionSummaryWriter;
+import uk.ac.ebi.eva.accession.pipeline.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
@@ -42,14 +42,14 @@ public class AccessionWriterConfiguration {
 
     @Bean(ACCESSION_WRITER)
     public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service,
-                                           AccessionSummaryWriter accessionSummaryWriter) throws IOException {
-        return new AccessionWriter(service, accessionSummaryWriter);
+                                           AccessionReportWriter accessionReportWriter) throws IOException {
+        return new AccessionWriter(service, accessionReportWriter);
     }
 
     @Bean
-    AccessionSummaryWriter accessionSummaryWriter(InputParameters inputParameters) throws IOException {
-        return new AccessionSummaryWriter(new File(inputParameters.getOutputVcf()),
-                                          new FastaSequenceReader(Paths.get(inputParameters.getFasta())));
+    AccessionReportWriter accessionSummaryWriter(InputParameters inputParameters) throws IOException {
+        return new AccessionReportWriter(new File(inputParameters.getOutputVcf()),
+                                         new FastaSequenceReader(Paths.get(inputParameters.getFasta())));
     }
 
 }

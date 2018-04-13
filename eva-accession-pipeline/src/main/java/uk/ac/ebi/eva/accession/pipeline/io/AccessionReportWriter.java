@@ -18,12 +18,13 @@ package uk.ac.ebi.eva.accession.pipeline.io;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 
-public class AccessionSummaryWriter {
+public class AccessionReportWriter {
 
     private static final String VCF_MISSING_VALUE = ".";
 
@@ -31,14 +32,14 @@ public class AccessionSummaryWriter {
 
     private boolean headerWritten;
 
-    private final FileWriter fileWriter;
+    private final BufferedWriter fileWriter;
 
     private String accessionPrefix;
 
-    public AccessionSummaryWriter(File output, FastaSequenceReader fastaSequenceReader) throws IOException {
+    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
         this.headerWritten = false;
-        this.fileWriter = new FileWriter(output);
+        this.fileWriter = new BufferedWriter(new FileWriter(output));
         this.accessionPrefix = "ss";
     }
 
@@ -62,14 +63,17 @@ public class AccessionSummaryWriter {
     }
 
     private void writeHeader() throws IOException {
-        fileWriter.write("##fileformat=VCFv4.1\n");
-        fileWriter.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n");
+        fileWriter.write("##fileformat=VCFv4.2");
+        fileWriter.newLine();
+        fileWriter.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO");
+        fileWriter.newLine();
     }
 
     private void writeVariant(Long id, ISubmittedVariant normalizedVariant) throws IOException {
         ISubmittedVariant variant = denormalizeVariant(normalizedVariant);
         String vcfLine = variantToVcfLine(id, variant);
         fileWriter.write(vcfLine);
+        fileWriter.newLine();
     }
 
     private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
@@ -90,7 +94,7 @@ public class AccessionSummaryWriter {
         String newReference;
         String newAlternate;
         if (normalizedVariant.getStart() == 1) {
-            // VCF 4.3 section 1.6.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
+            // VCF 4.2 section 1.4.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
             // event occurs at position 1 on the contig in which case it must include the base after the event"
             newStart = normalizedVariant.getStart() + 1;
             String contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
@@ -121,6 +125,6 @@ public class AccessionSummaryWriter {
                                          variant.getReferenceAllele(),
                                          variant.getAlternateAllele(),
                                          VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
-        return variantLine + "\n";
+        return variantLine;
     }
 }

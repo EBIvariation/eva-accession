@@ -33,7 +33,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
-public class AccessionSummaryWriterTest {
+public class AccessionReportWriterTest {
 
     private static final String CONTIG = "contig";
 
@@ -49,7 +49,7 @@ public class AccessionSummaryWriterTest {
 
     private static final String ACCESSION_PREFIX = "ss";
 
-    private AccessionSummaryWriter accessionWriter;
+    private AccessionReportWriter accessionWriter;
 
     private static final long ACCESSION = 100L;
 
@@ -61,8 +61,8 @@ public class AccessionSummaryWriterTest {
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
-        Path fastaPath = Paths.get(AccessionSummaryWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
-        accessionWriter = new AccessionSummaryWriter(output, new FastaSequenceReader(fastaPath));
+        Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
+        accessionWriter = new AccessionReportWriter(output, new FastaSequenceReader(fastaPath));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class AccessionSummaryWriterTest {
 
     public static String getFirstVariantLine(File output) throws IOException {
         BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
-            String line;
+        String line;
         while ((line = fileInputStream.readLine()) != null) {
             if (!line.startsWith("#")) {
                 return line;

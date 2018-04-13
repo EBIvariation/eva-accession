@@ -79,10 +79,10 @@ public class AccessionWriterTest {
     public void setUp() throws Exception {
         File output = temporaryFolderRule.newFile();
         inputParameters.setOutputVcf(output.getAbsolutePath());
-        Path fastaPath = Paths.get(AccessionSummaryWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
-        AccessionSummaryWriter accessionSummaryWriter = new AccessionSummaryWriter(output,
-                                                                                   new FastaSequenceReader(fastaPath));
-        accessionWriter = new AccessionWriter(service, accessionSummaryWriter);
+        Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
+        AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
+                                                                                new FastaSequenceReader(fastaPath));
+        accessionWriter = new AccessionWriter(service, accessionReportWriter);
     }
 
     @Test
@@ -172,7 +172,7 @@ public class AccessionWriterTest {
         Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
         assertEquals(1, accessions.size());
 
-        String vcfLine = AccessionSummaryWriterTest.getFirstVariantLine(new File(inputParameters.getOutputVcf()));
+        String vcfLine = AccessionReportWriterTest.getFirstVariantLine(new File(inputParameters.getOutputVcf()));
         assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN], ACCESSION_PREFIX + accessions.keySet().iterator().next());
 
     }
