@@ -10,7 +10,7 @@ import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_PROCESSOR;
 
 /**
- * Configuration to inject a VariantProcessor as a Variant Processor bean.
+ * Configuration to inject a VariantProcessor as a bean.
  */
 @Configuration
 public class VariantProcessorConfiguration {

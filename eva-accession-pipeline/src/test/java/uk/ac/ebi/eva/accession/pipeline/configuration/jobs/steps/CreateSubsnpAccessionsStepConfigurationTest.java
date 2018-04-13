@@ -15,7 +15,6 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepo
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
@@ -33,7 +32,7 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep("CREATE_SUBSNP_ACCESSION_STEP");
         assertEquals(jobExecution.getStatus(), BatchStatus.COMPLETED);
 
-        long variants = repository.count();
-        assertNotEquals(0, variants);
+        long numVariants = repository.count();
+        assertEquals(300, numVariants);
     }
 }
