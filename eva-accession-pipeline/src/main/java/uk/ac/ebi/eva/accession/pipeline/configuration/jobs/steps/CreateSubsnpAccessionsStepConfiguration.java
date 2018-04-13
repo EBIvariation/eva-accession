@@ -35,8 +35,8 @@ import uk.ac.ebi.eva.commons.core.models.factories.exception.IncompleteInformati
 import uk.ac.ebi.eva.commons.core.models.factories.exception.NonVariantException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_PROCESSOR;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_READER;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
@@ -45,11 +45,11 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SU
 public class CreateSubsnpAccessionsStepConfiguration {
 
     @Autowired
-    @Qualifier(ACCESSION_READER)
+    @Qualifier(VARIANT_READER)
     private ItemReader<Variant> variantReader;
 
     @Autowired
-    @Qualifier(ACCESSION_PROCESSOR)
+    @Qualifier(VARIANT_PROCESSOR)
     private VariantProcessor variantProcessor;
 
     @Autowired

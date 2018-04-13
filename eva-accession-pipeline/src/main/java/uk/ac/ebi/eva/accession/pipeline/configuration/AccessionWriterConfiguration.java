@@ -25,6 +25,8 @@ import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 
 import java.io.IOException;
 
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
+
 
 /**
  * Configuration to inject a VcfReader as a Variant Reader bean.
@@ -33,11 +35,8 @@ import java.io.IOException;
 @Import(SubmittedVariantAccessioningConfiguration.class)
 public class AccessionWriterConfiguration {
 
-    private static final String ACCESSION_WRITER = "ACCESSION_WRITER";
-
     @Bean(ACCESSION_WRITER)
     public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service) throws IOException {
         return new AccessionWriter(service);
     }
-
 }

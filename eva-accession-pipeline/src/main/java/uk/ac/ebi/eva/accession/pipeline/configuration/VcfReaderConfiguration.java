@@ -32,6 +32,7 @@ import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import java.io.File;
 import java.io.IOException;
 
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 
 /**
  * Configuration to inject a VcfReader as a Variant Reader bean.
@@ -39,8 +40,6 @@ import java.io.IOException;
 @Configuration
 @Import(InputParametersConfiguration.class)
 public class VcfReaderConfiguration {
-
-    private static final String VARIANT_READER = "VARIANT_READER";
 
     @Autowired
     private InputParameters inputParameters;

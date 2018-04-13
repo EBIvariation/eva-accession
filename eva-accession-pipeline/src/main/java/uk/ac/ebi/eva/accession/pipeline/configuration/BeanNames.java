@@ -18,9 +18,9 @@ package uk.ac.ebi.eva.accession.pipeline.configuration;
 
 public class BeanNames {
 
-    public static final String ACCESSION_READER = "VARIANT_READER";
+    public static final String VARIANT_READER = "VARIANT_READER";
 
-    public static final String ACCESSION_PROCESSOR = "ACCESSION_PROCESSOR";
+    public static final String VARIANT_PROCESSOR = "VARIANT_PROCESSOR";
 
     public static final String ACCESSION_WRITER = "ACCESSION_WRITER";
 
