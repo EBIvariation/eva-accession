@@ -44,13 +44,4 @@ public class BatchTestConfiguration {
         return new JobLauncherTestUtils();
     }
 
-    @PostConstruct
-    protected void initialize() {
-        String platform = "h2";
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        String schemaLocation = this.properties.getSchema();
-        schemaLocation = schemaLocation.replace("@@platform@@", platform);
-        populator.addScript(this.resourceLoader.getResource(schemaLocation));
-        DatabasePopulatorUtils.execute(populator, dataSource);
-    }
 }
