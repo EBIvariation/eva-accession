@@ -6,7 +6,6 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -21,10 +20,10 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class,
-        SubmittedVariantAccessioningConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class CreateSubsnpAccessionsStepConfigurationTest {
 
@@ -40,7 +39,6 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     private SubmittedVariantAccessioningRepository repository;
 
     @Test
-//    @DirtiesContext
     public void executeStep() {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep("CREATE_SUBSNP_ACCESSION_STEP");
         assertEquals(jobExecution.getStatus(), BatchStatus.COMPLETED);
@@ -49,6 +47,6 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
                 Collections.singletonList(EXPECTED_ACCESSION));
 
         long variants = repository.count();
-        assertEquals(0,variants);
+        assertNotEquals(0, variants);
     }
 }

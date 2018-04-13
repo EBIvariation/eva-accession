@@ -28,14 +28,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.commons.core.models.factories.exception.IncompleteInformationException;
+import uk.ac.ebi.eva.commons.core.models.factories.exception.NonVariantException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_READER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_PROCESSOR;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_READER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
@@ -63,6 +64,9 @@ public class CreateSubsnpAccessionsStepConfiguration {
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)
+                .faultTolerant()
+                .skip(NonVariantException.class)
+                .skip(IncompleteInformationException.class)
                 .build();
         return step;
     }

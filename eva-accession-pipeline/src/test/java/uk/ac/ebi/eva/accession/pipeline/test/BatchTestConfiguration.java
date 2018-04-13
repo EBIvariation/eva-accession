@@ -1,22 +1,11 @@
 package uk.ac.ebi.eva.accession.pipeline.test;
 
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
-import org.springframework.batch.support.transaction.ResourcelessTransactionManager;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.batch.BatchProperties;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -32,14 +21,10 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CreateSubsnpAcc
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
-@Configuration
-@AutoConfigureDataJpa
-@EnableBatchProcessing
-@EnableConfigurationProperties(value=BatchProperties.class)
+@EnableAutoConfiguration
 @Import({CreateSubsnpAccessionsJobConfiguration.class, CreateSubsnpAccessionsStepConfiguration.class,
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class})
-//@ComponentScan(basePackages = {"uk.ac.ebi.eva.accession"})
 public class BatchTestConfiguration {
 
     @Autowired
