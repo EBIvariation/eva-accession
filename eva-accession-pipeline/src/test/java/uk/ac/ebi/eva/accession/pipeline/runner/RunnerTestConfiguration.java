@@ -16,6 +16,8 @@
 
 package uk.ac.ebi.eva.accession.pipeline.runner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -42,6 +44,8 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 @ComponentScan(basePackages = {"uk.ac.ebi.eva.accession.pipeline.runner"})
 public class RunnerTestConfiguration {
 
+    private static final Logger logger = LoggerFactory.getLogger(RunnerTestConfiguration.class);
+
     public static final String TEST_JOB_NAME = "job1";
 
     @Autowired
@@ -50,26 +54,22 @@ public class RunnerTestConfiguration {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
-//    @Autowired
-//    private InputParameters inputParameters;
-
     // I think we don't need the steps being beans
     @Bean
     public Step step1() {
-        return getSleepingStep("step1", 1);
+        return getStep("step1");
     }
 
     @Bean
     public Step step2() {
-        return getSleepingStep("step2", 2);
+        return getStep("step2");
     }
 
-    private Step getSleepingStep(String name, int seconds) {
+    private Step getStep(String name) {
         return stepBuilderFactory.get(name)
                           .tasklet(new Tasklet() {
                               public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws InterruptedException {
-                                  System.out.println("SLEEPING " + seconds + " SECONDS");
-                                  Thread.sleep(seconds * 1000);
+                                  logger.info("Executing step " + name);
                                   return null;
                               }
                           })
