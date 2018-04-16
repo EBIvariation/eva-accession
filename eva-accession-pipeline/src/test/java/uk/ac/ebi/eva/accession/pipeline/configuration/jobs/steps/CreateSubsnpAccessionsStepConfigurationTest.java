@@ -43,11 +43,6 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     @Autowired
     private InputParameters inputParameters;
 
-    @Before
-    public void setUp() throws Exception {
-        new File(inputParameters.getOutputVcf()).delete();
-    }
-
     @After
     public void tearDown() throws Exception {
         new File(inputParameters.getOutputVcf()).delete();

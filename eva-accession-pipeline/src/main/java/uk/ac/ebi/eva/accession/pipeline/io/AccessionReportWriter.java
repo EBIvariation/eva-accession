@@ -132,4 +132,8 @@ public class AccessionReportWriter {
                                          VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
         return variantLine;
     }
+
+    public void close() throws IOException {
+        fileWriter.close();
+    }
 }

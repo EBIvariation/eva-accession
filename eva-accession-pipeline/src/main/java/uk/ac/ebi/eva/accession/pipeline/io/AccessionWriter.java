@@ -15,15 +15,19 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStreamException;
+import org.springframework.batch.item.ItemStreamWriter;
 import org.springframework.batch.item.ItemWriter;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class AccessionWriter implements ItemWriter<ISubmittedVariant> {
+public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
 
     private SubmittedVariantAccessioningService service;
 
@@ -40,4 +44,20 @@ public class AccessionWriter implements ItemWriter<ISubmittedVariant> {
         accessionReportWriter.write(accessions);
     }
 
+    @Override
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
+    }
+
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+    }
+
+    @Override
+    public void close() throws ItemStreamException {
+        try {
+            accessionReportWriter.close();
+        } catch (IOException e) {
+            throw new ItemStreamException(e);
+        }
+    }
 }
