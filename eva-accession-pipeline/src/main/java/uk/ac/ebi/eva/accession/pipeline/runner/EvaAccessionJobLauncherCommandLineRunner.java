@@ -97,7 +97,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
         super(jobLauncher, jobExplorer);
 //        jobs = Collections.emptySet();
         this.jobRepository = jobRepository;
-        abnormalExit = false;
 //        converter = new DefaultJobParametersConverter();
 
     }
@@ -112,12 +111,11 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
         this.jobs = jobs;
     }
 
-    // TODO do we need to call to super.setJobNames?
-//    @Override
-//    public void setJobNames(String jobName) {
-//        this.jobName = jobName;
-//        super.setJobNames(jobName);
-//    }
+    @Override
+    public void setJobNames(String jobName) {
+        this.jobName = jobName;
+        super.setJobNames(jobName);
+    }
 
     @Override
     public int getExitCode() {
@@ -132,7 +130,7 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
     @Override
     public void run(String... args) throws JobExecutionException {
         try {
-
+            abnormalExit = false;
             // TODO: exclude those parameters if they are in inputParameters class:
        // Filter all runner specific parameters
 //        properties.remove(SPRING_BATCH_JOB_NAME_PROPERTY);
@@ -140,7 +138,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
 //        properties.remove(JobParametersNames.RESTART_PROPERTY);
 //
             JobParameters jobParameters = inputParameters.toJobParameters();
-
 
             ManageJobsUtils.checkIfJobNameHasBeenDefined(jobName);
             ManageJobsUtils.checkIfPropertiesHaveBeenProvided(jobParameters);
@@ -156,19 +153,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
         }
 
     }
-
-//     TODO: how are we going to pass the job name for the job to be executed? application.properties?
-//    private void configureLauncherPropertiesFromFileProperties(Properties fileProperties) {
-//        if (StringUtils.isEmpty(jobName)) {
-//            jobName = (String) fileProperties.get(SPRING_BATCH_JOB_NAME_PROPERTY);
-//        } else {
-//            if (!Objects.equals(jobName, fileProperties.get(SPRING_BATCH_JOB_NAME_PROPERTY))) {
-//                logger.info("You have passed a job name in your parameter file and in the command line, '" + jobName
-//                                    + "' will be executed.");
-//            }
-//        }
-//    }
-
 
     private void launchJob(JobParameters jobParameters) throws JobExecutionException, UnknownJobException {
         for (Job job : this.jobs) {

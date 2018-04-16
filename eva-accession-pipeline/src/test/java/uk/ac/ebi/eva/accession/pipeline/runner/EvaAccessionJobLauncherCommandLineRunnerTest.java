@@ -23,7 +23,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.pipeline.utils.RunnerTestConfiguration;
+import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TEST_JOB_NAME;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes={RunnerTestConfiguration.class})
@@ -36,12 +37,24 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
 //    @Autowired
 //    private JobExplorer jobExplorer;
 
+//    @Autowired
+//    private InputParameters inputParameters;
+
     @Autowired
     EvaAccessionJobLauncherCommandLineRunner runner;
 
     @Test
-    public void runJob() throws Exception {
-//        EvaAccessionJobLauncherCommandLineRunner runner = new EvaAccessionJobLauncherCommandLineRunner(jobLauncher, jobExplorer);
+    public void runJobWithNoName() throws Exception {
         runner.run("");
+
+        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    public void runJobWithName() throws Exception {
+        runner.setJobNames(TEST_JOB_NAME);
+        runner.run("");
+
+        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 }

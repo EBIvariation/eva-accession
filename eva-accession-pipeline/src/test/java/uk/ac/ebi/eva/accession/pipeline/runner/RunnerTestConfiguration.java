@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.pipeline.utils;
+package uk.ac.ebi.eva.accession.pipeline.runner;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -33,7 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 @Configuration
@@ -43,24 +42,26 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 @ComponentScan(basePackages = {"uk.ac.ebi.eva.accession.pipeline.runner"})
 public class RunnerTestConfiguration {
 
+    public static final String TEST_JOB_NAME = "job1";
+
     @Autowired
     private JobBuilderFactory jobBuilderFactory;
 
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
-    @Autowired
-    private InputParameters inputParameters;
+//    @Autowired
+//    private InputParameters inputParameters;
 
     // I think we don't need the steps being beans
     @Bean
     public Step step1() {
-        return getSleepingStep("step1", 10);
+        return getSleepingStep("step1", 1);
     }
 
     @Bean
     public Step step2() {
-        return getSleepingStep("step2", 30);
+        return getSleepingStep("step2", 2);
     }
 
     private Step getSleepingStep(String name, int seconds) {
@@ -77,7 +78,7 @@ public class RunnerTestConfiguration {
 
     @Bean
     public Job job(Step step1, Step step2) throws Exception {
-        return jobBuilderFactory.get("job1")
+        return jobBuilderFactory.get(TEST_JOB_NAME)
 //                                .incrementer(new RunIdIncrementer())
                                 .start(step1).next(step2)
                                 .build();
