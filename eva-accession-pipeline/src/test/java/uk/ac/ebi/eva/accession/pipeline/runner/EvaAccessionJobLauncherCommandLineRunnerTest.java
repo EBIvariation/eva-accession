@@ -20,11 +20,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.batch.core.launch.JobOperator;
-import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
-import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -98,7 +94,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
         jobRepository.createJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
 
         inputParameters.setForceRestart(true);
-
+        // TODO check that previous job status is updated to FAILED. Check also step status before and after the job execution
         runner.run("");
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
@@ -107,7 +103,6 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     @Test
     public void forceRestartButNoJobInTheRepository() throws Exception {
         inputParameters.setForceRestart(true);
-
         runner.run("");
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
@@ -119,7 +114,6 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
         jobRepository.createJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
 
         inputParameters.setForceRestart(false);
-
         runner.run("");
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
