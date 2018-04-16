@@ -16,12 +16,24 @@
 
 package uk.ac.ebi.eva.accession.pipeline.runner;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+
+import javax.sql.DataSource;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TEST_JOB_NAME;
@@ -37,24 +49,79 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
 //    @Autowired
 //    private JobExplorer jobExplorer;
 
-//    @Autowired
-//    private InputParameters inputParameters;
+    @Autowired
+    private InputParameters inputParameters;
+
+    @Autowired
+    private JobRepository jobRepository;
+
+    @Autowired
+    private DataSource datasource;
 
     @Autowired
     EvaAccessionJobLauncherCommandLineRunner runner;
 
+//    @Autowired
+//    JobRepositoryTestUtils jobRepositoryTestUtils;
+
+    JobRepositoryTestUtils jobRepositoryTestUtils;
+
+
+    @Before
+    public void setUp() throws Exception {
+        jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
+        runner.setJobNames(TEST_JOB_NAME);
+    }
+
+    @After
+    public void tearDown() {
+        jobRepositoryTestUtils.removeJobExecutions();
+    }
+
+    @Test
+    public void runJobWithNoErrors() throws Exception {
+        runner.run("");
+
+        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
     @Test
     public void runJobWithNoName() throws Exception {
+        runner.setJobNames(null);
         runner.run("");
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
 
     @Test
-    public void runJobWithName() throws Exception {
-        runner.setJobNames(TEST_JOB_NAME);
+    public void forceRestarForJobThatIsAlreadyInTheRepository() throws Exception {
+        jobRepository.createJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
+
+        inputParameters.setForceRestart(true);
+
         runner.run("");
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    public void forceRestartButNoJobInTheRepository() throws Exception {
+        inputParameters.setForceRestart(true);
+
+        runner.run("");
+
+        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
+    }
+
+
+    @Test
+    public void runJobThatIsAlreadyInTheRepositoryWithoutForcingRestart() throws Exception {
+        jobRepository.createJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
+
+        inputParameters.setForceRestart(false);
+
+        runner.run("");
+
+        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
 }

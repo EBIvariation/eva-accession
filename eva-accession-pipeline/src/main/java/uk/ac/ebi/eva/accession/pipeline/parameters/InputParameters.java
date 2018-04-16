@@ -42,6 +42,8 @@ public class InputParameters {
 
     private int chunkSize;
 
+    private boolean forceRestart;
+
     public String getStudyId() {
         return studyId;
     }
@@ -132,5 +134,13 @@ public class InputParameters {
                 .addString("fasta", fasta)
                 .addString("outputVcf", outputVcf)
                 .toJobParameters();
+    }
+
+    public boolean isForceRestart() {
+        return forceRestart;
+    }
+
+    public void setForceRestart(boolean forceRestart) {
+        this.forceRestart = forceRestart;
     }
 }

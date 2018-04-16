@@ -33,11 +33,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.autoconfigure.batch.JobLauncherCommandLineRunner;
 import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import org.springframework.util.PatternMatchUtils;
 
-import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.exception.NoJobToExecuteException;
 import uk.ac.ebi.eva.commons.batch.exception.NoParametersHaveBeenPassedException;
@@ -66,17 +64,12 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
     // TODO: move those constants to variation-commons-batch?
     public static final String SPRING_BATCH_JOB_NAME_PROPERTY = "spring.batch.job.names";
 
-    public static final String RESTART_PROPERTY = "force.restart";
-
     public static final int EXIT_WITHOUT_ERRORS = 0;
 
     public static final int EXIT_WITH_ERRORS = 1;
 
     @Value("${" + SPRING_BATCH_JOB_NAME_PROPERTY + ":#{null}}")
     private String jobName;
-
-    @Value("${" + RESTART_PROPERTY + ":false}")
-    private boolean restartPreviousExecution;
 
     private Collection<Job> jobs;
 
@@ -92,8 +85,8 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
 
     private boolean abnormalExit;
 
-    public EvaAccessionJobLauncherCommandLineRunner(JobLauncher jobLauncher, JobExplorer jobExplorer) {
-//                                                    JobRepository jobRepository) {
+    public EvaAccessionJobLauncherCommandLineRunner(JobLauncher jobLauncher, JobExplorer jobExplorer,
+                                                    JobRepository jobRepository) {
         super(jobLauncher, jobExplorer);
 //        jobs = Collections.emptySet();
         this.jobRepository = jobRepository;
@@ -131,22 +124,18 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
     public void run(String... args) throws JobExecutionException {
         try {
             abnormalExit = false;
-            // TODO: exclude those parameters if they are in inputParameters class:
-       // Filter all runner specific parameters
-//        properties.remove(SPRING_BATCH_JOB_NAME_PROPERTY);
-//        properties.remove(JobParametersNames.PROPERTY_FILE_PROPERTY);
-//        properties.remove(JobParametersNames.RESTART_PROPERTY);
 //
+            // TODO: different jobs can have different parameters
             JobParameters jobParameters = inputParameters.toJobParameters();
 
             ManageJobsUtils.checkIfJobNameHasBeenDefined(jobName);
             ManageJobsUtils.checkIfPropertiesHaveBeenProvided(jobParameters);
-            if (restartPreviousExecution) {
+            if (inputParameters.isForceRestart()) {
                 markPreviousJobAsFailed(jobParameters);
             }
             launchJob(jobParameters);
         } catch (NoJobToExecuteException | NoParametersHaveBeenPassedException | NoPreviousJobExecutionException
-                | UnknownJobException | JobParametersInvalidException e) {
+                | UnknownJobException | JobParametersInvalidException | JobExecutionAlreadyRunningException e) {
             logger.error(e.getMessage());
             logger.debug("Error trace", e);
             abnormalExit = true;
@@ -179,9 +168,7 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
     protected void execute(Job job, JobParameters jobParameters) throws JobExecutionAlreadyRunningException,
             JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException,
             JobParametersNotFoundException {
-        //TODO uncomment the log message
-        logger.info("Running TEST job with parameters: " + jobParameters);
-//        logger.info("Running job '" + jobName + "' with parameters: " + jobParameters);
+        logger.info("Running job '" + jobName + "' with parameters: " + jobParameters);
         super.execute(job, jobParameters);
     }
 
