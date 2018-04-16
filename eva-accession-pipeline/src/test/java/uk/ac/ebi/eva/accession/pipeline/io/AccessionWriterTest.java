@@ -32,10 +32,12 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.io.File;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,7 +49,8 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class,
+        MongoTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
@@ -69,6 +72,9 @@ public class AccessionWriterTest {
 
     @Autowired
     private SubmittedVariantAccessioningService service;
+
+    @Autowired
+    private InputParameters inputParameters;
 
     private AccessionWriter accessionWriter;
 
@@ -112,6 +118,7 @@ public class AccessionWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void saveTwoAccession() throws Exception {
         SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
                                                              "reference", "alternate", false);
@@ -136,6 +143,7 @@ public class AccessionWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void saveSameAccessionTwice() throws Exception {
         SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1, "reference",
                                                         "alternate", false);
@@ -163,6 +171,7 @@ public class AccessionWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void createAccessionAndItAppearsInTheReportVcf() throws Exception {
         SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
                                                         REFERENCE_ALLELE, ALTERNATE_ALLELE, false);

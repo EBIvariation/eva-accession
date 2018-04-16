@@ -47,7 +47,7 @@ public class AccessionWriterConfiguration {
     }
 
     @Bean
-    AccessionReportWriter accessionSummaryWriter(InputParameters inputParameters) throws IOException {
+    AccessionReportWriter accessionReportWriter(InputParameters inputParameters) throws IOException {
         return new AccessionReportWriter(new File(inputParameters.getOutputVcf()),
                                          new FastaSequenceReader(Paths.get(inputParameters.getFasta())));
     }

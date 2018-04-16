@@ -93,28 +93,33 @@ public class AccessionReportWriter {
         long newStart;
         String newReference;
         String newAlternate;
+        String contextBase;
         if (normalizedVariant.getStart() == 1) {
             // VCF 4.2 section 1.4.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
             // event occurs at position 1 on the contig in which case it must include the base after the event"
             newStart = normalizedVariant.getStart() + 1;
-            String contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
+            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
             newReference = normalizedVariant.getReferenceAllele() + contextBase;
             newAlternate = normalizedVariant.getAlternateAllele() + contextBase;
         } else {
             newStart = normalizedVariant.getStart() - 1;
-            String contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
+            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
             newReference = contextBase + normalizedVariant.getReferenceAllele();
             newAlternate = contextBase + normalizedVariant.getAlternateAllele();
         }
 
-        return new SubmittedVariant(normalizedVariant.getAssemblyAccession(),
-                                    normalizedVariant.getTaxonomyAccession(),
-                                    normalizedVariant.getProjectAccession(),
-                                    normalizedVariant.getContig(),
-                                    newStart,
-                                    newReference,
-                                    newAlternate,
-                                    normalizedVariant.isSupportedByEvidence());
+        if (contextBase.isEmpty()) {
+            throw new IllegalStateException("fastaSequenceReader should have returned a non-empty sequence");
+        } else {
+            return new SubmittedVariant(normalizedVariant.getAssemblyAccession(),
+                                        normalizedVariant.getTaxonomyAccession(),
+                                        normalizedVariant.getProjectAccession(),
+                                        normalizedVariant.getContig(),
+                                        newStart,
+                                        newReference,
+                                        newAlternate,
+                                        normalizedVariant.isSupportedByEvidence());
+        }
     }
 
     protected String variantToVcfLine(Long id, ISubmittedVariant variant) {

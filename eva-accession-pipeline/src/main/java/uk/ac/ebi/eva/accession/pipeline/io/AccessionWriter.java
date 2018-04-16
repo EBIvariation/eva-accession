@@ -39,4 +39,5 @@ public class AccessionWriter implements ItemWriter<ISubmittedVariant> {
         Map<Long, ISubmittedVariant> accessions = service.getOrCreateAccessions(variants);
         accessionReportWriter.write(accessions);
     }
+
 }
