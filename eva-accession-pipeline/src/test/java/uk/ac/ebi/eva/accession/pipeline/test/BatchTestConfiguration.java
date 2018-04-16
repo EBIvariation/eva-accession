@@ -7,8 +7,6 @@ import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
@@ -18,7 +16,6 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CreateSubsnpAccessionsStepConfiguration;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 @EnableAutoConfiguration
