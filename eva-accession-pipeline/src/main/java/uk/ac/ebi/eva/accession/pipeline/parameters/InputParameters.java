@@ -15,6 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.parameters;
 
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
 
 public class InputParameters {
@@ -117,5 +120,17 @@ public class InputParameters {
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
+    }
+
+    public JobParameters toJobParameters() {
+        // TODO: what about nulls? JobParametersBuilder won't complain, but we should take care of them
+        // TODO: return all identifying job parameters
+        return new JobParametersBuilder().addString("studyId", studyId)
+                .addString("vcf", vcf)
+                .addString("vcfAggregation", vcfAggregation.toString())
+                .addString("aggregatedMappingFile", aggregatedMappingFile)
+                .addString("fasta", fasta)
+                .addString("outputVcf", outputVcf)
+                .toJobParameters();
     }
 }
