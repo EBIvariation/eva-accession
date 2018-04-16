@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.pipeline.configuration;
 
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -31,15 +32,17 @@ import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import java.io.File;
 import java.io.IOException;
 
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 
 /**
  * Configuration to inject a VcfReader as a Variant Reader bean.
  */
 @Configuration
-@Import(InputParameters.class)
+@Import(InputParametersConfiguration.class)
 public class VcfReaderConfiguration {
 
-    private static final String VARIANT_READER = "VARIANT_READER";
+    @Autowired
+    private InputParameters inputParameters;
 
     @Bean(VARIANT_READER)
     @StepScope
@@ -56,16 +59,16 @@ public class VcfReaderConfiguration {
      */
     @Bean
     @StepScope
-    public VcfReader vcfReader(InputParameters parameters) throws IOException {
-        String fileId = parameters.getStudyId();
-        String studyId = parameters.getStudyId();
-        File vcfFile = new File(parameters.getVcf());
-        Aggregation vcfAggregation = parameters.getVcfAggregation();
+    public VcfReader vcfReader() throws IOException {
+        String fileId = inputParameters.getStudyId();
+        String studyId = inputParameters.getStudyId();
+        File vcfFile = new File(inputParameters.getVcf());
+        Aggregation vcfAggregation = inputParameters.getVcfAggregation();
 
         if (Aggregation.NONE.equals(vcfAggregation)) {
             return new VcfReader(fileId, studyId, vcfFile);
         } else {
-            return new AggregatedVcfReader(fileId, studyId, vcfAggregation, parameters.getAggregatedMappingFile(),
+            return new AggregatedVcfReader(fileId, studyId, vcfAggregation, inputParameters.getAggregatedMappingFile(),
                     vcfFile);
         }
     }

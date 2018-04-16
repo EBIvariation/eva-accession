@@ -33,7 +33,6 @@ import java.time.LocalDateTime;
 public class SubmittedVariantEntity implements ISubmittedVariant {
 
     @Id
-    @Column(nullable = false, unique = true, updatable = false)
     private Long accession;
 
     @Column(nullable = false, unique = true)

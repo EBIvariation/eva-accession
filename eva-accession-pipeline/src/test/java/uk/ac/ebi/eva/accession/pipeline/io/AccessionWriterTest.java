@@ -29,8 +29,6 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -41,7 +39,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
@@ -51,9 +49,6 @@ public class AccessionWriterTest {
 
     @Autowired
     private SubmittedVariantAccessioningService service;
-
-    @Autowired
-    private InputParameters inputParameters;
 
     private AccessionWriter accessionWriter;
 
