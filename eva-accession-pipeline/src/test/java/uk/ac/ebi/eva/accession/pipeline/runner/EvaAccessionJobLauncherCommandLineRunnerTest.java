@@ -20,6 +20,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +35,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
 import javax.sql.DataSource;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TEST_JOB_NAME;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TEST_STEP_1_NAME;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes={RunnerTestConfiguration.class})
@@ -41,9 +49,6 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
 
 //    @Autowired
 //    private JobLauncher jobLauncher;
-//
-//    @Autowired
-//    private JobExplorer jobExplorer;
 
     @Autowired
     private InputParameters inputParameters;
@@ -52,10 +57,16 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     private JobRepository jobRepository;
 
     @Autowired
+    private JobExplorer jobExplorer;
+
+    @Autowired
     private DataSource datasource;
 
     @Autowired
-    EvaAccessionJobLauncherCommandLineRunner runner;
+    private EvaAccessionJobLauncherCommandLineRunner runner;
+
+//    @Autowired
+//    private JobLauncherTestUtils jobLauncherTestUtils;
 
 //    @Autowired
 //    JobRepositoryTestUtils jobRepositoryTestUtils;
@@ -67,7 +78,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     public void setUp() throws Exception {
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
         runner.setJobNames(TEST_JOB_NAME);
-    }
+qgit cq    }
 
     @After
     public void tearDown() {
@@ -91,31 +102,58 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
 
     @Test
     public void forceRestarForJobThatIsAlreadyInTheRepository() throws Exception {
-        jobRepository.createJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
+        long jobId = createStartedJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
+        long stepId = addStartedStepToJobExecution(jobId, TEST_STEP_1_NAME);
 
         inputParameters.setForceRestart(true);
-        // TODO check that previous job status is updated to FAILED. Check also step status before and after the job execution
         runner.run("");
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        assertEquals(BatchStatus.FAILED, jobExplorer.getStepExecution(jobId, stepId).getStatus());
+        assertEquals(BatchStatus.FAILED, jobExplorer.getJobExecution(jobId).getStatus());
+        JobExecution lastJobExecution = jobRepository.getLastJobExecution(TEST_JOB_NAME,
+                                                                          inputParameters.toJobParameters());
+        assertEquals(BatchStatus.COMPLETED, lastJobExecution.getStatus());
+        assertTrue(lastJobExecution.getStepExecutions().stream()
+                                   .allMatch(s -> s.getStatus().equals(BatchStatus.COMPLETED)));
     }
-
-    @Test
-    public void forceRestartButNoJobInTheRepository() throws Exception {
-        inputParameters.setForceRestart(true);
-        runner.run("");
-
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-    }
-
 
     @Test
     public void runJobThatIsAlreadyInTheRepositoryWithoutForcingRestart() throws Exception {
-        jobRepository.createJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
+        long jobId = createStartedJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
+        long stepId = addStartedStepToJobExecution(jobId, TEST_STEP_1_NAME);
 
         inputParameters.setForceRestart(false);
         runner.run("");
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
+        assertEquals(BatchStatus.STARTED, jobExplorer.getStepExecution(jobId, stepId).getStatus());
+        assertEquals(BatchStatus.STARTED, jobExplorer.getJobExecution(jobId).getStatus());
+    }
+
+    @Test
+    public void forceRestartButNoJobInTheRepository() throws Exception {
+        inputParameters.setForceRestart(true);
+        assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
+        runner.run("");
+
+        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
+    }
+
+    private long createStartedJobExecution(String jobName, JobParameters jobParameters) throws Exception {
+        JobExecution jobExecution = jobRepository.createJobExecution(jobName, jobParameters);
+        jobExecution.setStatus(BatchStatus.STARTED);
+        jobRepository.update(jobExecution);
+        return jobExecution.getJobId();
+    }
+
+    private long addStartedStepToJobExecution(long jobExecutionId, String stepName) {
+        JobExecution jobExecution = jobExplorer.getJobExecution(jobExecutionId);
+        StepExecution stepExecution = jobExecution.createStepExecution(stepName);
+        jobRepository.add(stepExecution);
+        long stepId = stepExecution.getId();
+        stepExecution.setStatus(BatchStatus.STARTED);
+        jobRepository.update(stepExecution);
+        return stepId;
     }
 }

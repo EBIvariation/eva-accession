@@ -48,6 +48,10 @@ public class RunnerTestConfiguration {
 
     public static final String TEST_JOB_NAME = "job1";
 
+    public static final String TEST_STEP_1_NAME = "step1";
+
+    public static final String TEST_STEP_2_NAME = "step2";
+
     @Autowired
     private JobBuilderFactory jobBuilderFactory;
 
@@ -57,12 +61,12 @@ public class RunnerTestConfiguration {
     // I think we don't need the steps being beans
     @Bean
     public Step step1() {
-        return getStep("step1");
+        return getStep(TEST_STEP_1_NAME);
     }
 
     @Bean
     public Step step2() {
-        return getStep("step2");
+        return getStep(TEST_STEP_2_NAME);
     }
 
     private Step getStep(String name) {
