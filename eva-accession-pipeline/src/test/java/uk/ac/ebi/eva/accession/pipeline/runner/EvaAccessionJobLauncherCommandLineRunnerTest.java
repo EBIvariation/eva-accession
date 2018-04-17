@@ -62,7 +62,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     @Autowired
     private EvaAccessionJobLauncherCommandLineRunner runner;
 
-    JobRepositoryTestUtils jobRepositoryTestUtils;
+    private JobRepositoryTestUtils jobRepositoryTestUtils;
 
 
     @Before

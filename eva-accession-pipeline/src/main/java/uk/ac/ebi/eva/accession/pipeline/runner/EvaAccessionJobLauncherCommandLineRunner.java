@@ -47,12 +47,10 @@ import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
 import java.util.Collection;
 
 /**
- * // TODO: update this javadoc block
  * This class is a modified version of the default JobLauncherCommandLineRunner.
  * Its main differences are:
  * -If no job is specified then the execution stops.
- * -Job parameters can be passed from command line as normal parameters.
- * -Job parameters can be passed from a properties file by the user.
+ * -Job parameters can be passed from command line interface and properties files as normal parameters.
  * -The user can restart a job that has been run previously marking the previous execution as failed.
  */
 @Component

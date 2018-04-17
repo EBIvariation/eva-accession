@@ -58,30 +58,30 @@ public class RunnerTestConfiguration {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
-    public Step step1() {
-        return getStep(TEST_STEP_1_NAME);
-    }
-
-    public Step step2() {
-        return getStep(TEST_STEP_2_NAME);
-    }
-
-    private Step getStep(String name) {
-        return stepBuilderFactory.get(name)
-                          .tasklet(new Tasklet() {
-                              public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws InterruptedException {
-                                  logger.info("Executing step " + name);
-                                  return null;
-                              }
-                          })
-                          .build();
-    }
-
     @Bean
     public Job job() throws Exception {
         return jobBuilderFactory.get(TEST_JOB_NAME)
                                 .start(step1()).next(step2())
                                 .build();
+    }
+
+    private Step step1() {
+        return getStep(TEST_STEP_1_NAME);
+    }
+
+    private Step step2() {
+        return getStep(TEST_STEP_2_NAME);
+    }
+
+    private Step getStep(String name) {
+        return stepBuilderFactory.get(name)
+                                 .tasklet(new Tasklet() {
+                                     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws InterruptedException {
+                                         logger.info("Executing step " + name);
+                                         return null;
+                                     }
+                                 })
+                                 .build();
     }
 
     @Bean
