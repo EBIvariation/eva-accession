@@ -74,8 +74,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
 
     private JobRepository jobRepository;
 
-//    private JobRegistry jobRegistry;
-
     @Autowired
     private JobExecutionApplicationListener jobExecutionApplicationListener;
 
@@ -87,16 +85,9 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
     public EvaAccessionJobLauncherCommandLineRunner(JobLauncher jobLauncher, JobExplorer jobExplorer,
                                                     JobRepository jobRepository) {
         super(jobLauncher, jobExplorer);
-//        jobs = Collections.emptySet();
         this.jobRepository = jobRepository;
-//        converter = new DefaultJobParametersConverter();
-
     }
 
-//    @Autowired(required = false)
-//    public void setJobRegistry(JobRegistry jobRegistry) {
-//        this.jobRegistry = jobRegistry;
-//    }
 
     @Autowired(required = false)
     public void setJobs(Collection<Job> jobs) {
@@ -122,7 +113,7 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
     public void run(String... args) throws JobExecutionException {
         try {
             abnormalExit = false;
-//
+
             // TODO: different jobs can have different parameters
             JobParameters jobParameters = inputParameters.toJobParameters();
 

@@ -47,9 +47,6 @@ import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TE
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class EvaAccessionJobLauncherCommandLineRunnerTest {
 
-//    @Autowired
-//    private JobLauncher jobLauncher;
-
     @Autowired
     private InputParameters inputParameters;
 
@@ -64,12 +61,6 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
 
     @Autowired
     private EvaAccessionJobLauncherCommandLineRunner runner;
-
-//    @Autowired
-//    private JobLauncherTestUtils jobLauncherTestUtils;
-
-//    @Autowired
-//    JobRepositoryTestUtils jobRepositoryTestUtils;
 
     JobRepositoryTestUtils jobRepositoryTestUtils;
 
