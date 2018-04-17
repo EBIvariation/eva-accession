@@ -58,13 +58,10 @@ public class RunnerTestConfiguration {
     @Autowired
     private StepBuilderFactory stepBuilderFactory;
 
-    // I think we don't need the steps being beans
-    @Bean
     public Step step1() {
         return getStep(TEST_STEP_1_NAME);
     }
 
-    @Bean
     public Step step2() {
         return getStep(TEST_STEP_2_NAME);
     }
@@ -83,7 +80,6 @@ public class RunnerTestConfiguration {
     @Bean
     public Job job(Step step1, Step step2) throws Exception {
         return jobBuilderFactory.get(TEST_JOB_NAME)
-//                                .incrementer(new RunIdIncrementer())
                                 .start(step1).next(step2)
                                 .build();
     }

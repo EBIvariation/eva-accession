@@ -47,12 +47,12 @@ import uk.ac.ebi.eva.commons.batch.job.ManageJobsUtils;
 import java.util.Collection;
 
 /**
+ * // TODO: update this javadoc block
  * This class is a modified version of the default JobLauncherCommandLineRunner.
  * Its main differences are:
  * -If no job is specified then the execution stops.
- * // TODO: remove the next two lines
-// * -Job parameters can be passed from command line as normal parameters.
-// * -Job parameters can be passed from a properties file by the user.
+ * -Job parameters can be passed from command line as normal parameters.
+ * -Job parameters can be passed from a properties file by the user.
  * -The user can restart a job that has been run previously marking the previous execution as failed.
  */
 @Component
@@ -61,7 +61,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
 
     private static final Logger logger = LoggerFactory.getLogger(EvaAccessionJobLauncherCommandLineRunner.class);
 
-    // TODO: move those constants to variation-commons-batch?
     public static final String SPRING_BATCH_JOB_NAME_PROPERTY = "spring.batch.job.names";
 
     public static final int EXIT_WITHOUT_ERRORS = 0;
@@ -112,7 +111,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
 
     @Override
     public int getExitCode() {
-        // TODO: do we really need to catch the exceptions, set abnormalExit and return 1? does not Spring batch do that?
         if (!abnormalExit && jobExecutionApplicationListener.isJobExecutionComplete()) {
             return EXIT_WITHOUT_ERRORS;
         } else {
@@ -151,15 +149,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
                 return;
             }
         }
-
-        // TODO do we need to use the job registry?
-//        if (this.jobRegistry != null) {
-//            try {
-//                execute(jobRegistry.getJob(jobName), jobParameters);
-//            } catch (NoSuchJobException ex) {
-//                logger.error("No job found in registry for job name: " + jobName);
-//            }
-//        }
 
         throw new UnknownJobException(jobName);
     }

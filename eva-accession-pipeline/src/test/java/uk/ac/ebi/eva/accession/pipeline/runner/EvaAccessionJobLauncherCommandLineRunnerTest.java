@@ -78,7 +78,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     public void setUp() throws Exception {
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
         runner.setJobNames(TEST_JOB_NAME);
-qgit cq    }
+    }
 
     @After
     public void tearDown() {
@@ -87,7 +87,7 @@ qgit cq    }
 
     @Test
     public void runJobWithNoErrors() throws Exception {
-        runner.run("");
+        runner.run();
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -95,7 +95,7 @@ qgit cq    }
     @Test
     public void runJobWithNoName() throws Exception {
         runner.setJobNames(null);
-        runner.run("");
+        runner.run();
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
@@ -106,7 +106,7 @@ qgit cq    }
         long stepId = addStartedStepToJobExecution(jobId, TEST_STEP_1_NAME);
 
         inputParameters.setForceRestart(true);
-        runner.run("");
+        runner.run();
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
         assertEquals(BatchStatus.FAILED, jobExplorer.getStepExecution(jobId, stepId).getStatus());
@@ -124,7 +124,7 @@ qgit cq    }
         long stepId = addStartedStepToJobExecution(jobId, TEST_STEP_1_NAME);
 
         inputParameters.setForceRestart(false);
-        runner.run("");
+        runner.run();
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
         assertEquals(BatchStatus.STARTED, jobExplorer.getStepExecution(jobId, stepId).getStatus());
@@ -135,7 +135,7 @@ qgit cq    }
     public void forceRestartButNoJobInTheRepository() throws Exception {
         inputParameters.setForceRestart(true);
         assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
-        runner.run("");
+        runner.run();
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
