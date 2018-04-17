@@ -42,7 +42,7 @@ import uk.ac.ebi.eva.commons.batch.exception.NoParametersHaveBeenPassedException
 import uk.ac.ebi.eva.commons.batch.exception.NoPreviousJobExecutionException;
 import uk.ac.ebi.eva.commons.batch.exception.UnknownJobException;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
-import uk.ac.ebi.eva.commons.batch.job.ManageJobsUtils;
+import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
 
 import java.util.Collection;
 
@@ -126,8 +126,8 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
             // TODO: different jobs can have different parameters
             JobParameters jobParameters = inputParameters.toJobParameters();
 
-            ManageJobsUtils.checkIfJobNameHasBeenDefined(jobName);
-            ManageJobsUtils.checkIfPropertiesHaveBeenProvided(jobParameters);
+            JobStatusManager.checkIfJobNameHasBeenDefined(jobName);
+            JobStatusManager.checkIfPropertiesHaveBeenProvided(jobParameters);
             if (inputParameters.isForceRestart()) {
                 markPreviousJobAsFailed(jobParameters);
             }
@@ -164,6 +164,6 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
     private void markPreviousJobAsFailed(JobParameters jobParameters) throws
             NoPreviousJobExecutionException {
         logger.info("Force restartPreviousExecution of job '" + jobName + "' with parameters: " + jobParameters);
-        ManageJobsUtils.markLastJobAsFailed(jobRepository, jobName, jobParameters);
+        JobStatusManager.markLastJobAsFailed(jobRepository, jobName, jobParameters);
     }
 }

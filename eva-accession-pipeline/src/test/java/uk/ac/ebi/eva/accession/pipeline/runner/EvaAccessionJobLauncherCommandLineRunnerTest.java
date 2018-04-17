@@ -101,7 +101,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     }
 
     @Test
-    public void forceRestarForJobThatIsAlreadyInTheRepository() throws Exception {
+    public void forceRestartForJobThatIsAlreadyInTheRepository() throws Exception {
         long jobId = createStartedJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
         long stepId = addStartedStepToJobExecution(jobId, TEST_STEP_1_NAME);
 
