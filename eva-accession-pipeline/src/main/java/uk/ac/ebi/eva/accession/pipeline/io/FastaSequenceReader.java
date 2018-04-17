@@ -63,7 +63,7 @@ public class FastaSequenceReader {
      *
      * @param referenceFile File whose dictionary needs to be created
      * @return Dictionary associated with the given reference sequence file
-     * @link https://github.com/broadinstitute/picard/blob/master/src/main/java/picard/sam/CreateSequenceDictionary.java
+     * @see "https://github.com/broadinstitute/picard/blob/master/src/main/java/picard/sam/CreateSequenceDictionary.java"
      */
     private SAMSequenceDictionary createSequenceDictionary(ReferenceSequenceFile referenceFile) {
         ReferenceSequence referenceSequence;

@@ -126,7 +126,7 @@ public class AccessionReportWriter {
         String variantLine = String.join("\t",
                                          variant.getContig(),
                                          Long.toString(variant.getStart()),
-                                         accessionPrefix + Long.toString(id),
+                                         accessionPrefix + id,
                                          variant.getReferenceAllele(),
                                          variant.getAlternateAllele(),
                                          VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
