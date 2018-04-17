@@ -133,6 +133,9 @@ public class InputParameters {
                 .addString("aggregatedMappingFile", aggregatedMappingFile)
                 .addString("fasta", fasta)
                 .addString("outputVcf", outputVcf)
+                .addLong("taxonomyAccession", (long)taxonomyAccession)
+                .addString("projectAccession", projectAccession)
+                .addLong("chunkSize", (long)chunkSize)
                 .toJobParameters();
     }
 
