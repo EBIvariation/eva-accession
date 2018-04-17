@@ -83,6 +83,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     @After
     public void tearDown() {
         jobRepositoryTestUtils.removeJobExecutions();
+        inputParameters.setForceRestart(false);
     }
 
     @Test

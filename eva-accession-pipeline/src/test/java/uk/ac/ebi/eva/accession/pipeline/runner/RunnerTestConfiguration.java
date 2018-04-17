@@ -78,9 +78,9 @@ public class RunnerTestConfiguration {
     }
 
     @Bean
-    public Job job(Step step1, Step step2) throws Exception {
+    public Job job() throws Exception {
         return jobBuilderFactory.get(TEST_JOB_NAME)
-                                .start(step1).next(step2)
+                                .start(step1()).next(step2())
                                 .build();
     }
 

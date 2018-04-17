@@ -125,8 +125,6 @@ public class InputParameters {
     }
 
     public JobParameters toJobParameters() {
-        // TODO: what about nulls? JobParametersBuilder won't complain, but we should take care of them
-        // TODO: return all identifying job parameters. Also, different jobs may have different parameters
         return new JobParametersBuilder().addString("studyId", studyId)
                 .addString("vcf", vcf)
                 .addString("vcfAggregation", vcfAggregation.toString())
