@@ -22,8 +22,6 @@ import uk.ac.ebi.eva.commons.core.models.Aggregation;
 
 public class InputParameters {
 
-    private String studyId;
-
     private String vcf;
 
     private Aggregation vcfAggregation;
@@ -43,14 +41,6 @@ public class InputParameters {
     private int chunkSize;
 
     private boolean forceRestart;
-
-    public String getStudyId() {
-        return studyId;
-    }
-
-    public void setStudyId(String studyId) {
-        this.studyId = studyId;
-    }
 
     public String getVcf() {
         return vcf;
@@ -125,7 +115,7 @@ public class InputParameters {
     }
 
     public JobParameters toJobParameters() {
-        return new JobParametersBuilder().addString("studyId", studyId)
+        return new JobParametersBuilder()
                 .addString("vcf", vcf)
                 .addString("vcfAggregation", vcfAggregation.toString())
                 .addString("aggregatedMappingFile", aggregatedMappingFile)
