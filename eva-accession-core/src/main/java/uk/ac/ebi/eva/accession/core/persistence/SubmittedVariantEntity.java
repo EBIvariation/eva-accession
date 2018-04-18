@@ -20,13 +20,11 @@ package uk.ac.ebi.eva.accession.core.persistence;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
-import javax.persistence.EntityListeners;
 import java.time.LocalDateTime;
 
 @Document
@@ -139,6 +137,17 @@ public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<Lo
         return accession;
     }
 
+    /**
+     * If we want to insert entities with the @Id already filled, this is needed for using @CreatedDate.
+     *
+     * Even If we implement the "save" method in the repository to avoid updates and make inserts always, in
+     * MongoTemplate::doInsertBatch, a BeforeConvertEvent is issued, and the listener processing that event, in
+     * org.springframework.data.auditing.IsNewAwareAuditingHandler::markAudited it will check again if the entity is
+     * new or not.
+     *
+     * An alternative explained here https://jira.spring.io/browse/DATAMONGO-946 is using @Version instead of
+     * Persistable.
+     */
     @Override
     public boolean isNew() {
         return true;

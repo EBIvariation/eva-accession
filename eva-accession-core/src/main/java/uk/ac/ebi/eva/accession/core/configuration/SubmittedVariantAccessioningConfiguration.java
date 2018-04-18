@@ -20,31 +20,22 @@ package uk.ac.ebi.eva.accession.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
-
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.ContiguousIdBlockService;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+
 @Configuration
 @EnableSpringDataContiguousIdService
-@EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
-@EnableJpaRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
-@EnableJpaAuditing
-@Import(MongoConfiguration.class)
+@Import({MongoConfiguration.class})
 public class SubmittedVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningConfiguration.class);

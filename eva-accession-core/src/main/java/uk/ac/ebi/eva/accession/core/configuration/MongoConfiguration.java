@@ -15,57 +15,32 @@
  */
 package uk.ac.ebi.eva.accession.core.configuration;
 
-import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.mongodb.config.AbstractMongoConfiguration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.net.UnknownHostException;
 
 @Configuration
 @EnableMongoRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
 @EnableMongoAuditing
-@Import(MongoAutoConfiguration.class)
-public class MongoConfiguration extends AbstractMongoConfiguration {
-
-    private MongoClient mongoClient;
-
-    private MongoProperties mongoProperties;
-
-    public MongoConfiguration(MongoClient mongoClient, MongoProperties mongoProperties) {
-        this.mongoClient = mongoClient;
-        this.mongoProperties = mongoProperties;
-    }
+@Import({MongoDataAutoConfiguration.class})
+public class MongoConfiguration {
 
     @Bean
-    public MongoTemplate mongoTemplate() {
-        return new MongoTemplate(mongo(), getDatabaseName());
-    }
-
-    @Override
-    protected String getDatabaseName() {
-        return mongoProperties.getDatabase();
-    }
-
-    @Override
-    public Mongo mongo() {
-        return mongoClient;
-    }
-
-    @Override
-    protected Collection<String> getMappingBasePackages() {
-        return Collections.singletonList("uk.ac.ebi.eva.accession.core.persistence");
+    public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
+                            Environment environment) throws UnknownHostException {
+        return properties.createMongoClient(options.getIfAvailable(), environment);
     }
 
 }

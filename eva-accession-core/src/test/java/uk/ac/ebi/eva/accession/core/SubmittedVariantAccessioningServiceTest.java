@@ -16,7 +16,6 @@
 
 package uk.ac.ebi.eva.accession.core;
 
-import com.mongodb.MongoClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +43,6 @@ public class SubmittedVariantAccessioningServiceTest {
 
     @Autowired
     SubmittedVariantAccessioningService service;
-
-    @Autowired
-    MongoClient mongoClient;
 
     @Test
     public void sameAccessionsAreReturnedForIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
