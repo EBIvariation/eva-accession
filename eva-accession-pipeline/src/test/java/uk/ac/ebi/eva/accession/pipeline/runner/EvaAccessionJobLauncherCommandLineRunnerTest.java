@@ -41,6 +41,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TEST_JOB_NAME;
 import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TEST_STEP_1_NAME;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerTestConfiguration.TEST_STEP_2_NAME;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes={RunnerTestConfiguration.class})
@@ -95,13 +96,15 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     @Test
     public void forceRestartForJobThatIsAlreadyInTheRepository() throws Exception {
         long jobId = createStartedJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
-        long stepId = addStartedStepToJobExecution(jobId, TEST_STEP_1_NAME);
+        long step1Id = addStepToJobExecution(jobId, TEST_STEP_1_NAME, BatchStatus.COMPLETED);
+        long step2Id = addStepToJobExecution(jobId, TEST_STEP_2_NAME, BatchStatus.STARTED);
 
         inputParameters.setForceRestart(true);
         runner.run();
 
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-        assertEquals(BatchStatus.FAILED, jobExplorer.getStepExecution(jobId, stepId).getStatus());
+        assertEquals(BatchStatus.FAILED, jobExplorer.getStepExecution(jobId, step1Id).getStatus());
+        assertEquals(BatchStatus.FAILED, jobExplorer.getStepExecution(jobId, step2Id).getStatus());
         assertEquals(BatchStatus.FAILED, jobExplorer.getJobExecution(jobId).getStatus());
         JobExecution lastJobExecution = jobRepository.getLastJobExecution(TEST_JOB_NAME,
                                                                           inputParameters.toJobParameters());
@@ -113,7 +116,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     @Test
     public void runJobThatIsAlreadyInTheRepositoryWithoutForcingRestart() throws Exception {
         long jobId = createStartedJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
-        long stepId = addStartedStepToJobExecution(jobId, TEST_STEP_1_NAME);
+        long stepId = addStepToJobExecution(jobId, TEST_STEP_1_NAME, BatchStatus.STARTED);
 
         inputParameters.setForceRestart(false);
         runner.run();
@@ -136,15 +139,15 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
         JobExecution jobExecution = jobRepository.createJobExecution(jobName, jobParameters);
         jobExecution.setStatus(BatchStatus.STARTED);
         jobRepository.update(jobExecution);
-        return jobExecution.getJobId();
+        return jobExecution.getId();
     }
 
-    private long addStartedStepToJobExecution(long jobExecutionId, String stepName) {
+    private long addStepToJobExecution(long jobExecutionId, String stepName, BatchStatus stepStatus) {
         JobExecution jobExecution = jobExplorer.getJobExecution(jobExecutionId);
         StepExecution stepExecution = jobExecution.createStepExecution(stepName);
         jobRepository.add(stepExecution);
         long stepId = stepExecution.getId();
-        stepExecution.setStatus(BatchStatus.STARTED);
+        stepExecution.setStatus(stepStatus);
         jobRepository.update(stepExecution);
         return stepId;
     }
