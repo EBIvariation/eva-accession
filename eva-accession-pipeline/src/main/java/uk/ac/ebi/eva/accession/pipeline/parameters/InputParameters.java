@@ -116,6 +116,7 @@ public class InputParameters {
 
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
+                .addString("projectAccession", projectAccession)
                 .addString("vcf", vcf)
                 .addString("vcfAggregation", vcfAggregation.toString())
                 .addString("aggregatedMappingFile", aggregatedMappingFile)
