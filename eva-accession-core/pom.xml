@@ -21,6 +21,11 @@
             <artifactId>postgresql</artifactId>
             <version>42.2.2</version>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.ampt2d</groupId>
+            <artifactId>accessioning-commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>
