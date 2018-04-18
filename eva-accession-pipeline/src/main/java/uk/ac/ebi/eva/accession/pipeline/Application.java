@@ -23,7 +23,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 // TODO: eva-pipeline is also excluding MongoDataAutoConfiguration
 @EnableBatchProcessing
-@SpringBootApplication(exclude = {JobLauncherCommandLineRunner.class})
+@SpringBootApplication
 public class Application {
 
     public static void main(String[] args) {
