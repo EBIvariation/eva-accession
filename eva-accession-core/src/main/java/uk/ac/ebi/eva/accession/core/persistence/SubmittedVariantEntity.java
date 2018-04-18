@@ -18,52 +18,43 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
-import javax.persistence.Id;
 import java.time.LocalDateTime;
 
-@Entity
-@EntityListeners(AuditingEntityListener.class)
-public class SubmittedVariantEntity implements ISubmittedVariant {
+@Document
+public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<Long> {
 
     @Id
     private Long accession;
 
-    @Column(nullable = false, unique = true)
+    @Indexed
     private String hashedMessage;
 
-    @Column(nullable = false)
     private String assemblyAccession;
 
-    @Column(nullable = false)
     private int taxonomyAccession;
 
-    @Column(nullable = false)
     private String projectAccession;
 
-    @Column(nullable = false)
     private String contig;
 
-    @Column(nullable = false)
     private long start;
 
-    @Column(nullable = false)
     private String referenceAllele;
 
-    @Column(nullable = false)
     private String alternateAllele;
 
-    @Column(nullable = false)
     private boolean supportedByEvidence;
 
     @CreatedDate
-    @Column(updatable = false)
     private LocalDateTime createdDate;
 
     SubmittedVariantEntity() {
@@ -141,5 +132,15 @@ public class SubmittedVariantEntity implements ISubmittedVariant {
     @Override
     public LocalDateTime getCreatedDate() {
         return createdDate;
+    }
+
+    @Override
+    public Long getId() {
+        return accession;
+    }
+
+    @Override
+    public boolean isNew() {
+        return true;
     }
 }

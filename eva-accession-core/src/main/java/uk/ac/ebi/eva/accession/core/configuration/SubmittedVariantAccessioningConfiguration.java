@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
@@ -31,17 +32,19 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningData
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.ContiguousIdBlockService;
 
 @Configuration
 @EnableSpringDataContiguousIdService
-@EntityScan({"uk.ac.ebi.eva.accession.core.persistence"})
-@EnableJpaRepositories(
-        basePackages = {"uk.ac.ebi.eva.accession.core.persistence"}
-)
+@EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
+@EnableJpaRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
 @EnableJpaAuditing
+@Import(MongoConfiguration.class)
 public class SubmittedVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningConfiguration.class);

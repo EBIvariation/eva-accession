@@ -16,6 +16,7 @@
 
 package uk.ac.ebi.eva.accession.core;
 
+import com.mongodb.MongoClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.test.MongoTestConfiguration;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,11 +39,14 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @TestPropertySource("classpath:accession-test.properties")
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
 public class SubmittedVariantAccessioningServiceTest {
 
     @Autowired
     SubmittedVariantAccessioningService service;
+
+    @Autowired
+    MongoClient mongoClient;
 
     @Test
     public void sameAccessionsAreReturnedForIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
