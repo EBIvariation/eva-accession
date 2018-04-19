@@ -15,16 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.ws;
+package uk.ac.ebi.eva.accession.ws.configuration;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
-@SpringBootApplication
-public class EvaAccessionApplication extends SpringBootServletInitializer {
+import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 
-    public static void main(String[] args) throws Exception {
-        SpringApplication.run(EvaAccessionApplication.class, args);
-    }
+@Configuration
+@Import({SubmittedVariantAccessioningConfiguration.class})
+public class ApplicationConfiguration {
+
 }
