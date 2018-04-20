@@ -140,7 +140,7 @@ public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<Lo
     /**
      * If we want to insert entities with the @Id already filled, this is needed for using @CreatedDate.
      *
-     * Even If we implement the "save" method in the repository to avoid updates and make inserts always, in
+     * Even if we implement the "insert" method in the repository to avoid updates and make inserts always, in
      * MongoTemplate::doInsertBatch, a BeforeConvertEvent is issued, and the listener processing that event, in
      * org.springframework.data.auditing.IsNewAwareAuditingHandler::markAudited it will check again if the entity is
      * new or not.

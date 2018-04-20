@@ -18,7 +18,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <com.github.fakemongo.version>2.1.1</com.github.fakemongo.version>
     </properties>
 
     <parent>
@@ -33,6 +32,13 @@
                 <groupId>uk.ac.ebi.ampt2d</groupId>
                 <artifactId>accessioning-commons</artifactId>
                 <version>0.2</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.github.fakemongo</groupId>
+                <artifactId>fongo</artifactId>
+                <scope>test</scope>
+                <version>2.1.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

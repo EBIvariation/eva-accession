@@ -37,7 +37,6 @@
             <groupId>com.github.fakemongo</groupId>
             <artifactId>fongo</artifactId>
             <scope>test</scope>
-            <version>${com.github.fakemongo.version}</version>
         </dependency>
     </dependencies>
 
