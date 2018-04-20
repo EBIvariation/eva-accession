@@ -15,6 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStream;
+import org.springframework.batch.item.ItemStreamException;
+
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
@@ -24,22 +30,30 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 
-public class AccessionReportWriter {
+// TODO make AccessionReportWriter implement ItemStreamWriter<AccessionWrapper<ISubmittedVariant, String, Long>>
+// when accession-commons 0.3 is used. Not worth to do it right now because
+// SubmittedVariantAccessioningService returns a Map.
+public class AccessionReportWriter implements ItemStream {
 
     private static final String VCF_MISSING_VALUE = ".";
 
+    private static final String IS_HEADER_WRITTEN_KEY = "AccessionReportWriter_isHeaderWritten";
+
+    private static final String IS_HEADER_WRITTEN_VALUE = "true";   // use string because ExecutionContext doesn't support boolean
+
+    private static final Logger logger = LoggerFactory.getLogger(AccessionReportWriter.class);
+
+    private final File output;
+
     private FastaSequenceReader fastaSequenceReader;
 
-    private boolean headerWritten;
-
-    private final BufferedWriter fileWriter;
+    private BufferedWriter fileWriter;
 
     private String accessionPrefix;
 
     public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
-        this.headerWritten = false;
-        this.fileWriter = new BufferedWriter(new FileWriter(output));
+        this.output = output;
         this.accessionPrefix = "ss";
     }
 
@@ -51,15 +65,25 @@ public class AccessionReportWriter {
         this.accessionPrefix = accessionPrefix;
     }
 
-    public void write(Map<Long, ISubmittedVariant> accessions) throws IOException {
-        if (!headerWritten) {
-            writeHeader();
-            headerWritten = true;
+    @Override
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
+        boolean isHeaderAlreadyWritten = IS_HEADER_WRITTEN_VALUE.equals(executionContext.get(IS_HEADER_WRITTEN_KEY));
+        if (output.exists() && !isHeaderAlreadyWritten) {
+            logger.warn("According to the job's execution context, the accession report should not exist, but it does" +
+                                " exist. The AccessionReportWriter will append to the file, but it's possible that " +
+                                "there will be 2 non-contiguous header sections in the report VCF. This can happen if" +
+                                " the job execution context was not properly retrieved from the job repository.");
         }
-        for (Map.Entry<Long, ISubmittedVariant> variant : accessions.entrySet()) {
-            writeVariant(variant.getKey(), variant.getValue());
+        try {
+            boolean append = true;
+            this.fileWriter = new BufferedWriter(new FileWriter(this.output, append));
+            if (!isHeaderAlreadyWritten) {
+                writeHeader();
+                executionContext.put(IS_HEADER_WRITTEN_KEY, IS_HEADER_WRITTEN_VALUE);
+            }
+        } catch (IOException e) {
+            throw new ItemStreamException(e);
         }
-        fileWriter.flush();
     }
 
     private void writeHeader() throws IOException {
@@ -67,6 +91,31 @@ public class AccessionReportWriter {
         fileWriter.newLine();
         fileWriter.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO");
         fileWriter.newLine();
+    }
+
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+
+    }
+
+    @Override
+    public void close() throws ItemStreamException {
+        try {
+            fileWriter.close();
+        } catch (IOException e) {
+            throw new ItemStreamException(e);
+        }
+    }
+
+    public void write(Map<Long, ISubmittedVariant> accessions) throws IOException {
+        if (fileWriter == null) {
+            throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
+                                          "called AccessionReportWriter::open");
+        }
+        for (Map.Entry<Long, ISubmittedVariant> variant : accessions.entrySet()) {
+            writeVariant(variant.getKey(), variant.getValue());
+        }
+        fileWriter.flush();
     }
 
     private void writeVariant(Long id, ISubmittedVariant normalizedVariant) throws IOException {
@@ -133,7 +182,4 @@ public class AccessionReportWriter {
         return variantLine;
     }
 
-    public void close() throws IOException {
-        fileWriter.close();
-    }
 }

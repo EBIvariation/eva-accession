@@ -1,7 +1,6 @@
 package uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;

@@ -20,6 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -32,13 +33,11 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
-import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -49,8 +48,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class,
-        MongoTestConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
@@ -73,22 +71,21 @@ public class AccessionWriterTest {
     @Autowired
     private SubmittedVariantAccessioningService service;
 
-    @Autowired
-    private InputParameters inputParameters;
-
-    private AccessionWriter accessionWriter;
-
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
+    private AccessionWriter accessionWriter;
+
+    private File output;
+
     @Before
     public void setUp() throws Exception {
-        File output = temporaryFolderRule.newFile();
-        inputParameters.setOutputVcf(output.getAbsolutePath());
+        output = temporaryFolderRule.newFile();
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
                                                                                 new FastaSequenceReader(fastaPath));
         accessionWriter = new AccessionWriter(service, accessionReportWriter);
+        accessionReportWriter.open(new ExecutionContext());
     }
 
     @Test
@@ -181,7 +178,7 @@ public class AccessionWriterTest {
         Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
         assertEquals(1, accessions.size());
 
-        String vcfLine = AccessionReportWriterTest.getFirstVariantLine(new File(inputParameters.getOutputVcf()));
+        String vcfLine = AccessionReportWriterTest.getFirstVariantLine(output);
         assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN], ACCESSION_PREFIX + accessions.keySet().iterator().next());
 
     }

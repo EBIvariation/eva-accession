@@ -19,8 +19,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.batch.item.ExecutionContext;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,10 +34,14 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 public class AccessionReportWriterTest {
 
-    private static final String CONTIG = "contig";
+    private static final String CONTIG_1 = "contig_1";
+
+    private static final String CONTIG_2 = "contig_2";
 
     private static final int START = 10;
 
@@ -49,30 +55,37 @@ public class AccessionReportWriterTest {
 
     private static final String ACCESSION_PREFIX = "ss";
 
-    private AccessionReportWriter accessionWriter;
-
     private static final long ACCESSION = 100L;
+
+    private AccessionReportWriter accessionReportWriter;
+
+    private File output;
+
+    private FastaSequenceReader fastaSequenceReader;
+
+    private ExecutionContext executionContext;
 
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
-
-    private File output;
 
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
-        accessionWriter = new AccessionReportWriter(output, new FastaSequenceReader(fastaPath));
+        fastaSequenceReader = new FastaSequenceReader(fastaPath);
+        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader);
+        executionContext = new ExecutionContext();
+        accessionReportWriter.open(executionContext);
     }
 
     @Test
     public void writeSnpWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, REFERENCE,
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
                                                         ALTERNATE, false);
 
-        accessionWriter.write(Collections.singletonMap(ACCESSION, variant));
+        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START), ACCESSION_PREFIX + ACCESSION,
                                  REFERENCE, ALTERNATE, ".", ".", "."),
                      getFirstVariantLine(output));
     }
@@ -90,12 +103,12 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeInsertionWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, "",
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, "",
                                                         ALTERNATE, false);
 
-        accessionWriter.write(Collections.singletonMap(ACCESSION, variant));
+        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
@@ -103,14 +116,47 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeDeletionWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG, START, REFERENCE,
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
                                                         "", false);
 
-        accessionWriter.write(Collections.singletonMap(ACCESSION, variant));
+        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
 
-        assertEquals(String.join("\t", CONTIG, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE + REFERENCE, CONTEXT_BASE,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
+    }
+
+    @Test
+    public void resumeWriting() throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
+                                                        ALTERNATE, false);
+
+        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
+        accessionReportWriter.close();
+
+        AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader);
+        variant.setContig(CONTIG_2);
+        resumingWriter.open(executionContext);
+        resumingWriter.write(Collections.singletonMap(ACCESSION, variant));
+        resumingWriter.close();
+
+        assertHeaderIsNotWrittenTwice(output);
+        assertEquals(2, FileUtils.countNonCommentLines(new FileInputStream(output)));
+    }
+
+    private void assertHeaderIsNotWrittenTwice(File output) throws IOException {
+        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
+        String line;
+        do {
+            line = fileInputStream.readLine();
+            assertNotNull("VCF report was shorter than expected", line);
+        } while (line.startsWith("#"));
+
+        String variantLine = line;
+        do {
+            assertFalse("VCF report has header lines after variant lines", variantLine.startsWith("#"));
+            variantLine = fileInputStream.readLine();
+        } while (variantLine != null);
     }
 }
