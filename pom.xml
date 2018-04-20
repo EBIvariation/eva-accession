@@ -33,6 +33,13 @@
                 <artifactId>accessioning-commons</artifactId>
                 <version>0.2</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.github.fakemongo</groupId>
+                <artifactId>fongo</artifactId>
+                <scope>test</scope>
+                <version>2.1.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
