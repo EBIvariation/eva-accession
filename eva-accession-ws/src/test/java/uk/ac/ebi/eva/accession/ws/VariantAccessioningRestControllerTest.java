@@ -23,15 +23,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
@@ -47,46 +46,22 @@ import static org.junit.Assert.assertEquals;
 public class VariantAccessioningRestControllerTest {
 
     @Autowired
-    private TestRestTemplate testRestTemplate;
+    private BasicRestController basicRestController;
 
     @Autowired
-    private SubmittedVariantAccessioningRepository accessioningRepository;
+    private TestRestTemplate testRestTemplate;
+
+    private static final Long ACCESSION = 10000000001L;
+
+    private static final String URL = "/v1/submitted-variants/";
 
     @Test
-    public void testRestApi() {
-        String url = "/v1/variant";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
-        ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(2, response.getBody().size());
-    }
-
-    @Test
-    public void requestPostTwiceAndWeGetSameAccessions() {
-        String url = "/v1/variant";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
-        ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(2, response.getBody().size());
-        assertEquals(2, accessioningRepository.count());
-
-        //Accessing Post Request again with same files
-        response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(2, response.getBody().size());
-        assertEquals(2, accessioningRepository.count());
-    }
-
-    @Test
-    public void testGetVariantsRestApi() {
-        String getAccessionsUrl = "/v1/variant";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
-        ResponseEntity<Map> getAccessionsResponse = testRestTemplate.exchange(getAccessionsUrl, HttpMethod.POST,
-                requestEntity, Map.class);
-        assertEquals(HttpStatus.OK, getAccessionsResponse.getStatusCode());
-        assertEquals(2, getAccessionsResponse.getBody().size());
-        Object[] accessions = getAccessionsResponse.getBody().keySet().toArray();
-        String getVariantsUrl = "/v1/variant/" + accessions[0] + "," + accessions[1];
+    public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
+        Map<Long, SubmittedVariantDTO> generatedAccessions = basicRestController.generateAccessions(
+                getListOfVariantMessages());
+        assertEquals(2, generatedAccessions.size());
+        Object[] accessions = generatedAccessions.keySet().toArray();
+        String getVariantsUrl = URL + accessions[0] + "," + accessions[1];
         ResponseEntity<Map> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, Map.class);
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(2, getVariantsResponse.getBody().size());
