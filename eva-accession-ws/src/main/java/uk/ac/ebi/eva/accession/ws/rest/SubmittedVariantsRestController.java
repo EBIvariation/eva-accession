@@ -31,11 +31,11 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "/v1/submitted-variants")
 @Api(tags = { "Submitted variants" })
-public class VariantAccessioningRestController {
+public class SubmittedVariantsRestController {
 
     private final BasicRestController basicRestController;
 
-    public VariantAccessioningRestController(BasicRestController basicRestController) {
+    public SubmittedVariantsRestController(BasicRestController basicRestController) {
         this.basicRestController = basicRestController;
     }
 

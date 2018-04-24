@@ -44,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
-public class VariantAccessioningRestControllerTest {
+public class SubmittedVariantsRestControllerTest {
 
     @Autowired
     private BasicRestController basicRestController;
