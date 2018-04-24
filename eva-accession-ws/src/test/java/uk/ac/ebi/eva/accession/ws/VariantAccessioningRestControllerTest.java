@@ -35,6 +35,7 @@ import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -60,8 +61,8 @@ public class VariantAccessioningRestControllerTest {
         Map<Long, SubmittedVariantDTO> generatedAccessions = basicRestController.generateAccessions(
                 getListOfVariantMessages());
         assertEquals(2, generatedAccessions.size());
-        Object[] accessions = generatedAccessions.keySet().toArray();
-        String getVariantsUrl = URL + accessions[0] + "," + accessions[1];
+        String accessions = generatedAccessions.keySet().stream().map(acc -> acc.toString()).collect(Collectors.joining(","));
+        String getVariantsUrl = URL + accessions;
         ResponseEntity<Map> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, Map.class);
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(2, getVariantsResponse.getBody().size());

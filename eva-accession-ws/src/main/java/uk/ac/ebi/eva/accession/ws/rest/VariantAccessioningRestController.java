@@ -37,7 +37,7 @@ public class VariantAccessioningRestController {
         this.basicRestController = basicRestController;
     }
 
-    @ApiOperation(value = "Find submitted variants")
+    @ApiOperation(value = "Find submitted variants by accession")
     @GetMapping(value = "/{accessions}", produces = "application/json")
     public Map<Long, SubmittedVariantDTO> get(@PathVariable List<Long> accessions) {
         return basicRestController.get(accessions);
