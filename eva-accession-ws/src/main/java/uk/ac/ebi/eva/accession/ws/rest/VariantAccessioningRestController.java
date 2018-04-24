@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.ws.rest;
 
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/v1/submitted-variants")
+@Api(tags = { "Submitted variants" })
 public class VariantAccessioningRestController {
 
     private final BasicRestController basicRestController;
@@ -37,10 +39,10 @@ public class VariantAccessioningRestController {
         this.basicRestController = basicRestController;
     }
 
-    @ApiOperation(value = "Find submitted variants by accession")
-    @GetMapping(value = "/{accessions}", produces = "application/json")
-    public Map<Long, SubmittedVariantDTO> get(@PathVariable List<Long> accessions) {
-        return basicRestController.get(accessions);
+    @ApiOperation(value = "Find submitted variants by identifier")
+    @GetMapping(value = "/{identifiers}", produces = "application/json")
+    public Map<Long, SubmittedVariantDTO> get(@PathVariable List<Long> identifiers) {
+        return basicRestController.get(identifiers);
     }
 }
 

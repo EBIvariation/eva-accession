@@ -30,7 +30,6 @@ public class SwaggerConfiguration {
                 .contact(new Contact("Europe Variation Archive - EMBL-EBI", "https://www.ebi.ac.uk/eva", null))
                 .license("Apache 2.0")
                 .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0")
-                .termsOfServiceUrl(null)
                 .title("EVA variant identifiers API")
                 .description("API to retrieve information about SubSNP (ss) and RefSNP (rs) variant identifiers")
                 .version("0.1")
