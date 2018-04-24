@@ -21,9 +21,14 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
+import uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
 
@@ -32,11 +37,19 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION
  * Configuration to inject a VcfReader as a Variant Reader bean.
  */
 @Configuration
-@Import(SubmittedVariantAccessioningConfiguration.class)
+@Import({SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class})
 public class AccessionWriterConfiguration {
 
     @Bean(ACCESSION_WRITER)
-    public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service) throws IOException {
-        return new AccessionWriter(service);
+    public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service,
+                                           AccessionReportWriter accessionReportWriter) throws IOException {
+        return new AccessionWriter(service, accessionReportWriter);
     }
+
+    @Bean
+    AccessionReportWriter accessionReportWriter(InputParameters inputParameters) throws IOException {
+        return new AccessionReportWriter(new File(inputParameters.getOutputVcf()),
+                                         new FastaSequenceReader(Paths.get(inputParameters.getFasta())));
+    }
+
 }

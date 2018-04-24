@@ -15,7 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStreamException;
+import org.springframework.batch.item.ItemStreamWriter;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
@@ -23,16 +25,35 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import java.util.List;
 import java.util.Map;
 
-public class AccessionWriter implements ItemWriter<ISubmittedVariant> {
+public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
 
     private SubmittedVariantAccessioningService service;
 
-    public AccessionWriter(SubmittedVariantAccessioningService service) {
+    private AccessionReportWriter accessionReportWriter;
+
+    public AccessionWriter(SubmittedVariantAccessioningService service, AccessionReportWriter accessionReportWriter) {
         this.service = service;
+        this.accessionReportWriter = accessionReportWriter;
     }
 
     @Override
     public void write(List<? extends ISubmittedVariant> variants) throws Exception {
         Map<Long, ISubmittedVariant> accessions = service.getOrCreateAccessions(variants);
+        accessionReportWriter.write(accessions);
+    }
+
+    @Override
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
+        accessionReportWriter.open(executionContext);
+    }
+
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+        accessionReportWriter.update(executionContext);
+    }
+
+    @Override
+    public void close() throws ItemStreamException {
+        accessionReportWriter.close();
     }
 }

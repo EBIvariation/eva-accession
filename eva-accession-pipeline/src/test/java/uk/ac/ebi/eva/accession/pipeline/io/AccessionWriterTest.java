@@ -16,8 +16,11 @@
 package uk.ac.ebi.eva.accession.pipeline.io;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -31,8 +34,13 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -48,20 +56,42 @@ public class AccessionWriterTest {
 
     private static final long EXPECTED_ACCESSION = 10000000000L;
 
+    private static final int START_1 = 100;
+
+    private static final int START_2 = 200;
+
+    private static final String ALTERNATE_ALLELE = "T";
+
+    private static final String REFERENCE_ALLELE = "A";
+
+    private static final int ACCESSION_COLUMN = 2;
+
+    private static final String ACCESSION_PREFIX = "ss";
+
     @Autowired
     private SubmittedVariantAccessioningService service;
 
+    @Rule
+    public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+
     private AccessionWriter accessionWriter;
+
+    private File output;
 
     @Before
     public void setUp() throws Exception {
-        accessionWriter = new AccessionWriter(service);
+        output = temporaryFolderRule.newFile();
+        Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
+        AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
+                                                                                new FastaSequenceReader(fastaPath));
+        accessionWriter = new AccessionWriter(service, accessionReportWriter);
+        accessionReportWriter.open(new ExecutionContext());
     }
 
     @Test
     @DirtiesContext
     public void saveSingleAccession() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
+        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1, "reference",
                                                         "alternate", false);
 
         accessionWriter.write(Collections.singletonList(variant));
@@ -70,21 +100,63 @@ public class AccessionWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long)accessions.keySet().iterator().next());
 
-        ISubmittedVariant savedVariant = accessions.values().iterator().next();
-        assertEquals(variant.getAssemblyAccession(), savedVariant.getAssemblyAccession());
-        assertEquals(variant.getTaxonomyAccession(), savedVariant.getTaxonomyAccession());
-        assertEquals(variant.getProjectAccession(), savedVariant.getProjectAccession());
-        assertEquals(variant.getContig(), savedVariant.getContig());
-        assertEquals(variant.getStart(), savedVariant.getStart());
-        assertEquals(variant.getReferenceAllele(), savedVariant.getReferenceAllele());
-        assertEquals(variant.getAlternateAllele(), savedVariant.getAlternateAllele());
-        assertEquals(variant.isSupportedByEvidence(), savedVariant.isSupportedByEvidence());
+        assertVariantEquals(variant, accessions.values().iterator().next());
+    }
+
+    private void assertVariantEquals(ISubmittedVariant expectedvariant, ISubmittedVariant actualVariant) {
+        assertEquals(expectedvariant.getAssemblyAccession(), actualVariant.getAssemblyAccession());
+        assertEquals(expectedvariant.getTaxonomyAccession(), actualVariant.getTaxonomyAccession());
+        assertEquals(expectedvariant.getProjectAccession(), actualVariant.getProjectAccession());
+        assertEquals(expectedvariant.getContig(), actualVariant.getContig());
+        assertEquals(expectedvariant.getStart(), actualVariant.getStart());
+        assertEquals(expectedvariant.getReferenceAllele(), actualVariant.getReferenceAllele());
+        assertEquals(expectedvariant.getAlternateAllele(), actualVariant.getAlternateAllele());
+        assertEquals(expectedvariant.isSupportedByEvidence(), actualVariant.isSupportedByEvidence());
+    }
+
+    @Test
+    @DirtiesContext
+    public void saveTwoAccession() throws Exception {
+        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
+                                                             "reference", "alternate", false);
+        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_2,
+                                                              "reference", "alternate", false);
+
+        accessionWriter.write(Arrays.asList(firstVariant, secondVariant));
+
+        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Arrays.asList(firstVariant, secondVariant));
+        assertEquals(2, accessions.size());
+
+        Iterator<ISubmittedVariant> iterator = accessions.values().iterator();
+        ISubmittedVariant firstSavedVariant = iterator.next();
+        ISubmittedVariant secondSavedVariant = iterator.next();
+        if (firstSavedVariant.getStart() == firstVariant.getStart()) {
+            assertVariantEquals(firstVariant, firstSavedVariant);
+            assertVariantEquals(secondVariant, secondSavedVariant);
+        } else {
+            assertVariantEquals(secondVariant, firstSavedVariant);
+            assertVariantEquals(firstVariant, secondSavedVariant);
+        }
+    }
+
+    @Test
+    @DirtiesContext
+    public void saveSameAccessionTwice() throws Exception {
+        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1, "reference",
+                                                        "alternate", false);
+
+        accessionWriter.write(Arrays.asList(variant, variant));
+
+        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        assertEquals(1, accessions.size());
+
+        assertVariantEquals(variant, accessions.values().iterator().next());
     }
 
     @Test
     @DirtiesContext
     public void testSaveInitializesCreatedDate() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", 100, "reference",
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", START_1, "reference",
                                                         "alternate", false);
         LocalDateTime beforeSave = LocalDateTime.now();
         accessionWriter.write(Collections.singletonList(variant));
@@ -93,5 +165,21 @@ public class AccessionWriterTest {
         assertEquals(1, accessions.size());
         ISubmittedVariant savedVariant = accessions.values().iterator().next();
         assertTrue(beforeSave.isBefore(savedVariant.getCreatedDate()));
+    }
+
+    @Test
+    @DirtiesContext
+    public void createAccessionAndItAppearsInTheReportVcf() throws Exception {
+        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
+                                                        REFERENCE_ALLELE, ALTERNATE_ALLELE, false);
+
+        accessionWriter.write(Arrays.asList(variant, variant));
+
+        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        assertEquals(1, accessions.size());
+
+        String vcfLine = AccessionReportWriterTest.getFirstVariantLine(output);
+        assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN], ACCESSION_PREFIX + accessions.keySet().iterator().next());
+
     }
 }
