@@ -11,6 +11,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.SkipPolicyVerificationConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsJobConfiguration;
@@ -21,7 +22,7 @@ import javax.sql.DataSource;
 @EnableAutoConfiguration
 @Import({CreateSubsnpAccessionsJobConfiguration.class, CreateSubsnpAccessionsStepConfiguration.class,
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class})
+        ChunkSizeCompletionPolicyConfiguration.class, SkipPolicyVerificationConfiguration.class})
 public class BatchTestConfiguration {
 
     @Autowired
