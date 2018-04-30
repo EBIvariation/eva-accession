@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.pipeline.policies.SkipPolicyVerification;
+import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
@@ -56,7 +56,7 @@ public class CreateSubsnpAccessionsStepConfiguration {
     private AccessionWriter accessionWriter;
 
     @Autowired
-    private SkipPolicyVerification skipPolicyVerification;
+    private InvalidVariantSkipPolicy invalidVariantSkipPolicy;
 
     @Bean(CREATE_SUBSNP_ACCESSION_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
@@ -67,7 +67,7 @@ public class CreateSubsnpAccessionsStepConfiguration {
                 .processor(variantProcessor)
                 .writer(accessionWriter)
                 .faultTolerant()
-                .skipPolicy(skipPolicyVerification)
+                .skipPolicy(invalidVariantSkipPolicy)
                 .build();
         return step;
     }

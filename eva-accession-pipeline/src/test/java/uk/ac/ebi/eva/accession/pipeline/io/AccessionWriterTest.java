@@ -81,7 +81,7 @@ public class AccessionWriterTest {
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
-        Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
+        Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").getFile());
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
                                                                                 new FastaSequenceReader(fastaPath));
         accessionWriter = new AccessionWriter(service, accessionReportWriter);
