@@ -42,7 +42,7 @@ public class FastaSequenceReaderTest {
     @Before
     public void setUp() throws Exception {
         reader = new FastaSequenceReader(Paths.get(
-                FastaSequenceReaderTest.class.getResource("/input-files/fasta/Gallus_gallus-5.0.test.fa").getFile()));
+                FastaSequenceReaderTest.class.getResource("/input-files/fasta/Gallus_gallus-5.0.test.fa").toURI()));
     }
 
     @After
@@ -94,7 +94,7 @@ public class FastaSequenceReaderTest {
     @Test
     public void fastaWithNoDictionary() throws Exception {
         FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(Paths.get(
-                FastaSequenceReaderTest.class.getResource("/input-files/fasta/fastaWithNoDictionary.fa").getFile()));
+                FastaSequenceReaderTest.class.getResource("/input-files/fasta/fastaWithNoDictionary.fa").toURI()));
         // this sequence is split between three lines in the FASTA file
         assertEquals("CAGCCGCAGTCCGGACAGCGCATGCGCCAGCCGCGAGACCGCACAGCGCATGCGCCAGCGCGAGTGACAGCG",
                      fastaSequenceReader.getSequence("22", 174, 245));
@@ -105,7 +105,7 @@ public class FastaSequenceReaderTest {
         String fastaFilename = "fastaWithNoDictionary.fa";
         File temporaryFolderRoot = temporaryFolder.getRoot();
         Path fasta = Files.copy(
-                Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).getFile()),
+                Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
                 temporaryFolderRoot.toPath().resolve(fastaFilename));
 
         FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(fasta);
