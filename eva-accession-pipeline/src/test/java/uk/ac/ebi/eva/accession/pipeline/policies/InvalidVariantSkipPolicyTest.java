@@ -19,13 +19,9 @@ package uk.ac.ebi.eva.accession.pipeline.policies;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.springframework.batch.item.file.FlatFileParseException;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.pipeline.configuration.InvalidVariantSkipPolicyConfiguration;
 import uk.ac.ebi.eva.commons.core.models.factories.exception.IncompleteInformationException;
 import uk.ac.ebi.eva.commons.core.models.factories.exception.NonVariantException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -33,8 +29,6 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(SpringRunner.class)
-@Import({InvalidVariantSkipPolicyConfiguration.class})
 public class InvalidVariantSkipPolicyTest {
 
     @Mock
