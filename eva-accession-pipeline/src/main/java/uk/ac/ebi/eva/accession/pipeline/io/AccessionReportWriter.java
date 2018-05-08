@@ -21,6 +21,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStream;
 import org.springframework.batch.item.ItemStreamException;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
@@ -28,6 +29,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 // TODO make AccessionReportWriter implement ItemStreamWriter<AccessionWrapper<ISubmittedVariant, String, Long>>
@@ -107,13 +109,17 @@ public class AccessionReportWriter implements ItemStream {
         }
     }
 
-    public void write(Map<Long, ISubmittedVariant> accessions) throws IOException {
+//    public void write(Map<Long, ISubmittedVariant> accessions) throws IOException {
+    public void write(List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions) throws IOException {
         if (fileWriter == null) {
             throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
                                           "called AccessionReportWriter::open");
         }
-        for (Map.Entry<Long, ISubmittedVariant> variant : accessions.entrySet()) {
-            writeVariant(variant.getKey(), variant.getValue());
+//        for (Map.Entry<Long, ISubmittedVariant> variant : accessions.entrySet()) {
+//            writeVariant(variant.getKey(), variant.getValue());
+//        }
+        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : accessions) {
+            writeVariant(variant.getAccession(), variant.getData());
         }
         fileWriter.flush();
     }

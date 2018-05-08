@@ -23,18 +23,19 @@ import org.springframework.data.domain.Persistable;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import uk.ac.ebi.ampt2d.commons.accession.persistence.IAccessionedObject;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import java.time.LocalDateTime;
 
 @Document
-public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<Long> {
+public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<Long>, IAccessionedObject<Long> {
 
     @Id
-    private Long accession;
+    private String hashedMessage;
 
     @Indexed
-    private String hashedMessage;
+    private Long accession;
 
     private String assemblyAccession;
 
@@ -88,6 +89,11 @@ public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<Lo
     }
 
     @Override
+    public boolean isActive() {
+        return false;
+    }
+
+    @Override
     public String getAssemblyAccession() {
         return assemblyAccession;
     }
@@ -130,6 +136,11 @@ public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<Lo
     @Override
     public LocalDateTime getCreatedDate() {
         return createdDate;
+    }
+
+    @Override
+    public int getVersion() {
+        return 0;
     }
 
     @Override

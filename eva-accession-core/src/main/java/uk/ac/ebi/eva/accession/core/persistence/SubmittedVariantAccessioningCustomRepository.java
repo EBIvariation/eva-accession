@@ -18,10 +18,10 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.stereotype.Repository;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.IAccessionedObjectRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.IAccessionedObjectCustomRepository;
 
 @Repository
-public interface SubmittedVariantAccessioningRepository
-        extends IAccessionedObjectRepository<SubmittedVariantEntity, Long> {
+public interface SubmittedVariantAccessioningCustomRepository
+        extends IAccessionedObjectCustomRepository {
 
 }

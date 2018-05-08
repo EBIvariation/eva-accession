@@ -44,6 +44,6 @@ public class ApplicationConfiguration {
 
     @Bean
     public BasicRestController basicRestController(SubmittedVariantAccessioningService service) {
-        return new BasicRestController<ISubmittedVariant, SubmittedVariantDTO, Long>(service, SubmittedVariantDTO::new);
+        return new BasicRestController<SubmittedVariantDTO, ISubmittedVariant, String, Long>(service, SubmittedVariantDTO::new);
     }
 }

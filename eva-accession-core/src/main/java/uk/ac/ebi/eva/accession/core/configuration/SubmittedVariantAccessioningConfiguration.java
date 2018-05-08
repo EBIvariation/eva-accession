@@ -26,10 +26,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.monotonic.service.ContiguousIdBlockService;
-
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.accession.repositories.BasicJpaAccessionedObjectCustomRepositoryImpl;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningCustomRepository;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningCustomRepositoryImpl;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 
@@ -42,6 +44,10 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
+
+    @Autowired
+    private SubmittedVariantAccessioningCustomRepositoryImpl customRepository;
+//    private SubmittedVariantAccessioningCustomRepository customRepository;
 
     @Autowired
     private ContiguousIdBlockService service;
@@ -60,7 +66,7 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Bean
     public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
-        return new SubmittedVariantAccessioningDatabaseService(repository);
+        return new SubmittedVariantAccessioningDatabaseService(repository, customRepository);
     }
 
     @Bean

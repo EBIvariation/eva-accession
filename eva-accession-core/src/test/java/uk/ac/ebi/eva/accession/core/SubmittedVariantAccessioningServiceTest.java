@@ -19,13 +19,17 @@ package uk.ac.ebi.eva.accession.core;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestEntityManager;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningCustomRepositoryImpl;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.test.MongoTestConfiguration;
 
@@ -38,7 +42,9 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @TestPropertySource("classpath:accession-test.properties")
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class, SubmittedVariantAccessioningCustomRepositoryImpl.class})
+//@AutoConfigureTestEntityManager
+//@EnableJpaRepositories
 public class SubmittedVariantAccessioningServiceTest {
 
     @Autowired
@@ -53,8 +59,8 @@ public class SubmittedVariantAccessioningServiceTest {
                 new SubmittedVariantEntity(null, null, "assembly", 1111,
                                            "project", "contig_2", 100, "ref",
                                            "alt", true));
-        Map<Long, ISubmittedVariant> generatedAccessions = service.getOrCreateAccessions(variants);
-        Map<Long, ISubmittedVariant> retrievedAccessions = service.getOrCreateAccessions(variants);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreateAccessions(variants);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>>  retrievedAccessions = service.getOrCreateAccessions(variants);
 
         assertEquals(generatedAccessions, retrievedAccessions);
     }
