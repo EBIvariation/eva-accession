@@ -35,7 +35,7 @@ import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 public class ApplicationConfiguration {
 
     @Bean
-    public ObjectMapper objectMapper(){
+    public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -44,6 +44,7 @@ public class ApplicationConfiguration {
 
     @Bean
     public BasicRestController basicRestController(SubmittedVariantAccessioningService service) {
-        return new BasicRestController<SubmittedVariantDTO, ISubmittedVariant, String, Long>(service, SubmittedVariantDTO::new);
+        return new BasicRestController<SubmittedVariantDTO, ISubmittedVariant, String, Long>(service,
+                                                                                             SubmittedVariantDTO::new);
     }
 }

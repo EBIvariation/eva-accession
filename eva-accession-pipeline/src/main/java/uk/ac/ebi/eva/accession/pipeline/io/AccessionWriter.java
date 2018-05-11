@@ -18,13 +18,11 @@ package uk.ac.ebi.eva.accession.pipeline.io;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 
 import java.util.List;
-import java.util.Map;
 
 public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
 
@@ -40,7 +38,6 @@ public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
     @Override
     public void write(List<? extends ISubmittedVariant> variants) throws Exception {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreateAccessions(variants);
-
         accessionReportWriter.write(accessions);
     }
 

@@ -35,7 +35,6 @@ import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningCo
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -62,9 +61,10 @@ public class SubmittedVariantsRestControllerTest {
         List<AccessionResponseDTO> generatedAccessions = basicRestController.generateAccessions(
                 getListOfVariantMessages());
         assertEquals(2, generatedAccessions.size());
-        String accessions = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
+        String accessions = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
+                Collectors.joining(","));
         String getVariantsUrl = URL + accessions;
-        ResponseEntity<Map> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, Map.class);
+        ResponseEntity<List> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, List.class);
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(2, getVariantsResponse.getBody().size());
     }

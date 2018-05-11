@@ -20,8 +20,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.batch.item.ExecutionContext;
-
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
+
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
@@ -84,14 +84,16 @@ public class AccessionReportWriterTest {
     public void writeSnpWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
                                                         ALTERNATE, false);
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-//        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
-        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START), ACCESSION_PREFIX + ACCESSION,
-                                 REFERENCE, ALTERNATE, ".", ".", "."),
-                     getFirstVariantLine(output));
+        assertEquals(
+                String.join("\t", CONTIG_1, Integer.toString(START), ACCESSION_PREFIX + ACCESSION, REFERENCE, ALTERNATE,
+                            ".", ".", "."),
+                getFirstVariantLine(output));
     }
 
     public static String getFirstVariantLine(File output) throws IOException {
@@ -109,9 +111,10 @@ public class AccessionReportWriterTest {
     public void writeInsertionWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, "",
                                                         ALTERNATE, false);
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-//        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
@@ -124,9 +127,10 @@ public class AccessionReportWriterTest {
     public void writeDeletionWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
                                                         "", false);
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-//        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
@@ -139,16 +143,16 @@ public class AccessionReportWriterTest {
     public void resumeWriting() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
                                                         ALTERNATE, false);
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-//        accessionReportWriter.write(Collections.singletonMap(ACCESSION, variant));
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
         accessionReportWriter.close();
 
         AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader);
         variant.setContig(CONTIG_2);
         resumingWriter.open(executionContext);
-//        resumingWriter.write(Collections.singletonMap(ACCESSION, variant));
         resumingWriter.write(Collections.singletonList(accessionWrapper));
         resumingWriter.close();
 
