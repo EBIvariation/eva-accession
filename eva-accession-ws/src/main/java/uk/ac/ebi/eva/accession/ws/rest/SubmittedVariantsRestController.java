@@ -22,7 +22,6 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
@@ -42,10 +41,8 @@ public class SubmittedVariantsRestController {
 
     @ApiOperation(value = "Find submitted variants by identifier")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
-    public List<AccessionResponseDTO> get(@PathVariable List<Long> identifiers,
-                                          @RequestParam(name = "hideDeprecated", required = false,
-                                                        defaultValue = "false") boolean hideDeprecated) {
-        return basicRestController.get(identifiers, hideDeprecated);
+    public List<AccessionResponseDTO> get(@PathVariable List<Long> identifiers) {
+        return basicRestController.get(identifiers, false);
     }
 }
 
