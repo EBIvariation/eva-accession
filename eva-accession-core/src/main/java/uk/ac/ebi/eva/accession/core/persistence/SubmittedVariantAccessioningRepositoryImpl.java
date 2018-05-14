@@ -30,9 +30,7 @@ public class SubmittedVariantAccessioningRepositoryImpl implements IAccessionedO
 
     private static final String ID = "_id";
 
-    private static final String ACTIVE = "ACTIVE";
-
-    private static final boolean TRUE = true;
+    private static final String ACTIVE = "active";
 
     private MongoTemplate mongoTemplate;
 
@@ -42,7 +40,7 @@ public class SubmittedVariantAccessioningRepositoryImpl implements IAccessionedO
 
     @Override
     public void enableByHashedMessageIn(Set<String> set) {
-        mongoTemplate.updateMulti(new Query(Criteria.where(ID).in(set)), Update.update(ACTIVE, TRUE),
+        mongoTemplate.updateMulti(new Query(Criteria.where(ID).in(set)), Update.update(ACTIVE, true),
                                   SubmittedVariantEntity.class);
     }
 

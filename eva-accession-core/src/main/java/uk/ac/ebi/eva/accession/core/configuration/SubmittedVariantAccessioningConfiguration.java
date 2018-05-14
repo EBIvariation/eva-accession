@@ -32,7 +32,6 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepositoryImpl;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -43,9 +42,6 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
-
-    @Autowired
-    private SubmittedVariantAccessioningRepositoryImpl customRepository;
 
     @Autowired
     private ContiguousIdBlockService service;
@@ -64,7 +60,7 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Bean
     public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
-        return new SubmittedVariantAccessioningDatabaseService(repository, customRepository);
+        return new SubmittedVariantAccessioningDatabaseService(repository);
     }
 
     @Bean

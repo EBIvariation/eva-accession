@@ -72,8 +72,7 @@ public class SubmittedVariantEntity implements ISubmittedVariant, Persistable<St
     public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
                                   int taxonomyAccession, String projectAccession, String contig, long start,
                                   String referenceAllele, String alternateAllele, boolean isSupportedByEvidence,
-                                  boolean active, int version
-    ) {
+                                  boolean active, int version) {
         this.accession = accession;
         this.hashedMessage = hashedMessage;
         this.assemblyAccession = assemblyAccession;
