@@ -27,6 +27,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
@@ -41,7 +42,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -96,11 +97,12 @@ public class AccessionWriterTest {
 
         accessionWriter.write(Collections.singletonList(variant));
 
-        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getAccessions(
+                Collections.singletonList(variant));
         assertEquals(1, accessions.size());
-        assertEquals(EXPECTED_ACCESSION, (long)accessions.keySet().iterator().next());
+        assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
 
-        assertVariantEquals(variant, accessions.values().iterator().next());
+        assertVariantEquals(variant, accessions.iterator().next().getData());
     }
 
     private void assertVariantEquals(ISubmittedVariant expectedvariant, ISubmittedVariant actualVariant) {
@@ -124,12 +126,13 @@ public class AccessionWriterTest {
 
         accessionWriter.write(Arrays.asList(firstVariant, secondVariant));
 
-        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Arrays.asList(firstVariant, secondVariant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getAccessions(
+                Arrays.asList(firstVariant, secondVariant));
         assertEquals(2, accessions.size());
 
-        Iterator<ISubmittedVariant> iterator = accessions.values().iterator();
-        ISubmittedVariant firstSavedVariant = iterator.next();
-        ISubmittedVariant secondSavedVariant = iterator.next();
+        Iterator<AccessionWrapper<ISubmittedVariant, String, Long>> iterator = accessions.iterator();
+        ISubmittedVariant firstSavedVariant = iterator.next().getData();
+        ISubmittedVariant secondSavedVariant = iterator.next().getData();
         if (firstSavedVariant.getStart() == firstVariant.getStart()) {
             assertVariantEquals(firstVariant, firstSavedVariant);
             assertVariantEquals(secondVariant, secondSavedVariant);
@@ -147,23 +150,25 @@ public class AccessionWriterTest {
 
         accessionWriter.write(Arrays.asList(variant, variant));
 
-        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getAccessions(
+                Collections.singletonList(variant));
         assertEquals(1, accessions.size());
 
-        assertVariantEquals(variant, accessions.values().iterator().next());
+        assertVariantEquals(variant, accessions.iterator().next().getData());
     }
 
     @Test
     @DirtiesContext
     public void testSaveInitializesCreatedDate() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", START_1, "reference",
-                                                        "alternate", false);
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", START_1,
+                                                        "reference", "alternate", false);
         LocalDateTime beforeSave = LocalDateTime.now();
         accessionWriter.write(Collections.singletonList(variant));
 
-        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getAccessions(
+                Collections.singletonList(variant));
         assertEquals(1, accessions.size());
-        ISubmittedVariant savedVariant = accessions.values().iterator().next();
+        ISubmittedVariant savedVariant = accessions.iterator().next().getData();
         assertTrue(beforeSave.isBefore(savedVariant.getCreatedDate()));
     }
 
@@ -175,11 +180,12 @@ public class AccessionWriterTest {
 
         accessionWriter.write(Arrays.asList(variant, variant));
 
-        Map<Long, ISubmittedVariant> accessions = service.getAccessions(Collections.singletonList(variant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getAccessions(
+                Collections.singletonList(variant));
         assertEquals(1, accessions.size());
 
         String vcfLine = AccessionReportWriterTest.getFirstVariantLine(output);
-        assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN], ACCESSION_PREFIX + accessions.keySet().iterator().next());
-
+        assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN],
+                     ACCESSION_PREFIX + accessions.iterator().next().getAccession());
     }
 }

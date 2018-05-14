@@ -31,7 +31,7 @@
             <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
                 <artifactId>accessioning-commons</artifactId>
-                <version>0.2</version>
+                <version>0.3-SNAPSHOT</version>
             </dependency>
 
             <dependency>

@@ -28,13 +28,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -58,12 +58,13 @@ public class SubmittedVariantsRestControllerTest {
 
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
-        Map<Long, SubmittedVariantDTO> generatedAccessions = basicRestController.generateAccessions(
+        List<AccessionResponseDTO> generatedAccessions = basicRestController.generateAccessions(
                 getListOfVariantMessages());
         assertEquals(2, generatedAccessions.size());
-        String accessions = generatedAccessions.keySet().stream().map(acc -> acc.toString()).collect(Collectors.joining(","));
+        String accessions = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
+                Collectors.joining(","));
         String getVariantsUrl = URL + accessions;
-        ResponseEntity<Map> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, Map.class);
+        ResponseEntity<List> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, List.class);
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(2, getVariantsResponse.getBody().size());
     }

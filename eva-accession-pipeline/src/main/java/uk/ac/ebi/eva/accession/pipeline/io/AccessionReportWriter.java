@@ -18,9 +18,9 @@ package uk.ac.ebi.eva.accession.pipeline.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
-import org.springframework.batch.item.ItemStream;
 import org.springframework.batch.item.ItemStreamException;
-
+import org.springframework.batch.item.ItemStreamWriter;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
@@ -28,12 +28,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
-// TODO make AccessionReportWriter implement ItemStreamWriter<AccessionWrapper<ISubmittedVariant, String, Long>>
-// when accession-commons 0.3 is used. Not worth to do it right now because
-// SubmittedVariantAccessioningService returns a Map.
-public class AccessionReportWriter implements ItemStream {
+public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<ISubmittedVariant, String, Long>> {
+
+    private static final String ACCESSION_PREFIX = "ss";
 
     private static final String VCF_MISSING_VALUE = ".";
 
@@ -54,7 +53,7 @@ public class AccessionReportWriter implements ItemStream {
     public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
         this.output = output;
-        this.accessionPrefix = "ss";
+        this.accessionPrefix = ACCESSION_PREFIX;
     }
 
     public String getAccessionPrefix() {
@@ -107,13 +106,14 @@ public class AccessionReportWriter implements ItemStream {
         }
     }
 
-    public void write(Map<Long, ISubmittedVariant> accessions) throws IOException {
+    @Override
+    public void write(List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions) throws IOException {
         if (fileWriter == null) {
             throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
                                           "called AccessionReportWriter::open");
         }
-        for (Map.Entry<Long, ISubmittedVariant> variant : accessions.entrySet()) {
-            writeVariant(variant.getKey(), variant.getValue());
+        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : accessions) {
+            writeVariant(variant.getAccession(), variant.getData());
         }
         fileWriter.flush();
     }
