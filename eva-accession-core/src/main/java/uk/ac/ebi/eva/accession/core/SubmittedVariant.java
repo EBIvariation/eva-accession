@@ -171,4 +171,19 @@ public class SubmittedVariant implements ISubmittedVariant {
         return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession,
                             contig, start, referenceAllele, alternateAllele, supportedByEvidence, createdDate);
     }
+
+    @Override
+    public String toString() {
+        return "SubmittedVariant{" +
+                "assemblyAccession='" + assemblyAccession + '\'' +
+                ", taxonomyAccession=" + taxonomyAccession +
+                ", projectAccession='" + projectAccession + '\'' +
+                ", contig='" + contig + '\'' +
+                ", start=" + start +
+                ", referenceAllele='" + referenceAllele + '\'' +
+                ", alternateAllele='" + alternateAllele + '\'' +
+                ", supportedByEvidence=" + supportedByEvidence +
+                ", createdDate=" + createdDate +
+                '}';
+    }
 }

@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.pipeline.io;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ExecutionContext;
@@ -39,6 +40,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -74,6 +76,9 @@ public class AccessionWriterTest {
 
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private AccessionWriter accessionWriter;
 
@@ -187,5 +192,29 @@ public class AccessionWriterTest {
         String vcfLine = AccessionReportWriterTest.getFirstVariantLine(output);
         assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN],
                      ACCESSION_PREFIX + accessions.iterator().next().getAccession());
+    }
+
+    @Test
+    public void shouldThrowIfSomeVariantsWereNotAccessioned() {
+        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
+                                                        REFERENCE_ALLELE, ALTERNATE_ALLELE, false);
+
+        thrown.expect(IllegalStateException.class);
+        accessionWriter.assertCountsMatch(Collections.singletonList(variant), new ArrayList<>());
+    }
+
+    @Test
+    public void shouldThrowIfSomeVariantsWereNotAccessionedInAChunkWithRepeatedVariants() {
+        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
+                                                             "reference", "alternate", false);
+        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_2,
+                                                              "reference", "alternate", false);
+        List<SubmittedVariant> variants = Arrays.asList(firstVariant, secondVariant, firstVariant, secondVariant);
+
+        ArrayList<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = new ArrayList<>();
+        accessions.add(new AccessionWrapper<>(EXPECTED_ACCESSION, "hashedMessage", secondVariant));
+
+        thrown.expect(IllegalStateException.class);
+        accessionWriter.assertCountsMatch(variants, accessions);
     }
 }
