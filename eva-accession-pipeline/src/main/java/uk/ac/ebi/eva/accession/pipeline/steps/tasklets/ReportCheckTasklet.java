@@ -15,14 +15,24 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.steps.tasklets;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ReportCheckTasklet implements Tasklet {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReportCheckTasklet.class);
 
     private VcfReader vcfReader;
 
@@ -33,14 +43,47 @@ public class ReportCheckTasklet implements Tasklet {
         this.reportReader = reportReader;
     }
 
-
     @Override
-    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-        // vcf reader
-        // report reader
-        // read vcf into set
-        // take out variants from the report out of the set
+    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+        Set<Variant> variantsWithoutAccession = new HashSet<>();
+        Set<Variant> mismatchingAccessions = new HashSet<>();
+        List<Variant> variantsRead;
+        while ((variantsRead = vcfReader.read()) != null) {
+            variantsWithoutAccession.addAll(variantsRead);
+        }
+        List<Variant> reportVariantsRead;
+        while ((reportVariantsRead = reportReader.read()) != null) {
+            for (Variant reportedVariant : reportVariantsRead) {
+                boolean removed = variantsWithoutAccession.remove(reportedVariant);
+                if (!removed) {
+                    mismatchingAccessions.add(reportedVariant);
+                }
+            }
+        }
+
+        logStatus(stepContribution, variantsWithoutAccession, mismatchingAccessions);
 
         return RepeatStatus.FINISHED;
+    }
+
+    private void logStatus(StepContribution stepContribution, Set<Variant> variantsWithoutAccession,
+                           Set<Variant> mismatchingAccessions) {
+        stepContribution.setExitStatus(ExitStatus.COMPLETED);
+
+        if (!mismatchingAccessions.isEmpty()) {
+            stepContribution.setExitStatus(ExitStatus.FAILED);
+            logger.error("{} variants were found in the accession report that were not found in the original report. " +
+                                 "This might be caused by alignment issues or a bug in the code.",
+                         mismatchingAccessions.size());
+            logger.info("These are the {} variants that were not found in the original report: {}",
+                        mismatchingAccessions.size(), mismatchingAccessions);
+        }
+
+        if (!variantsWithoutAccession.isEmpty()) {
+            stepContribution.setExitStatus(ExitStatus.FAILED);
+            logger.error("{} variants were not found in the accession report.", variantsWithoutAccession.size());
+            logger.info("These are the {} variants that were not found in the accession report: {}",
+                        variantsWithoutAccession.size(), variantsWithoutAccession);
+        }
     }
 }

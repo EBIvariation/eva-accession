@@ -20,11 +20,16 @@ import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.ExecutionContext;
 
+import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
+import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
@@ -36,14 +41,9 @@ public class ReportCheckTaskletTest {
     @Test
     public void correctReport() throws Exception {
         // given
-        File vcfFile = new File(ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI());
-        File reportFile = new File(ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.report" +
-                                                                                       ".vcf.gz").toURI());
-        AggregatedVcfReader vcfReader = new AggregatedVcfReader("fileId", "studyId", Aggregation.BASIC, null, vcfFile);
-        AggregatedVcfReader reportReader = new AggregatedVcfReader("reportFile", "studyId", Aggregation.BASIC, null,
-                                                                   reportFile);
-
-        ReportCheckTasklet reportCheckTasklet = new ReportCheckTasklet(vcfReader, reportReader);
+        URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.report.vcf.gz").toURI();
+        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
 
         // when
         StepContribution stepContribution = new StepContribution(
@@ -54,17 +54,24 @@ public class ReportCheckTaskletTest {
         assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
     }
 
+    private ReportCheckTasklet getReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
+        File vcfFile = new File(vcfUri);
+        AggregatedVcfReader vcfReader = new AggregatedVcfReader("fileId", "studyId", Aggregation.BASIC, null, vcfFile);
+        vcfReader.open(new ExecutionContext());
+
+        File reportFile = new File(reportUri);
+        VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
+        reportReader.open(new ExecutionContext());
+
+        return new ReportCheckTasklet(vcfReader, reportReader);
+    }
+
     @Test
     public void variantMissingInReport() throws Exception {
         // given
-        File vcfFile = new File(ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI());
-        File reportFile = new File(
-                ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.wrong-report.vcf.gz").toURI());
-        AggregatedVcfReader vcfReader = new AggregatedVcfReader("fileId", "studyId", Aggregation.BASIC, null, vcfFile);
-        AggregatedVcfReader reportReader = new AggregatedVcfReader("reportFile", "studyId", Aggregation.BASIC, null,
-                                                                   reportFile);
-
-        ReportCheckTasklet reportCheckTasklet = new ReportCheckTasklet(vcfReader, reportReader);
+        URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.wrong-report.vcf.gz").toURI();
+        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
 
         // when
         StepContribution stepContribution = new StepContribution(
