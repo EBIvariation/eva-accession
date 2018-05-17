@@ -81,4 +81,21 @@ public class ReportCheckTaskletTest {
         // then
         assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
     }
+
+    @Test
+    public void smallBuffer() throws Exception {
+        // given
+        URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.report.vcf.gz").toURI();
+        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
+        reportCheckTasklet.setMaxBufferSize(10);
+
+        // when
+        StepContribution stepContribution = new StepContribution(
+                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+        reportCheckTasklet.execute(stepContribution, null);
+
+        // then
+        assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
+    }
 }

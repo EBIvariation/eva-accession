@@ -34,34 +34,66 @@ public class ReportCheckTasklet implements Tasklet {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportCheckTasklet.class);
 
+    private static final int DEFAULT_MAX_BUFFER_SIZE = 10000;
+
     private VcfReader vcfReader;
 
     private VcfReader reportReader;
 
+    private long maxBufferSize;
+
     public ReportCheckTasklet(VcfReader vcfReader, VcfReader reportReader) {
         this.vcfReader = vcfReader;
         this.reportReader = reportReader;
+        this.maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
     }
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-        Set<Variant> variantsWithoutAccession = new HashSet<>();
-        Set<Variant> mismatchingAccessions = new HashSet<>();
+        Set<Variant> variantsWithoutAccessionYet = new HashSet<>();
+        Set<Variant> unmatchedAccessions = new HashSet<>();
+        Set<Variant> unmatchedAccessionsInChunk = new HashSet<>();
         List<Variant> variantsRead;
-        while ((variantsRead = vcfReader.read()) != null) {
-            variantsWithoutAccession.addAll(variantsRead);
+        while (true) {
+            while (variantsWithoutAccessionYet.size() < maxBufferSize && (variantsRead = vcfReader.read()) != null) {
+                variantsWithoutAccessionYet.addAll(variantsRead);
+            }
+
+            List<Variant> reportVariantsRead = null;
+            while (unmatchedAccessionsInChunk.size() == 0 && (reportVariantsRead = reportReader.read()) != null) {
+                for (Variant reportedVariant : reportVariantsRead) {
+                    boolean removed = variantsWithoutAccessionYet.remove(reportedVariant);
+                    if (!removed) {
+                        unmatchedAccessionsInChunk.add(reportedVariant);
+                    }
+                }
+            }
+            unmatchedAccessions.addAll(unmatchedAccessionsInChunk);
+            unmatchedAccessionsInChunk.clear();
+            if (reportVariantsRead == null) {
+                break;
+            }
+            logger.debug("unmatched accessions size: {}", unmatchedAccessions.size());
         }
-        List<Variant> reportVariantsRead;
-        while ((reportVariantsRead = reportReader.read()) != null) {
-            for (Variant reportedVariant : reportVariantsRead) {
-                boolean removed = variantsWithoutAccession.remove(reportedVariant);
+
+        logger.debug("max unmatched accessions size: {}", unmatchedAccessions.size());
+        Set<Variant> variantsWithoutAccession = new HashSet<>();
+        for (Variant variantWithoutAccession : variantsWithoutAccessionYet) {
+            boolean removed = unmatchedAccessions.remove(variantWithoutAccession);
+            if (!removed) {
+                variantsWithoutAccession.add(variantWithoutAccession);
+            }
+        }
+        while ((variantsRead = vcfReader.read()) != null) {
+            for (Variant variantWithoutAccession : variantsRead) {
+                boolean removed = unmatchedAccessions.remove(variantWithoutAccession);
                 if (!removed) {
-                    mismatchingAccessions.add(reportedVariant);
+                    variantsWithoutAccession.add(variantWithoutAccession);
                 }
             }
         }
 
-        logStatus(stepContribution, variantsWithoutAccession, mismatchingAccessions);
+        logStatus(stepContribution, variantsWithoutAccession, unmatchedAccessions);
 
         return RepeatStatus.FINISHED;
     }
@@ -85,5 +117,13 @@ public class ReportCheckTasklet implements Tasklet {
             logger.info("These are the {} variants that were not found in the accession report: {}",
                         variantsWithoutAccession.size(), variantsWithoutAccession);
         }
+    }
+
+    public long getMaxBufferSize() {
+        return maxBufferSize;
+    }
+
+    public void setMaxBufferSize(long maxBufferSize) {
+        this.maxBufferSize = maxBufferSize;
     }
 }

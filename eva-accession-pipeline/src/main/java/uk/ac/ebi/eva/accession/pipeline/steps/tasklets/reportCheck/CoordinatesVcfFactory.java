@@ -23,9 +23,11 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Transforms a String (in VCF format) to a list of variants, keeping only the basic fields (coordinates):
@@ -39,7 +41,13 @@ public class CoordinatesVcfFactory extends VariantVcfFactory {
         String[] fields = line.split("\t", 6);
         String chromosome = fields[0];
         long position = Long.parseLong(fields[1]);
-        String[] ids = fields[2].split(",");
+        String[] idsSplit = fields[2].split(";");
+        Set<String> ids;
+        if (idsSplit.length == 1 && ".".equals(idsSplit[0])) {
+            ids = Collections.emptySet();
+        } else {
+            ids = new HashSet<>(Arrays.asList(idsSplit));
+        }
         String reference = fields[3].equals(".") ? "" : fields[3];
         String[] alternateAlleles = fields[4].split(",");
 
@@ -53,7 +61,7 @@ public class CoordinatesVcfFactory extends VariantVcfFactory {
             }
             Variant variant = new Variant(chromosome, keyFields.getStart(), keyFields.getEnd(),
                                           keyFields.getReference(), keyFields.getAlternate());
-            variant.setIds(new HashSet<>(Arrays.asList(ids)));
+            variant.setIds(ids);
             variants.add(variant);
         }
         return variants;
