@@ -70,7 +70,7 @@ public class ReportCheckTaskletTest {
     public void variantMissingInReport() throws Exception {
         // given
         URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
-        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.wrong-report.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.incomplete-report.vcf.gz").toURI();
         ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
 
         // when
@@ -83,12 +83,55 @@ public class ReportCheckTaskletTest {
     }
 
     @Test
-    public void smallBuffer() throws Exception {
+    public void originalVcfDoesNotContainUnexpectedAccession() throws Exception {
+        // given
+        URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.unexpected-report.vcf.gz")
+                                                    .toURI();
+        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
+
+        // when
+        StepContribution stepContribution = new StepContribution(
+                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+        reportCheckTasklet.execute(stepContribution, null);
+
+        // then
+        assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
+    }
+
+    @Test
+    public void smallBuffer_10() throws Exception {
+        profileBuffering(10, 136, 137);
+    }
+
+    @Test
+    public void smallBuffer_11() throws Exception {
+        profileBuffering(11, 81, 137);
+    }
+
+    @Test
+    public void smallBuffer_20() throws Exception {
+        profileBuffering(20, 81, 95);
+    }
+
+    @Test
+    public void smallBuffer_21() throws Exception {
+        profileBuffering(21, 1, 86);
+    }
+
+    /**
+     * the report has all the accessions, but unordered. The
+     * @param maxBufferSize max size of the set of variants read from the original VCF. the set of accessions has
+     * to grow indefinitely (expectedAccessionBuffer) to grant a correct behaviour in worst-ordering scenario.
+     * @param expectedAccessionBuffer max size of the set of accessions
+     * @param expectedIterations number of times a chunk was read from the original VCF
+     */
+    private void profileBuffering(int maxBufferSize, int expectedAccessionBuffer, int expectedIterations) throws Exception {
         // given
         URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
         URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.report.vcf.gz").toURI();
         ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
-        reportCheckTasklet.setMaxBufferSize(10);
+        reportCheckTasklet.setMaxBufferSize(maxBufferSize);
 
         // when
         StepContribution stepContribution = new StepContribution(
@@ -97,5 +140,7 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
+        assertEquals(expectedAccessionBuffer, reportCheckTasklet.getMaxUnmatchedHeld());
+        assertEquals(expectedIterations, reportCheckTasklet.getIterations());
     }
 }

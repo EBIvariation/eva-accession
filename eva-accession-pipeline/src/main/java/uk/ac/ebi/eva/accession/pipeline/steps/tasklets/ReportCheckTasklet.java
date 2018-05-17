@@ -42,6 +42,10 @@ public class ReportCheckTasklet implements Tasklet {
 
     private long maxBufferSize;
 
+    private long maxUnmatchedHeld;
+
+    private long iterations;
+
     public ReportCheckTasklet(VcfReader vcfReader, VcfReader reportReader) {
         this.vcfReader = vcfReader;
         this.reportReader = reportReader;
@@ -54,7 +58,10 @@ public class ReportCheckTasklet implements Tasklet {
         Set<Variant> unmatchedAccessions = new HashSet<>();
         Set<Variant> unmatchedAccessionsInChunk = new HashSet<>();
         List<Variant> variantsRead;
+        maxUnmatchedHeld = 0;
+        iterations = 0;
         while (true) {
+            iterations++;
             while (variantsWithoutAccessionYet.size() < maxBufferSize && (variantsRead = vcfReader.read()) != null) {
                 variantsWithoutAccessionYet.addAll(variantsRead);
             }
@@ -68,15 +75,26 @@ public class ReportCheckTasklet implements Tasklet {
                     }
                 }
             }
+
+            Set<Variant> matchedAccessions = new HashSet<>();
+            for (Variant unmatchedAccession : unmatchedAccessions) {
+                boolean removed = variantsWithoutAccessionYet.remove(unmatchedAccession);
+                if (removed) {
+                    matchedAccessions.add(unmatchedAccession);
+                }//                if (variantsWithoutAccessionYet.isEmpty()) { break; }
+            }
+            unmatchedAccessions.removeAll(matchedAccessions);
+
             unmatchedAccessions.addAll(unmatchedAccessionsInChunk);
             unmatchedAccessionsInChunk.clear();
+            maxUnmatchedHeld = maxUnmatchedHeld > unmatchedAccessions.size()? maxUnmatchedHeld : unmatchedAccessions.size();
+            logger.debug("unmatched accessions size: {}", unmatchedAccessions.size());
             if (reportVariantsRead == null) {
                 break;
             }
-            logger.debug("unmatched accessions size: {}", unmatchedAccessions.size());
         }
 
-        logger.debug("max unmatched accessions size: {}", unmatchedAccessions.size());
+        logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxUnmatchedHeld, iterations);
         Set<Variant> variantsWithoutAccession = new HashSet<>();
         for (Variant variantWithoutAccession : variantsWithoutAccessionYet) {
             boolean removed = unmatchedAccessions.remove(variantWithoutAccession);
@@ -125,5 +143,13 @@ public class ReportCheckTasklet implements Tasklet {
 
     public void setMaxBufferSize(long maxBufferSize) {
         this.maxBufferSize = maxBufferSize;
+    }
+
+    public long getMaxUnmatchedHeld() {
+        return maxUnmatchedHeld;
+    }
+
+    public long getIterations() {
+        return iterations;
     }
 }
