@@ -200,7 +200,7 @@ public class AccessionWriterTest {
                                                         REFERENCE_ALLELE, ALTERNATE_ALLELE, false);
 
         thrown.expect(IllegalStateException.class);
-        accessionWriter.assertCountsMatch(Collections.singletonList(variant), new ArrayList<>());
+        accessionWriter.checkCountsMatch(Collections.singletonList(variant), new ArrayList<>());
     }
 
     @Test
@@ -215,6 +215,6 @@ public class AccessionWriterTest {
         accessions.add(new AccessionWrapper<>(EXPECTED_ACCESSION, "hashedMessage", secondVariant));
 
         thrown.expect(IllegalStateException.class);
-        accessionWriter.assertCountsMatch(variants, accessions);
+        accessionWriter.checkCountsMatch(variants, accessions);
     }
 }

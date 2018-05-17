@@ -47,34 +47,34 @@ public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
     public void write(List<? extends ISubmittedVariant> variants) throws Exception {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreateAccessions(variants);
         accessionReportWriter.write(accessions);
-        assertCountsMatch(variants, accessions);
+        checkCountsMatch(variants, accessions);
     }
 
-    void assertCountsMatch(List<? extends ISubmittedVariant> variants,
-                                   List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
+    void checkCountsMatch(List<? extends ISubmittedVariant> variants,
+                          List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
         if (variants.size() != accessions.size()) {
             Set<ISubmittedVariant> accessionedVariants = accessions.stream()
                                                                    .map(AccessionWrapper::getData)
                                                                    .collect(Collectors.toSet());
             HashSet<ISubmittedVariant> distinctVariants = new HashSet<>(variants);
             int duplicateCount = variants.size() - distinctVariants.size();
-
-            List<ISubmittedVariant> variantsWithoutAccession = distinctVariants.stream()
-                                                                               .filter(v -> !accessionedVariants.contains(v))
-                                                                               .collect(Collectors.toList());
             if (duplicateCount != 0) {
                 logger.warn("A variant chunk contains {} repeated variants. This is not an error, but please check " +
                                     "it's expected.", duplicateCount);
             }
+
+            List<ISubmittedVariant> variantsWithoutAccession = distinctVariants.stream()
+                                                                               .filter(v -> !accessionedVariants.contains(v))
+                                                                               .collect(Collectors.toList());
             if (variantsWithoutAccession.size() != 0) {
-                logger.error("A variant chunk wasn't accessioned properly. Only {} variants were accessioned out of " +
-                                     "{} distinct variants (from a chunk of {} variants, having {} repeated variants). " +
-                                     "The {} variants that were not accessioned are these: {}",
-                             accessionedVariants.size(), distinctVariants.size(), variants.size(), duplicateCount,
-                             variantsWithoutAccession.size(), variantsWithoutAccession.toString());
-                logger.info("This is the complete chunk of {} variants: {}", variants.size(), variants.toString());
+                logger.error("A problem occurred while accessioning a chunk. Total num variants = {}, distinct = {}, " +
+                                     "duplicate = {}, accessioned = {}, not accessioned = {}",
+                             variants.size(), distinctVariants.size(), duplicateCount, accessionedVariants.size(),
+                             variantsWithoutAccession.size());
+                logger.error("The non-accessioned variants are: {}", variantsWithoutAccession.toString());
+
                 throw new IllegalStateException(
-                        "A variant chunk wasn't accessioned properly (the relevant information was already logged).");
+                        "A problem occurred while accessioning a chunk. See log for details.");
             }
         }
     }
