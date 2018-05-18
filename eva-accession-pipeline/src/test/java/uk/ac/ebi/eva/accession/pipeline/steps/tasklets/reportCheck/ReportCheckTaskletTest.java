@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.pipeline.steps.tasklets;
+package uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck;
 
 import org.junit.Test;
 import org.springframework.batch.core.ExitStatus;
@@ -22,7 +22,6 @@ import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.item.ExecutionContext;
 
-import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;

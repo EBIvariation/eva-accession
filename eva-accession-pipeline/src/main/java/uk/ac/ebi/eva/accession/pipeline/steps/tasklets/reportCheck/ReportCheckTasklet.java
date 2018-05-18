@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.pipeline.steps.tasklets;
+package uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,14 +86,12 @@ public class ReportCheckTasklet implements Tasklet {
             boolean isEveryAccessionLoaded = readAccessionsAndRemoveMatchingOnes(variantBuffer, accessionBuffer);
 
             maxAccessionBufferSize = Math.max(maxAccessionBufferSize, accessionBuffer.size());
-            logger.debug("unmatched accessions size: {}", accessionBuffer.size());
             if (isEveryAccessionLoaded) {
                 break;
             }
         }
 
-        logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxAccessionBufferSize,
-                     iterations);
+        logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxAccessionBufferSize, iterations);
         removeRemainingMatchingVariants(variantBuffer, accessionBuffer);
 
         logStatus(stepContribution, variantBuffer, accessionBuffer);
@@ -169,8 +167,7 @@ public class ReportCheckTasklet implements Tasklet {
 
         if (!unmatchedAccessions.isEmpty()) {
             stepContribution.setExitStatus(ExitStatus.FAILED);
-            logger.error("{} variants were found in the accession report that were not found in the original VCF. " +
-                                 "This might be caused by alignment issues or a bug in the code.",
+            logger.error("{} variants were found in the accession report that were not found in the original VCF.",
                          unmatchedAccessions.size());
             logger.info("These are the {} variants that were not found in the original VCF: {}",
                         unmatchedAccessions.size(), unmatchedAccessions);
