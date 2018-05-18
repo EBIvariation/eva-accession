@@ -30,103 +30,150 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Compares the the original VCF and accession report VCF, and logs the differences.
+ *
+ * Terminology: The original VCF contains variants, and it will be loaded into the 'variantBuffer'. The accession
+ * report VCF contains the accessioned variants, and it will be loaded into the 'accessionBuffer'.
+ *
+ * The high-level idea of the process is filling those 2 buffers, and when the same coordinates appears in both the
+ * variantBuffer and the accessionBuffer, it means that the variant in those coordinates was correctly accessioned,
+ * so it can be removed from both buffers. At the end, only variants without accessions and accessions without
+ * variants should be left in the buffers after both files were completely read.
+ *
+ * The reason why the buffers are needed is that the accession report can be unordered. In order to avoid
+ * having the original VCF completely loaded in the variantBuffer, a buffer size can be configured. However, to grant
+ * correct behaviour in worst-ordering scenario, the accessionBuffer (for yet-unmatched accessions from the accession
+ * report) has to be able to grow indefinitely.
+ *
+ * To perform self-checks, this tasklet provides the maximum size that the accessionBuffer during the execution, and
+ * also provides the number of iterations needed.
+ *
+ */
 public class ReportCheckTasklet implements Tasklet {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportCheckTasklet.class);
 
-    private static final int DEFAULT_MAX_BUFFER_SIZE = 10000;
+    private static final int DEFAULT_MAX_BUFFER_SIZE = 100000;
 
     private VcfReader vcfReader;
 
     private VcfReader reportReader;
 
-    private long maxBufferSize;
+    private long maxVariantBufferSize;
 
-    private long maxUnmatchedHeld;
+    private long maxAccessionBufferSize;
 
     private long iterations;
 
     public ReportCheckTasklet(VcfReader vcfReader, VcfReader reportReader) {
         this.vcfReader = vcfReader;
         this.reportReader = reportReader;
-        this.maxBufferSize = DEFAULT_MAX_BUFFER_SIZE;
+        this.maxVariantBufferSize = DEFAULT_MAX_BUFFER_SIZE;
+        this.maxAccessionBufferSize = 0;
+        this.iterations = 0;
     }
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-        Set<Variant> variantsWithoutAccessionYet = new HashSet<>();
-        Set<Variant> unmatchedAccessions = new HashSet<>();
-        Set<Variant> unmatchedAccessionsInChunk = new HashSet<>();
-        List<Variant> variantsRead;
-        maxUnmatchedHeld = 0;
-        iterations = 0;
+        Set<Variant> variantBuffer = new HashSet<>();
+        Set<Variant> accessionBuffer = new HashSet<>();
         while (true) {
             iterations++;
-            while (variantsWithoutAccessionYet.size() < maxBufferSize && (variantsRead = vcfReader.read()) != null) {
-                variantsWithoutAccessionYet.addAll(variantsRead);
-            }
 
-            List<Variant> reportVariantsRead = null;
-            while (unmatchedAccessionsInChunk.size() == 0 && (reportVariantsRead = reportReader.read()) != null) {
-                for (Variant reportedVariant : reportVariantsRead) {
-                    boolean removed = variantsWithoutAccessionYet.remove(reportedVariant);
-                    if (!removed) {
-                        unmatchedAccessionsInChunk.add(reportedVariant);
-                    }
-                }
-            }
+            readOriginalVcfUntilBufferIsFull(variantBuffer);
+            removeMatchingVariants(variantBuffer, accessionBuffer);
+            boolean isEveryAccessionLoaded = readAccessionsAndRemoveMatchingOnes(variantBuffer, accessionBuffer);
 
-            Set<Variant> matchedAccessions = new HashSet<>();
-            for (Variant unmatchedAccession : unmatchedAccessions) {
-                boolean removed = variantsWithoutAccessionYet.remove(unmatchedAccession);
-                if (removed) {
-                    matchedAccessions.add(unmatchedAccession);
-                }//                if (variantsWithoutAccessionYet.isEmpty()) { break; }
-            }
-            unmatchedAccessions.removeAll(matchedAccessions);
-
-            unmatchedAccessions.addAll(unmatchedAccessionsInChunk);
-            unmatchedAccessionsInChunk.clear();
-            maxUnmatchedHeld = maxUnmatchedHeld > unmatchedAccessions.size()? maxUnmatchedHeld : unmatchedAccessions.size();
-            logger.debug("unmatched accessions size: {}", unmatchedAccessions.size());
-            if (reportVariantsRead == null) {
+            maxAccessionBufferSize = Math.max(maxAccessionBufferSize, accessionBuffer.size());
+            logger.debug("unmatched accessions size: {}", accessionBuffer.size());
+            if (isEveryAccessionLoaded) {
                 break;
             }
         }
 
-        logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxUnmatchedHeld, iterations);
-        Set<Variant> variantsWithoutAccession = new HashSet<>();
-        for (Variant variantWithoutAccession : variantsWithoutAccessionYet) {
-            boolean removed = unmatchedAccessions.remove(variantWithoutAccession);
-            if (!removed) {
-                variantsWithoutAccession.add(variantWithoutAccession);
-            }
-        }
-        while ((variantsRead = vcfReader.read()) != null) {
-            for (Variant variantWithoutAccession : variantsRead) {
-                boolean removed = unmatchedAccessions.remove(variantWithoutAccession);
-                if (!removed) {
-                    variantsWithoutAccession.add(variantWithoutAccession);
-                }
-            }
-        }
+        logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxAccessionBufferSize,
+                     iterations);
+        removeRemainingMatchingVariants(variantBuffer, accessionBuffer);
 
-        logStatus(stepContribution, variantsWithoutAccession, unmatchedAccessions);
+        logStatus(stepContribution, variantBuffer, accessionBuffer);
 
         return RepeatStatus.FINISHED;
     }
 
+    /**
+     * Fill the variantBuffer (from the original VCF) until the maximum buffer size is
+     * reached, or until the file was completely read.
+     * @param variantBuffer buffer that will be filled with the original VCF
+     */
+    private void readOriginalVcfUntilBufferIsFull(Set<Variant> variantBuffer) throws Exception {
+        List<Variant> variantsRead;
+        while (variantBuffer.size() < maxVariantBufferSize && (variantsRead = vcfReader.read()) != null) {
+            variantBuffer.addAll(variantsRead);
+        }
+    }
+
+    private void removeMatchingVariants(Set<Variant> variantBuffer, Set<Variant> accessionBuffer) {
+        Set<Variant> matchedAccessions = new HashSet<>();
+        for (Variant unmatchedAccession : accessionBuffer) {
+            boolean removed = variantBuffer.remove(unmatchedAccession);
+            if (removed) {
+                matchedAccessions.add(unmatchedAccession);
+            }
+            if (variantBuffer.isEmpty()) {
+                break;
+            }
+        }
+        accessionBuffer.removeAll(matchedAccessions);
+    }
+
+    private boolean readAccessionsAndRemoveMatchingOnes(Set<Variant> variantBuffer, Set<Variant> accessionBuffer)
+            throws Exception {
+        Set<Variant> newUnmatchedAccessions = new HashSet<>();
+        List<Variant> reportVariantsRead = null;
+        newUnmatchedAccessions.clear();
+        while (newUnmatchedAccessions.size() == 0 && (reportVariantsRead = reportReader.read()) != null) {
+            for (Variant reportedVariant : reportVariantsRead) {
+                boolean removed = variantBuffer.remove(reportedVariant);
+                if (!removed) {
+                    newUnmatchedAccessions.add(reportedVariant);
+                }
+            }
+        }
+        accessionBuffer.addAll(newUnmatchedAccessions);
+        return reportVariantsRead == null;
+    }
+
+    private void removeRemainingMatchingVariants(Set<Variant> variantBuffer,
+                                                 Set<Variant> accessionBuffer) throws Exception {
+        removeMatchingVariants(variantBuffer, accessionBuffer);
+        removeRemainingMatchingVariantsFromOriginalVcfFile(variantBuffer, accessionBuffer);
+    }
+
+    private void removeRemainingMatchingVariantsFromOriginalVcfFile(Set<Variant> variantBuffer,
+                                                                    Set<Variant> accessionBuffer) throws Exception {
+        List<Variant> variantsRead;
+        while ((variantsRead = vcfReader.read()) != null) {
+            for (Variant variantWithoutAccession : variantsRead) {
+                boolean removed = accessionBuffer.remove(variantWithoutAccession);
+                if (!removed) {
+                    variantBuffer.add(variantWithoutAccession);
+                }
+            }
+        }
+    }
+
     private void logStatus(StepContribution stepContribution, Set<Variant> variantsWithoutAccession,
-                           Set<Variant> mismatchingAccessions) {
+                           Set<Variant> unmatchedAccessions) {
         stepContribution.setExitStatus(ExitStatus.COMPLETED);
 
-        if (!mismatchingAccessions.isEmpty()) {
+        if (!unmatchedAccessions.isEmpty()) {
             stepContribution.setExitStatus(ExitStatus.FAILED);
-            logger.error("{} variants were found in the accession report that were not found in the original report. " +
+            logger.error("{} variants were found in the accession report that were not found in the original VCF. " +
                                  "This might be caused by alignment issues or a bug in the code.",
-                         mismatchingAccessions.size());
-            logger.info("These are the {} variants that were not found in the original report: {}",
-                        mismatchingAccessions.size(), mismatchingAccessions);
+                         unmatchedAccessions.size());
+            logger.info("These are the {} variants that were not found in the original VCF: {}",
+                        unmatchedAccessions.size(), unmatchedAccessions);
         }
 
         if (!variantsWithoutAccession.isEmpty()) {
@@ -137,16 +184,25 @@ public class ReportCheckTasklet implements Tasklet {
         }
     }
 
-    public long getMaxBufferSize() {
-        return maxBufferSize;
+    public long getMaxVariantBufferSize() {
+        return maxVariantBufferSize;
     }
 
-    public void setMaxBufferSize(long maxBufferSize) {
-        this.maxBufferSize = maxBufferSize;
+    /**
+     * See the terminology in the documentation of this class
+     * @param maxVariantBufferSize max size of the buffer where the variants of the original VCF are loaded
+     */
+    public void setMaxVariantBufferSize(long maxVariantBufferSize) {
+        this.maxVariantBufferSize = maxVariantBufferSize;
     }
 
-    public long getMaxUnmatchedHeld() {
-        return maxUnmatchedHeld;
+    /**
+     * To grant correct behaviour in worst-ordering scenario, the accessionBuffer (for yet-unmatched accessions from
+     * the accession report) has to be able to grow indefinitely.
+     * @return The maximum size of the accessionBuffer
+     */
+    public long getMaxAccessionBufferSize() {
+        return maxAccessionBufferSize;
     }
 
     public long getIterations() {

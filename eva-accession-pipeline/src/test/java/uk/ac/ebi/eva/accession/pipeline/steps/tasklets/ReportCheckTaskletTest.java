@@ -120,18 +120,18 @@ public class ReportCheckTaskletTest {
     }
 
     /**
-     * the report has all the accessions, but unordered. The
-     * @param maxBufferSize max size of the set of variants read from the original VCF. the set of accessions has
-     * to grow indefinitely (expectedAccessionBuffer) to grant a correct behaviour in worst-ordering scenario.
-     * @param expectedAccessionBuffer max size of the set of accessions
-     * @param expectedIterations number of times a chunk was read from the original VCF
+     * the report has all the accessions, but unordered. The 1st to 10th variants appear after the 100th variant, and
+     * the 11th to 20th appear at the end.
+     * @param maxVariantBufferSize configures max size of the variantBuffer, which is filled from the original VCF.
+     * @param expectedMaxUnmatchedAccessionsBufferSize expected max size of the set of accessions
+     * @param expectedIterations expected number of times a chunk was read from the original VCF
      */
-    private void profileBuffering(int maxBufferSize, int expectedAccessionBuffer, int expectedIterations) throws Exception {
+    private void profileBuffering(int maxVariantBufferSize, int expectedMaxUnmatchedAccessionsBufferSize, int expectedIterations) throws Exception {
         // given
         URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
         URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.report.vcf.gz").toURI();
         ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
-        reportCheckTasklet.setMaxBufferSize(maxBufferSize);
+        reportCheckTasklet.setMaxVariantBufferSize(maxVariantBufferSize);
 
         // when
         StepContribution stepContribution = new StepContribution(
@@ -140,7 +140,7 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
-        assertEquals(expectedAccessionBuffer, reportCheckTasklet.getMaxUnmatchedHeld());
+        assertEquals(expectedMaxUnmatchedAccessionsBufferSize, reportCheckTasklet.getMaxAccessionBufferSize());
         assertEquals(expectedIterations, reportCheckTasklet.getIterations());
     }
 }
