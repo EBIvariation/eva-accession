@@ -15,12 +15,14 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.InvalidVariantSkipPolicyCo
 import uk.ac.ebi.eva.accession.pipeline.configuration.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CheckSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CreateSubsnpAccessionsStepConfiguration;
 
 import javax.sql.DataSource;
 
 @EnableAutoConfiguration
-@Import({CreateSubsnpAccessionsJobConfiguration.class, CreateSubsnpAccessionsStepConfiguration.class,
+@Import({CreateSubsnpAccessionsJobConfiguration.class,
+        CreateSubsnpAccessionsStepConfiguration.class, CheckSubsnpAccessionsStepConfiguration.class,
         VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class})
 public class BatchTestConfiguration {

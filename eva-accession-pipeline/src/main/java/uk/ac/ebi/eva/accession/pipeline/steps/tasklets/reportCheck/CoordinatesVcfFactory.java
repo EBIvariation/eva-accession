@@ -39,24 +39,18 @@ public class CoordinatesVcfFactory extends VariantVcfFactory {
     public List<Variant> create(String fileId, String studyId, String line)
             throws IllegalArgumentException, NonVariantException, IncompleteInformationException {
         String[] fields = line.split("\t", 6);
-        String chromosome = fields[0];
-        long position = Long.parseLong(fields[1]);
-        String[] idsSplit = fields[2].split(";");
-        Set<String> ids;
-        if (idsSplit.length == 1 && ".".equals(idsSplit[0])) {
-            ids = Collections.emptySet();
-        } else {
-            ids = new HashSet<>(Arrays.asList(idsSplit));
-        }
-        String reference = fields[3].equals(".") ? "" : fields[3];
-        String[] alternateAlleles = fields[4].split(",");
+        String chromosome = getChromosomeWithoutPrefix(fields);
+        int position = getPosition(fields);
+        Set<String> ids = getIds(fields);
+        String reference = getReference(fields);
+        String[] alternateAlleles = getAlternateAlleles(fields);
 
         List<Variant> variants = new LinkedList<>();
         for (String alternateAllele : alternateAlleles) {
             VariantCoreFields keyFields;
             try {
                 keyFields = new VariantCoreFields(chromosome, position, reference, alternateAllele);
-            } catch (IllegalArgumentException referenceEqualsAlternate) {
+            } catch (NonVariantException e) {
                 continue;
             }
             Variant variant = new Variant(chromosome, keyFields.getStart(), keyFields.getEnd(),
@@ -65,6 +59,17 @@ public class CoordinatesVcfFactory extends VariantVcfFactory {
             variants.add(variant);
         }
         return variants;
+    }
+
+    private Set<String> getIds(String[] fields) {
+        String[] idsSplit = fields[2].split(";");
+        Set<String> ids;
+        if (idsSplit.length == 1 && ".".equals(idsSplit[0])) {
+            ids = Collections.emptySet();
+        } else {
+            ids = new HashSet<>(Arrays.asList(idsSplit));
+        }
+        return ids;
     }
 
     @Override

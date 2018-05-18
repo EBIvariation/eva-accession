@@ -56,11 +56,9 @@ public class ReportCheckTaskletTest {
     private ReportCheckTasklet getReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
         File vcfFile = new File(vcfUri);
         AggregatedVcfReader vcfReader = new AggregatedVcfReader("fileId", "studyId", Aggregation.BASIC, null, vcfFile);
-        vcfReader.open(new ExecutionContext());
 
         File reportFile = new File(reportUri);
         VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
-        reportReader.open(new ExecutionContext());
 
         return new ReportCheckTasklet(vcfReader, reportReader);
     }
@@ -96,6 +94,33 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
+    }
+
+    @Test
+    public void originalVcfContainsNonVariants() throws Exception {
+        // given
+        URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/genotyped.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/genotyped.report.vcf.gz")
+                                                    .toURI();
+        ReportCheckTasklet reportCheckTasklet = getGenotypedReportCheckTasklet(vcfUri, reportUri);
+
+        // when
+        StepContribution stepContribution = new StepContribution(
+                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+        reportCheckTasklet.execute(stepContribution, null);
+
+        // then
+        assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
+    }
+
+    private ReportCheckTasklet getGenotypedReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
+        File vcfFile = new File(vcfUri);
+        VcfReader vcfReader = new VcfReader("fileId", "studyId", vcfFile);
+
+        File reportFile = new File(reportUri);
+        VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
+
+        return new ReportCheckTasklet(vcfReader, reportReader);
     }
 
     @Test

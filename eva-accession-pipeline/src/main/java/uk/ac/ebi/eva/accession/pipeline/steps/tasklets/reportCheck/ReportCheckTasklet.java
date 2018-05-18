@@ -20,10 +20,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.repeat.RepeatStatus;
 
+import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
+import uk.ac.ebi.eva.commons.core.models.factories.exception.NonVariantException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.HashSet;
@@ -66,18 +70,23 @@ public class ReportCheckTasklet implements Tasklet {
 
     private long iterations;
 
+    private SkipPolicy skipPolicy;
+
     public ReportCheckTasklet(VcfReader vcfReader, VcfReader reportReader) {
         this.vcfReader = vcfReader;
         this.reportReader = reportReader;
         this.maxVariantBufferSize = DEFAULT_MAX_BUFFER_SIZE;
         this.maxAccessionBufferSize = 0;
         this.iterations = 0;
+        this.skipPolicy = new InvalidVariantSkipPolicy();
     }
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         Set<Variant> variantBuffer = new HashSet<>();
         Set<Variant> accessionBuffer = new HashSet<>();
+        vcfReader.open(new ExecutionContext());
+        reportReader.open(new ExecutionContext());
         while (true) {
             iterations++;
 
@@ -106,9 +115,27 @@ public class ReportCheckTasklet implements Tasklet {
      */
     private void readOriginalVcfUntilBufferIsFull(Set<Variant> variantBuffer) throws Exception {
         List<Variant> variantsRead;
-        while (variantBuffer.size() < maxVariantBufferSize && (variantsRead = vcfReader.read()) != null) {
+        while (variantBuffer.size() < maxVariantBufferSize && (variantsRead = readVcfIgnoringNonVariants()) != null) {
             variantBuffer.addAll(variantsRead);
         }
+    }
+
+    private List<Variant> readVcfIgnoringNonVariants() throws Exception {
+        List<Variant> variants = null;
+        boolean readVariantOrEof = false;
+        while (!readVariantOrEof) {
+            try {
+                variants = vcfReader.read();
+                readVariantOrEof = true;
+            } catch (Exception exception) {
+                if (skipPolicy.shouldSkip(exception, 0)) {
+                    // this was a non-variant, we must read the next line
+                } else {
+                    throw exception;
+                }
+            }
+        }
+        return variants;
     }
 
     private void removeMatchingVariants(Set<Variant> variantBuffer, Set<Variant> accessionBuffer) {
@@ -151,7 +178,7 @@ public class ReportCheckTasklet implements Tasklet {
     private void removeRemainingMatchingVariantsFromOriginalVcfFile(Set<Variant> variantBuffer,
                                                                     Set<Variant> accessionBuffer) throws Exception {
         List<Variant> variantsRead;
-        while ((variantsRead = vcfReader.read()) != null) {
+        while ((variantsRead = readVcfIgnoringNonVariants()) != null) {
             for (Variant variantWithoutAccession : variantsRead) {
                 boolean removed = accessionBuffer.remove(variantWithoutAccession);
                 if (!removed) {
