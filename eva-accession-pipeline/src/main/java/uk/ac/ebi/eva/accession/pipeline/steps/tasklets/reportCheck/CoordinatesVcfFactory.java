@@ -40,7 +40,7 @@ public class CoordinatesVcfFactory extends VariantVcfFactory {
             throws IllegalArgumentException, NonVariantException, IncompleteInformationException {
         String[] fields = line.split("\t", 6);
         String chromosome = getChromosomeWithoutPrefix(fields);
-        int position = getPosition(fields);
+        long position = getPosition(fields);
         Set<String> ids = getIds(fields);
         String reference = getReference(fields);
         String[] alternateAlleles = getAlternateAlleles(fields);
