@@ -26,8 +26,8 @@ public class AccessionWrapperComparator implements Comparator<AccessionWrapper<I
     @Override
     public int compare(AccessionWrapper<ISubmittedVariant, String, Long> firstAccession,
                        AccessionWrapper<ISubmittedVariant, String, Long> secondAccession) {
-        int contigComparation = firstAccession.getData().getContig()
-                                              .compareTo(secondAccession.getData().getContig());
+        int contigComparation = new AlphanumComparator().compare(firstAccession.getData().getContig(),
+                                                                 secondAccession.getData().getContig());
         if (contigComparation < 0) {
             return -1;
         } else if (contigComparation > 0) {
