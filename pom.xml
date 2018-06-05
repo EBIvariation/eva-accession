@@ -14,6 +14,7 @@
         <module>eva-accession-core</module>
         <module>eva-accession-ws</module>
         <module>eva-accession-pipeline</module>
+        <module>eva-accession-import</module>
     </modules>
 
     <properties>
