@@ -137,4 +137,20 @@ public class FastaSequenceReaderTest {
 
         assertEquals("\0\0\0\0", fastaSequenceReader.getSequence("22", 174, 177));
     }
+
+    /**
+     * For the rationale of this test, look at {@link #htsDoesNotSupportCompressedFastas()} and
+     *  {@link uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)}
+     */
+    @Test
+    public void shouldThrowOnCompressedFasta() throws URISyntaxException, IOException {
+        String fastaFilename = "compressed.fa.gz";
+        File temporaryFolderRoot = temporaryFolder.getRoot();
+        Path fasta = Files.copy(
+                Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
+                temporaryFolderRoot.toPath().resolve(fastaFilename));
+
+        thrown.expect(IllegalArgumentException.class);
+        new FastaSequenceReader(fasta);
+    }
 }

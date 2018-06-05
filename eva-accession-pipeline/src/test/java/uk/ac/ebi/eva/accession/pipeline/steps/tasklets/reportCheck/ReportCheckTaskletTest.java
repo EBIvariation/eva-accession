@@ -22,8 +22,10 @@ import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
 
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
+import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,11 +57,13 @@ public class ReportCheckTaskletTest {
     private ReportCheckTasklet getReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
         File vcfFile = new File(vcfUri);
         AggregatedVcfReader vcfReader = new AggregatedVcfReader("fileId", "studyId", Aggregation.BASIC, null, vcfFile);
+        UnwindingItemStreamReader<Variant> unwindingVcfReader = new UnwindingItemStreamReader<>(vcfReader);
 
         File reportFile = new File(reportUri);
         VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
+        UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
-        return new ReportCheckTasklet(vcfReader, reportReader);
+        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader);
     }
 
     @Test
@@ -116,11 +120,13 @@ public class ReportCheckTaskletTest {
     private ReportCheckTasklet getGenotypedReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
         File vcfFile = new File(vcfUri);
         VcfReader vcfReader = new VcfReader("fileId", "studyId", vcfFile);
+        UnwindingItemStreamReader<Variant> unwindingVcfReader = new UnwindingItemStreamReader<>(vcfReader);
 
         File reportFile = new File(reportUri);
         VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
+        UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
-        return new ReportCheckTasklet(vcfReader, reportReader);
+        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader);
     }
 
     @Test

@@ -20,6 +20,8 @@ public class BeanNames {
 
     public static final String VARIANT_READER = "VARIANT_READER";
 
+    public static final String REPORT_READER = "REPORT_READER";
+
     public static final String VARIANT_PROCESSOR = "VARIANT_PROCESSOR";
 
     public static final String ACCESSION_WRITER = "ACCESSION_WRITER";

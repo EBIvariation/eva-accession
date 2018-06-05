@@ -23,34 +23,32 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.repeat.RepeatStatus;
 
 import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
-import uk.ac.ebi.eva.commons.batch.io.VcfReader;
-import uk.ac.ebi.eva.commons.core.models.factories.exception.NonVariantException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
  * Compares the the original VCF and accession report VCF, and logs the differences.
  *
- * Terminology: The original VCF contains variants, and it will be loaded into the 'variantBuffer'. The accession
- * report VCF contains the accessioned variants, and it will be loaded into the 'accessionBuffer'.
+ * Terminology: The original VCF contains variants, and it will be loaded into the 'variant buffer'. The accession
+ * report VCF contains the accessioned variants, and it will be loaded into the 'accession buffer'.
  *
  * The high-level idea of the process is filling those 2 buffers, and when the same coordinates appears in both the
- * variantBuffer and the accessionBuffer, it means that the variant in those coordinates was correctly accessioned,
+ * variant buffer and the accession buffer, it means that the variant in those coordinates was correctly accessioned,
  * so it can be removed from both buffers. At the end, only variants without accessions and accessions without
  * variants should be left in the buffers after both files were completely read.
  *
  * The reason why the buffers are needed is that the accession report can be unordered. In order to avoid
- * having the original VCF completely loaded in the variantBuffer, a buffer size can be configured. However, to grant
- * correct behaviour in worst-ordering scenario, the accessionBuffer (for yet-unmatched accessions from the accession
+ * having the original VCF completely loaded in the variant buffer, a buffer size can be configured. However, to grant
+ * correct behaviour in worst-ordering scenario, the accession buffer (for yet-unmatched accessions from the accession
  * report) has to be able to grow indefinitely.
  *
- * To perform self-checks, this tasklet provides the maximum size that the accessionBuffer during the execution, and
+ * To perform self-checks, this tasklet provides the maximum size that the accession buffer during the execution, and
  * also provides the number of iterations needed.
  *
  */
@@ -60,9 +58,9 @@ public class ReportCheckTasklet implements Tasklet {
 
     private static final int DEFAULT_MAX_BUFFER_SIZE = 100000;
 
-    private VcfReader vcfReader;
+    private ItemStreamReader<Variant> inputReader;
 
-    private VcfReader reportReader;
+    private ItemStreamReader<Variant> reportReader;
 
     private long maxVariantBufferSize;
 
@@ -72,8 +70,8 @@ public class ReportCheckTasklet implements Tasklet {
 
     private SkipPolicy skipPolicy;
 
-    public ReportCheckTasklet(VcfReader vcfReader, VcfReader reportReader) {
-        this.vcfReader = vcfReader;
+    public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader) {
+        this.inputReader = inputReader;
         this.reportReader = reportReader;
         this.maxVariantBufferSize = DEFAULT_MAX_BUFFER_SIZE;
         this.maxAccessionBufferSize = 0;
@@ -85,7 +83,7 @@ public class ReportCheckTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         Set<Variant> variantBuffer = new HashSet<>();
         Set<Variant> accessionBuffer = new HashSet<>();
-        vcfReader.open(new ExecutionContext());
+        inputReader.open(new ExecutionContext());
         reportReader.open(new ExecutionContext());
         while (true) {
             iterations++;
@@ -114,18 +112,18 @@ public class ReportCheckTasklet implements Tasklet {
      * @param variantBuffer buffer that will be filled with the original VCF
      */
     private void readOriginalVcfUntilBufferIsFull(Set<Variant> variantBuffer) throws Exception {
-        List<Variant> variantsRead;
-        while (variantBuffer.size() < maxVariantBufferSize && (variantsRead = readVcfIgnoringNonVariants()) != null) {
-            variantBuffer.addAll(variantsRead);
+        Variant variantRead;
+        while (variantBuffer.size() < maxVariantBufferSize && (variantRead = readVcfIgnoringNonVariants()) != null) {
+            variantBuffer.add(variantRead);
         }
     }
 
-    private List<Variant> readVcfIgnoringNonVariants() throws Exception {
-        List<Variant> variants = null;
+    private Variant readVcfIgnoringNonVariants() throws Exception {
+        Variant variant = null;
         boolean readVariantOrEof = false;
         while (!readVariantOrEof) {
             try {
-                variants = vcfReader.read();
+                variant = inputReader.read();
                 readVariantOrEof = true;
             } catch (Exception exception) {
                 if (skipPolicy.shouldSkip(exception, 0)) {
@@ -135,7 +133,7 @@ public class ReportCheckTasklet implements Tasklet {
                 }
             }
         }
-        return variants;
+        return variant;
     }
 
     private void removeMatchingVariants(Set<Variant> variantBuffer, Set<Variant> accessionBuffer) {
@@ -155,18 +153,15 @@ public class ReportCheckTasklet implements Tasklet {
     private boolean readAccessionsAndRemoveMatchingOnes(Set<Variant> variantBuffer, Set<Variant> accessionBuffer)
             throws Exception {
         Set<Variant> newUnmatchedAccessions = new HashSet<>();
-        List<Variant> reportVariantsRead = null;
-        newUnmatchedAccessions.clear();
-        while (newUnmatchedAccessions.size() == 0 && (reportVariantsRead = reportReader.read()) != null) {
-            for (Variant reportedVariant : reportVariantsRead) {
-                boolean removed = variantBuffer.remove(reportedVariant);
-                if (!removed) {
-                    newUnmatchedAccessions.add(reportedVariant);
-                }
+        Variant reportedVariant = null;
+        while (newUnmatchedAccessions.size() == 0 && (reportedVariant = reportReader.read()) != null) {
+            boolean removed = variantBuffer.remove(reportedVariant);
+            if (!removed) {
+                newUnmatchedAccessions.add(reportedVariant);
             }
         }
         accessionBuffer.addAll(newUnmatchedAccessions);
-        return reportVariantsRead == null;
+        return reportedVariant == null;
     }
 
     private void removeRemainingMatchingVariants(Set<Variant> variantBuffer,
@@ -177,13 +172,11 @@ public class ReportCheckTasklet implements Tasklet {
 
     private void removeRemainingMatchingVariantsFromOriginalVcfFile(Set<Variant> variantBuffer,
                                                                     Set<Variant> accessionBuffer) throws Exception {
-        List<Variant> variantsRead;
-        while ((variantsRead = readVcfIgnoringNonVariants()) != null) {
-            for (Variant variantWithoutAccession : variantsRead) {
-                boolean removed = accessionBuffer.remove(variantWithoutAccession);
-                if (!removed) {
-                    variantBuffer.add(variantWithoutAccession);
-                }
+        Variant variantWithoutAccession;
+        while ((variantWithoutAccession = readVcfIgnoringNonVariants()) != null) {
+            boolean removed = accessionBuffer.remove(variantWithoutAccession);
+            if (!removed) {
+                variantBuffer.add(variantWithoutAccession);
             }
         }
     }
@@ -221,8 +214,8 @@ public class ReportCheckTasklet implements Tasklet {
     }
 
     /**
-     * To grant correct behaviour in worst-ordering scenario, the accessionBuffer (for yet-unmatched accessions from
-     * the accession report) has to be able to grow indefinitely.
+     * To guarantee correct behaviour in worst-ordering scenario, the accession buffer (for yet-unmatched accessions
+     * from the accession report) has to be able to grow indefinitely.
      * @return The maximum size of the accessionBuffer
      */
     public long getMaxAccessionBufferSize() {
