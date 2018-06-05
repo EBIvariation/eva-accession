@@ -32,6 +32,8 @@ import java.sql.SQLException;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.ALLELES_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.BATCH_HANDLE_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.BATCH_NAME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CHROMOSOME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CHROMOSOME_START_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CONTIG_NAME_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CONTIG_ORIENTATION_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CONTIG_START_COLUMN;
@@ -46,7 +48,8 @@ public class SubmittedVariantsNoHgvsLinkReader extends JdbcCursorItemReader<Vari
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantsNoHgvsLinkReader.class);
 
-    public SubmittedVariantsNoHgvsLinkReader(int batch, String assembly, DataSource dataSource, int pageSize) throws Exception {
+    public SubmittedVariantsNoHgvsLinkReader(int batch, String assembly, DataSource dataSource,
+                                             int pageSize) throws Exception {
         setDataSource(dataSource);
         setSql(buildSql(assembly));
         setPreparedStatementSetter(buildPreparedStatementSetter(batch));
@@ -69,18 +72,21 @@ public class SubmittedVariantsNoHgvsLinkReader extends JdbcCursorItemReader<Vari
         logger.debug("querying table {} for assembly {}", tableName, assembly);
         String sql =
                 "SELECT " +
-                    ALLELES_COLUMN +
-                    "," + BATCH_HANDLE_COLUMN +
-                    "," + BATCH_NAME_COLUMN +
-                    "," + CONTIG_NAME_COLUMN +
-                    "," + CONTIG_ORIENTATION_COLUMN +
-                    "," + CONTIG_START_COLUMN +
-                    "," + FREQUENCY_EXIST_COLUMN +
-                    "," + GENOTYPE_EXIST_COLUMN +
-                    "," + REFERENCE_COLUMN +
-                    "," + SS_CREATE_TIME_COLUMN +
-                    "," + TAXONOMY_ID_COLUMN +
-                " FROM " + tableName +
+                        ALLELES_COLUMN +
+                        "," + BATCH_HANDLE_COLUMN +
+                        "," + BATCH_NAME_COLUMN +
+                        "," + CHROMOSOME_COLUMN +
+                        "," + CHROMOSOME_START_COLUMN +
+                        "," + CONTIG_NAME_COLUMN +
+                        "," + CONTIG_ORIENTATION_COLUMN +
+                        "," + CONTIG_START_COLUMN +
+                        "," + FREQUENCY_EXIST_COLUMN +
+                        "," + GENOTYPE_EXIST_COLUMN +
+                        "," + LOAD_ORDER_COLUMN +
+                        "," + REFERENCE_COLUMN +
+                        "," + SS_CREATE_TIME_COLUMN +
+                        "," + TAXONOMY_ID_COLUMN +
+                        " FROM " + tableName +
                         " WHERE batch_id = ? " +
                         " ORDER BY " + LOAD_ORDER_COLUMN;
 
