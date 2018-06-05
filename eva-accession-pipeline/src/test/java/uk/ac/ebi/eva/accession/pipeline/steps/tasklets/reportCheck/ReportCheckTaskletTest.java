@@ -131,38 +131,38 @@ public class ReportCheckTaskletTest {
 
     @Test
     public void smallBuffer_10() throws Exception {
-        profileBuffering(10, 136, 137);
+        profileBuffering(10, 40, 8);
     }
 
     @Test
     public void smallBuffer_11() throws Exception {
-        profileBuffering(11, 81, 137);
+        profileBuffering(11, 22, 40);
     }
 
     @Test
     public void smallBuffer_20() throws Exception {
-        profileBuffering(20, 81, 95);
+        profileBuffering(20, 40, 7);
     }
 
     @Test
     public void smallBuffer_21() throws Exception {
-        profileBuffering(21, 1, 86);
+        profileBuffering(21, 21, 70);
     }
 
     /**
      * The report has all the accessions, but unordered. The 1st to 10th variants in the original vcf appear after
      * the 100th variant in the report, and the 11th to 20th in the original vcf appear at the end of the report.
-     * @param maxVariantBufferSize configures max size of the variantBuffer, which is filled from the original VCF.
-     * @param expectedMaxUnmatchedAccessionsBufferSize expected max size of the set of accessions
-     * @param expectedIterations expected number of times a chunk was read from the original VCF
+     * @param initialBufferSize configures initial size of the buffers. If will grow if needed.
+     * @param expectedMaxBufferSize expected max size of the buffers.
+     * @param expectedIterations expected number of times a chunk was read from the VCFs.
      */
-    private void profileBuffering(int maxVariantBufferSize, int expectedMaxUnmatchedAccessionsBufferSize,
+    private void profileBuffering(int initialBufferSize, int expectedMaxBufferSize,
                                   int expectedIterations) throws Exception {
         // given
         URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
         URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.report.vcf.gz").toURI();
         ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
-        reportCheckTasklet.setMaxVariantBufferSize(maxVariantBufferSize);
+        reportCheckTasklet.setInitialBufferSize(initialBufferSize);
 
         // when
         StepContribution stepContribution = new StepContribution(
@@ -171,7 +171,7 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
-        assertEquals(expectedMaxUnmatchedAccessionsBufferSize, reportCheckTasklet.getMaxAccessionBufferSize());
+        assertEquals(expectedMaxBufferSize, reportCheckTasklet.getMaxBufferSize());
         assertEquals(expectedIterations, reportCheckTasklet.getIterations());
     }
 }

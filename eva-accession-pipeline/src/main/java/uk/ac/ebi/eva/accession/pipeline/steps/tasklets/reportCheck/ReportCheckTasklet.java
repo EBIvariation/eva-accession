@@ -44,13 +44,11 @@ import java.util.Set;
  * variants should be left in the buffers after both files were completely read.
  *
  * The reason why the buffers are needed is that the accession report can be unordered. In order to avoid
- * having the original VCF completely loaded in the variant buffer, a buffer size can be configured. However, to grant
- * correct behaviour in worst-ordering scenario, the accession buffer (for yet-unmatched accessions from the accession
- * report) has to be able to grow indefinitely.
+ * having the VCFs completely loaded in memory, a buffer size can be configured for both buffers. However, to guarantee
+ * correct behaviour in worst-ordering scenario, the buffers need to be able to grow indefinitely.
  *
- * To perform self-checks, this tasklet provides the maximum size that the accession buffer during the execution, and
+ * To perform some self-checks, this tasklet provides the maximum size of the buffers during the execution, and
  * also provides the number of iterations needed.
- *
  */
 public class ReportCheckTasklet implements Tasklet {
 
@@ -58,13 +56,15 @@ public class ReportCheckTasklet implements Tasklet {
 
     private static final int DEFAULT_MAX_BUFFER_SIZE = 100000;
 
+    private static final int BUFFER_SIZE_INCREASE_FACTOR = 2;
+
     private ItemStreamReader<Variant> inputReader;
 
     private ItemStreamReader<Variant> reportReader;
 
-    private long maxVariantBufferSize;
+    private long maxBufferSize;
 
-    private long maxAccessionBufferSize;
+    private long initialBufferSize;
 
     private long iterations;
 
@@ -73,8 +73,8 @@ public class ReportCheckTasklet implements Tasklet {
     public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader) {
         this.inputReader = inputReader;
         this.reportReader = reportReader;
-        this.maxVariantBufferSize = DEFAULT_MAX_BUFFER_SIZE;
-        this.maxAccessionBufferSize = 0;
+        this.initialBufferSize = DEFAULT_MAX_BUFFER_SIZE;
+        this.maxBufferSize = 0;
         this.iterations = 0;
         this.skipPolicy = new InvalidVariantSkipPolicy();
     }
@@ -85,21 +85,19 @@ public class ReportCheckTasklet implements Tasklet {
         Set<Variant> accessionBuffer = new HashSet<>();
         inputReader.open(new ExecutionContext());
         reportReader.open(new ExecutionContext());
-        while (true) {
+        boolean finishedInputFile = false;
+        boolean finishedReportFile = false;
+        while (!finishedInputFile && !finishedReportFile) {
             iterations++;
 
-            readOriginalVcfUntilBufferIsFull(variantBuffer);
-            removeMatchingVariants(variantBuffer, accessionBuffer);
-            boolean isEveryAccessionLoaded = readAccessionsAndRemoveMatchingOnes(variantBuffer, accessionBuffer);
+            finishedInputFile = fillBuffer(inputReader, variantBuffer);
+            finishedReportFile = fillBuffer(reportReader, accessionBuffer);
 
-            maxAccessionBufferSize = Math.max(maxAccessionBufferSize, accessionBuffer.size());
-            if (isEveryAccessionLoaded) {
-                break;
+            int numRemoved = removeMatchingVariants(variantBuffer, accessionBuffer);
+            if (numRemoved == 0) {
+                increaseBufferSizeToAvoidLock();
             }
         }
-
-        logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxAccessionBufferSize, iterations);
-        removeRemainingMatchingVariants(variantBuffer, accessionBuffer);
 
         logStatus(stepContribution, variantBuffer, accessionBuffer);
 
@@ -107,18 +105,21 @@ public class ReportCheckTasklet implements Tasklet {
     }
 
     /**
-     * Fill the variantBuffer (from the original VCF) until the maximum buffer size is
-     * reached, or until the file was completely read.
-     * @param variantBuffer buffer that will be filled with the original VCF
+     * @return true if the reader is finished, false otherwise (i.e. return false if further calls can put more
+     * variants in the buffer)
      */
-    private void readOriginalVcfUntilBufferIsFull(Set<Variant> variantBuffer) throws Exception {
-        Variant variantRead;
-        while (variantBuffer.size() < maxVariantBufferSize && (variantRead = readVcfIgnoringNonVariants()) != null) {
-            variantBuffer.add(variantRead);
+    private boolean fillBuffer(ItemStreamReader<Variant> reader, Set<Variant> buffer) throws Exception {
+        Variant variantRead = null;
+        boolean bufferWasNotFull = buffer.size() < initialBufferSize;
+
+        while (buffer.size() < initialBufferSize && (variantRead = readVcfIgnoringNonVariants(reader)) != null) {
+            buffer.add(variantRead);
         }
+        maxBufferSize = Math.max(maxBufferSize, buffer.size());
+        return bufferWasNotFull && variantRead == null;
     }
 
-    private Variant readVcfIgnoringNonVariants() throws Exception {
+    private Variant readVcfIgnoringNonVariants(ItemStreamReader<Variant> inputReader) throws Exception {
         Variant variant = null;
         boolean readVariantOrEof = false;
         while (!readVariantOrEof) {
@@ -136,7 +137,7 @@ public class ReportCheckTasklet implements Tasklet {
         return variant;
     }
 
-    private void removeMatchingVariants(Set<Variant> variantBuffer, Set<Variant> accessionBuffer) {
+    private int removeMatchingVariants(Set<Variant> variantBuffer, Set<Variant> accessionBuffer) {
         Set<Variant> matchedAccessions = new HashSet<>();
         for (Variant unmatchedAccession : accessionBuffer) {
             boolean removed = variantBuffer.remove(unmatchedAccession);
@@ -148,41 +149,22 @@ public class ReportCheckTasklet implements Tasklet {
             }
         }
         accessionBuffer.removeAll(matchedAccessions);
+        return matchedAccessions.size();
     }
 
-    private boolean readAccessionsAndRemoveMatchingOnes(Set<Variant> variantBuffer, Set<Variant> accessionBuffer)
-            throws Exception {
-        Set<Variant> newUnmatchedAccessions = new HashSet<>();
-        Variant reportedVariant = null;
-        while (newUnmatchedAccessions.size() == 0 && (reportedVariant = reportReader.read()) != null) {
-            boolean removed = variantBuffer.remove(reportedVariant);
-            if (!removed) {
-                newUnmatchedAccessions.add(reportedVariant);
-            }
-        }
-        accessionBuffer.addAll(newUnmatchedAccessions);
-        return reportedVariant == null;
-    }
-
-    private void removeRemainingMatchingVariants(Set<Variant> variantBuffer,
-                                                 Set<Variant> accessionBuffer) throws Exception {
-        removeMatchingVariants(variantBuffer, accessionBuffer);
-        removeRemainingMatchingVariantsFromOriginalVcfFile(variantBuffer, accessionBuffer);
-    }
-
-    private void removeRemainingMatchingVariantsFromOriginalVcfFile(Set<Variant> variantBuffer,
-                                                                    Set<Variant> accessionBuffer) throws Exception {
-        Variant variantWithoutAccession;
-        while ((variantWithoutAccession = readVcfIgnoringNonVariants()) != null) {
-            boolean removed = accessionBuffer.remove(variantWithoutAccession);
-            if (!removed) {
-                variantBuffer.add(variantWithoutAccession);
-            }
-        }
+    /**
+     * TODO: decide if we allow to grow indefinitely or put a hard cap
+     * A hard cap would mean we stop the process if there are more unmatched variants than the buffer size or the
+     * report is heavily unordered.
+     */
+    private void increaseBufferSizeToAvoidLock() {
+        initialBufferSize *= BUFFER_SIZE_INCREASE_FACTOR;
     }
 
     private void logStatus(StepContribution stepContribution, Set<Variant> variantsWithoutAccession,
                            Set<Variant> unmatchedAccessions) {
+        logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxBufferSize, iterations);
+
         stepContribution.setExitStatus(ExitStatus.COMPLETED);
 
         if (!unmatchedAccessions.isEmpty()) {
@@ -201,25 +183,15 @@ public class ReportCheckTasklet implements Tasklet {
         }
     }
 
-    public long getMaxVariantBufferSize() {
-        return maxVariantBufferSize;
+    /**
+     * @param initialBufferSize initial size of the buffers. This will grow exponentially as needed.
+     */
+    public void setInitialBufferSize(long initialBufferSize) {
+        this.initialBufferSize = initialBufferSize;
     }
 
-    /**
-     * See the terminology in the documentation of this class
-     * @param maxVariantBufferSize max size of the buffer where the variants of the original VCF are loaded
-     */
-    public void setMaxVariantBufferSize(long maxVariantBufferSize) {
-        this.maxVariantBufferSize = maxVariantBufferSize;
-    }
-
-    /**
-     * To guarantee correct behaviour in worst-ordering scenario, the accession buffer (for yet-unmatched accessions
-     * from the accession report) has to be able to grow indefinitely.
-     * @return The maximum size of the accessionBuffer
-     */
-    public long getMaxAccessionBufferSize() {
-        return maxAccessionBufferSize;
+    public long getMaxBufferSize() {
+        return maxBufferSize;
     }
 
     public long getIterations() {
