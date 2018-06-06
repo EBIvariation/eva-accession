@@ -20,27 +20,55 @@ import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AccessionWrapperComparator implements Comparator<AccessionWrapper<ISubmittedVariant, String, Long>> {
+
+    private Map<String, Integer> contigOrder;
+
+    public AccessionWrapperComparator(List<? extends ISubmittedVariant> variants) {
+        this.contigOrder = getContigOrder(variants);
+    }
+
+    private Map<String, Integer> getContigOrder(List<? extends ISubmittedVariant> variants) {
+        Map<String, Integer> contigsOrder = new HashMap<>();
+        int nextIndex = 0;
+        for (ISubmittedVariant variant : variants) {
+            if (!contigsOrder.containsKey(variant.getContig())) {
+                contigsOrder.put(variant.getContig(), nextIndex++);
+            }
+        }
+        return contigsOrder;
+    }
 
     @Override
     public int compare(AccessionWrapper<ISubmittedVariant, String, Long> firstAccession,
                        AccessionWrapper<ISubmittedVariant, String, Long> secondAccession) {
-        int contigComparation = new AlphanumComparator().compare(firstAccession.getData().getContig(),
-                                                                 secondAccession.getData().getContig());
-        if (contigComparation < 0) {
+        Integer firstAccessionOrder = contigOrder.get(firstAccession.getData().getContig());
+        Integer secondAccessionOrder = contigOrder.get(secondAccession.getData().getContig());
+        if (firstAccessionOrder == null || secondAccessionOrder == null) {
+            String missingContigInOrdering = firstAccessionOrder == null ? firstAccession.getData().getContig()
+                                                                         : secondAccession.getData().getContig();
+            throw new IllegalStateException("AccessionWrapperComparator can not compare "
+                                                    + firstAccession.getData().getContig()
+                                                    + " and "
+                                                    + secondAccession.getData().getContig()
+                                                    + ", because "
+                                                    + missingContigInOrdering
+                                                    + " was not contained in the initial list of variants that is "
+                                                    + "used to extract the order: "
+                                                    + contigOrder.toString());
+        }
+        Integer contigComparison = firstAccessionOrder - secondAccessionOrder;
+        if (contigComparison < 0) {
             return -1;
-        } else if (contigComparation > 0) {
+        } else if (contigComparison > 0) {
             return 1;
         } else {
-            long positionComparation = firstAccession.getData().getStart() - secondAccession.getData().getStart();
-            if (positionComparation < 0) {
-                return -1;
-            } else if (positionComparation > 0) {
-                return 1;
-            } else {
-                return 0;
-            }
+            long positionComparison = firstAccession.getData().getStart() - secondAccession.getData().getStart();
+            return Long.signum(positionComparison);
         }
     }
 }

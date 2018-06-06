@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,7 +37,11 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -47,6 +52,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
@@ -58,6 +64,10 @@ public class AccessionWriterTest {
     private static final int TAXONOMY = 3880;
 
     private static final long EXPECTED_ACCESSION = 10000000000L;
+
+    private static final String CONTIG_1 = "contig_1";
+
+    private static final String CONTIG_2 = "contig_2";
 
     private static final int START_1 = 100;
 
@@ -216,5 +226,38 @@ public class AccessionWriterTest {
 
         thrown.expect(IllegalStateException.class);
         accessionWriter.checkCountsMatch(variants, accessions);
+    }
+
+    @Test
+    public void shouldSortReport() throws Exception {
+        // given
+        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
+                                                             "reference", "alternate", false);
+        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_2, START_2,
+                                                              "reference", "alternate", false);
+        SubmittedVariant thirdVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_2,
+                                                             "reference", "alternate", false);
+        SubmittedVariant fourthVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_2, START_1,
+                                                              "reference", "alternate", false);
+        List<SubmittedVariant> variants = Arrays.asList(firstVariant, secondVariant, thirdVariant, fourthVariant);
+
+        // when
+        accessionWriter.write(variants);
+
+        // then
+        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
+        String line;
+        while ((line = fileInputStream.readLine()) != null) {
+            if (!line.startsWith("#")) {
+                break;
+            }
+        }
+        assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_1));
+        line = fileInputStream.readLine();
+        assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_2));
+        line = fileInputStream.readLine();
+        assertThat(line, Matchers.startsWith(CONTIG_2 + "\t" + START_1));
+        line = fileInputStream.readLine();
+        assertThat(line, Matchers.startsWith(CONTIG_2 + "\t" + START_2));
     }
 }

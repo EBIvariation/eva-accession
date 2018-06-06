@@ -184,39 +184,6 @@ public class AccessionReportWriterTest {
         } while (variantLine != null);
     }
 
-    @Test
-    public void shouldSortReport() throws IOException {
-        // given
-        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
-                                                             "reference", "alternate", false);
-        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_2, START_2,
-                                                              "reference", "alternate", false);
-        SubmittedVariant thirdVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_2,
-                                                             "reference", "alternate", false);
-        SubmittedVariant fourthVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_2, START_1,
-                                                              "reference", "alternate", false);
-        List<SubmittedVariant> variants = Arrays.asList(firstVariant, secondVariant, thirdVariant, fourthVariant);
-
-        // when
-        accessionReportWriter.write(mockWrap(variants));
-
-        // then
-        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
-        String line;
-        while ((line = fileInputStream.readLine()) != null) {
-            if (!line.startsWith("#")) {
-                break;
-            }
-        }
-        assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_1));
-        line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_2));
-        line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CONTIG_2 + "\t" + START_1));
-        line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CONTIG_2 + "\t" + START_2));
-    }
-
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> mockWrap(List<SubmittedVariant> variants) {
         return variants.stream()
                        .map(variant -> new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, HASH, variant))

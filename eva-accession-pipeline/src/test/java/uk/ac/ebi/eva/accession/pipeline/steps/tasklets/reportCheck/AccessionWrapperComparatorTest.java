@@ -15,21 +15,55 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 
 public class AccessionWrapperComparatorTest {
 
+    private static final String CONTIG_A = "A";
+
+    private static final String CONTIG_B = "B";
+
+    private static final String CONTIG_2 = "2";
+
+    private static final String CONTIG_11 = "11";
+
+    private static final String CONTIG_PREFIX_2 = "prefix2";
+
+    private static final String CONTIG_PREFIX_11 = "prefix11";
+
+    private AccessionWrapperComparator accessionWrapperComparator;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Before
+    public void setUp() throws Exception {
+        List<SubmittedVariant> variants = Arrays.asList(buildMockVariant(CONTIG_A),
+                                                        buildMockVariant(CONTIG_B),
+                                                        buildMockVariant(CONTIG_2),
+                                                        buildMockVariant(CONTIG_11),
+                                                        buildMockVariant(CONTIG_PREFIX_2),
+                                                        buildMockVariant(CONTIG_PREFIX_11)
+        );
+        accessionWrapperComparator = new AccessionWrapperComparator(variants);
+    }
+
     @Test
     public void checkSortedContig() {
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator();
-        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper("A", 200),
-                                                             buildMockAccessionWrapper("B", 100));
+        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper(CONTIG_A, 200),
+                                                             buildMockAccessionWrapper(CONTIG_B, 100));
         assertEquals(-1, comparation);
     }
 
@@ -41,50 +75,82 @@ public class AccessionWrapperComparatorTest {
 
     @Test
     public void checkUnsortedContig() {
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator();
-        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper("B", 100),
-                                                             buildMockAccessionWrapper("A", 200));
+        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper(CONTIG_B, 100),
+                                                             buildMockAccessionWrapper(CONTIG_A, 200));
         assertEquals(1, comparation);
     }
 
     @Test
     public void checkEqualContigSortedPosition() {
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator();
-        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper("A", 100),
-                                                             buildMockAccessionWrapper("A", 200));
+        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper(CONTIG_A, 100),
+                                                             buildMockAccessionWrapper(CONTIG_A, 200));
         assertEquals(-1, comparation);
     }
 
     @Test
     public void checkEqualContigUnsortedPosition() {
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator();
-        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper("A", 200),
-                                                             buildMockAccessionWrapper("A", 100));
+        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper(CONTIG_A, 200),
+                                                             buildMockAccessionWrapper(CONTIG_A, 100));
         assertEquals(1, comparation);
     }
 
     @Test
     public void checkEqualContigEqualPosition() {
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator();
-        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper("A", 100),
-                                                             buildMockAccessionWrapper("A", 100));
+        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper(CONTIG_A, 100),
+                                                             buildMockAccessionWrapper(CONTIG_A, 100));
         assertEquals(0, comparation);
     }
 
     @Test
     public void checkNumericalContig() {
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator();
-        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper("2", 100),
-                                                             buildMockAccessionWrapper("11", 100));
+        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper(CONTIG_2, 100),
+                                                             buildMockAccessionWrapper(CONTIG_11, 100));
         assertEquals(-1, comparation);
     }
+
     @Test
     public void checkNumericalContigWithPrefix() {
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator();
-        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper("prefix2", 100),
-                                                             buildMockAccessionWrapper("prefix11", 100));
+        int comparation = accessionWrapperComparator.compare(buildMockAccessionWrapper(CONTIG_PREFIX_2, 100),
+                                                             buildMockAccessionWrapper(CONTIG_PREFIX_11, 100));
         assertEquals(-1, comparation);
     }
 
+    @Test
+    public void checkDifferentInputOrder() {
+        List<SubmittedVariant> variants = Arrays.asList(buildMockVariant(CONTIG_B),
+                                                        buildMockVariant(CONTIG_A),
+                                                        buildMockVariant(CONTIG_A),
+                                                        buildMockVariant(CONTIG_A),
+                                                        buildMockVariant(CONTIG_11),
+                                                        buildMockVariant(CONTIG_11),
+                                                        buildMockVariant(CONTIG_2),
+                                                        buildMockVariant(CONTIG_2),
+                                                        buildMockVariant(CONTIG_2));
+        AccessionWrapperComparator comparator = new AccessionWrapperComparator(variants);
 
+        assertEquals(-1, comparator.compare(buildMockAccessionWrapper(CONTIG_11, 100),
+                                            buildMockAccessionWrapper(CONTIG_2, 100)));
+        assertEquals(+1, comparator.compare(buildMockAccessionWrapper(CONTIG_2, 100),
+                                            buildMockAccessionWrapper(CONTIG_11, 100)));
+
+        assertEquals(-1, comparator.compare(buildMockAccessionWrapper(CONTIG_B, 100),
+                                            buildMockAccessionWrapper(CONTIG_11, 100)));
+        assertEquals(+1, comparator.compare(buildMockAccessionWrapper(CONTIG_2, 100),
+                                            buildMockAccessionWrapper(CONTIG_A, 100)));
+    }
+
+    private SubmittedVariant buildMockVariant(String contig) {
+        return new SubmittedVariant("", 0, "", contig, 0, "", "", false);
+    }
+
+    @Test
+    public void checkUnexpectedContigRaisesException() {
+        List<SubmittedVariant> variants = Arrays.asList(buildMockVariant(CONTIG_B),
+                                                        buildMockVariant(CONTIG_A));
+        AccessionWrapperComparator comparator = new AccessionWrapperComparator(variants);
+
+        thrown.expect(IllegalStateException.class);
+        comparator.compare(buildMockAccessionWrapper(CONTIG_11, 100),
+                           buildMockAccessionWrapper(CONTIG_2, 100));
+    }
 }

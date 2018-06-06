@@ -113,7 +113,6 @@ public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<
             throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
                                           "called AccessionReportWriter::open");
         }
-        accessions.sort(new AccessionWrapperComparator());
         for (AccessionWrapper<ISubmittedVariant, String, Long> variant : accessions) {
             writeVariant(variant.getAccession(), variant.getData());
         }
