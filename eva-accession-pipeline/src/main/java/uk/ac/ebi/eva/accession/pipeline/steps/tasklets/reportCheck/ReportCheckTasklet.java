@@ -87,7 +87,7 @@ public class ReportCheckTasklet implements Tasklet {
         reportReader.open(new ExecutionContext());
         boolean finishedInputFile = false;
         boolean finishedReportFile = false;
-        while (!finishedInputFile && !finishedReportFile) {
+        while (!(finishedInputFile && finishedReportFile)) {
             iterations++;
 
             finishedInputFile = fillBuffer(inputReader, variantBuffer);
