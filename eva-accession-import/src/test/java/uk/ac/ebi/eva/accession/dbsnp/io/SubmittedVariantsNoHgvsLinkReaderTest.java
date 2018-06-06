@@ -16,9 +16,12 @@
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStreamException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -32,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource({"classpath:application.properties"})
@@ -43,6 +47,9 @@ public class SubmittedVariantsNoHgvsLinkReaderTest {
     private SubmittedVariantsNoHgvsLinkReader reader;
 
     private static final String CHICKEN_ASSEMBY = "Gallus_gallus-5.0";
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Autowired
     private DbsnpDataSource dbsnpDataSource;
@@ -59,6 +66,18 @@ public class SubmittedVariantsNoHgvsLinkReaderTest {
         reader = buildReader(11825, CHICKEN_ASSEMBY, PAGE_SIZE);
         List<VariantNoHgvsLink> variants = readAll(reader);
         assertEquals(2, variants.size());
+    }
+
+    @Test
+    public void readBatchWithNoVariants() throws Exception {
+        reader = buildReader(11000, CHICKEN_ASSEMBY, PAGE_SIZE);
+        assertNull(reader.read());
+    }
+
+    @Test
+    public void readWrongAssembly() throws Exception {
+        thrown.expect(ItemStreamException.class);
+        reader = buildReader(11825, "UNKNOWN_ASSEMBLY", PAGE_SIZE);
     }
 
     private SubmittedVariantsNoHgvsLinkReader buildReader(int batch, String assembly, int pageSize)
