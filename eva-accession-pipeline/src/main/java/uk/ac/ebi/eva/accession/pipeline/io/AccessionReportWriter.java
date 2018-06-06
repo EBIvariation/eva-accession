@@ -23,6 +23,7 @@ import org.springframework.batch.item.ItemStreamWriter;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -112,6 +113,7 @@ public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<
             throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
                                           "called AccessionReportWriter::open");
         }
+        accessions.sort(new AccessionWrapperComparator());
         for (AccessionWrapper<ISubmittedVariant, String, Long> variant : accessions) {
             writeVariant(variant.getAccession(), variant.getData());
         }

@@ -47,7 +47,6 @@ public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
     @Override
     public void write(List<? extends ISubmittedVariant> variants) throws Exception {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreateAccessions(variants);
-        accessions.sort(new AccessionWrapperComparator());
         accessionReportWriter.write(accessions);
         checkCountsMatch(variants, accessions);
     }

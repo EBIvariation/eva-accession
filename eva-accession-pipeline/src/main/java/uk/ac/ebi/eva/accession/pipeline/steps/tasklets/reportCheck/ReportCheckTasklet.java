@@ -156,6 +156,7 @@ public class ReportCheckTasklet implements Tasklet {
      * TODO: decide if we allow to grow indefinitely or put a hard cap
      * A hard cap would mean we stop the process if there are more unmatched variants than the buffer size or the
      * report is heavily unordered.
+     * Alternatively, we can allow configuring which behaviour to use?
      */
     private void increaseBufferSizeToAvoidLock() {
         initialBufferSize *= BUFFER_SIZE_INCREASE_FACTOR;
