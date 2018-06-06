@@ -61,6 +61,7 @@ public class VariantNoHgvsLink {
         this.chromosome = chromosome;
         this.chromosomeStart = chromosomeStart;
         this.contigName = contigName;
+        // TODO: check if we need other orientation fields to calculate the variant alleles
         this.contigOrientation = contigOrientation;
         this.contigStart = contigStart;
         this.frequencyExists = frequencyExists;
@@ -68,6 +69,126 @@ public class VariantNoHgvsLink {
         this.loadOrder = loadOrder;
         this.reference = reference;
         this.createTime = createTime;
+        this.taxonomyId = taxonomyId;
+    }
+
+    public String getAlleles() {
+        return alleles;
+    }
+
+    public void setAlleles(String alleles) {
+        this.alleles = alleles;
+    }
+
+    public String getAssembly() {
+        return assembly;
+    }
+
+    public void setAssembly(String assembly) {
+        this.assembly = assembly;
+    }
+
+    public String getBatchHandle() {
+        return batchHandle;
+    }
+
+    public void setBatchHandle(String batchHandle) {
+        this.batchHandle = batchHandle;
+    }
+
+    public String getBatchName() {
+        return batchName;
+    }
+
+    public void setBatchName(String batchName) {
+        this.batchName = batchName;
+    }
+
+    public String getChromosome() {
+        return chromosome;
+    }
+
+    public void setChromosome(String chromosome) {
+        this.chromosome = chromosome;
+    }
+
+    public int getChromosomeStart() {
+        return chromosomeStart;
+    }
+
+    public void setChromosomeStart(int chromosomeStart) {
+        this.chromosomeStart = chromosomeStart;
+    }
+
+    public String getContigName() {
+        return contigName;
+    }
+
+    public void setContigName(String contigName) {
+        this.contigName = contigName;
+    }
+
+    public Orientation getContigOrientation() {
+        return contigOrientation;
+    }
+
+    public void setContigOrientation(Orientation contigOrientation) {
+        this.contigOrientation = contigOrientation;
+    }
+
+    public int getContigStart() {
+        return contigStart;
+    }
+
+    public void setContigStart(int contigStart) {
+        this.contigStart = contigStart;
+    }
+
+    public boolean isFrequencyExists() {
+        return frequencyExists;
+    }
+
+    public void setFrequencyExists(boolean frequencyExists) {
+        this.frequencyExists = frequencyExists;
+    }
+
+    public boolean isGenotypExists() {
+        return genotypExists;
+    }
+
+    public void setGenotypExists(boolean genotypExists) {
+        this.genotypExists = genotypExists;
+    }
+
+    public int getLoadOrder() {
+        return loadOrder;
+    }
+
+    public void setLoadOrder(int loadOrder) {
+        this.loadOrder = loadOrder;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public int getTaxonomyId() {
+        return taxonomyId;
+    }
+
+    public void setTaxonomyId(int taxonomyId) {
         this.taxonomyId = taxonomyId;
     }
 }
