@@ -24,6 +24,8 @@ import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.ebi.eva.commons.core.utils.FileUtils;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -44,6 +46,7 @@ public class FastaSequenceReader {
     private SAMSequenceDictionary sequenceDictionary;
 
     public FastaSequenceReader(Path fastaPath) throws IOException {
+        checkFastaIsUncompressed(fastaPath);
         fastaSequenceFile = ReferenceSequenceFileFactory.getReferenceSequenceFile(fastaPath, true);
         sequenceDictionary = fastaSequenceFile.getSequenceDictionary();
 
@@ -55,6 +58,17 @@ public class FastaSequenceReader {
             logger.info("Sequence index file not found - creating one...");
             FastaSequenceIndexCreator.create(fastaPath, true);
             fastaSequenceFile = ReferenceSequenceFileFactory.getReferenceSequenceFile(fastaPath, true);
+        }
+    }
+
+    /**
+     * Require the fasta to be uncompressed. Htsjdk seems to support reading and indexing compressed fastas, but for
+     * some reason, when asked for a reference, it returns \0 at every position. this test shows the error:
+     * uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReaderTest#htsDoesNotSupportCompressedFastas()
+     */
+    private void checkFastaIsUncompressed(Path fastaPath) throws IOException {
+        if (FileUtils.isGzip(fastaPath.toFile())) {
+            throw new IllegalArgumentException("Fasta file should not be compressed: " + fastaPath);
         }
     }
 

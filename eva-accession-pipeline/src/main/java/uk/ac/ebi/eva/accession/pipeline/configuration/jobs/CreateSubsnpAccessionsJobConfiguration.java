@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
@@ -37,11 +38,16 @@ public class CreateSubsnpAccessionsJobConfiguration {
     @Qualifier(CREATE_SUBSNP_ACCESSION_STEP)
     private Step createSubsnpAccessionStep;
 
+    @Autowired
+    @Qualifier(CHECK_SUBSNP_ACCESSION_STEP)
+    private Step checkSubsnpAccessionStep;
+
     @Bean(CREATE_SUBSNP_ACCESSION_JOB)
     public Job createSubsnpAccessionJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CREATE_SUBSNP_ACCESSION_JOB)
                                 .incrementer(new RunIdIncrementer())
                                 .flow(createSubsnpAccessionStep)
+                                .next(checkSubsnpAccessionStep)
                                 .end()
                                 .build();
     }

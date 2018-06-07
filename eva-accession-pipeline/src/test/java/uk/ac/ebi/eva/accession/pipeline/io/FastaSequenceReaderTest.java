@@ -17,12 +17,15 @@ package uk.ac.ebi.eva.accession.pipeline.io;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -113,5 +116,41 @@ public class FastaSequenceReaderTest {
         // this sequence is split between three lines in the FASTA file
         assertEquals("CAGCCGCAGTCCGGACAGCGCATGCGCCAGCCGCGAGACCGCACAGCGCATGCGCCAGCGCGAGTGACAGCG",
                      fastaSequenceReader.getSequence("22", 174, 245));
+    }
+
+    /**
+     * @TODO find the bug: either we don't use properly htsjdk, or they have a bug reading compressed fastas.
+     * This test is ignored because to run it we have to remove the requirement in
+     * {@link uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)} that
+     * forbids compressed fastas. You can comment the requirement by hand and run this test to see if it still applies.
+     */
+    @Test
+    @Ignore
+    public void htsDoesNotSupportCompressedFastas() throws URISyntaxException, IOException {
+        String fastaFilename = "compressed.fa.gz";
+        File temporaryFolderRoot = temporaryFolder.getRoot();
+        Path fasta = Files.copy(
+                Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
+                temporaryFolderRoot.toPath().resolve(fastaFilename));
+
+        FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(fasta);
+
+        assertEquals("\0\0\0\0", fastaSequenceReader.getSequence("22", 174, 177));
+    }
+
+    /**
+     * For the rationale of this test, look at {@link #htsDoesNotSupportCompressedFastas()} and
+     *  {@link uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)}
+     */
+    @Test
+    public void shouldThrowOnCompressedFasta() throws URISyntaxException, IOException {
+        String fastaFilename = "compressed.fa.gz";
+        File temporaryFolderRoot = temporaryFolder.getRoot();
+        Path fasta = Files.copy(
+                Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
+                temporaryFolderRoot.toPath().resolve(fastaFilename));
+
+        thrown.expect(IllegalArgumentException.class);
+        new FastaSequenceReader(fasta);
     }
 }

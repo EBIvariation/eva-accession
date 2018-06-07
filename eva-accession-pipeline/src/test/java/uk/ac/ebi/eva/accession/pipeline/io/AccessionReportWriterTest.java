@@ -34,6 +34,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -45,7 +47,9 @@ public class AccessionReportWriterTest {
 
     private static final String CONTIG_2 = "contig_2";
 
-    private static final int START = 10;
+    private static final int START_1 = 10;
+
+    private static final int START_2 = 20;
 
     private static final String REFERENCE = "T";
 
@@ -58,6 +62,8 @@ public class AccessionReportWriterTest {
     private static final String ACCESSION_PREFIX = "ss";
 
     private static final long ACCESSION = 100L;
+
+    private static final String HASH = "hash";
 
     private AccessionReportWriter accessionReportWriter;
 
@@ -82,7 +88,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeSnpWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
                                                         ALTERNATE, false);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
@@ -91,7 +97,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
         assertEquals(
-                String.join("\t", CONTIG_1, Integer.toString(START), ACCESSION_PREFIX + ACCESSION, REFERENCE, ALTERNATE,
+                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE, ALTERNATE,
                             ".", ".", "."),
                 getFirstVariantLine(output));
     }
@@ -109,7 +115,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeInsertionWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, "",
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, "",
                                                         ALTERNATE, false);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
@@ -117,7 +123,7 @@ public class AccessionReportWriterTest {
 
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
-        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
@@ -125,7 +131,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeDeletionWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
                                                         "", false);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
@@ -133,7 +139,7 @@ public class AccessionReportWriterTest {
 
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
-        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START - 1), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE + REFERENCE, CONTEXT_BASE,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
@@ -141,7 +147,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void resumeWriting() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START, REFERENCE,
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
                                                         ALTERNATE, false);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
@@ -173,5 +179,11 @@ public class AccessionReportWriterTest {
             assertFalse("VCF report has header lines after variant lines", variantLine.startsWith("#"));
             variantLine = fileInputStream.readLine();
         } while (variantLine != null);
+    }
+
+    private List<AccessionWrapper<ISubmittedVariant, String, Long>> mockWrap(List<SubmittedVariant> variants) {
+        return variants.stream()
+                       .map(variant -> new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, HASH, variant))
+                       .collect(Collectors.toList());
     }
 }

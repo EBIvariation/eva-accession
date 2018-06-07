@@ -28,8 +28,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
+import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
