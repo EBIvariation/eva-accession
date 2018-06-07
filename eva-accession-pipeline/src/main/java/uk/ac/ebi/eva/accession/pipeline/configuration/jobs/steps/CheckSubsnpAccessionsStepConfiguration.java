@@ -60,8 +60,8 @@ public class CheckSubsnpAccessionsStepConfiguration {
 
     @Bean(CHECK_SUBSNP_ACCESSION_STEP)
     public Step checkSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory) throws IOException {
-        ReportCheckTasklet tasklet = new ReportCheckTasklet(inputReader, reportReader());
-        tasklet.setInitialBufferSize(inputParameters.getChunkSize() * 2);
+        ReportCheckTasklet tasklet = new ReportCheckTasklet(inputReader, reportReader(),
+                                                            inputParameters.getChunkSize() * 2);
         TaskletStep step = stepBuilderFactory.get(CHECK_SUBSNP_ACCESSION_STEP)
                                              .tasklet(tasklet)
                                              .build();

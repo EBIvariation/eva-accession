@@ -54,8 +54,6 @@ public class ReportCheckTasklet implements Tasklet {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportCheckTasklet.class);
 
-    private static final int DEFAULT_MAX_BUFFER_SIZE = 100000;
-
     private static final int BUFFER_SIZE_INCREASE_FACTOR = 2;
 
     private ItemStreamReader<Variant> inputReader;
@@ -70,10 +68,11 @@ public class ReportCheckTasklet implements Tasklet {
 
     private SkipPolicy skipPolicy;
 
-    public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader) {
+    public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader,
+                              long initialBufferSize) {
         this.inputReader = inputReader;
         this.reportReader = reportReader;
-        this.initialBufferSize = DEFAULT_MAX_BUFFER_SIZE;
+        this.initialBufferSize = initialBufferSize;
         this.maxBufferSize = 0;
         this.iterations = 0;
         this.skipPolicy = new InvalidVariantSkipPolicy();
@@ -85,13 +84,13 @@ public class ReportCheckTasklet implements Tasklet {
         Set<Variant> accessionBuffer = new HashSet<>();
         inputReader.open(new ExecutionContext());
         reportReader.open(new ExecutionContext());
-        boolean finishedInputFile = false;
-        boolean finishedReportFile = false;
-        while (!(finishedInputFile && finishedReportFile)) {
+        boolean readsPendingInputFile = true;
+        boolean readsPendingReportFile = true;
+        while (readsPendingInputFile || readsPendingReportFile) {
             iterations++;
 
-            finishedInputFile = fillBuffer(inputReader, variantBuffer);
-            finishedReportFile = fillBuffer(reportReader, accessionBuffer);
+            readsPendingInputFile = fillBuffer(inputReader, variantBuffer);
+            readsPendingReportFile = fillBuffer(reportReader, accessionBuffer);
 
             int numRemoved = removeMatchingVariants(variantBuffer, accessionBuffer);
             if (numRemoved == 0) {
@@ -105,18 +104,19 @@ public class ReportCheckTasklet implements Tasklet {
     }
 
     /**
-     * @return true if the reader is finished, false otherwise (i.e. return false if further calls can put more
-     * variants in the buffer)
+     * @return true if the reader is pending some reads, false otherwise (i.e. return false if there are no more
+     * reads available)
      */
     private boolean fillBuffer(ItemStreamReader<Variant> reader, Set<Variant> buffer) throws Exception {
         Variant variantRead = null;
-        boolean bufferWasNotFull = buffer.size() < initialBufferSize;
+        boolean bufferWasFull = buffer.size() >= initialBufferSize;
 
         while (buffer.size() < initialBufferSize && (variantRead = readVcfIgnoringNonVariants(reader)) != null) {
             buffer.add(variantRead);
         }
         maxBufferSize = Math.max(maxBufferSize, buffer.size());
-        return bufferWasNotFull && variantRead == null;
+        boolean moreReadsPending = bufferWasFull || variantRead != null;
+        return moreReadsPending;
     }
 
     private Variant readVcfIgnoringNonVariants(ItemStreamReader<Variant> inputReader) throws Exception {

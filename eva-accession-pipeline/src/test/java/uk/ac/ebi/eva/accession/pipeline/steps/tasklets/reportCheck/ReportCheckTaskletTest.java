@@ -55,6 +55,10 @@ public class ReportCheckTaskletTest {
     }
 
     private ReportCheckTasklet getReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
+        return getReportCheckTasklet(vcfUri, reportUri, 1000);
+    }
+
+    private ReportCheckTasklet getReportCheckTasklet(URI vcfUri, URI reportUri, int initialBufferSize) throws IOException {
         File vcfFile = new File(vcfUri);
         AggregatedVcfReader vcfReader = new AggregatedVcfReader("fileId", "studyId", Aggregation.BASIC, null, vcfFile);
         UnwindingItemStreamReader<Variant> unwindingVcfReader = new UnwindingItemStreamReader<>(vcfReader);
@@ -63,7 +67,7 @@ public class ReportCheckTaskletTest {
         VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
         UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
-        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader);
+        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, initialBufferSize);
     }
 
     @Test
@@ -126,7 +130,7 @@ public class ReportCheckTaskletTest {
         VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
         UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
-        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader);
+        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, 1000);
     }
 
     @Test
@@ -161,8 +165,7 @@ public class ReportCheckTaskletTest {
         // given
         URI vcfUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.vcf.gz").toURI();
         URI reportUri = ReportCheckTaskletTest.class.getResource("/input-files/vcf/aggregated.report.vcf.gz").toURI();
-        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
-        reportCheckTasklet.setInitialBufferSize(initialBufferSize);
+        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri, initialBufferSize);
 
         // when
         StepContribution stepContribution = new StepContribution(

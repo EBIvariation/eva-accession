@@ -247,11 +247,9 @@ public class AccessionWriterTest {
         // then
         BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
         String line;
-        while ((line = fileInputStream.readLine()) != null) {
-            if (!line.startsWith("#")) {
-                break;
-            }
+        while ((line = fileInputStream.readLine()) != null && line.startsWith("#")) {
         }
+
         assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_1));
         line = fileInputStream.readLine();
         assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_2));
