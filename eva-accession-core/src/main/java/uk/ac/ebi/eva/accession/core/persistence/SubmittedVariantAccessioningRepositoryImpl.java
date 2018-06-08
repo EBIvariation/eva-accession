@@ -18,34 +18,13 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.IAccessionedObjectCustomRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository.BasicMongoDbAccessionedCustomRepositoryImpl;
 
-import java.util.Collection;
-import java.util.Set;
-
-public class SubmittedVariantAccessioningRepositoryImpl implements IAccessionedObjectCustomRepository {
-
-    private static final String ID = "_id";
-
-    private static final String ACTIVE = "active";
-
-    private MongoTemplate mongoTemplate;
+public class SubmittedVariantAccessioningRepositoryImpl
+        extends BasicMongoDbAccessionedCustomRepositoryImpl<Long, SubmittedVariantEntity> {
 
     public SubmittedVariantAccessioningRepositoryImpl(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = mongoTemplate;
+        super(SubmittedVariantEntity.class, mongoTemplate);
     }
 
-    @Override
-    public void enableByHashedMessageIn(Set<String> set) {
-        mongoTemplate.updateMulti(new Query(Criteria.where(ID).in(set)), Update.update(ACTIVE, true),
-                                  SubmittedVariantEntity.class);
-    }
-
-    @Override
-    public <ENTITY> void insert(Collection<ENTITY> collection) {
-        mongoTemplate.insert(collection, SubmittedVariantEntity.class);
-    }
 }

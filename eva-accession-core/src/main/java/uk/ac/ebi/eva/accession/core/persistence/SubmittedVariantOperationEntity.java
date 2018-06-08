@@ -17,11 +17,10 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
-import org.springframework.stereotype.Repository;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.IAccessionedObjectRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.OperationDocument;
 
-@Repository
-public interface SubmittedVariantAccessioningRepository extends
-        IAccessionedObjectRepository<SubmittedVariantEntity, Long> {
-
+/**
+ * TODO
+ */
+public class SubmittedVariantOperationEntity extends OperationDocument<Long, SubmittedVariantInactiveEntity> {
 }

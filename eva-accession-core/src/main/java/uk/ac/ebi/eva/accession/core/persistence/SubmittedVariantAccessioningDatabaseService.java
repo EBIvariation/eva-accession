@@ -18,6 +18,7 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.BasicInactiveAccessionService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.BasicSpringDataRepositoryDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
 
@@ -26,16 +27,17 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import java.util.Collection;
 
 public class SubmittedVariantAccessioningDatabaseService
-        extends BasicSpringDataRepositoryDatabaseService<ISubmittedVariant, SubmittedVariantEntity, Long>
+        extends BasicSpringDataRepositoryDatabaseService<ISubmittedVariant, Long, SubmittedVariantEntity>
         implements MonotonicDatabaseService<ISubmittedVariant, String> {
 
-    public SubmittedVariantAccessioningDatabaseService(SubmittedVariantAccessioningRepository repository) {
+    public SubmittedVariantAccessioningDatabaseService(SubmittedVariantAccessioningRepository repository,
+                                                       BasicInactiveAccessionService inactiveAccessionService) {
         super(repository,
-              repository,
               accessionWrapper -> new SubmittedVariantEntity(accessionWrapper.getAccession(),
                                                              accessionWrapper.getHash(),
                                                              accessionWrapper.getData()),
-              submittedVariant -> submittedVariant);
+              ISubmittedVariant.class::cast,
+              inactiveAccessionService);
     }
 
     @Override

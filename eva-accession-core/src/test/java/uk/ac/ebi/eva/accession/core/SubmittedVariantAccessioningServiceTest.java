@@ -53,10 +53,8 @@ public class SubmittedVariantAccessioningServiceTest {
                 new SubmittedVariant("assembly", 1111,
                                      "project", "contig_2", 100, "ref",
                                      "alt", true));
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreateAccessions(
-                variants);
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreateAccessions(
-                variants);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(variants);
 
         assertEquals(new HashSet(generatedAccessions), new HashSet(retrievedAccessions));
     }
