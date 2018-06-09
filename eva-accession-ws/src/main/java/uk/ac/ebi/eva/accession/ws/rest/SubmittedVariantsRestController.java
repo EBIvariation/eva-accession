@@ -46,7 +46,7 @@ public class SubmittedVariantsRestController {
     @GetMapping(value = "/{identifiers}", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>> get(
             @PathVariable List<Long> identifiers) {
-        return basicRestController.get(identifiers, false);
+        return basicRestController.get(identifiers);
     }
 }
 
