@@ -51,13 +51,10 @@ public class SubSnpNoHgvs {
 
     private int taxonomyId;
 
-    // TODO: sort the fields in a logical order, or just leave them in alphabetical order?
     public SubSnpNoHgvs(String alleles, String assembly, String batchHandle, String batchName,
-                        String chromosome, int chromosomeStart, String contigName,
-                        Orientation subsnpOrientation,
-                        Orientation snpOrientation, Orientation contigOrientation,
-                        int contigStart, boolean frequencyExists,
-                        boolean genotypeExists, String reference, Date createTime,
+                        String chromosome, int chromosomeStart, String contigName, Orientation subsnpOrientation,
+                        Orientation snpOrientation, Orientation contigOrientation, int contigStart,
+                        boolean frequencyExists, boolean genotypeExists, String reference, Date createTime,
                         int taxonomyId) {
         this.alleles = alleles;
         this.assembly = assembly;
@@ -68,7 +65,6 @@ public class SubSnpNoHgvs {
         this.contigName = contigName;
         this.subsnpOrientation = subsnpOrientation;
         this.snpOrientation = snpOrientation;
-        // TODO: check if we need other orientation fields to calculate the variant alleles
         this.contigOrientation = contigOrientation;
         this.contigStart = contigStart;
         this.frequencyExists = frequencyExists;
