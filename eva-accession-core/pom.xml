@@ -33,12 +33,19 @@
             <groupId>uk.ac.ebi.ampt2d</groupId>
             <artifactId>accession-commons-monotonic-generator-jpa</artifactId>
         </dependency>
-
         <dependency>
+            <groupId>com.lordofthejars</groupId>
+            <artifactId>nosqlunit-mongodb</artifactId>
+            <version>1.0.0-rc.5</version>
+            <scope>test</scope>
+        </dependency>
+
+<!--        <dependency>
             <groupId>com.github.fakemongo</groupId>
             <artifactId>fongo</artifactId>
             <scope>test</scope>
-        </dependency>
+        </dependency>-->
     </dependencies>
+
 
 </project>

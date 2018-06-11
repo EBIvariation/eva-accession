@@ -153,23 +153,24 @@ public class SubmittedVariant implements ISubmittedVariant {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SubmittedVariant that = (SubmittedVariant) o;
-        return start == that.start &&
-                supportedByEvidence == that.supportedByEvidence &&
-                Objects.equals(assemblyAccession, that.assemblyAccession) &&
-                Objects.equals(taxonomyAccession, that.taxonomyAccession) &&
-                Objects.equals(projectAccession, that.projectAccession) &&
-                Objects.equals(contig, that.contig) &&
-                Objects.equals(referenceAllele, that.referenceAllele) &&
-                Objects.equals(alternateAllele, that.alternateAllele) &&
-                Objects.equals(createdDate, that.createdDate);
+        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+
+        ISubmittedVariant that = (ISubmittedVariant) o;
+
+        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
+        if (start != that.getStart()) return false;
+        if (supportedByEvidence != that.isSupportedByEvidence()) return false;
+        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
+        if (!projectAccession.equals(that.getProjectAccession())) return false;
+        if (!contig.equals(that.getContig())) return false;
+        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
+        return alternateAllele.equals(that.getAlternateAllele());
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession,
-                            contig, start, referenceAllele, alternateAllele, supportedByEvidence, createdDate);
+                            contig, start, referenceAllele, alternateAllele, supportedByEvidence);
     }
 
     @Override

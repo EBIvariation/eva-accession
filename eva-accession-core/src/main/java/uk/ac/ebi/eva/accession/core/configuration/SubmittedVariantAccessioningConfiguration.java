@@ -37,6 +37,8 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepo
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -48,6 +50,10 @@ public class SubmittedVariantAccessioningConfiguration {
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
 
+    @Autowired
+    private SubmittedVariantOperationRepository operationRepository;
+
+    @Autowired
     private BasicInactiveAccessionService<Long, SubmittedVariantEntity, SubmittedVariantInactiveEntity,
             SubmittedVariantOperationEntity> inactiveService;
 
@@ -64,6 +70,18 @@ public class SubmittedVariantAccessioningConfiguration {
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
         return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
                                                        submittedVariantAccessioningDatabaseService());
+    }
+
+    @Bean
+    public SubmittedVariantOperationRepository submittedVariantOperationRepository() {
+        return operationRepository;
+    }
+
+    @Bean
+    public SubmittedVariantInactiveService submittedVariantInactiveService() {
+        return new SubmittedVariantInactiveService(operationRepository,
+                                                   SubmittedVariantInactiveEntity::new,
+                                                   SubmittedVariantOperationEntity::new);
     }
 
     @Bean

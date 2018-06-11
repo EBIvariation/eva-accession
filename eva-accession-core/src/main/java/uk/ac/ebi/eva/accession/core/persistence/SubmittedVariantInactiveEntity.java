@@ -24,4 +24,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
  */
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> {
 
+    public SubmittedVariantInactiveEntity(SubmittedVariantEntity submittedVariantEntity) {
+        super(submittedVariantEntity);
+    }
 }
