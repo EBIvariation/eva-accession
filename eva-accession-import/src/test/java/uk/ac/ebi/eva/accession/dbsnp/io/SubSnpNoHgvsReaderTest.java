@@ -29,7 +29,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.dbsnp.configuration.DbsnpDataSource;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.TestConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp.model.VariantNoHgvsLink;
+import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,11 +40,11 @@ import static org.junit.Assert.assertNull;
 @RunWith(SpringRunner.class)
 @TestPropertySource({"classpath:application.properties"})
 @ContextConfiguration(classes = {TestConfiguration.class})
-public class SubmittedVariantsNoHgvsLinkReaderTest {
+public class SubSnpNoHgvsReaderTest {
 
     private static final int PAGE_SIZE = 10;
 
-    private SubmittedVariantsNoHgvsLinkReader reader;
+    private SubSnpNoHgvsReader reader;
 
     private static final String CHICKEN_ASSEMBY = "Gallus_gallus-5.0";
 
@@ -64,7 +64,7 @@ public class SubmittedVariantsNoHgvsLinkReaderTest {
     @Test
     public void readChickenVariants() throws Exception {
         reader = buildReader(11825, CHICKEN_ASSEMBY, PAGE_SIZE);
-        List<VariantNoHgvsLink> variants = readAll(reader);
+        List<SubSnpNoHgvs> variants = readAll(reader);
         assertEquals(2, variants.size());
     }
 
@@ -80,19 +80,21 @@ public class SubmittedVariantsNoHgvsLinkReaderTest {
         reader = buildReader(11825, "UNKNOWN_ASSEMBLY", PAGE_SIZE);
     }
 
-    private SubmittedVariantsNoHgvsLinkReader buildReader(int batch, String assembly, int pageSize)
+    private SubSnpNoHgvsReader buildReader(int batch, String assembly, int pageSize)
             throws Exception {
-        SubmittedVariantsNoHgvsLinkReader fieldsReader = new SubmittedVariantsNoHgvsLinkReader(batch, assembly, dbsnpDataSource.getDatasource(), pageSize);
+        SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(batch, assembly,
+                                                                 dbsnpDataSource.getDatasource(),
+                                                                 pageSize);
         fieldsReader.afterPropertiesSet();
         ExecutionContext executionContext = new ExecutionContext();
         fieldsReader.open(executionContext);
         return fieldsReader;
     }
 
-    private List<VariantNoHgvsLink> readAll(SubmittedVariantsNoHgvsLinkReader reader) throws Exception {
-        List<VariantNoHgvsLink> variants = new ArrayList<>();
+    private List<SubSnpNoHgvs> readAll(SubSnpNoHgvsReader reader) throws Exception {
+        List<SubSnpNoHgvs> variants = new ArrayList<>();
 
-        VariantNoHgvsLink variant;
+        SubSnpNoHgvs variant;
         while ((variant = reader.read()) != null) {
             variants.add(variant);
         }

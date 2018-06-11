@@ -23,37 +23,38 @@ import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.util.DigestUtils;
 
-import uk.ac.ebi.eva.accession.dbsnp.model.VariantNoHgvsLink;
+import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.ALLELES_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.BATCH_HANDLE_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.BATCH_NAME_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CHROMOSOME_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CHROMOSOME_START_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CONTIG_NAME_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CONTIG_ORIENTATION_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.CONTIG_START_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.FREQUENCY_EXIST_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.GENOTYPE_EXIST_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.LOAD_ORDER_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.REFERENCE_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.SS_CREATE_TIME_COLUMN;
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubmittedVariantRowMapper.TAXONOMY_ID_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.ALLELES_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.BATCH_HANDLE_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.BATCH_NAME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CHROMOSOME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CHROMOSOME_START_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_NAME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_ORIENTATION_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_START_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.FREQUENCY_EXISTS_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.GENOTYPE_EXISTS_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.REFERENCE_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_ORIENTATION_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SS_CREATE_TIME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SUBSNP_ORIENTATION_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.TAXONOMY_ID_COLUMN;
 
-public class SubmittedVariantsNoHgvsLinkReader extends JdbcCursorItemReader<VariantNoHgvsLink> {
+public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
 
-    private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantsNoHgvsLinkReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsReader.class);
 
-    public SubmittedVariantsNoHgvsLinkReader(int batch, String assembly, DataSource dataSource,
-                                             int pageSize) throws Exception {
+    public SubSnpNoHgvsReader(int batch, String assembly, DataSource dataSource,
+                              int pageSize) throws Exception {
         setDataSource(dataSource);
         setSql(buildSql(assembly));
         setPreparedStatementSetter(buildPreparedStatementSetter(batch));
-        setRowMapper(new SubmittedVariantRowMapper(assembly));
+        setRowMapper(new SubSnpNoHgvsRowMapper(assembly));
         setFetchSize(pageSize);
     }
 
@@ -78,17 +79,17 @@ public class SubmittedVariantsNoHgvsLinkReader extends JdbcCursorItemReader<Vari
                         "," + CHROMOSOME_COLUMN +
                         "," + CHROMOSOME_START_COLUMN +
                         "," + CONTIG_NAME_COLUMN +
+                        "," + SUBSNP_ORIENTATION_COLUMN +
+                        "," + SNP_ORIENTATION_COLUMN +
                         "," + CONTIG_ORIENTATION_COLUMN +
                         "," + CONTIG_START_COLUMN +
-                        "," + FREQUENCY_EXIST_COLUMN +
-                        "," + GENOTYPE_EXIST_COLUMN +
-                        "," + LOAD_ORDER_COLUMN +
+                        "," + FREQUENCY_EXISTS_COLUMN +
+                        "," + GENOTYPE_EXISTS_COLUMN +
                         "," + REFERENCE_COLUMN +
                         "," + SS_CREATE_TIME_COLUMN +
                         "," + TAXONOMY_ID_COLUMN +
                         " FROM " + tableName +
-                        " WHERE batch_id = ? " +
-                        " ORDER BY " + LOAD_ORDER_COLUMN;
+                        " WHERE batch_id = ? ";
 
         return sql;
     }

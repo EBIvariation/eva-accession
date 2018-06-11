@@ -17,7 +17,7 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 
 import java.sql.Date;
 
-public class VariantNoHgvsLink {
+public class SubSnpNoHgvs {
 
     private String alleles;
 
@@ -33,15 +33,17 @@ public class VariantNoHgvsLink {
 
     private String contigName;
 
+    private Orientation subsnpOrientation;
+
+    private Orientation snpOrientation;
+
     private Orientation contigOrientation;
 
     private int contigStart;
 
     private boolean frequencyExists;
 
-    private boolean genotypExists;
-
-    private int loadOrder;
+    private boolean genotypeExists;
 
     private String reference;
 
@@ -50,10 +52,13 @@ public class VariantNoHgvsLink {
     private int taxonomyId;
 
     // TODO: sort the fields in a logical order, or just leave them in alphabetical order?
-    public VariantNoHgvsLink(String alleles, String assembly, String batchHandle, String batchName,
-                             String chromosome, int chromosomeStart, String contigName, Orientation contigOrientation,
-                             int contigStart, boolean frequencyExists, boolean genotypExists, int loadOrder,
-                             String reference, Date createTime, int taxonomyId) {
+    public SubSnpNoHgvs(String alleles, String assembly, String batchHandle, String batchName,
+                        String chromosome, int chromosomeStart, String contigName,
+                        Orientation subsnpOrientation,
+                        Orientation snpOrientation, Orientation contigOrientation,
+                        int contigStart, boolean frequencyExists,
+                        boolean genotypeExists, String reference, Date createTime,
+                        int taxonomyId) {
         this.alleles = alleles;
         this.assembly = assembly;
         this.batchHandle = batchHandle;
@@ -61,12 +66,13 @@ public class VariantNoHgvsLink {
         this.chromosome = chromosome;
         this.chromosomeStart = chromosomeStart;
         this.contigName = contigName;
+        this.subsnpOrientation = subsnpOrientation;
+        this.snpOrientation = snpOrientation;
         // TODO: check if we need other orientation fields to calculate the variant alleles
         this.contigOrientation = contigOrientation;
         this.contigStart = contigStart;
         this.frequencyExists = frequencyExists;
-        this.genotypExists = genotypExists;
-        this.loadOrder = loadOrder;
+        this.genotypeExists = genotypeExists;
         this.reference = reference;
         this.createTime = createTime;
         this.taxonomyId = taxonomyId;
@@ -152,20 +158,12 @@ public class VariantNoHgvsLink {
         this.frequencyExists = frequencyExists;
     }
 
-    public boolean isGenotypExists() {
-        return genotypExists;
+    public boolean isGenotypeExists() {
+        return genotypeExists;
     }
 
-    public void setGenotypExists(boolean genotypExists) {
-        this.genotypExists = genotypExists;
-    }
-
-    public int getLoadOrder() {
-        return loadOrder;
-    }
-
-    public void setLoadOrder(int loadOrder) {
-        this.loadOrder = loadOrder;
+    public void setGenotypeExists(boolean genotypeExists) {
+        this.genotypeExists = genotypeExists;
     }
 
     public String getReference() {

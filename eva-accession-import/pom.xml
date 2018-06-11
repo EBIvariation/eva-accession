@@ -22,12 +22,6 @@
             <artifactId>eva-accession-core</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.3.4</version>
-            <scope>test</scope>
-        </dependency>
         <!--TODO : add PostgreSQL driver with scope runtime for production deployment-->
     </dependencies>
 

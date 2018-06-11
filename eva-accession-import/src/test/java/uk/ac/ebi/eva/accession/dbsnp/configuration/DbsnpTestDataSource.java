@@ -45,10 +45,6 @@ public class DbsnpTestDataSource implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        populateDatabase();
-    }
-
-    public void populateDatabase() {
         if (!initialized) {
             logger.info("Populating test DB");
             DatabasePopulatorUtils.execute(databasePopulator(), dbsnpDatasource.getDatasource());
