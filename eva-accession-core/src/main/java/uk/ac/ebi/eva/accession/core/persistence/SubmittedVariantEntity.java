@@ -124,7 +124,6 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         return alternateAllele.equals(that.getAlternateAllele());
     }
 
-
     @Override
     public int hashCode() {
         return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession,

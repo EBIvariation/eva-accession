@@ -17,14 +17,107 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
+import org.springframework.data.mongodb.core.mapping.Document;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
-/**
- * TODO
- */
-public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> {
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+
+import java.util.Objects;
+
+@Document
+public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> implements ISubmittedVariant {
+
+    private String assemblyAccession;
+
+    private int taxonomyAccession;
+
+    private String projectAccession;
+
+    private String contig;
+
+    private long start;
+
+    private String referenceAllele;
+
+    private String alternateAllele;
+
+    private boolean supportedByEvidence;
+
+    SubmittedVariantInactiveEntity() {
+    }
 
     public SubmittedVariantInactiveEntity(SubmittedVariantEntity submittedVariantEntity) {
         super(submittedVariantEntity);
+        this.assemblyAccession = submittedVariantEntity.getAssemblyAccession();
+        this.taxonomyAccession = submittedVariantEntity.getTaxonomyAccession();
+        this.projectAccession = submittedVariantEntity.getProjectAccession();
+        this.contig = submittedVariantEntity.getContig();
+        this.start = submittedVariantEntity.getStart();
+        this.referenceAllele = submittedVariantEntity.getReferenceAllele();
+        this.alternateAllele = submittedVariantEntity.getAlternateAllele();
+        this.supportedByEvidence = submittedVariantEntity.isSupportedByEvidence();
+    }
+
+    @Override
+    public String getAssemblyAccession() {
+        return assemblyAccession;
+    }
+
+    @Override
+    public int getTaxonomyAccession() {
+        return taxonomyAccession;
+    }
+
+    @Override
+    public String getProjectAccession() {
+        return projectAccession;
+    }
+
+    @Override
+    public String getContig() {
+        return contig;
+    }
+
+    @Override
+    public long getStart() {
+        return start;
+    }
+
+    @Override
+    public String getReferenceAllele() {
+        return referenceAllele;
+    }
+
+    @Override
+    public String getAlternateAllele() {
+        return alternateAllele;
+    }
+
+    @Override
+    public boolean isSupportedByEvidence() {
+        return supportedByEvidence;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+
+        ISubmittedVariant that = (ISubmittedVariant) o;
+
+        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
+        if (start != that.getStart()) return false;
+        if (supportedByEvidence != that.isSupportedByEvidence()) return false;
+        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
+        if (!projectAccession.equals(that.getProjectAccession())) return false;
+        if (!contig.equals(that.getContig())) return false;
+        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
+        return alternateAllele.equals(that.getAlternateAllele());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession,
+                            contig, start, referenceAllele, alternateAllele, supportedByEvidence);
     }
 }
