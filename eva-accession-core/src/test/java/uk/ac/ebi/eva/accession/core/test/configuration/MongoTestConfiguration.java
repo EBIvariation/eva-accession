@@ -38,36 +38,6 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationReposit
         "uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository"})
 @EnableMongoAuditing
 @AutoConfigureDataMongo
-public class MongoDbTestConfiguration {
+public class MongoTestConfiguration {
 
-//    @Autowired
-//    private SubmittedVariantOperationRepository testOperationRepository;
-
-//    @Autowired
-//    private SubmittedVariantInactiveService inactiveService;
-//    private BasicInactiveAccessionService<Long, SubmittedVariantEntity, SubmittedVariantInactiveEntity,
-//            SubmittedVariantOperationEntity> inactiveService;
-//
-//    @Bean
-//    public TestMongoDbInactiveAccessionService testMongoDbInactiveAccessionService() {
-//        return new TestMongoDbInactiveAccessionService(
-//                testOperationRepository,
-//                TestInactiveSubDocument::new,
-//                TestOperationDocument::new
-//        );
-//    }
-//
-//    @Bean
-//    public SubmittedVariantInactiveService submittedVariantInactiveService() {
-//        return new SubmittedVariantInactiveService(
-//                testOperationRepository,
-//                SubmittedVariantInactiveEntity::new,
-//                SubmittedVariantOperationEntity::new
-//        );
-//    }
-//
-//    @Bean
-//    public SubmittedVariantOperationRepository testOperationRepository() {
-//        return testOperationRepository;
-//    }
 }

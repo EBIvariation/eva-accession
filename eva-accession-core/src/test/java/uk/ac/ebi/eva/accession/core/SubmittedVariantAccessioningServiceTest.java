@@ -33,13 +33,12 @@ import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.test.configuration.MongoDbTestConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,7 +46,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @TestPropertySource("classpath:ss-accession-test.properties")
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoDbTestConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
 public class SubmittedVariantAccessioningServiceTest {
 
     @Rule
