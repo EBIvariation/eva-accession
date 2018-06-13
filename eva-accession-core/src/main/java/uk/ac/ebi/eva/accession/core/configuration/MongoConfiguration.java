@@ -17,7 +17,9 @@ package uk.ac.ebi.eva.accession.core.configuration;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.ReadPreference;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
@@ -37,10 +39,20 @@ import java.net.UnknownHostException;
 @Import({MongoDataAutoConfiguration.class})
 public class MongoConfiguration {
 
+    @Value("${mongodb.read-preference}")
+    private ReadPreference readPreference;
+
     @Bean
     public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
                             Environment environment) throws UnknownHostException {
-        return properties.createMongoClient(options.getIfAvailable(), environment);
+        MongoClientOptions mongoClientOptions = options.getIfAvailable();
+        if (mongoClientOptions != null) {
+            mongoClientOptions = new MongoClientOptions.Builder(mongoClientOptions).readPreference(readPreference)
+                                                                                   .build();
+        } else {
+            mongoClientOptions = new MongoClientOptions.Builder().readPreference(readPreference).build();
+        }
+        return properties.createMongoClient(mongoClientOptions, environment);
     }
 
 }
