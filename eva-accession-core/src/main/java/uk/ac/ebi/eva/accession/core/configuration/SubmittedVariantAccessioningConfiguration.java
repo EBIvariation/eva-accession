@@ -26,15 +26,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.BasicInactiveAccessionService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.service.BasicMongoDbInactiveAccessionService;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
@@ -54,8 +51,7 @@ public class SubmittedVariantAccessioningConfiguration {
     private SubmittedVariantOperationRepository operationRepository;
 
     @Autowired
-    private BasicInactiveAccessionService<Long, SubmittedVariantEntity, SubmittedVariantInactiveEntity,
-            SubmittedVariantOperationEntity> inactiveService;
+    private SubmittedVariantInactiveService inactiveService;
 
     @Autowired
     private ContiguousIdBlockService service;
