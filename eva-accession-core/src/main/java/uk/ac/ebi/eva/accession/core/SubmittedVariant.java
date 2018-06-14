@@ -159,7 +159,6 @@ public class SubmittedVariant implements ISubmittedVariant {
 
         if (taxonomyAccession != that.getTaxonomyAccession()) return false;
         if (start != that.getStart()) return false;
-        if (supportedByEvidence != that.isSupportedByEvidence()) return false;
         if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
         if (!projectAccession.equals(that.getProjectAccession())) return false;
         if (!contig.equals(that.getContig())) return false;
@@ -169,8 +168,8 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     @Override
     public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession,
-                            contig, start, referenceAllele, alternateAllele, supportedByEvidence);
+        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession, contig, start,
+                            referenceAllele, alternateAllele);
     }
 
     @Override
