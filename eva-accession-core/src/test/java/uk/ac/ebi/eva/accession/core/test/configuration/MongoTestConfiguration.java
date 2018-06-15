@@ -34,7 +34,6 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationReposit
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
 @EnableMongoRepositories(basePackages = {
         "uk.ac.ebi.eva.accession.core.persistence",
-        "uk.ac.ebi.eva.accession.core.test.persistence.repository",
         "uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository"})
 @EnableMongoAuditing
 @AutoConfigureDataMongo
