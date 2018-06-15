@@ -32,6 +32,10 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -42,6 +46,12 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
+
+    @Autowired
+    private SubmittedVariantOperationRepository operationRepository;
+
+    @Autowired
+    private SubmittedVariantInactiveService inactiveService;
 
     @Autowired
     private ContiguousIdBlockService service;
@@ -59,8 +69,20 @@ public class SubmittedVariantAccessioningConfiguration {
     }
 
     @Bean
+    public SubmittedVariantOperationRepository submittedVariantOperationRepository() {
+        return operationRepository;
+    }
+
+    @Bean
+    public SubmittedVariantInactiveService submittedVariantInactiveService() {
+        return new SubmittedVariantInactiveService(operationRepository,
+                                                   SubmittedVariantInactiveEntity::new,
+                                                   SubmittedVariantOperationEntity::new);
+    }
+
+    @Bean
     public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
-        return new SubmittedVariantAccessioningDatabaseService(repository);
+        return new SubmittedVariantAccessioningDatabaseService(repository, inactiveService);
     }
 
     @Bean

@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class SubmittedVariantDTO implements ISubmittedVariant {
 
@@ -107,5 +108,27 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     @Override
     public LocalDateTime getCreatedDate() {
         return createdDate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+
+        ISubmittedVariant that = (ISubmittedVariant) o;
+
+        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
+        if (start != that.getStart()) return false;
+        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
+        if (!projectAccession.equals(that.getProjectAccession())) return false;
+        if (!contig.equals(that.getContig())) return false;
+        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
+        return alternateAllele.equals(that.getAlternateAllele());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession, contig, start,
+                            referenceAllele, alternateAllele);
     }
 }

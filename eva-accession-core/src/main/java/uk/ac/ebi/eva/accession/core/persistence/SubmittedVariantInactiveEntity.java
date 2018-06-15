@@ -18,14 +18,14 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.data.mongodb.core.mapping.Document;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import java.util.Objects;
 
 @Document
-public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
+public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> implements ISubmittedVariant {
 
     private String assemblyAccession;
 
@@ -43,28 +43,19 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     private boolean supportedByEvidence;
 
-    SubmittedVariantEntity() {
+    SubmittedVariantInactiveEntity() {
     }
 
-    public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
-        this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
-             model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
-             model.getAlternateAllele(), model.isSupportedByEvidence(), 1);
-    }
-
-    public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
-                                  int taxonomyAccession, String projectAccession, String contig, long start,
-                                  String referenceAllele, String alternateAllele, boolean isSupportedByEvidence,
-                                  int version) {
-        super(hashedMessage, accession, version);
-        this.assemblyAccession = assemblyAccession;
-        this.taxonomyAccession = taxonomyAccession;
-        this.projectAccession = projectAccession;
-        this.contig = contig;
-        this.start = start;
-        this.referenceAllele = referenceAllele;
-        this.alternateAllele = alternateAllele;
-        this.supportedByEvidence = isSupportedByEvidence;
+    public SubmittedVariantInactiveEntity(SubmittedVariantEntity submittedVariantEntity) {
+        super(submittedVariantEntity);
+        this.assemblyAccession = submittedVariantEntity.getAssemblyAccession();
+        this.taxonomyAccession = submittedVariantEntity.getTaxonomyAccession();
+        this.projectAccession = submittedVariantEntity.getProjectAccession();
+        this.contig = submittedVariantEntity.getContig();
+        this.start = submittedVariantEntity.getStart();
+        this.referenceAllele = submittedVariantEntity.getReferenceAllele();
+        this.alternateAllele = submittedVariantEntity.getAlternateAllele();
+        this.supportedByEvidence = submittedVariantEntity.isSupportedByEvidence();
     }
 
     @Override

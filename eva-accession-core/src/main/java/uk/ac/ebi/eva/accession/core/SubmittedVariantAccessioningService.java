@@ -17,10 +17,10 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import uk.ac.ebi.ampt2d.commons.accession.core.BasicMonotonicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
+import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 public class SubmittedVariantAccessioningService extends BasicMonotonicAccessioningService<ISubmittedVariant, String> {
 

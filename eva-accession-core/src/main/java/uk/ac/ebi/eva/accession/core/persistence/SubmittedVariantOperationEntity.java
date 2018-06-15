@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +13,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package uk.ac.ebi.eva.accession.core.test;
+package uk.ac.ebi.eva.accession.core.persistence;
 
-import com.github.fakemongo.Fongo;
-import com.mongodb.MongoClient;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.core.mapping.Document;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.OperationDocument;
 
-@Configuration
-public class MongoTestConfiguration {
-
-    @Bean
-    public MongoClient mongoClient() {
-        return new Fongo("defaultInstance").getMongo();
-    }
-
+@Document
+public class SubmittedVariantOperationEntity extends OperationDocument<Long, SubmittedVariantInactiveEntity> {
 }
