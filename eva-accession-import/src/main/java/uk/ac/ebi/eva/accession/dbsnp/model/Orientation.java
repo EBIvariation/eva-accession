@@ -19,15 +19,19 @@ public enum Orientation {
 
     FORWARD,
 
-    REVERSE;
+    REVERSE,
 
-    public static Orientation getOrientation(int orientation) {
-        if (orientation == 1) {
+    UNKNOWN;
+
+    public static Orientation getOrientation(Integer orientation) {
+        if (orientation == null) {
+            return UNKNOWN;
+        } else if (orientation == 1) {
             return FORWARD;
         } else if (orientation == -1) {
             return REVERSE;
         } else {
-            throw new IllegalArgumentException("Orientation must be +1 or -1");
+            throw new IllegalArgumentException("Orientation must be +1, -1 or null");
         }
     }
 }
