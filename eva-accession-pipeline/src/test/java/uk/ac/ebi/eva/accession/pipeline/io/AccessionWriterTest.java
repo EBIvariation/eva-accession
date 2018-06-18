@@ -177,11 +177,13 @@ public class AccessionWriterTest {
                                                         "reference", "alternate", false);
         LocalDateTime beforeSave = LocalDateTime.now();
         accessionWriter.write(Collections.singletonList(variant));
+        LocalDateTime afterSave = LocalDateTime.now();
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(Collections.singletonList(variant));
         assertEquals(1, accessions.size());
         ISubmittedVariant savedVariant = accessions.iterator().next().getData();
         assertTrue(beforeSave.isBefore(savedVariant.getCreatedDate()));
+        assertTrue(afterSave.isAfter(savedVariant.getCreatedDate()));
     }
 
     @Test
