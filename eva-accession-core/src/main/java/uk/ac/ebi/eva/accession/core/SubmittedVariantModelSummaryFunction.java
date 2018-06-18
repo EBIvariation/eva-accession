@@ -25,7 +25,6 @@ public class SubmittedVariantModelSummaryFunction implements Function<ISubmitted
     public String apply(ISubmittedVariant model) {
         return new StringBuilder()
                 .append(model.getAssemblyAccession())
-                .append("_").append(model.getTaxonomyAccession())
                 .append("_").append(model.getProjectAccession())
                 .append("_").append(model.getContig())
                 .append("_").append(model.getStart())
