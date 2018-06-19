@@ -18,6 +18,7 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
@@ -27,20 +28,26 @@ import java.util.Objects;
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
 
+    @Field("asm")
     private String assemblyAccession;
 
+    @Field("tax")
     private int taxonomyAccession;
 
+    @Field("study")
     private String projectAccession;
 
     private String contig;
 
     private long start;
 
+    @Field("ref")
     private String referenceAllele;
 
+    @Field("alt")
     private String alternateAllele;
 
+    @Field("evidence")
     private boolean supportedByEvidence;
 
     SubmittedVariantEntity() {
