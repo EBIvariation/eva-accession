@@ -119,6 +119,8 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
+        assertEquals(1, reportCheckTasklet.getSkippedVariantsInInputVcf());
+        assertEquals(0, reportCheckTasklet.getSkippedVariantsInReportVcf());
     }
 
     private ReportCheckTasklet getGenotypedReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
@@ -131,6 +133,26 @@ public class ReportCheckTaskletTest {
         UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
         return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, 1000);
+    }
+
+    @Test
+    public void vcfsContainDuplicates() throws Exception {
+        // given
+        URI vcfUri = ReportCheckTaskletTest.class
+                .getResource("/input-files/vcf/aggregated.with_duplicates.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class
+                .getResource("/input-files/vcf/aggregated.with_duplicates.report.vcf.gz").toURI();
+        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
+
+        // when
+        StepContribution stepContribution = new StepContribution(
+                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+        reportCheckTasklet.execute(stepContribution, null);
+
+        // then
+        assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
+        assertEquals(1, reportCheckTasklet.getDuplicatedVariantsInInputVcf());
+        assertEquals(2, reportCheckTasklet.getDuplicatedVariantsInReportVcf());
     }
 
     @Test

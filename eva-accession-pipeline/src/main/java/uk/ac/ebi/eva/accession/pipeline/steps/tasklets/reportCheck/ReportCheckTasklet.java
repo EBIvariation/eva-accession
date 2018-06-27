@@ -34,19 +34,19 @@ import java.util.Set;
 
 /**
  * Compares the the original VCF and accession report VCF, and logs the differences.
- *
+ * <p>
  * Terminology: The original VCF contains variants, and it will be loaded into the 'variant buffer'. The accession
  * report VCF contains the accessioned variants, and it will be loaded into the 'accession buffer'.
- *
+ * <p>
  * The high-level idea of the process is filling those 2 buffers, and when the same coordinates appears in both the
  * variant buffer and the accession buffer, it means that the variant in those coordinates was correctly accessioned,
  * so it can be removed from both buffers. At the end, only variants without accessions and accessions without
  * variants should be left in the buffers after both files were completely read.
- *
+ * <p>
  * The reason why the buffers are needed is that the accession report can be unordered. In order to avoid
  * having the VCFs completely loaded in memory, a buffer size can be configured for both buffers. However, to guarantee
  * correct behaviour in worst-ordering scenario, the buffers need to be able to grow indefinitely.
- *
+ * <p>
  * To perform some self-checks, this tasklet provides the maximum size of the buffers during the execution, and
  * also provides the number of iterations needed.
  */
@@ -67,6 +67,14 @@ public class ReportCheckTasklet implements Tasklet {
     private long iterations;
 
     private SkipPolicy skipPolicy;
+
+    private long duplicatedVariantsInInputVcf;
+
+    private long duplicatedVariantsInReportVcf;
+
+    private long skippedVariantsInInputVcf;
+
+    private long skippedVariantsInReportVcf;
 
     public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader,
                               long initialBufferSize) {
@@ -197,5 +205,21 @@ public class ReportCheckTasklet implements Tasklet {
 
     public long getIterations() {
         return iterations;
+    }
+
+    public long getDuplicatedVariantsInInputVcf() {
+        return duplicatedVariantsInInputVcf;
+    }
+
+    public long getDuplicatedVariantsInReportVcf() {
+        return duplicatedVariantsInReportVcf;
+    }
+
+    public long getSkippedVariantsInInputVcf() {
+        return skippedVariantsInInputVcf;
+    }
+
+    public long getSkippedVariantsInReportVcf() {
+        return skippedVariantsInReportVcf;
     }
 }
