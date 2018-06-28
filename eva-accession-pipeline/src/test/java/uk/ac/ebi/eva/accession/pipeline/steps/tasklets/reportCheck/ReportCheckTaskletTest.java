@@ -52,6 +52,8 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInInputVcf());
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
     }
 
     private ReportCheckTasklet getReportCheckTasklet(URI vcfUri, URI reportUri) throws IOException {
@@ -85,6 +87,8 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
+        assertEquals(1, reportCheckTasklet.getUnmatchedVariantsInInputVcf());
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
     }
 
     @Test
@@ -102,6 +106,8 @@ public class ReportCheckTaskletTest {
 
         // then
         assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInInputVcf());
+        assertEquals(1, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
     }
 
     @Test
@@ -150,9 +156,31 @@ public class ReportCheckTaskletTest {
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
+        // TODO: when we do left alignment using the reference fasta, the next asserts should be:
+        // step is properly completed, 2 duplicates in input, 0 duplicates in report
         assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
         assertEquals(1, reportCheckTasklet.getDuplicatedVariantsInInputVcf());
-        assertEquals(2, reportCheckTasklet.getDuplicatedVariantsInReportVcf());
+        assertEquals(1, reportCheckTasklet.getDuplicatedVariantsInReportVcf());
+    }
+
+    @Test
+    public void vcfsContainAmbiguousVariantThatCanNotBeMatched() throws Exception {
+        // given
+        URI vcfUri = ReportCheckTaskletTest.class
+                .getResource("/input-files/vcf/aggregated.with_ambiguous.vcf.gz").toURI();
+        URI reportUri = ReportCheckTaskletTest.class
+                .getResource("/input-files/vcf/aggregated.with_ambiguous.report.vcf.gz").toURI();
+        ReportCheckTasklet reportCheckTasklet = getReportCheckTasklet(vcfUri, reportUri);
+
+        // when
+        StepContribution stepContribution = new StepContribution(
+                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+        reportCheckTasklet.execute(stepContribution, null);
+
+        // then
+        assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
+        assertEquals(1, reportCheckTasklet.getUnmatchedVariantsInInputVcf());
+        assertEquals(1, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
     }
 
     @Test
