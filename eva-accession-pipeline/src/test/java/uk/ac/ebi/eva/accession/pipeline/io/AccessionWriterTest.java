@@ -170,13 +170,13 @@ public class AccessionWriterTest {
                 service.get(Arrays.asList(firstVariant, secondVariant));
         assertEquals(2, accessions.size());
 
-        int firstVariantLineNumber = getVariantLineByPosition(output, CONTIG_1 + "\t" + "2");
+        int firstVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + "2");
         //secondVariant position is 1 because it is an insertion and the context base is added
-        int secondVariantLineNumber = getVariantLineByPosition(output, CONTIG_1 + "\t" + "1");
+        int secondVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + "1");
         assertTrue(firstVariantLineNumber > secondVariantLineNumber);
     }
 
-    public static int getVariantLineByPosition(File output, String position) throws IOException {
+    private static int getVariantLineNumberByPosition(File output, String position) throws IOException {
         BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
         String line;
         int lineNumber = 0;

@@ -75,12 +75,12 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         File output = new File(inputParameters.getOutputVcf());
-        int firstVariantLineNumber = getVariantLineByPosition(output, "20" + "\t" + "60027");
-        int secondVariantLineNumber = getVariantLineByPosition(output, "20" + "\t" + "60028");
+        int firstVariantLineNumber = getVariantLineNumberByPosition(output, "20" + "\t" + "60027");
+        int secondVariantLineNumber = getVariantLineNumberByPosition(output, "20" + "\t" + "60028");
         assertTrue(firstVariantLineNumber < secondVariantLineNumber);
     }
 
-    public static int getVariantLineByPosition(File output, String position) throws IOException {
+    private static int getVariantLineNumberByPosition(File output, String position) throws IOException {
         BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
         String line;
         int lineNumber = 0;
