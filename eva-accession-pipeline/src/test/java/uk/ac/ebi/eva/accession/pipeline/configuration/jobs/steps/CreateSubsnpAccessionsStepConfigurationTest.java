@@ -32,7 +32,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SU
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class CreateSubsnpAccessionsStepConfigurationTest {
 
-    private static final int EXPECTED_VARIANTS = 299;
+    private static final int EXPECTED_VARIANTS = 22;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
