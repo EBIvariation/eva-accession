@@ -97,8 +97,8 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
         assertEquals(
-                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE, ALTERNATE,
-                            ".", ".", "."),
+                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
+                            ALTERNATE, ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
@@ -119,7 +119,8 @@ public class AccessionReportWriterTest {
                                                         ALTERNATE, false);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", accessionReportWriter
+                        .denormalizeVariant(variant));
 
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 
@@ -135,7 +136,8 @@ public class AccessionReportWriterTest {
                                                         "", false);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", accessionReportWriter
+                        .denormalizeVariant(variant));
 
         accessionReportWriter.write(Collections.singletonList(accessionWrapper));
 

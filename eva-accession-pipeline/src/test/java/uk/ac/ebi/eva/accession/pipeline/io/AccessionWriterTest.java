@@ -158,6 +158,39 @@ public class AccessionWriterTest {
 
     @Test
     @DirtiesContext
+    public void variantInsertionCheckOrder() throws Exception {
+        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, 2,
+                                                             "C", "A", false);
+        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, 2,
+                                                              "", "A", false);
+
+        accessionWriter.write(Arrays.asList(firstVariant, secondVariant));
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions =
+                service.get(Arrays.asList(firstVariant, secondVariant));
+        assertEquals(2, accessions.size());
+
+        int firstVariantLineNumber = getVariantLineByPosition(output, CONTIG_1 + "\t" + "2");
+        //secondVariant position is 1 because it is an insertion and the context base is added
+        int secondVariantLineNumber = getVariantLineByPosition(output, CONTIG_1 + "\t" + "1");
+        assertTrue(firstVariantLineNumber > secondVariantLineNumber);
+    }
+
+    public static int getVariantLineByPosition(File output, String position) throws IOException {
+        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
+        String line;
+        int lineNumber = 0;
+        while ((line = fileInputStream.readLine()) != null) {
+            if (line.startsWith(position)) {
+                return lineNumber;
+            }
+            lineNumber++;
+        }
+        throw new IllegalStateException("VCF didn't have any data lines");
+    }
+
+    @Test
+    @DirtiesContext
     public void saveSameAccessionTwice() throws Exception {
         SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1, "reference",
                                                         "alternate", false);

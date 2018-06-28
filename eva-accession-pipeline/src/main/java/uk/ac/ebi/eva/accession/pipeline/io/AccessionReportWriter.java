@@ -119,14 +119,13 @@ public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<
         fileWriter.flush();
     }
 
-    private void writeVariant(Long id, ISubmittedVariant normalizedVariant) throws IOException {
-        ISubmittedVariant variant = denormalizeVariant(normalizedVariant);
-        String vcfLine = variantToVcfLine(id, variant);
+    private void writeVariant(Long id, ISubmittedVariant denormalizedVariant) throws IOException {
+        String vcfLine = variantToVcfLine(id, denormalizedVariant);
         fileWriter.write(vcfLine);
         fileWriter.newLine();
     }
 
-    private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
+    protected ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
         if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
             if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
                 return createVariantWithContextBase(normalizedVariant);
