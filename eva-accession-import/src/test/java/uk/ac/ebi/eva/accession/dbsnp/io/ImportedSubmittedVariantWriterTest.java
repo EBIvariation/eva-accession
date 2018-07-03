@@ -74,7 +74,7 @@ public class ImportedSubmittedVariantWriterTest {
 
     @Before
     public void setUp() throws Exception {
-        importedSubmittedVariantWriter = new ImportedSubmittedVariantWriter();
+        importedSubmittedVariantWriter = new ImportedSubmittedVariantWriter(mongoTemplate);
         hashingFunction = new SubmittedVariantModelSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -89,7 +89,8 @@ public class ImportedSubmittedVariantWriterTest {
 
         importedSubmittedVariantWriter.write(Collections.singletonList(variant));
 
-        List<ImportedSubmittedVariantEntity> accessions = mongoTemplate.find(new Query(), ImportedSubmittedVariantEntity.class);
+        List<ImportedSubmittedVariantEntity> accessions = mongoTemplate.find(new Query(),
+                                                                             ImportedSubmittedVariantEntity.class);
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
 

@@ -56,7 +56,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     @Field("matchAsm")
     private Boolean matchesAssembly;
 
-    SubmittedVariantEntity() {
+    protected SubmittedVariantEntity() {
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {

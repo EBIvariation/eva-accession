@@ -20,6 +20,10 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
 public class ImportedSubmittedVariantEntity extends SubmittedVariantEntity {
 
+    ImportedSubmittedVariantEntity() {
+        super();
+    }
+
     public ImportedSubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
         super(accession, hashedMessage, model);
     }

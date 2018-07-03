@@ -15,7 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
+import com.mongodb.BulkWriteResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.data.mongodb.core.BulkOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.dbsnp.persistence.ImportedSubmittedVariantEntity;
 
@@ -23,8 +28,30 @@ import java.util.List;
 
 public class ImportedSubmittedVariantWriter implements ItemWriter<ImportedSubmittedVariantEntity> {
 
-    @Override
-    public void write(List<? extends ImportedSubmittedVariantEntity> items) throws Exception {
+    private static final Logger logger = LoggerFactory.getLogger(ImportedSubmittedVariantWriter.class);
 
+    private MongoTemplate mongoTemplate;
+
+    public ImportedSubmittedVariantWriter(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
+
+    @Override
+    public void write(List<? extends ImportedSubmittedVariantEntity> importedSubmittedVariants) throws Exception {
+        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                              ImportedSubmittedVariantEntity.class);
+        bulkOperations.insert(importedSubmittedVariants);
+        BulkWriteResult result = bulkOperations.execute();
+        checkInsertionResult(result, importedSubmittedVariants);
+        // TODO check the case where several rows have same hash and different accessions (redundant rows) because
+        // that is a serious error
+    }
+
+    private void checkInsertionResult(BulkWriteResult result,
+                                      List<? extends ImportedSubmittedVariantEntity> importedSubmittedVariants) {
+        if (result.getInsertedCount() != importedSubmittedVariants.size()) {
+            logger.warn("Tried to insert a chunk of {} variants but only {} were inserted",
+                        importedSubmittedVariants.size(), result.getInsertedCount());
+        }
     }
 }

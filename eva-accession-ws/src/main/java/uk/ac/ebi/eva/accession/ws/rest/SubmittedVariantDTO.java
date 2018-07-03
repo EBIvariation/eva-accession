@@ -21,6 +21,7 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 public class SubmittedVariantDTO implements ISubmittedVariant {
 
@@ -68,7 +69,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.alternateAllele = alternateAllele;
         this.clusteredVariant = clusteredVariant;
         this.supportedByEvidence = supportedByEvidence;
-        this.matchesAssembly = matchesAssembly;
+        this.matchesAssembly = Optional.of(matchesAssembly).orElse(true);
         this.createdDate = createdDate;
     }
 
