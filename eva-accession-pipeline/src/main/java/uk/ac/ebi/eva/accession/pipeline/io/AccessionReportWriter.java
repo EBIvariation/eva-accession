@@ -44,6 +44,8 @@ public class AccessionReportWriter {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionReportWriter.class);
 
+    private static final Long UNDEFINED_CLUSTERED_VARIANT = null;
+
     private final File output;
 
     private FastaSequenceReader fastaSequenceReader;
@@ -178,7 +180,9 @@ public class AccessionReportWriter {
                                         newStart,
                                         newReference,
                                         newAlternate,
-                                        normalizedVariant.isSupportedByEvidence());
+                                        UNDEFINED_CLUSTERED_VARIANT,
+                                        normalizedVariant.isSupportedByEvidence(),
+                                        true);
         }
     }
 

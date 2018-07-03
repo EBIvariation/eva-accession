@@ -39,7 +39,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
 
     private static final String ALT_T = "T";
 
+    private static final Long CLUSTERED_VARIANT = null;
+
     private static final boolean SUPPORTED_BY_EVIDENCE = true;
+
+    private static final Boolean MATCHES_ASSEMBLY = null;
 
     private SubmittedVariantModelSummaryFunction summaryFunction;
 
@@ -52,7 +56,7 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void summaryFunctionMustBeIdempotent() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant1));
     }
@@ -61,11 +65,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void differentSummaryWhenAssemblyDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                        REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant("anotherAssembly", TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                        REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -74,12 +78,12 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void sameSummaryWhenTaxonomyDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         int taxonomyAccession2 = 2;
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -88,11 +92,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void differentSummaryWhenContigDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, "anotherContig", START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -101,11 +105,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void differentSummaryWhenStartDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, 2,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -114,11 +118,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void differentSummaryWhenReferenceDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     "C", ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     "C", ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -127,11 +131,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void differentSummaryWhenAlternateDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, "G", SUPPORTED_BY_EVIDENCE);
+                                     REF_A, "G", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -140,11 +144,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
     public void sameSummaryWhenSupportedByEvidenceDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                        REF_A, ALT_T, SUPPORTED_BY_EVIDENCE);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                        REF_A, ALT_T, false);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }

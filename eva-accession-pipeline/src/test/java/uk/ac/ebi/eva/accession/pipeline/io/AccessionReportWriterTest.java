@@ -64,6 +64,10 @@ public class AccessionReportWriterTest {
 
     private static final String HASH = "hash";
 
+    private static final Long CLUSTERED_VARIANT = null;
+
+    private static final Boolean MATCHES_ASSEMBLY = null;
+
     private AccessionReportWriter accessionReportWriter;
 
     private File output;
@@ -88,7 +92,7 @@ public class AccessionReportWriterTest {
     @Test
     public void writeSnpWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        ALTERNATE, false);
+                                                        ALTERNATE, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
@@ -118,7 +122,7 @@ public class AccessionReportWriterTest {
     @Test
     public void writeInsertionWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, "",
-                                                        ALTERNATE, false);
+                                                        ALTERNATE, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
@@ -137,7 +141,7 @@ public class AccessionReportWriterTest {
     @Test
     public void writeDeletionWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        "", false);
+                                                        "", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
@@ -156,7 +160,7 @@ public class AccessionReportWriterTest {
     @Test
     public void resumeWriting() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        ALTERNATE, false);
+                                                        ALTERNATE, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);

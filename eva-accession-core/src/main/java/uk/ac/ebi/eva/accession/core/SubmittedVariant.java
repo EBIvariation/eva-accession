@@ -36,12 +36,17 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private String alternateAllele;
 
+    private Long clusteredVariant;
+
     private boolean supportedByEvidence;
+
+    private Boolean matchesAssembly;
 
     private LocalDateTime createdDate;
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
-                            long start, String referenceAllele, String alternateAllele, boolean supportedByEvidence) {
+                            long start, String referenceAllele, String alternateAllele, Long clusteredVariant,
+                            boolean supportedByEvidence, Boolean matchesAssembly) {
         if(Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
@@ -65,7 +70,9 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
+        this.clusteredVariant = clusteredVariant;
         this.supportedByEvidence = supportedByEvidence;
+        this.matchesAssembly = matchesAssembly;
         this.createdDate = null;
     }
 
@@ -133,12 +140,30 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
+    public Long getClusteredVariant() {
+        return clusteredVariant;
+    }
+
+    public void setClusteredVariant(Long clusteredVariant) {
+        this.clusteredVariant = clusteredVariant;
+    }
+
+    @Override
     public boolean isSupportedByEvidence() {
         return supportedByEvidence;
     }
 
     public void setSupportedByEvidence(boolean supportedByEvidence) {
         this.supportedByEvidence = supportedByEvidence;
+    }
+
+    @Override
+    public Boolean getMatchesAssembly() {
+        return matchesAssembly;
+    }
+
+    public void setMatchesAssembly(Boolean matchesAssembly) {
+        this.matchesAssembly = matchesAssembly;
     }
 
     @Override

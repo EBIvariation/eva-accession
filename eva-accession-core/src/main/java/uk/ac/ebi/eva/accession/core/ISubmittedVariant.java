@@ -41,10 +41,14 @@ public interface ISubmittedVariant {
 
     String getAlternateAllele();
 
+    Long getClusteredVariant();
+
     /**
      * @return True if this submitted variant is supported by genotypes or frequencies
      */
     boolean isSupportedByEvidence();
+
+    Boolean getMatchesAssembly();
 
     LocalDateTime getCreatedDate();
 }

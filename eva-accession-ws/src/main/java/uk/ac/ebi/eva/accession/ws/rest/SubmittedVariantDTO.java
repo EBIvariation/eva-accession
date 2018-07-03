@@ -38,7 +38,11 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private String alternateAllele;
 
+    private Long clusteredVariant;
+
     private boolean supportedByEvidence;
+
+    private Boolean matchesAssembly;
 
     private LocalDateTime createdDate;
 
@@ -47,13 +51,14 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     public SubmittedVariantDTO(ISubmittedVariant model) {
         this(model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getProjectAccession(), model.getContig(),
-             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.isSupportedByEvidence(),
-             model.getCreatedDate());
+             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.getClusteredVariant(),
+             model.isSupportedByEvidence(), model.getMatchesAssembly(), model.getCreatedDate());
     }
 
     public SubmittedVariantDTO(String assemblyAccession, int taxonomyAccession, String projectAccession,
                                String contig, long start, String referenceAllele, String alternateAllele,
-                               boolean supportedByEvidence, LocalDateTime createdDate) {
+                               Long clusteredVariant, boolean supportedByEvidence, Boolean matchesAssembly,
+                               LocalDateTime createdDate) {
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
@@ -61,7 +66,9 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
+        this.clusteredVariant = clusteredVariant;
         this.supportedByEvidence = supportedByEvidence;
+        this.matchesAssembly = matchesAssembly;
         this.createdDate = createdDate;
     }
 
@@ -101,8 +108,18 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     }
 
     @Override
+    public Long getClusteredVariant() {
+        return clusteredVariant;
+    }
+
+    @Override
     public boolean isSupportedByEvidence() {
         return supportedByEvidence;
+    }
+
+    @Override
+    public Boolean getMatchesAssembly() {
+        return matchesAssembly;
     }
 
     @Override

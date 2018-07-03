@@ -49,6 +49,10 @@ import static org.junit.Assert.assertTrue;
 @ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
 public class SubmittedVariantAccessioningServiceTest {
 
+    private static final Long CLUSTERED_VARIANT = null;
+
+    private static final Boolean MATCHES_ASSEMBLY = null;
+
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName("submitted-variants-test").build());
@@ -67,13 +71,13 @@ public class SubmittedVariantAccessioningServiceTest {
         List<SubmittedVariant> variants = Arrays.asList(
                 new SubmittedVariant("assembly", 1111,
                                      "project", "contig_1", 100, "ref",
-                                     "alt", true),
+                                     "alt", CLUSTERED_VARIANT, true, MATCHES_ASSEMBLY),
                 new SubmittedVariant("assembly", 1111,
                                      "project", "contig_2", 100, "ref",
-                                     "alt", true));
+                                     "alt", CLUSTERED_VARIANT, true, MATCHES_ASSEMBLY));
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(variants);
 
-        assertEquals(new HashSet(generatedAccessions), new HashSet(retrievedAccessions));
+        assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
     }
 }

@@ -42,6 +42,10 @@ public class VariantProcessorTest {
 
     private static final String ALTERNATE_ALLELE = "T";
 
+    private static final Long CLUSTERED_VARIANT = null;
+
+    private static final Boolean MATCHES_ASSEMBLY = null;
+
     private VariantProcessor processor;
 
     @Before
@@ -54,37 +58,42 @@ public class VariantProcessorTest {
         Variant variant = new Variant(CONTIG, START, 1001, REFERENCE_ALLELE, ALTERNATE_ALLELE);
         ISubmittedVariant processed = processor.process(variant);
         ISubmittedVariant expected = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE,
-                                                         ALTERNATE_ALLELE, true);
+                                                          ALTERNATE_ALLELE, CLUSTERED_VARIANT, true, MATCHES_ASSEMBLY);
         assertEquals(expected, processed);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionAssemblyNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(null, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
+                                                                 true, MATCHES_ASSEMBLY);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionProjectNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, null, CONTIG, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
+                                                                 true, MATCHES_ASSEMBLY);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionContigNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, null, START,
-                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, true);
+                                                                 REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
+                                                                 true, MATCHES_ASSEMBLY);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionReferenceNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 null, ALTERNATE_ALLELE, true);
+                                                                 null, ALTERNATE_ALLELE, CLUSTERED_VARIANT, true,
+                                                                 MATCHES_ASSEMBLY);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionAlternateNull() {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
-                                                                 REFERENCE_ALLELE, null, true);
+                                                                 REFERENCE_ALLELE, null, CLUSTERED_VARIANT, true,
+                                                                 MATCHES_ASSEMBLY);
     }
 }

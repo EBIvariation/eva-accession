@@ -56,6 +56,10 @@ public class SubmittedVariantsRestControllerTest {
 
     private static final String URL = "/v1/submitted-variants/";
 
+    private static final Long CLUSTERED_VARIANT = null;
+
+    private static final Boolean MATCHES_ASSEMBLY = null;
+
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
         List<AccessionResponseDTO> generatedAccessions = basicRestController.generateAccessions(
@@ -71,9 +75,11 @@ public class SubmittedVariantsRestControllerTest {
 
     public List<SubmittedVariantDTO> getListOfVariantMessages() {
         SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234,
-                                                               "REF", "ALT", false, null);
+                                                               "REF", "ALT", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY,
+                                                               null);
         SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234,
-                                                               "REF", "ALT", false, null);
+                                                               "REF", "ALT", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY,
+                                                               null);
         return asList(variant1, variant2);
     }
 }
