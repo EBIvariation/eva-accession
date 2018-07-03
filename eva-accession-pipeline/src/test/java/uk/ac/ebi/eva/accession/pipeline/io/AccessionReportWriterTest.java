@@ -24,6 +24,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.BufferedReader;
@@ -48,8 +49,6 @@ public class AccessionReportWriterTest {
     private static final String CONTIG_2 = "contig_2";
 
     private static final int START_1 = 10;
-
-    private static final int START_2 = 20;
 
     private static final String REFERENCE = "T";
 
@@ -94,11 +93,14 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper));
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE, ALTERNATE,
-                            ".", ".", "."),
+                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
+                            ALTERNATE, ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
@@ -121,7 +123,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper));
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
@@ -137,7 +142,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper));
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  CONTEXT_BASE + REFERENCE, CONTEXT_BASE,
@@ -153,13 +161,16 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper));
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
         accessionReportWriter.close();
 
         AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader);
         variant.setContig(CONTIG_2);
         resumingWriter.open(executionContext);
-        resumingWriter.write(Collections.singletonList(accessionWrapper));
+        resumingWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
         resumingWriter.close();
 
         assertHeaderIsNotWrittenTwice(output);

@@ -69,7 +69,7 @@ public class AccessionWriterTest {
 
     private static final String CONTIG_2 = "contig_2";
 
-    private static final int START_1 = 100;
+    private static final int START_1 = 2;
 
     private static final int START_2 = 200;
 
@@ -154,6 +154,39 @@ public class AccessionWriterTest {
             assertVariantEquals(secondVariant, firstSavedVariant);
             assertVariantEquals(firstVariant, secondSavedVariant);
         }
+    }
+
+    @Test
+    @DirtiesContext
+    public void variantInsertionCheckOrder() throws Exception {
+        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
+                                                             "C", "A", false);
+        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
+                                                              "", "A", false);
+
+        accessionWriter.write(Arrays.asList(firstVariant, secondVariant));
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions =
+                service.get(Arrays.asList(firstVariant, secondVariant));
+        assertEquals(2, accessions.size());
+
+        int firstVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + START_1);
+        //secondVariant position is 1 because it is an insertion and the context base is added
+        int secondVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + (START_1 - 1));
+        assertTrue(firstVariantLineNumber > secondVariantLineNumber);
+    }
+
+    private static int getVariantLineNumberByPosition(File output, String position) throws IOException {
+        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
+        String line;
+        int lineNumber = 0;
+        while ((line = fileInputStream.readLine()) != null) {
+            if (line.startsWith(position)) {
+                return lineNumber;
+            }
+            lineNumber++;
+        }
+        throw new IllegalStateException("The VCF does not contain any variant with position " + position);
     }
 
     @Test

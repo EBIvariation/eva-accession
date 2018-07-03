@@ -19,19 +19,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
-import org.springframework.batch.item.ItemStreamWriter;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<ISubmittedVariant, String, Long>> {
+public class AccessionReportWriter {
 
     private static final String ACCESSION_PREFIX = "ss";
 
@@ -65,7 +66,6 @@ public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<
         this.accessionPrefix = accessionPrefix;
     }
 
-    @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         boolean isHeaderAlreadyWritten = IS_HEADER_WRITTEN_VALUE.equals(executionContext.get(IS_HEADER_WRITTEN_KEY));
         if (output.exists() && !isHeaderAlreadyWritten) {
@@ -93,12 +93,10 @@ public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<
         fileWriter.newLine();
     }
 
-    @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
 
     }
 
-    @Override
     public void close() throws ItemStreamException {
         try {
             fileWriter.close();
@@ -107,23 +105,35 @@ public class AccessionReportWriter implements ItemStreamWriter<AccessionWrapper<
         }
     }
 
-    @Override
-    public void write(List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions) throws IOException {
+    public void write(List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions,
+                      AccessionWrapperComparator accessionWrapperComparator) throws IOException {
         if (fileWriter == null) {
             throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
                                           "called AccessionReportWriter::open");
         }
-        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : accessions) {
+        List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = denormalizeVariants(
+                accessions);
+        denormalizedAccessions.sort(accessionWrapperComparator);
+        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : denormalizedAccessions) {
             writeVariant(variant.getAccession(), variant.getData());
         }
         fileWriter.flush();
     }
 
-    private void writeVariant(Long id, ISubmittedVariant normalizedVariant) throws IOException {
-        ISubmittedVariant variant = denormalizeVariant(normalizedVariant);
-        String vcfLine = variantToVcfLine(id, variant);
+    private void writeVariant(Long id, ISubmittedVariant denormalizedVariant) throws IOException {
+        String vcfLine = variantToVcfLine(id, denormalizedVariant);
         fileWriter.write(vcfLine);
         fileWriter.newLine();
+    }
+
+    private List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizeVariants(
+            List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = new ArrayList<>();
+        for (AccessionWrapper<ISubmittedVariant, String, Long> accession : accessions) {
+            denormalizedAccessions.add(new AccessionWrapper(accession.getAccession(), accession.getHash(),
+                                                            denormalizeVariant(accession.getData())));
+        }
+        return denormalizedAccessions;
     }
 
     private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
