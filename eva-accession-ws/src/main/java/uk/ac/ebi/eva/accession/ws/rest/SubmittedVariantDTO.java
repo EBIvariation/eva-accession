@@ -69,7 +69,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.alternateAllele = alternateAllele;
         this.clusteredVariant = clusteredVariant;
         this.supportedByEvidence = supportedByEvidence;
-        this.matchesAssembly = Optional.of(matchesAssembly).orElse(true);
+        this.matchesAssembly = Optional.ofNullable(matchesAssembly).orElse(true);
         this.createdDate = createdDate;
     }
 
