@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
@@ -47,6 +48,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     @Field("alt")
     private String alternateAllele;
 
+    @Indexed
     @Field("rs")
     private Long clusteredVariant;
 
