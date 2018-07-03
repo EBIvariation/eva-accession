@@ -180,16 +180,15 @@ public class ReportCheckTasklet implements Tasklet {
         }
 
         if (inputBufferHelper.getDuplicatedVariants() > 0) {
-            logger.warn("{} duplicated variants were found in the original VCF. This means that it's expected for the" +
-                                " report to have less variants than the original VCF, as each set of duplicates got " +
-                                "only one accession.",
+            logger.warn("{} duplicated variants were found in the original VCF. This means the report should have " +
+                                "less variants than the original VCF, as each set of duplicates got only one accession.",
                         inputBufferHelper.getDuplicatedVariants());
         }
         if (reportBufferHelper.getDuplicatedVariants() > 0) {
             logger.warn("{} duplicated variants were found in the accession report. This means that in the original " +
                                 "VCF there were duplicates and they got different accessions, and now there are " +
-                                "redundant accessions that should be eventually deprecated. This redundant " +
-                                "accessions will be avoided when alignment against the reference is done.",
+                                "redundant accessions that should be eventually deprecated. These redundant " +
+                                "accessions will be avoided when aligning against the reference sequence.",
                         reportBufferHelper.getDuplicatedVariants());
         }
 
