@@ -131,7 +131,9 @@ public class AccessionWriterTest {
         assertEquals(expectedvariant.getStart(), actualVariant.getStart());
         assertEquals(expectedvariant.getReferenceAllele(), actualVariant.getReferenceAllele());
         assertEquals(expectedvariant.getAlternateAllele(), actualVariant.getAlternateAllele());
+        assertEquals(expectedvariant.getClusteredVariant(), actualVariant.getClusteredVariant());
         assertEquals(expectedvariant.isSupportedByEvidence(), actualVariant.isSupportedByEvidence());
+        assertEquals(expectedvariant.getMatchesAssembly(), actualVariant.getMatchesAssembly());
     }
 
     @Test

@@ -22,6 +22,10 @@
             <artifactId>eva-accession-core</artifactId>
             <version>0.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.fakemongo</groupId>
+            <artifactId>fongo</artifactId>
+        </dependency>
         <!--TODO : add PostgreSQL driver with scope runtime for production deployment-->
     </dependencies>
 
