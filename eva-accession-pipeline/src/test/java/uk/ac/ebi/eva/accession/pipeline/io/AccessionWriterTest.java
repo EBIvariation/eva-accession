@@ -69,7 +69,7 @@ public class AccessionWriterTest {
 
     private static final String CONTIG_2 = "contig_2";
 
-    private static final int START_1 = 100;
+    private static final int START_1 = 2;
 
     private static final int START_2 = 200;
 
@@ -159,9 +159,9 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void variantInsertionCheckOrder() throws Exception {
-        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, 2,
+        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
                                                              "C", "A", false);
-        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, 2,
+        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
                                                               "", "A", false);
 
         accessionWriter.write(Arrays.asList(firstVariant, secondVariant));
@@ -170,9 +170,9 @@ public class AccessionWriterTest {
                 service.get(Arrays.asList(firstVariant, secondVariant));
         assertEquals(2, accessions.size());
 
-        int firstVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + "2");
+        int firstVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + START_1);
         //secondVariant position is 1 because it is an insertion and the context base is added
-        int secondVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + "1");
+        int secondVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + (START_1 - 1));
         assertTrue(firstVariantLineNumber > secondVariantLineNumber);
     }
 
