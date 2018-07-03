@@ -34,19 +34,19 @@ import java.util.Set;
 
 /**
  * Compares the the original VCF and accession report VCF, and logs the differences.
- *
+ * <p>
  * Terminology: The original VCF contains variants, and it will be loaded into the 'variant buffer'. The accession
  * report VCF contains the accessioned variants, and it will be loaded into the 'accession buffer'.
- *
+ * <p>
  * The high-level idea of the process is filling those 2 buffers, and when the same coordinates appears in both the
  * variant buffer and the accession buffer, it means that the variant in those coordinates was correctly accessioned,
  * so it can be removed from both buffers. At the end, only variants without accessions and accessions without
  * variants should be left in the buffers after both files were completely read.
- *
+ * <p>
  * The reason why the buffers are needed is that the accession report can be unordered. In order to avoid
  * having the VCFs completely loaded in memory, a buffer size can be configured for both buffers. However, to guarantee
  * correct behaviour in worst-ordering scenario, the buffers need to be able to grow indefinitely.
- *
+ * <p>
  * To perform some self-checks, this tasklet provides the maximum size of the buffers during the execution, and
  * also provides the number of iterations needed.
  */
@@ -56,9 +56,9 @@ public class ReportCheckTasklet implements Tasklet {
 
     private static final int BUFFER_SIZE_INCREASE_FACTOR = 2;
 
-    private ItemStreamReader<Variant> inputReader;
+    private BufferHelper inputBufferHelper;
 
-    private ItemStreamReader<Variant> reportReader;
+    private BufferHelper reportBufferHelper;
 
     private long maxBufferSize;
 
@@ -70,8 +70,8 @@ public class ReportCheckTasklet implements Tasklet {
 
     public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader,
                               long initialBufferSize) {
-        this.inputReader = inputReader;
-        this.reportReader = reportReader;
+        this.inputBufferHelper = new BufferHelper(inputReader);
+        this.reportBufferHelper = new BufferHelper(reportReader);
         this.initialBufferSize = initialBufferSize;
         this.maxBufferSize = 0;
         this.iterations = 0;
@@ -80,25 +80,23 @@ public class ReportCheckTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-        Set<Variant> variantBuffer = new HashSet<>();
-        Set<Variant> accessionBuffer = new HashSet<>();
-        inputReader.open(new ExecutionContext());
-        reportReader.open(new ExecutionContext());
+        inputBufferHelper.getReader().open(new ExecutionContext());
+        reportBufferHelper.getReader().open(new ExecutionContext());
         boolean readsPendingInputFile = true;
         boolean readsPendingReportFile = true;
         while (readsPendingInputFile || readsPendingReportFile) {
             iterations++;
 
-            readsPendingInputFile = fillBuffer(inputReader, variantBuffer);
-            readsPendingReportFile = fillBuffer(reportReader, accessionBuffer);
+            readsPendingInputFile = fillBuffer(inputBufferHelper);
+            readsPendingReportFile = fillBuffer(reportBufferHelper);
 
-            int numRemoved = removeMatchingVariants(variantBuffer, accessionBuffer);
+            int numRemoved = removeMatchingVariants(inputBufferHelper.getBuffer(), reportBufferHelper.getBuffer());
             if (numRemoved == 0) {
                 increaseBufferSizeToAvoidLock();
             }
         }
 
-        logStatus(stepContribution, variantBuffer, accessionBuffer);
+        logStatus(stepContribution);
 
         return RepeatStatus.FINISHED;
     }
@@ -107,28 +105,32 @@ public class ReportCheckTasklet implements Tasklet {
      * @return true if the reader is pending some reads, false otherwise (i.e. return false if there are no more
      * reads available)
      */
-    private boolean fillBuffer(ItemStreamReader<Variant> reader, Set<Variant> buffer) throws Exception {
+    private boolean fillBuffer(BufferHelper bufferHelper) throws Exception {
         Variant variantRead = null;
+        Set<Variant> buffer = bufferHelper.getBuffer();
         boolean bufferWasFull = buffer.size() >= initialBufferSize;
 
-        while (buffer.size() < initialBufferSize && (variantRead = readVcfIgnoringNonVariants(reader)) != null) {
-            buffer.add(variantRead);
+        while (buffer.size() < initialBufferSize && (variantRead = readVcfIgnoringNonVariants(bufferHelper)) != null) {
+            if (!buffer.add(variantRead)) {
+                bufferHelper.setDuplicatedVariants(bufferHelper.getDuplicatedVariants() + 1);
+            }
         }
         maxBufferSize = Math.max(maxBufferSize, buffer.size());
         boolean moreReadsPending = bufferWasFull || variantRead != null;
         return moreReadsPending;
     }
 
-    private Variant readVcfIgnoringNonVariants(ItemStreamReader<Variant> inputReader) throws Exception {
+    private Variant readVcfIgnoringNonVariants(BufferHelper bufferHelper) throws Exception {
         Variant variant = null;
         boolean readVariantOrEof = false;
         while (!readVariantOrEof) {
             try {
-                variant = inputReader.read();
+                variant = bufferHelper.getReader().read();
                 readVariantOrEof = true;
             } catch (Exception exception) {
                 if (skipPolicy.shouldSkip(exception, 0)) {
-                    // this was a non-variant, we must read the next line
+                    // this was likely a non-variant, we must read the next line
+                    bufferHelper.setSkippedVariants(bufferHelper.getSkippedVariants() + 1);
                 } else {
                     throw exception;
                 }
@@ -162,25 +164,52 @@ public class ReportCheckTasklet implements Tasklet {
         initialBufferSize *= BUFFER_SIZE_INCREASE_FACTOR;
     }
 
-    private void logStatus(StepContribution stepContribution, Set<Variant> variantsWithoutAccession,
-                           Set<Variant> unmatchedAccessions) {
+    private void logStatus(StepContribution stepContribution) {
         logger.debug("Max unmatched accessions held in memory: {}; iterations: {}", maxBufferSize, iterations);
 
-        stepContribution.setExitStatus(ExitStatus.COMPLETED);
-
-        if (!unmatchedAccessions.isEmpty()) {
-            stepContribution.setExitStatus(ExitStatus.FAILED);
-            logger.error("{} variants were found in the accession report that were not found in the original VCF.",
-                         unmatchedAccessions.size());
-            logger.info("These are the {} variants that were not found in the original VCF: {}",
-                        unmatchedAccessions.size(), unmatchedAccessions);
+        if (inputBufferHelper.getSkippedVariants() > 0) {
+            logger.warn("{} lines in the original VCF were skipped. The most likely reason is that they were " +
+                                "non-variants, but a high number could be symptom of a problem.",
+                        inputBufferHelper.getSkippedVariants());
         }
 
-        if (!variantsWithoutAccession.isEmpty()) {
+        if (reportBufferHelper.getSkippedVariants() > 0) {
+            logger.error("{} variants in the accession report were skipped. This is very likely a bug because the " +
+                                 "report should not contain non-variants nor malformed lines.",
+                         reportBufferHelper.getSkippedVariants());
+        }
+
+        if (inputBufferHelper.getDuplicatedVariants() > 0) {
+            logger.warn("{} duplicated variants were found in the original VCF. This means the report should have " +
+                                "less variants than the original VCF, as each set of duplicates got only one accession.",
+                        inputBufferHelper.getDuplicatedVariants());
+        }
+        if (reportBufferHelper.getDuplicatedVariants() > 0) {
+            logger.warn("{} duplicated variants were found in the accession report. This means that in the original " +
+                                "VCF there were duplicates and they got different accessions, and now there are " +
+                                "redundant accessions that should be eventually deprecated. These redundant " +
+                                "accessions will be avoided when aligning against the reference sequence.",
+                        reportBufferHelper.getDuplicatedVariants());
+        }
+
+        stepContribution.setExitStatus(ExitStatus.COMPLETED);
+        if (!reportBufferHelper.getBuffer().isEmpty()) {
             stepContribution.setExitStatus(ExitStatus.FAILED);
-            logger.error("{} variants were not found in the accession report.", variantsWithoutAccession.size());
+            logger.error("{} variants were found in the accession report that were not found in the original VCF.",
+                         reportBufferHelper.getBuffer().size());
+            logger.info("These are the {} variants that were not found in the original VCF: {}",
+                        reportBufferHelper.getBuffer().size(), reportBufferHelper.getBuffer());
+        }
+
+        if (!inputBufferHelper.getBuffer().isEmpty()) {
+            stepContribution.setExitStatus(ExitStatus.FAILED);
+            logger.error("{} variants were not found in the accession report. Given that {} of those are duplicates, " +
+                                 "only {} - {} = {} unaccessioned variants need to be checked.",
+                         inputBufferHelper.getBuffer().size(), reportBufferHelper.getDuplicatedVariants(),
+                         inputBufferHelper.getBuffer().size(), reportBufferHelper.getDuplicatedVariants(),
+                         inputBufferHelper.getBuffer().size() - reportBufferHelper.getDuplicatedVariants());
             logger.info("These are the {} variants that were not found in the accession report: {}",
-                        variantsWithoutAccession.size(), variantsWithoutAccession);
+                        inputBufferHelper.getBuffer().size(), inputBufferHelper.getBuffer());
         }
     }
 
@@ -197,5 +226,79 @@ public class ReportCheckTasklet implements Tasklet {
 
     public long getIterations() {
         return iterations;
+    }
+
+    public long getDuplicatedVariantsInInputVcf() {
+        return inputBufferHelper.getDuplicatedVariants();
+    }
+
+    public long getDuplicatedVariantsInReportVcf() {
+        return reportBufferHelper.getDuplicatedVariants();
+    }
+
+    public long getSkippedVariantsInInputVcf() {
+        return inputBufferHelper.getSkippedVariants();
+    }
+
+    public long getSkippedVariantsInReportVcf() {
+        return reportBufferHelper.getSkippedVariants();
+    }
+
+    public long getUnmatchedVariantsInInputVcf() {
+        return inputBufferHelper.getBuffer().size();
+    }
+
+    public long getUnmatchedVariantsInReportVcf() {
+        return reportBufferHelper.getBuffer().size();
+    }
+
+    private class BufferHelper {
+
+        private ItemStreamReader<Variant> reader;
+
+        private Set<Variant> buffer;
+
+        private Long duplicatedVariants;
+
+        private Long skippedVariants;
+
+        BufferHelper(ItemStreamReader<Variant> reportReader) {
+            this.reader = reportReader;
+            this.buffer = new HashSet<>();
+            this.duplicatedVariants = 0L;
+            this.skippedVariants = 0L;
+        }
+
+        public ItemStreamReader<Variant> getReader() {
+            return reader;
+        }
+
+        public void setReader(ItemStreamReader<Variant> reader) {
+            this.reader = reader;
+        }
+
+        public Set<Variant> getBuffer() {
+            return buffer;
+        }
+
+        public void setBuffer(Set<Variant> buffer) {
+            this.buffer = buffer;
+        }
+
+        public Long getDuplicatedVariants() {
+            return duplicatedVariants;
+        }
+
+        public void setDuplicatedVariants(Long duplicatedVariants) {
+            this.duplicatedVariants = duplicatedVariants;
+        }
+
+        public Long getSkippedVariants() {
+            return skippedVariants;
+        }
+
+        public void setSkippedVariants(Long skippedVariants) {
+            this.skippedVariants = skippedVariants;
+        }
     }
 }
