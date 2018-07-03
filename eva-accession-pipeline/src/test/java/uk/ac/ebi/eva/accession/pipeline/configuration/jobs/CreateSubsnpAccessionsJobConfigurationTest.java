@@ -90,7 +90,7 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
             }
             lineNumber++;
         }
-        throw new IllegalStateException("The VCF does not contain any variant with position" + position);
+        throw new IllegalStateException("The VCF does not contain any variant with position " + position);
     }
 
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
