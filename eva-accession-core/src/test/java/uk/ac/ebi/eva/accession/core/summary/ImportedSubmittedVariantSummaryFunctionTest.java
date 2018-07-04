@@ -15,15 +15,18 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.core;
+package uk.ac.ebi.eva.accession.core.summary;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class SubmittedVariantModelSummaryFunctionTest {
+public class ImportedSubmittedVariantSummaryFunctionTest {
 
     private static final String ASSEMBLY_ACCESSION = "assembly";
 
@@ -45,11 +48,11 @@ public class SubmittedVariantModelSummaryFunctionTest {
 
     private static final Boolean MATCHES_ASSEMBLY = null;
 
-    private SubmittedVariantModelSummaryFunction summaryFunction;
+    private ImportedSubmittedVariantSummaryFunction summaryFunction;
 
     @Before
     public void setUp() {
-        summaryFunction = new SubmittedVariantModelSummaryFunction();
+        summaryFunction = new ImportedSubmittedVariantSummaryFunction();
     }
 
     @Test
@@ -75,7 +78,7 @@ public class SubmittedVariantModelSummaryFunctionTest {
     }
 
     @Test
-    public void sameSummaryWhenTaxonomyDiffers() {
+    public void differentSummaryWhenTaxonomyDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
                                      REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
@@ -85,7 +88,7 @@ public class SubmittedVariantModelSummaryFunctionTest {
                 new SubmittedVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, PROJECT_ACCESSION, CONTIG, START,
                                      REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
 
-        assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
+        assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
 
     @Test
@@ -141,6 +144,19 @@ public class SubmittedVariantModelSummaryFunctionTest {
     }
 
     @Test
+    public void sameSummaryWhenClusteredVariantDiffers() {
+        ISubmittedVariant submittedVariant1 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+
+        ISubmittedVariant submittedVariant2 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, 5L, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+
+        assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
+    }
+
+    @Test
     public void sameSummaryWhenSupportedByEvidenceDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
@@ -149,6 +165,19 @@ public class SubmittedVariantModelSummaryFunctionTest {
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
                                      REF_A, ALT_T, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+
+        assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
+    }
+
+    @Test
+    public void sameSummaryWhenMatchesAssemblyDiffers() {
+        ISubmittedVariant submittedVariant1 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+
+        ISubmittedVariant submittedVariant2 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, false);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }

@@ -16,7 +16,9 @@
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -27,11 +29,13 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariantModelSummaryFunction;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.summary.ImportedSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.ImportedSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.test.MongoTestConfiguration;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -41,7 +45,9 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class ImportedSubmittedVariantWriterTest {
-    private static final int TAXONOMY = 3880;
+    private static final int TAXONOMY_1 = 3880;
+
+    private static final int TAXONOMY_2 = 3882;
 
     private static final long EXPECTED_ACCESSION = 10000000000L;
 
@@ -72,15 +78,19 @@ public class ImportedSubmittedVariantWriterTest {
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Before
     public void setUp() throws Exception {
         importedSubmittedVariantWriter = new ImportedSubmittedVariantWriter(mongoTemplate);
-        hashingFunction = new SubmittedVariantModelSummaryFunction().andThen(new SHA1HashingFunction());
+        hashingFunction = new ImportedSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        mongoTemplate.dropCollection(ImportedSubmittedVariantEntity.class);
     }
 
     @Test
     public void saveSingleAccession() throws Exception {
-        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
                                                                  "reference", "alternate",
                                                                  CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
         ImportedSubmittedVariantEntity variant = new ImportedSubmittedVariantEntity(EXPECTED_ACCESSION,
@@ -92,9 +102,45 @@ public class ImportedSubmittedVariantWriterTest {
         List<ImportedSubmittedVariantEntity> accessions = mongoTemplate.find(new Query(),
                                                                              ImportedSubmittedVariantEntity.class);
         assertEquals(1, accessions.size());
-        assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
+        assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertVariantEquals(variant, accessions.iterator().next());
+        assertVariantEquals(variant, accessions.get(0));
+    }
+
+    @Test
+    public void saveDifferentTaxonomies() throws Exception {
+        SubmittedVariant firstSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
+                                                                      START_1, "reference", "alternate",
+                                                                      CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+        SubmittedVariant secondSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig",
+                                                                       START_1, "reference", "alternate",
+                                                                       CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+        ImportedSubmittedVariantEntity firstVariant = new ImportedSubmittedVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant);
+        ImportedSubmittedVariantEntity secondVariant = new ImportedSubmittedVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(secondSubmittedVariant), secondSubmittedVariant);
+
+        importedSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant));
+
+        List<ImportedSubmittedVariantEntity> accessions = mongoTemplate.find(new Query(),
+                                                                             ImportedSubmittedVariantEntity.class);
+        assertEquals(2, accessions.size());
+        assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
+
+        assertVariantEquals(firstVariant, accessions.get(0));
+        assertVariantEquals(secondVariant, accessions.get(1));
+    }
+
+    @Test
+    public void failsOnDuplicateVariant() throws Exception {
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
+                                                                      START_1, "reference", "alternate",
+                                                                      CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+        ImportedSubmittedVariantEntity variant = new ImportedSubmittedVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant);
+
+        thrown.expect(RuntimeException.class);
+        importedSubmittedVariantWriter.write(Arrays.asList(variant, variant));
     }
 
     private void assertVariantEquals(ISubmittedVariant expectedvariant, ISubmittedVariant actualVariant) {

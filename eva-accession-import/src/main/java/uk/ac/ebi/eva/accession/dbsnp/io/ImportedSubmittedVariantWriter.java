@@ -37,21 +37,11 @@ public class ImportedSubmittedVariantWriter implements ItemWriter<ImportedSubmit
     }
 
     @Override
-    public void write(List<? extends ImportedSubmittedVariantEntity> importedSubmittedVariants) throws Exception {
+    public void write(List<? extends ImportedSubmittedVariantEntity> importedSubmittedVariants) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               ImportedSubmittedVariantEntity.class);
         bulkOperations.insert(importedSubmittedVariants);
-        BulkWriteResult result = bulkOperations.execute();
-        checkInsertionResult(result, importedSubmittedVariants);
-        // TODO check the case where several rows have same hash and different accessions (redundant rows) because
-        // that is a serious error
+        bulkOperations.execute();
     }
 
-    private void checkInsertionResult(BulkWriteResult result,
-                                      List<? extends ImportedSubmittedVariantEntity> importedSubmittedVariants) {
-        if (result.getInsertedCount() != importedSubmittedVariants.size()) {
-            logger.warn("Tried to insert a chunk of {} variants but only {} were inserted",
-                        importedSubmittedVariants.size(), result.getInsertedCount());
-        }
-    }
 }
