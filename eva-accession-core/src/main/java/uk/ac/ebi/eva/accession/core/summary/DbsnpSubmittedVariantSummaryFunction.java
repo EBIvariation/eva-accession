@@ -21,7 +21,7 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import java.util.function.Function;
 
-public class ImportedSubmittedVariantSummaryFunction implements Function<ISubmittedVariant, String> {
+public class DbsnpSubmittedVariantSummaryFunction implements Function<ISubmittedVariant, String> {
 
     @Override
     public String apply(ISubmittedVariant model) {

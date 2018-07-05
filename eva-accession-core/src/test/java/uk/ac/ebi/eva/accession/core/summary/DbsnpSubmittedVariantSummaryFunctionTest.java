@@ -26,7 +26,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class ImportedSubmittedVariantSummaryFunctionTest {
+public class DbsnpSubmittedVariantSummaryFunctionTest {
 
     private static final String ASSEMBLY_ACCESSION = "assembly";
 
@@ -48,11 +48,11 @@ public class ImportedSubmittedVariantSummaryFunctionTest {
 
     private static final Boolean MATCHES_ASSEMBLY = null;
 
-    private ImportedSubmittedVariantSummaryFunction summaryFunction;
+    private DbsnpSubmittedVariantSummaryFunction summaryFunction;
 
     @Before
     public void setUp() {
-        summaryFunction = new ImportedSubmittedVariantSummaryFunction();
+        summaryFunction = new DbsnpSubmittedVariantSummaryFunction();
     }
 
     @Test

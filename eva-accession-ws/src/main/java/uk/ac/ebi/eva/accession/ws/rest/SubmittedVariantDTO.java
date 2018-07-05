@@ -39,7 +39,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private String alternateAllele;
 
-    private Long clusteredVariant;
+    private Long clusteredVariantAccession;
 
     private boolean supportedByEvidence;
 
@@ -52,13 +52,13 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     public SubmittedVariantDTO(ISubmittedVariant model) {
         this(model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getProjectAccession(), model.getContig(),
-             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.getClusteredVariant(),
+             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.getClusteredVariantAccession(),
              model.isSupportedByEvidence(), model.getMatchesAssembly(), model.getCreatedDate());
     }
 
     public SubmittedVariantDTO(String assemblyAccession, int taxonomyAccession, String projectAccession,
                                String contig, long start, String referenceAllele, String alternateAllele,
-                               Long clusteredVariant, boolean supportedByEvidence, Boolean matchesAssembly,
+                               Long clusteredVariantAccession, boolean supportedByEvidence, Boolean matchesAssembly,
                                LocalDateTime createdDate) {
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
@@ -67,7 +67,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
-        this.clusteredVariant = clusteredVariant;
+        this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
         this.matchesAssembly = Optional.ofNullable(matchesAssembly).orElse(true);
         this.createdDate = createdDate;
@@ -109,8 +109,8 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     }
 
     @Override
-    public Long getClusteredVariant() {
-        return clusteredVariant;
+    public Long getClusteredVariantAccession() {
+        return clusteredVariantAccession;
     }
 
     @Override

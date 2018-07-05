@@ -18,22 +18,23 @@ package uk.ac.ebi.eva.accession.dbsnp.persistence;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
-public class ImportedSubmittedVariantEntity extends SubmittedVariantEntity {
+public class DbsnpSubmittedVariantEntity extends SubmittedVariantEntity {
 
-    ImportedSubmittedVariantEntity() {
+    DbsnpSubmittedVariantEntity() {
         super();
     }
 
-    public ImportedSubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
+    public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
         super(accession, hashedMessage, model);
     }
 
-    public ImportedSubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
-                                          int taxonomyAccession,
-                                          String projectAccession, String contig, long start, String referenceAllele,
-                                          String alternateAllele, Long clusteredVariant, boolean isSupportedByEvidence,
-                                          Boolean matchesAssembly, int version) {
+    public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
+                                       int taxonomyAccession, String projectAccession, String contig, long start,
+                                       String referenceAllele, String alternateAllele,
+                                       Long clusteredVariantAccession, boolean isSupportedByEvidence,
+                                       Boolean matchesAssembly, int version) {
         super(accession, hashedMessage, assemblyAccession, taxonomyAccession, projectAccession, contig, start,
-              referenceAllele, alternateAllele, clusteredVariant, isSupportedByEvidence, matchesAssembly, version);
+              referenceAllele, alternateAllele, clusteredVariantAccession, isSupportedByEvidence, matchesAssembly,
+              version);
     }
 }

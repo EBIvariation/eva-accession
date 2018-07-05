@@ -50,7 +50,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     @Indexed
     @Field("rs")
-    private Long clusteredVariant;
+    private Long clusteredVariantAccession;
 
     @Field("evidence")
     private boolean supportedByEvidence;
@@ -64,15 +64,14 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
-             model.getAlternateAllele(), model.getClusteredVariant(), model.isSupportedByEvidence(),
+             model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
              model.getMatchesAssembly(), 1);
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
                                   int taxonomyAccession, String projectAccession, String contig, long start,
-                                  String referenceAllele, String alternateAllele, Long clusteredVariant,
-                                  boolean isSupportedByEvidence,
-                                  Boolean matchesAssembly, int version) {
+                                  String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
+                                  boolean isSupportedByEvidence, Boolean matchesAssembly, int version) {
         super(hashedMessage, accession, version);
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
@@ -81,7 +80,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
-        this.clusteredVariant = clusteredVariant;
+        this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = isSupportedByEvidence;
         this.matchesAssembly = matchesAssembly;
     }
@@ -122,8 +121,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     }
 
     @Override
-    public Long getClusteredVariant() {
-        return clusteredVariant;
+    public Long getClusteredVariantAccession() {
+        return clusteredVariantAccession;
     }
 
     @Override

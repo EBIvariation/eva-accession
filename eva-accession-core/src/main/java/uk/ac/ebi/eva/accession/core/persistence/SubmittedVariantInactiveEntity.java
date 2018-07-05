@@ -41,7 +41,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
 
     private String alternateAllele;
 
-    private Long clusteredVariant;
+    private Long clusteredVariantAccession;
 
     private boolean supportedByEvidence;
 
@@ -59,7 +59,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
         this.start = submittedVariantEntity.getStart();
         this.referenceAllele = submittedVariantEntity.getReferenceAllele();
         this.alternateAllele = submittedVariantEntity.getAlternateAllele();
-        this.clusteredVariant = submittedVariantEntity.getClusteredVariant();
+        this.clusteredVariantAccession = submittedVariantEntity.getClusteredVariantAccession();
         this.supportedByEvidence = submittedVariantEntity.isSupportedByEvidence();
         this.matchesAssembly = submittedVariantEntity.getMatchesAssembly();
     }
@@ -100,8 +100,8 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
     }
 
     @Override
-    public Long getClusteredVariant() {
-        return clusteredVariant;
+    public Long getClusteredVariantAccession() {
+        return clusteredVariantAccession;
     }
 
     @Override

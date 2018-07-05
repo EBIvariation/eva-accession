@@ -36,7 +36,7 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private String alternateAllele;
 
-    private Long clusteredVariant;
+    private Long clusteredVariantAccession;
 
     private boolean supportedByEvidence;
 
@@ -45,7 +45,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     private LocalDateTime createdDate;
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
-                            long start, String referenceAllele, String alternateAllele, Long clusteredVariant,
+                            long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
                             boolean supportedByEvidence, Boolean matchesAssembly) {
         if(Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
@@ -70,7 +70,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
-        this.clusteredVariant = clusteredVariant;
+        this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
         this.matchesAssembly = matchesAssembly;
         this.createdDate = null;
@@ -140,12 +140,12 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public Long getClusteredVariant() {
-        return clusteredVariant;
+    public Long getClusteredVariantAccession() {
+        return clusteredVariantAccession;
     }
 
-    public void setClusteredVariant(Long clusteredVariant) {
-        this.clusteredVariant = clusteredVariant;
+    public void setClusteredVariantAccession(Long clusteredVariantAccession) {
+        this.clusteredVariantAccession = clusteredVariantAccession;
     }
 
     @Override

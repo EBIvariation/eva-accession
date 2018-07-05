@@ -41,7 +41,7 @@ public interface ISubmittedVariant {
 
     String getAlternateAllele();
 
-    Long getClusteredVariant();
+    Long getClusteredVariantAccession();
 
     /**
      * @return True if this submitted variant is supported by genotypes or frequencies

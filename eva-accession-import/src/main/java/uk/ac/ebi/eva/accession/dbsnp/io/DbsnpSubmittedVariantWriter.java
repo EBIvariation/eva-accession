@@ -15,31 +15,30 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
-import com.mongodb.BulkWriteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.dbsnp.persistence.ImportedSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
 
 import java.util.List;
 
-public class ImportedSubmittedVariantWriter implements ItemWriter<ImportedSubmittedVariantEntity> {
+public class DbsnpSubmittedVariantWriter implements ItemWriter<DbsnpSubmittedVariantEntity> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ImportedSubmittedVariantWriter.class);
+    private static final Logger logger = LoggerFactory.getLogger(DbsnpSubmittedVariantWriter.class);
 
     private MongoTemplate mongoTemplate;
 
-    public ImportedSubmittedVariantWriter(MongoTemplate mongoTemplate) {
+    public DbsnpSubmittedVariantWriter(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
 
     @Override
-    public void write(List<? extends ImportedSubmittedVariantEntity> importedSubmittedVariants) {
+    public void write(List<? extends DbsnpSubmittedVariantEntity> importedSubmittedVariants) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              ImportedSubmittedVariantEntity.class);
+                                                              DbsnpSubmittedVariantEntity.class);
         bulkOperations.insert(importedSubmittedVariants);
         bulkOperations.execute();
     }
