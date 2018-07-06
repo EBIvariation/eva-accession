@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.pipeline.io;
+package uk.ac.ebi.eva.accession.core.test.fasta;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,6 +22,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+
+import uk.ac.ebi.eva.accession.core.fasta.FastaSequenceReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -121,7 +123,7 @@ public class FastaSequenceReaderTest {
     /**
      * @TODO find the bug: either we don't use properly htsjdk, or they have a bug reading compressed fastas.
      * This test is ignored because to run it we have to remove the requirement in
-     * {@link uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)} that
+     * {@link FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)} that
      * forbids compressed fastas. You can comment the requirement by hand and run this test to see if it still applies.
      */
     @Test
@@ -140,7 +142,7 @@ public class FastaSequenceReaderTest {
 
     /**
      * For the rationale of this test, look at {@link #htsDoesNotSupportCompressedFastas()} and
-     *  {@link uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)}
+     *  {@link FastaSequenceReader#checkFastaIsUncompressed(java.nio.file.Path)}
      */
     @Test
     public void shouldThrowOnCompressedFasta() throws URISyntaxException, IOException {

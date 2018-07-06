@@ -23,6 +23,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.fasta.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
 import java.io.BufferedWriter;
