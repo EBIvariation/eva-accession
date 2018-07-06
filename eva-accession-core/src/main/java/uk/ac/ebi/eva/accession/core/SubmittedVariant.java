@@ -38,15 +38,20 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private Long clusteredVariantAccession;
 
-    private boolean supportedByEvidence;
+    private Boolean supportedByEvidence;
 
     private Boolean matchesAssembly;
+
+    private Boolean allelesMatch;
+
+    private Boolean validated;
 
     private LocalDateTime createdDate;
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
                             long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
-                            boolean supportedByEvidence, Boolean matchesAssembly) {
+                            Boolean supportedByEvidence, Boolean matchesAssembly, Boolean allelesMatch,
+                            Boolean validated) {
         if(Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
@@ -73,6 +78,8 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
         this.matchesAssembly = matchesAssembly;
+        this.allelesMatch = allelesMatch;
+        this.validated = validated;
         this.createdDate = null;
     }
 
@@ -149,7 +156,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public boolean isSupportedByEvidence() {
+    public Boolean getSupportedByEvidence() {
         return supportedByEvidence;
     }
 
@@ -176,25 +183,35 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
+    public Boolean getAllelesMatch() {
+        return allelesMatch;
+    }
+
+    public void setAllelesMatch(Boolean allelesMatch) {
+        this.allelesMatch = allelesMatch;
+    }
+
+    @Override
+    public Boolean getValidated() {
+        return validated;
+    }
+
+    public void setValidated(Boolean validated) {
+        this.validated = validated;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+        if (!(o instanceof ISubmittedVariant)) {
+            return false;
+        }
 
-        ISubmittedVariant that = (ISubmittedVariant) o;
-
-        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
-        if (start != that.getStart()) return false;
-        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
-        if (!projectAccession.equals(that.getProjectAccession())) return false;
-        if (!contig.equals(that.getContig())) return false;
-        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
-        return alternateAllele.equals(that.getAlternateAllele());
+        return ISubmittedVariant.equals(this, (ISubmittedVariant) o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele, alternateAllele);
+        return ISubmittedVariant.hashCode(this);
     }
 
     @Override
@@ -207,7 +224,11 @@ public class SubmittedVariant implements ISubmittedVariant {
                 ", start=" + start +
                 ", referenceAllele='" + referenceAllele + '\'' +
                 ", alternateAllele='" + alternateAllele + '\'' +
+                ", clusteredVariantAccession=" + clusteredVariantAccession +
                 ", supportedByEvidence=" + supportedByEvidence +
+                ", matchesAssembly=" + matchesAssembly +
+                ", allelesMatch=" + allelesMatch +
+                ", validated=" + validated +
                 ", createdDate=" + createdDate +
                 '}';
     }

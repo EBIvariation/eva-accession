@@ -44,9 +44,13 @@ public class SubmittedVariantSummaryFunctionTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
-    private static final boolean SUPPORTED_BY_EVIDENCE = true;
+    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
 
     private static final Boolean MATCHES_ASSEMBLY = null;
+
+    private static final Boolean ALLELES_MATCH = null;
+
+    private static final Boolean VALIDATED = null;
 
     private SubmittedVariantSummaryFunction summaryFunction;
 
@@ -59,7 +63,8 @@ public class SubmittedVariantSummaryFunctionTest {
     public void summaryFunctionMustBeIdempotent() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant1));
     }
@@ -68,11 +73,13 @@ public class SubmittedVariantSummaryFunctionTest {
     public void differentSummaryWhenAssemblyDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant("anotherAssembly", TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -81,12 +88,14 @@ public class SubmittedVariantSummaryFunctionTest {
     public void sameSummaryWhenTaxonomyDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         int taxonomyAccession2 = 2;
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -95,11 +104,13 @@ public class SubmittedVariantSummaryFunctionTest {
     public void differentSummaryWhenContigDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, "anotherContig", START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -108,11 +119,13 @@ public class SubmittedVariantSummaryFunctionTest {
     public void differentSummaryWhenStartDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, 2,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -121,11 +134,13 @@ public class SubmittedVariantSummaryFunctionTest {
     public void differentSummaryWhenReferenceDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     "C", ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     "C", ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -134,11 +149,13 @@ public class SubmittedVariantSummaryFunctionTest {
     public void differentSummaryWhenAlternateDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, "G", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, "G", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -147,11 +164,13 @@ public class SubmittedVariantSummaryFunctionTest {
     public void sameSummaryWhenClusteredVariantDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, 5L, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, 5L, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                     VALIDATED);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -160,11 +179,12 @@ public class SubmittedVariantSummaryFunctionTest {
     public void sameSummaryWhenSupportedByEvidenceDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }
@@ -173,11 +193,43 @@ public class SubmittedVariantSummaryFunctionTest {
     public void sameSummaryWhenMatchesAssemblyDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, false);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, false, ALLELES_MATCH,
+                                     VALIDATED);
+
+        assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
+    }
+
+    @Test
+    public void sameSummaryWhenAllelesMatchDiffers() {
+        ISubmittedVariant submittedVariant1 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
+
+        ISubmittedVariant submittedVariant2 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, false,
+                                     VALIDATED);
+
+        assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
+    }
+
+    @Test
+    public void sameSummaryWhenValidatedDiffers() {
+        ISubmittedVariant submittedVariant1 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
+
+        ISubmittedVariant submittedVariant2 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START, REF_A,
+                                     ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                     false);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }

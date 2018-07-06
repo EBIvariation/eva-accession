@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
@@ -68,7 +69,13 @@ public class DbsnpSubmittedVariantWriterTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
+    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
+
     private static final Boolean MATCHES_ASSEMBLY = null;
+
+    private static final Boolean ALLELES_MATCH = null;
+
+    private static final Boolean VALIDATED = null;
 
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
@@ -91,7 +98,8 @@ public class DbsnpSubmittedVariantWriterTest {
     public void saveSingleAccession() throws Exception {
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
                                                                  "reference", "alternate",
-                                                                 CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+                                                                 CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(EXPECTED_ACCESSION,
                                                                               hashingFunction.apply(submittedVariant),
                                                                               submittedVariant);
@@ -103,17 +111,19 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertVariantEquals(variant, accessions.get(0));
+        assertTrue(ISubmittedVariant.equals(variant, accessions.get(0)));
     }
 
     @Test
     public void saveDifferentTaxonomies() throws Exception {
         SubmittedVariant firstSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
                                                                       START_1, "reference", "alternate",
-                                                                      CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+                                                                      CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                                      MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         SubmittedVariant secondSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig",
                                                                        START_1, "reference", "alternate",
-                                                                       CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+                                                                       CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                                       MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         DbsnpSubmittedVariantEntity firstVariant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant);
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
@@ -126,33 +136,21 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(2, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertVariantEquals(firstVariant, accessions.get(0));
-        assertVariantEquals(secondVariant, accessions.get(1));
+        assertTrue(ISubmittedVariant.equals(firstVariant, accessions.get(0)));
+        assertTrue(ISubmittedVariant.equals(secondVariant, accessions.get(1)));
     }
 
     @Test
     public void failsOnDuplicateVariant() throws Exception {
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
-                                                                      START_1, "reference", "alternate",
-                                                                      CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY);
+                                                                 START_1, "reference", "alternate",
+                                                                 CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant);
 
         thrown.expect(RuntimeException.class);
         dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));
-    }
-
-    private void assertVariantEquals(ISubmittedVariant expectedvariant, ISubmittedVariant actualVariant) {
-        assertEquals(expectedvariant.getAssemblyAccession(), actualVariant.getAssemblyAccession());
-        assertEquals(expectedvariant.getTaxonomyAccession(), actualVariant.getTaxonomyAccession());
-        assertEquals(expectedvariant.getProjectAccession(), actualVariant.getProjectAccession());
-        assertEquals(expectedvariant.getContig(), actualVariant.getContig());
-        assertEquals(expectedvariant.getStart(), actualVariant.getStart());
-        assertEquals(expectedvariant.getReferenceAllele(), actualVariant.getReferenceAllele());
-        assertEquals(expectedvariant.getAlternateAllele(), actualVariant.getAlternateAllele());
-        assertEquals(expectedvariant.getClusteredVariantAccession(), actualVariant.getClusteredVariantAccession());
-        assertEquals(expectedvariant.isSupportedByEvidence(), actualVariant.isSupportedByEvidence());
-        assertEquals(expectedvariant.getMatchesAssembly(), actualVariant.getMatchesAssembly());
     }
 
 }

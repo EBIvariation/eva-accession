@@ -24,8 +24,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
-import java.util.Objects;
-
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
 
@@ -53,10 +51,16 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     private Long clusteredVariantAccession;
 
     @Field("evidence")
-    private boolean supportedByEvidence;
+    private Boolean supportedByEvidence;
 
     @Field("matchAsm")
     private Boolean matchesAssembly;
+
+    @Field("allelesMatch")
+    private Boolean allelesMatch;
+
+    @Field("validated")
+    private Boolean validated;
 
     protected SubmittedVariantEntity() {
     }
@@ -64,14 +68,15 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
-             model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
-             model.getMatchesAssembly(), 1);
+             model.getAlternateAllele(), model.getClusteredVariantAccession(), model.getSupportedByEvidence(),
+             model.getMatchesAssembly(), model.getAllelesMatch(), model.getValidated(), 1);
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
-                                  int taxonomyAccession, String projectAccession, String contig, long start,
-                                  String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
-                                  boolean isSupportedByEvidence, Boolean matchesAssembly, int version) {
+                                   int taxonomyAccession, String projectAccession, String contig, long start,
+                                   String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
+                                   Boolean isSupportedByEvidence, Boolean matchesAssembly, Boolean allelesMatch,
+                                   Boolean validated, int version) {
         super(hashedMessage, accession, version);
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
@@ -83,6 +88,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = isSupportedByEvidence;
         this.matchesAssembly = matchesAssembly;
+        this.validated = validated;
+        this.allelesMatch = allelesMatch;
     }
 
     @Override
@@ -126,7 +133,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     }
 
     @Override
-    public boolean isSupportedByEvidence() {
+    public Boolean getSupportedByEvidence() {
         return supportedByEvidence;
     }
 
@@ -136,24 +143,27 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     }
 
     @Override
+    public Boolean getAllelesMatch() {
+        return allelesMatch;
+    }
+
+    @Override
+    public Boolean getValidated() {
+        return validated;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+        if (!(o instanceof ISubmittedVariant)) {
+            return false;
+        }
 
-        ISubmittedVariant that = (ISubmittedVariant) o;
-
-        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
-        if (start != that.getStart()) return false;
-        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
-        if (!projectAccession.equals(that.getProjectAccession())) return false;
-        if (!contig.equals(that.getContig())) return false;
-        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
-        return alternateAllele.equals(that.getAlternateAllele());
+        return ISubmittedVariant.equals(this, (ISubmittedVariant) o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele, alternateAllele);
+        return ISubmittedVariant.hashCode(this);
     }
+
 }

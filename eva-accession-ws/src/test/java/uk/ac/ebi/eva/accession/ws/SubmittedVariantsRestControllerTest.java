@@ -58,7 +58,13 @@ public class SubmittedVariantsRestControllerTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
+    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
+
     private static final Boolean MATCHES_ASSEMBLY = null;
+
+    private static final Boolean ALLELES_MATCH = null;
+
+    private static final Boolean VALIDATED = null;
 
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
@@ -74,12 +80,12 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     public List<SubmittedVariantDTO> getListOfVariantMessages() {
-        SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234,
-                                                               "REF", "ALT", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY,
-                                                               null);
-        SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234,
-                                                               "REF", "ALT", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY,
-                                                               null);
+        SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF",
+                                                               "ALT", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+        SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF",
+                                                               "ALT", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         return asList(variant1, variant2);
     }
 }

@@ -31,10 +31,10 @@ public class DbsnpSubmittedVariantEntity extends SubmittedVariantEntity {
     public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
                                        int taxonomyAccession, String projectAccession, String contig, long start,
                                        String referenceAllele, String alternateAllele,
-                                       Long clusteredVariantAccession, boolean isSupportedByEvidence,
-                                       Boolean matchesAssembly, int version) {
+                                       Long clusteredVariantAccession, Boolean isSupportedByEvidence,
+                                       Boolean matchesAssembly, Boolean allelesMatch, Boolean validated, int version) {
         super(accession, hashedMessage, assemblyAccession, taxonomyAccession, projectAccession, contig, start,
               referenceAllele, alternateAllele, clusteredVariantAccession, isSupportedByEvidence, matchesAssembly,
-              version);
+              allelesMatch, validated, version);
     }
 }

@@ -18,6 +18,7 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
@@ -27,25 +28,39 @@ import java.util.Objects;
 @Document
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> implements ISubmittedVariant {
 
+    @Field("asm")
     private String assemblyAccession;
 
+    @Field("tax")
     private int taxonomyAccession;
 
+    @Field("study")
     private String projectAccession;
 
     private String contig;
 
     private long start;
 
+    @Field("ref")
     private String referenceAllele;
 
+    @Field("alt")
     private String alternateAllele;
 
+    @Field("rs")
     private Long clusteredVariantAccession;
 
-    private boolean supportedByEvidence;
+    @Field("evidence")
+    private Boolean supportedByEvidence;
 
+    @Field("matchAsm")
     private Boolean matchesAssembly;
+
+    @Field("allelesMatch")
+    private Boolean allelesMatch;
+
+    @Field("validated")
+    private Boolean validated;
 
     SubmittedVariantInactiveEntity() {
     }
@@ -60,8 +75,10 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
         this.referenceAllele = submittedVariantEntity.getReferenceAllele();
         this.alternateAllele = submittedVariantEntity.getAlternateAllele();
         this.clusteredVariantAccession = submittedVariantEntity.getClusteredVariantAccession();
-        this.supportedByEvidence = submittedVariantEntity.isSupportedByEvidence();
+        this.supportedByEvidence = submittedVariantEntity.getSupportedByEvidence();
         this.matchesAssembly = submittedVariantEntity.getMatchesAssembly();
+        this.allelesMatch = submittedVariantEntity.getAllelesMatch();
+        this.validated = submittedVariantEntity.getValidated();
     }
 
     @Override
@@ -105,7 +122,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
     }
 
     @Override
-    public boolean isSupportedByEvidence() {
+    public Boolean getSupportedByEvidence() {
         return supportedByEvidence;
     }
 
@@ -115,24 +132,27 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
     }
 
     @Override
+    public Boolean getAllelesMatch() {
+        return allelesMatch;
+    }
+
+    @Override
+    public Boolean getValidated() {
+        return validated;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+        if (!(o instanceof ISubmittedVariant)) {
+            return false;
+        }
 
-        ISubmittedVariant that = (ISubmittedVariant) o;
-
-        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
-        if (start != that.getStart()) return false;
-        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
-        if (!projectAccession.equals(that.getProjectAccession())) return false;
-        if (!contig.equals(that.getContig())) return false;
-        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
-        return alternateAllele.equals(that.getAlternateAllele());
+        return ISubmittedVariant.equals(this, (ISubmittedVariant) o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele, alternateAllele);
+        return ISubmittedVariant.hashCode(this);
     }
+
 }

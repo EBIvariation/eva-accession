@@ -45,6 +45,6 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
     public ISubmittedVariant process(final IVariant variant) throws Exception {
         return new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession, variant.getChromosome(),
                                     variant.getStart(), variant.getReference(), variant.getAlternate(),
-                                    UNDEFINED_CLUSTERED_VARIANT, true, ASSEMBLY_MATCH_UNKNOWN);
+                                    UNDEFINED_CLUSTERED_VARIANT, true, true, true, false);
     }
 }

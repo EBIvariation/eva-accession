@@ -51,7 +51,13 @@ public class SubmittedVariantAccessioningServiceTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
+    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
+
     private static final Boolean MATCHES_ASSEMBLY = null;
+
+    private static final Boolean ALLELES_MATCH = null;
+
+    private static final Boolean VALIDATED = null;
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
@@ -69,12 +75,10 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void sameAccessionsAreReturnedForIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
         List<SubmittedVariant> variants = Arrays.asList(
-                new SubmittedVariant("assembly", 1111,
-                                     "project", "contig_1", 100, "ref",
-                                     "alt", CLUSTERED_VARIANT, true, MATCHES_ASSEMBLY),
-                new SubmittedVariant("assembly", 1111,
-                                     "project", "contig_2", 100, "ref",
-                                     "alt", CLUSTERED_VARIANT, true, MATCHES_ASSEMBLY));
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED));
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(variants);
 
