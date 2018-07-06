@@ -64,10 +64,11 @@ public class AssemblyReportParser {
     private void addContigSynonym(String line, ContigMapWrapper contigMapWrapper) {
         String[] columns = line.split("\t", -1);
         if (columns[RELATIONSHIP_COLUMN].equals(IDENTICAL_SEQUENCE)) {
-            ContigSynonym contigSynonym = new ContigSynonym(columns[SEQNAME_COLUMN],
-                                                            columns[GENBANK_COLUMN], columns[REFSEQ_COLUMN],
-                                                            columns[UCSC_COLUMN]);
-            contigMapWrapper.fillContigConventionMaps(contigSynonym);
+            ContigSynonyms contigSynonyms = new ContigSynonyms(columns[SEQNAME_COLUMN],
+                                                               columns[GENBANK_COLUMN],
+                                                               columns[REFSEQ_COLUMN],
+                                                               columns[UCSC_COLUMN]);
+            contigMapWrapper.fillContigConventionMaps(contigSynonyms);
         }
     }
 }

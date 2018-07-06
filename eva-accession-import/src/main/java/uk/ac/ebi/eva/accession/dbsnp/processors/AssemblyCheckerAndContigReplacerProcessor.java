@@ -3,30 +3,67 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.fasta.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
-
-import static uk.ac.ebi.eva.accession.dbsnp.contig.ContigNameConvention.GEN_BANK;
-import static uk.ac.ebi.eva.accession.dbsnp.contig.ContigNameConvention.REF_SEQ;
-import static uk.ac.ebi.eva.accession.dbsnp.contig.ContigNameConvention.SEQUENCE_NAME;
+import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
 
 public class AssemblyCheckerAndContigReplacerProcessor implements ItemProcessor<SubmittedVariant, SubmittedVariant> {
 
     private ContigMapping contigMapping;
 
-    public AssemblyCheckerAndContigReplacerProcessor(ContigMapping contigMapping) {
+    private FastaSequenceReader fastaReader;
+
+    public AssemblyCheckerAndContigReplacerProcessor(ContigMapping contigMapping, FastaSequenceReader fastaReader) {
         this.contigMapping = contigMapping;
+        this.fastaReader = fastaReader;
     }
 
     @Override
     public SubmittedVariant process(SubmittedVariant submittedVariant) throws Exception {
-        String sequenceName = contigMapping.getContigOrDefault(submittedVariant.getContig(), SEQUENCE_NAME);
-        submittedVariant.setContig(sequenceName);
-        //check whether reference matches with fastasequence reader
-        // if contig is not present in fasta, try genbank
-        String genbank = contigMapping.getContigOrDefault(submittedVariant.getContig(), GEN_BANK);
-        // if contig is still not present in fasta, try refseq
-        String refseq = contigMapping.getContigOrDefault(submittedVariant.getContig(), REF_SEQ);
-        // if still doesn't match, flag sv.setMatchesAssembly(false)
-        return submittedVariant;
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(submittedVariant.getContig());
+        if (contigSynonyms != null) {
+            long end = calculateReferenceAlleleEndPosition(submittedVariant.getReferenceAllele(), submittedVariant.getStart());
+            String sequence = getSequenceUsingSynonyms(contigSynonyms, submittedVariant.getStart(), end);
+            if (sequence.equals(submittedVariant.getReferenceAllele())) {
+                submittedVariant.setContig(contigSynonyms.getSequenceName());
+//              TODO: submittedVariant.setMatchesAssembly(true);
+                return submittedVariant;
+            } else {
+//              TODO: submittedVariant.setMatchesAssembly(false);
+//            throw new IllegalArgumentException("Reference allele '" + submittedVariant.getReferenceAllele() + "' not found in FASTA");
+            }
+        }
+        throw new IllegalArgumentException("Contig '" + submittedVariant.getContig() + "' not found in the ASSEMBLY REPORT");
+    }
+
+    private String getSequenceUsingSynonyms(ContigSynonyms contigSynonyms, long start, long end) {
+        String sequence = "";
+        if ((sequence = getSequence(contigSynonyms.getSequenceName(), start, end)) != null) {
+            return sequence;
+        }
+        if ((sequence = getSequence(contigSynonyms.getGenBank(), start, end)) != null) {
+            return sequence;
+        }
+        if ((sequence = getSequence(contigSynonyms.getRefSeq(), start, end)) != null) {
+            return sequence;
+        }
+        if ((sequence = getSequence(contigSynonyms.getUcsc(), start, end)) != null) {
+            return sequence;
+        }
+        throw new IllegalArgumentException("Contig " + contigSynonyms.getSequenceName() + " not found in FASTA file");
+    }
+
+    private String getSequence(String contig, long start, long end) {
+        try {
+            return fastaReader.getSequence(contig, start, end);
+        } catch (IllegalArgumentException e) {
+//          TODO: Change in FastaSequenceReader and validate specific exception (ie. ContigNotInFastaException)
+            return null;
+        }
+    }
+
+    private long calculateReferenceAlleleEndPosition(String referenceAllele, long start) {
+        long referenceLength = referenceAllele.length() - 1;
+        return start + referenceLength;
     }
 }

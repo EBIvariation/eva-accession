@@ -8,13 +8,17 @@ import java.util.regex.Pattern;
 
 public class ContigMapWrapper {
 
-    private Map<String, ContigSynonym> SequenceNameMap;
+    private Map<String, ContigSynonyms> SequenceNameMap;
 
-    private Map<String, ContigSynonym> GenBankMap;
+    private Map<String, ContigSynonyms> GenBankMap;
 
-    private Map<String, ContigSynonym> RefSeqMap;
+    private Map<String, ContigSynonyms> RefSeqMap;
 
-    private Map<String, ContigSynonym> UcscMap;
+    private Map<String, ContigSynonyms> UcscMap;
+
+    private static final String CHROMOSOME_PATTERN = "(chromosome|chrom|chr|ch)(.+)";
+
+    private static final Pattern PATTERN = Pattern.compile(CHROMOSOME_PATTERN, Pattern.CASE_INSENSITIVE);
 
     public ContigMapWrapper() {
         SequenceNameMap = new HashMap<>();
@@ -24,46 +28,46 @@ public class ContigMapWrapper {
     }
 
     public ContigMapWrapper(
-            Map<String, ContigSynonym> sequenceNameMap,
-            Map<String, ContigSynonym> genBankMap,
-            Map<String, ContigSynonym> refSeqMap,
-            Map<String, ContigSynonym> ucscMap) {
+            Map<String, ContigSynonyms> sequenceNameMap,
+            Map<String, ContigSynonyms> genBankMap,
+            Map<String, ContigSynonyms> refSeqMap,
+            Map<String, ContigSynonyms> ucscMap) {
         SequenceNameMap = sequenceNameMap;
         GenBankMap = genBankMap;
         RefSeqMap = refSeqMap;
         UcscMap = ucscMap;
     }
 
-    public Map<String, ContigSynonym> getSequenceNameMap() {
+    public Map<String, ContigSynonyms> getSequenceNameMap() {
         return SequenceNameMap;
     }
 
     public void setSequenceNameMap(
-            Map<String, ContigSynonym> sequenceNameMap) {
+            Map<String, ContigSynonyms> sequenceNameMap) {
         SequenceNameMap = sequenceNameMap;
     }
 
-    public Map<String, ContigSynonym> getGenBankMap() {
+    public Map<String, ContigSynonyms> getGenBankMap() {
         return GenBankMap;
     }
 
-    public void setGenBankMap(Map<String, ContigSynonym> genBankMap) {
+    public void setGenBankMap(Map<String, ContigSynonyms> genBankMap) {
         GenBankMap = genBankMap;
     }
 
-    public Map<String, ContigSynonym> getRefSeqMap() {
+    public Map<String, ContigSynonyms> getRefSeqMap() {
         return RefSeqMap;
     }
 
-    public void setRefSeqMap(Map<String, ContigSynonym> refSeqMap) {
+    public void setRefSeqMap(Map<String, ContigSynonyms> refSeqMap) {
         RefSeqMap = refSeqMap;
     }
 
-    public Map<String, ContigSynonym> getUcscMap() {
+    public Map<String, ContigSynonyms> getUcscMap() {
         return UcscMap;
     }
 
-    public void setUcscMap(Map<String, ContigSynonym> ucscMap) {
+    public void setUcscMap(Map<String, ContigSynonyms> ucscMap) {
         UcscMap = ucscMap;
     }
 
@@ -84,50 +88,48 @@ public class ContigMapWrapper {
     }
 
     public String getSynonymByContigConvention(String contig, ContigNameConvention contigNameConvention) {
-        ContigSynonym contigSynonym;
-        if ((contigSynonym = getSynonyms(contig)) != null) {
-            return getContig(contigSynonym, contigNameConvention);
+        ContigSynonyms contigSynonyms;
+        if ((contigSynonyms = getSynonyms(contig)) != null) {
+            return getContig(contigSynonyms, contigNameConvention);
         }
         return contig;
     }
 
-    private ContigSynonym getSynonyms(String contig) {
+    public ContigSynonyms getSynonyms(String contig) {
         contig = removePrefix(contig);
-        ContigSynonym contigSynonym;
-        if ((contigSynonym = SequenceNameMap.get(contig)) != null) {
-            return contigSynonym;
+        ContigSynonyms contigSynonyms;
+        if ((contigSynonyms = SequenceNameMap.get(contig)) != null) {
+            return contigSynonyms;
         }
-        if ((contigSynonym = GenBankMap.get(contig)) != null) {
-            return contigSynonym;
+        if ((contigSynonyms = GenBankMap.get(contig)) != null) {
+            return contigSynonyms;
         }
-        if ((contigSynonym = RefSeqMap.get(contig)) != null) {
-            return contigSynonym;
+        if ((contigSynonyms = RefSeqMap.get(contig)) != null) {
+            return contigSynonyms;
         }
-        if ((contigSynonym = UcscMap.get(contig)) != null) {
-            return contigSynonym;
+        if ((contigSynonyms = UcscMap.get(contig)) != null) {
+            return contigSynonyms;
         }
         return null;
     }
 
-    private String getContig(ContigSynonym contigSynonym, ContigNameConvention contigNameConvention) {
+    private String getContig(ContigSynonyms contigSynonyms, ContigNameConvention contigNameConvention) {
         switch (contigNameConvention) {
             case SEQUENCE_NAME:
-                return contigSynonym.getSequenceName();
+                return contigSynonyms.getSequenceName();
             case GEN_BANK:
-                return contigSynonym.getGenBank();
+                return contigSynonyms.getGenBank();
             case REF_SEQ:
-                return contigSynonym.getRefSeq();
+                return contigSynonyms.getRefSeq();
             case UCSC:
-                return contigSynonym.getUcsc();
+                return contigSynonyms.getUcsc();
             default:
                 return null;
         }
     }
 
     private String removePrefix(String contig) {
-        String chromosomePattern = "(chromosome|chrom|chr|ch)(.+)";
-        Pattern pattern = Pattern.compile(chromosomePattern, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(contig);
+        Matcher matcher = PATTERN.matcher(contig);
         String contigNoPrefix = contig;
         if (matcher.matches()) {
             contigNoPrefix = matcher.group(2);
@@ -135,12 +137,12 @@ public class ContigMapWrapper {
         return contigNoPrefix;
     }
 
-    public void fillContigConventionMaps(ContigSynonym contigSynonym) {
-        contigSynonym.setSequenceName(removePrefix(contigSynonym.getSequenceName()));
-        contigSynonym.setUcsc(removePrefix(contigSynonym.getUcsc()));
-        SequenceNameMap.put(removePrefix(contigSynonym.getSequenceName()), contigSynonym);
-        GenBankMap.put(contigSynonym.getGenBank(), contigSynonym);
-        RefSeqMap.put(contigSynonym.getRefSeq(), contigSynonym);
-        UcscMap.put(contigSynonym.getUcsc(), contigSynonym);
+    public void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
+        contigSynonyms.setSequenceName(removePrefix(contigSynonyms.getSequenceName()));
+        contigSynonyms.setUcsc(removePrefix(contigSynonyms.getUcsc()));
+        SequenceNameMap.put(contigSynonyms.getSequenceName(), contigSynonyms);
+        GenBankMap.put(contigSynonyms.getGenBank(), contigSynonyms);
+        RefSeqMap.put(contigSynonyms.getRefSeq(), contigSynonyms);
+        UcscMap.put(contigSynonyms.getUcsc(), contigSynonyms);
     }
 }
