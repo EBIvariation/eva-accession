@@ -12,10 +12,6 @@ public class ContigMapping {
         this.contigMapWrapper = contigMap;
     }
 
-    public String getContigOrDefault(String contig, ContigNameConvention contigNameConvention) {
-        return contigMapWrapper.getSynonymByContigConvention(contig, contigNameConvention);
-    }
-
     public ContigSynonyms getContigSynonyms(String contig) {
         return contigMapWrapper.getSynonyms(contig);
     }

@@ -30,7 +30,7 @@ public class AssemblyCheckerAndContigReplacerProcessor implements ItemProcessor<
                 return submittedVariant;
             } else {
 //              TODO: submittedVariant.setMatchesAssembly(false);
-//            throw new IllegalArgumentException("Reference allele '" + submittedVariant.getReferenceAllele() + "' not found in FASTA");
+                return submittedVariant;
             }
         }
         throw new IllegalArgumentException("Contig '" + submittedVariant.getContig() + "' not found in the ASSEMBLY REPORT");
@@ -57,7 +57,6 @@ public class AssemblyCheckerAndContigReplacerProcessor implements ItemProcessor<
         try {
             return fastaReader.getSequence(contig, start, end);
         } catch (IllegalArgumentException e) {
-//          TODO: Change in FastaSequenceReader and validate specific exception (ie. ContigNotInFastaException)
             return null;
         }
     }

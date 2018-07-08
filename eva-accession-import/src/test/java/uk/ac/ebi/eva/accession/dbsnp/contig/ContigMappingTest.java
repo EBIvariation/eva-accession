@@ -6,10 +6,7 @@ import org.junit.Test;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.dbsnp.contig.ContigNameConvention.GEN_BANK;
-import static uk.ac.ebi.eva.accession.dbsnp.contig.ContigNameConvention.REF_SEQ;
-import static uk.ac.ebi.eva.accession.dbsnp.contig.ContigNameConvention.SEQUENCE_NAME;
-import static uk.ac.ebi.eva.accession.dbsnp.contig.ContigNameConvention.UCSC;
+import static org.junit.Assert.assertNull;
 
 public class ContigMappingTest {
 
@@ -88,22 +85,21 @@ public class ContigMappingTest {
 
         ContigMapping contigMapping = new ContigMapping(contigMapWrapper);
 
-        assertEquals(SEQNAME_1, contigMapping.getContigOrDefault(REFSEQ_1, SEQUENCE_NAME));
-        assertEquals(SEQNAME_2, contigMapping.getContigOrDefault(REFSEQ_2, SEQUENCE_NAME));
-        assertEquals(SEQNAME_3, contigMapping.getContigOrDefault(REFSEQ_3, SEQUENCE_NAME));
+        assertEquals(SEQNAME_1, contigMapping.getContigSynonyms(REFSEQ_1).getSequenceName());
+        assertEquals(SEQNAME_2, contigMapping.getContigSynonyms(REFSEQ_2).getSequenceName());
+        assertEquals(SEQNAME_3, contigMapping.getContigSynonyms(REFSEQ_3).getSequenceName());
 
-        assertEquals(GENBANK_1, contigMapping.getContigOrDefault(SEQNAME_1, GEN_BANK));
-        assertEquals(GENBANK_2, contigMapping.getContigOrDefault(SEQNAME_2, GEN_BANK));
-        assertEquals(GENBANK_3, contigMapping.getContigOrDefault(SEQNAME_3, GEN_BANK));
+        assertEquals(GENBANK_1, contigMapping.getContigSynonyms(SEQNAME_1).getGenBank());
+        assertEquals(GENBANK_2, contigMapping.getContigSynonyms(SEQNAME_2).getGenBank());
+        assertEquals(GENBANK_3, contigMapping.getContigSynonyms(SEQNAME_3).getGenBank());
 
-        assertEquals(REFSEQ_1, contigMapping.getContigOrDefault(UCSC_1, REF_SEQ));
-        assertEquals(REFSEQ_2, contigMapping.getContigOrDefault(UCSC_2, REF_SEQ));
-        assertEquals(REFSEQ_3, contigMapping.getContigOrDefault(UCSC_3, REF_SEQ));
+        assertEquals(REFSEQ_1, contigMapping.getContigSynonyms(UCSC_1).getRefSeq());
+        assertEquals(REFSEQ_2, contigMapping.getContigSynonyms(UCSC_2).getRefSeq());
+        assertEquals(REFSEQ_3, contigMapping.getContigSynonyms(UCSC_3).getRefSeq());
 
-        assertEquals(UCSC_1, contigMapping.getContigOrDefault(GENBANK_1, UCSC));
-        assertEquals(UCSC_2, contigMapping.getContigOrDefault(REFSEQ_2, UCSC));
-        assertEquals(UCSC_3, contigMapping.getContigOrDefault(SEQNAME_3, UCSC));
-        assertEquals("does not exist", contigMapping.getContigOrDefault("does not exist", UCSC));
+        assertEquals(UCSC_1, contigMapping.getContigSynonyms(GENBANK_1).getUcsc());
+        assertEquals(UCSC_2, contigMapping.getContigSynonyms(REFSEQ_2).getUcsc());
+        assertEquals(UCSC_3, contigMapping.getContigSynonyms(SEQNAME_3).getUcsc());
     }
 
     @Test
@@ -120,100 +116,100 @@ public class ContigMappingTest {
 
         ContigMapping contigMapping = new ContigMapping(contigMapWrapper);
 
-        assertEquals(GENBANK_1, contigMapping.getContigOrDefault(SEQNAME_ch1, GEN_BANK));
+        assertEquals(GENBANK_1, contigMapping.getContigSynonyms(SEQNAME_ch1).getGenBank());
     }
 
     @Test
     public void noSynonym() throws Exception {
-        assertEquals(CONTIG_WITHOUT_SYNONYM, contigMapping.getContigOrDefault(CONTIG_WITHOUT_SYNONYM, GEN_BANK));
+        assertNull(contigMapping.getContigSynonyms(CONTIG_WITHOUT_SYNONYM));
     }
 
     //SEQNAME
 
     @Test
     public void getSeqNameFromSeqName() {
-        assertEquals(SEQNAME_CONTIG, contigMapping.getContigOrDefault(SEQNAME_CONTIG, SEQUENCE_NAME));
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getSequenceName());
     }
 
     @Test
     public void getSeqNameFromGenBank() {
-        assertEquals(SEQNAME_CONTIG, contigMapping.getContigOrDefault(GENBANK_CONTIG, SEQUENCE_NAME));
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(GENBANK_CONTIG).getSequenceName());
     }
 
     @Test
     public void getSeqNameFromRefSeq() {
-        assertEquals(SEQNAME_CONTIG, contigMapping.getContigOrDefault(REFSEQ_CONTIG, SEQUENCE_NAME));
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(REFSEQ_CONTIG).getSequenceName());
     }
 
     @Test
     public void getSeqNameFromUcsc() {
-        assertEquals(SEQNAME_CONTIG, contigMapping.getContigOrDefault(UCSC_CONTIG, SEQUENCE_NAME));
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getSequenceName());
     }
 
     //GENBANK
 
     @Test
     public void getGenBankFromSeqName() {
-        assertEquals(GENBANK_CONTIG, contigMapping.getContigOrDefault(SEQNAME_CONTIG, GEN_BANK));
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getGenBank());
     }
 
     @Test
     public void getGenBankFromGenBank() {
-        assertEquals(GENBANK_CONTIG, contigMapping.getContigOrDefault(GENBANK_CONTIG, GEN_BANK));
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(GENBANK_CONTIG).getGenBank());
     }
 
     @Test
     public void getGenBankFromRefSeq() {
-        assertEquals(GENBANK_CONTIG, contigMapping.getContigOrDefault(REFSEQ_CONTIG, GEN_BANK));
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(REFSEQ_CONTIG).getGenBank());
     }
 
     @Test
     public void getGenBankFromUcsc() {
-        assertEquals(GENBANK_CONTIG, contigMapping.getContigOrDefault(UCSC_CONTIG, GEN_BANK));
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getGenBank());
     }
 
     //REFSEQ
 
     @Test
     public void getRefSeqFromSeqName() {
-        assertEquals(REFSEQ_CONTIG, contigMapping.getContigOrDefault(SEQNAME_CONTIG, REF_SEQ));
+        assertEquals(REFSEQ_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getRefSeq());
     }
 
     @Test
     public void getRefSeqFromGenBank() {
-        assertEquals(REFSEQ_CONTIG, contigMapping.getContigOrDefault(GENBANK_CONTIG, REF_SEQ));
+        assertEquals(REFSEQ_CONTIG, contigMapping.getContigSynonyms(GENBANK_CONTIG).getRefSeq());
     }
 
     @Test
     public void getRefSeqFromRefSeq() {
-        assertEquals(REFSEQ_CONTIG, contigMapping.getContigOrDefault(REFSEQ_CONTIG, REF_SEQ));
+        assertEquals(REFSEQ_CONTIG, contigMapping.getContigSynonyms(REFSEQ_CONTIG).getRefSeq());
     }
 
     @Test
     public void getRefSeqFromUcsc() {
-        assertEquals(REFSEQ_CONTIG, contigMapping.getContigOrDefault(UCSC_CONTIG, REF_SEQ));
+        assertEquals(REFSEQ_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getRefSeq());
     }
 
     //UCSC
 
     @Test
     public void getUcscFromSeqName() {
-        assertEquals(UCSC_CONTIG, contigMapping.getContigOrDefault(SEQNAME_CONTIG, UCSC));
+        assertEquals(UCSC_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getUcsc());
     }
 
     @Test
     public void getUcscFromGenBank() {
-        assertEquals(UCSC_CONTIG, contigMapping.getContigOrDefault(GENBANK_CONTIG, UCSC));
+        assertEquals(UCSC_CONTIG, contigMapping.getContigSynonyms(GENBANK_CONTIG).getUcsc());
     }
 
     @Test
     public void getUcscFromRefSeq() {
-        assertEquals(UCSC_CONTIG, contigMapping.getContigOrDefault(REFSEQ_CONTIG, UCSC));
+        assertEquals(UCSC_CONTIG, contigMapping.getContigSynonyms(REFSEQ_CONTIG).getUcsc());
     }
 
     @Test
     public void getUcscFromUcsc() {
-        assertEquals(UCSC_CONTIG, contigMapping.getContigOrDefault(UCSC_CONTIG, UCSC));
+        assertEquals(UCSC_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getUcsc());
     }
 
 }

@@ -87,14 +87,6 @@ public class ContigMapWrapper {
         return Objects.hash(SequenceNameMap, GenBankMap, RefSeqMap, UcscMap);
     }
 
-    public String getSynonymByContigConvention(String contig, ContigNameConvention contigNameConvention) {
-        ContigSynonyms contigSynonyms;
-        if ((contigSynonyms = getSynonyms(contig)) != null) {
-            return getContig(contigSynonyms, contigNameConvention);
-        }
-        return contig;
-    }
-
     public ContigSynonyms getSynonyms(String contig) {
         contig = removePrefix(contig);
         ContigSynonyms contigSynonyms;
@@ -111,21 +103,6 @@ public class ContigMapWrapper {
             return contigSynonyms;
         }
         return null;
-    }
-
-    private String getContig(ContigSynonyms contigSynonyms, ContigNameConvention contigNameConvention) {
-        switch (contigNameConvention) {
-            case SEQUENCE_NAME:
-                return contigSynonyms.getSequenceName();
-            case GEN_BANK:
-                return contigSynonyms.getGenBank();
-            case REF_SEQ:
-                return contigSynonyms.getRefSeq();
-            case UCSC:
-                return contigSynonyms.getUcsc();
-            default:
-                return null;
-        }
     }
 
     private String removePrefix(String contig) {

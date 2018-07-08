@@ -101,10 +101,11 @@ public class AssemblyCheckerAndContigReplacerProcessorTest {
         assertNotNull(assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void notValidReferenceAlleleSeqNameFastaSeqName() throws Exception {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE_1, ALTERNATE_ALLELE, true);
-        assemblyCheckerAndContigReplacerProcessor.process(submittedVariant);
+        assertEquals(submittedVariant, assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
+        // TODO assertEquals(matchesAssembly)
     }
 
     @Test
@@ -113,10 +114,11 @@ public class AssemblyCheckerAndContigReplacerProcessorTest {
         assertNotNull(assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void notValidReferenceAlleleGenBankFastaSeqName() throws Exception {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, GENBANK_1, START, REFERENCE_ALLELE_1, ALTERNATE_ALLELE, true);
-        assemblyCheckerAndContigReplacerProcessor.process(submittedVariant);
+        assertEquals(submittedVariant, assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
+        // TODO assertEquals(matchesAssembly)
     }
 
     @Test
@@ -125,10 +127,11 @@ public class AssemblyCheckerAndContigReplacerProcessorTest {
         assertNotNull(assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void notValidReferenceAlleleRefSeqFastaSeqName() throws Exception {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, REFSEQ_1, START, REFERENCE_ALLELE_1, ALTERNATE_ALLELE, true);
-        assemblyCheckerAndContigReplacerProcessor.process(submittedVariant);
+        assertEquals(submittedVariant, assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
+        // TODO assertEquals(matchesAssembly)
     }
 
     @Test
@@ -137,11 +140,11 @@ public class AssemblyCheckerAndContigReplacerProcessorTest {
         assertNotNull(assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void notValidReferenceAlleleUcscFastaSeqName() throws Exception {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, UCSC_1, START, REFERENCE_ALLELE_1, ALTERNATE_ALLELE, true);
-        assemblyCheckerAndContigReplacerProcessor.process(submittedVariant);
-        // TODO asertEquals(matchesAssemly)
+        assertEquals(submittedVariant, assemblyCheckerAndContigReplacerProcessor.process(submittedVariant));
+        // TODO assertEquals(matchesAssembly)
     }
 
     //GenBank Fasta
