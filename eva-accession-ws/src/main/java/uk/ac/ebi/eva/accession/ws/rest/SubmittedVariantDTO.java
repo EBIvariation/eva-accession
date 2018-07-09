@@ -20,7 +20,6 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 public class SubmittedVariantDTO implements ISubmittedVariant {
 
@@ -40,7 +39,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private Long clusteredVariantAccession;
 
-    private boolean supportedByEvidence;
+    private Boolean supportedByEvidence;
 
     private Boolean matchesAssembly;
 
@@ -72,10 +71,10 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
-        this.supportedByEvidence = Optional.ofNullable(supportedByEvidence).orElse(true);
-        this.matchesAssembly = Optional.ofNullable(matchesAssembly).orElse(true);
-        this.allelesMatch = Optional.ofNullable(allelesMatch).orElse(true);
-        this.validated = Optional.ofNullable(validated).orElse(false);
+        this.supportedByEvidence = supportedByEvidence;
+        this.matchesAssembly = matchesAssembly;
+        this.allelesMatch = allelesMatch;
+        this.validated = validated;
         this.createdDate = createdDate;
     }
 
@@ -131,12 +130,12 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     @Override
     public Boolean getAllelesMatch() {
-        return null;
+        return allelesMatch;
     }
 
     @Override
     public Boolean getValidated() {
-        return null;
+        return validated;
     }
 
     @Override

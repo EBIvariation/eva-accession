@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
@@ -75,7 +76,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
                                    int taxonomyAccession, String projectAccession, String contig, long start,
                                    String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
-                                   Boolean isSupportedByEvidence, Boolean matchesAssembly, Boolean allelesMatch,
+                                   Boolean supportedByEvidence, Boolean matchesAssembly, Boolean allelesMatch,
                                    Boolean validated, int version) {
         super(hashedMessage, accession, version);
         this.assemblyAccession = assemblyAccession;
@@ -86,10 +87,34 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
-        this.supportedByEvidence = isSupportedByEvidence;
-        this.matchesAssembly = matchesAssembly;
-        this.validated = validated;
-        this.allelesMatch = allelesMatch;
+        this.supportedByEvidence = supportedByEvidence == getDefaultSupportedByEvidence() ? null : supportedByEvidence;
+        this.matchesAssembly = matchesAssembly == getDefaultMatchesAssembly() ? null : matchesAssembly;
+        this.allelesMatch = allelesMatch == getDefaultAllelesMatch()? null : allelesMatch;
+        this.validated = validated == getDefaultValidated() ? null : validated;
+    }
+
+    public ISubmittedVariant toISubmittedVariant() {
+        this.supportedByEvidence = supportedByEvidence == null ? getDefaultSupportedByEvidence() : supportedByEvidence;
+        this.matchesAssembly = matchesAssembly == null ? getDefaultMatchesAssembly() : matchesAssembly;
+        this.allelesMatch = allelesMatch == null ? getDefaultAllelesMatch() : allelesMatch;
+        this.validated = validated == null ? getDefaultValidated() : validated;
+        return this;
+    }
+
+    public static Boolean getDefaultSupportedByEvidence() {
+        return true;
+    }
+
+    public static Boolean getDefaultMatchesAssembly() {
+        return true;
+    }
+
+    public static Boolean getDefaultAllelesMatch() {
+        return true;
+    }
+
+    public static Boolean getDefaultValidated() {
+        return false;
     }
 
     @Override

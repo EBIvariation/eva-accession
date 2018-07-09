@@ -23,8 +23,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
-import java.util.Objects;
-
 @Document
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> implements ISubmittedVariant {
 

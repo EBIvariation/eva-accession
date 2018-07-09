@@ -50,8 +50,15 @@ public interface ISubmittedVariant {
 
     Boolean getMatchesAssembly();
 
+    /**
+     * @return False if reference allele was not found in the alleles list
+     */
     Boolean getAllelesMatch();
 
+    /**
+     * @return True if the variant was curated manually, and not only detected by computational methods.
+     * see https://www.ncbi.nlm.nih.gov/books/NBK21088/table/ch5.ch5_t4/?report=objectonly
+     */
     Boolean getValidated();
 
     LocalDateTime getCreatedDate();

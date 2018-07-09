@@ -70,6 +70,7 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
     }
 
     @Test
+    @DirtiesContext
     public void executeJobReportOrderCheck() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());

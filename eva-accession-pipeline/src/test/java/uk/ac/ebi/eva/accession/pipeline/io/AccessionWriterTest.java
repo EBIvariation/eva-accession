@@ -83,13 +83,13 @@ public class AccessionWriterTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
-    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
+    private static final Boolean SUPPORTED_BY_EVIDENCE = true;
 
-    private static final Boolean MATCHES_ASSEMBLY = null;
+    private static final Boolean MATCHES_ASSEMBLY = true;
 
-    private static final Boolean ALLELES_MATCH = null;
+    private static final Boolean ALLELES_MATCH = false;
 
-    private static final Boolean VALIDATED = null;
+    private static final Boolean VALIDATED = false;
 
     @Autowired
     private SubmittedVariantAccessioningService service;
@@ -127,7 +127,7 @@ public class AccessionWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
 
-        assertTrue(ISubmittedVariant.equals(variant, accessions.iterator().next().getData()));
+        assertEquals(variant, accessions.iterator().next().getData());
     }
 
     @Test

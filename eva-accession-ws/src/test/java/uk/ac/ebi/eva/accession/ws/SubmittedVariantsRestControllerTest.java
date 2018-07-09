@@ -31,10 +31,15 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -47,7 +52,7 @@ import static org.junit.Assert.assertEquals;
 public class SubmittedVariantsRestControllerTest {
 
     @Autowired
-    private BasicRestController basicRestController;
+    private BasicRestController<SubmittedVariantDTO, ISubmittedVariant, String, Long> basicRestController;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
@@ -58,9 +63,9 @@ public class SubmittedVariantsRestControllerTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
-    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
+    private static final Boolean SUPPORTED_BY_EVIDENCE = false;
 
-    private static final Boolean MATCHES_ASSEMBLY = null;
+    private static final Boolean MATCHES_ASSEMBLY = true;
 
     private static final Boolean ALLELES_MATCH = null;
 
@@ -68,8 +73,8 @@ public class SubmittedVariantsRestControllerTest {
 
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
-        List<AccessionResponseDTO> generatedAccessions = basicRestController.generateAccessions(
-                getListOfVariantMessages());
+        List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>> generatedAccessions =
+                basicRestController.generateAccessions(getListOfVariantMessages());
         assertEquals(2, generatedAccessions.size());
         String accessions = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
                 Collectors.joining(","));
@@ -77,6 +82,15 @@ public class SubmittedVariantsRestControllerTest {
         ResponseEntity<List> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, List.class);
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(2, getVariantsResponse.getBody().size());
+        assertDefaultFlags(getVariantsResponse.getBody());
+    }
+
+    private void assertDefaultFlags(List body) {
+        Map variant = ((Map) ((Map) body.get(0)).get("data"));
+        assertEquals(SUPPORTED_BY_EVIDENCE, variant.get("supportedByEvidence"));
+        assertEquals(MATCHES_ASSEMBLY, variant.get("matchesAssembly"));
+        assertEquals(SubmittedVariantEntity.getDefaultAllelesMatch(), variant.get("allelesMatch"));
+        assertEquals(SubmittedVariantEntity.getDefaultValidated(), variant.get("validated"));
     }
 
     public List<SubmittedVariantDTO> getListOfVariantMessages() {

@@ -27,7 +27,13 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
 
     private static final Long UNDEFINED_CLUSTERED_VARIANT = null;
 
-    private static final Boolean ASSEMBLY_MATCH_UNKNOWN = null;
+    private static final Boolean UNDEFINED_SUPPORTED_BY_EVIDENCE = null;
+
+    private static final Boolean UNDEFINED_MATCHES_ASSEMBLY = null;
+
+    private static final Boolean UNDEFINED_ALLELES_MATCH = null;
+
+    private static final Boolean UNDEFINED_VALIDATED = null;
 
     private String assemblyAccession;
 
@@ -45,6 +51,10 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
     public ISubmittedVariant process(final IVariant variant) throws Exception {
         return new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession, variant.getChromosome(),
                                     variant.getStart(), variant.getReference(), variant.getAlternate(),
-                                    UNDEFINED_CLUSTERED_VARIANT, true, true, true, false);
+                                    UNDEFINED_CLUSTERED_VARIANT,
+                                    UNDEFINED_SUPPORTED_BY_EVIDENCE,
+                                    UNDEFINED_MATCHES_ASSEMBLY,
+                                    UNDEFINED_ALLELES_MATCH,
+                                    UNDEFINED_VALIDATED);
     }
 }
