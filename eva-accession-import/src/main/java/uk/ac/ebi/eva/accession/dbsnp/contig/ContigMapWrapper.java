@@ -2,7 +2,6 @@ package uk.ac.ebi.eva.accession.dbsnp.contig;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,66 +24,6 @@ public class ContigMapWrapper {
         GenBankMap = new HashMap<>();
         RefSeqMap = new HashMap<>();
         UcscMap = new HashMap<>();
-    }
-
-    public ContigMapWrapper(
-            Map<String, ContigSynonyms> sequenceNameMap,
-            Map<String, ContigSynonyms> genBankMap,
-            Map<String, ContigSynonyms> refSeqMap,
-            Map<String, ContigSynonyms> ucscMap) {
-        SequenceNameMap = sequenceNameMap;
-        GenBankMap = genBankMap;
-        RefSeqMap = refSeqMap;
-        UcscMap = ucscMap;
-    }
-
-    public Map<String, ContigSynonyms> getSequenceNameMap() {
-        return SequenceNameMap;
-    }
-
-    public void setSequenceNameMap(
-            Map<String, ContigSynonyms> sequenceNameMap) {
-        SequenceNameMap = sequenceNameMap;
-    }
-
-    public Map<String, ContigSynonyms> getGenBankMap() {
-        return GenBankMap;
-    }
-
-    public void setGenBankMap(Map<String, ContigSynonyms> genBankMap) {
-        GenBankMap = genBankMap;
-    }
-
-    public Map<String, ContigSynonyms> getRefSeqMap() {
-        return RefSeqMap;
-    }
-
-    public void setRefSeqMap(Map<String, ContigSynonyms> refSeqMap) {
-        RefSeqMap = refSeqMap;
-    }
-
-    public Map<String, ContigSynonyms> getUcscMap() {
-        return UcscMap;
-    }
-
-    public void setUcscMap(Map<String, ContigSynonyms> ucscMap) {
-        UcscMap = ucscMap;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ContigMapWrapper that = (ContigMapWrapper) o;
-        return Objects.equals(SequenceNameMap, that.SequenceNameMap) &&
-                Objects.equals(GenBankMap, that.GenBankMap) &&
-                Objects.equals(RefSeqMap, that.RefSeqMap) &&
-                Objects.equals(UcscMap, that.UcscMap);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(SequenceNameMap, GenBankMap, RefSeqMap, UcscMap);
     }
 
     public ContigSynonyms getSynonyms(String contig) {

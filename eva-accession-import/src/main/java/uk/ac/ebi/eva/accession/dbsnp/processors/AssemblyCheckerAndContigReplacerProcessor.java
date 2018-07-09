@@ -27,11 +27,10 @@ public class AssemblyCheckerAndContigReplacerProcessor implements ItemProcessor<
             if (sequence.equals(submittedVariant.getReferenceAllele())) {
                 submittedVariant.setContig(contigSynonyms.getSequenceName());
 //              TODO: submittedVariant.setMatchesAssembly(true);
-                return submittedVariant;
             } else {
 //              TODO: submittedVariant.setMatchesAssembly(false);
-                return submittedVariant;
             }
+            return submittedVariant;
         }
         throw new IllegalArgumentException("Contig '" + submittedVariant.getContig() + "' not found in the ASSEMBLY REPORT");
     }

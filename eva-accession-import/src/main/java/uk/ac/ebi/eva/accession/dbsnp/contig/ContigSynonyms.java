@@ -1,7 +1,5 @@
 package uk.ac.ebi.eva.accession.dbsnp.contig;
 
-import java.util.Objects;
-
 public class ContigSynonyms {
 
     private String sequenceName;
@@ -49,22 +47,5 @@ public class ContigSynonyms {
 
     public void setUcsc(String ucsc) {
         this.ucsc = ucsc;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ContigSynonyms that = (ContigSynonyms) o;
-        return Objects.equals(sequenceName, that.sequenceName) &&
-                Objects.equals(genBank, that.genBank) &&
-                Objects.equals(refSeq, that.refSeq) &&
-                Objects.equals(ucsc, that.ucsc);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(sequenceName, genBank, refSeq, ucsc);
     }
 }

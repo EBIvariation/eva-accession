@@ -57,31 +57,14 @@ public class ContigMappingTest {
 
     @Test
     public void useMapContructor() throws Exception {
-        HashMap<String, ContigSynonyms> contigMapSeqName = new HashMap<>();
-        contigMapSeqName.put(SEQNAME_1, new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1));
-        contigMapSeqName.put(SEQNAME_2, new ContigSynonyms(SEQNAME_2, GENBANK_2, REFSEQ_2, UCSC_2));
-        contigMapSeqName.put(SEQNAME_3, new ContigSynonyms(SEQNAME_3, GENBANK_3, REFSEQ_3, UCSC_3));
-
-        HashMap<String, ContigSynonyms> contigMapGenBank = new HashMap<>();
-        contigMapGenBank.put(GENBANK_1, new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1));
-        contigMapGenBank.put(GENBANK_2, new ContigSynonyms(SEQNAME_2, GENBANK_2, REFSEQ_2, UCSC_2));
-        contigMapGenBank.put(GENBANK_3, new ContigSynonyms(SEQNAME_3, GENBANK_3, REFSEQ_3, UCSC_3));
-
-        HashMap<String, ContigSynonyms> contigMapRefSeq = new HashMap<>();
-        contigMapRefSeq.put(REFSEQ_1, new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1));
-        contigMapRefSeq.put(REFSEQ_2, new ContigSynonyms(SEQNAME_2, GENBANK_2, REFSEQ_2, UCSC_2));
-        contigMapRefSeq.put(REFSEQ_3, new ContigSynonyms(SEQNAME_3, GENBANK_3, REFSEQ_3, UCSC_3));
-
-        HashMap<String, ContigSynonyms> contigMapUcsc = new HashMap<>();
-        contigMapUcsc.put(UCSC_1, new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1));
-        contigMapUcsc.put(UCSC_2, new ContigSynonyms(SEQNAME_2, GENBANK_2, REFSEQ_2, UCSC_2));
-        contigMapUcsc.put(UCSC_3, new ContigSynonyms(SEQNAME_3, GENBANK_3, REFSEQ_3, UCSC_3));
-
         ContigMapWrapper contigMapWrapper = new ContigMapWrapper();
-        contigMapWrapper.setSequenceNameMap(contigMapSeqName);
-        contigMapWrapper.setGenBankMap(contigMapGenBank);
-        contigMapWrapper.setRefSeqMap(contigMapRefSeq);
-        contigMapWrapper.setUcscMap(contigMapUcsc);
+
+        ContigSynonyms contigSynonyms1 = new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1);
+        contigMapWrapper.fillContigConventionMaps(contigSynonyms1);
+        ContigSynonyms contigSynonyms2 = new ContigSynonyms(SEQNAME_2, GENBANK_2, REFSEQ_2, UCSC_2);
+        contigMapWrapper.fillContigConventionMaps(contigSynonyms2);
+        ContigSynonyms contigSynonyms3 = new ContigSynonyms(SEQNAME_3, GENBANK_3, REFSEQ_3, UCSC_3);
+        contigMapWrapper.fillContigConventionMaps(contigSynonyms3);
 
         ContigMapping contigMapping = new ContigMapping(contigMapWrapper);
 
@@ -104,16 +87,9 @@ public class ContigMappingTest {
 
     @Test
     public void matchWhenVcfHasPrefixes() {
-        HashMap<String, ContigSynonyms> contigMapSeqName = new HashMap<>();
-        contigMapSeqName.put(SEQNAME_1, new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1));
-
-        HashMap<String, ContigSynonyms> contigMapGenBank = new HashMap<>();
-        contigMapGenBank.put(GENBANK_1, new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1));
-
+        ContigSynonyms contigSynonyms = new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1);
         ContigMapWrapper contigMapWrapper = new ContigMapWrapper();
-        contigMapWrapper.setSequenceNameMap(contigMapSeqName);
-        contigMapWrapper.setGenBankMap(contigMapGenBank);
-
+        contigMapWrapper.fillContigConventionMaps(contigSynonyms);
         ContigMapping contigMapping = new ContigMapping(contigMapWrapper);
 
         assertEquals(GENBANK_1, contigMapping.getContigSynonyms(SEQNAME_ch1).getGenBank());
