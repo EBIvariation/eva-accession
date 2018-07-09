@@ -15,6 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.model;
 
+import uk.ac.ebi.eva.commons.core.models.Region;
+
 import java.sql.Date;
 
 public class SubSnpNoHgvs {
@@ -27,11 +29,9 @@ public class SubSnpNoHgvs {
 
     private String batchName;
 
-    private String chromosome;
+    private Region chromosomeRegion;
 
-    private int chromosomeStart;
-
-    private String contigName;
+    private Region contigRegion;
 
     private Orientation subsnpOrientation;
 
@@ -53,27 +53,37 @@ public class SubSnpNoHgvs {
 
     private boolean assemblyMatch;
 
-    public SubSnpNoHgvs(String alleles, String assembly, String batchHandle, String batchName,
-                        String chromosome, int chromosomeStart, String contigName, Orientation subsnpOrientation,
-                        Orientation snpOrientation, Orientation contigOrientation, int contigStart,
+    public SubSnpNoHgvs(String alleles, String assembly, String batchHandle, String batchName, String chromosome,
+                        Long chromosomeStart, String contigName, Orientation subsnpOrientation,
+                        Orientation snpOrientation, Orientation contigOrientation, Long contigStart,
                         boolean frequencyExists, boolean genotypeExists, String reference, Date createTime,
                         int taxonomyId) {
+
         this.alleles = alleles;
         this.assembly = assembly;
         this.batchHandle = batchHandle;
         this.batchName = batchName;
-        this.chromosome = chromosome;
-        this.chromosomeStart = chromosomeStart;
-        this.contigName = contigName;
+        this.chromosomeRegion = createRegion(chromosome, chromosomeStart);
+        this.contigRegion = createRegion(contigName, contigStart);
         this.subsnpOrientation = subsnpOrientation;
         this.snpOrientation = snpOrientation;
         this.contigOrientation = contigOrientation;
-        this.contigStart = contigStart;
         this.frequencyExists = frequencyExists;
         this.genotypeExists = genotypeExists;
         this.reference = reference;
         this.createTime = createTime;
         this.taxonomyId = taxonomyId;
+    }
+
+    private Region createRegion(String sequenceName, Long start) {
+        if (sequenceName != null) {
+            if (start != null) {
+                return new Region(sequenceName, start);
+            }
+            return new Region(sequenceName);
+        }
+        // This should happen only with chromosomes, when a contig-to-chromosome mapping is not available
+        return null;
     }
 
     public String getAlleles() {
@@ -108,28 +118,20 @@ public class SubSnpNoHgvs {
         this.batchName = batchName;
     }
 
-    public String getChromosome() {
-        return chromosome;
+    public Region getChromosomeRegion() {
+        return chromosomeRegion;
     }
 
-    public void setChromosome(String chromosome) {
-        this.chromosome = chromosome;
+    public void setChromosomeRegion(Region chromosomeRegion) {
+        this.chromosomeRegion = chromosomeRegion;
     }
 
-    public int getChromosomeStart() {
-        return chromosomeStart;
+    public Region getContigRegion() {
+        return contigRegion;
     }
 
-    public void setChromosomeStart(int chromosomeStart) {
-        this.chromosomeStart = chromosomeStart;
-    }
-
-    public String getContigName() {
-        return contigName;
-    }
-
-    public void setContigName(String contigName) {
-        this.contigName = contigName;
+    public void setContigRegion(Region contigRegion) {
+        this.contigRegion = contigRegion;
     }
 
     public Orientation getContigOrientation() {
@@ -194,5 +196,17 @@ public class SubSnpNoHgvs {
 
     public void setAssemblyMatch(boolean assemblyMatch) {
         this.assemblyMatch = assemblyMatch;
+    }
+
+    public String getAlternate() {
+        String[] alleles = getAlleles().split("/");
+        for (String allele : alleles) {
+            if (!allele.equals(reference)) {
+                return allele;
+            }
+        }
+        // TODO: what if there are several alleles?
+        // TODO: complement the alleles according to the orientation
+        return null;
     }
 }
