@@ -36,6 +36,7 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
 
     private long start;
 
+    // TODO use variant class  instead of alleles
     @Field("ref")
     private String referenceAllele;
 
