@@ -25,6 +25,10 @@ import java.sql.SQLException;
 
 public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
+    public static final String SS_ID_COLUMN = "ss_id";
+
+    public static final String RS_ID_COLUMN = "ss_id";
+
     public static final String ALLELES_COLUMN = "alleles";
 
     public static final String BATCH_HANDLE_COLUMN = "batch_handle";
@@ -63,7 +67,9 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
     @Override
     public SubSnpNoHgvs mapRow(ResultSet resultSet, int i) throws SQLException {
-        return new SubSnpNoHgvs(resultSet.getString(ALLELES_COLUMN),
+        return new SubSnpNoHgvs(resultSet.getLong(SS_ID_COLUMN),
+                                resultSet.getLong(RS_ID_COLUMN),
+                                resultSet.getString(ALLELES_COLUMN),
                                 assembly,
                                 resultSet.getString(BATCH_HANDLE_COLUMN),
                                 resultSet.getString(BATCH_NAME_COLUMN),

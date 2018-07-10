@@ -47,10 +47,11 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     @Test
     public void transformSnp() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs("C/T", CHICKEN_ASSEMBLY_5, "CHICKEN_SDAU",
-                                                     "JININGBAIRI UNINFECTED", "25", 920114L, "NT_456018",
-                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                                     49575L, false, false, "C", Date.valueOf("2017-08-22"), 9031);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(3035489735L, 1135402630L, "C/T", CHICKEN_ASSEMBLY_5,
+                                                     "CHICKEN_SDAU", "JININGBAIRI UNINFECTED", "25", 920114L,
+                                                     "NT_456018", Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, 49575L, false, false, "C",
+                                                     Date.valueOf("2017-08-22"), 9031);
 
         ISubmittedVariant variant = processor.process(subSnpNoHgvs);
         // TODO: supported by evidence?
@@ -69,10 +70,10 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     @Test
     public void transformReverseRsSnp() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs("C/T", CHICKEN_ASSEMBLY_5, "CFG-UPPSALA", "CHICK_WGS_RESEQ_PAPER_CHR32", "11",
-                                                     11857590L, "NT_455934", Orientation.FORWARD, Orientation.REVERSE,
-                                                     Orientation.FORWARD, 375024L, false, false, "G",
-                                                     Date.valueOf("2010-02-03"), 9031);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(186667770L, 14730808L, "C/T", CHICKEN_ASSEMBLY_5, "CFG-UPPSALA",
+                                                     "CHICK_WGS_RESEQ_PAPER_CHR32", "11", 11857590L, "NT_455934",
+                                                     Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
+                                                     375024L, false, false, "G", Date.valueOf("2010-02-03"), 9031);
 
         ISubmittedVariant variant = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(920114L, "TODO_HASH",

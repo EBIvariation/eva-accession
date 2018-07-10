@@ -40,8 +40,10 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_STAR
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.FREQUENCY_EXISTS_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.GENOTYPE_EXISTS_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.REFERENCE_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.RS_ID_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_ORIENTATION_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SS_CREATE_TIME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SS_ID_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SUBSNP_ORIENTATION_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.TAXONOMY_ID_COLUMN;
 
@@ -73,7 +75,9 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
         logger.debug("querying table {} for assembly {}", tableName, assembly);
         String sql =
                 "SELECT " +
-                        ALLELES_COLUMN +
+                        SS_ID_COLUMN +
+                        "," + RS_ID_COLUMN +
+                        "," + ALLELES_COLUMN +
                         "," + BATCH_HANDLE_COLUMN +
                         "," + BATCH_NAME_COLUMN +
                         "," + CHROMOSOME_COLUMN +
