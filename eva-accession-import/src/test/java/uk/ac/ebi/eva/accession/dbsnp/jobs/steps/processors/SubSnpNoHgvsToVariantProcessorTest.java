@@ -56,6 +56,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         // TODO: supported by evidence?
         // TODO: validated, match assembly and RS variant accession are being added into PR #28
 
+        // TODO: hash in expected object, is it not being compared in the equals method?
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(920114L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "CHICKEN_SDAU_JININGBAIRI " +
@@ -88,5 +89,45 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         // TODO: this test fails because the alleles are not being complemented in SubSnpNoHgvs class
         assertEquals(expectedVariant, variant);
 
+    }
+
+    @Test
+    public void transformReverseRsAndSsSnp() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1982511850L, 14730808L, "G/A", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
+                                                     "SNP_28TTCC_CB", "11", 11857590L, "NT_455934", Orientation.REVERSE,
+                                                     Orientation.REVERSE, Orientation.FORWARD, 375024L, false, false,
+                                                     "G", Date.valueOf("2016-03-19"), 9031);
+
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1982511850L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "LBA_ESALQ_SNP_28TTCC_CB",
+                                                                                      "11", 11857590, "G", "A",
+                                                                                      14730808L, false, false, false,
+                                                                                      false, 1);
+        expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
+
+        assertEquals(expectedVariant, variant);
+    }
+
+    @Test
+    public void transformVariantSupportedByEvidence() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25945162L, 14730808L, "C/T", "CHICKEN_ASSEMBLY_5", "BGI",
+                                                     "CHICKEN_SNPS_BROILER", "11", 11857590L, "NT_455934",
+                                                     Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
+                                                     375024L, false, false, "G", Date.valueOf("2004-06-23"),
+                                                     9031);
+
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(25945162L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "BGI_CHICKEN_SNPS_BROILER",
+                                                                                      "11", 11857590, "G", "A",
+                                                                                      14730808L, true, false, false,
+                                                                                      false, 1);
+        expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
+
+        // TODO: this test fails because the alleles are not being complemented in SubSnpNoHgvs class
+        assertEquals(expectedVariant, variant);
     }
 }
