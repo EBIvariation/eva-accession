@@ -31,6 +31,7 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.test.MongoTestConfiguration;
 
@@ -111,7 +112,7 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertTrue(ISubmittedVariant.equals(variant, accessions.get(0)));
+        assertTrue(ISubmittedVariantComparator.equals(variant, accessions.get(0)));
     }
 
     @Test
@@ -136,8 +137,8 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(2, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertTrue(ISubmittedVariant.equals(firstVariant, accessions.get(0)));
-        assertTrue(ISubmittedVariant.equals(secondVariant, accessions.get(1)));
+        assertTrue(ISubmittedVariantComparator.equals(firstVariant, accessions.get(0)));
+        assertTrue(ISubmittedVariantComparator.equals(secondVariant, accessions.get(1)));
     }
 
     @Test

@@ -18,6 +18,7 @@
 package uk.ac.ebi.eva.accession.ws.rest;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 
 import java.time.LocalDateTime;
 
@@ -149,11 +150,11 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
             return false;
         }
 
-        return ISubmittedVariant.equals(this, (ISubmittedVariant) o);
+        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
     }
 
     @Override
     public int hashCode() {
-        return ISubmittedVariant.hashCode(this);
+        return ISubmittedVariantComparator.hashCode(this);
     }
 }

@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
+import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -206,12 +208,12 @@ public class SubmittedVariant implements ISubmittedVariant {
             return false;
         }
 
-        return ISubmittedVariant.equals(this, (ISubmittedVariant) o);
+        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
     }
 
     @Override
     public int hashCode() {
-        return ISubmittedVariant.hashCode(this);
+        return ISubmittedVariantComparator.hashCode(this);
     }
 
     @Override

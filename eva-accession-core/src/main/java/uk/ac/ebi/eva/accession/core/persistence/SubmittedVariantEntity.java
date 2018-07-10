@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 
 import java.util.Objects;
 
@@ -177,12 +178,12 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
             return false;
         }
 
-        return ISubmittedVariant.equals(this, (ISubmittedVariant) o);
+        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
     }
 
     @Override
     public int hashCode() {
-        return ISubmittedVariant.hashCode(this);
+        return ISubmittedVariantComparator.hashCode(this);
     }
 
 }
