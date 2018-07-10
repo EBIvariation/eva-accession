@@ -51,17 +51,34 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      "JININGBAIRI UNINFECTED", "25", 920114L, "NT_456018",
                                                      Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
                                                      49575L, false, false, "C", Date.valueOf("2017-08-22"), 9031);
+
         ISubmittedVariant variant = processor.process(subSnpNoHgvs);
-        // TODO: project name? batch handle + batch name?
         // TODO: supported by evidence?
         // TODO: validated, match assembly and RS variant accession are being added into PR #28
+
         SubmittedVariant expectedVariant = new SubmittedVariant(CHICKEN_ASSEMBLY_5, 9031,
                                                                 "CHICKEN_SDAU_JININGBAIRI UNINFECTED", "25", 920114,
                                                                 "C", "T", false);
         expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
+        // TODO: is comparing well the variants? (the date is not the same)
         assertEquals(expectedVariant, variant);
 
     }
 
-    // TODO: alleles in reverse
+    @Test
+    public void transformReverseRsSnp() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs("C/T", CHICKEN_ASSEMBLY_5, "CFG-UPPSALA", "CHICK_WGS_RESEQ_PAPER_CHR32", "11",
+                                                     11857590L, "NT_455934", Orientation.FORWARD, Orientation.REVERSE,
+                                                     Orientation.FORWARD, 375024L, false, false, "G",
+                                                     Date.valueOf("2010-02-03"), 9031);
+
+        ISubmittedVariant variant = processor.process(subSnpNoHgvs);
+        SubmittedVariant expectedVariant = new SubmittedVariant(CHICKEN_ASSEMBLY_5, 9031,
+                                                                "CFG-UPPSALA_CHICK_WGS_RESEQ_PAPER_CHR32", "11",
+                                                                11857590, "G", "A", false);
+        expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
+
+        assertEquals(expectedVariant, variant);
+
+    }
 }
