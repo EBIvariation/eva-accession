@@ -21,6 +21,10 @@ import java.sql.Date;
 
 public class SubSnpNoHgvs {
 
+    private Long ssId;
+
+    private Long rsId;
+
     private String alleles;
 
     private String assembly;
@@ -53,12 +57,13 @@ public class SubSnpNoHgvs {
 
     private boolean assemblyMatch;
 
-    public SubSnpNoHgvs(String alleles, String assembly, String batchHandle, String batchName, String chromosome,
-                        Long chromosomeStart, String contigName, Orientation subsnpOrientation,
+    public SubSnpNoHgvs(Long ssId, Long rsId, String alleles, String assembly, String batchHandle, String batchName,
+                        String chromosome, Long chromosomeStart, String contigName, Orientation subsnpOrientation,
                         Orientation snpOrientation, Orientation contigOrientation, Long contigStart,
                         boolean frequencyExists, boolean genotypeExists, String reference, Date createTime,
                         int taxonomyId) {
-
+        this.ssId = ssId;
+        this.rsId = rsId;
         this.alleles = alleles;
         this.assembly = assembly;
         this.batchHandle = batchHandle;
@@ -84,6 +89,22 @@ public class SubSnpNoHgvs {
         }
         // This should happen only with chromosomes, when a contig-to-chromosome mapping is not available
         return null;
+    }
+
+    public Long getSsId() {
+        return ssId;
+    }
+
+    public void setSsId(Long ssId) {
+        this.ssId = ssId;
+    }
+
+    public Long getRsId() {
+        return rsId;
+    }
+
+    public void setRsId(Long rsId) {
+        this.rsId = rsId;
     }
 
     public String getAlleles() {
