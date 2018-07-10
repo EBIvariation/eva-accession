@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
 import java.util.Objects;
 
@@ -104,11 +105,14 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     }
 
     public ISubmittedVariant getModel() {
-        this.supportedByEvidence = supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence;
-        this.assemblyMatch = assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch;
-        this.allelesMatch = allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch;
-        this.validated = validated == null ? DEFAULT_VALIDATED : validated;
-        return this;
+        SubmittedVariant variant = new SubmittedVariant(this);
+        variant.setSupportedByEvidence(
+                supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence);
+        variant.setAssemblyMatch(assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch);
+        variant.setAllelesMatch(allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch);
+        variant.setValidated(validated == null ? DEFAULT_VALIDATED : validated);
+        variant.setCreatedDate(getCreatedDate());
+        return variant;
     }
 
     @Override
