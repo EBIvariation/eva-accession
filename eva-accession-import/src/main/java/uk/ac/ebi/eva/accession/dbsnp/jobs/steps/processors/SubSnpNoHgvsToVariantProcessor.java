@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package uk.ac.ebi.eva.accession.dbsnp.jobs.steps.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
@@ -37,15 +37,20 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
 
     @Override
     public DbsnpSubmittedVariantEntity process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
+        // this method will return the chromosome region or the contig one if there is no chromosome mapping
         Region variantRegion = getVariantRegion(subSnpNoHgvs);
-        DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), null, subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
-                                    subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs.getBatchName(),
-                                    variantRegion.getChromosome(), variantRegion.getStart(),
-                                    subSnpNoHgvs.getReference(), subSnpNoHgvs.getAlternate(), subSnpNoHgvs.getRsId(),
-                                    subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists(), false, false, false, 1);
-        String hash = hashingFunction.apply(variant);
-        // TODO: there is no way to set the hash to the already created variant
 
+        // a ISubmittedVariant is needed to calculate the hash to create the DbsnpSubmittedVariantEntity object
+        ISubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
+                                                         subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs
+                                                                 .getBatchName(), variantRegion.getChromosome(),
+                                                         variantRegion.getStart(), subSnpNoHgvs.getReference(),
+                                                         subSnpNoHgvs.getAlternate(), subSnpNoHgvs.getRsId(),
+                                                         subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs
+                                                                 .isGenotypeExists(), false, false, false);
+        String hash = hashingFunction.apply(variant);
+
+        return new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash, variant);
     }
 
     private Region getVariantRegion(SubSnpNoHgvs subSnpNoHgvs) {
