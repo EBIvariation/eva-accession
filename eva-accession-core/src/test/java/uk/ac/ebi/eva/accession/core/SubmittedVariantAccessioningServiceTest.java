@@ -83,17 +83,7 @@ public class SubmittedVariantAccessioningServiceTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(variants);
 
-        assertEquals(new HashSet<>(generatedAccessions),
-                     new HashSet<>(getAccessionWrapperOfSubmittedVariant(retrievedAccessions)));
-    }
-
-    private List<AccessionWrapper<SubmittedVariant, String, Long>> getAccessionWrapperOfSubmittedVariant(
-            List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions) {
-        return retrievedAccessions.stream()
-                                         .map(aw -> new AccessionWrapper<>(aw.getAccession(),
-                                                                           aw.getHash(),
-                                                                           new SubmittedVariant(aw.getData())))
-                                         .collect(Collectors.toList());
+        assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
     }
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
@@ -115,6 +105,6 @@ public class SubmittedVariantAccessioningServiceTest {
                 requestedVariants);
 
         assertEquals(new HashSet<>(generatedAccessions),
-                     new HashSet<>(getAccessionWrapperOfSubmittedVariant(retrievedAccessions)));
+                     new HashSet<>(retrievedAccessions));
     }
 }

@@ -113,7 +113,7 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertEquals(submittedVariant, new SubmittedVariant(accessions.get(0)));
+        assertEquals(submittedVariant, accessions.get(0).getModel());
     }
 
     @Test
@@ -139,8 +139,8 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
         assertEquals(EXPECTED_ACCESSION_2, (long) accessions.get(1).getAccession());
 
-        assertEquals(firstSubmittedVariant, new SubmittedVariant(accessions.get(0)));
-        assertEquals(secondSubmittedVariant, new SubmittedVariant(accessions.get(1)));
+        assertEquals(firstSubmittedVariant, accessions.get(0).getModel());
+        assertEquals(secondSubmittedVariant, accessions.get(1).getModel());
     }
 
     @Test

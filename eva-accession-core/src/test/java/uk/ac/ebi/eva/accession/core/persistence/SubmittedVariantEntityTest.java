@@ -50,7 +50,7 @@ public class SubmittedVariantEntityTest {
                                      REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant);
-        assertEquals(variant, new SubmittedVariant(entity.getModel()));
+        assertEquals(variant, entity.getModel());
     }
 
     @Test
@@ -60,7 +60,7 @@ public class SubmittedVariantEntityTest {
                                      REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant);
-        assertEquals(variant, new SubmittedVariant(entity.getModel()));
+        assertEquals(variant, entity.getModel());
     }
 
     @Test
@@ -75,6 +75,6 @@ public class SubmittedVariantEntityTest {
         variant.setAssemblyMatch(true);
         variant.setAllelesMatch(true);
         variant.setValidated(false);
-        assertEquals(variant, new SubmittedVariant(entity.getModel()));
+        assertEquals(variant, entity.getModel());
     }
 }

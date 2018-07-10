@@ -127,7 +127,7 @@ public class AccessionWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
 
-        assertEquals(variant, new SubmittedVariant(accessions.iterator().next().getData()));
+        assertEquals(variant, accessions.iterator().next().getData());
     }
 
     @Test
@@ -150,11 +150,11 @@ public class AccessionWriterTest {
         ISubmittedVariant firstSavedVariant = iterator.next().getData();
         ISubmittedVariant secondSavedVariant = iterator.next().getData();
         if (firstSavedVariant.getStart() == firstVariant.getStart()) {
-            assertEquals(firstVariant, new SubmittedVariant(firstSavedVariant));
-            assertEquals(secondVariant, new SubmittedVariant(secondSavedVariant));
+            assertEquals(firstVariant, firstSavedVariant);
+            assertEquals(secondVariant, secondSavedVariant);
         } else {
-            assertEquals(secondVariant, new SubmittedVariant(firstSavedVariant));
-            assertEquals(firstVariant, new SubmittedVariant(secondSavedVariant));
+            assertEquals(secondVariant, firstSavedVariant);
+            assertEquals(firstVariant, secondSavedVariant);
         }
     }
 
@@ -205,7 +205,7 @@ public class AccessionWriterTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(Collections.singletonList(variant));
         assertEquals(1, accessions.size());
 
-        assertEquals(variant, new SubmittedVariant(accessions.iterator().next().getData()));
+        assertEquals(variant, accessions.iterator().next().getData());
     }
 
     @Test

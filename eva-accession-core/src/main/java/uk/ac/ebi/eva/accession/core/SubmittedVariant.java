@@ -259,7 +259,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         if (validated != null ? !validated.equals(variant.validated) : variant.validated != null) {
             return false;
         }
-        return createdDate != null ? createdDate.equals(variant.createdDate) : variant.createdDate == null;
+        return true;
     }
 
     @Override
@@ -276,7 +276,6 @@ public class SubmittedVariant implements ISubmittedVariant {
         result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
         result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
         result = 31 * result + (validated != null ? validated.hashCode() : 0);
-        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
         return result;
     }
 
