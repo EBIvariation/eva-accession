@@ -31,7 +31,6 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.test.MongoTestConfiguration;
 
@@ -51,6 +50,8 @@ public class DbsnpSubmittedVariantWriterTest {
     private static final int TAXONOMY_2 = 3882;
 
     private static final long EXPECTED_ACCESSION = 10000000000L;
+
+    private static final long EXPECTED_ACCESSION_2 = 10000000001L;
 
     private static final String CONTIG_1 = "contig_1";
 
@@ -112,7 +113,7 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertTrue(ISubmittedVariantComparator.equals(variant, accessions.get(0)));
+        assertEquals(submittedVariant, new SubmittedVariant(accessions.get(0)));
     }
 
     @Test
@@ -128,7 +129,7 @@ public class DbsnpSubmittedVariantWriterTest {
         DbsnpSubmittedVariantEntity firstVariant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant);
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(secondSubmittedVariant), secondSubmittedVariant);
+                EXPECTED_ACCESSION_2, hashingFunction.apply(secondSubmittedVariant), secondSubmittedVariant);
 
         dbsnpSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant));
 
@@ -136,9 +137,10 @@ public class DbsnpSubmittedVariantWriterTest {
                                                                           DbsnpSubmittedVariantEntity.class);
         assertEquals(2, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
+        assertEquals(EXPECTED_ACCESSION_2, (long) accessions.get(1).getAccession());
 
-        assertTrue(ISubmittedVariantComparator.equals(firstVariant, accessions.get(0)));
-        assertTrue(ISubmittedVariantComparator.equals(secondVariant, accessions.get(1)));
+        assertEquals(firstSubmittedVariant, new SubmittedVariant(accessions.get(0)));
+        assertEquals(secondSubmittedVariant, new SubmittedVariant(accessions.get(1)));
     }
 
     @Test

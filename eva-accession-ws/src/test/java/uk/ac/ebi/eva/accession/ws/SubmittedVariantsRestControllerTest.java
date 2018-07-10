@@ -34,9 +34,9 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,7 +51,7 @@ import static org.junit.Assert.assertEquals;
 public class SubmittedVariantsRestControllerTest {
 
     @Autowired
-    private BasicRestController<SubmittedVariantDTO, ISubmittedVariant, String, Long> basicRestController;
+    private BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
@@ -72,19 +72,19 @@ public class SubmittedVariantsRestControllerTest {
 
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
-        List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>> generatedAccessions =
+        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> generatedAccessions =
                 basicRestController.generateAccessions(getListOfVariantMessages());
         assertEquals(2, generatedAccessions.size());
         String accessions = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
                 Collectors.joining(","));
         String getVariantsUrl = URL + accessions;
-        ResponseEntity<List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>>>
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                 getVariantsResponse =
                 testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
                                           new ParameterizedTypeReference<
                                                   List<
                                                           AccessionResponseDTO<
-                                                                  SubmittedVariantDTO,
+                                                                  SubmittedVariant,
                                                                   ISubmittedVariant,
                                                                   String,
                                                                   Long>>>() {
@@ -95,21 +95,21 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     private void assertDefaultFlags(
-            List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>> body) {
-        SubmittedVariantDTO variant = body.get(0).getData();
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
+        SubmittedVariant variant = body.get(0).getData();
         assertEquals(SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
         assertEquals(MATCHES_ASSEMBLY, variant.isAssemblyMatch());
         assertEquals(SubmittedVariantEntity.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
         assertEquals(SubmittedVariantEntity.DEFAULT_VALIDATED, variant.isValidated());
     }
 
-    public List<SubmittedVariantDTO> getListOfVariantMessages() {
-        SubmittedVariantDTO variant1 = new SubmittedVariantDTO("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF",
+    public List<SubmittedVariant> getListOfVariantMessages() {
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF",
                                                                "ALT", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-        SubmittedVariantDTO variant2 = new SubmittedVariantDTO("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF",
+                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF",
                                                                "ALT", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         return asList(variant1, variant2);
     }
 }

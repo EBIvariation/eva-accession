@@ -39,6 +39,7 @@ import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -82,7 +83,17 @@ public class SubmittedVariantAccessioningServiceTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(variants);
 
-        assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
+        assertEquals(new HashSet<>(generatedAccessions),
+                     new HashSet<>(getAccessionWrapperOfSubmittedVariant(retrievedAccessions)));
+    }
+
+    private List<AccessionWrapper<SubmittedVariant, String, Long>> getAccessionWrapperOfSubmittedVariant(
+            List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions) {
+        return retrievedAccessions.stream()
+                                         .map(aw -> new AccessionWrapper<>(aw.getAccession(),
+                                                                           aw.getHash(),
+                                                                           new SubmittedVariant(aw.getData())))
+                                         .collect(Collectors.toList());
     }
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
@@ -103,6 +114,7 @@ public class SubmittedVariantAccessioningServiceTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(
                 requestedVariants);
 
-        assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
+        assertEquals(new HashSet<>(generatedAccessions),
+                     new HashSet<>(getAccessionWrapperOfSubmittedVariant(retrievedAccessions)));
     }
 }

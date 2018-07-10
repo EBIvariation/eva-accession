@@ -17,8 +17,6 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
-
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -49,6 +47,16 @@ public class SubmittedVariant implements ISubmittedVariant {
     private Boolean validated;
 
     private LocalDateTime createdDate;
+
+    SubmittedVariant() {
+    }
+
+    public SubmittedVariant(ISubmittedVariant variant) {
+        this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getProjectAccession(),
+             variant.getContig(), variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(),
+             variant.getClusteredVariantAccession(), variant.isSupportedByEvidence(), variant.isAssemblyMatch(),
+             variant.isAllelesMatch(), variant.isValidated());
+    }
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
                             long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
@@ -204,16 +212,72 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ISubmittedVariant)) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SubmittedVariant)) {
             return false;
         }
 
-        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
+        SubmittedVariant variant = (SubmittedVariant) o;
+
+        if (taxonomyAccession != variant.taxonomyAccession) {
+            return false;
+        }
+        if (start != variant.start) {
+            return false;
+        }
+        if (!assemblyAccession.equals(variant.assemblyAccession)) {
+            return false;
+        }
+        if (!projectAccession.equals(variant.projectAccession)) {
+            return false;
+        }
+        if (!contig.equals(variant.contig)) {
+            return false;
+        }
+        if (!referenceAllele.equals(variant.referenceAllele)) {
+            return false;
+        }
+        if (!alternateAllele.equals(variant.alternateAllele)) {
+            return false;
+        }
+        if (clusteredVariantAccession != null ? !clusteredVariantAccession.equals(
+                variant.clusteredVariantAccession) : variant.clusteredVariantAccession != null) {
+            return false;
+        }
+        if (supportedByEvidence != null ? !supportedByEvidence.equals(
+                variant.supportedByEvidence) : variant.supportedByEvidence != null) {
+            return false;
+        }
+        if (assemblyMatch != null ? !assemblyMatch.equals(variant.assemblyMatch) : variant.assemblyMatch != null) {
+            return false;
+        }
+        if (allelesMatch != null ? !allelesMatch.equals(variant.allelesMatch) : variant.allelesMatch != null) {
+            return false;
+        }
+        if (validated != null ? !validated.equals(variant.validated) : variant.validated != null) {
+            return false;
+        }
+        return createdDate != null ? createdDate.equals(variant.createdDate) : variant.createdDate == null;
     }
 
     @Override
     public int hashCode() {
-        return ISubmittedVariantComparator.hashCode(this);
+        int result = assemblyAccession.hashCode();
+        result = 31 * result + taxonomyAccession;
+        result = 31 * result + projectAccession.hashCode();
+        result = 31 * result + contig.hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + referenceAllele.hashCode();
+        result = 31 * result + alternateAllele.hashCode();
+        result = 31 * result + (clusteredVariantAccession != null ? clusteredVariantAccession.hashCode() : 0);
+        result = 31 * result + (supportedByEvidence != null ? supportedByEvidence.hashCode() : 0);
+        result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
+        result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
+        result = 31 * result + (validated != null ? validated.hashCode() : 0);
+        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
+        return result;
     }
 
     @Override

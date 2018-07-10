@@ -23,7 +23,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 
 import java.util.Objects;
 
@@ -170,20 +169,6 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     @Override
     public Boolean isValidated() {
         return validated;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ISubmittedVariant)) {
-            return false;
-        }
-
-        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
-    }
-
-    @Override
-    public int hashCode() {
-        return ISubmittedVariantComparator.hashCode(this);
     }
 
 }
