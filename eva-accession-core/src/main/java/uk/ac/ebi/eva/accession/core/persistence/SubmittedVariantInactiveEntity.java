@@ -52,7 +52,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
     @Field("evidence")
     private Boolean supportedByEvidence;
 
-    @Field("matchAsm")
+    @Field("asmMatch")
     private Boolean assemblyMatch;
 
     @Field("allelesMatch")
