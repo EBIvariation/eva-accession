@@ -49,6 +49,16 @@ import static org.junit.Assert.assertTrue;
 @ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
 public class SubmittedVariantAccessioningServiceTest {
 
+    private static final Long CLUSTERED_VARIANT = null;
+
+    private static final Boolean SUPPORTED_BY_EVIDENCE = true;
+
+    private static final Boolean MATCHES_ASSEMBLY = true;
+
+    private static final Boolean ALLELES_MATCH = false;
+
+    private static final Boolean VALIDATED = false;
+
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName("submitted-variants-test").build());
@@ -65,15 +75,34 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void sameAccessionsAreReturnedForIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
         List<SubmittedVariant> variants = Arrays.asList(
-                new SubmittedVariant("assembly", 1111,
-                                     "project", "contig_1", 100, "ref",
-                                     "alt", true),
-                new SubmittedVariant("assembly", 1111,
-                                     "project", "contig_2", 100, "ref",
-                                     "alt", true));
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED));
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(variants);
 
-        assertEquals(new HashSet(generatedAccessions), new HashSet(retrievedAccessions));
+        assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
+    }
+
+    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @Test
+    public void sameAccessionsAreReturnedForEquivalentVariants() throws AccessionCouldNotBeGeneratedException {
+        List<SubmittedVariant> originalVariants = Arrays.asList(
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED));
+        List<SubmittedVariant> requestedVariants = Arrays.asList(
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null, null, null, null,
+                                     null),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null, null, null, null,
+                                     null));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
+                originalVariants);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(
+                requestedVariants);
+
+        assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
     }
 }

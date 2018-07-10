@@ -22,11 +22,13 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+
 public class SubmittedVariantAccessioningService extends BasicMonotonicAccessioningService<ISubmittedVariant, String> {
 
     public SubmittedVariantAccessioningService(MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
                                                MonotonicDatabaseService dbService) {
-        super(accessionGenerator, dbService, new SubmittedVariantModelSummaryFunction(), new SHA1HashingFunction());
+        super(accessionGenerator, dbService, new SubmittedVariantSummaryFunction(), new SHA1HashingFunction());
     }
 
 }

@@ -41,10 +41,33 @@ public interface ISubmittedVariant {
 
     String getAlternateAllele();
 
+    Long getClusteredVariantAccession();
+
     /**
-     * @return True if this submitted variant is supported by genotypes or frequencies
+     * @return True if this submitted variant is supported by genotypes or frequencies. Nullable (= true) when
+     * serialized to database in order to reduce disk usage.
      */
-    boolean isSupportedByEvidence();
+    Boolean isSupportedByEvidence();
+
+    /**
+     * @return True if the reference allele matches the reference genome. Nullable (= true) when serialized to
+     * database in order to reduce disk usage.
+     */
+    Boolean isAssemblyMatch();
+
+    /**
+     * @return False if reference allele was not found in the alleles list. Nullable (= true) when serialized to
+     * database in order to reduce disk usage.
+     */
+    Boolean isAllelesMatch();
+
+    /**
+     * @return True if the variant was curated manually, and not only detected by computational methods.
+     * see https://www.ncbi.nlm.nih.gov/books/NBK21088/table/ch5.ch5_t4/?report=objectonly . Nullable (= false) when
+     * serialized to database in order to reduce disk usage.
+     */
+    Boolean isValidated();
 
     LocalDateTime getCreatedDate();
+
 }

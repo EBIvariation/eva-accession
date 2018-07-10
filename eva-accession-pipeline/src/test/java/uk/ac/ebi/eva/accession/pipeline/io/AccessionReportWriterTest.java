@@ -64,6 +64,16 @@ public class AccessionReportWriterTest {
 
     private static final String HASH = "hash";
 
+    private static final Long CLUSTERED_VARIANT = null;
+
+    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
+
+    private static final Boolean MATCHES_ASSEMBLY = null;
+
+    private static final Boolean ALLELES_MATCH = null;
+
+    private static final Boolean VALIDATED = null;
+
     private AccessionReportWriter accessionReportWriter;
 
     private File output;
@@ -88,7 +98,8 @@ public class AccessionReportWriterTest {
     @Test
     public void writeSnpWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        ALTERNATE, false);
+                                                        ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
@@ -117,11 +128,17 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeInsertionWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, "",
-                                                        ALTERNATE, false);
+        writeIndelWithAccessionHelper("", ALTERNATE, CONTEXT_BASE, CONTEXT_BASE + ALTERNATE);
+    }
 
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+    private void writeIndelWithAccessionHelper(String reference, String alternate, String denormalizedReference,
+                                               String denormalizedAlternate) throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, reference,
+                                                        alternate, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
+                                                                                                    variant);
 
         AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
                 Collections.singletonList(variant));
@@ -129,34 +146,21 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
-                                 CONTEXT_BASE, CONTEXT_BASE + ALTERNATE,
+                                 denormalizedReference, denormalizedAlternate,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
     }
 
     @Test
     public void writeDeletionWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        "", false);
-
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
-
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
-                Collections.singletonList(variant));
-
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
-
-        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
-                                 CONTEXT_BASE + REFERENCE, CONTEXT_BASE,
-                                 ".", ".", "."),
-                     getFirstVariantLine(output));
+        writeIndelWithAccessionHelper(REFERENCE, "", CONTEXT_BASE + REFERENCE, CONTEXT_BASE);
     }
 
     @Test
     public void resumeWriting() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        ALTERNATE, false);
+                                                        ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);

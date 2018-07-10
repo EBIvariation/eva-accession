@@ -178,7 +178,11 @@ public class AccessionReportWriter {
                                         newStart,
                                         newReference,
                                         newAlternate,
-                                        normalizedVariant.isSupportedByEvidence());
+                                        normalizedVariant.getClusteredVariantAccession(),
+                                        normalizedVariant.isSupportedByEvidence(),
+                                        normalizedVariant.isAssemblyMatch(),
+                                        normalizedVariant.isAllelesMatch(),
+                                        normalizedVariant.isValidated());
         }
     }
 

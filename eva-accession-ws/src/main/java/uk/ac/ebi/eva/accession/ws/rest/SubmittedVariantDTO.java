@@ -18,9 +18,9 @@
 package uk.ac.ebi.eva.accession.ws.rest;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 public class SubmittedVariantDTO implements ISubmittedVariant {
 
@@ -38,7 +38,15 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private String alternateAllele;
 
-    private boolean supportedByEvidence;
+    private Long clusteredVariantAccession;
+
+    private Boolean supportedByEvidence;
+
+    private Boolean assemblyMatch;
+
+    private Boolean allelesMatch;
+
+    private Boolean validated;
 
     private LocalDateTime createdDate;
 
@@ -47,13 +55,15 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     public SubmittedVariantDTO(ISubmittedVariant model) {
         this(model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getProjectAccession(), model.getContig(),
-             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(), model.isSupportedByEvidence(),
-             model.getCreatedDate());
+             model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(),
+             model.getClusteredVariantAccession(), model.isSupportedByEvidence(), model.isAssemblyMatch(),
+             model.isAllelesMatch(), model.isValidated(), model.getCreatedDate());
     }
 
     public SubmittedVariantDTO(String assemblyAccession, int taxonomyAccession, String projectAccession,
                                String contig, long start, String referenceAllele, String alternateAllele,
-                               boolean supportedByEvidence, LocalDateTime createdDate) {
+                               Long clusteredVariantAccession, Boolean supportedByEvidence, Boolean assemblyMatch,
+                               Boolean allelesMatch, Boolean validated, LocalDateTime createdDate) {
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
@@ -61,7 +71,11 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
+        this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
+        this.assemblyMatch = assemblyMatch;
+        this.allelesMatch = allelesMatch;
+        this.validated = validated;
         this.createdDate = createdDate;
     }
 
@@ -101,8 +115,28 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     }
 
     @Override
-    public boolean isSupportedByEvidence() {
+    public Long getClusteredVariantAccession() {
+        return clusteredVariantAccession;
+    }
+
+    @Override
+    public Boolean isSupportedByEvidence() {
         return supportedByEvidence;
+    }
+
+    @Override
+    public Boolean isAssemblyMatch() {
+        return assemblyMatch;
+    }
+
+    @Override
+    public Boolean isAllelesMatch() {
+        return allelesMatch;
+    }
+
+    @Override
+    public Boolean isValidated() {
+        return validated;
     }
 
     @Override
@@ -112,23 +146,15 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+        if (!(o instanceof ISubmittedVariant)) {
+            return false;
+        }
 
-        ISubmittedVariant that = (ISubmittedVariant) o;
-
-        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
-        if (start != that.getStart()) return false;
-        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
-        if (!projectAccession.equals(that.getProjectAccession())) return false;
-        if (!contig.equals(that.getContig())) return false;
-        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
-        return alternateAllele.equals(that.getAlternateAllele());
+        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele, alternateAllele);
+        return ISubmittedVariantComparator.hashCode(this);
     }
 }
