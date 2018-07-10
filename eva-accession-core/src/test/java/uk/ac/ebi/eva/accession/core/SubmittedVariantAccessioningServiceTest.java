@@ -88,7 +88,7 @@ public class SubmittedVariantAccessioningServiceTest {
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void sameAccessionsAreReturnedForEquivalentVariants() throws AccessionCouldNotBeGeneratedException {
-        List<SubmittedVariant> accessionedVariants = Arrays.asList(
+        List<SubmittedVariant> originalVariants = Arrays.asList(
                 new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
                                      SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
                 new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", CLUSTERED_VARIANT,
@@ -99,7 +99,7 @@ public class SubmittedVariantAccessioningServiceTest {
                 new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null, null, null, null,
                                      null));
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
-                accessionedVariants);
+                originalVariants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(
                 requestedVariants);
 

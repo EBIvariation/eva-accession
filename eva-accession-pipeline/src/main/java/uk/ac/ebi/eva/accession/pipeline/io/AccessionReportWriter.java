@@ -179,10 +179,10 @@ public class AccessionReportWriter {
                                         newReference,
                                         newAlternate,
                                         normalizedVariant.getClusteredVariantAccession(),
-                                        normalizedVariant.getSupportedByEvidence(),
-                                        normalizedVariant.getMatchesAssembly(),
-                                        normalizedVariant.getAllelesMatch(),
-                                        normalizedVariant.getValidated());
+                                        normalizedVariant.isSupportedByEvidence(),
+                                        normalizedVariant.isAssemblyMatch(),
+                                        normalizedVariant.isAllelesMatch(),
+                                        normalizedVariant.isValidated());
         }
     }
 

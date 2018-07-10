@@ -41,7 +41,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
 
     private Boolean supportedByEvidence;
 
-    private Boolean matchesAssembly;
+    private Boolean assemblyMatch;
 
     private Boolean allelesMatch;
 
@@ -55,13 +55,13 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     public SubmittedVariantDTO(ISubmittedVariant model) {
         this(model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getProjectAccession(), model.getContig(),
              model.getStart(), model.getReferenceAllele(), model.getAlternateAllele(),
-             model.getClusteredVariantAccession(), model.getSupportedByEvidence(), model.getMatchesAssembly(),
-             model.getAllelesMatch(), model.getValidated(), model.getCreatedDate());
+             model.getClusteredVariantAccession(), model.isSupportedByEvidence(), model.isAssemblyMatch(),
+             model.isAllelesMatch(), model.isValidated(), model.getCreatedDate());
     }
 
     public SubmittedVariantDTO(String assemblyAccession, int taxonomyAccession, String projectAccession,
                                String contig, long start, String referenceAllele, String alternateAllele,
-                               Long clusteredVariantAccession, Boolean supportedByEvidence, Boolean matchesAssembly,
+                               Long clusteredVariantAccession, Boolean supportedByEvidence, Boolean assemblyMatch,
                                Boolean allelesMatch, Boolean validated, LocalDateTime createdDate) {
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
@@ -72,7 +72,7 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
-        this.matchesAssembly = matchesAssembly;
+        this.assemblyMatch = assemblyMatch;
         this.allelesMatch = allelesMatch;
         this.validated = validated;
         this.createdDate = createdDate;
@@ -119,22 +119,22 @@ public class SubmittedVariantDTO implements ISubmittedVariant {
     }
 
     @Override
-    public Boolean getSupportedByEvidence() {
+    public Boolean isSupportedByEvidence() {
         return supportedByEvidence;
     }
 
     @Override
-    public Boolean getMatchesAssembly() {
-        return matchesAssembly;
+    public Boolean isAssemblyMatch() {
+        return assemblyMatch;
     }
 
     @Override
-    public Boolean getAllelesMatch() {
+    public Boolean isAllelesMatch() {
         return allelesMatch;
     }
 
     @Override
-    public Boolean getValidated() {
+    public Boolean isValidated() {
         return validated;
     }
 

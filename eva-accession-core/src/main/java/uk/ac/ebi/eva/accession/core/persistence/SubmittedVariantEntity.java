@@ -23,10 +23,19 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+
+import java.util.Objects;
 
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
+
+    public static final boolean DEFAULT_SUPPORTED_BY_EVIDENCE = true;
+
+    public static final boolean DEFAULT_ASSEMBLY_MATCH = true;
+
+    public static final boolean DEFAULT_ALLELES_MATCH = true;
+
+    public static final boolean DEFAULT_VALIDATED = false;
 
     @Field("asm")
     private String assemblyAccession;
@@ -54,8 +63,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     @Field("evidence")
     private Boolean supportedByEvidence;
 
-    @Field("matchAsm")
-    private Boolean matchesAssembly;
+    @Field("asmMatch")
+    private Boolean assemblyMatch;
 
     @Field("allelesMatch")
     private Boolean allelesMatch;
@@ -69,15 +78,15 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
-             model.getAlternateAllele(), model.getClusteredVariantAccession(), model.getSupportedByEvidence(),
-             model.getMatchesAssembly(), model.getAllelesMatch(), model.getValidated(), 1);
+             model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
+             model.isAssemblyMatch(), model.isAllelesMatch(), model.isValidated(), 1);
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
-                                   int taxonomyAccession, String projectAccession, String contig, long start,
-                                   String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
-                                   Boolean supportedByEvidence, Boolean matchesAssembly, Boolean allelesMatch,
-                                   Boolean validated, int version) {
+                                  int taxonomyAccession, String projectAccession, String contig, long start,
+                                  String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
+                                  Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
+                                  Boolean validated, int version) {
         super(hashedMessage, accession, version);
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
@@ -87,34 +96,19 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
-        this.supportedByEvidence = supportedByEvidence == getDefaultSupportedByEvidence() ? null : supportedByEvidence;
-        this.matchesAssembly = matchesAssembly == getDefaultMatchesAssembly() ? null : matchesAssembly;
-        this.allelesMatch = allelesMatch == getDefaultAllelesMatch()? null : allelesMatch;
-        this.validated = validated == getDefaultValidated() ? null : validated;
+        this.supportedByEvidence =
+                Objects.equals(supportedByEvidence, DEFAULT_SUPPORTED_BY_EVIDENCE) ? null : supportedByEvidence;
+        this.assemblyMatch = Objects.equals(assemblyMatch, DEFAULT_ASSEMBLY_MATCH) ? null : assemblyMatch;
+        this.allelesMatch = Objects.equals(allelesMatch, DEFAULT_ALLELES_MATCH) ? null : allelesMatch;
+        this.validated = Objects.equals(validated, DEFAULT_VALIDATED) ? null : validated;
     }
 
-    public ISubmittedVariant toISubmittedVariant() {
-        this.supportedByEvidence = supportedByEvidence == null ? getDefaultSupportedByEvidence() : supportedByEvidence;
-        this.matchesAssembly = matchesAssembly == null ? getDefaultMatchesAssembly() : matchesAssembly;
-        this.allelesMatch = allelesMatch == null ? getDefaultAllelesMatch() : allelesMatch;
-        this.validated = validated == null ? getDefaultValidated() : validated;
+    public ISubmittedVariant getModel() {
+        this.supportedByEvidence = supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence;
+        this.assemblyMatch = assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch;
+        this.allelesMatch = allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch;
+        this.validated = validated == null ? DEFAULT_VALIDATED : validated;
         return this;
-    }
-
-    public static Boolean getDefaultSupportedByEvidence() {
-        return true;
-    }
-
-    public static Boolean getDefaultMatchesAssembly() {
-        return true;
-    }
-
-    public static Boolean getDefaultAllelesMatch() {
-        return true;
-    }
-
-    public static Boolean getDefaultValidated() {
-        return false;
     }
 
     @Override
@@ -158,22 +152,22 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
     }
 
     @Override
-    public Boolean getSupportedByEvidence() {
+    public Boolean isSupportedByEvidence() {
         return supportedByEvidence;
     }
 
     @Override
-    public Boolean getMatchesAssembly() {
-        return matchesAssembly;
+    public Boolean isAssemblyMatch() {
+        return assemblyMatch;
     }
 
     @Override
-    public Boolean getAllelesMatch() {
+    public Boolean isAllelesMatch() {
         return allelesMatch;
     }
 
     @Override
-    public Boolean getValidated() {
+    public Boolean isValidated() {
         return validated;
     }
 

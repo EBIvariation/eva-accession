@@ -184,7 +184,8 @@ public class SubmittedVariantSummaryFunctionTest {
 
         ISubmittedVariant submittedVariant2 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                     VALIDATED);
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }

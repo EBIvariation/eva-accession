@@ -52,7 +52,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
     private Boolean supportedByEvidence;
 
     @Field("matchAsm")
-    private Boolean matchesAssembly;
+    private Boolean assemblyMatch;
 
     @Field("allelesMatch")
     private Boolean allelesMatch;
@@ -73,10 +73,10 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
         this.referenceAllele = submittedVariantEntity.getReferenceAllele();
         this.alternateAllele = submittedVariantEntity.getAlternateAllele();
         this.clusteredVariantAccession = submittedVariantEntity.getClusteredVariantAccession();
-        this.supportedByEvidence = submittedVariantEntity.getSupportedByEvidence();
-        this.matchesAssembly = submittedVariantEntity.getMatchesAssembly();
-        this.allelesMatch = submittedVariantEntity.getAllelesMatch();
-        this.validated = submittedVariantEntity.getValidated();
+        this.supportedByEvidence = submittedVariantEntity.isSupportedByEvidence();
+        this.assemblyMatch = submittedVariantEntity.isAssemblyMatch();
+        this.allelesMatch = submittedVariantEntity.isAllelesMatch();
+        this.validated = submittedVariantEntity.isValidated();
     }
 
     @Override
@@ -120,22 +120,22 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
     }
 
     @Override
-    public Boolean getSupportedByEvidence() {
+    public Boolean isSupportedByEvidence() {
         return supportedByEvidence;
     }
 
     @Override
-    public Boolean getMatchesAssembly() {
-        return matchesAssembly;
+    public Boolean isAssemblyMatch() {
+        return assemblyMatch;
     }
 
     @Override
-    public Boolean getAllelesMatch() {
+    public Boolean isAllelesMatch() {
         return allelesMatch;
     }
 
     @Override
-    public Boolean getValidated() {
+    public Boolean isValidated() {
         return validated;
     }
 

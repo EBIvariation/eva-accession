@@ -22,7 +22,7 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import java.time.LocalDateTime;
 
 /**
- * Abstract representation of the fields second uniquely identify an accessioned submitted variant. Implemented by the
+ * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
  * entity serialized into the database {@link SubmittedVariantEntity} and the message/DTO used by the REST API.
  */
 public interface ISubmittedVariant {
@@ -44,22 +44,29 @@ public interface ISubmittedVariant {
     Long getClusteredVariantAccession();
 
     /**
-     * @return True if this submitted variant is supported by genotypes or frequencies
+     * @return True if this submitted variant is supported by genotypes or frequencies. Nullable (= true) when
+     * serialized to database in order to reduce disk usage.
      */
-    Boolean getSupportedByEvidence();
-
-    Boolean getMatchesAssembly();
+    Boolean isSupportedByEvidence();
 
     /**
-     * @return False if reference allele was not found in the alleles list
+     * @return True if the reference allele matches the reference genome. Nullable (= true) when serialized to
+     * database in order to reduce disk usage.
      */
-    Boolean getAllelesMatch();
+    Boolean isAssemblyMatch();
+
+    /**
+     * @return False if reference allele was not found in the alleles list. Nullable (= true) when serialized to
+     * database in order to reduce disk usage.
+     */
+    Boolean isAllelesMatch();
 
     /**
      * @return True if the variant was curated manually, and not only detected by computational methods.
-     * see https://www.ncbi.nlm.nih.gov/books/NBK21088/table/ch5.ch5_t4/?report=objectonly
+     * see https://www.ncbi.nlm.nih.gov/books/NBK21088/table/ch5.ch5_t4/?report=objectonly . Nullable (= false) when
+     * serialized to database in order to reduce disk usage.
      */
-    Boolean getValidated();
+    Boolean isValidated();
 
     LocalDateTime getCreatedDate();
 
@@ -96,30 +103,27 @@ public interface ISubmittedVariant {
                 second.getClusteredVariantAccession()) : second.getClusteredVariantAccession() != null) {
             return false;
         }
-        if (first.getSupportedByEvidence() != null ? !first.getSupportedByEvidence().equals(
-                second.getSupportedByEvidence()) : second.getSupportedByEvidence() != null) {
+        if (first.isSupportedByEvidence() != null ? !first.isSupportedByEvidence().equals(
+                second.isSupportedByEvidence()) : second.isSupportedByEvidence() != null) {
 
             return false;
         }
-        if (first.getMatchesAssembly() != null ? !first.getMatchesAssembly().equals(
-                second.getMatchesAssembly()) : second.getMatchesAssembly() != null) {
+        if (first.isAssemblyMatch() != null ? !first.isAssemblyMatch().equals(
+                second.isAssemblyMatch()) : second.isAssemblyMatch() != null) {
 
             return false;
         }
-        if (first.getAllelesMatch() != null ? !first.getAllelesMatch().equals(second.getAllelesMatch())
-                : second.getAllelesMatch() != null) {
+        if (first.isAllelesMatch() != null ? !first.isAllelesMatch().equals(second.isAllelesMatch())
+                : second.isAllelesMatch() != null) {
             return false;
         }
-        if (first.getValidated() != null ? !first.getValidated().equals(second.getValidated())
-                : second.getValidated() != null) {
+        if (first.isValidated() != null ? !first.isValidated().equals(second.isValidated())
+                : second.isValidated() != null) {
             return false;
         }
 
-        // do NOT take into account the date, don't use the next code:
-//        if (first.getCreatedDate() != null ? !first.getCreatedDate().equals(second.getCreatedDate())
-//                : second.getCreatedDate() != null) {
-//            return false;
-//        }
+        // do NOT take into account the date
+
         return true;
     }
 
@@ -133,18 +137,17 @@ public interface ISubmittedVariant {
         result = 31 * result + iSubmittedVariant.getAlternateAllele().hashCode();
         result = 31 * result + (iSubmittedVariant.getClusteredVariantAccession() != null ?
                 iSubmittedVariant.getClusteredVariantAccession().hashCode() : 0);
-        result = 31 * result + (iSubmittedVariant.getSupportedByEvidence() != null ?
-                iSubmittedVariant.getSupportedByEvidence().hashCode() : 0);
-        result = 31 * result + (iSubmittedVariant.getMatchesAssembly() != null ?
-                iSubmittedVariant.getMatchesAssembly().hashCode() : 0);
-        result = 31 * result + (iSubmittedVariant.getAllelesMatch() != null ?
-                iSubmittedVariant.getAllelesMatch().hashCode() : 0);
-        result = 31 * result + (iSubmittedVariant.getValidated() != null ?
-                iSubmittedVariant.getValidated().hashCode() : 0);
+        result = 31 * result + (iSubmittedVariant.isSupportedByEvidence() != null ?
+                iSubmittedVariant.isSupportedByEvidence().hashCode() : 0);
+        result = 31 * result + (iSubmittedVariant.isAssemblyMatch() != null ?
+                iSubmittedVariant.isAssemblyMatch().hashCode() : 0);
+        result = 31 * result + (iSubmittedVariant.isAllelesMatch() != null ?
+                iSubmittedVariant.isAllelesMatch().hashCode() : 0);
+        result = 31 * result + (iSubmittedVariant.isValidated() != null ?
+                iSubmittedVariant.isValidated().hashCode() : 0);
 
-        // do NOT take into account the date, don't use the next code:
-//        result = 31 * result + (iSubmittedVariant.getCreatedDate() != null ?
-//                iSubmittedVariant.getCreatedDate().hashCode() : 0);
+        // do NOT take into account the date
+
         return result;
     }
 }

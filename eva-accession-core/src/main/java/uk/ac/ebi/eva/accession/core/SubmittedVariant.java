@@ -40,7 +40,7 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private Boolean supportedByEvidence;
 
-    private Boolean matchesAssembly;
+    private Boolean assemblyMatch;
 
     private Boolean allelesMatch;
 
@@ -50,7 +50,7 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
                             long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
-                            Boolean supportedByEvidence, Boolean matchesAssembly, Boolean allelesMatch,
+                            Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
                             Boolean validated) {
         if(Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
@@ -77,7 +77,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
-        this.matchesAssembly = matchesAssembly;
+        this.assemblyMatch = assemblyMatch;
         this.allelesMatch = allelesMatch;
         this.validated = validated;
         this.createdDate = null;
@@ -156,7 +156,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public Boolean getSupportedByEvidence() {
+    public Boolean isSupportedByEvidence() {
         return supportedByEvidence;
     }
 
@@ -165,12 +165,12 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public Boolean getMatchesAssembly() {
-        return matchesAssembly;
+    public Boolean isAssemblyMatch() {
+        return assemblyMatch;
     }
 
-    public void setMatchesAssembly(Boolean matchesAssembly) {
-        this.matchesAssembly = matchesAssembly;
+    public void setAssemblyMatch(Boolean assemblyMatch) {
+        this.assemblyMatch = assemblyMatch;
     }
 
     @Override
@@ -183,7 +183,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public Boolean getAllelesMatch() {
+    public Boolean isAllelesMatch() {
         return allelesMatch;
     }
 
@@ -192,7 +192,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public Boolean getValidated() {
+    public Boolean isValidated() {
         return validated;
     }
 
@@ -226,7 +226,7 @@ public class SubmittedVariant implements ISubmittedVariant {
                 ", alternateAllele='" + alternateAllele + '\'' +
                 ", clusteredVariantAccession=" + clusteredVariantAccession +
                 ", supportedByEvidence=" + supportedByEvidence +
-                ", matchesAssembly=" + matchesAssembly +
+                ", assemblyMatch=" + assemblyMatch +
                 ", allelesMatch=" + allelesMatch +
                 ", validated=" + validated +
                 ", createdDate=" + createdDate +

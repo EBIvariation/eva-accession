@@ -128,11 +128,11 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeInsertionWithAccession() throws IOException {
-        writeIndeWithAccession("", ALTERNATE, CONTEXT_BASE, CONTEXT_BASE + ALTERNATE);
+        writeIndelWithAccessionHelper("", ALTERNATE, CONTEXT_BASE, CONTEXT_BASE + ALTERNATE);
     }
 
-    private void writeIndeWithAccession(String reference, String alternate, String denormalizedReference,
-                                        String denormalizedAlternate) throws IOException {
+    private void writeIndelWithAccessionHelper(String reference, String alternate, String denormalizedReference,
+                                               String denormalizedAlternate) throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, reference,
                                                         alternate, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                         MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
@@ -153,7 +153,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeDeletionWithAccession() throws IOException {
-        writeIndeWithAccession(REFERENCE, "", CONTEXT_BASE + REFERENCE, CONTEXT_BASE);
+        writeIndelWithAccessionHelper(REFERENCE, "", CONTEXT_BASE + REFERENCE, CONTEXT_BASE);
     }
 
     @Test

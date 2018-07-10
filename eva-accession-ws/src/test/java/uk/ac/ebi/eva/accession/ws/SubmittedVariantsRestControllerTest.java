@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
@@ -32,14 +34,11 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantDTO;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -79,18 +78,29 @@ public class SubmittedVariantsRestControllerTest {
         String accessions = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
                 Collectors.joining(","));
         String getVariantsUrl = URL + accessions;
-        ResponseEntity<List> getVariantsResponse = testRestTemplate.getForEntity(getVariantsUrl, List.class);
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                          new ParameterizedTypeReference<
+                                                  List<
+                                                          AccessionResponseDTO<
+                                                                  SubmittedVariantDTO,
+                                                                  ISubmittedVariant,
+                                                                  String,
+                                                                  Long>>>() {
+                                          });
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(2, getVariantsResponse.getBody().size());
         assertDefaultFlags(getVariantsResponse.getBody());
     }
 
-    private void assertDefaultFlags(List body) {
-        Map variant = ((Map) ((Map) body.get(0)).get("data"));
-        assertEquals(SUPPORTED_BY_EVIDENCE, variant.get("supportedByEvidence"));
-        assertEquals(MATCHES_ASSEMBLY, variant.get("matchesAssembly"));
-        assertEquals(SubmittedVariantEntity.getDefaultAllelesMatch(), variant.get("allelesMatch"));
-        assertEquals(SubmittedVariantEntity.getDefaultValidated(), variant.get("validated"));
+    private void assertDefaultFlags(
+            List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>> body) {
+        SubmittedVariantDTO variant = body.get(0).getData();
+        assertEquals(SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
+        assertEquals(MATCHES_ASSEMBLY, variant.isAssemblyMatch());
+        assertEquals(SubmittedVariantEntity.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
+        assertEquals(SubmittedVariantEntity.DEFAULT_VALIDATED, variant.isValidated());
     }
 
     public List<SubmittedVariantDTO> getListOfVariantMessages() {

@@ -36,7 +36,7 @@ public class SubmittedVariantAccessioningDatabaseService
               accessionWrapper -> new SubmittedVariantEntity(accessionWrapper.getAccession(),
                                                              accessionWrapper.getHash(),
                                                              accessionWrapper.getData()),
-              SubmittedVariantEntity::toISubmittedVariant,
+              SubmittedVariantEntity::getModel,
               inactiveAccessionService);
     }
 
