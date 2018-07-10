@@ -17,15 +17,11 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.persistence;
 
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-
-import java.util.Objects;
 
 @Document
 public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> implements IClusteredVariant {
@@ -106,24 +102,4 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
         return validated;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ISubmittedVariant)) return false;
-
-        ISubmittedVariant that = (ISubmittedVariant) o;
-
-        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
-        if (start != that.getStart()) return false;
-        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
-        if (!contig.equals(that.getContig())) return false;
-        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
-        return alternateAllele.equals(that.getAlternateAllele());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, contig, start,
-                            referenceAllele, alternateAllele);
-    }
 }
