@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
@@ -53,15 +52,17 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.FORWARD, 49575L, false, false, "C",
                                                      Date.valueOf("2017-08-22"), 9031);
 
-        ISubmittedVariant variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
         // TODO: supported by evidence?
         // TODO: validated, match assembly and RS variant accession are being added into PR #28
 
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(920114L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
-                                                                                      "CHICKEN_SDAU_JININGBAIRI UNINFECTED",
-                                                                                      "25", 920114, "C", "T", -1L,
-                                                                                      false, false, false, false, 1);
+                                                                                      "CHICKEN_SDAU_JININGBAIRI " +
+                                                                                              "UNINFECTED",
+                                                                                      "25", 920114, "C", "T",
+                                                                                      1135402630L, false, false, false,
+                                                                                      false, 1);
         expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
         // TODO: is comparing well the variants? (the date is not the same)
         assertEquals(expectedVariant, variant);
@@ -75,14 +76,16 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
                                                      375024L, false, false, "G", Date.valueOf("2010-02-03"), 9031);
 
-        ISubmittedVariant variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(920114L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "CFG-UPPSALA_CHICK_WGS_RESEQ_PAPER_CHR32",
-                                                                                      "11", 11857590, "G", "A", -1L,
-                                                                                      false, false, false, false, 1);
+                                                                                      "11", 11857590, "G", "A",
+                                                                                      14730808L, false, false, false,
+                                                                                      false, 1);
         expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
 
+        // TODO: this test fails because the alleles are not being complemented in SubSnpNoHgvs class
         assertEquals(expectedVariant, variant);
 
     }
