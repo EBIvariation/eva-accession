@@ -220,14 +220,81 @@ public class SubSnpNoHgvs {
     }
 
     public String getAlternate() {
-        String[] alleles = getAlleles().split("/");
+        String[] alleles = splitAlleles();
+
         for (String allele : alleles) {
             if (!allele.equals(reference)) {
                 return allele;
             }
         }
-        // TODO: what if there are several alleles?
-        // TODO: complement the alleles according to the orientation
+        // TODO: if there are several alleles this is returning just the first
+
         return null;
+    }
+
+    private String[] splitAlleles() {
+        Orientation allelesOrientation;
+        try {
+            allelesOrientation = getAllelesOrientation();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unknown alleles orientation for variant " + this, e);
+        }
+
+        if (allelesOrientation.equals(Orientation.FORWARD)) {
+            return getAlleles().split("/");
+        } else if (allelesOrientation.equals(Orientation.REVERSE)) {
+            return getReversedComplementedAlleles();
+        } else {
+            throw new IllegalArgumentException(
+                    "Unknown alleles orientation " + allelesOrientation + " for variant " + this);
+        }
+    }
+
+    private Orientation getAllelesOrientation() {
+        return Orientation.getOrientation(
+                this.subsnpOrientation.getValue() * this.snpOrientation.getValue() * this.contigOrientation.getValue());
+    }
+
+    private String[] getReversedComplementedAlleles() {
+        String[] alleles = this.alleles.split("/");
+        for (int i=0; i < alleles.length; i++) {
+            alleles[i] = calculateReverseComplement(alleles[i]);
+        }
+        return alleles;
+    }
+
+    private static String calculateReverseComplement(String alleleInReverseStrand) {
+        StringBuilder alleleInForwardStrand = new StringBuilder(alleleInReverseStrand).reverse();
+        for (int i = 0; i < alleleInForwardStrand.length(); i++) {
+            switch (alleleInForwardStrand.charAt(i)) {
+                // Capitalization holds a special meaning for dbSNP so we need to preserve it.
+                // See https://www.ncbi.nlm.nih.gov/books/NBK44414/#_Reports_Lowercase_Small_Sequence_Letteri_
+                case 'A':
+                    alleleInForwardStrand.setCharAt(i, 'T');
+                    break;
+                case 'a':
+                    alleleInForwardStrand.setCharAt(i, 't');
+                    break;
+                case 'C':
+                    alleleInForwardStrand.setCharAt(i, 'G');
+                    break;
+                case 'c':
+                    alleleInForwardStrand.setCharAt(i, 'g');
+                    break;
+                case 'G':
+                    alleleInForwardStrand.setCharAt(i, 'C');
+                    break;
+                case 'g':
+                    alleleInForwardStrand.setCharAt(i, 'c');
+                    break;
+                case 'T':
+                    alleleInForwardStrand.setCharAt(i, 'A');
+                    break;
+                case 't':
+                    alleleInForwardStrand.setCharAt(i, 'a');
+                    break;
+            }
+        }
+        return alleleInForwardStrand.toString();
     }
 }

@@ -56,7 +56,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         // TODO: supported by evidence?
         // TODO: validated, match assembly and RS variant accession are being added into PR #28
 
-        // TODO: hash in expected object, is it not being compared in the equals method?
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(920114L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "CHICKEN_SDAU_JININGBAIRI " +
@@ -65,9 +64,10 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       1135402630L, false, false, false,
                                                                                       false, 1);
         expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
-        // TODO: is comparing well the variants? (the date is not the same)
-        assertEquals(expectedVariant, variant);
 
+        // TODO: compare createdDate and hash, as they are not compared in the equals method
+
+        assertEquals(expectedVariant, variant);
     }
 
     @Test
@@ -86,7 +86,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       false, 1);
         expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
 
-        // TODO: this test fails because the alleles are not being complemented in SubSnpNoHgvs class
         assertEquals(expectedVariant, variant);
 
     }
@@ -127,7 +126,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       false, 1);
         expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
 
-        // TODO: this test fails because the alleles are not being complemented in SubSnpNoHgvs class
         assertEquals(expectedVariant, variant);
     }
 }
