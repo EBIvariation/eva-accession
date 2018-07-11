@@ -19,7 +19,7 @@ import org.junit.Test;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class SubmittedVariantEntityTest {
 
@@ -67,14 +67,20 @@ public class SubmittedVariantEntityTest {
     public void getModelWithDefaultFlags() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, null, null, null, null);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant);
-
         variant.setSupportedByEvidence(true);
         variant.setAssemblyMatch(true);
         variant.setAllelesMatch(true);
         variant.setValidated(false);
         assertEquals(variant, entity.getModel());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void flagsShouldNotBeNull() {
+        new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
+                                   PROJECT_ACCESSION, CONTIG, START, REF_A, ALT_T, CLUSTERED_VARIANT, null, null, null,
+                                   null, 1);
     }
 }

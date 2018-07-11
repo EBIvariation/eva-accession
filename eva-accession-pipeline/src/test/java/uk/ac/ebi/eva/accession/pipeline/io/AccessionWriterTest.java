@@ -35,7 +35,6 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 
 import java.io.BufferedReader;
@@ -151,11 +150,11 @@ public class AccessionWriterTest {
         ISubmittedVariant firstSavedVariant = iterator.next().getData();
         ISubmittedVariant secondSavedVariant = iterator.next().getData();
         if (firstSavedVariant.getStart() == firstVariant.getStart()) {
-            assertTrue(ISubmittedVariantComparator.equals(firstVariant, firstSavedVariant));
-            assertTrue(ISubmittedVariantComparator.equals(secondVariant, secondSavedVariant));
+            assertEquals(firstVariant, firstSavedVariant);
+            assertEquals(secondVariant, secondSavedVariant);
         } else {
-            assertTrue(ISubmittedVariantComparator.equals(secondVariant, firstSavedVariant));
-            assertTrue(ISubmittedVariantComparator.equals(firstVariant, secondSavedVariant));
+            assertEquals(secondVariant, firstSavedVariant);
+            assertEquals(firstVariant, secondSavedVariant);
         }
     }
 
@@ -206,7 +205,7 @@ public class AccessionWriterTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(Collections.singletonList(variant));
         assertEquals(1, accessions.size());
 
-        assertTrue(ISubmittedVariantComparator.equals(variant, accessions.iterator().next().getData()));
+        assertEquals(variant, accessions.iterator().next().getData());
     }
 
     @Test

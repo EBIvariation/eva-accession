@@ -22,7 +22,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
 
 @Document
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> implements ISubmittedVariant {
@@ -142,16 +141,67 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ISubmittedVariant)) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SubmittedVariantInactiveEntity)) {
             return false;
         }
 
-        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
+        SubmittedVariantInactiveEntity that = (SubmittedVariantInactiveEntity) o;
+
+        if (taxonomyAccession != that.taxonomyAccession) {
+            return false;
+        }
+        if (start != that.start) {
+            return false;
+        }
+        if (!assemblyAccession.equals(that.assemblyAccession)) {
+            return false;
+        }
+        if (!projectAccession.equals(that.projectAccession)) {
+            return false;
+        }
+        if (!contig.equals(that.contig)) {
+            return false;
+        }
+        if (!referenceAllele.equals(that.referenceAllele)) {
+            return false;
+        }
+        if (!alternateAllele.equals(that.alternateAllele)) {
+            return false;
+        }
+        if (clusteredVariantAccession != null ? !clusteredVariantAccession.equals(
+                that.clusteredVariantAccession) : that.clusteredVariantAccession != null) {
+            return false;
+        }
+        if (supportedByEvidence != null ? !supportedByEvidence.equals(
+                that.supportedByEvidence) : that.supportedByEvidence != null) {
+            return false;
+        }
+        if (assemblyMatch != null ? !assemblyMatch.equals(that.assemblyMatch) : that.assemblyMatch != null) {
+            return false;
+        }
+        if (allelesMatch != null ? !allelesMatch.equals(that.allelesMatch) : that.allelesMatch != null) {
+            return false;
+        }
+        return validated != null ? validated.equals(that.validated) : that.validated == null;
     }
 
     @Override
     public int hashCode() {
-        return ISubmittedVariantComparator.hashCode(this);
+        int result = assemblyAccession.hashCode();
+        result = 31 * result + taxonomyAccession;
+        result = 31 * result + projectAccession.hashCode();
+        result = 31 * result + contig.hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + referenceAllele.hashCode();
+        result = 31 * result + alternateAllele.hashCode();
+        result = 31 * result + (clusteredVariantAccession != null ? clusteredVariantAccession.hashCode() : 0);
+        result = 31 * result + (supportedByEvidence != null ? supportedByEvidence.hashCode() : 0);
+        result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
+        result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
+        result = 31 * result + (validated != null ? validated.hashCode() : 0);
+        return result;
     }
-
 }

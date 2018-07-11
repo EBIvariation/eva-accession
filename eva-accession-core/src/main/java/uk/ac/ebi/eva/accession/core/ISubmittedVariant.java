@@ -27,6 +27,14 @@ import java.time.LocalDateTime;
  */
 public interface ISubmittedVariant {
 
+    boolean DEFAULT_SUPPORTED_BY_EVIDENCE = true;
+
+    boolean DEFAULT_ASSEMBLY_MATCH = true;
+
+    boolean DEFAULT_ALLELES_MATCH = true;
+
+    boolean DEFAULT_VALIDATED = false;
+
     String getAssemblyAccession();
 
     int getTaxonomyAccession();

@@ -23,20 +23,12 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.utils.ISubmittedVariantComparator;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
 import java.util.Objects;
 
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
-
-    public static final boolean DEFAULT_SUPPORTED_BY_EVIDENCE = true;
-
-    public static final boolean DEFAULT_ASSEMBLY_MATCH = true;
-
-    public static final boolean DEFAULT_ALLELES_MATCH = true;
-
-    public static final boolean DEFAULT_VALIDATED = false;
 
     @Field("asm")
     private String assemblyAccession;
@@ -97,19 +89,44 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
-        this.supportedByEvidence =
-                Objects.equals(supportedByEvidence, DEFAULT_SUPPORTED_BY_EVIDENCE) ? null : supportedByEvidence;
-        this.assemblyMatch = Objects.equals(assemblyMatch, DEFAULT_ASSEMBLY_MATCH) ? null : assemblyMatch;
-        this.allelesMatch = Objects.equals(allelesMatch, DEFAULT_ALLELES_MATCH) ? null : allelesMatch;
-        this.validated = Objects.equals(validated, DEFAULT_VALIDATED) ? null : validated;
+
+        if (supportedByEvidence == null) {
+            throw new IllegalArgumentException(
+                    "supportedByEvidence should not be null, as null is used for default values");
+        } else {
+            this.supportedByEvidence = supportedByEvidence == DEFAULT_SUPPORTED_BY_EVIDENCE ? null :
+                    supportedByEvidence;
+        }
+
+        if (assemblyMatch == null) {
+            throw new IllegalArgumentException("assemblyMatch should not be null, as null is used for default values");
+        } else {
+            this.assemblyMatch = assemblyMatch == DEFAULT_ASSEMBLY_MATCH ? null : assemblyMatch;
+        }
+
+        if (allelesMatch == null) {
+            throw new IllegalArgumentException("allelesMatch should not be null, as null is used for default values");
+        } else {
+            this.allelesMatch = allelesMatch == DEFAULT_ALLELES_MATCH ? null :
+                    allelesMatch;
+        }
+
+        if (validated == null) {
+            throw new IllegalArgumentException("validated should not be null, as null is used for default values");
+        } else {
+            this.validated = validated == DEFAULT_VALIDATED ? null : validated;
+        }
     }
 
     public ISubmittedVariant getModel() {
-        this.supportedByEvidence = supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence;
-        this.assemblyMatch = assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch;
-        this.allelesMatch = allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch;
-        this.validated = validated == null ? DEFAULT_VALIDATED : validated;
-        return this;
+        SubmittedVariant variant = new SubmittedVariant(this);
+        variant.setSupportedByEvidence(
+                supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence);
+        variant.setAssemblyMatch(assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch);
+        variant.setAllelesMatch(allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch);
+        variant.setValidated(validated == null ? DEFAULT_VALIDATED : validated);
+        variant.setCreatedDate(getCreatedDate());
+        return variant;
     }
 
     @Override
@@ -174,16 +191,67 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ISubmittedVariant)) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SubmittedVariantEntity)) {
             return false;
         }
 
-        return ISubmittedVariantComparator.equals(this, (ISubmittedVariant) o);
+        SubmittedVariantEntity that = (SubmittedVariantEntity) o;
+
+        if (taxonomyAccession != that.taxonomyAccession) {
+            return false;
+        }
+        if (start != that.start) {
+            return false;
+        }
+        if (!assemblyAccession.equals(that.assemblyAccession)) {
+            return false;
+        }
+        if (!projectAccession.equals(that.projectAccession)) {
+            return false;
+        }
+        if (!contig.equals(that.contig)) {
+            return false;
+        }
+        if (!referenceAllele.equals(that.referenceAllele)) {
+            return false;
+        }
+        if (!alternateAllele.equals(that.alternateAllele)) {
+            return false;
+        }
+        if (clusteredVariantAccession != null ? !clusteredVariantAccession.equals(
+                that.clusteredVariantAccession) : that.clusteredVariantAccession != null) {
+            return false;
+        }
+        if (supportedByEvidence != null ? !supportedByEvidence.equals(
+                that.supportedByEvidence) : that.supportedByEvidence != null) {
+            return false;
+        }
+        if (assemblyMatch != null ? !assemblyMatch.equals(that.assemblyMatch) : that.assemblyMatch != null) {
+            return false;
+        }
+        if (allelesMatch != null ? !allelesMatch.equals(that.allelesMatch) : that.allelesMatch != null) {
+            return false;
+        }
+        return validated != null ? validated.equals(that.validated) : that.validated == null;
     }
 
     @Override
     public int hashCode() {
-        return ISubmittedVariantComparator.hashCode(this);
+        int result = assemblyAccession.hashCode();
+        result = 31 * result + taxonomyAccession;
+        result = 31 * result + projectAccession.hashCode();
+        result = 31 * result + contig.hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + referenceAllele.hashCode();
+        result = 31 * result + alternateAllele.hashCode();
+        result = 31 * result + (clusteredVariantAccession != null ? clusteredVariantAccession.hashCode() : 0);
+        result = 31 * result + (supportedByEvidence != null ? supportedByEvidence.hashCode() : 0);
+        result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
+        result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
+        result = 31 * result + (validated != null ? validated.hashCode() : 0);
+        return result;
     }
-
 }

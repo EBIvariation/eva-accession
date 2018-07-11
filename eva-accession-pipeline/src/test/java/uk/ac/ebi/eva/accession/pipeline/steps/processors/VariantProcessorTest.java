@@ -44,13 +44,13 @@ public class VariantProcessorTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
-    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
+    private static final Boolean SUPPORTED_BY_EVIDENCE = true;
 
-    private static final Boolean MATCHES_ASSEMBLY = null;
+    private static final Boolean MATCHES_ASSEMBLY = true;
 
-    private static final Boolean ALLELES_MATCH = null;
+    private static final Boolean ALLELES_MATCH = true;
 
-    private static final Boolean VALIDATED = null;
+    private static final Boolean VALIDATED = false;
 
     private VariantProcessor processor;
 
