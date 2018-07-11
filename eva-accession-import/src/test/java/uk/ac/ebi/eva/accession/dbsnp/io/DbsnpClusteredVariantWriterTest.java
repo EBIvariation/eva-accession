@@ -97,9 +97,9 @@ public class DbsnpClusteredVariantWriterTest {
 
     @Test
     public void saveSingleAccession() throws Exception {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
-                                                                 "reference", "alternate", SUPPORTED_BY_EVIDENCE,
-                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                 "reference", "alternate", 
+                                                                   VALIDATED);
         DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(EXPECTED_ACCESSION,
                                                                               hashingFunction.apply(clusteredVariant),
                                                                               clusteredVariant);
@@ -116,14 +116,14 @@ public class DbsnpClusteredVariantWriterTest {
 
     @Test
     public void saveDifferentTaxonomies() throws Exception {
-        ClusteredVariant firstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "project", "contig",
+        ClusteredVariant firstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig",
                                                                       START_1, "reference", "alternate",
-                                                                      CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                      MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
-        ClusteredVariant secondClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_2, "project", "contig",
+                                                                      CLUSTERED_VARIANT, 
+                                                                        VALIDATED);
+        ClusteredVariant secondClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_2, "contig",
                                                                        START_1, "reference", "alternate",
-                                                                       CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                       MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                       CLUSTERED_VARIANT, 
+                                                                         VALIDATED);
         DbsnpClusteredVariantEntity firstVariant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(firstClusteredVariant), firstClusteredVariant);
         DbsnpClusteredVariantEntity secondVariant = new DbsnpClusteredVariantEntity(
@@ -143,10 +143,10 @@ public class DbsnpClusteredVariantWriterTest {
 
     @Test
     public void failsOnDuplicateVariant() throws Exception {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "project", "contig",
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig",
                                                                  START_1, "reference", "alternate",
-                                                                 CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                 CLUSTERED_VARIANT, 
+                                                                   VALIDATED);
         DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(clusteredVariant), clusteredVariant);
 
