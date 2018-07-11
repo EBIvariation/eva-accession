@@ -30,14 +30,6 @@ import java.util.Objects;
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
 
-    public static final boolean DEFAULT_SUPPORTED_BY_EVIDENCE = true;
-
-    public static final boolean DEFAULT_ASSEMBLY_MATCH = true;
-
-    public static final boolean DEFAULT_ALLELES_MATCH = true;
-
-    public static final boolean DEFAULT_VALIDATED = false;
-
     @Field("asm")
     private String assemblyAccession;
 
@@ -97,11 +89,33 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
-        this.supportedByEvidence =
-                Objects.equals(supportedByEvidence, DEFAULT_SUPPORTED_BY_EVIDENCE) ? null : supportedByEvidence;
-        this.assemblyMatch = Objects.equals(assemblyMatch, DEFAULT_ASSEMBLY_MATCH) ? null : assemblyMatch;
-        this.allelesMatch = Objects.equals(allelesMatch, DEFAULT_ALLELES_MATCH) ? null : allelesMatch;
-        this.validated = Objects.equals(validated, DEFAULT_VALIDATED) ? null : validated;
+
+        if (supportedByEvidence == null) {
+            throw new IllegalArgumentException(
+                    "supportedByEvidence should not be null, as null is used for default values");
+        } else {
+            this.supportedByEvidence = supportedByEvidence == DEFAULT_SUPPORTED_BY_EVIDENCE ? null :
+                    supportedByEvidence;
+        }
+
+        if (assemblyMatch == null) {
+            throw new IllegalArgumentException("assemblyMatch should not be null, as null is used for default values");
+        } else {
+            this.assemblyMatch = assemblyMatch == DEFAULT_ASSEMBLY_MATCH ? null : assemblyMatch;
+        }
+
+        if (allelesMatch == null) {
+            throw new IllegalArgumentException("allelesMatch should not be null, as null is used for default values");
+        } else {
+            this.allelesMatch = allelesMatch == DEFAULT_ALLELES_MATCH ? null :
+                    allelesMatch;
+        }
+
+        if (validated == null) {
+            throw new IllegalArgumentException("validated should not be null, as null is used for default values");
+        } else {
+            this.validated = validated == DEFAULT_VALIDATED ? null : validated;
+        }
     }
 
     public ISubmittedVariant getModel() {

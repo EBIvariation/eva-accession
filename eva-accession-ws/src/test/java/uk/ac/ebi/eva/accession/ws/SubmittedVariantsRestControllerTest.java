@@ -62,14 +62,6 @@ public class SubmittedVariantsRestControllerTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
-    private static final Boolean SUPPORTED_BY_EVIDENCE = false;
-
-    private static final Boolean MATCHES_ASSEMBLY = true;
-
-    private static final Boolean ALLELES_MATCH = null;
-
-    private static final Boolean VALIDATED = null;
-
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
         List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> generatedAccessions =
@@ -97,19 +89,17 @@ public class SubmittedVariantsRestControllerTest {
     private void assertDefaultFlags(
             List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
         SubmittedVariant variant = body.get(0).getData();
-        assertEquals(SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
-        assertEquals(MATCHES_ASSEMBLY, variant.isAssemblyMatch());
-        assertEquals(SubmittedVariantEntity.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
-        assertEquals(SubmittedVariantEntity.DEFAULT_VALIDATED, variant.isValidated());
+        assertEquals(ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
+        assertEquals(ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH, variant.isAssemblyMatch());
+        assertEquals(ISubmittedVariant.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
+        assertEquals(ISubmittedVariant.DEFAULT_VALIDATED, variant.isValidated());
     }
 
     public List<SubmittedVariant> getListOfVariantMessages() {
-        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF",
-                                                               "ALT", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
-        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF",
-                                                               "ALT", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
         return asList(variant1, variant2);
     }
 }

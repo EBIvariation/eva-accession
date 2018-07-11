@@ -27,13 +27,17 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
 
     private static final Long UNDEFINED_CLUSTERED_VARIANT = null;
 
-    private static final Boolean UNDEFINED_SUPPORTED_BY_EVIDENCE = null;
+    // assumed by this pipeline, independent of the default in ISubmittedVariant
+    private static final Boolean SUPPORTED_BY_EVIDENCE = true;
 
-    private static final Boolean UNDEFINED_MATCHES_ASSEMBLY = null;
+    // assumed by this pipeline, independent of the default in ISubmittedVariant
+    private static final Boolean MATCHES_ASSEMBLY = true;
 
-    private static final Boolean UNDEFINED_ALLELES_MATCH = null;
+    // can only be false in eva-accession-import, independent of the default in ISubmittedVariant
+    private static final Boolean ALLELES_MATCH = true;
 
-    private static final Boolean UNDEFINED_VALIDATED = null;
+    // assumed by this pipeline, independent of the default in ISubmittedVariant
+    private static final Boolean VALIDATED = false;
 
     private String assemblyAccession;
 
@@ -52,9 +56,9 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
         return new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession, variant.getChromosome(),
                                     variant.getStart(), variant.getReference(), variant.getAlternate(),
                                     UNDEFINED_CLUSTERED_VARIANT,
-                                    UNDEFINED_SUPPORTED_BY_EVIDENCE,
-                                    UNDEFINED_MATCHES_ASSEMBLY,
-                                    UNDEFINED_ALLELES_MATCH,
-                                    UNDEFINED_VALIDATED);
+                                    SUPPORTED_BY_EVIDENCE,
+                                    MATCHES_ASSEMBLY,
+                                    ALLELES_MATCH,
+                                    VALIDATED);
     }
 }

@@ -51,6 +51,22 @@ public class SubmittedVariant implements ISubmittedVariant {
     SubmittedVariant() {
     }
 
+    /**
+     * This constructor sets the flags (supportedByEvidence, assemblyMatch, allelesMatch, validated) to its default
+     * value defined in {@link ISubmittedVariant}
+     *
+     * Important note: do not use this constructor for objects that will be stored in the accessioning database, as it
+     * would write the flags with an arbitrary value. This constructor is intended to create objects for querying only,
+     * where the flags are ignored.
+     */
+    public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession,
+                            String contig, long start, String referenceAllele, String alternateAllele,
+                            Long clusteredVariantAccession) {
+        this(assemblyAccession, taxonomyAccession, projectAccession, contig, start, referenceAllele, alternateAllele,
+             clusteredVariantAccession, DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, DEFAULT_ALLELES_MATCH,
+             DEFAULT_VALIDATED);
+    }
+
     public SubmittedVariant(ISubmittedVariant variant) {
         this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getProjectAccession(),
              variant.getContig(), variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(),
@@ -58,6 +74,10 @@ public class SubmittedVariant implements ISubmittedVariant {
              variant.isAllelesMatch(), variant.isValidated());
     }
 
+    /**
+     * This is the constructor that has to be used to instantiate objects that will be written in the accessioning
+     * database.
+     */
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
                             long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
                             Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
