@@ -95,10 +95,10 @@ public class SubmittedVariantAccessioningServiceTest {
                 new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", CLUSTERED_VARIANT,
                                      SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED));
         List<SubmittedVariant> requestedVariants = Arrays.asList(
-                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null, null, null, null,
-                                     null),
-                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null, null, null, null,
-                                     null));
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED));
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
                 originalVariants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(
