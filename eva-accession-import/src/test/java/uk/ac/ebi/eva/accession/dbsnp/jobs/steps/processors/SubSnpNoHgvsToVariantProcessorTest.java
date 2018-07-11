@@ -45,7 +45,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformSnp() throws Exception {
+    public void transformForwardSnp() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(3035489735L, 1135402630L, "C/T", CHICKEN_ASSEMBLY_5,
                                                      "CHICKEN_SDAU", "JININGBAIRI UNINFECTED", "25", 920114L,
                                                      "NT_456018", Orientation.FORWARD, Orientation.FORWARD,
@@ -71,7 +71,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseRsSnp() throws Exception {
+    public void transformReverseRs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(186667770L, 14730808L, "C/T", CHICKEN_ASSEMBLY_5, "CFG-UPPSALA",
                                                      "CHICK_WGS_RESEQ_PAPER_CHR32", "11", 11857590L, "NT_455934",
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
@@ -87,11 +87,10 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
 
         assertEquals(expectedVariant, variant);
-
     }
 
     @Test
-    public void transformReverseRsAndSsSnp() throws Exception {
+    public void transformReverseRsAndSs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1982511850L, 14730808L, "G/A", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
                                                      "SNP_28TTCC_CB", "11", 11857590L, "NT_455934", Orientation.REVERSE,
                                                      Orientation.REVERSE, Orientation.FORWARD, 375024L, false, false,
@@ -110,7 +109,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseContigSnp() throws Exception {
+    public void transformReverseContig() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(181534645L, 14797051L, "C/T", CHICKEN_ASSEMBLY_5, "CBCB",
                                                      "DUPLICATION MIS-ASSEMBLY 2009 - CHICKEN", "1", 9869060L,
                                                      "NT_455705", Orientation.FORWARD, Orientation.FORWARD,
@@ -126,22 +125,28 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       false, 1);
 
         assertEquals(expectedVariant, variant);
+    }
 
-        subSnpNoHgvs = new SubSnpNoHgvs(823297358L, 14797051L, "G/A", CHICKEN_ASSEMBLY_5, "CNU_JH_AMG",
-                                        "KOREAN_CHICKEN_Y24", "1", 9869060L, "NT_455705", Orientation.REVERSE,
-                                        Orientation.FORWARD, Orientation.REVERSE, 540970L, false, false, "T",
-                                        Date.valueOf("2013-06-18"), 9031);
+    @Test
+    public void transformReverseContigAndSs() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(823297358L, 14797051L, "G/A", CHICKEN_ASSEMBLY_5, "CNU_JH_AMG",
+                                                     "KOREAN_CHICKEN_Y24", "1", 9869060L, "NT_455705",
+                                                     Orientation.REVERSE, Orientation.FORWARD, Orientation.REVERSE,
+                                                     540970L, false, false, "T", Date.valueOf("2013-06-18"), 9031);
 
-        variant = processor.process(subSnpNoHgvs);
-        expectedVariant = new DbsnpSubmittedVariantEntity(823297358L, "TODO_HASH", CHICKEN_ASSEMBLY_5, 9031,
-                                                          "CNU_JH_AMG_KOREAN_CHICKEN_Y24", "1", 9869060L, "A", "G",
-                                                          14797051L, false, false, false, false, 1);
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(823297358L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "CNU_JH_AMG_KOREAN_CHICKEN_Y24",
+                                                                                      "1", 9869060L, "A", "G",
+                                                                                      14797051L, false, false, false,
+                                                                                      false, 1);
 
         assertEquals(expectedVariant, variant);
     }
 
     @Test
-    public void transformVariantContigAndRsReversed() throws Exception {
+    public void transformReverseContigAndRs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1979073615L, 10723963L, "G/A", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
                                                      "SNP_28TTCC_CB", "4", 65914909L, "NT_455856", Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, 3825984L, false, false,
@@ -159,7 +164,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformVariantContigRsAndSsReversed() throws Exception {
+    public void transformReverseContigRsAndSs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(822765305L, 14510048L, "C/G", CHICKEN_ASSEMBLY_5, "CNU_JH_AMG",
                                                      "KOREAN_CHICKEN_Y24", "5", 432354L, "NT_455869",
                                                      Orientation.REVERSE, Orientation.REVERSE, Orientation.REVERSE,
