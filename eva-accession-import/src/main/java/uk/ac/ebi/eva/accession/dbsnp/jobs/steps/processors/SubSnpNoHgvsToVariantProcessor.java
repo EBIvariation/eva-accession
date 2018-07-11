@@ -44,8 +44,10 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
         ISubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
                                                          subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs
                                                                  .getBatchName(), variantRegion.getChromosome(),
-                                                         variantRegion.getStart(), subSnpNoHgvs.getReference(),
-                                                         subSnpNoHgvs.getAlternate(), subSnpNoHgvs.getRsId(),
+                                                         variantRegion.getStart(),
+                                                         subSnpNoHgvs.getReferenceInForwardStrand(),
+                                                         subSnpNoHgvs.getAlternateInForwardStrand(),
+                                                         subSnpNoHgvs.getRsId(),
                                                          subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs
                                                                  .isGenotypeExists(), false, false, false);
         String hash = hashingFunction.apply(variant);

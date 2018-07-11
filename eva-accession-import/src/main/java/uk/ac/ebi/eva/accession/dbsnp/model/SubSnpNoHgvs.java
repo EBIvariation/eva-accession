@@ -219,7 +219,15 @@ public class SubSnpNoHgvs {
         this.assemblyMatch = assemblyMatch;
     }
 
-    public String getAlternate() {
+    public String getReferenceInForwardStrand() {
+        if (contigOrientation.equals(Orientation.REVERSE)) {
+            return calculateReverseComplement(reference);
+        } else {
+            return reference;
+        }
+    }
+
+    public String getAlternateInForwardStrand() {
         String[] alleles = splitAlleles();
 
         for (String allele : alleles) {

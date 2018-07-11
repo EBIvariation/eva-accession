@@ -110,6 +110,37 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
+    public void transformReverseContigSnp() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(181534645L, 14797051L, "C/T", CHICKEN_ASSEMBLY_5, "CBCB",
+                                                     "DUPLICATION MIS-ASSEMBLY 2009 - CHICKEN", "1", 9869060L,
+                                                     "NT_455705", Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.REVERSE, 540970L, false, false, "T",
+                                                     Date.valueOf("2009-12-07"), 9031);
+
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(181534645L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "CBCB_DUPLICATION MIS-ASSEMBLY 2009 - CHICKEN",
+                                                                                      "1", 9869060L, "A", "G",
+                                                                                      14797051L, false, false, false,
+                                                                                      false, 1);
+
+        assertEquals(expectedVariant, variant);
+
+        subSnpNoHgvs = new SubSnpNoHgvs(823297358L, 14797051L, "G/A", CHICKEN_ASSEMBLY_5, "CNU_JH_AMG",
+                                        "KOREAN_CHICKEN_Y24", "1", 9869060L, "NT_455705", Orientation.REVERSE,
+                                        Orientation.FORWARD, Orientation.REVERSE, 540970L, false, false, "T",
+                                        Date.valueOf("2013-06-18"), 9031);
+
+        variant = processor.process(subSnpNoHgvs);
+        expectedVariant = new DbsnpSubmittedVariantEntity(823297358L, "TODO_HASH", CHICKEN_ASSEMBLY_5, 9031,
+                                                          "CNU_JH_AMG_KOREAN_CHICKEN_Y24", "1", 9869060L, "A", "G",
+                                                          14797051L, false, false, false, false, 1);
+
+        assertEquals(expectedVariant, variant);
+    }
+
+    @Test
     public void transformVariantSupportedByEvidence() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25945162L, 14730808L, "C/T", CHICKEN_ASSEMBLY_5, "BGI",
                                                      "CHICKEN_SNPS_BROILER", "11", 11857590L, "NT_455934",
@@ -128,4 +159,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
         assertEquals(expectedVariant, variant);
     }
+
+    // TODO: test for "A/C/" (the last "/" is a typo and this should not be considered an indel
 }
