@@ -46,27 +46,40 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     @Test
     public void transformForwardSnp() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(3035489735L, 1135402630L, "C/T", CHICKEN_ASSEMBLY_5,
-                                                     "CHICKEN_SDAU", "JININGBAIRI UNINFECTED", "25", 920114L,
-                                                     "NT_456018", Orientation.FORWARD, Orientation.FORWARD,
-                                                     Orientation.FORWARD, 49575L, false, false, "C",
-                                                     Date.valueOf("2017-08-22"), 9031);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A/C", CHICKEN_ASSEMBLY_5, "BGI",
+                                                     "CHICKEN_SNPS_BROILER", "W", 880493L, "NT_456074",
+                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
+                                                     339900L, false, false, "A", Date.valueOf("2004-06-23"), 9031);
 
         DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
-        // TODO: supported by evidence?
         // TODO: validated, match assembly and RS variant accession are being added into PR #28
 
-        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(920114L, "TODO_HASH",
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(25928972L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
-                                                                                      "CHICKEN_SDAU_JININGBAIRI " +
-                                                                                              "UNINFECTED",
-                                                                                      "25", 920114, "C", "T",
-                                                                                      1135402630L, false, false, false,
-                                                                                      false, 1);
-        expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
+                                                                                      "BGI_CHICKEN_SNPS_BROILER", "W",
+                                                                                      880493L, "A", "C", 14718243L,
+                                                                                      false, false, false, false, 1);
+        expectedVariant.setCreatedDate(LocalDateTime.parse("2004-06-23T21:45:00"));
 
         // TODO: compare createdDate and hash, as they are not compared in the equals method
 
+        assertEquals(expectedVariant, variant);
+    }
+
+    @Test
+    public void transformReverseSs() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1984788946L, 14718243L, "T/C", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
+                                                     "SNP_28TTCC_CB", "W", 880493L, "NT_456074", Orientation.REVERSE,
+                                                     Orientation.FORWARD, Orientation.FORWARD, 339900L, false, false,
+                                                     "A", Date.valueOf("2016-03-19"), 9031);
+
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1984788946L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "LBA_ESALQ_SNP_28TTCC_CB",
+                                                                                      "W", 880493L, "A", "G",
+                                                                                      14718243L, false, false, false,
+                                                                                      false, 1);
         assertEquals(expectedVariant, variant);
     }
 
@@ -84,8 +97,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       "11", 11857590, "G", "A",
                                                                                       14730808L, false, false, false,
                                                                                       false, 1);
-        expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
-
         assertEquals(expectedVariant, variant);
     }
 
@@ -103,8 +114,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       "11", 11857590, "G", "A",
                                                                                       14730808L, false, false, false,
                                                                                       false, 1);
-        expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
-
         assertEquals(expectedVariant, variant);
     }
 
