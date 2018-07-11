@@ -254,4 +254,22 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         result = 31 * result + (validated != null ? validated.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "SubmittedVariantEntity{" +
+                "assemblyAccession='" + assemblyAccession + '\'' +
+                ", taxonomyAccession=" + taxonomyAccession +
+                ", projectAccession='" + projectAccession + '\'' +
+                ", contig='" + contig + '\'' +
+                ", start=" + start +
+                ", referenceAllele='" + referenceAllele + '\'' +
+                ", alternateAllele='" + alternateAllele + '\'' +
+                ", clusteredVariantAccession=" + clusteredVariantAccession +
+                ", supportedByEvidence=" + supportedByEvidence +
+                ", assemblyMatch=" + assemblyMatch +
+                ", allelesMatch=" + allelesMatch +
+                ", validated=" + validated +
+                '}';
+    }
 }
