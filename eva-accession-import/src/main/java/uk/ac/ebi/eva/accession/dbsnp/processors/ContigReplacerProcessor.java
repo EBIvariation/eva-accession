@@ -18,7 +18,9 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         ContigSynonyms contigSynonyms;
         if (subSnpNoHgvs.getChromosome() != null) {
-            contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
+            if ((contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome())) != null) {
+                subSnpNoHgvs.setChromosome(contigSynonyms.getSequenceName());
+            }
         } else {
             contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
         }
@@ -28,7 +30,6 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
                     "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report");
         }
 
-        subSnpNoHgvs.setChromosome(contigSynonyms.getSequenceName());
         subSnpNoHgvs.setContigName(contigSynonyms.getSequenceName());
         return subSnpNoHgvs;
     }
