@@ -59,9 +59,7 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
         if ((sequence = getSequence(contigSynonyms.getUcsc(), start, end)) != null) {
             return sequence;
         }
-        throw new IllegalArgumentException("Contigs " + contigSynonyms.getSequenceName() + ", " + contigSynonyms
-                .getGenBank() + ", " + contigSynonyms.getRefSeq() + ", " + contigSynonyms
-                .getUcsc() + " not found in fasta file");
+        throw new IllegalArgumentException("Contig " + contigSynonyms.toString() + " not found in fasta file");
     }
 
     private String getSequence(String contig, long start, long end) {

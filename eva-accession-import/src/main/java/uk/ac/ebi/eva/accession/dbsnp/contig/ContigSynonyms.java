@@ -65,4 +65,14 @@ public class ContigSynonyms {
     public void setUcsc(String ucsc) {
         this.ucsc = ucsc;
     }
+
+    @Override
+    public String toString() {
+        return "ContigSynonyms{" +
+                "sequenceName='" + sequenceName + '\'' +
+                ", genBank='" + genBank + '\'' +
+                ", refSeq='" + refSeq + '\'' +
+                ", ucsc='" + ucsc + '\'' +
+                '}';
+    }
 }
