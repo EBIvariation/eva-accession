@@ -8,7 +8,7 @@ import static org.junit.Assert.assertNull;
 
 public class ContigMappingTest {
 
-    private static final String SEQNAME_ch1 = "ch1";
+    private static final String SEQNAME_CH1 = "ch1";
 
     private static final String GENBANK_CONTIG = "CM000994.2";
 
@@ -30,7 +30,7 @@ public class ContigMappingTest {
 
     @Test
     public void matchWhenVcfHasPrefixes() {
-        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_ch1).getGenBank());
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CH1).getGenBank());
     }
 
     @Test

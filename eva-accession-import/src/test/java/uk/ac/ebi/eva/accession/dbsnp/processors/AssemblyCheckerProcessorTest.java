@@ -66,7 +66,8 @@ public class AssemblyCheckerProcessorTest {
         processorUcsc = new AssemblyCheckerProcessor(contigMapping, fastaSequenceReaderUcsc);
     }
 
-    private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, int chromosomeStart, String contig, int contigStart, String referenceAllele) {
+    private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, int chromosomeStart, String contig, int contigStart,
+                                         String referenceAllele) {
         return new SubSnpNoHgvs(ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome, chromosomeStart,
                                 contig, Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, contigStart,
                                 true, true, referenceAllele, null, TAXONOMY);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.core.test.fasta;
+package uk.ac.ebi.eva.accession.core.io;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,8 +22,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
-
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 
 import java.io.File;
 import java.io.IOException;

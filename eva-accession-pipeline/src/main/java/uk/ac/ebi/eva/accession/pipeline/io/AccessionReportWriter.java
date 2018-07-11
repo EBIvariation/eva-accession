@@ -143,7 +143,7 @@ public class AccessionReportWriter {
                 return createVariantWithContextBase(normalizedVariant);
             } else {
                 throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
-                                                           + "' does not appear in the io file ");
+                                                           + "' does not appear in the fasta file ");
             }
         } else {
             return normalizedVariant;

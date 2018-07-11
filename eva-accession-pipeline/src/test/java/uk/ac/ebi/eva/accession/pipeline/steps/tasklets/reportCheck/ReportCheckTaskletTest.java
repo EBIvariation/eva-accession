@@ -156,7 +156,7 @@ public class ReportCheckTaskletTest {
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
-        // TODO: when we do left alignment using the reference io, the next asserts should be:
+        // TODO: when we do left alignment using the reference fasta, the next asserts should be:
         // step is properly completed, 2 duplicates in input, 0 duplicates in report
         assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
         assertEquals(1, reportCheckTasklet.getDuplicatedVariantsInInputVcf());

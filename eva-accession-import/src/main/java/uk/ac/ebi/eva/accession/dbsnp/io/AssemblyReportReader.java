@@ -64,18 +64,6 @@ public class AssemblyReportReader implements ItemReader<ContigSynonyms> {
         reader.open(new ExecutionContext());
     }
 
-    private ContigSynonyms getContigSynonyms(String line) {
-        String[] columns = line.split("\t", -1);
-        if (columns[RELATIONSHIP_COLUMN].equals(IDENTICAL_SEQUENCE)) {
-            ContigSynonyms contigSynonyms = new ContigSynonyms(columns[SEQNAME_COLUMN],
-                                                               columns[GENBANK_COLUMN],
-                                                               columns[REFSEQ_COLUMN],
-                                                               columns[UCSC_COLUMN]);
-            return contigSynonyms;
-        }
-        return null;
-    }
-
     @Override
     public ContigSynonyms read() throws Exception {
         String line;
@@ -84,6 +72,18 @@ public class AssemblyReportReader implements ItemReader<ContigSynonyms> {
             if ((contigSynonyms = getContigSynonyms(line)) != null) {
                 return contigSynonyms;
             }
+        }
+        return null;
+    }
+
+    private ContigSynonyms getContigSynonyms(String line) {
+        String[] columns = line.split("\t", -1);
+        if (columns[RELATIONSHIP_COLUMN].equals(IDENTICAL_SEQUENCE)) {
+            ContigSynonyms contigSynonyms = new ContigSynonyms(columns[SEQNAME_COLUMN],
+                                                               columns[GENBANK_COLUMN],
+                                                               columns[REFSEQ_COLUMN],
+                                                               columns[UCSC_COLUMN]);
+            return contigSynonyms;
         }
         return null;
     }

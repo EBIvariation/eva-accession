@@ -30,17 +30,19 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
             start = subSnpNoHgvs.getContigStart();
         }
 
-        if (contigSynonyms != null) {
-            long end = calculateReferenceAlleleEndPosition(subSnpNoHgvs.getReference(), start);
-            String sequence = getSequenceUsingSynonyms(contigSynonyms, start, end);
-            if (sequence.equals(subSnpNoHgvs.getReference())) {
-                subSnpNoHgvs.setAssemblyMatch(true);
-            } else {
-                subSnpNoHgvs.setAssemblyMatch(false);
-            }
-            return subSnpNoHgvs;
+        if (contigSynonyms == null) {
+            throw new IllegalArgumentException(
+                    "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report");
         }
-        throw new IllegalArgumentException("Contig '" + subSnpNoHgvs.getContigName() + "' not found in the ASSEMBLY REPORT");
+
+        long end = calculateReferenceAlleleEndPosition(subSnpNoHgvs.getReference(), start);
+        String sequence = getSequenceUsingSynonyms(contigSynonyms, start, end);
+        if (sequence.equals(subSnpNoHgvs.getReference())) {
+            subSnpNoHgvs.setAssemblyMatch(true);
+        } else {
+            subSnpNoHgvs.setAssemblyMatch(false);
+        }
+        return subSnpNoHgvs;
     }
 
     private String getSequenceUsingSynonyms(ContigSynonyms contigSynonyms, long start, long end) {
@@ -57,7 +59,9 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
         if ((sequence = getSequence(contigSynonyms.getUcsc(), start, end)) != null) {
             return sequence;
         }
-        throw new IllegalArgumentException("Contig " + contigSynonyms.getSequenceName() + " not found in FASTA file");
+        throw new IllegalArgumentException("Contigs " + contigSynonyms.getSequenceName() + ", " + contigSynonyms
+                .getGenBank() + ", " + contigSynonyms.getRefSeq() + ", " + contigSynonyms
+                .getUcsc() + " not found in fasta file");
     }
 
     private String getSequence(String contig, long start, long end) {

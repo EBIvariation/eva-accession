@@ -50,8 +50,33 @@ public class ContigMapping {
         populateMaps(assemblyReportReader);
     }
 
-    public ContigSynonyms getContigSynonyms(String contigNoPrefix) {
-        contigNoPrefix = removePrefix(contigNoPrefix);
+    private void populateMaps(AssemblyReportReader assemblyReportReader) throws Exception {
+        ContigSynonyms contigSynonyms;
+        while ((contigSynonyms = assemblyReportReader.read()) != null) {
+            fillContigConventionMaps(contigSynonyms);
+        }
+    }
+
+    private void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
+        contigSynonyms.setSequenceName(removePrefix(contigSynonyms.getSequenceName()));
+        contigSynonyms.setUcsc(removePrefix(contigSynonyms.getUcsc()));
+        sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
+        genBankToSynonyms.put(contigSynonyms.getGenBank(), contigSynonyms);
+        refSeqToSynonyms.put(contigSynonyms.getRefSeq(), contigSynonyms);
+        ucscToSynonyms.put(contigSynonyms.getUcsc(), contigSynonyms);
+    }
+
+    private String removePrefix(String contig) {
+        Matcher matcher = PATTERN.matcher(contig);
+        String contigNoPrefix = contig;
+        if (matcher.matches()) {
+            contigNoPrefix = matcher.group(2);
+        }
+        return contigNoPrefix;
+    }
+
+    public ContigSynonyms getContigSynonyms(String contig) {
+        String contigNoPrefix = removePrefix(contig);
         ContigSynonyms contigSynonyms;
         if ((contigSynonyms = sequenceNameToSynonyms.get(contigNoPrefix)) != null) {
             return contigSynonyms;
@@ -66,30 +91,5 @@ public class ContigMapping {
             return contigSynonyms;
         }
         return null;
-    }
-
-    private String removePrefix(String contig) {
-        Matcher matcher = PATTERN.matcher(contig);
-        String contigNoPrefix = contig;
-        if (matcher.matches()) {
-            contigNoPrefix = matcher.group(2);
-        }
-        return contigNoPrefix;
-    }
-
-    private void populateMaps(AssemblyReportReader assemblyReportReader) throws Exception {
-        ContigSynonyms contigSynonyms;
-        while ((contigSynonyms = assemblyReportReader.read()) != null) {
-            fillContigConventionMaps(contigSynonyms);
-        }
-    }
-
-    void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
-        contigSynonyms.setSequenceName(removePrefix(contigSynonyms.getSequenceName()));
-        contigSynonyms.setUcsc(removePrefix(contigSynonyms.getUcsc()));
-        sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
-        genBankToSynonyms.put(contigSynonyms.getGenBank(), contigSynonyms);
-        refSeqToSynonyms.put(contigSynonyms.getRefSeq(), contigSynonyms);
-        ucscToSynonyms.put(contigSynonyms.getUcsc(), contigSynonyms);
     }
 }

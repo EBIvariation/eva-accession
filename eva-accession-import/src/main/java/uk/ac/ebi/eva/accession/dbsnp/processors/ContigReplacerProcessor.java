@@ -16,12 +16,20 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
     @Override
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
-        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
-        if (contigSynonyms != null) {
-            subSnpNoHgvs.setContigName(contigSynonyms.getSequenceName());
-            return subSnpNoHgvs;
+        ContigSynonyms contigSynonyms;
+        if (subSnpNoHgvs.getChromosome() != null) {
+            contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
+        } else {
+            contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
         }
-        throw new IllegalArgumentException(
-                "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the ASSEMBLY REPORT");
+
+        if (contigSynonyms == null) {
+            throw new IllegalArgumentException(
+                    "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report");
+        }
+
+        subSnpNoHgvs.setChromosome(contigSynonyms.getSequenceName());
+        subSnpNoHgvs.setContigName(contigSynonyms.getSequenceName());
+        return subSnpNoHgvs;
     }
 }
