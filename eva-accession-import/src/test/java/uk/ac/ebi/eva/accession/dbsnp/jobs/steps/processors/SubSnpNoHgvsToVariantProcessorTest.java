@@ -45,7 +45,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformForwardSnp() throws Exception {
+    public void transformSnpForwardOrientations() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A/C", CHICKEN_ASSEMBLY_5, "BGI",
                                                      "CHICKEN_SNPS_BROILER", "W", 880493L, "NT_456074",
                                                      Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
@@ -67,7 +67,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseSs() throws Exception {
+    public void transformSnpReverseSs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1984788946L, 14718243L, "T/C", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
                                                      "SNP_28TTCC_CB", "W", 880493L, "NT_456074", Orientation.REVERSE,
                                                      Orientation.FORWARD, Orientation.FORWARD, 339900L, false, false,
@@ -84,7 +84,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseRs() throws Exception {
+    public void transformSnpReverseRs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(186667770L, 14730808L, "C/T", CHICKEN_ASSEMBLY_5, "CFG-UPPSALA",
                                                      "CHICK_WGS_RESEQ_PAPER_CHR32", "11", 11857590L, "NT_455934",
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
@@ -101,7 +101,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseRsAndSs() throws Exception {
+    public void transformSnpReverseRsAndSs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1982511850L, 14730808L, "G/A", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
                                                      "SNP_28TTCC_CB", "11", 11857590L, "NT_455934", Orientation.REVERSE,
                                                      Orientation.REVERSE, Orientation.FORWARD, 375024L, false, false,
@@ -118,7 +118,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseContig() throws Exception {
+    public void transformSnpReverseContig() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(181534645L, 14797051L, "C/T", CHICKEN_ASSEMBLY_5, "CBCB",
                                                      "DUPLICATION MIS-ASSEMBLY 2009 - CHICKEN", "1", 9869060L,
                                                      "NT_455705", Orientation.FORWARD, Orientation.FORWARD,
@@ -137,7 +137,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseContigAndSs() throws Exception {
+    public void transformSnpReverseContigAndSs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(823297358L, 14797051L, "G/A", CHICKEN_ASSEMBLY_5, "CNU_JH_AMG",
                                                      "KOREAN_CHICKEN_Y24", "1", 9869060L, "NT_455705",
                                                      Orientation.REVERSE, Orientation.FORWARD, Orientation.REVERSE,
@@ -155,7 +155,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseContigAndRs() throws Exception {
+    public void transformSnpReverseContigAndRs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1979073615L, 10723963L, "G/A", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
                                                      "SNP_28TTCC_CB", "4", 65914909L, "NT_455856", Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, 3825984L, false, false,
@@ -173,7 +173,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
-    public void transformReverseContigRsAndSs() throws Exception {
+    public void transformSnpReverseContigRsAndSs() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(822765305L, 14510048L, "C/G", CHICKEN_ASSEMBLY_5, "CNU_JH_AMG",
                                                      "KOREAN_CHICKEN_Y24", "5", 432354L, "NT_455869",
                                                      Orientation.REVERSE, Orientation.REVERSE, Orientation.REVERSE,
