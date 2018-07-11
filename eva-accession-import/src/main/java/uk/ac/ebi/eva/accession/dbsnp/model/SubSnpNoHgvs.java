@@ -230,6 +230,7 @@ public class SubSnpNoHgvs {
     public String getAlternateInForwardStrand() {
         String[] alleles = splitAlleles();
 
+        String reference = getReferenceInForwardStrand();
         for (String allele : alleles) {
             if (!allele.equals(reference)) {
                 return allele;
