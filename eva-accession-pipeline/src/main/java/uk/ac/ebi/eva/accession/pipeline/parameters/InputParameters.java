@@ -119,7 +119,7 @@ public class InputParameters {
                 .addString("vcf", vcf)
                 .addString("vcfAggregation", vcfAggregation.toString())
                 .addString("aggregatedMappingFile", aggregatedMappingFile)
-                .addString("fasta", fasta)
+                .addString("io", fasta)
                 .addString("outputVcf", outputVcf)
                 .addLong("taxonomyAccession", (long)taxonomyAccession)
                 .addString("assemblyAccession", assemblyAccession)

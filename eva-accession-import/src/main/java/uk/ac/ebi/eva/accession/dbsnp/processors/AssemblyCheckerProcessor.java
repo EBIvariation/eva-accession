@@ -2,41 +2,49 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.fasta.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
-public class AssemblyCheckerAndContigReplacerProcessor implements ItemProcessor<SubmittedVariant, SubmittedVariant> {
+public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {
 
     private ContigMapping contigMapping;
 
     private FastaSequenceReader fastaReader;
 
-    public AssemblyCheckerAndContigReplacerProcessor(ContigMapping contigMapping, FastaSequenceReader fastaReader) {
+    public AssemblyCheckerProcessor(ContigMapping contigMapping, FastaSequenceReader fastaReader) {
         this.contigMapping = contigMapping;
         this.fastaReader = fastaReader;
     }
 
     @Override
-    public SubmittedVariant process(SubmittedVariant submittedVariant) throws Exception {
-        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(submittedVariant.getContig());
-        if (contigSynonyms != null) {
-            long end = calculateReferenceAlleleEndPosition(submittedVariant.getReferenceAllele(), submittedVariant.getStart());
-            String sequence = getSequenceUsingSynonyms(contigSynonyms, submittedVariant.getStart(), end);
-            if (sequence.equals(submittedVariant.getReferenceAllele())) {
-                submittedVariant.setContig(contigSynonyms.getSequenceName());
-//              TODO: submittedVariant.setMatchesAssembly(true);
-            } else {
-//              TODO: submittedVariant.setMatchesAssembly(false);
-            }
-            return submittedVariant;
+    public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
+        ContigSynonyms contigSynonyms;
+        int start;
+        if (subSnpNoHgvs.getChromosome() != null) {
+            contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
+            start = subSnpNoHgvs.getChromosomeStart();
+        } else {
+            contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
+            start = subSnpNoHgvs.getContigStart();
         }
-        throw new IllegalArgumentException("Contig '" + submittedVariant.getContig() + "' not found in the ASSEMBLY REPORT");
+
+        if (contigSynonyms != null) {
+            long end = calculateReferenceAlleleEndPosition(subSnpNoHgvs.getReference(), start);
+            String sequence = getSequenceUsingSynonyms(contigSynonyms, start, end);
+            if (sequence.equals(subSnpNoHgvs.getReference())) {
+                subSnpNoHgvs.setAssemblyMatch(true);
+            } else {
+                subSnpNoHgvs.setAssemblyMatch(false);
+            }
+            return subSnpNoHgvs;
+        }
+        throw new IllegalArgumentException("Contig '" + subSnpNoHgvs.getContigName() + "' not found in the ASSEMBLY REPORT");
     }
 
     private String getSequenceUsingSynonyms(ContigSynonyms contigSynonyms, long start, long end) {
-        String sequence = "";
+        String sequence;
         if ((sequence = getSequence(contigSynonyms.getSequenceName(), start, end)) != null) {
             return sequence;
         }

@@ -3,38 +3,12 @@ package uk.ac.ebi.eva.accession.dbsnp.contig;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashMap;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class ContigMappingTest {
 
-    private static final String GENBANK_1 = "genbank_example_1";
-
-    private static final String GENBANK_2 = "genbank_example_2";
-
-    private static final String GENBANK_3 = "genbank_example_3";
-
-    private static final String REFSEQ_1 = "refseq_example_1";
-
-    private static final String REFSEQ_2 = "refseq_example_2";
-
-    private static final String REFSEQ_3 = "refseq_example_3";
-
-    private static final String SEQNAME_1 = "1";
-
-    private static final String SEQNAME_2 = "2";
-
-    private static final String SEQNAME_3 = "3";
-
     private static final String SEQNAME_ch1 = "ch1";
-
-    private static final String UCSC_1 = "ucsc_example_1";
-
-    private static final String UCSC_2 = "ucsc_example_2";
-
-    private static final String UCSC_3 = "ucsc_example_3";
 
     private static final String GENBANK_CONTIG = "CM000994.2";
 
@@ -50,49 +24,13 @@ public class ContigMappingTest {
 
     @Before
     public void setUp() throws Exception {
-        String fileString = Thread.currentThread().getContextClassLoader().getResource("input-files/AssemblyReport.txt")
-                                  .toString();
+        String fileString = ContigMappingTest.class.getResource("/input-files/AssemblyReport.txt").toString();
         contigMapping = new ContigMapping(fileString);
     }
 
     @Test
-    public void useMapContructor() throws Exception {
-        ContigMapWrapper contigMapWrapper = new ContigMapWrapper();
-
-        ContigSynonyms contigSynonyms1 = new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1);
-        contigMapWrapper.fillContigConventionMaps(contigSynonyms1);
-        ContigSynonyms contigSynonyms2 = new ContigSynonyms(SEQNAME_2, GENBANK_2, REFSEQ_2, UCSC_2);
-        contigMapWrapper.fillContigConventionMaps(contigSynonyms2);
-        ContigSynonyms contigSynonyms3 = new ContigSynonyms(SEQNAME_3, GENBANK_3, REFSEQ_3, UCSC_3);
-        contigMapWrapper.fillContigConventionMaps(contigSynonyms3);
-
-        ContigMapping contigMapping = new ContigMapping(contigMapWrapper);
-
-        assertEquals(SEQNAME_1, contigMapping.getContigSynonyms(REFSEQ_1).getSequenceName());
-        assertEquals(SEQNAME_2, contigMapping.getContigSynonyms(REFSEQ_2).getSequenceName());
-        assertEquals(SEQNAME_3, contigMapping.getContigSynonyms(REFSEQ_3).getSequenceName());
-
-        assertEquals(GENBANK_1, contigMapping.getContigSynonyms(SEQNAME_1).getGenBank());
-        assertEquals(GENBANK_2, contigMapping.getContigSynonyms(SEQNAME_2).getGenBank());
-        assertEquals(GENBANK_3, contigMapping.getContigSynonyms(SEQNAME_3).getGenBank());
-
-        assertEquals(REFSEQ_1, contigMapping.getContigSynonyms(UCSC_1).getRefSeq());
-        assertEquals(REFSEQ_2, contigMapping.getContigSynonyms(UCSC_2).getRefSeq());
-        assertEquals(REFSEQ_3, contigMapping.getContigSynonyms(UCSC_3).getRefSeq());
-
-        assertEquals(UCSC_1, contigMapping.getContigSynonyms(GENBANK_1).getUcsc());
-        assertEquals(UCSC_2, contigMapping.getContigSynonyms(REFSEQ_2).getUcsc());
-        assertEquals(UCSC_3, contigMapping.getContigSynonyms(SEQNAME_3).getUcsc());
-    }
-
-    @Test
     public void matchWhenVcfHasPrefixes() {
-        ContigSynonyms contigSynonyms = new ContigSynonyms(SEQNAME_1, GENBANK_1, REFSEQ_1, UCSC_1);
-        ContigMapWrapper contigMapWrapper = new ContigMapWrapper();
-        contigMapWrapper.fillContigConventionMaps(contigSynonyms);
-        ContigMapping contigMapping = new ContigMapping(contigMapWrapper);
-
-        assertEquals(GENBANK_1, contigMapping.getContigSynonyms(SEQNAME_ch1).getGenBank());
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_ch1).getGenBank());
     }
 
     @Test

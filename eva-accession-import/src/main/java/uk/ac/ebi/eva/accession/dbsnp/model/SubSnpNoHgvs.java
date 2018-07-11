@@ -51,6 +51,8 @@ public class SubSnpNoHgvs {
 
     private int taxonomyId;
 
+    private boolean assemblyMatch;
+
     public SubSnpNoHgvs(String alleles, String assembly, String batchHandle, String batchName,
                         String chromosome, int chromosomeStart, String contigName, Orientation subsnpOrientation,
                         Orientation snpOrientation, Orientation contigOrientation, int contigStart,
@@ -184,5 +186,13 @@ public class SubSnpNoHgvs {
 
     public void setTaxonomyId(int taxonomyId) {
         this.taxonomyId = taxonomyId;
+    }
+
+    public boolean isAssemblyMatch() {
+        return assemblyMatch;
+    }
+
+    public void setAssemblyMatch(boolean assemblyMatch) {
+        this.assemblyMatch = assemblyMatch;
     }
 }

@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
-import uk.ac.ebi.eva.accession.core.fasta.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 
 import java.io.File;
 import java.io.IOException;

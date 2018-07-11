@@ -23,7 +23,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.fasta.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
 import java.io.BufferedWriter;
@@ -143,7 +143,7 @@ public class AccessionReportWriter {
                 return createVariantWithContextBase(normalizedVariant);
             } else {
                 throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
-                                                           + "' does not appear in the fasta file ");
+                                                           + "' does not appear in the io file ");
             }
         } else {
             return normalizedVariant;
