@@ -141,6 +141,24 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
+    public void transformVariantContigAndRsReversed() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1979073615L, 10723963L, "G/A", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
+                                                     "SNP_28TTCC_CB", "4", 65914909L, "NT_455856", Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, 3825984L, false, false,
+                                                     "C", Date.valueOf("2016-03-18"), 9031);
+
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1979073615L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "LBA_ESALQ_SNP_28TTCC_CB",
+                                                                                      "4", 65914909L, "G", "A",
+                                                                                      10723963L, false, false, false,
+                                                                                      false, 1);
+
+        assertEquals(expectedVariant, variant);
+    }
+
+    @Test
     public void transformVariantContigRsAndSsReversed() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(822765305L, 14510048L, "C/G", CHICKEN_ASSEMBLY_5, "CNU_JH_AMG",
                                                      "KOREAN_CHICKEN_Y24", "5", 432354L, "NT_455869",
