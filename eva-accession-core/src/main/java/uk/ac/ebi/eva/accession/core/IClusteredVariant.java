@@ -35,15 +35,13 @@ public interface IClusteredVariant {
 
     long getStart();
 
-    String getReferenceAllele();
-
-    String getAlternateAllele();
+    VariantType getType();
 
     /**
      * @return True if the variant was curated manually, and not only detected by computational methods.
      * see https://www.ncbi.nlm.nih.gov/books/NBK21088/table/ch5.ch5_t4/?report=objectonly
      */
-    Boolean getValidated();
+    Boolean isValidated();
 
     LocalDateTime getCreatedDate();
 }

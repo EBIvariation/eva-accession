@@ -30,35 +30,34 @@ public class ClusteredVariant implements IClusteredVariant {
 
     private long start;
 
-    private String referenceAllele;
-
-    private String alternateAllele;
+    private VariantType type;
 
     private Boolean validated;
 
     private LocalDateTime createdDate;
 
+    public ClusteredVariant(IClusteredVariant variant) {
+        this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getContig(), variant.getStart(),
+             variant.getType(), variant.isValidated());
+    }
+
     public ClusteredVariant(String assemblyAccession, int taxonomyAccession, String contig, long start,
-                            String referenceAllele, String alternateAllele, Boolean validated) {
+                            VariantType type, Boolean validated) {
         if (Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
         if (Objects.isNull(contig)) {
             throw new IllegalArgumentException("Contig is required");
         }
-        if (Objects.isNull(referenceAllele)) {
-            throw new IllegalArgumentException("Reference allele is required");
-        }
-        if (Objects.isNull(alternateAllele)) {
-            throw new IllegalArgumentException("Alternate allele is required");
+        if (Objects.isNull(type)) {
+            throw new IllegalArgumentException("Variant type is required");
         }
 
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.contig = contig;
         this.start = start;
-        this.referenceAllele = referenceAllele;
-        this.alternateAllele = alternateAllele;
+        this.type = type;
         this.validated = validated;
         this.createdDate = null;
     }
@@ -100,25 +99,16 @@ public class ClusteredVariant implements IClusteredVariant {
     }
 
     @Override
-    public String getReferenceAllele() {
-        return referenceAllele;
+    public VariantType getType() {
+        return type;
     }
 
-    public void setReferenceAllele(String referenceAllele) {
-        this.referenceAllele = referenceAllele;
-    }
-
-    @Override
-    public String getAlternateAllele() {
-        return alternateAllele;
-    }
-
-    public void setAlternateAllele(String alternateAllele) {
-        this.alternateAllele = alternateAllele;
+    public void setType(VariantType type) {
+        this.type = type;
     }
 
     @Override
-    public Boolean getValidated() {
+    public Boolean isValidated() {
         return validated;
     }
 
@@ -137,22 +127,42 @@ public class ClusteredVariant implements IClusteredVariant {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ClusteredVariant)) {
+            return false;
+        }
 
-        ISubmittedVariant that = (ISubmittedVariant) o;
+        ClusteredVariant that = (ClusteredVariant) o;
 
-        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
-        if (start != that.getStart()) return false;
-        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
-        if (!contig.equals(that.getContig())) return false;
-        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
-        return alternateAllele.equals(that.getAlternateAllele());
+        if (taxonomyAccession != that.taxonomyAccession) {
+            return false;
+        }
+        if (start != that.start) {
+            return false;
+        }
+        if (!assemblyAccession.equals(that.assemblyAccession)) {
+            return false;
+        }
+        if (!contig.equals(that.contig)) {
+            return false;
+        }
+        if (type != that.type) {
+            return false;
+        }
+        return validated != null ? validated.equals(that.validated) : that.validated == null;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, contig, start, referenceAllele, alternateAllele);
+        int result = assemblyAccession.hashCode();
+        result = 31 * result + taxonomyAccession;
+        result = 31 * result + contig.hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + type.hashCode();
+        result = 31 * result + (validated != null ? validated.hashCode() : 0);
+        return result;
     }
 
     @Override
@@ -162,8 +172,7 @@ public class ClusteredVariant implements IClusteredVariant {
                 ", taxonomyAccession=" + taxonomyAccession +
                 ", contig='" + contig + '\'' +
                 ", start=" + start +
-                ", referenceAllele='" + referenceAllele + '\'' +
-                ", alternateAllele='" + alternateAllele + '\'' +
+                ", type=" + type +
                 ", validated=" + validated +
                 ", createdDate=" + createdDate +
                 '}';

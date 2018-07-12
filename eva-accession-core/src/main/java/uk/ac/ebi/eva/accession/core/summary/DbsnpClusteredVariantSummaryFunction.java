@@ -30,8 +30,7 @@ public class DbsnpClusteredVariantSummaryFunction implements Function<IClustered
                 .append("_").append(model.getTaxonomyAccession())
                 .append("_").append(model.getContig())
                 .append("_").append(model.getStart())
-                .append("_").append(model.getReferenceAllele())
-                .append("_").append(model.getAlternateAllele())
+                .append("_").append(model.getType())
                 .toString();
     }
 

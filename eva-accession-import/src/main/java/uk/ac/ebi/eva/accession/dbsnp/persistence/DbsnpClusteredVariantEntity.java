@@ -21,7 +21,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.VariantType;
+
+import java.util.Arrays;
 
 @Document
 public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> implements IClusteredVariant {
@@ -36,12 +40,7 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
 
     private long start;
 
-    // TODO use variant class  instead of alleles
-    @Field("ref")
-    private String referenceAllele;
-
-    @Field("alt")
-    private String alternateAllele;
+    private VariantType type;
 
     @Field("validated")
     private Boolean validated;
@@ -51,21 +50,23 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
 
     public DbsnpClusteredVariantEntity(Long accession, String hashedMessage, IClusteredVariant model) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getContig(),
-             model.getStart(), model.getReferenceAllele(),
-             model.getAlternateAllele(), model.getValidated(), 1);
+             model.getStart(), model.getType(), model.isValidated(), 1);
     }
 
     public DbsnpClusteredVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
-                                       int taxonomyAccession, String contig, long start, String referenceAllele,
-                                       String alternateAllele, Boolean validated, int version) {
+                                       int taxonomyAccession, String contig, long start, VariantType type,
+                                       Boolean validated, int version) {
         super(hashedMessage, accession, version);
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.contig = contig;
         this.start = start;
-        this.referenceAllele = referenceAllele;
-        this.alternateAllele = alternateAllele;
+        this.type = type;
         this.validated = validated;
+    }
+
+    public IClusteredVariant getModel() {
+        return new ClusteredVariant(this);
     }
 
     @Override
@@ -89,18 +90,52 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
     }
 
     @Override
-    public String getReferenceAllele() {
-        return referenceAllele;
+    public VariantType getType() {
+        return type;
     }
 
     @Override
-    public String getAlternateAllele() {
-        return alternateAllele;
-    }
-
-    @Override
-    public Boolean getValidated() {
+    public Boolean isValidated() {
         return validated;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DbsnpClusteredVariantEntity)) {
+            return false;
+        }
+
+        DbsnpClusteredVariantEntity that = (DbsnpClusteredVariantEntity) o;
+
+        if (taxonomyAccession != that.taxonomyAccession) {
+            return false;
+        }
+        if (start != that.start) {
+            return false;
+        }
+        if (!assemblyAccession.equals(that.assemblyAccession)) {
+            return false;
+        }
+        if (!contig.equals(that.contig)) {
+            return false;
+        }
+        if (type != that.type) {
+            return false;
+        }
+        return validated != null ? validated.equals(that.validated) : that.validated == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = assemblyAccession.hashCode();
+        result = 31 * result + taxonomyAccession;
+        result = 31 * result + contig.hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + type.hashCode();
+        result = 31 * result + (validated != null ? validated.hashCode() : 0);
+        return result;
+    }
 }

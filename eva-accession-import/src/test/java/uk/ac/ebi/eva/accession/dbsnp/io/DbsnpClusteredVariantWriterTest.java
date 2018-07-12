@@ -27,8 +27,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.VariantType;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
@@ -60,9 +61,7 @@ public class DbsnpClusteredVariantWriterTest {
 
     private static final int START_2 = 200;
 
-    private static final String ALTERNATE_ALLELE = "T";
-
-    private static final String REFERENCE_ALLELE = "A";
+    private static final VariantType VARIANT_TYPE = VariantType.SNV;
 
     private static final int ACCESSION_COLUMN = 2;
 
@@ -78,15 +77,15 @@ public class DbsnpClusteredVariantWriterTest {
 
     private static final Boolean VALIDATED = null;
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
     private Function<IClusteredVariant, String> hashingFunction;
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() throws Exception {
@@ -98,8 +97,7 @@ public class DbsnpClusteredVariantWriterTest {
     @Test
     public void saveSingleAccession() throws Exception {
         ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
-                                                                 "reference", "alternate", 
-                                                                   VALIDATED);
+                                                                 VARIANT_TYPE, VALIDATED);
         DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(EXPECTED_ACCESSION,
                                                                               hashingFunction.apply(clusteredVariant),
                                                                               clusteredVariant);
@@ -111,19 +109,15 @@ public class DbsnpClusteredVariantWriterTest {
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
 
-        assertEquals(clusteredVariant, new ClusteredVariant(accessions.get(0)));
+        assertEquals(clusteredVariant, accessions.get(0).getModel());
     }
 
     @Test
     public void saveDifferentTaxonomies() throws Exception {
-        ClusteredVariant firstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig",
-                                                                      START_1, "reference", "alternate",
-                                                                      CLUSTERED_VARIANT, 
-                                                                        VALIDATED);
-        ClusteredVariant secondClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_2, "contig",
-                                                                       START_1, "reference", "alternate",
-                                                                       CLUSTERED_VARIANT, 
-                                                                         VALIDATED);
+        ClusteredVariant firstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                      VARIANT_TYPE, VALIDATED);
+        ClusteredVariant secondClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_2, "contig", START_1,
+                                                                       VARIANT_TYPE, VALIDATED);
         DbsnpClusteredVariantEntity firstVariant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(firstClusteredVariant), firstClusteredVariant);
         DbsnpClusteredVariantEntity secondVariant = new DbsnpClusteredVariantEntity(
@@ -137,16 +131,14 @@ public class DbsnpClusteredVariantWriterTest {
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
         assertEquals(EXPECTED_ACCESSION_2, (long) accessions.get(1).getAccession());
 
-        assertEquals(firstClusteredVariant, new ClusteredVariant(accessions.get(0)));
-        assertEquals(secondClusteredVariant, new ClusteredVariant(accessions.get(1)));
+        assertEquals(firstClusteredVariant, accessions.get(0).getModel());
+        assertEquals(secondClusteredVariant, accessions.get(1).getModel());
     }
 
     @Test
     public void failsOnDuplicateVariant() throws Exception {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig",
-                                                                 START_1, "reference", "alternate",
-                                                                 CLUSTERED_VARIANT, 
-                                                                   VALIDATED);
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                 VARIANT_TYPE, VALIDATED);
         DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(clusteredVariant), clusteredVariant);
 
