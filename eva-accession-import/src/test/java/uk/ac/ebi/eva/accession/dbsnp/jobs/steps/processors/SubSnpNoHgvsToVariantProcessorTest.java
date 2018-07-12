@@ -196,7 +196,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25945162L, 14730808L, "C/T", CHICKEN_ASSEMBLY_5, "BGI",
                                                      "CHICKEN_SNPS_BROILER", "11", 11857590L, "NT_455934",
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
-                                                     375024L, false, false, "G", Date.valueOf("2004-06-23"),
+                                                     375024L, false, true, "G", Date.valueOf("2004-06-23"),
                                                      9031);
 
         DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
