@@ -17,13 +17,13 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
-
 import java.time.LocalDateTime;
 
 /**
- * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
- * entity serialized into the database {@link SubmittedVariantEntity} and the message/DTO used by the REST API.
+ * Abstract representation of the fields that uniquely identify an accessioned clustered variant.
+ *
+ * Implemented by the basic bean {@link ClusteredVariant}, the entity for EVA accessions (TODO fill reference here), and
+ * the entities for DbSNP accessions (regular imported RSs and RSs without coordinates).
  */
 public interface IClusteredVariant {
 
