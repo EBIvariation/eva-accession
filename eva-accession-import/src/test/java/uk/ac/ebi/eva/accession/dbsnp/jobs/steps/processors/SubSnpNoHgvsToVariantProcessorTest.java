@@ -26,6 +26,7 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -51,7 +52,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
                                                      339900L, false, false, "A", Date.valueOf("2004-06-23"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         // TODO: validated, match assembly and RS variant accession are being added into PR #28
 
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(25928972L, "TODO_HASH",
@@ -63,7 +64,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
         // TODO: compare createdDate and hash, as they are not compared in the equals method
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -73,14 +74,14 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, 339900L, false, false,
                                                      "A", Date.valueOf("2016-03-19"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1984788946L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "LBA_ESALQ_SNP_28TTCC_CB",
                                                                                       "W", 880493L, "A", "G",
                                                                                       14718243L, false, false, false,
                                                                                       false, 1);
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -90,14 +91,14 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
                                                      375024L, false, false, "G", Date.valueOf("2010-02-03"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(920114L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "CFG-UPPSALA_CHICK_WGS_RESEQ_PAPER_CHR32",
                                                                                       "11", 11857590, "G", "A",
                                                                                       14730808L, false, false, false,
                                                                                       false, 1);
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -107,14 +108,14 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.FORWARD, 375024L, false, false,
                                                      "G", Date.valueOf("2016-03-19"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1982511850L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "LBA_ESALQ_SNP_28TTCC_CB",
                                                                                       "11", 11857590, "G", "A",
                                                                                       14730808L, false, false, false,
                                                                                       false, 1);
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -125,7 +126,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.REVERSE, 540970L, false, false, "T",
                                                      Date.valueOf("2009-12-07"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(181534645L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "CBCB_DUPLICATION MIS-ASSEMBLY 2009 - CHICKEN",
@@ -133,7 +134,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       14797051L, false, false, false,
                                                                                       false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -143,7 +144,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.FORWARD, Orientation.REVERSE,
                                                      540970L, false, false, "T", Date.valueOf("2013-06-18"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(823297358L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "CNU_JH_AMG_KOREAN_CHICKEN_Y24",
@@ -151,7 +152,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       14797051L, false, false, false,
                                                                                       false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -161,7 +162,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.REVERSE, 3825984L, false, false,
                                                      "C", Date.valueOf("2016-03-18"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1979073615L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "LBA_ESALQ_SNP_28TTCC_CB",
@@ -169,7 +170,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       10723963L, false, false, false,
                                                                                       false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -180,7 +181,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      5268917L, false, false, "C", Date.valueOf("2013-06-18"),
                                                      9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(822765305L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "CNU_JH_AMG_KOREAN_CHICKEN_Y24",
@@ -188,7 +189,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       14510048L, false, false, false,
                                                                                       false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -199,14 +200,14 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      375024L, false, true, "G", Date.valueOf("2004-06-23"),
                                                      9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(25945162L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "BGI_CHICKEN_SNPS_BROILER",
                                                                                       "11", 11857590, "G", "A",
                                                                                       14730808L, true, false, false,
                                                                                       false, 1);
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -216,24 +217,24 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.FORWARD, 100L, false, false, "C",
                                                      Date.valueOf("2003-02-03"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "BATCH_HANDLE", "1", 1000L, "C",
                                                                                       "A", 2L, false, false, false,
                                                                                       false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
 
         subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "/T/C", CHICKEN_ASSEMBLY_5, "BATCH", "HANDLE", "1", 1000L, "CONTIG",
                                         Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, 100L, false,
                                         false, "A", Date.valueOf("2003-02-03"), 9031);
 
-        variant = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs);
         expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH", CHICKEN_ASSEMBLY_5, 9031, "BATCH_HANDLE",
                                                           "1", 1000L, "A", "G", 2L, false, false, false, false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 
     @Test
@@ -243,23 +244,23 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      Orientation.FORWARD, 100L, false, false, "C",
                                                      Date.valueOf("2003-02-03"), 9031);
 
-        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "BATCH_HANDLE", "1", 1000L, "C",
                                                                                       "A", 2L, false, false, false,
                                                                                       false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
 
         subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "T/C/", CHICKEN_ASSEMBLY_5, "BATCH", "HANDLE", "1", 1000L, "CONTIG",
                                         Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, 100L, false,
                                         false, "A", Date.valueOf("2003-02-03"), 9031);
 
-        variant = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs);
         expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH", CHICKEN_ASSEMBLY_5, 9031, "BATCH_HANDLE",
                                                           "1", 1000L, "A", "G", 2L, false, false, false, false, 1);
 
-        assertEquals(expectedVariant, variant);
+        assertEquals(expectedVariant, variants.get(0));
     }
 }

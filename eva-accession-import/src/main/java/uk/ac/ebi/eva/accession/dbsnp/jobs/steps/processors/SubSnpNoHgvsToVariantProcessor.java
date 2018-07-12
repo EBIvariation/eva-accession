@@ -25,9 +25,11 @@ import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.Region;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
-public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpSubmittedVariantEntity> {
+public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgvs, List<DbsnpSubmittedVariantEntity>> {
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
@@ -36,7 +38,7 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
     }
 
     @Override
-    public DbsnpSubmittedVariantEntity process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
+    public List<DbsnpSubmittedVariantEntity> process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         // this method will return the chromosome region or the contig one if there is no chromosome mapping
         Region variantRegion = getVariantRegion(subSnpNoHgvs);
 
@@ -52,7 +54,11 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
                                                                  .isGenotypeExists(), false, false, false);
         String hash = hashingFunction.apply(variant);
 
-        return new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash, variant);
+        DbsnpSubmittedVariantEntity ssVariant = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash, variant);
+        List<DbsnpSubmittedVariantEntity> variants = new ArrayList<>();
+        variants.add(ssVariant);
+
+        return variants;
     }
 
     private Region getVariantRegion(SubSnpNoHgvs subSnpNoHgvs) {
