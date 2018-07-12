@@ -15,6 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.model;
 
+import org.apache.commons.lang3.StringUtils;
+
 import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.sql.Date;
@@ -249,10 +251,13 @@ public class SubSnpNoHgvs {
             throw new IllegalArgumentException("Unknown alleles orientation for variant " + this, e);
         }
 
+        // We use StringUtils instead of String.split because it removes the trailing empty values after splitting
+        String[] dividedAlleles = StringUtils.split(alleles, "/");
+        
         if (allelesOrientation.equals(Orientation.FORWARD)) {
-            return getAlleles().split("/");
+            return dividedAlleles;
         } else if (allelesOrientation.equals(Orientation.REVERSE)) {
-            return getReversedComplementedAlleles();
+            return getReversedComplementedAlleles(dividedAlleles);
         } else {
             throw new IllegalArgumentException(
                     "Unknown alleles orientation " + allelesOrientation + " for variant " + this);
@@ -264,8 +269,7 @@ public class SubSnpNoHgvs {
                 this.subsnpOrientation.getValue() * this.snpOrientation.getValue() * this.contigOrientation.getValue());
     }
 
-    private String[] getReversedComplementedAlleles() {
-        String[] alleles = this.alleles.split("/");
+    private String[] getReversedComplementedAlleles(String[] alleles) {
         for (int i=0; i < alleles.length; i++) {
             alleles[i] = calculateReverseComplement(alleles[i]);
         }

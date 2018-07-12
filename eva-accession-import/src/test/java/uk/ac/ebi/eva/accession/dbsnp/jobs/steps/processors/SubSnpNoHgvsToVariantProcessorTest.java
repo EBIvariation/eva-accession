@@ -206,10 +206,60 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       "11", 11857590, "G", "A",
                                                                                       14730808L, true, false, false,
                                                                                       false, 1);
-        expectedVariant.setCreatedDate(LocalDateTime.parse("2017-08-22T13:22:00"));
+        assertEquals(expectedVariant, variant);
+    }
+
+    @Test
+    public void leadingSlashInAllelesIsIgnored() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "/A/C", CHICKEN_ASSEMBLY_5, "BATCH", "HANDLE", "1", 1000L,
+                                                     "CONTIG", Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, 100L, false, false, "C",
+                                                     Date.valueOf("2003-02-03"), 9031);
+
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "BATCH_HANDLE", "1", 1000L, "C",
+                                                                                      "A", 2L, false, false, false,
+                                                                                      false, 1);
+
+        assertEquals(expectedVariant, variant);
+
+        subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "/T/C", CHICKEN_ASSEMBLY_5, "BATCH", "HANDLE", "1", 1000L, "CONTIG",
+                                        Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, 100L, false,
+                                        false, "A", Date.valueOf("2003-02-03"), 9031);
+
+        variant = processor.process(subSnpNoHgvs);
+        expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH", CHICKEN_ASSEMBLY_5, 9031, "BATCH_HANDLE",
+                                                          "1", 1000L, "A", "G", 2L, false, false, false, false, 1);
 
         assertEquals(expectedVariant, variant);
     }
 
-    // TODO: test for "A/C/" (the last "/" is a typo and this should not be considered an indel
+    @Test
+    public void trailingSlashInAllelesIsIgnored() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "A/C/", CHICKEN_ASSEMBLY_5, "BATCH", "HANDLE", "1", 1000L,
+                                                     "CONTIG", Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, 100L, false, false, "C",
+                                                     Date.valueOf("2003-02-03"), 9031);
+
+        DbsnpSubmittedVariantEntity variant = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "BATCH_HANDLE", "1", 1000L, "C",
+                                                                                      "A", 2L, false, false, false,
+                                                                                      false, 1);
+
+        assertEquals(expectedVariant, variant);
+
+        subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "T/C/", CHICKEN_ASSEMBLY_5, "BATCH", "HANDLE", "1", 1000L, "CONTIG",
+                                        Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, 100L, false,
+                                        false, "A", Date.valueOf("2003-02-03"), 9031);
+
+        variant = processor.process(subSnpNoHgvs);
+        expectedVariant = new DbsnpSubmittedVariantEntity(1L, "TODO_HASH", CHICKEN_ASSEMBLY_5, 9031, "BATCH_HANDLE",
+                                                          "1", 1000L, "A", "G", 2L, false, false, false, false, 1);
+
+        assertEquals(expectedVariant, variant);
+    }
 }
