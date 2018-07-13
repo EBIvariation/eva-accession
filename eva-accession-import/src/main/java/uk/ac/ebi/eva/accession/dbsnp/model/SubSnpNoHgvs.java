@@ -20,6 +20,8 @@ import org.apache.commons.lang3.StringUtils;
 import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SubSnpNoHgvs {
 
@@ -229,21 +231,26 @@ public class SubSnpNoHgvs {
         }
     }
 
-    public String getAlternateInForwardStrand() {
-        String[] alleles = splitAlleles();
+    public List<String> getAlternateAllelesInForwardStrand() {
+        List<String> altAllelesInForwardStrand = new ArrayList<>();
 
+        String[] alleles = getAllelesInForwardStrand();
         String reference = getReferenceInForwardStrand();
         for (String allele : alleles) {
             if (!allele.equals(reference)) {
-                return allele;
+                altAllelesInForwardStrand.add(allele);
             }
         }
-        // TODO: if there are several alleles this is returning just the first
 
-        return null;
+        return altAllelesInForwardStrand;
     }
 
-    private String[] splitAlleles() {
+    /**
+     * This method split the alleles and convert them to the forward strand if necessary. This method will return all
+     * alleles, including the reference one
+     * @return Array containing each allele in the forward strand
+     */
+    private String[] getAllelesInForwardStrand() {
         Orientation allelesOrientation;
         try {
             allelesOrientation = getAllelesOrientation();

@@ -28,6 +28,7 @@ import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class SubSnpNoHgvsToVariantProcessorTest {
@@ -204,10 +205,32 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(25945162L, "TODO_HASH",
                                                                                       CHICKEN_ASSEMBLY_5, 9031,
                                                                                       "BGI_CHICKEN_SNPS_BROILER",
-                                                                                      "11", 11857590, "G", "A",
+                                                                                      "11", 11857590L, "G", "A",
                                                                                       14730808L, true, false, false,
                                                                                       false, 1);
         assertEquals(expectedVariant, variants.get(0));
+    }
+
+    @Test
+    public void transformMultiallelicSS() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1975823489L, 13637891L, "A/C/G", CHICKEN_ASSEMBLY_5, "LBA_ESALQ",
+                                                     "SNP_28TTCC_CB", "2", 88762120L, "NT_455791", Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, 2326310L, false, false,
+                                                     "A", Date.valueOf("2016-03-18"), 9031);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant1 = new DbsnpSubmittedVariantEntity(1975823489L, "TODO_HASH",
+                                                                                       CHICKEN_ASSEMBLY_5, 9031,
+                                                                                       "LBA_ESALQ_SNP_28TTCC_CB", "2",
+                                                                                       88762120L, "A", "C", 13637891L,
+                                                                                       false, false, false, false, 1);
+        DbsnpSubmittedVariantEntity expectedVariant2 = new DbsnpSubmittedVariantEntity(1975823489L, "TODO_HASH",
+                                                                                       CHICKEN_ASSEMBLY_5, 9031,
+                                                                                       "LBA_ESALQ_SNP_28TTCC_CB", "2",
+                                                                                       88762120L, "A", "G", 13637891L,
+                                                                                       false, false, false, false, 1);
+        assertTrue(variants.contains(expectedVariant1));
+        assertTrue(variants.contains(expectedVariant2));
     }
 
     @Test

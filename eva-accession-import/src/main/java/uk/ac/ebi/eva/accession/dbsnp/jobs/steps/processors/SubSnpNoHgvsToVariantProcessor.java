@@ -39,24 +39,28 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
 
     @Override
     public List<DbsnpSubmittedVariantEntity> process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
+        List<DbsnpSubmittedVariantEntity> variants = new ArrayList<>();
+
         // this method will return the chromosome region or the contig one if there is no chromosome mapping
         Region variantRegion = getVariantRegion(subSnpNoHgvs);
 
-        // a ISubmittedVariant is needed to calculate the hash to create the DbsnpSubmittedVariantEntity object
-        ISubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
-                                                         subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs
-                                                                 .getBatchName(), variantRegion.getChromosome(),
-                                                         variantRegion.getStart(),
-                                                         subSnpNoHgvs.getReferenceInForwardStrand(),
-                                                         subSnpNoHgvs.getAlternateInForwardStrand(),
-                                                         subSnpNoHgvs.getRsId(),
-                                                         subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs
-                                                                 .isGenotypeExists(), false, false, false);
-        String hash = hashingFunction.apply(variant);
+        List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
+        for (String alternate : alternateAlleles) {
+            // a ISubmittedVariant is needed to calculate the hash to create the DbsnpSubmittedVariantEntity object
+            ISubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
+                                                             subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs
+                                                                     .getBatchName(), variantRegion.getChromosome(),
+                                                             variantRegion.getStart(),
+                                                             subSnpNoHgvs.getReferenceInForwardStrand(), alternate,
+                                                             subSnpNoHgvs.getRsId(),
+                                                             subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs
+                                                                     .isGenotypeExists(), false, false, false);
+            String hash = hashingFunction.apply(variant);
 
-        DbsnpSubmittedVariantEntity ssVariant = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash, variant);
-        List<DbsnpSubmittedVariantEntity> variants = new ArrayList<>();
-        variants.add(ssVariant);
+            DbsnpSubmittedVariantEntity ssVariant = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
+                                                                                    variant);
+            variants.add(ssVariant);
+        }
 
         return variants;
     }
