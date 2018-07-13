@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
  * Abstract representation of the fields that uniquely identify an accessioned clustered variant.
  *
  * Implemented by the basic bean {@link ClusteredVariant}, the entity for EVA accessions (TODO fill reference here), and
- * the entities for DbSNP accessions (regular imported RSs and RSs without coordinates).
+ * the entities for DbSNP accessions (RefSnps with and without coordinates).
  */
 public interface IClusteredVariant {
 

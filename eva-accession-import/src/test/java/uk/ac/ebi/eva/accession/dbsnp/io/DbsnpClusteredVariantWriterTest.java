@@ -53,27 +53,9 @@ public class DbsnpClusteredVariantWriterTest {
 
     private static final long EXPECTED_ACCESSION_2 = 10000000001L;
 
-    private static final String CONTIG_1 = "contig_1";
-
-    private static final String CONTIG_2 = "contig_2";
-
     private static final int START_1 = 100;
 
-    private static final int START_2 = 200;
-
     private static final VariantType VARIANT_TYPE = VariantType.SNV;
-
-    private static final int ACCESSION_COLUMN = 2;
-
-    private static final String ACCESSION_PREFIX = "ss";
-
-    private static final Long CLUSTERED_VARIANT = null;
-
-    private static final Boolean SUPPORTED_BY_EVIDENCE = null;
-
-    private static final Boolean MATCHES_ASSEMBLY = null;
-
-    private static final Boolean ALLELES_MATCH = null;
 
     private static final Boolean VALIDATED = null;
 

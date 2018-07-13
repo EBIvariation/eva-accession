@@ -25,8 +25,7 @@ import java.time.LocalDateTime;
  * Abstract representation of the fields that uniquely identify an accessioned submitted variant.
  *
  * Implemented by the basic bean {@link SubmittedVariant}, the entity for EVA accessions
- * {@link SubmittedVariantEntity}, and the entities for DbSNP accessions (regular imported SSs and SSs without
- * coordinates).
+ * {@link SubmittedVariantEntity}, and the entities for DbSNP accessions (Subsnps with and without coordinates).
  */
 public interface ISubmittedVariant {
 
