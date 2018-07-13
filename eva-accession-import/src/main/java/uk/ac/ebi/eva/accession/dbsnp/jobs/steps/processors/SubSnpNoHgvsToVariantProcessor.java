@@ -66,10 +66,10 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
     }
 
     private Region getVariantRegion(SubSnpNoHgvs subSnpNoHgvs) {
-        if (subSnpNoHgvs.getChromosomeRegion() != null) {
-            return subSnpNoHgvs.getChromosomeRegion();
+        if (subSnpNoHgvs.getChromosome() != null) {
+            return new Region(subSnpNoHgvs.getChromosome(), subSnpNoHgvs.getChromosomeStart());
         } else {
-            return subSnpNoHgvs.getContigRegion();
+            return new Region(subSnpNoHgvs.getContigName(), subSnpNoHgvs.getContigStart());
         }
     }
 }

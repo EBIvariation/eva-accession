@@ -17,8 +17,6 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 
 import org.apache.commons.lang3.StringUtils;
 
-import uk.ac.ebi.eva.commons.core.models.Region;
-
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,17 +35,19 @@ public class SubSnpNoHgvs {
 
     private String batchName;
 
-    private Region chromosomeRegion;
+    private String chromosome;
 
-    private Region contigRegion;
+    private Long chromosomeStart;
+
+    private String contigName;
+
+    private Long contigStart;
 
     private Orientation subsnpOrientation;
 
     private Orientation snpOrientation;
 
     private Orientation contigOrientation;
-
-    private int contigStart;
 
     private boolean frequencyExists;
 
@@ -72,8 +72,10 @@ public class SubSnpNoHgvs {
         this.assembly = assembly;
         this.batchHandle = batchHandle;
         this.batchName = batchName;
-        this.chromosomeRegion = createRegion(chromosome, chromosomeStart);
-        this.contigRegion = createRegion(contigName, contigStart);
+        this.chromosome = chromosome;
+        this.chromosomeStart = chromosomeStart;
+        this.contigName = contigName;
+        this.contigStart = contigStart;
         this.subsnpOrientation = subsnpOrientation;
         this.snpOrientation = snpOrientation;
         this.contigOrientation = contigOrientation;
@@ -84,16 +86,6 @@ public class SubSnpNoHgvs {
         this.taxonomyId = taxonomyId;
     }
 
-    private Region createRegion(String sequenceName, Long start) {
-        if (sequenceName != null) {
-            if (start != null) {
-                return new Region(sequenceName, start);
-            }
-            return new Region(sequenceName);
-        }
-        // This should happen only with chromosomes, when a contig-to-chromosome mapping is not available
-        return null;
-    }
 
     public Long getSsId() {
         return ssId;
@@ -143,20 +135,28 @@ public class SubSnpNoHgvs {
         this.batchName = batchName;
     }
 
-    public Region getChromosomeRegion() {
-        return chromosomeRegion;
+    public String getChromosome() {
+        return chromosome;
     }
 
-    public void setChromosomeRegion(Region chromosomeRegion) {
-        this.chromosomeRegion = chromosomeRegion;
+    public void setChromosome(String chromosome) {
+        this.chromosome = chromosome;
     }
 
-    public Region getContigRegion() {
-        return contigRegion;
+    public Long getChromosomeStart() {
+        return chromosomeStart;
     }
 
-    public void setContigRegion(Region contigRegion) {
-        this.contigRegion = contigRegion;
+    public void setChromosomeStart(Long chromosomeStart) {
+        this.chromosomeStart = chromosomeStart;
+    }
+
+    public String getContigName() {
+        return contigName;
+    }
+
+    public void setContigName(String contigName) {
+        this.contigName = contigName;
     }
 
     public Orientation getContigOrientation() {
@@ -167,11 +167,11 @@ public class SubSnpNoHgvs {
         this.contigOrientation = contigOrientation;
     }
 
-    public int getContigStart() {
+    public Long getContigStart() {
         return contigStart;
     }
 
-    public void setContigStart(int contigStart) {
+    public void setContigStart(Long contigStart) {
         this.contigStart = contigStart;
     }
 

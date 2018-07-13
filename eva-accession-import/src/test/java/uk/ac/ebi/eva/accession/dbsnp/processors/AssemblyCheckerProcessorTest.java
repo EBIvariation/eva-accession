@@ -36,6 +36,10 @@ public class AssemblyCheckerProcessorTest {
 
     private static final String UCSC_1 = "ucsc_example_1";
 
+    private static final Long SS_ID = 12345L;
+
+    private static final Long RS_ID = 56789L;
+
     private AssemblyCheckerProcessor processorSeqName;
 
     private AssemblyCheckerProcessor processorGenBank;
@@ -66,9 +70,9 @@ public class AssemblyCheckerProcessorTest {
         processorUcsc = new AssemblyCheckerProcessor(contigMapping, fastaSequenceReaderUcsc);
     }
 
-    private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, int chromosomeStart, String contig, int contigStart,
+    private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, long chromosomeStart, String contig, long contigStart,
                                          String referenceAllele) {
-        return new SubSnpNoHgvs(ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome, chromosomeStart,
+        return new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome, chromosomeStart,
                                 contig, Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, contigStart,
                                 true, true, referenceAllele, null, TAXONOMY);
     }
