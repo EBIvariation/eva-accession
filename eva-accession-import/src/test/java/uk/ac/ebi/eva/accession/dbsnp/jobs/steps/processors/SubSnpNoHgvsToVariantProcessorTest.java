@@ -35,6 +35,8 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     public static final String CHICKEN_ASSEMBLY_5 = "Gallus_gallus-5.0";
 
+    private static final String CONTIG_NAME = "Contig1";
+
     SubSnpNoHgvsToVariantProcessor processor;
 
     @Before
@@ -190,6 +192,51 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                                                       14510048L, false, false, false,
                                                                                       false, 1);
 
+        assertEquals(expectedVariant, variants.get(0));
+    }
+
+    @Test public void transformInsertion() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "-/T", CHICKEN_ASSEMBLY_5, "HANDLE",
+                                                     "NAME", "1", 69527468L, "NT_455715", Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, 2805800L, false, false,
+                                                     "-", Date.valueOf("2010-01-01"), 9031);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(1052228949L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "HANDLE_NAME", "1", 69527468L,
+                                                                                      "-", "T", 794529293L, false,
+                                                                                      false, false, false, 1);
+        assertEquals(expectedVariant, variants.get(0));
+    }
+
+    @Test public void transformDeletion() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(808112673L, 794532822L, "T/-", CHICKEN_ASSEMBLY_5, "HANDLE",
+                                                     "NAME", "2", 90014736L, "NT_455791", Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, 3578926L, false, false,
+                                                     "T", Date.valueOf("2010-01-01"), 9031);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(808112673L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "HANDLE_NAME", "2", 90014736L,
+                                                                                      "T", "-", 794532822L, false,
+                                                                                      false, false, false, 1);
+        assertEquals(expectedVariant, variants.get(0));
+    }
+
+    @Test public void transformDeletionReverseContig() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(820982442L, 794525917L, "T/-", CHICKEN_ASSEMBLY_5, "HANDLE",
+                                                     "NAME", "5", 10000L, CONTIG_NAME, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, 2000L, false, false, "A",
+                                                     Date.valueOf("2010-01-01"), 9031);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        DbsnpSubmittedVariantEntity expectedVariant = new DbsnpSubmittedVariantEntity(820982442L, "TODO_HASH",
+                                                                                      CHICKEN_ASSEMBLY_5, 9031,
+                                                                                      "HANDLE_NAME", "5", 10000L,
+                                                                                      "T", "-", 794525917L, false,
+                                                                                      false, false, false, 1);
         assertEquals(expectedVariant, variants.get(0));
     }
 
