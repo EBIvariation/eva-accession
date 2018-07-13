@@ -30,7 +30,11 @@
             <groupId>com.github.fakemongo</groupId>
             <artifactId>fongo</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.batch</groupId>
+            <artifactId>spring-batch-test</artifactId>
+            <scope>test</scope>
+        </dependency>
         <!--TODO : add PostgreSQL driver with scope runtime for production deployment-->
     </dependencies>
 
