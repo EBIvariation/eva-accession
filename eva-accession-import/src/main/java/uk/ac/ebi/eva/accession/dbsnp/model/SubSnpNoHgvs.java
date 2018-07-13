@@ -182,6 +182,22 @@ public class SubSnpNoHgvs {
         this.dbsnpVariantType = dbsnpVariantType;
     }
 
+    public Orientation getSubsnpOrientation() {
+        return subsnpOrientation;
+    }
+
+    public void setSubsnpOrientation(Orientation subsnpOrientation) {
+        this.subsnpOrientation = subsnpOrientation;
+    }
+
+    public Orientation getSnpOrientation() {
+        return snpOrientation;
+    }
+
+    public void setSnpOrientation(Orientation snpOrientation) {
+        this.snpOrientation = snpOrientation;
+    }
+
     public Orientation getContigOrientation() {
         return contigOrientation;
     }

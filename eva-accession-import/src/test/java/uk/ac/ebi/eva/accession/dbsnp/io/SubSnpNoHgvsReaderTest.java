@@ -65,27 +65,20 @@ public class SubSnpNoHgvsReaderTest {
 
     @Test
     public void readChickenVariants() throws Exception {
-        reader = buildReader(11825, CHICKEN_ASSEMBY, PAGE_SIZE);
+        reader = buildReader(CHICKEN_ASSEMBY, PAGE_SIZE);
         List<SubSnpNoHgvs> variants = readAll(reader);
-        assertEquals(2, variants.size());
-        assertTrue(variants.stream().allMatch(v -> v.getDbsnpVariantType().equals(DbsnpVariantType.SNV)));
-    }
-
-    @Test
-    public void readBatchWithNoVariants() throws Exception {
-        reader = buildReader(11000, CHICKEN_ASSEMBY, PAGE_SIZE);
-        assertNull(reader.read());
+        assertEquals(5, variants.size());
     }
 
     @Test
     public void readWrongAssembly() throws Exception {
         thrown.expect(ItemStreamException.class);
-        reader = buildReader(11825, "UNKNOWN_ASSEMBLY", PAGE_SIZE);
+        reader = buildReader("UNKNOWN_ASSEMBLY", PAGE_SIZE);
     }
 
-    private SubSnpNoHgvsReader buildReader(int batch, String assembly, int pageSize)
+    private SubSnpNoHgvsReader buildReader(String assembly, int pageSize)
             throws Exception {
-        SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(batch, assembly,
+        SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(assembly,
                                                                  dbsnpDataSource.getDatasource(),
                                                                  pageSize);
         fieldsReader.afterPropertiesSet();
