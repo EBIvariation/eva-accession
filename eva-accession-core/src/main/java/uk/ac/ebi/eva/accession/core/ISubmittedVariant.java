@@ -22,8 +22,10 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import java.time.LocalDateTime;
 
 /**
- * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
- * entity serialized into the database {@link SubmittedVariantEntity} and the message/DTO used by the REST API.
+ * Abstract representation of the fields that uniquely identify an accessioned submitted variant.
+ *
+ * Implemented by the basic bean {@link SubmittedVariant}, the entity for EVA accessions
+ * {@link SubmittedVariantEntity}, and the entities for DbSNP accessions (Subsnps with and without coordinates).
  */
 public interface ISubmittedVariant {
 

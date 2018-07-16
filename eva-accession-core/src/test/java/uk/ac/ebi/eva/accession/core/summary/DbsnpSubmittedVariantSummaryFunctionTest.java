@@ -101,6 +101,21 @@ public class DbsnpSubmittedVariantSummaryFunctionTest {
     }
 
     @Test
+    public void differentSummaryWhenProjectDiffers() {
+        ISubmittedVariant submittedVariant1 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
+
+        ISubmittedVariant submittedVariant2 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, "project_2", CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED);
+
+        assertNotEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
+    }
+
+    @Test
     public void differentSummaryWhenContigDiffers() {
         ISubmittedVariant submittedVariant1 =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
