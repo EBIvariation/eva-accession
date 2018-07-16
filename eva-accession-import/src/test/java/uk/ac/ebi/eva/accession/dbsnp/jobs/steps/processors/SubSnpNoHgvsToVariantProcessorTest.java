@@ -357,20 +357,20 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     public void transformShortTandemRepeat() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(700214256L, 439714840L, "(T)4/5/7", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                                     DbsnpClass.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                                     Orientation.FORWARD, CONTIG_START, false, false, "T", CREATED_DATE,
-                                                     TAXONOMY);
+                                                     DbsnpClass.MICROSATELLITE, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, CONTIG_START, false,
+                                                     false, "T", CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         DbsnpSubmittedVariantEntity expectedVariant1 = new DbsnpSubmittedVariantEntity(700214256L, "TODO_HASH", ASSEMBLY,
                                                                                       TAXONOMY, PROJECT_ACCESSION,
                                                                                       CHROMOSOME, CHROMOSOME_START,
-                                                                                      "T(4)", "T(5)", 439714840L, false,
+                                                                                      "(T)4", "(T)5", 439714840L, false,
                                                                                       false, false, false, 1);
         DbsnpSubmittedVariantEntity expectedVariant2 = new DbsnpSubmittedVariantEntity(700214256L, "TODO_HASH", ASSEMBLY,
                                                                                       TAXONOMY, PROJECT_ACCESSION,
                                                                                       CHROMOSOME, CHROMOSOME_START,
-                                                                                      "T(4)", "T(7)", 439714840L, false,
+                                                                                      "(T)4", "(T)7", 439714840L, false,
                                                                                       false, false, false, 1);
 
         assertTrue(variants.contains(expectedVariant1));

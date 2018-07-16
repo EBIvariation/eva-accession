@@ -16,10 +16,12 @@
 package uk.ac.ebi.eva.accession.dbsnp.model;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class SubSnpNoHgvs {
 
@@ -238,10 +240,14 @@ public class SubSnpNoHgvs {
     }
 
     public String getReferenceInForwardStrand() {
-        if (contigOrientation.equals(Orientation.REVERSE)) {
-            return calculateReverseComplement(reference);
+        if (dbsnpClass.equals(DbsnpClass.MICROSATELLITE)) {
+            return alleles.split("/")[0];
         } else {
-            return reference;
+            if (contigOrientation.equals(Orientation.REVERSE)) {
+                return calculateReverseComplement(reference);
+            } else {
+                return reference;
+            }
         }
     }
 
@@ -252,7 +258,11 @@ public class SubSnpNoHgvs {
         String reference = getReferenceInForwardStrand();
         for (String allele : alleles) {
             if (!allele.equals(reference)) {
-                altAllelesInForwardStrand.add(allele);
+                if (dbsnpClass.equals(DbsnpClass.MICROSATELLITE)) {
+                    altAllelesInForwardStrand.add(getMicrosatelliteAlternate(reference, allele));
+                } else {
+                    altAllelesInForwardStrand.add(allele);
+                }
             }
         }
 
@@ -274,7 +284,7 @@ public class SubSnpNoHgvs {
 
         // We use StringUtils instead of String.split because it removes the trailing empty values after splitting
         String[] dividedAlleles = StringUtils.split(alleles, "/");
-        
+
         if (allelesOrientation.equals(Orientation.FORWARD)) {
             return dividedAlleles;
         } else if (allelesOrientation.equals(Orientation.REVERSE)) {
@@ -330,5 +340,15 @@ public class SubSnpNoHgvs {
             }
         }
         return alleleInForwardStrand.toString();
+    }
+
+    private String getMicrosatelliteAlternate(String reference, String alternate) {
+        String[] referenceAlleleParts = reference.split("\\)");
+        if (NumberUtils.isDigits(referenceAlleleParts[1]) && NumberUtils.isDigits(alternate)) {
+            String nucleotideInReference = referenceAlleleParts[0] + ")";
+            return referenceAlleleParts[0] + ")" + alternate;
+        } else {
+            throw new IllegalArgumentException("Not parseable STR: " + reference + "/" + alternate);
+        }
     }
 }
