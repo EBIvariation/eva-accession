@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.item.util.FileUtils;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
@@ -13,22 +12,19 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.test.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class, TestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 

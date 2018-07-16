@@ -35,6 +35,7 @@
             <artifactId>spring-batch-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <!--TODO : add PostgreSQL driver with scope runtime for production deployment-->
     </dependencies>
 

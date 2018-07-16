@@ -53,7 +53,7 @@ public class AssemblyCheckerProcessorTest {
 
     @Before
     public void setUp() throws Exception {
-        String fileString = ContigMappingTest.class.getResource("/input-files/AssemblyReport.txt").toString();
+        String fileString = ContigMappingTest.class.getResource("/input-files/assembly-report/AssemblyReport.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
         FastaSequenceReader fastaSequenceReaderSeqName = new FastaSequenceReader(

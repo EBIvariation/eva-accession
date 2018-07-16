@@ -27,19 +27,24 @@ public class InputParameters {
 
     private String assemblyAccession;
 
+    private String assembly;
+
     private int taxonomyAccession;
 
     private int chunkSize;
 
     private boolean forceRestart;
 
+    private int pageSize;
+
     public JobParameters toJobParameters() {
-        return new JobParametersBuilder()
-                .addString("fasta", fasta)
-                .addLong("taxonomyAccession", (long)taxonomyAccession)
-                .addString("assemblyAccession", assemblyAccession)
-                .addLong("chunkSize", (long)chunkSize)
-                .toJobParameters();
+        throw new UnsupportedOperationException("implementation incomplete. make sure all the fields are used");
+//        return new JobParametersBuilder()
+//                .addString("fasta", fasta)
+//                .addLong("taxonomyAccession", (long)taxonomyAccession)
+//                .addString("assemblyAccession", assemblyAccession)
+//                .addLong("chunkSize", (long)chunkSize)
+//                .toJobParameters();
     }
 
     public String getFasta() {
@@ -80,5 +85,29 @@ public class InputParameters {
 
     public void setForceRestart(boolean forceRestart) {
         this.forceRestart = forceRestart;
+    }
+
+    public String getAssemblyReportUrl() {
+        return assemblyReportUrl;
+    }
+
+    public void setAssemblyReportUrl(String assemblyReportUrl) {
+        this.assemblyReportUrl = assemblyReportUrl;
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+
+    public String getAssembly() {
+        return assembly;
+    }
+
+    public void setAssembly(String assembly) {
+        this.assembly = assembly;
     }
 }

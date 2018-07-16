@@ -35,13 +35,13 @@ public class ImportDbsnpVariantsJobConfiguration {
 
     @Autowired
     @Qualifier(IMPORT_DBSNP_VARIANTS_STEP)
-    private Step createSubsnpAccessionStep;
+    private Step importDbsnpVariantsStep;
 
     @Bean(IMPORT_DBSNP_VARIANTS_JOB)
-    public Job createSubsnpAccessionJob(JobBuilderFactory jobBuilderFactory) {
+    public Job importDbsnpVariantsJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(IMPORT_DBSNP_VARIANTS_JOB)
                                 .incrementer(new RunIdIncrementer())
-                                .start(createSubsnpAccessionStep)
+                                .start(importDbsnpVariantsStep)
                                 .build();
     }
 }

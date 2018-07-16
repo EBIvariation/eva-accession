@@ -9,23 +9,27 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsJobConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsProcessorConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsReaderConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsStepConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.InvalidVariantSkipPolicyConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.VariantProcessorConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsJobConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CheckSubsnpAccessionsStepConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CreateSubsnpAccessionsStepConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsWriterConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.InputParametersConfiguration;
 
 import javax.sql.DataSource;
 
 @EnableAutoConfiguration
-@Import({ImportDbsnpVariantsJobConfiguration.class, ImportDbsnpVariantsStepConfiguration.class,
-        VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class})
+@Import({DbsnpTestDataSource.class,
+        MongoConfiguration.class,
+        ImportDbsnpVariantsJobConfiguration.class,
+        ImportDbsnpVariantsStepConfiguration.class,
+        ImportDbsnpVariantsReaderConfiguration.class,
+        ImportDbsnpVariantsProcessorConfiguration.class,
+        ImportDbsnpVariantsWriterConfiguration.class,
+        ChunkSizeCompletionPolicyConfiguration.class,
+        InputParametersConfiguration.class})
 public class BatchTestConfiguration {
 
     @Autowired

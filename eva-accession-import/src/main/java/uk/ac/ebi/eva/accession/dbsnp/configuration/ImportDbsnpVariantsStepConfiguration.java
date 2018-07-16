@@ -17,6 +17,7 @@
 package uk.ac.ebi.eva.accession.dbsnp.configuration;
 
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -32,6 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.ASSEMBLY_CHECK_STEP_LISTENER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_WRITER;
@@ -53,6 +55,10 @@ public class ImportDbsnpVariantsStepConfiguration {
     @Qualifier(DBSNP_VARIANT_WRITER)
     private ItemWriter<DbsnpVariantsWrapper> accessionWriter;
 
+    @Autowired
+    @Qualifier(ASSEMBLY_CHECK_STEP_LISTENER)
+    private StepExecutionListener assemblyCheckStepListener;
+
     @Bean(IMPORT_DBSNP_VARIANTS_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
@@ -61,6 +67,7 @@ public class ImportDbsnpVariantsStepConfiguration {
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)
+                .listener(assemblyCheckStepListener)
                 .build();
         return step;
     }

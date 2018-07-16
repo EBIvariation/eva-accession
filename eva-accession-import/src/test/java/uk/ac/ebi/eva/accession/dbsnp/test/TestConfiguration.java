@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.configuration;
+package uk.ac.ebi.eva.accession.dbsnp.test;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+
+import uk.ac.ebi.eva.accession.dbsnp.configuration.DbsnpDataSource;
 
 @Configuration
 @EnableConfigurationProperties({DbsnpDataSource.class, DbsnpTestDataSource.class})

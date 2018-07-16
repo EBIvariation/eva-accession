@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.configuration;
+package uk.ac.ebi.eva.accession.dbsnp.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,8 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.datasource.init.DatabasePopulator;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+
+import uk.ac.ebi.eva.accession.dbsnp.configuration.DbsnpDataSource;
 
 import javax.sql.DataSource;
 

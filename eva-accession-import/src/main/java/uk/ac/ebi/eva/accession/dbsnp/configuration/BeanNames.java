@@ -27,4 +27,6 @@ public class BeanNames {
     public static final String IMPORT_DBSNP_VARIANTS_STEP = "IMPORT_DBSNP_VARIANTS_STEP";
     
     public static final String IMPORT_DBSNP_VARIANTS_JOB = "IMPORT_DBSNP_VARIANTS_JOB";
+
+    public static final String ASSEMBLY_CHECK_STEP_LISTENER = "ASSEMBLY_CHECK_STEP_LISTENER";
 }
