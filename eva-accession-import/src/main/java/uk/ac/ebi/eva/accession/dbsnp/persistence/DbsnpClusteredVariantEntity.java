@@ -25,8 +25,6 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.VariantType;
 
-import java.util.Arrays;
-
 @Document
 public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> implements IClusteredVariant {
 
@@ -42,7 +40,6 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
 
     private VariantType type;
 
-    @Field("validated")
     private Boolean validated;
 
     protected DbsnpClusteredVariantEntity() {
@@ -62,11 +59,17 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
         this.contig = contig;
         this.start = start;
         this.type = type;
-        this.validated = validated;
+        if (validated == null) {
+            throw new IllegalArgumentException("validated should not be null, as null is used for default values");
+        } else {
+            this.validated = validated == DEFAULT_VALIDATED ? null : validated;
+        }
     }
 
     public IClusteredVariant getModel() {
-        return new ClusteredVariant(this);
+        ClusteredVariant clusteredVariant = new ClusteredVariant(this);
+        clusteredVariant.setValidated(validated == null ? DEFAULT_VALIDATED : validated);
+        return clusteredVariant;
     }
 
     @Override

@@ -57,7 +57,7 @@ public class DbsnpClusteredVariantWriterTest {
 
     private static final VariantType VARIANT_TYPE = VariantType.SNV;
 
-    private static final Boolean VALIDATED = null;
+    private static final Boolean VALIDATED = false;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -128,4 +128,18 @@ public class DbsnpClusteredVariantWriterTest {
         dbsnpClusteredVariantWriter.write(Arrays.asList(variant, variant));
     }
 
+    @Test
+    public void failsOnDuplicateNonIdenticalVariant() throws Exception {
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                 VARIANT_TYPE, false);
+        ClusteredVariant duplicateClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                 VARIANT_TYPE, true);
+        DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(clusteredVariant), clusteredVariant);
+        DbsnpClusteredVariantEntity duplicateVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(duplicateClusteredVariant), duplicateClusteredVariant);
+
+        thrown.expect(RuntimeException.class);
+        dbsnpClusteredVariantWriter.write(Arrays.asList(variant, duplicateVariant));
+    }
 }

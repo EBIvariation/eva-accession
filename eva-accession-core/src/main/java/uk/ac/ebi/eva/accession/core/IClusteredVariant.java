@@ -27,6 +27,8 @@ import java.time.LocalDateTime;
  */
 public interface IClusteredVariant {
 
+    boolean DEFAULT_VALIDATED = false;
+
     String getAssemblyAccession();
 
     int getTaxonomyAccession();
