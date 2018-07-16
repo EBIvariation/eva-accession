@@ -23,6 +23,8 @@ import java.util.List;
 
 public class SubSnpNoHgvs {
 
+    private static final int SHORT_TANDEM_REPEAT = 4;
+
     private Long ssId;
 
     private Long rsId;
@@ -43,6 +45,8 @@ public class SubSnpNoHgvs {
 
     private Long contigStart;
 
+    private DbsnpClass dbsnpClass;
+
     private Orientation subsnpOrientation;
 
     private Orientation snpOrientation;
@@ -62,10 +66,11 @@ public class SubSnpNoHgvs {
     private boolean assemblyMatch;
 
     public SubSnpNoHgvs(Long ssId, Long rsId, String alleles, String assembly, String batchHandle, String batchName,
-                        String chromosome, Long chromosomeStart, String contigName, Orientation subsnpOrientation,
-                        Orientation snpOrientation, Orientation contigOrientation, Long contigStart,
-                        boolean frequencyExists, boolean genotypeExists, String reference, Date createTime,
-                        int taxonomyId) {
+                        String chromosome, Long chromosomeStart, String contigName, DbsnpClass dbsnpClass,
+                        Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
+                        Long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
+                        Date createTime, int taxonomyId) {
+
         this.ssId = ssId;
         this.rsId = rsId;
         this.alleles = alleles;
@@ -76,6 +81,7 @@ public class SubSnpNoHgvs {
         this.chromosomeStart = chromosomeStart;
         this.contigName = contigName;
         this.contigStart = contigStart;
+        this.dbsnpClass = dbsnpClass;
         this.subsnpOrientation = subsnpOrientation;
         this.snpOrientation = snpOrientation;
         this.contigOrientation = contigOrientation;
@@ -157,6 +163,14 @@ public class SubSnpNoHgvs {
 
     public void setContigName(String contigName) {
         this.contigName = contigName;
+    }
+
+    public DbsnpClass getDbsnpClass() {
+        return dbsnpClass;
+    }
+
+    public void setDbsnpClass(DbsnpClass dbsnpClass) {
+        this.dbsnpClass = dbsnpClass;
     }
 
     public Orientation getContigOrientation() {

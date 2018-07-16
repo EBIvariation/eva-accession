@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.springframework.jdbc.core.RowMapper;
 
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpClass;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
@@ -40,6 +41,8 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
     public static final String CHROMOSOME_START_COLUMN = "chromosome_start";
 
     public static final String CONTIG_NAME_COLUMN = "contig_name";
+
+    public static final String SNP_CLASS_COLUMN = "snp_class";
 
     public static final String SUBSNP_ORIENTATION_COLUMN = "subsnp_orientation";
 
@@ -76,6 +79,7 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
                                 resultSet.getString(CHROMOSOME_COLUMN),
                                 resultSet.getLong(CHROMOSOME_START_COLUMN),
                                 resultSet.getString(CONTIG_NAME_COLUMN),
+                                DbsnpClass.getClass(resultSet.getInt(SNP_CLASS_COLUMN)),
                                 Orientation.getOrientation(resultSet.getObject(SUBSNP_ORIENTATION_COLUMN, Integer.class)),
                                 Orientation.getOrientation(resultSet.getObject(SNP_ORIENTATION_COLUMN, Integer.class)),
                                 Orientation.getOrientation(resultSet.getObject(CONTIG_ORIENTATION_COLUMN, Integer.class)),

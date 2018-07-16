@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMappingTest;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpClass;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
@@ -47,32 +48,32 @@ public class ContigReplacerProcessorTest {
     @Test
     public void convertVariantFromSeqNameToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", SEQNAME_1, START,
-                                              SEQNAME_1, Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                              START, true, true, REFERENCE_ALLELE, null, TAXONOMY);
+                                              SEQNAME_1, DbsnpClass.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                              Orientation.FORWARD, START, true, true, REFERENCE_ALLELE, null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
 
     @Test
     public void convertVariantFromGenBankToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", null, 0L, GENBANK_1,
-                                              Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, START,
-                                              true, true, REFERENCE_ALLELE, null, TAXONOMY);
+                                              DbsnpClass.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                              Orientation.FORWARD, START, true, true, REFERENCE_ALLELE, null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
 
     @Test
     public void convertVariantFromRefSeqToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", REFSEQ_1, START, null,
-                                              Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, 0L,
-                                              true, true, REFERENCE_ALLELE, null, TAXONOMY);
+                                              DbsnpClass.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                              Orientation.FORWARD, 0L, true, true, REFERENCE_ALLELE, null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
 
     @Test
     public void convertVariantFromUcscToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", UCSC_1, START, UCSC_1,
-                                              Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, START,
-                                              true, true, REFERENCE_ALLELE, null, TAXONOMY);
+                                              DbsnpClass.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                              Orientation.FORWARD, START, true, true, REFERENCE_ALLELE, null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
 }
