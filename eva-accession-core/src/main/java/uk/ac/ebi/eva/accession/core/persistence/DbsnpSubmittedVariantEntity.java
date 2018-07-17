@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.persistence;
+package uk.ac.ebi.eva.accession.core.persistence;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 
 public class DbsnpSubmittedVariantEntity extends SubmittedVariantEntity {
 

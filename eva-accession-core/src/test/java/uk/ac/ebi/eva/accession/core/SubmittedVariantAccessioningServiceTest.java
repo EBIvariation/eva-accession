@@ -31,6 +31,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
@@ -42,12 +45,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @TestPropertySource("classpath:ss-accession-test.properties")
 @ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
+@UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})
 public class SubmittedVariantAccessioningServiceTest {
 
     private static final Long CLUSTERED_VARIANT = null;
@@ -104,7 +107,71 @@ public class SubmittedVariantAccessioningServiceTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(
                 requestedVariants);
 
-        assertEquals(new HashSet<>(generatedAccessions),
-                     new HashSet<>(retrievedAccessions));
+        assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
+    }
+
+    @Test
+    public void getOrCreateAccessions() throws AccessionCouldNotBeGeneratedException {
+        List<SubmittedVariant> variants = Arrays.asList(
+                new SubmittedVariant("GCA_000003055.3", 9913, "PRJEB21794", "21", 20800319, "C", "T", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("GCA_000009999.3", 9999, "PRJEB21999", "21", 20849999, "", "GG", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, true, VALIDATED));
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = service.getOrCreate(variants);
+
+        long accession = submittedVariants.stream().filter(x -> x.getData().getProjectAccession().equals("PRJEB21794"))
+                                          .collect(Collectors.toList())
+                                          .get(0).getAccession();
+        assertEquals(5000000000L, accession);
+
+        long accessionDbsnp = submittedVariants.stream()
+                                               .filter(x -> x.getData().getProjectAccession().equals("PRJEB21999"))
+                                               .collect(Collectors.toList())
+                                               .get(0).getAccession();
+        assertEquals(1000000001L, accessionDbsnp);
+
+        assertEquals(3, submittedVariants.size());
+    }
+
+    @Test
+    public void get() {
+        List<SubmittedVariant> variants = Arrays.asList(
+                new SubmittedVariant("GCA_000003055.3", 9913, "PRJEB21794", "21", 20800319, "C", "T", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("GCA_000009999.3", 9999, "PRJEB21999", "21", 20849999, "", "GG", CLUSTERED_VARIANT,
+                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, true, VALIDATED));
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(variants);
+        assertEquals(2, accessions.size());
+    }
+
+    @Test
+    public void getByAccessions() {
+        List<Long> accessions = Arrays.asList(5000000000L, 1000000001L);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = service.getByAccessions(accessions);
+        assertEquals(2, submittedVariants.size());
+    }
+
+    @Test
+    public void getByAccessionAndVersion() throws AccessionMergedException, AccessionDoesNotExistException,
+            AccessionDeprecatedException {
+        SubmittedVariant variant = new SubmittedVariant("GCA_000003055.3", 9913, "PRJEB21794", "21", 20800319, "C", "T",
+                                                        CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                                        true, VALIDATED);
+        AccessionWrapper<ISubmittedVariant, String, Long> submittedVariant = service.getByAccessionAndVersion(
+                5000000000L, 1);
+        assertEquals(variant, submittedVariant.getData());
+
+        SubmittedVariant dbsnpVariant = new SubmittedVariant("GCA_000009999.3", 9999, "PRJEB21999", "21", 20849999, "",
+                                                             "GG", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                             MATCHES_ASSEMBLY, true, VALIDATED);
+        AccessionWrapper<ISubmittedVariant, String, Long> dbsnpSubmittedVariant = service.getByAccessionAndVersion(
+                1000000001L, 1);
+        assertEquals(dbsnpVariant, dbsnpSubmittedVariant.getData());
     }
 }

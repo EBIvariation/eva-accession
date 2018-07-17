@@ -1,0 +1,17 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id" : "925E489266E58B67F1CDCCDF1914A7B4B6FC697A",
+      "asm" : "GCA_000003055.3",
+      "tax" : 9913,
+      "study" : "PRJEB21794",
+      "contig" : "21",
+      "start" : 20800319,
+      "ref" : "C",
+      "alt" : "T",
+      "evidence" : true,
+      "accession" : 5000000000,
+      "version" : 1
+    }
+  ]
+}

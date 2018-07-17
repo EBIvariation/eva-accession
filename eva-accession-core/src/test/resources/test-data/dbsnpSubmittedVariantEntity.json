@@ -1,0 +1,17 @@
+{
+  "dbsnpSubmittedVariantEntity": [
+    {
+      "_id" : "980E2EA1AF733B432D4E7EB520B632BDB9EC20BE",
+      "asm" : "GCA_000009999.3",
+      "tax" : 9999,
+      "study" : "PRJEB21999",
+      "contig" : "21",
+      "start" : 20849999,
+      "ref" : "",
+      "alt" : "GG",
+      "evidence" : true,
+      "accession" : 1000000001,
+      "version" : 1
+    }
+  ]
+}

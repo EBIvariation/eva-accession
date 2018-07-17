@@ -30,11 +30,17 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
 @Configuration
@@ -48,10 +54,19 @@ public class SubmittedVariantAccessioningConfiguration {
     private SubmittedVariantAccessioningRepository repository;
 
     @Autowired
+    private DbsnpSubmittedVariantAccessioningRepository dbsnpRepository;
+
+    @Autowired
     private SubmittedVariantOperationRepository operationRepository;
 
     @Autowired
+    private DbsnpSubmittedVariantOperationRepository dbsnpOperationRepository;
+
+    @Autowired
     private SubmittedVariantInactiveService inactiveService;
+
+    @Autowired
+    private DbsnpSubmittedVariantInactiveService dbsnpInactiveService;
 
     @Autowired
     private ContiguousIdBlockService service;
@@ -65,24 +80,8 @@ public class SubmittedVariantAccessioningConfiguration {
     @Bean
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
         return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
-                                                       submittedVariantAccessioningDatabaseService());
-    }
-
-    @Bean
-    public SubmittedVariantOperationRepository submittedVariantOperationRepository() {
-        return operationRepository;
-    }
-
-    @Bean
-    public SubmittedVariantInactiveService submittedVariantInactiveService() {
-        return new SubmittedVariantInactiveService(operationRepository,
-                                                   SubmittedVariantInactiveEntity::new,
-                                                   SubmittedVariantOperationEntity::new);
-    }
-
-    @Bean
-    public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
-        return new SubmittedVariantAccessioningDatabaseService(repository, inactiveService);
+                                                       submittedVariantAccessioningDatabaseService(),
+                                                       dbsnpSubmittedVariantAccessioningDatabaseService());
     }
 
     @Bean
@@ -94,6 +93,40 @@ public class SubmittedVariantAccessioningConfiguration {
                 properties.getVariant().getCategoryId(),
                 properties.getInstanceId(),
                 service);
+    }
+
+    @Bean
+    public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
+        return new SubmittedVariantAccessioningDatabaseService(repository, inactiveService);
+    }
+
+    @Bean
+    public DbsnpSubmittedVariantAccessioningDatabaseService dbsnpSubmittedVariantAccessioningDatabaseService() {
+        return new DbsnpSubmittedVariantAccessioningDatabaseService(dbsnpRepository, dbsnpInactiveService);
+    }
+
+    @Bean
+    public SubmittedVariantOperationRepository submittedVariantOperationRepository() {
+        return operationRepository;
+    }
+
+    @Bean
+    public DbsnpSubmittedVariantOperationRepository dbsnpSubmittedVariantOperationRepository() {
+        return dbsnpOperationRepository;
+    }
+
+    @Bean
+    public SubmittedVariantInactiveService submittedVariantInactiveService() {
+        return new SubmittedVariantInactiveService(operationRepository,
+                                                   SubmittedVariantInactiveEntity::new,
+                                                   SubmittedVariantOperationEntity::new);
+    }
+
+    @Bean
+    public DbsnpSubmittedVariantInactiveService dbsnpSubmittedVariantInactiveService() {
+        return new DbsnpSubmittedVariantInactiveService(dbsnpOperationRepository,
+                                                        DbsnpSubmittedVariantInactiveEntity::new,
+                                                        DbsnpSubmittedVariantOperationEntity::new);
     }
 
 }
