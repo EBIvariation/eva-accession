@@ -41,16 +41,14 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
     public List<DbsnpSubmittedVariantEntity> process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         List<DbsnpSubmittedVariantEntity> variants = new ArrayList<>();
 
-        // this method will return the chromosome region or the contig one if there is no chromosome mapping
         Region variantRegion = getVariantRegion(subSnpNoHgvs);
 
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
         for (String alternate : alternateAlleles) {
             // a ISubmittedVariant is needed to calculate the hash to create the DbsnpSubmittedVariantEntity object
             ISubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
-                                                             subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs
-                                                                     .getBatchName(), variantRegion.getChromosome(),
-                                                             variantRegion.getStart(),
+                                                             getProjectAccession(subSnpNoHgvs),
+                                                             variantRegion.getChromosome(), variantRegion.getStart(),
                                                              subSnpNoHgvs.getReferenceInForwardStrand(), alternate,
                                                              subSnpNoHgvs.getRsId(),
                                                              subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs
@@ -71,5 +69,9 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
         } else {
             return new Region(subSnpNoHgvs.getContigName(), subSnpNoHgvs.getContigStart());
         }
+    }
+
+    private String getProjectAccession(SubSnpNoHgvs subSnpNoHgvs) {
+        return subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs.getBatchName();
     }
 }

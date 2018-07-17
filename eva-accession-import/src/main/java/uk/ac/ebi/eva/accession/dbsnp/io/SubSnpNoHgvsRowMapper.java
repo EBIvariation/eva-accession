@@ -28,7 +28,7 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
     public static final String SS_ID_COLUMN = "ss_id";
 
-    public static final String RS_ID_COLUMN = "ss_id";
+    public static final String RS_ID_COLUMN = "rs_id";
 
     public static final String ALLELES_COLUMN = "alleles";
 

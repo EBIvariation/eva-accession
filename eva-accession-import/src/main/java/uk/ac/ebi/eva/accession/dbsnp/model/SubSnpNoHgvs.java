@@ -282,7 +282,7 @@ public class SubSnpNoHgvs {
             throw new IllegalArgumentException("Unknown alleles orientation for variant " + this, e);
         }
 
-        // We use StringUtils instead of String.split because it removes the trailing empty values after splitting
+        // We use StringUtils because String.split does not remove the leading empty fields after splitting
         String[] dividedAlleles = StringUtils.split(alleles, "/");
 
         if (allelesOrientation.equals(Orientation.FORWARD)) {
@@ -345,7 +345,6 @@ public class SubSnpNoHgvs {
     private String getMicrosatelliteAlternate(String reference, String alternate) {
         String[] referenceAlleleParts = reference.split("\\)");
         if (NumberUtils.isDigits(referenceAlleleParts[1]) && NumberUtils.isDigits(alternate)) {
-            String nucleotideInReference = referenceAlleleParts[0] + ")";
             return referenceAlleleParts[0] + ")" + alternate;
         } else {
             throw new IllegalArgumentException("Not parseable STR: " + reference + "/" + alternate);
