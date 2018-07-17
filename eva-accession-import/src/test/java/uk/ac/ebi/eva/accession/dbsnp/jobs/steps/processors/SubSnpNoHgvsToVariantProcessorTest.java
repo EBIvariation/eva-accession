@@ -297,11 +297,29 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      false, "T", CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "(T)4", "(T)5");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "(T)4", "(T)7");
-    }
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "T", "(T)4");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "T", "(T)5");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(2), "T", "(T)7");
 
+        subSnpNoHgvs = new SubSnpNoHgvs(244316767L, 315216130L, "(TA)14(CA)2TA/-", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                        CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpClass.MICROSATELLITE,
+                                        Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE, CONTIG_START,
+                                        false, false, "TA", CREATED_DATE, TAXONOMY);
+        variants = processor.process(subSnpNoHgvs);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "TA", "(TA)14(CA)2TA");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "TA", "-");
+
+        subSnpNoHgvs = new SubSnpNoHgvs(702701141L, 718200201L, "(A)2(TA)8/(A)2(TA)6/(A)2(TA)7/(A)4(TA)9", ASSEMBLY,
+                                        BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                        DbsnpClass.MICROSATELLITE, Orientation.FORWARD, Orientation.FORWARD,
+                                        Orientation.FORWARD, CONTIG_START, false, false, "A",
+                                        Date.valueOf("2010-01-01"), TAXONOMY);
+        variants = processor.process(subSnpNoHgvs);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "(A)2(TA)8");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "A", "(A)2(TA)6");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(2), "A", "(A)2(TA)7");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(3), "A", "(A)4(TA)9");
+    }
     // TODO: MNV test
-    // TODO: STR test
     // TODO: variant without chromosome coordinates test
 }

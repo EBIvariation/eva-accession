@@ -21,11 +21,12 @@ import org.apache.commons.lang3.math.NumberUtils;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SubSnpNoHgvs {
 
-    private static final int SHORT_TANDEM_REPEAT = 4;
+    public static final String STR_SEQUENCE_REGEX_GROUP = "sequence";
 
     private Long ssId;
 
@@ -66,6 +67,11 @@ public class SubSnpNoHgvs {
     private int taxonomyId;
 
     private boolean assemblyMatch;
+
+    /**
+     * This pattern will detect STRs like (A)5 or (TA)7, being the sequence group the not numeric part
+     */
+    private static Pattern microsatellitePattern = Pattern.compile("(?<" + STR_SEQUENCE_REGEX_GROUP + ">\\([ATCG]+\\))\\d+");
 
     public SubSnpNoHgvs(Long ssId, Long rsId, String alleles, String assembly, String batchHandle, String batchName,
                         String chromosome, Long chromosomeStart, String contigName, DbsnpClass dbsnpClass,
@@ -240,14 +246,10 @@ public class SubSnpNoHgvs {
     }
 
     public String getReferenceInForwardStrand() {
-        if (dbsnpClass.equals(DbsnpClass.MICROSATELLITE)) {
-            return alleles.split("/")[0];
+        if (contigOrientation.equals(Orientation.REVERSE)) {
+            return calculateReverseComplement(reference);
         } else {
-            if (contigOrientation.equals(Orientation.REVERSE)) {
-                return calculateReverseComplement(reference);
-            } else {
-                return reference;
-            }
+            return reference;
         }
     }
 
@@ -256,10 +258,11 @@ public class SubSnpNoHgvs {
 
         String[] alleles = getAllelesInForwardStrand();
         String reference = getReferenceInForwardStrand();
+
         for (String allele : alleles) {
             if (!allele.equals(reference)) {
                 if (dbsnpClass.equals(DbsnpClass.MICROSATELLITE)) {
-                    altAllelesInForwardStrand.add(getMicrosatelliteAlternate(reference, allele));
+                    altAllelesInForwardStrand.add(getMicrosatelliteAlternate(allele, alleles[0]));
                 } else {
                     altAllelesInForwardStrand.add(allele);
                 }
@@ -342,12 +345,16 @@ public class SubSnpNoHgvs {
         return alleleInForwardStrand.toString();
     }
 
-    private String getMicrosatelliteAlternate(String reference, String alternate) {
-        String[] referenceAlleleParts = reference.split("\\)");
-        if (NumberUtils.isDigits(referenceAlleleParts[1]) && NumberUtils.isDigits(alternate)) {
-            return referenceAlleleParts[0] + ")" + alternate;
-        } else {
-            throw new IllegalArgumentException("Not parseable STR: " + reference + "/" + alternate);
+    private String getMicrosatelliteAlternate(String alternate, String firstAltAllele) {
+        if (NumberUtils.isDigits(alternate)) {
+            Matcher matcher = microsatellitePattern.matcher(firstAltAllele);
+            if (matcher.matches()) {
+                alternate = matcher.group(STR_SEQUENCE_REGEX_GROUP) + alternate;
+            } else {
+                throw new IllegalArgumentException("Not parseable STR: " + reference + "/" + alternate);
+            }
         }
+
+        return alternate;
     }
 }
