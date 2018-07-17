@@ -80,20 +80,20 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
                                         String expectedReference, String expectedAlternate) {
-        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, expectedReference, expectedAlternate, false);
+        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, CHROMOSOME, CHROMOSOME_START,
+                                    expectedReference, expectedAlternate, false);
     }
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
-                                        String expectedReference, String expectedAlternate,
-                                        boolean supportedByEvidence) {
-
+                                        String expectedContig, long expectedStart, String expectedReference,
+                                        String expectedAlternate, boolean supportedByEvidence) {
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
         assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
         assertEquals(ASSEMBLY, dbsnpSubmittedVariant.getAssemblyAccession());
         assertEquals(TAXONOMY, dbsnpSubmittedVariant.getTaxonomyAccession());
         assertEquals(PROJECT_ACCESSION, dbsnpSubmittedVariant.getProjectAccession());
-        assertEquals(CHROMOSOME, dbsnpSubmittedVariant.getContig());
-        assertEquals(CHROMOSOME_START, dbsnpSubmittedVariant.getStart());
+        assertEquals(expectedContig, dbsnpSubmittedVariant.getContig());
+        assertEquals(expectedStart, dbsnpSubmittedVariant.getStart());
         assertEquals(expectedReference, dbsnpSubmittedVariant.getReferenceAllele());
         assertEquals(expectedAlternate, dbsnpSubmittedVariant.getAlternateAllele());
         assertEquals(supportedByEvidence, dbsnpSubmittedVariant.isSupportedByEvidence());
@@ -233,7 +233,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "A", true);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true);
     }
 
     @Test
@@ -347,5 +347,16 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertProcessedVariant(subSnpNoHgvs, variants.get(2), "A", "(A)2(TA)7");
         assertProcessedVariant(subSnpNoHgvs, variants.get(3), "A", "(A)4(TA)9");
     }
-    // TODO: variant without chromosome coordinates test
+
+    @Test
+    public void transformVariantWithNoChromosomeCoordinates() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25962272L, 14745629L, "A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                                     null, null, CONTIG_NAME, DbsnpClass.MVN, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.FORWARD, CONTIG_START, false,
+                                                     false, "T", CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "G", false);
+    }
 }
