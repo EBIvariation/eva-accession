@@ -97,8 +97,8 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertEquals(expectedReference, dbsnpSubmittedVariant.getReferenceAllele());
         assertEquals(expectedAlternate, dbsnpSubmittedVariant.getAlternateAllele());
         assertEquals(supportedByEvidence, dbsnpSubmittedVariant.isSupportedByEvidence());
-        assertEquals(false, dbsnpSubmittedVariant.isAllelesMatch());
-        assertEquals(false, dbsnpSubmittedVariant.isAllelesMatch());
+        assertEquals(true, dbsnpSubmittedVariant.isAssemblyMatch());
+        assertEquals(true, dbsnpSubmittedVariant.isAllelesMatch());
         assertEquals(false, dbsnpSubmittedVariant.isValidated());
         assertEquals(1, dbsnpSubmittedVariant.getVersion());
     }

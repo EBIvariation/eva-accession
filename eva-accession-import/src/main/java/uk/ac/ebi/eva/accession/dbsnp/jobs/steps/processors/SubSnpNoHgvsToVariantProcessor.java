@@ -46,13 +46,12 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
         for (String alternate : alternateAlleles) {
             // a ISubmittedVariant is needed to calculate the hash to create the DbsnpSubmittedVariantEntity object
-            ISubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
+            SubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
                                                              getProjectAccession(subSnpNoHgvs),
                                                              variantRegion.getChromosome(), variantRegion.getStart(),
                                                              subSnpNoHgvs.getReferenceInForwardStrand(), alternate,
-                                                             subSnpNoHgvs.getRsId(),
-                                                             subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs
-                                                                     .isGenotypeExists(), false, false, false);
+                                                             subSnpNoHgvs.getRsId());
+            variant.setSupportedByEvidence(subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists());
             String hash = hashingFunction.apply(variant);
 
             DbsnpSubmittedVariantEntity ssVariant = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,

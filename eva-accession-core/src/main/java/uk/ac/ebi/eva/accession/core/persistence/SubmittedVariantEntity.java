@@ -176,12 +176,12 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     @Override
     public Boolean isAssemblyMatch() {
-        return assemblyMatch;
+        return assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch;
     }
 
     @Override
     public Boolean isAllelesMatch() {
-        return allelesMatch;
+        return allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch;
     }
 
     @Override
