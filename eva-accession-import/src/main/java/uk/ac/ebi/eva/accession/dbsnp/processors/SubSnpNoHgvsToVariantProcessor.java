@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.jobs.steps.processors;
+package uk.ac.ebi.eva.accession.dbsnp.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;

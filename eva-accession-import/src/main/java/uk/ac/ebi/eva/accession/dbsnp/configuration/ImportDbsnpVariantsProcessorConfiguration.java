@@ -33,6 +33,8 @@ import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.accession.dbsnp.processors.AssemblyCheckerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor;
+import uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor;
+import uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToVariantProcessor;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -52,11 +54,14 @@ public class ImportDbsnpVariantsProcessorConfiguration {
     ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> dbsnpVariantProcessor(
             InputParameters parameters,
             ContigReplacerProcessor contigReplacerProcessor,
-            AssemblyCheckerProcessor assemblyCheckerProcessor)
+            AssemblyCheckerProcessor assemblyCheckerProcessor,
+            SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor)
             throws Exception {
         logger.info("Injecting dbsnpVariantProcessor with parameters: {}", parameters);
         CompositeItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> compositeProcessor = new CompositeItemProcessor<>();
-        compositeProcessor.setDelegates(Arrays.asList(contigReplacerProcessor, assemblyCheckerProcessor));
+        compositeProcessor.setDelegates(Arrays.asList(contigReplacerProcessor,
+                                                      assemblyCheckerProcessor,
+                                                      subSnpNoHgvsToDbsnpVariantsWrapperProcessor));
         return compositeProcessor;
     }
 
@@ -80,6 +85,11 @@ public class ImportDbsnpVariantsProcessorConfiguration {
     FastaSequenceReader fastaSequenceReader(InputParameters parameters) throws IOException {
         Path referenceFastaFile = Paths.get(parameters.getFasta());
         return new FastaSequenceReader(referenceFastaFile);
+    }
+
+    @Bean
+    SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor() {
+        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor();
     }
 
     @Bean(ASSEMBLY_CHECK_STEP_LISTENER)

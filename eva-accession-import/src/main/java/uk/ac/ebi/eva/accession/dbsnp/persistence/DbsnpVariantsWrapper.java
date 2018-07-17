@@ -26,7 +26,7 @@ public class DbsnpVariantsWrapper {
 
     private List<? extends ISubmittedVariant> submittedVariants;
 
-    private IClusteredVariant clusteredVariants;
+    private IClusteredVariant clusteredVariant;
 
     private List<SubmittedVariantOperationEntity> operations;
 
@@ -41,12 +41,12 @@ public class DbsnpVariantsWrapper {
         this.submittedVariants = submittedVariants;
     }
 
-    public IClusteredVariant getClusteredVariants() {
-        return clusteredVariants;
+    public IClusteredVariant getClusteredVariant() {
+        return clusteredVariant;
     }
 
-    public void setClusteredVariants(IClusteredVariant clusteredVariants) {
-        this.clusteredVariants = clusteredVariants;
+    public void setClusteredVariant(IClusteredVariant clusteredVariant) {
+        this.clusteredVariant = clusteredVariant;
     }
 
     public List<SubmittedVariantOperationEntity> getOperations() {
