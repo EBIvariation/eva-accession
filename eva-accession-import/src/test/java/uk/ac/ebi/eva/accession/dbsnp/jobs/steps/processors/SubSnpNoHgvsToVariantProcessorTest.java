@@ -80,13 +80,13 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
                                         String expectedReference, String expectedAlternate) {
-        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, expectedReference, expectedAlternate, false,
-                                    false, false, false);
+        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, expectedReference, expectedAlternate, false);
     }
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
-                                        String expectedReference, String expectedAlternate, boolean supportedByEvidence,
-                                        boolean matchesAssembly, boolean allelesMatch, boolean validated) {
+                                        String expectedReference, String expectedAlternate,
+                                        boolean supportedByEvidence) {
+
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
         assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
         assertEquals(ASSEMBLY, dbsnpSubmittedVariant.getAssemblyAccession());
@@ -97,9 +97,9 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertEquals(expectedReference, dbsnpSubmittedVariant.getReferenceAllele());
         assertEquals(expectedAlternate, dbsnpSubmittedVariant.getAlternateAllele());
         assertEquals(supportedByEvidence, dbsnpSubmittedVariant.isSupportedByEvidence());
-        assertEquals(matchesAssembly, dbsnpSubmittedVariant.isAllelesMatch());
-        assertEquals(allelesMatch, dbsnpSubmittedVariant.isAllelesMatch());
-        assertEquals(validated, dbsnpSubmittedVariant.isValidated());
+        assertEquals(false, dbsnpSubmittedVariant.isAllelesMatch());
+        assertEquals(false, dbsnpSubmittedVariant.isAllelesMatch());
+        assertEquals(false, dbsnpSubmittedVariant.isValidated());
         assertEquals(1, dbsnpSubmittedVariant.getVersion());
     }
 
@@ -233,7 +233,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "A", true, false, false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "A", true);
     }
 
     @Test

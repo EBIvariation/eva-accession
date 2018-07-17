@@ -171,7 +171,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     @Override
     public Boolean isSupportedByEvidence() {
-        return supportedByEvidence;
+        return supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence;
     }
 
     @Override
@@ -186,7 +186,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     @Override
     public Boolean isValidated() {
-        return validated;
+        return validated == null ? DEFAULT_VALIDATED : validated;
     }
 
     @Override
