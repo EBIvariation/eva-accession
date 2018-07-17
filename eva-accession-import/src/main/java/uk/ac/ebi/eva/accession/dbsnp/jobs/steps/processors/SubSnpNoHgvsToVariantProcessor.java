@@ -43,17 +43,19 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
 
         Region variantRegion = getVariantRegion(subSnpNoHgvs);
 
+        String reference = subSnpNoHgvs.getReferenceInForwardStrand();
+        boolean allelesMatch = subSnpNoHgvs.referenceAlleleMatches();
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
         for (String alternate : alternateAlleles) {
-            // a ISubmittedVariant is needed to calculate the hash to create the DbsnpSubmittedVariantEntity object
+            // a SubmittedVariant object is needed to calculate the hash to create the DbsnpSubmittedVariantEntity one
             SubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
-                                                             getProjectAccession(subSnpNoHgvs),
-                                                             variantRegion.getChromosome(), variantRegion.getStart(),
-                                                             subSnpNoHgvs.getReferenceInForwardStrand(), alternate,
-                                                             subSnpNoHgvs.getRsId());
+                                                            getProjectAccession(subSnpNoHgvs),
+                                                            variantRegion.getChromosome(), variantRegion.getStart(),
+                                                            reference, alternate, subSnpNoHgvs.getRsId());
             variant.setSupportedByEvidence(subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists());
-            String hash = hashingFunction.apply(variant);
+            variant.setAllelesMatch(allelesMatch);
 
+            String hash = hashingFunction.apply(variant);
             DbsnpSubmittedVariantEntity ssVariant = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
                                                                                     variant);
             variants.add(ssVariant);

@@ -72,7 +72,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      CONTIG_START, false, false, "A", CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
-        // TODO: validated, match assembly and RS variant accession are being added into PR #28
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "C");
         // TODO: compare createdDate and hash, as they are not compared in the equals method
@@ -81,12 +80,12 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
                                         String expectedReference, String expectedAlternate) {
         this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, CHROMOSOME, CHROMOSOME_START,
-                                    expectedReference, expectedAlternate, false);
+                                    expectedReference, expectedAlternate, false, true);
     }
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
                                         String expectedContig, long expectedStart, String expectedReference,
-                                        String expectedAlternate, boolean supportedByEvidence) {
+                                        String expectedAlternate, boolean supportedByEvidence, boolean allelesMatch) {
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
         assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
         assertEquals(ASSEMBLY, dbsnpSubmittedVariant.getAssemblyAccession());
@@ -98,7 +97,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertEquals(expectedAlternate, dbsnpSubmittedVariant.getAlternateAllele());
         assertEquals(supportedByEvidence, dbsnpSubmittedVariant.isSupportedByEvidence());
         assertEquals(true, dbsnpSubmittedVariant.isAssemblyMatch());
-        assertEquals(true, dbsnpSubmittedVariant.isAllelesMatch());
+        assertEquals(allelesMatch, dbsnpSubmittedVariant.isAllelesMatch());
         assertEquals(false, dbsnpSubmittedVariant.isValidated());
         assertEquals(1, dbsnpSubmittedVariant.getVersion());
     }
@@ -233,7 +232,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
     }
 
     @Test
@@ -324,17 +323,18 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                                      false, "T", CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "T", "(T)4");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "T", "(T)5");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(2), "T", "(T)7");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "(T)4", false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "(T)5", false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "T", "(T)7", false, false);
 
         subSnpNoHgvs = new SubSnpNoHgvs(244316767L, 315216130L, "(TA)14(CA)2TA/-", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
                                         CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpClass.MICROSATELLITE,
                                         Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE, CONTIG_START,
                                         false, false, "TA", CREATED_DATE, TAXONOMY);
         variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "TA", "(TA)14(CA)2TA");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "TA", "-");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "TA", "(TA)14(CA)2TA",
+                               false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "TA", "-", false, false);
 
         subSnpNoHgvs = new SubSnpNoHgvs(702701141L, 718200201L, "(A)2(TA)8/(A)2(TA)6/(A)2(TA)7/(A)4(TA)9", ASSEMBLY,
                                         BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
@@ -342,10 +342,14 @@ public class SubSnpNoHgvsToVariantProcessorTest {
                                         Orientation.FORWARD, CONTIG_START, false, false, "A",
                                         Date.valueOf("2010-01-01"), TAXONOMY);
         variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "(A)2(TA)8");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "A", "(A)2(TA)6");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(2), "A", "(A)2(TA)7");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(3), "A", "(A)4(TA)9");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)8", false,
+                               false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)6", false,
+                               false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)7", false,
+                               false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(3), CHROMOSOME, CHROMOSOME_START, "A", "(A)4(TA)9", false,
+                               false);
     }
 
     @Test
@@ -357,6 +361,19 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "G", false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "G", false, true);
+    }
+
+    @Test
+    public void transformSnpNotMatchingAlleles() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpClass.SNV,
+                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
+                                                     CONTIG_START, false, false, "T", CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "A", false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "C", false, false);
     }
 }
