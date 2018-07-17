@@ -251,6 +251,33 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
+    public void transformMNV() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(666079762L, 313826846L, "TTA/ATC", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     DbsnpClass.MVN, Orientation.FORWARD, Orientation.REVERSE,
+                                                     Orientation.REVERSE, CONTIG_START, false, false, "TAA",
+                                                     CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "TTA", "ATC");
+    }
+
+    @Test
+    public void transformMultiallelicMNV() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(973513424L, 525103154L, "AC/TC/TA", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     DbsnpClass.MVN, Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, CONTIG_START, false, false, "AC",
+                                                     CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "AC", "TC");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "AC", "TA");
+    }
+
+    @Test
     public void leadingSlashInAllelesIsIgnored() throws Exception {
         // forward strand
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "/A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
@@ -320,6 +347,5 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertProcessedVariant(subSnpNoHgvs, variants.get(2), "A", "(A)2(TA)7");
         assertProcessedVariant(subSnpNoHgvs, variants.get(3), "A", "(A)4(TA)9");
     }
-    // TODO: MNV test
     // TODO: variant without chromosome coordinates test
 }
