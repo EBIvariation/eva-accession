@@ -60,6 +60,8 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
     public static final String SS_CREATE_TIME_COLUMN = "ss_create_time";
 
+    public static final String RS_CREATE_TIME_COLUMN = "rs_create_time";
+
     public static final String TAXONOMY_ID_COLUMN = "tax_id";
 
     public static final String LOAD_ORDER_COLUMN = "load_order";
@@ -90,6 +92,7 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
                                 resultSet.getBoolean(GENOTYPE_EXISTS_COLUMN),
                                 resultSet.getString(REFERENCE_COLUMN),
                                 resultSet.getTimestamp(SS_CREATE_TIME_COLUMN),
+                                resultSet.getTimestamp(RS_CREATE_TIME_COLUMN),
                                 resultSet.getInt(TAXONOMY_ID_COLUMN));
     }
 }

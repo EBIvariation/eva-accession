@@ -63,7 +63,9 @@ public class SubSnpNoHgvs {
 
     private String reference;
 
-    private Timestamp createTime;
+    private Timestamp ssCreateTime;
+
+    private Timestamp rsCreateTime;
 
     private int taxonomyId;
 
@@ -78,8 +80,7 @@ public class SubSnpNoHgvs {
                         String chromosome, Long chromosomeStart, String contigName, DbsnpVariantType dbsnpVariantType,
                         Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
                         long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
-                        Timestamp createTime, int taxonomyId) {
-
+                        Timestamp ssCreateTime, Timestamp rsCreateTime, int taxonomyId) {
         this.ssId = ssId;
         this.rsId = rsId;
         this.alleles = alleles;
@@ -97,7 +98,8 @@ public class SubSnpNoHgvs {
         this.frequencyExists = frequencyExists;
         this.genotypeExists = genotypeExists;
         this.reference = reference;
-        this.createTime = createTime;
+        this.ssCreateTime = ssCreateTime;
+        this.rsCreateTime = rsCreateTime;
         this.taxonomyId = taxonomyId;
     }
 
@@ -238,12 +240,20 @@ public class SubSnpNoHgvs {
         this.reference = reference;
     }
 
-    public Timestamp getCreateTime() {
-        return createTime;
+    public Timestamp getSsCreateTime() {
+        return ssCreateTime;
     }
 
-    public void setCreateTime(Timestamp createTime) {
-        this.createTime = createTime;
+    public void setSsCreateTime(Timestamp ssCreateTime) {
+        this.ssCreateTime = ssCreateTime;
+    }
+
+    public Timestamp getRsCreateTime() {
+        return rsCreateTime;
+    }
+
+    public void setRsCreateTime(Timestamp rsCreateTime) {
+        this.rsCreateTime = rsCreateTime;
     }
 
     public int getTaxonomyId() {
