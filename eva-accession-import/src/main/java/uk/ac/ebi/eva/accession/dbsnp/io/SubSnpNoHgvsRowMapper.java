@@ -87,7 +87,7 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
                                 resultSet.getBoolean(FREQUENCY_EXISTS_COLUMN),
                                 resultSet.getBoolean(GENOTYPE_EXISTS_COLUMN),
                                 resultSet.getString(REFERENCE_COLUMN),
-                                resultSet.getDate(SS_CREATE_TIME_COLUMN),
+                                resultSet.getTimestamp(SS_CREATE_TIME_COLUMN),
                                 resultSet.getInt(TAXONOMY_ID_COLUMN));
     }
 }

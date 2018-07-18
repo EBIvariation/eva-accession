@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
-import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,7 +63,7 @@ public class SubSnpNoHgvs {
 
     private String reference;
 
-    private Date createTime;
+    private Timestamp createTime;
 
     private int taxonomyId;
 
@@ -78,7 +78,7 @@ public class SubSnpNoHgvs {
                         String chromosome, Long chromosomeStart, String contigName, DbsnpClass dbsnpClass,
                         Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
                         Long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
-                        Date createTime, int taxonomyId) {
+                        Timestamp createTime, int taxonomyId) {
 
         this.ssId = ssId;
         this.rsId = rsId;
@@ -222,11 +222,11 @@ public class SubSnpNoHgvs {
         this.reference = reference;
     }
 
-    public Date getCreateTime() {
+    public Timestamp getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Date createTime) {
+    public void setCreateTime(Timestamp createTime) {
         this.createTime = createTime;
     }
 

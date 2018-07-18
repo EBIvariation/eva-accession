@@ -25,10 +25,9 @@ import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
 
 import java.sql.Date;
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import java.util.List;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class SubSnpNoHgvsToVariantProcessorTest {
@@ -51,7 +50,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     private static final int TAXONOMY = 9999;
 
-    private static final Date CREATED_DATE = Date.valueOf("2010-01-02");
+    private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
     SubSnpNoHgvsToVariantProcessor processor;
 
@@ -99,6 +98,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertEquals(true, dbsnpSubmittedVariant.isAssemblyMatch());
         assertEquals(allelesMatch, dbsnpSubmittedVariant.isAllelesMatch());
         assertEquals(false, dbsnpSubmittedVariant.isValidated());
+        assertEquals(CREATED_DATE.toLocalDateTime(), dbsnpSubmittedVariant.getCreatedDate());
         assertEquals(1, dbsnpSubmittedVariant.getVersion());
     }
 
@@ -339,8 +339,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         subSnpNoHgvs = new SubSnpNoHgvs(702701141L, 718200201L, "(A)2(TA)8/(A)2(TA)6/(A)2(TA)7/(A)4(TA)9", ASSEMBLY,
                                         BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                         DbsnpClass.MICROSATELLITE, Orientation.FORWARD, Orientation.FORWARD,
-                                        Orientation.FORWARD, CONTIG_START, false, false, "A",
-                                        Date.valueOf("2010-01-01"), TAXONOMY);
+                                        Orientation.FORWARD, CONTIG_START, false, false, "A", CREATED_DATE, TAXONOMY);
         variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)8", false,
                                false);
@@ -376,4 +375,6 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "A", false, false);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "C", false, false);
     }
+
+
 }
