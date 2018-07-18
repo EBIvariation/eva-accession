@@ -20,12 +20,16 @@ import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.Before;
+import com.mongodb.DBObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -46,6 +50,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 
@@ -154,6 +159,9 @@ public class SubmittedVariantAccessioningServiceTest {
                 (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
                  new SHA1HashingFunction());
     }
+
+    @Autowired
+    private MongoDbFactory mongoDbFactory;
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
@@ -368,4 +376,27 @@ public class SubmittedVariantAccessioningServiceTest {
         accessioningServiceDbsnp.getOrCreate(Collections.singletonList(submittedVariant));
     }
 
+    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @Test
+    public void defaultValuesAreNotStored() throws AccessionCouldNotBeGeneratedException {
+        boolean NOT_DEFAULT_SUPPORTED_BY_EVIDENCE = !ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref",
+                                                                 "alt", CLUSTERED_VARIANT,
+                                                                 NOT_DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                                 ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH,
+                                                                 ISubmittedVariant.DEFAULT_ALLELES_MATCH,
+                                                                 ISubmittedVariant.DEFAULT_VALIDATED);
+
+        service.getOrCreate(Collections.singletonList(submittedVariant));
+
+        List<DBObject> submittedVariantEntities = mongoDbFactory.getDb()
+                                                                .getCollection("submittedVariantEntity")
+                                                                .find()
+                                                                .toArray();
+        assertEquals(1, submittedVariantEntities.size());
+        assertEquals(NOT_DEFAULT_SUPPORTED_BY_EVIDENCE, submittedVariantEntities.get(0).get("evidence"));
+        assertEquals(null, submittedVariantEntities.get(0).get("asmMatch"));
+        assertEquals(null, submittedVariantEntities.get(0).get("allelesMatch"));
+        assertEquals(null, submittedVariantEntities.get(0).get("validated"));
+    }
 }
