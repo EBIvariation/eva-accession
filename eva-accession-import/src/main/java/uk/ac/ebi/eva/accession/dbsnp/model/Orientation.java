@@ -30,14 +30,14 @@ public enum Orientation {
     }
 
     public static Orientation getOrientation(Integer orientation) {
-        if (orientation == null) {
+        if (orientation == 0) {
             return UNKNOWN;
         } else if (orientation == 1) {
             return FORWARD;
         } else if (orientation == -1) {
             return REVERSE;
         } else {
-            throw new IllegalArgumentException("Orientation must be +1, -1 or null");
+            throw new IllegalArgumentException("Orientation must be +1, -1 or 0");
         }
     }
 
