@@ -68,7 +68,7 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
 
     public IClusteredVariant getModel() {
         ClusteredVariant clusteredVariant = new ClusteredVariant(this);
-        clusteredVariant.setValidated(validated == null ? DEFAULT_VALIDATED : validated);
+        clusteredVariant.setValidated(isValidated());
         return clusteredVariant;
     }
 
@@ -99,7 +99,7 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> imple
 
     @Override
     public Boolean isValidated() {
-        return validated;
+        return validated == null ? DEFAULT_VALIDATED : validated;
     }
 
     @Override

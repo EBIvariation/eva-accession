@@ -61,11 +61,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpForwardOrientations() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "A", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "A/C", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -116,11 +116,12 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpReverseSs() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1984788946L, 14718243L, "T/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "A", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1984788946L, 14718243L, "A", "T/C", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -130,11 +131,12 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpReverseRs() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(186667770L, 14730808L, "C/T", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "G", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(186667770L, 14730808L, "G", "C/T", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -143,11 +145,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpReverseRsAndSs() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1982511850L, 14730808L, "G/A", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.REVERSE, Orientation.REVERSE, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "G", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1982511850L, 14730808L, "G", "G/A", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
+                                                     Orientation.REVERSE, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -156,11 +158,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpReverseContig() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(181534645L, 14797051L, "C/T", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.REVERSE,
-                                                     CONTIG_START, false, false, false, false, "T", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(181534645L, 14797051L, "T", "C/T", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -169,11 +171,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpReverseContigAndSs() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(823297358L, 14797051L, "G/A", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.REVERSE, Orientation.FORWARD, Orientation.REVERSE,
-                                                     CONTIG_START, false, false, false, false, "T", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(823297358L, 14797051L, "T", "G/A", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
+                                                     Orientation.FORWARD, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -182,11 +184,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpReverseContigAndRs() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1979073615L, 10723963L, "G/A", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE,
-                                                     CONTIG_START, false, false, false, false, "C", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1979073615L, 10723963L, "C", "G/A", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -195,11 +197,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpReverseContigRsAndSs() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(822765305L, 14510048L, "C/G", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.REVERSE, Orientation.REVERSE, Orientation.REVERSE,
-                                                     CONTIG_START, false, false, false, false, "C", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(822765305L, 14510048L, "C", "C/G", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -208,21 +210,20 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformInsertion() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "-/T", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.DIV,
-                                                     Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE,
-                                                     CONTIG_START, false, false, false, false, "-", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "-", "-/T", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "-", "T");
 
-        subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "G/AG", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                        CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.DIV,
-                                        Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE,
-                                        CONTIG_START, false, false, false, false, "C", CREATED_DATE, CREATED_DATE,
-                                        TAXONOMY);
+        subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "C", "G/AG", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                        CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.DIV,
+                                        Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE, false, false,
+                                        false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         variants = processor.process(subSnpNoHgvs);
 
@@ -231,21 +232,20 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformDeletion() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(808112673L, 794532822L, "T/-", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.DIV,
-                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "T", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(808112673L, 794532822L, "T", "T/-", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "T", "-");
 
-        subSnpNoHgvs = new SubSnpNoHgvs(808112673L, 794532822L, "TG/T", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                        CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.DIV,
-                                        Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                        CONTIG_START, false, false, false, false, "TG", CREATED_DATE, CREATED_DATE,
-                                        TAXONOMY);
+        subSnpNoHgvs = new SubSnpNoHgvs(808112673L, 794532822L, "TG", "TG/T", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                        CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.DIV,
+                                        Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, false, false,
+                                        false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         variants = processor.process(subSnpNoHgvs);
 
@@ -254,12 +254,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformIndel() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052218848L, 794686157L, "C/TA", ASSEMBLY, BATCH_HANDLE,
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052218848L, 794686157L, "G", "C/TA", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                                     DbsnpVariantType.DIV, Orientation.FORWARD, Orientation.REVERSE,
-                                                     Orientation.REVERSE, CONTIG_START, false, false, false, false, "G",
-                                                     CREATED_DATE, CREATED_DATE, TAXONOMY);
-
+                                                     CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "C", "TA");
@@ -267,25 +266,24 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformDeletionReverseContig() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(820982442L, 794525917L, "T/-", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.DIV,
-                                                     Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE,
-                                                     CONTIG_START, false, false, false, false, "A", CREATED_DATE, CREATED_DATE,
-                                                     TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(820982442L, 794525917L, "A", "T/-", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "T", "-");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "T", "");
     }
 
     @Test
     public void transformVariantSupportedByEvidence() throws Exception {
-        // variant with genotype and frequencies
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25945162L, 14730808L, "C/T", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
-                                                     CONTIG_START, true, true, false, true, "G", CREATED_DATE,
-                                                     CREATED_DATE, TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25945162L, 14730808L, "G", "C/T", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.FORWARD, true, true, false, true,
+                                                     CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
@@ -305,11 +303,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformMultiallelicSS() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1975823489L, 13637891L, "A/C/G", ASSEMBLY, BATCH_HANDLE,
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1975823489L, 13637891L, "A", "A/C/G", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                                     DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                                     Orientation.FORWARD, CONTIG_START, false, false, false, false, "A",
-                                                     CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -319,11 +317,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformMNV() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(666079762L, 313826846L, "TTA/ATC", ASSEMBLY, BATCH_HANDLE,
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(666079762L, 313826846L, "TAA", "TTA/ATC", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                                     DbsnpVariantType.MNV, Orientation.FORWARD, Orientation.REVERSE,
-                                                     Orientation.REVERSE, CONTIG_START, false, false, false, false,
-                                                     "TAA", CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     CONTIG_START, DbsnpVariantType.MNV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -332,11 +330,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformMultiallelicMNV() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(973513424L, 525103154L, "AC/TC/TA", ASSEMBLY, BATCH_HANDLE,
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(973513424L, 525103154L, "AC", "AC/TC/TA", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                                     DbsnpVariantType.MNV, Orientation.FORWARD, Orientation.FORWARD,
-                                                     Orientation.FORWARD, CONTIG_START, false, false, false, false,
-                                                     "AC", CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     CONTIG_START, DbsnpVariantType.MNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -347,19 +345,19 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
     @Test
     public void leadingSlashInAllelesIsIgnored() throws Exception {
         // forward strand
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "/A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
-                                                     CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "C", CREATED_DATE,
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "C", "/A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
+                                                     DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, false, false, false, false, CREATED_DATE,
                                                      CREATED_DATE, TAXONOMY);
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "C", "A");
 
         // reverse strand
-        subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "/T/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
-                                        CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV, Orientation.REVERSE,
-                                        Orientation.FORWARD, Orientation.FORWARD, CONTIG_START, false, false, false,
-                                        false, "A", CREATED_DATE, CREATED_DATE, TAXONOMY);
+        subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "A", "/T/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
+                                        CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.SNV,
+                                        Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, false, false,
+                                        false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
         variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "G");
     }
@@ -367,50 +365,50 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
     @Test
     public void trailingSlashInAllelesIsIgnored() throws Exception {
         // forward strand
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "A/C/", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
-                                                     CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "C", CREATED_DATE,
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "C", "A/C/", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
+                                                     DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, false, false, false, false, CREATED_DATE,
                                                      CREATED_DATE, TAXONOMY);
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "C", "A");
 
         // reverse strand
-        subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "T/C/", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
-                                        CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV, Orientation.REVERSE,
-                                        Orientation.FORWARD, Orientation.FORWARD, CONTIG_START, false, false, false,
-                                        false, "A", CREATED_DATE, CREATED_DATE, TAXONOMY);
+        subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "A", "T/C/", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
+                                        CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.SNV,
+                                        Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, false, false,
+                                        false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
         variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "G");
     }
 
     @Test
     public void transformShortTandemRepeat() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(700214256L, 439714840L, "(T)4/5/7", ASSEMBLY, BATCH_HANDLE,
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(700214256L, 439714840L, "T", "(T)4/5/7", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                                     DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD,
-                                                     Orientation.FORWARD, Orientation.FORWARD, CONTIG_START, false,
-                                                     false, false,
-                                                     false, "T", CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     CONTIG_START, DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "(T)4", false, false);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "(T)5", false, false);
         assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "T", "(T)7", false, false);
 
-        subSnpNoHgvs = new SubSnpNoHgvs(244316767L, 315216130L, "(TA)14(CA)2TA/-", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                        CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.MICROSATELLITE,
-                                        Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE, CONTIG_START,
-                                        false, false, false, false, "TA", CREATED_DATE, CREATED_DATE, TAXONOMY);
+        subSnpNoHgvs = new SubSnpNoHgvs(244316767L, 315216130L, "TA", "(TA)14(CA)2TA/-", ASSEMBLY, BATCH_HANDLE,
+                                        BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
+                                        DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD, Orientation.REVERSE,
+                                        Orientation.REVERSE, false, false, false, false, CREATED_DATE, CREATED_DATE,
+                                        TAXONOMY);
         variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "TA", "(TA)14(CA)2TA",
                                false, false);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "TA", "-", false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "TA", "", false, false);
 
-        subSnpNoHgvs = new SubSnpNoHgvs(702701141L, 718200201L, "(A)2(TA)8/(A)2(TA)6/(A)2(TA)7/(A)4(TA)9", ASSEMBLY,
-                                        BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                        DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD, Orientation.FORWARD,
-                                        Orientation.FORWARD, CONTIG_START, false, false, false, false, "A",
+        subSnpNoHgvs = new SubSnpNoHgvs(702701141L, 718200201L, "A", "(A)2(TA)8/(A)2(TA)6/(A)2(TA)7/(A)4(TA)9",
+                                        ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                        CONTIG_START, DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD,
+                                        Orientation.FORWARD, Orientation.FORWARD, false, false, false, false,
                                         CREATED_DATE, CREATED_DATE, TAXONOMY);
         variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)8", false,
@@ -425,11 +423,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformVariantWithNoChromosomeCoordinates() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25962272L, 14745629L, "A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     null, null, CONTIG_NAME, DbsnpVariantType.SNV, Orientation.FORWARD,
-                                                     Orientation.REVERSE, Orientation.FORWARD, CONTIG_START, false,
-                                                     false, false,
-                                                     false, "T", CREATED_DATE, CREATED_DATE, TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25962272L, 14745629L, "T", "A/C", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, null, null, CONTIG_NAME, CONTIG_START,
+                                                     DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.REVERSE,
+                                                     Orientation.FORWARD, false, false, false, false, CREATED_DATE,
+                                                     CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
@@ -438,10 +436,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     @Test
     public void transformSnpNotMatchingAlleles() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
-                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
-                                                     Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                                     CONTIG_START, false, false, false, false, "T", CREATED_DATE, CREATED_DATE, TAXONOMY);
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "T", "A/C", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 

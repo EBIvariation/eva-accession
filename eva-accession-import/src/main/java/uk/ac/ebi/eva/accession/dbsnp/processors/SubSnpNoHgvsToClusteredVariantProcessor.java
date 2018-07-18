@@ -43,7 +43,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
     public DbsnpClusteredVariantEntity process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         Region variantRegion = subSnpNoHgvs.getVariantRegion();
         List<String> alleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
-        VariantType type = VariantClassifier.getVariantClassification(subSnpNoHgvs.getReference(),
+        VariantType type = VariantClassifier.getVariantClassification(subSnpNoHgvs.getReferenceInForwardStrand(),
                                                                       alleles.get(0), // TODO which allele to use? we
                                                                       // need the logic of the declustering to
                                                                       // complete this
