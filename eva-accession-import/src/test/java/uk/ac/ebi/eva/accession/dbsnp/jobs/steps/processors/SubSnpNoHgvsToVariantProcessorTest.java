@@ -225,13 +225,25 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     @Test
     public void transformVariantSupportedByEvidence() throws Exception {
+        // variant with genotype and frequencies
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25945162L, 14730808L, "C/T", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
                                                      CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpClass.SNV,
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
-                                                     CONTIG_START, false, true, "G", CREATED_DATE, TAXONOMY);
+                                                     CONTIG_START, true, true, "G", CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
 
+        // variant with genotypes but no frequencies
+        subSnpNoHgvs.setFrequencyExists(false);
+        subSnpNoHgvs.setGenotypeExists(true);
+        variants = processor.process(subSnpNoHgvs);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
+
+        // variant with frequencies but no genotypes
+        subSnpNoHgvs.setFrequencyExists(true);
+        subSnpNoHgvs.setGenotypeExists(false);
+        variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
     }
 
