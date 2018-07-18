@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.core;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 public class ClusteredVariant implements IClusteredVariant {
 

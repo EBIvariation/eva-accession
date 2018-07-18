@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.VariantType;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;

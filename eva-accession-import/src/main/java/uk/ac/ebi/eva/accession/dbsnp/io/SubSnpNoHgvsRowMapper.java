@@ -52,6 +52,10 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
     public static final String CONTIG_START_COLUMN = "contig_start";
 
+    public static final String SUBSNP_VALIDATED_COLUMN = "subsnp_validation_status";
+
+    public static final String SNP_VALIDATED_COLUMN = "snp_validation_status";
+
     public static final String FREQUENCY_EXISTS_COLUMN = "freq_exists";
 
     public static final String GENOTYPE_EXISTS_COLUMN = "genotype_exists";
@@ -88,11 +92,17 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
                                 Orientation.getOrientation(resultSet.getObject(SNP_ORIENTATION_COLUMN, Integer.class)),
                                 Orientation.getOrientation(resultSet.getObject(CONTIG_ORIENTATION_COLUMN, Integer.class)),
                                 resultSet.getLong(CONTIG_START_COLUMN),
+                                isValidated(resultSet.getInt(SUBSNP_VALIDATED_COLUMN)),
+                                isValidated(resultSet.getInt(SNP_VALIDATED_COLUMN)),
                                 resultSet.getBoolean(FREQUENCY_EXISTS_COLUMN),
                                 resultSet.getBoolean(GENOTYPE_EXISTS_COLUMN),
                                 resultSet.getString(REFERENCE_COLUMN),
                                 resultSet.getTimestamp(SS_CREATE_TIME_COLUMN),
                                 resultSet.getTimestamp(RS_CREATE_TIME_COLUMN),
                                 resultSet.getInt(TAXONOMY_ID_COLUMN));
+    }
+
+    private boolean isValidated(int validationStatusCode) throws SQLException {
+        return validationStatusCode != 0;
     }
 }

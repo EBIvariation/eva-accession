@@ -85,7 +85,7 @@ public class AssemblyCheckerProcessorTest {
                                          String referenceAllele, DbsnpVariantType variantClass) {
         return new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome, chromosomeStart, contig,
                                 variantClass, Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                contigStart, true, true, referenceAllele, null, null, TAXONOMY);
+                                contigStart, false, false, true, true, referenceAllele, null, null, TAXONOMY);
     }
 
     //SeqName Fasta

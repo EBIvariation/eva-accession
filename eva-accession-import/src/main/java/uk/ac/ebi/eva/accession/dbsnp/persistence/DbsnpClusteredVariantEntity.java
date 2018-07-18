@@ -23,7 +23,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.VariantType;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 @Document
 public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> implements IClusteredVariant {

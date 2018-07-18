@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
+import uk.ac.ebi.eva.commons.core.models.VariantType;
+
 import java.time.LocalDateTime;
 
 /**

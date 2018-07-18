@@ -49,8 +49,8 @@ public class ContigReplacerProcessorTest {
     public void convertVariantFromSeqNameToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", SEQNAME_1, START,
                                               SEQNAME_1, DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                              Orientation.FORWARD, START, true, true, REFERENCE_ALLELE, null,
-                                              null, TAXONOMY);
+                                              Orientation.FORWARD, START, true, true, true, true, REFERENCE_ALLELE,
+                                              null, null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
 
@@ -58,8 +58,8 @@ public class ContigReplacerProcessorTest {
     public void convertVariantFromGenBankToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", null, 0L, GENBANK_1,
                                               DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                              Orientation.FORWARD, START, true, true, REFERENCE_ALLELE, null,
-                                              null, TAXONOMY);
+                                              Orientation.FORWARD, START, true, true, true, true, REFERENCE_ALLELE,
+                                              null, null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
 
@@ -67,7 +67,7 @@ public class ContigReplacerProcessorTest {
     public void convertVariantFromRefSeqToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", REFSEQ_1, START, null,
                                               DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                              Orientation.FORWARD, 0L, true, true, REFERENCE_ALLELE, null,
+                                              Orientation.FORWARD, 0L, true, true, true, true, REFERENCE_ALLELE, null,
                                               null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
@@ -76,8 +76,8 @@ public class ContigReplacerProcessorTest {
     public void convertVariantFromUcscToSeqName() throws Exception {
         SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", UCSC_1, START, UCSC_1,
                                               DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                              Orientation.FORWARD, START, true, true, REFERENCE_ALLELE, null,
-                                              null, TAXONOMY);
+                                              Orientation.FORWARD, START, true, true, true, true, REFERENCE_ALLELE,
+                                              null, null, TAXONOMY);
         assertEquals(SEQNAME_1, processor.process(input).getContigName());
     }
 }

@@ -55,11 +55,12 @@ public class SubSnpNoHgvsToSubmittedVariantProcessor
                                                             reference, alternate, subSnpNoHgvs.getRsId());
             variant.setSupportedByEvidence(subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists());
             variant.setAllelesMatch(allelesMatch);
+            variant.setValidated(subSnpNoHgvs.isSubsnpValidated());
 
             String hash = hashingFunction.apply(variant);
             DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
                                                                                           variant);
-            ssVariantEntity.setCreatedDate(subSnpNoHgvs.getCreateTime().toLocalDateTime());
+            ssVariantEntity.setCreatedDate(subSnpNoHgvs.getSsCreateTime().toLocalDateTime());
             variants.add(ssVariantEntity);
         }
 

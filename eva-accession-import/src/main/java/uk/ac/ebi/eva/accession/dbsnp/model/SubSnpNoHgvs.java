@@ -18,6 +18,8 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import uk.ac.ebi.eva.commons.core.models.Region;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +59,10 @@ public class SubSnpNoHgvs {
 
     private Orientation contigOrientation;
 
+    private boolean subsnpValidated;
+
+    private boolean snpValidated;
+
     private boolean frequencyExists;
 
     private boolean genotypeExists;
@@ -79,8 +85,9 @@ public class SubSnpNoHgvs {
     public SubSnpNoHgvs(Long ssId, Long rsId, String alleles, String assembly, String batchHandle, String batchName,
                         String chromosome, Long chromosomeStart, String contigName, DbsnpVariantType dbsnpVariantType,
                         Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
-                        long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
-                        Timestamp ssCreateTime, Timestamp rsCreateTime, int taxonomyId) {
+                        long contigStart, boolean subsnpValidated, boolean snpValidated, boolean frequencyExists,
+                        boolean genotypeExists, String reference, Timestamp ssCreateTime, Timestamp rsCreateTime,
+                        int taxonomyId) {
         this.ssId = ssId;
         this.rsId = rsId;
         this.alleles = alleles;
@@ -95,6 +102,8 @@ public class SubSnpNoHgvs {
         this.subsnpOrientation = subsnpOrientation;
         this.snpOrientation = snpOrientation;
         this.contigOrientation = contigOrientation;
+        this.subsnpValidated = subsnpValidated;
+        this.snpValidated = snpValidated;
         this.frequencyExists = frequencyExists;
         this.genotypeExists = genotypeExists;
         this.reference = reference;
@@ -102,7 +111,6 @@ public class SubSnpNoHgvs {
         this.rsCreateTime = rsCreateTime;
         this.taxonomyId = taxonomyId;
     }
-
 
     public Long getSsId() {
         return ssId;
@@ -214,6 +222,22 @@ public class SubSnpNoHgvs {
 
     public void setContigStart(long contigStart) {
         this.contigStart = contigStart;
+    }
+
+    public boolean isSubsnpValidated() {
+        return subsnpValidated;
+    }
+
+    public void setSubsnpValidated(boolean subsnpValidated) {
+        this.subsnpValidated = subsnpValidated;
+    }
+
+    public boolean isSnpValidated() {
+        return snpValidated;
+    }
+
+    public void setSnpValidated(boolean snpValidated) {
+        this.snpValidated = snpValidated;
     }
 
     public boolean isFrequencyExists() {
@@ -390,4 +414,13 @@ public class SubSnpNoHgvs {
         String[] allAllelesInForwardStrand = getAllelesInForwardStrand();
         return Arrays.stream(allAllelesInForwardStrand).anyMatch(allele -> allele.equals(referenceInForwardStrand));
     }
+
+    public Region getVariantRegion() {
+        if (getChromosome() != null) {
+            return new Region(getChromosome(), getChromosomeStart());
+        } else {
+            return new Region(getContigName(), getContigStart());
+        }
+    }
+
 }

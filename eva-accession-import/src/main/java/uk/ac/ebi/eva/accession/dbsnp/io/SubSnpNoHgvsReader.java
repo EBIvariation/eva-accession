@@ -45,9 +45,11 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.RS_CREATE_T
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.RS_ID_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_CLASS_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_ORIENTATION_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_VALIDATED_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SS_CREATE_TIME_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SS_ID_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SUBSNP_ORIENTATION_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SUBSNP_VALIDATED_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.TAXONOMY_ID_COLUMN;
 
 public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
@@ -92,6 +94,8 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
                         "," + FREQUENCY_EXISTS_COLUMN +
                         "," + GENOTYPE_EXISTS_COLUMN +
                         "," + REFERENCE_COLUMN +
+                        "," + SUBSNP_VALIDATED_COLUMN +
+                        "," + SNP_VALIDATED_COLUMN +
                         "," + SS_CREATE_TIME_COLUMN +
                         "," + RS_CREATE_TIME_COLUMN +
                         "," + TAXONOMY_ID_COLUMN +
