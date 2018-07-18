@@ -1,5 +1,6 @@
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,6 +11,7 @@ import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpClass;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertFalse;
@@ -70,6 +72,14 @@ public class AssemblyCheckerProcessorTest {
                 Paths.get("src/test/resources/input-files/fasta/fasta.ucsc.fa"));
         processorUcsc = new AssemblyCheckerProcessor(contigMapping, fastaSequenceReaderUcsc);
     }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        Files.deleteIfExists(Paths.get("src/test/resources/input-files/fasta/fasta.genbank.fa.fai"));
+        Files.deleteIfExists(Paths.get("src/test/resources/input-files/fasta/fasta.refseq.fa.fai"));
+        Files.deleteIfExists(Paths.get("src/test/resources/input-files/fasta/fasta.ucsc.fa.fai"));
+    }
+
 
     private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, long chromosomeStart, String contig, long contigStart,
                                          String referenceAllele, DbsnpClass variantClass) {
