@@ -29,11 +29,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgvs, List<DbsnpSubmittedVariantEntity>> {
+public class SubSnpNoHgvsToSubmittedVariantProcessor
+        implements ItemProcessor<SubSnpNoHgvs, List<DbsnpSubmittedVariantEntity>> {
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public SubSnpNoHgvsToVariantProcessor() {
+    public SubSnpNoHgvsToSubmittedVariantProcessor() {
         hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 

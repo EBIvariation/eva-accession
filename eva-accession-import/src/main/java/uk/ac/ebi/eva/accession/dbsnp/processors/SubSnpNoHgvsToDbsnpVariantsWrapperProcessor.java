@@ -22,16 +22,16 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
 
-    SubSnpNoHgvsToVariantProcessor subSnpNoHgvsToVariantProcessor;
+    SubSnpNoHgvsToSubmittedVariantProcessor subSnpNoHgvsToSubmittedVariantProcessor;
 
     public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor() {
-        subSnpNoHgvsToVariantProcessor = new SubSnpNoHgvsToVariantProcessor();
+        subSnpNoHgvsToSubmittedVariantProcessor = new SubSnpNoHgvsToSubmittedVariantProcessor();
     }
 
     @Override
     public DbsnpVariantsWrapper process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         DbsnpVariantsWrapper dbsnpVariantsWrapper = new DbsnpVariantsWrapper();
-        dbsnpVariantsWrapper.setSubmittedVariants(subSnpNoHgvsToVariantProcessor.process(subSnpNoHgvs));
+        dbsnpVariantsWrapper.setSubmittedVariants(subSnpNoHgvsToSubmittedVariantProcessor.process(subSnpNoHgvs));
         // TODO create ClusteredVariant and operations
         return dbsnpVariantsWrapper;
     }

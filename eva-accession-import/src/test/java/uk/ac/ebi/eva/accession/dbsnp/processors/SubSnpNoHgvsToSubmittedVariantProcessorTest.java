@@ -30,7 +30,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class SubSnpNoHgvsToVariantProcessorTest {
+public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     private static final String ASSEMBLY = "AnyAssembly-1.0";
 
@@ -52,11 +52,11 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
-    SubSnpNoHgvsToVariantProcessor processor;
+    SubSnpNoHgvsToSubmittedVariantProcessor processor;
 
     @Before
     public void setUp() throws Exception {
-        processor = new SubSnpNoHgvsToVariantProcessor();
+        processor = new SubSnpNoHgvsToSubmittedVariantProcessor();
     }
 
 
@@ -365,7 +365,7 @@ public class SubSnpNoHgvsToVariantProcessorTest {
 
     @Test
     public void trailingSlashInAllelesIsIgnored() throws Exception {
-        // forward strabd
+        // forward strand
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "A/C/", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
                                                      CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.SNV,
                                                      Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
