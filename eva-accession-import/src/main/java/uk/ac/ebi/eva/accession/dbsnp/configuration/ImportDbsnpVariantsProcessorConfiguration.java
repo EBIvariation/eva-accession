@@ -92,19 +92,4 @@ public class ImportDbsnpVariantsProcessorConfiguration {
         return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor();
     }
 
-    @Bean(ASSEMBLY_CHECK_STEP_LISTENER)
-    StepListenerSupport assemblyCheckStepListener(FastaSequenceReader fastaSequenceReader) {
-        return new StepListenerSupport() {
-            @Override
-            public ExitStatus afterStep(StepExecution stepExecution) {
-                try {
-                    logger.debug("Closing FASTA file reader used for assembly check");
-                    fastaSequenceReader.close();
-                } catch (Exception e) {
-                    logger.warn("Error closing FASTA file reader used for assembly check: {}", e.getMessage());
-                }
-                return stepExecution.getExitStatus();
-            }
-        };
-    }
 }

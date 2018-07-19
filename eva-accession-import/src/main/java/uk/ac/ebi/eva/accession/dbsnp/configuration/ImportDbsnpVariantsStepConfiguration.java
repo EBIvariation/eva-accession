@@ -37,6 +37,7 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.ASSEMBLY_CHE
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_WRITER;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
 
 @Configuration
@@ -59,6 +60,10 @@ public class ImportDbsnpVariantsStepConfiguration {
     @Qualifier(ASSEMBLY_CHECK_STEP_LISTENER)
     private StepExecutionListener assemblyCheckStepListener;
 
+    @Autowired
+    @Qualifier(IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER)
+    private StepExecutionListener importDbsnpVariantsProgressListener;
+
     @Bean(IMPORT_DBSNP_VARIANTS_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
@@ -68,6 +73,7 @@ public class ImportDbsnpVariantsStepConfiguration {
                 .processor(variantProcessor)
                 .writer(accessionWriter)
                 .listener(assemblyCheckStepListener)
+                .listener(importDbsnpVariantsProgressListener)
                 .build();
         return step;
     }
