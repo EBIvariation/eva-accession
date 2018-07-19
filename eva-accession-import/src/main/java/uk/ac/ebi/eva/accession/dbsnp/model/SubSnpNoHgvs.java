@@ -359,7 +359,7 @@ public class SubSnpNoHgvs {
         return alternate;
     }
 
-    public boolean referenceAlleleMatches() {
+    public boolean doAllelesMatch() {
         String referenceInForwardStrand = getReferenceInForwardStrand();
         String[] allAllelesInForwardStrand = getAllelesInForwardStrand();
         return Arrays.stream(allAllelesInForwardStrand).anyMatch(allele -> allele.equals(referenceInForwardStrand));

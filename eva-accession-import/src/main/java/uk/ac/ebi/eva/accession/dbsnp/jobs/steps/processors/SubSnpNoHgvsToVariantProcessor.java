@@ -44,7 +44,7 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
         Region variantRegion = getVariantRegion(subSnpNoHgvs);
 
         String reference = subSnpNoHgvs.getReferenceInForwardStrand();
-        boolean allelesMatch = subSnpNoHgvs.referenceAlleleMatches();
+        boolean allelesMatch = subSnpNoHgvs.doAllelesMatch();
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
         for (String alternate : alternateAlleles) {
             // a SubmittedVariant object is needed to calculate the hash to create the DbsnpSubmittedVariantEntity one
@@ -56,10 +56,10 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
             variant.setAllelesMatch(allelesMatch);
 
             String hash = hashingFunction.apply(variant);
-            DbsnpSubmittedVariantEntity ssVariant = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
+            DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
                                                                                     variant);
-            ssVariant.setCreatedDate(subSnpNoHgvs.getCreateTime().toLocalDateTime());
-            variants.add(ssVariant);
+            ssVariantEntity.setCreatedDate(subSnpNoHgvs.getCreateTime().toLocalDateTime());
+            variants.add(ssVariantEntity);
         }
 
         return variants;
