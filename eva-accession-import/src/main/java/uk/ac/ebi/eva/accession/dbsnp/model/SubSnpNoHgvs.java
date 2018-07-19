@@ -49,7 +49,7 @@ public class SubSnpNoHgvs {
 
     private Long contigStart;
 
-    private DbsnpClass dbsnpClass;
+    private DbsnpVariantType dbsnpVariantType;
 
     private Orientation subsnpOrientation;
 
@@ -75,7 +75,7 @@ public class SubSnpNoHgvs {
     private static Pattern microsatellitePattern = Pattern.compile("(?<" + STR_SEQUENCE_REGEX_GROUP + ">\\([ATCG]+\\))\\d+");
 
     public SubSnpNoHgvs(Long ssId, Long rsId, String alleles, String assembly, String batchHandle, String batchName,
-                        String chromosome, Long chromosomeStart, String contigName, DbsnpClass dbsnpClass,
+                        String chromosome, Long chromosomeStart, String contigName, DbsnpVariantType dbsnpVariantType,
                         Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
                         Long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
                         Timestamp createTime, int taxonomyId) {
@@ -90,7 +90,7 @@ public class SubSnpNoHgvs {
         this.chromosomeStart = chromosomeStart;
         this.contigName = contigName;
         this.contigStart = contigStart;
-        this.dbsnpClass = dbsnpClass;
+        this.dbsnpVariantType = dbsnpVariantType;
         this.subsnpOrientation = subsnpOrientation;
         this.snpOrientation = snpOrientation;
         this.contigOrientation = contigOrientation;
@@ -174,12 +174,12 @@ public class SubSnpNoHgvs {
         this.contigName = contigName;
     }
 
-    public DbsnpClass getDbsnpClass() {
-        return dbsnpClass;
+    public DbsnpVariantType getDbsnpVariantType() {
+        return dbsnpVariantType;
     }
 
-    public void setDbsnpClass(DbsnpClass dbsnpClass) {
-        this.dbsnpClass = dbsnpClass;
+    public void setDbsnpVariantType(DbsnpVariantType dbsnpVariantType) {
+        this.dbsnpVariantType = dbsnpVariantType;
     }
 
     public Orientation getContigOrientation() {
@@ -262,7 +262,7 @@ public class SubSnpNoHgvs {
 
         for (String allele : alleles) {
             if (!allele.equals(reference)) {
-                if (dbsnpClass.equals(DbsnpClass.MICROSATELLITE)) {
+                if (dbsnpVariantType.equals(DbsnpVariantType.MICROSATELLITE)) {
                     altAllelesInForwardStrand.add(getMicrosatelliteAlternate(allele, alleles[0]));
                 } else {
                     altAllelesInForwardStrand.add(allele);

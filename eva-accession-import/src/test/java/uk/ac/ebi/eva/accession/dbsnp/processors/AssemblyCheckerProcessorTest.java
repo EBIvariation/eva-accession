@@ -7,7 +7,7 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMappingTest;
-import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpClass;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
@@ -82,7 +82,7 @@ public class AssemblyCheckerProcessorTest {
 
 
     private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, long chromosomeStart, String contig, long contigStart,
-                                         String referenceAllele, DbsnpClass variantClass) {
+                                         String referenceAllele, DbsnpVariantType variantClass) {
         return new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome, chromosomeStart, contig,
                                 variantClass, Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
                                 contigStart, true, true, referenceAllele, null, TAXONOMY);
@@ -92,49 +92,49 @@ public class AssemblyCheckerProcessorTest {
 
     @Test
     public void validReferenceAlleleSeqNameFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpClass.DIV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpVariantType.DIV);
         assertTrue(processorSeqName.process(input).isAssemblyMatch());
     }
 
     @Test
     public void notValidReferenceAlleleSeqNameFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE_1, DbsnpClass.SNV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE_1, DbsnpVariantType.SNV);
         assertFalse(processorSeqName.process(input).isAssemblyMatch());
     }
 
     @Test
     public void validReferenceAlleleGenBankFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, GENBANK_1, START, REFERENCE_ALLELE, DbsnpClass.DIV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, GENBANK_1, START, REFERENCE_ALLELE, DbsnpVariantType.DIV);
         assertTrue(processorSeqName.process(input).isAssemblyMatch());
     }
 
     @Test
     public void notValidReferenceAlleleGenBankFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, GENBANK_1, START, REFERENCE_ALLELE_1, DbsnpClass.SNV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, GENBANK_1, START, REFERENCE_ALLELE_1, DbsnpVariantType.SNV);
         assertFalse(processorSeqName.process(input).isAssemblyMatch());
     }
 
     @Test
     public void validReferenceAlleleRefSeqFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(REFSEQ_1, START, null, 0, REFERENCE_ALLELE, DbsnpClass.DIV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(REFSEQ_1, START, null, 0, REFERENCE_ALLELE, DbsnpVariantType.DIV);
         assertTrue(processorSeqName.process(input).isAssemblyMatch());
     }
 
     @Test
     public void notValidReferenceAlleleRefSeqFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(REFSEQ_1, START, null, 0, REFERENCE_ALLELE_1, DbsnpClass.SNV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(REFSEQ_1, START, null, 0, REFERENCE_ALLELE_1, DbsnpVariantType.SNV);
         assertFalse(processorSeqName.process(input).isAssemblyMatch());
     }
 
     @Test
     public void validReferenceAlleleUcscFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, UCSC_1, START, REFERENCE_ALLELE, DbsnpClass.DIV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, UCSC_1, START, REFERENCE_ALLELE, DbsnpVariantType.DIV);
         assertTrue(processorSeqName.process(input).isAssemblyMatch());
     }
 
     @Test
     public void notValidReferenceAlleleUcscFastaSeqName() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, UCSC_1, START, REFERENCE_ALLELE_1, DbsnpClass.SNV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, UCSC_1, START, REFERENCE_ALLELE_1, DbsnpVariantType.SNV);
         assertFalse(processorSeqName.process(input).isAssemblyMatch());
     }
 
@@ -142,7 +142,7 @@ public class AssemblyCheckerProcessorTest {
 
     @Test
     public void validReferenceAlleleSeqNameFastaGenBank() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpClass.DIV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpVariantType.DIV);
         assertTrue(processorGenBank.process(input).isAssemblyMatch());
     }
 
@@ -150,7 +150,7 @@ public class AssemblyCheckerProcessorTest {
 
     @Test
     public void validReferenceAlleleSeqNumFastaRefSeq() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpClass.DIV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpVariantType.DIV);
         assertTrue(processorRefSeq.process(input).isAssemblyMatch());
     }
 
@@ -158,7 +158,7 @@ public class AssemblyCheckerProcessorTest {
 
     @Test
     public void validReferenceAlleleSeqNumFastaUcsc() throws Exception {
-        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpClass.DIV);
+        SubSnpNoHgvs input = newSubSnpNoHgvs(SEQNAME_1, START, null, 0, REFERENCE_ALLELE, DbsnpVariantType.DIV);
         assertTrue(processorUcsc.process(input).isAssemblyMatch());
     }
 

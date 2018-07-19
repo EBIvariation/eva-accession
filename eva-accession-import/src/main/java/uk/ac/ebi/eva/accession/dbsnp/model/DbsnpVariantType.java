@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 import java.util.HashMap;
 import java.util.Map;
 
-public enum DbsnpClass {
+public enum DbsnpVariantType {
 
     SNV(1),
 
@@ -40,18 +40,18 @@ public enum DbsnpClass {
 
     private final Integer type;
 
-    private static Map<Integer, DbsnpClass> integerToEnum = new HashMap<>();
+    private static Map<Integer, DbsnpVariantType> integerToEnum = new HashMap<>();
 
-    DbsnpClass(Integer type) {
+    DbsnpVariantType(Integer type) {
         this.type = type;
     }
 
-    public static DbsnpClass getClass(Integer type) {
+    public static DbsnpVariantType getVariantClass(Integer type) {
         return integerToEnum.get(type);
     }
 
     static {
-        for (DbsnpClass op : values()) {
+        for (DbsnpVariantType op : values()) {
             integerToEnum.put(op.type, op);
         }
     }
