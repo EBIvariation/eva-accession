@@ -211,6 +211,19 @@ public class SubSnpNoHgvsToVariantProcessorTest {
     }
 
     @Test
+    public void transformIndel() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052218848L, 794686157L, "C/TA", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     DbsnpVariantType.DIV, Orientation.FORWARD, Orientation.REVERSE,
+                                                     Orientation.REVERSE, CONTIG_START, false, false, "G", CREATED_DATE,
+                                                     TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "C", "TA");
+    }
+
+    @Test
     public void transformDeletionReverseContig() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(820982442L, 794525917L, "T/-", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
                                                      CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.DIV,
