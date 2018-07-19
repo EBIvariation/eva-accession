@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.dbsnp.parameters;
 
 import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
 
 
 public class InputParameters {
@@ -27,7 +26,7 @@ public class InputParameters {
 
     private String assemblyAccession;
 
-    private String assembly;
+    private String assemblyName;
 
     private int taxonomyAccession;
 
@@ -103,11 +102,11 @@ public class InputParameters {
         this.pageSize = pageSize;
     }
 
-    public String getAssembly() {
-        return assembly;
+    public String getAssemblyName() {
+        return assemblyName;
     }
 
-    public void setAssembly(String assembly) {
-        this.assembly = assembly;
+    public void setAssemblyName(String assemblyName) {
+        this.assemblyName = assemblyName;
     }
 }

@@ -22,6 +22,15 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 
 import java.util.List;
 
+/**
+ * Wrapper for all the objects that could be generated based on a single record from dbSNP:
+ *
+ * - One or more submitted variants (SS), depending on the number of alternate alleles
+ *
+ * - Zero or one clustered variant (RS)
+ *
+ * - Zero or more operations, depending on whether deprecations, declustering and/or merges need to applied
+ */
 public class DbsnpVariantsWrapper {
 
     private List<? extends ISubmittedVariant> submittedVariants;

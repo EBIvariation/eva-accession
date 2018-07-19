@@ -40,10 +40,6 @@ public class ImportDbsnpVariantsStepConfigurationTest {
     @Autowired
     private InputParameters inputParameters;
 
-    @After
-    public void tearDown() throws Exception {
-    }
-
     @Test
     @DirtiesContext
     @Ignore("In order to make this test pass, we have to implement DbsnpVariantsWriter")
