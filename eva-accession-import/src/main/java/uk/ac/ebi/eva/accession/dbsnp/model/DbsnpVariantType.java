@@ -34,7 +34,7 @@ public enum DbsnpVariantType {
 
     MIXED(7),
 
-    MVN(8),
+    MNV(8),
 
     EXCEPTION(9);
 

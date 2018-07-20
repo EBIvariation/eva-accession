@@ -57,7 +57,7 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
 
             String hash = hashingFunction.apply(variant);
             DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
-                                                                                    variant);
+                                                                                          variant);
             ssVariantEntity.setCreatedDate(subSnpNoHgvs.getCreateTime().toLocalDateTime());
             variants.add(ssVariantEntity);
         }

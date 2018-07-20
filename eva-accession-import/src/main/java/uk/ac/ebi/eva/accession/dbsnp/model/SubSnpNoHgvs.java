@@ -47,7 +47,7 @@ public class SubSnpNoHgvs {
 
     private String contigName;
 
-    private Long contigStart;
+    private long contigStart;
 
     private DbsnpVariantType dbsnpVariantType;
 
@@ -77,7 +77,7 @@ public class SubSnpNoHgvs {
     public SubSnpNoHgvs(Long ssId, Long rsId, String alleles, String assembly, String batchHandle, String batchName,
                         String chromosome, Long chromosomeStart, String contigName, DbsnpVariantType dbsnpVariantType,
                         Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
-                        Long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
+                        long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
                         Timestamp createTime, int taxonomyId) {
 
         this.ssId = ssId;
@@ -190,11 +190,11 @@ public class SubSnpNoHgvs {
         this.contigOrientation = contigOrientation;
     }
 
-    public Long getContigStart() {
+    public long getContigStart() {
         return contigStart;
     }
 
-    public void setContigStart(Long contigStart) {
+    public void setContigStart(long contigStart) {
         this.contigStart = contigStart;
     }
 
@@ -274,7 +274,7 @@ public class SubSnpNoHgvs {
     }
 
     /**
-     * This method split the alleles and convert them to the forward strand if necessary. This method will return all
+     * This method splits the alleles and convert them to the forward strand if necessary. This method will return all
      * alleles, including the reference one
      * @return Array containing each allele in the forward strand
      */
