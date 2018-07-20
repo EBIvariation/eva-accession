@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.jobs.steps.processors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
@@ -96,6 +97,21 @@ public class SubSnpNoHgvsToVariantProcessorTest {
         assertEquals(false, dbsnpSubmittedVariant.isValidated());
         assertEquals(CREATED_DATE.toLocalDateTime(), dbsnpSubmittedVariant.getCreatedDate());
         assertEquals(1, dbsnpSubmittedVariant.getVersion());
+        assertEquals(getExpectedHash(expectedContig, expectedStart, expectedReference, expectedAlternate),
+                     dbsnpSubmittedVariant.getHashedMessage());
+    }
+
+    public String getExpectedHash(String contig, long start, String reference, String alternate) {
+        String summary = new StringBuilder()
+                .append(ASSEMBLY)
+                .append("_").append(TAXONOMY)
+                .append("_").append(PROJECT_ACCESSION)
+                .append("_").append(contig)
+                .append("_").append(start)
+                .append("_").append(reference)
+                .append("_").append(alternate)
+                .toString();
+        return new SHA1HashingFunction().apply(summary);
     }
 
     @Test
