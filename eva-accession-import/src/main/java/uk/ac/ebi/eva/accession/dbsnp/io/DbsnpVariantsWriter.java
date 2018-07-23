@@ -18,7 +18,9 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import java.util.Collections;
@@ -44,8 +46,21 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     @Override
     public void write(List<? extends DbsnpVariantsWrapper> items) throws Exception {
         for (DbsnpVariantsWrapper dbsnpVariantsWrapper : items) {
-            dbsnpSubmittedVariantWriter.write(dbsnpVariantsWrapper.getSubmittedVariants());
+            List<DbsnpSubmittedVariantEntity> submittedVariants = dbsnpVariantsWrapper.getSubmittedVariants();
+            dbsnpSubmittedVariantWriter.write(submittedVariants);
             dbsnpClusteredVariantWriter.write(Collections.singletonList(dbsnpVariantsWrapper.getClusteredVariant()));
+            declusterAllelesMismatch(submittedVariants);
+        }
+
+    }
+
+    private void declusterAllelesMismatch(List<DbsnpSubmittedVariantEntity> submittedVariants) {
+        for (DbsnpSubmittedVariantEntity submittedVariant : submittedVariants) {
+            if (!submittedVariant.isAllelesMatch()) {
+                ISubmittedVariant model = submittedVariant.getModel();
+                model.set
+                service.update(submittedVariant.getAccession(), 1, )
+            }
         }
     }
 }

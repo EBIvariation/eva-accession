@@ -57,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -116,6 +117,10 @@ public class SubmittedVariantAccessioningServiceTest {
     @Autowired
     private DbsnpSubmittedVariantAccessioningDatabaseService dbServiceDbsnp;
 
+    private SubmittedVariant multiallelicSubmittedVariant_1;
+
+    private SubmittedVariant multiallelicSubmittedVariant_2;
+
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName("submitted-variants-test").build());
@@ -131,8 +136,8 @@ public class SubmittedVariantAccessioningServiceTest {
 
     @Autowired
     private Long accessioningMonotonicInitSs;
-
     //Required by nosql-unit
+
     @Autowired
     private ApplicationContext applicationContext;
 
@@ -153,6 +158,13 @@ public class SubmittedVariantAccessioningServiceTest {
         submittedVariantModified = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319,
                                                         "C", "TCTC", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                         MATCHES_ASSEMBLY, true, VALIDATED);
+
+        multiallelicSubmittedVariant_1 = new SubmittedVariant("GCA_000009999.3", 9999, "DBSNP555", "21", 20849999, "A",
+                                                              "G", 2200000002L, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                                              true, VALIDATED);
+        multiallelicSubmittedVariant_2 = new SubmittedVariant("GCA_000009999.3", 9999, "DBSNP555", "21", 20849999, "A",
+                                                              "C", 2200000003L, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                                              true, VALIDATED);
 
         accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
                 (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
@@ -180,14 +192,12 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void sameAccessionsAreReturnedForEquivalentVariants() throws AccessionCouldNotBeGeneratedException {
         List<SubmittedVariant> originalVariants = Arrays.asList(
-                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", 10L,
                                      SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
                 newSubmittedVariant);
         List<SubmittedVariant> requestedVariants = Arrays.asList(
-                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null,
-                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
-                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null,
-                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED));
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null));
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
                 originalVariants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(
@@ -204,14 +214,14 @@ public class SubmittedVariantAccessioningServiceTest {
 
         long accession = submittedVariants.stream()
                                           .filter(x -> x.getData().getProjectAccession().equals(PROJECT))
-                                          .collect(Collectors.toList())
-                                          .get(0).getAccession();
+                                          .findAny().orElseThrow(NoSuchElementException::new)
+                                          .getAccession();
         assertEquals(ACCESSION, accession);
 
         long accessionDbsnp = submittedVariants.stream()
                                                .filter(x -> x.getData().getProjectAccession().equals(PROJECT_DBSNP))
-                                               .collect(Collectors.toList())
-                                               .get(0).getAccession();
+                                               .findAny().orElseThrow(NoSuchElementException::new)
+                                               .getAccession();
         assertEquals(ACCESSION_DBSNP_1, accessionDbsnp);
 
         assertEquals(3, submittedVariants.size());
@@ -397,5 +407,15 @@ public class SubmittedVariantAccessioningServiceTest {
         assertEquals(null, submittedVariantEntities.get(0).get("asmMatch"));
         assertEquals(null, submittedVariantEntities.get(0).get("allelesMatch"));
         assertEquals(null, submittedVariantEntities.get(0).get("validated"));
+    }
+
+    @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
+    @Test
+    public void getSeveralVariantsWithSameAccession() {
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionWrappers = service.get(
+                Arrays.asList(multiallelicSubmittedVariant_1, multiallelicSubmittedVariant_2));
+        assertEquals(2, accessionWrappers.size());
+        assertEquals(1,
+                     accessionWrappers.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet()).size());
     }
 }
