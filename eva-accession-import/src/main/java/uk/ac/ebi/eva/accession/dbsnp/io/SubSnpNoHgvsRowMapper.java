@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.springframework.jdbc.core.RowMapper;
 
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
@@ -24,6 +25,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
+
+    public static final String SS_ID_COLUMN = "ss_id";
+
+    public static final String RS_ID_COLUMN = "rs_id";
 
     public static final String ALLELES_COLUMN = "alleles";
 
@@ -36,6 +41,8 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
     public static final String CHROMOSOME_START_COLUMN = "chromosome_start";
 
     public static final String CONTIG_NAME_COLUMN = "contig_name";
+
+    public static final String SNP_CLASS_COLUMN = "snp_class";
 
     public static final String SUBSNP_ORIENTATION_COLUMN = "subsnp_orientation";
 
@@ -63,21 +70,24 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
     @Override
     public SubSnpNoHgvs mapRow(ResultSet resultSet, int i) throws SQLException {
-        return new SubSnpNoHgvs(resultSet.getString(ALLELES_COLUMN),
+        return new SubSnpNoHgvs(resultSet.getLong(SS_ID_COLUMN),
+                                resultSet.getLong(RS_ID_COLUMN),
+                                resultSet.getString(ALLELES_COLUMN),
                                 assembly,
                                 resultSet.getString(BATCH_HANDLE_COLUMN),
                                 resultSet.getString(BATCH_NAME_COLUMN),
                                 resultSet.getString(CHROMOSOME_COLUMN),
-                                resultSet.getInt(CHROMOSOME_START_COLUMN),
+                                resultSet.getLong(CHROMOSOME_START_COLUMN),
                                 resultSet.getString(CONTIG_NAME_COLUMN),
+                                DbsnpVariantType.getVariantClass(resultSet.getInt(SNP_CLASS_COLUMN)),
                                 Orientation.getOrientation(resultSet.getObject(SUBSNP_ORIENTATION_COLUMN, Integer.class)),
                                 Orientation.getOrientation(resultSet.getObject(SNP_ORIENTATION_COLUMN, Integer.class)),
                                 Orientation.getOrientation(resultSet.getObject(CONTIG_ORIENTATION_COLUMN, Integer.class)),
-                                resultSet.getInt(CONTIG_START_COLUMN),
+                                resultSet.getLong(CONTIG_START_COLUMN),
                                 resultSet.getBoolean(FREQUENCY_EXISTS_COLUMN),
                                 resultSet.getBoolean(GENOTYPE_EXISTS_COLUMN),
                                 resultSet.getString(REFERENCE_COLUMN),
-                                resultSet.getDate(SS_CREATE_TIME_COLUMN),
+                                resultSet.getTimestamp(SS_CREATE_TIME_COLUMN),
                                 resultSet.getInt(TAXONOMY_ID_COLUMN));
     }
 }

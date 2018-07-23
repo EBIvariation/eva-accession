@@ -21,7 +21,7 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
     @Override
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         ContigSynonyms contigSynonyms;
-        int start;
+        long start;
         if (subSnpNoHgvs.getChromosome() != null) {
             contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
             start = subSnpNoHgvs.getChromosomeStart();

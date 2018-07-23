@@ -171,22 +171,22 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     @Override
     public Boolean isSupportedByEvidence() {
-        return supportedByEvidence;
+        return supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence;
     }
 
     @Override
     public Boolean isAssemblyMatch() {
-        return assemblyMatch;
+        return assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch;
     }
 
     @Override
     public Boolean isAllelesMatch() {
-        return allelesMatch;
+        return allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch;
     }
 
     @Override
     public Boolean isValidated() {
-        return validated;
+        return validated == null ? DEFAULT_VALIDATED : validated;
     }
 
     @Override
@@ -253,5 +253,23 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
         result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
         result = 31 * result + (validated != null ? validated.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SubmittedVariantEntity{" +
+                "assemblyAccession='" + assemblyAccession + '\'' +
+                ", taxonomyAccession=" + taxonomyAccession +
+                ", projectAccession='" + projectAccession + '\'' +
+                ", contig='" + contig + '\'' +
+                ", start=" + start +
+                ", referenceAllele='" + referenceAllele + '\'' +
+                ", alternateAllele='" + alternateAllele + '\'' +
+                ", clusteredVariantAccession=" + clusteredVariantAccession +
+                ", supportedByEvidence=" + supportedByEvidence +
+                ", assemblyMatch=" + assemblyMatch +
+                ", allelesMatch=" + allelesMatch +
+                ", validated=" + validated +
+                '}';
     }
 }

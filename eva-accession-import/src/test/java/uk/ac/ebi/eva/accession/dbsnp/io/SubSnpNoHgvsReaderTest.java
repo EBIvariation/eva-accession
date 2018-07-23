@@ -29,6 +29,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.dbsnp.configuration.DbsnpDataSource;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.TestConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource({"classpath:application.properties"})
@@ -66,6 +68,7 @@ public class SubSnpNoHgvsReaderTest {
         reader = buildReader(11825, CHICKEN_ASSEMBY, PAGE_SIZE);
         List<SubSnpNoHgvs> variants = readAll(reader);
         assertEquals(2, variants.size());
+        assertTrue(variants.stream().allMatch(v -> v.getDbsnpVariantType().equals(DbsnpVariantType.SNV)));
     }
 
     @Test

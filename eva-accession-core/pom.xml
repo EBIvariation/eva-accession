@@ -5,7 +5,7 @@
     <parent>
         <groupId>uk.ac.ebi.eva</groupId>
         <artifactId>eva-accession</artifactId>
-        <version>0.1</version>
+        <version>0.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>eva-accession-core</artifactId>
@@ -15,7 +15,6 @@
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>variation-commons-core</artifactId>
-            <version>0.6-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

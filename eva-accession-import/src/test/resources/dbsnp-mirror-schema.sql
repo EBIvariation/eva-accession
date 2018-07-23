@@ -5,7 +5,7 @@ CREATE TABLE dbsnp_variant_load_nohgvslink_d8c757988871529f37061fa9c79477a5 (
 	tax_id integer NULL,
 	univar_id integer NULL,
 	var_str varchar(1024) NULL,
-	subsnp_class smallint NULL,
+	snp_class smallint NULL,
 	rs_id bigint NULL,
 	ss_id bigint NULL,
 	contig_name varchar(32) NULL,

@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -52,7 +54,8 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
 
     @After
     public void tearDown() throws Exception {
-        new File(inputParameters.getOutputVcf()).delete();
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
+        Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
     }
 
     @Test
