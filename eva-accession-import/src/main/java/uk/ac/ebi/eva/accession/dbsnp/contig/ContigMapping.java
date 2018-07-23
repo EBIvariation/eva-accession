@@ -38,8 +38,8 @@ public class ContigMapping {
 
     private static final Pattern PATTERN = Pattern.compile(CHROMOSOME_PATTERN, Pattern.CASE_INSENSITIVE);
 
-    public ContigMapping(String mappingUrl) throws Exception {
-        this(new AssemblyReportReader(mappingUrl));
+    public ContigMapping(String assemblyReportUrl) throws Exception {
+        this(new AssemblyReportReader(assemblyReportUrl));
     }
 
     public ContigMapping(AssemblyReportReader assemblyReportReader) throws Exception {

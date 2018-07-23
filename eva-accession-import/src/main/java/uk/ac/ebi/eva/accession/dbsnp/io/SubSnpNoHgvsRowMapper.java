@@ -62,6 +62,8 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
     public static final String TAXONOMY_ID_COLUMN = "tax_id";
 
+    public static final String LOAD_ORDER_COLUMN = "load_order";
+
     private final String assembly;
 
     public SubSnpNoHgvsRowMapper(String assembly) {
