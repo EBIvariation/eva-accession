@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.OperationType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
@@ -35,6 +36,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
@@ -42,10 +44,13 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.accession.dbsnp.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -109,6 +114,8 @@ public class DbsnpVariantsWriterTest {
         dbsnpVariantsWriter = new DbsnpVariantsWriter(mongoTemplate, service);
         hashingFunctionSubmitted = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         hashingFunctionClustered = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
     }
 
     @Test
@@ -124,7 +131,7 @@ public class DbsnpVariantsWriterTest {
 
         List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find(new Query(),
                                                                           DbsnpClusteredVariantEntity.class);
-        assertEquals(1, ssEntities.size());
+        assertEquals(1, rsEntities.size());
         assertEquals(wrapper.getClusteredVariant(), rsEntities.get(0));
     }
 
@@ -148,12 +155,70 @@ public class DbsnpVariantsWriterTest {
     }
 
     @Test
-    public void writeComplexVariant() {
-        throw new UnsupportedOperationException();
+    public void writeComplexVariant() throws Exception {
+        SubmittedVariant submittedVariant_1 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
+                                                                 "reference", "alternate", CLUSTERED_VARIANT,
+                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                                 VALIDATED);
+        SubmittedVariant submittedVariant_2 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
+                                                                 "reference", "alternate_2", CLUSTERED_VARIANT,
+                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                                 VALIDATED);
+        DbsnpVariantsWrapper wrapper = buildSimpleWrapper();
+        wrapper.setSubmittedVariants(Arrays.asList(
+                new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT,
+                                                hashingFunctionSubmitted.apply(submittedVariant_1),
+                                                submittedVariant_1),
+                new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT,
+                                                hashingFunctionSubmitted.apply(submittedVariant_2),
+                                                submittedVariant_2)));
+
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
+
+        List<DbsnpSubmittedVariantEntity> ssEntities = mongoTemplate.find(new Query(),
+                                                                          DbsnpSubmittedVariantEntity.class);
+        assertEquals(2, ssEntities.size());
+        assertEquals(wrapper.getSubmittedVariants().get(0), ssEntities.get(0));
+        assertEquals(wrapper.getSubmittedVariants().get(1), ssEntities.get(1));
+
+        List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find(new Query(),
+                                                                          DbsnpClusteredVariantEntity.class);
+        assertEquals(1, rsEntities.size());
+        assertEquals(wrapper.getClusteredVariant(), rsEntities.get(0));
     }
 
     @Test
-    public void declusterVariantWithMismatchingAlleles() {
-        throw new UnsupportedOperationException();
+    public void declusterVariantWithMismatchingAlleles() throws Exception {
+        boolean allelesMatch = false;
+        SubmittedVariant submittedVariant_1 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
+                                                                   "reference", "alternate", CLUSTERED_VARIANT,
+                                                                   SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                                                   allelesMatch, VALIDATED);
+        DbsnpVariantsWrapper wrapper = buildSimpleWrapper();
+        wrapper.setSubmittedVariants(Collections.singletonList(
+                new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT,
+                                                hashingFunctionSubmitted.apply(submittedVariant_1),
+                                                submittedVariant_1)));
+
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
+
+        List<DbsnpSubmittedVariantEntity> ssEntities = mongoTemplate.find(new Query(),
+                                                                          DbsnpSubmittedVariantEntity.class);
+        assertEquals(1, ssEntities.size());
+        assertNotEquals(wrapper.getSubmittedVariants().get(0), ssEntities.get(0));
+        assertNull(wrapper.getSubmittedVariants().get(0).getClusteredVariantAccession());
+
+        List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find(new Query(),
+                                                                          DbsnpClusteredVariantEntity.class);
+        assertEquals(1, rsEntities.size());
+        assertEquals(wrapper.getClusteredVariant(), rsEntities.get(0));
+
+
+        List<DbsnpSubmittedVariantOperationEntity> operationEntities = mongoTemplate.find(
+                new Query(), DbsnpSubmittedVariantOperationEntity.class);
+        assertEquals(1, operationEntities.size());
+        assertEquals(OperationType.UPDATED, operationEntities.get(0).getOperationType());
+        assertEquals(ssEntities.get(0), operationEntities.get(0).getInactiveObjects());
+        assertEquals(ssEntities.get(0).getAccession(), operationEntities.get(0).getAccessionIdOrigin());
     }
 }
