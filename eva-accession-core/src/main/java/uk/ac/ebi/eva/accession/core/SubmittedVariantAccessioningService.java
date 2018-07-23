@@ -30,6 +30,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
+import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.List;
@@ -37,19 +38,22 @@ import java.util.stream.Collectors;
 
 public class SubmittedVariantAccessioningService implements AccessioningService<ISubmittedVariant, String, Long> {
 
-    private static final Long ACCESSIONING_MONOTONIC_INIT_SS = 5000000000L;
-
     private BasicMonotonicAccessioningService<ISubmittedVariant, String> accessioningService;
 
     private BasicMonotonicAccessioningService<ISubmittedVariant, String> accessioningServiceDbsnp;
 
+    private Long accessioningMonotonicInitSs;
+
     public SubmittedVariantAccessioningService(MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
                                                MonotonicDatabaseService dbService,
-                                               MonotonicDatabaseService dbServiceDbsnp) {
+                                               MonotonicDatabaseService dbServiceDbsnp,
+                                               Long accessioningMonotonicInitSs) {
         this.accessioningService = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
                 (accessionGenerator, dbService, new SubmittedVariantSummaryFunction(), new SHA1HashingFunction());
         this.accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
-                (accessionGenerator, dbServiceDbsnp, new SubmittedVariantSummaryFunction(), new SHA1HashingFunction());
+                (accessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
+                 new SHA1HashingFunction());
+        this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
     }
 
     @Override
@@ -58,7 +62,8 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
             throws AccessionCouldNotBeGeneratedException {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> dbsnpVariants = accessioningServiceDbsnp.get(variants);
         List<ISubmittedVariant> variantsNotInDbsnp = removeFromList(variants, dbsnpVariants);
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = accessioningService.getOrCreate(variantsNotInDbsnp);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = accessioningService.getOrCreate(
+                variantsNotInDbsnp);
         return joinLists(submittedVariants, dbsnpVariants);
     }
 
@@ -74,10 +79,11 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         return accessionWrapperList.stream().anyMatch(x -> x.getData().equals(iSubmittedVariant));
     }
 
-    private List<AccessionWrapper<ISubmittedVariant, String, Long>> joinLists(List l1, List l2) {
-        List allVariants = l1;
-        allVariants.addAll(l2);
-        return allVariants;
+    private List<AccessionWrapper<ISubmittedVariant, String, Long>> joinLists(
+            List<AccessionWrapper<ISubmittedVariant, String, Long>> l1,
+            List<AccessionWrapper<ISubmittedVariant, String, Long>> l2) {
+        l1.addAll(l2);
+        return l1;
     }
 
     @Override
@@ -94,7 +100,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     @Override
     public AccessionWrapper<ISubmittedVariant, String, Long> getByAccessionAndVersion(Long accession, int version)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
-        if (accession >= ACCESSIONING_MONOTONIC_INIT_SS) {
+        if (accession >= accessioningMonotonicInitSs) {
             return accessioningService.getByAccessionAndVersion(accession, version);
         } else {
             return accessioningServiceDbsnp.getByAccessionAndVersion(accession, version);
@@ -106,25 +112,44 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
                                                                             ISubmittedVariant iSubmittedVariant)
             throws AccessionDoesNotExistException, HashAlreadyExistsException, AccessionDeprecatedException,
             AccessionMergedException {
-        return accessioningService.update(accession, version, iSubmittedVariant);
+        if (accession >= accessioningMonotonicInitSs) {
+            return accessioningService.update(accession, version, iSubmittedVariant);
+        } else {
+            return accessioningServiceDbsnp.update(accession, version, iSubmittedVariant);
+        }
     }
 
     @Override
     public AccessionVersionsWrapper<ISubmittedVariant, String, Long> patch(Long accession, ISubmittedVariant variant)
             throws AccessionDoesNotExistException, HashAlreadyExistsException, AccessionDeprecatedException,
             AccessionMergedException {
-        return accessioningService.patch(accession, variant);
+        if (accession >= accessioningMonotonicInitSs) {
+            return accessioningService.patch(accession, variant);
+        } else {
+            return accessioningServiceDbsnp.patch(accession, variant);
+        }
     }
 
     @Override
     public void deprecate(Long accession, String reason)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        accessioningService.deprecate(accession, reason);
+        if (accession >= accessioningMonotonicInitSs) {
+            accessioningService.deprecate(accession, reason);
+        } else {
+            accessioningServiceDbsnp.deprecate(accession, reason);
+        }
     }
 
     @Override
     public void merge(Long accession, Long accession1, String reason)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        accessioningService.merge(accession, accession1, reason);
+        if (accession >= accessioningMonotonicInitSs && accession1 >= accessioningMonotonicInitSs) {
+            accessioningService.merge(accession, accession1, reason);
+        } else if (accession < accessioningMonotonicInitSs && accession1 < accessioningMonotonicInitSs) {
+            accessioningServiceDbsnp.merge(accession, accession1, reason);
+        } else {
+//          TODO: Support merging submittedVariants and DbsnpSubmittedVariants
+            throw new UnsupportedOperationException("Can't merge a submitted variant with a dbsnp submitted variant");
+        }
     }
 }

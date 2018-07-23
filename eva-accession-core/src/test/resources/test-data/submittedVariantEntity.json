@@ -1,17 +1,69 @@
 {
   "submittedVariantEntity": [
     {
-      "_id" : "925E489266E58B67F1CDCCDF1914A7B4B6FC697A",
-      "asm" : "GCA_000003055.3",
-      "tax" : 9913,
-      "study" : "PRJEB21794",
-      "contig" : "21",
-      "start" : 20800319,
-      "ref" : "C",
-      "alt" : "T",
-      "evidence" : true,
-      "accession" : 5000000000,
-      "version" : 1
+      "_id": "925E489266E58B67F1CDCCDF1914A7B4B6FC697A",
+      "asm": "GCA_000003055.3",
+      "tax": 9913,
+      "study": "PRJEB21794",
+      "contig": "21",
+      "start": 20800319,
+      "ref": "C",
+      "alt": "T",
+      "evidence": true,
+      "accession": 5000000000,
+      "version": 1
+    },
+    {
+      "_id": "F2D754CF53BC28B48969A9D5FCE0971473239488",
+      "asm": "GCA_000002285.2",
+      "tax": 9615,
+      "study": "PRJEB24328",
+      "contig": "17",
+      "start": 22907389,
+      "ref": "",
+      "alt": "G",
+      "evidence": true,
+      "accession": 5000000002,
+      "version": 1
+    },
+    {
+      "_id": "06F9F4A45938C671E1E1A21D928B2FD01802BEBC",
+      "asm": "GCA_000002305.1",
+      "tax": 9796,
+      "study": "PRJEB25439",
+      "contig": "1",
+      "start": 94372649,
+      "ref": "C",
+      "alt": "T",
+      "evidence": true,
+      "accession": 5000000003,
+      "version": 1
+    },
+    {
+      "_id": "88B90C6B052F23681876943B54747DEB1640FF6D",
+      "asm": "GCA_000002305.1",
+      "tax": 9796,
+      "study": "PRJEB9799",
+      "contig": "1",
+      "start": 13887,
+      "ref": "C",
+      "alt": "T",
+      "evidence": true,
+      "accession": 5000000004,
+      "version": 1
+    },
+    {
+      "_id": "B4E7D497664B8EA2E731E0D23D04A9E9CD7FA41B",
+      "asm": "GCA_000002305.1",
+      "tax": 9796,
+      "study": "PRJEB9799",
+      "contig": "1",
+      "start": 38431,
+      "ref": "T",
+      "alt": "A",
+      "evidence": true,
+      "accession": 5000000005,
+      "version": 1
     }
   ]
 }

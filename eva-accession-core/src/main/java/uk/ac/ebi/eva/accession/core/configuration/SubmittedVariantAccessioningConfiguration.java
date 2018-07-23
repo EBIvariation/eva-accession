@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,8 +31,8 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
@@ -42,6 +43,8 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
+
+import java.util.HashMap;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -71,6 +74,15 @@ public class SubmittedVariantAccessioningConfiguration {
     @Autowired
     private ContiguousIdBlockService service;
 
+    @Autowired
+    @Qualifier("contiguousBlockInitializations")
+    private HashMap<String, String> accessioningMonotonicInitProperties;
+
+    @Bean
+    public Long accessioningMonotonicInitSs() {
+        return new Long(accessioningMonotonicInitProperties.get("ss"));
+    }
+
     @Bean
     @ConfigurationProperties(prefix = "accessioning")
     public ApplicationProperties applicationProperties() {
@@ -81,7 +93,8 @@ public class SubmittedVariantAccessioningConfiguration {
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
         return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
                                                        submittedVariantAccessioningDatabaseService(),
-                                                       dbsnpSubmittedVariantAccessioningDatabaseService());
+                                                       dbsnpSubmittedVariantAccessioningDatabaseService(),
+                                                       accessioningMonotonicInitSs());
     }
 
     @Bean

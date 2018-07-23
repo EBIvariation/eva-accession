@@ -20,10 +20,10 @@ package uk.ac.ebi.eva.accession.core.persistence;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository.BasicMongoDbAccessionedCustomRepositoryImpl;
 
-public class DbSnpSubmittedVariantAccessioningRepositoryImpl extends
+public class DbsnpSubmittedVariantAccessioningRepositoryImpl extends
         BasicMongoDbAccessionedCustomRepositoryImpl<Long, DbsnpSubmittedVariantEntity> {
 
-    public DbSnpSubmittedVariantAccessioningRepositoryImpl(MongoTemplate mongoTemplate) {
+    public DbsnpSubmittedVariantAccessioningRepositoryImpl(MongoTemplate mongoTemplate) {
         super(DbsnpSubmittedVariantEntity.class, mongoTemplate);
     }
 }
