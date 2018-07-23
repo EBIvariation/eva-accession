@@ -148,7 +148,6 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         } else if (accession < accessioningMonotonicInitSs && accession1 < accessioningMonotonicInitSs) {
             accessioningServiceDbsnp.merge(accession, accession1, reason);
         } else {
-//          TODO: Support merging submittedVariants and DbsnpSubmittedVariants
             throw new UnsupportedOperationException("Can't merge a submitted variant with a dbsnp submitted variant");
         }
     }
