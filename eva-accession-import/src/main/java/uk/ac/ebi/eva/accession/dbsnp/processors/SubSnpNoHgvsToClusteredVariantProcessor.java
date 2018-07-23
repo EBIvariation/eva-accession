@@ -47,7 +47,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
                                                                       alleles.get(0), // TODO which allele to use? we
                                                                       // need the logic of the declustering to
                                                                       // complete this
-                                                                      subSnpNoHgvs.getDbsnpClass().intValue());
+                                                                      subSnpNoHgvs.getDbsnpVariantType().intValue());
         ClusteredVariant variant = new ClusteredVariant(subSnpNoHgvs.getAssembly(),
                                                         subSnpNoHgvs.getTaxonomyId(),
                                                         variantRegion.getChromosome(),
