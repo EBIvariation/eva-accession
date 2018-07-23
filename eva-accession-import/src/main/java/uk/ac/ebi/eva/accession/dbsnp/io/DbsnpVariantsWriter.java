@@ -18,22 +18,34 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
+import java.util.Collections;
 import java.util.List;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private MongoTemplate mongoTemplate;
 
-    public DbsnpVariantsWriter(MongoTemplate mongoTemplate) {
+    private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
+
+    private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
+
+    private SubmittedVariantAccessioningService service;
+
+    public DbsnpVariantsWriter(MongoTemplate mongoTemplate, SubmittedVariantAccessioningService service) {
         this.mongoTemplate = mongoTemplate;
+        this.service = service;
+        this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate);
+        this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate);
     }
 
     @Override
     public void write(List<? extends DbsnpVariantsWrapper> items) throws Exception {
-        throw new UnsupportedOperationException("Not implemented yet. Need DbsnpClusteredVariantWriter, " +
-                                                        "DbsnpSubmittedVariantWriter and the writer for history " +
-                                                        "operations");
+        for (DbsnpVariantsWrapper dbsnpVariantsWrapper : items) {
+            dbsnpSubmittedVariantWriter.write(dbsnpVariantsWrapper.getSubmittedVariants());
+            dbsnpClusteredVariantWriter.write(Collections.singletonList(dbsnpVariantsWrapper.getClusteredVariant()));
+        }
     }
 }

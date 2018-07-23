@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.persistence;
 
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 
 import java.util.List;
@@ -33,28 +34,28 @@ import java.util.List;
  */
 public class DbsnpVariantsWrapper {
 
-    private List<? extends ISubmittedVariant> submittedVariants;
+    private List<DbsnpSubmittedVariantEntity> submittedVariants;
 
-    private IClusteredVariant clusteredVariant;
+    private DbsnpClusteredVariantEntity clusteredVariant;
 
     private List<SubmittedVariantOperationEntity> operations;
 
     public DbsnpVariantsWrapper() {
     }
 
-    public List<? extends ISubmittedVariant> getSubmittedVariants() {
+    public List<DbsnpSubmittedVariantEntity> getSubmittedVariants() {
         return submittedVariants;
     }
 
-    public void setSubmittedVariants(List<? extends ISubmittedVariant> submittedVariants) {
+    public void setSubmittedVariants(List<DbsnpSubmittedVariantEntity> submittedVariants) {
         this.submittedVariants = submittedVariants;
     }
 
-    public IClusteredVariant getClusteredVariant() {
+    public DbsnpClusteredVariantEntity getClusteredVariant() {
         return clusteredVariant;
     }
 
-    public void setClusteredVariant(IClusteredVariant clusteredVariant) {
+    public void setClusteredVariant(DbsnpClusteredVariantEntity clusteredVariant) {
         this.clusteredVariant = clusteredVariant;
     }
 

@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -29,6 +30,7 @@ public class DbsnpSubmittedVariantWriter implements ItemWriter<DbsnpSubmittedVar
 
     private static final Logger logger = LoggerFactory.getLogger(DbsnpSubmittedVariantWriter.class);
 
+    @Autowired
     private MongoTemplate mongoTemplate;
 
     public DbsnpSubmittedVariantWriter(MongoTemplate mongoTemplate) {
