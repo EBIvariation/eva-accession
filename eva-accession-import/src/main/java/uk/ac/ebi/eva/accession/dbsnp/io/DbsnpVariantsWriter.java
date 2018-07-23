@@ -17,11 +17,18 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,13 +61,17 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     }
 
-    private void declusterAllelesMismatch(List<DbsnpSubmittedVariantEntity> submittedVariants) {
-        for (DbsnpSubmittedVariantEntity submittedVariant : submittedVariants) {
+    private void declusterAllelesMismatch(List<DbsnpSubmittedVariantEntity> submittedVariants)
+            throws AccessionDeprecatedException, AccessionDoesNotExistException, AccessionMergedException,
+                   HashAlreadyExistsException {
+        for (int i = 0; i < submittedVariants.size(); i++) {
+            DbsnpSubmittedVariantEntity submittedVariant = submittedVariants.get(i);
             if (!submittedVariant.isAllelesMatch()) {
                 ISubmittedVariant model = submittedVariant.getModel();
-                model.set
-                service.update(submittedVariant.getAccession(), 1, )
+//                model.setClusteredVariantAccession(null);
+                service.update(submittedVariant.getAccession(), i+1, model); // i+1: versions start with 1
             }
         }
     }
+
 }

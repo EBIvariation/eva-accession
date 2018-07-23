@@ -53,6 +53,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
         // RS
         DbsnpClusteredVariantEntity clusteredVariant = subSnpNoHgvsToClusteredVariantProcessor.process(subSnpNoHgvs);
         dbsnpVariantsWrapper.setClusteredVariant(clusteredVariant);
+        dbsnpVariantsWrapper.setDbsnpVariantType(subSnpNoHgvs.getDbsnpVariantType());
 
         // TODO create operations
         return dbsnpVariantsWrapper;
