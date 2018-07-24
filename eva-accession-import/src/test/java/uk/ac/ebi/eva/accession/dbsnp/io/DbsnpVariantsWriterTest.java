@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,6 +189,7 @@ public class DbsnpVariantsWriterTest {
     }
 
     @Test
+    @Ignore("not ready yet. this will be fixed for EVA-1277")
     public void declusterVariantWithMismatchingAlleles() throws Exception {
         boolean allelesMatch = false;
         SubmittedVariant submittedVariant_1 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
