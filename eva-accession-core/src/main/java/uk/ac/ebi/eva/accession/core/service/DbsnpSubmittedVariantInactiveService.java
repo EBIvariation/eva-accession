@@ -17,9 +17,10 @@
  */
 package uk.ac.ebi.eva.accession.core.service;
 
-import uk.ac.ebi.ampt2d.commons.accession.persistence.IHistoryRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.service.BasicMongoDbInactiveAccessionService;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
@@ -27,7 +28,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEn
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class DbsnpSubmittedVariantInactiveService extends BasicMongoDbInactiveAccessionService<Long,
+public class DbsnpSubmittedVariantInactiveService extends BasicMongoDbInactiveAccessionService<ISubmittedVariant, Long,
         DbsnpSubmittedVariantEntity, DbsnpSubmittedVariantInactiveEntity, DbsnpSubmittedVariantOperationEntity> {
 
     public DbsnpSubmittedVariantInactiveService(

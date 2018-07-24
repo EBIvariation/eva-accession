@@ -33,15 +33,15 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.core.OperationType;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.IOperation;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
@@ -268,15 +268,15 @@ public class SubmittedVariantAccessioningServiceTest {
             throws AccessionDeprecatedException, AccessionDoesNotExistException, AccessionMergedException {
         assertEquals(modifiedVariant, service.getByAccessionAndVersion(accession, 1).getData());
 
-        IOperation<Long> lastOperation;
+        IEvent<ISubmittedVariant, Long> lastOperation;
         if (accession >= accessioningMonotonicInitSs) {
-            lastOperation = inactiveService.getLastOperation(accession);
+            lastOperation = inactiveService.getLastEvent(accession);
         } else {
-            lastOperation = dbsnpInactiveService.getLastOperation(accession);
+            lastOperation = dbsnpInactiveService.getLastEvent(accession);
         }
-        assertEquals(OperationType.UPDATED, lastOperation.getOperationType());
-        assertEquals(accession, lastOperation.getAccessionIdOrigin().longValue());
-        assertNull(lastOperation.getAccessionIdDestination());
+        assertEquals(EventType.UPDATED, lastOperation.getEventType());
+        assertEquals(accession, lastOperation.getAccession().longValue());
+        assertNull(lastOperation.getMergedInto());
     }
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
@@ -321,15 +321,15 @@ public class SubmittedVariantAccessioningServiceTest {
     private void assertVariantDeprecated(long accession, String reason) {
         assertTrue(service.getByAccessions(Collections.singletonList(accession)).isEmpty());
 
-        IOperation<Long> lastOperation;
+        IEvent<ISubmittedVariant, Long> lastOperation;
         if (accession >= accessioningMonotonicInitSs) {
-            lastOperation = inactiveService.getLastOperation(accession);
+            lastOperation = inactiveService.getLastEvent(accession);
         } else {
-            lastOperation = dbsnpInactiveService.getLastOperation(accession);
+            lastOperation = dbsnpInactiveService.getLastEvent(accession);
         }
-        assertEquals(OperationType.DEPRECATED, lastOperation.getOperationType());
-        assertEquals(accession, lastOperation.getAccessionIdOrigin().longValue());
-        assertNull(lastOperation.getAccessionIdDestination());
+        assertEquals(EventType.DEPRECATED, lastOperation.getEventType());
+        assertEquals(accession, lastOperation.getAccession().longValue());
+        assertNull(lastOperation.getMergedInto());
         assertEquals(reason, lastOperation.getReason());
     }
 
@@ -356,15 +356,15 @@ public class SubmittedVariantAccessioningServiceTest {
         assertTrue(service.getByAccessions(Collections.singletonList(accessionOrigin)).isEmpty());
         assertFalse(service.getByAccessions(Collections.singletonList(accessionDestination)).isEmpty());
 
-        IOperation<Long> lastOperation;
+        IEvent<ISubmittedVariant, Long> lastOperation;
         if (accessionOrigin >= accessioningMonotonicInitSs) {
-            lastOperation = inactiveService.getLastOperation(accessionOrigin);
+            lastOperation = inactiveService.getLastEvent(accessionOrigin);
         } else {
-            lastOperation = dbsnpInactiveService.getLastOperation(accessionOrigin);
+            lastOperation = dbsnpInactiveService.getLastEvent(accessionOrigin);
         }
-        assertEquals(OperationType.MERGED_INTO, lastOperation.getOperationType());
-        assertEquals(accessionOrigin, lastOperation.getAccessionIdOrigin().longValue());
-        assertEquals(accessionDestination, lastOperation.getAccessionIdDestination().longValue());
+        assertEquals(EventType.MERGED, lastOperation.getEventType());
+        assertEquals(accessionOrigin, lastOperation.getAccession().longValue());
+        assertEquals(accessionDestination, lastOperation.getMergedInto().longValue());
         assertEquals(MERGE_REASON, lastOperation.getReason());
     }
 

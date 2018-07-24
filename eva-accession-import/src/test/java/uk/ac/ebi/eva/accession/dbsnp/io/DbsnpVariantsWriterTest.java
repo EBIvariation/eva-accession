@@ -25,7 +25,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.commons.accession.core.OperationType;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
@@ -217,8 +217,8 @@ public class DbsnpVariantsWriterTest {
         List<DbsnpSubmittedVariantOperationEntity> operationEntities = mongoTemplate.find(
                 new Query(), DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(1, operationEntities.size());
-        assertEquals(OperationType.UPDATED, operationEntities.get(0).getOperationType());
+        assertEquals(EventType.UPDATED, operationEntities.get(0).getEventType());
         assertEquals(ssEntities.get(0), operationEntities.get(0).getInactiveObjects());
-        assertEquals(ssEntities.get(0).getAccession(), operationEntities.get(0).getAccessionIdOrigin());
+        assertEquals(ssEntities.get(0).getAccession(), operationEntities.get(0).getAccession());
     }
 }

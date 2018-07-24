@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
-import uk.ac.ebi.ampt2d.commons.accession.persistence.IHistoryRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 
 public interface DbsnpSubmittedVariantOperationRepository extends IHistoryRepository<Long,
         DbsnpSubmittedVariantOperationEntity, String> {

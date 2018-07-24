@@ -26,7 +26,8 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 @Document
-public class DbsnpClusteredVariantEntity extends AccessionedDocument<Long> implements IClusteredVariant {
+public class DbsnpClusteredVariantEntity extends AccessionedDocument<IClusteredVariant, Long> implements
+        IClusteredVariant {
 
     @Field("asm")
     private String assemblyAccession;

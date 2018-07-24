@@ -22,9 +22,11 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
 @Document
-public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> implements ISubmittedVariant {
+public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmittedVariant, Long>
+        implements ISubmittedVariant {
 
     @Field("asm")
     private String assemblyAccession;
@@ -203,5 +205,10 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<Long> im
         result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
         result = 31 * result + (validated != null ? validated.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public ISubmittedVariant getModel() {
+        return new SubmittedVariant(this);
     }
 }
