@@ -20,7 +20,7 @@ package uk.ac.ebi.eva.accession.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,8 +44,6 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
-
-import java.util.HashMap;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -75,13 +73,12 @@ public class SubmittedVariantAccessioningConfiguration {
     @Autowired
     private ContiguousIdBlockService service;
 
-    @Autowired
-    @Qualifier("contiguousBlockInitializations")
-    private HashMap<String, String> accessioningMonotonicInitProperties;
+    @Value("${accessioning.variant.categoryId}")
+    private String categoryId;
 
     @Bean
     public Long accessioningMonotonicInitSs() {
-        return new Long(accessioningMonotonicInitProperties.get("ss"));
+        return service.getBlockParameters(categoryId).getBlockStartValue();
     }
 
     @Bean
@@ -104,7 +101,6 @@ public class SubmittedVariantAccessioningConfiguration {
         ApplicationProperties properties = applicationProperties();
         logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(
-                properties.getVariant().getBlockSize(),
                 properties.getVariant().getCategoryId(),
                 properties.getInstanceId(),
                 service);
@@ -113,9 +109,7 @@ public class SubmittedVariantAccessioningConfiguration {
     @Bean
     public DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties();
-        return new DbsnpMonotonicAccessionGenerator<>(
-                properties.getVariant().getBlockSize(),
-                properties.getVariant().getCategoryId(),
+        return new DbsnpMonotonicAccessionGenerator<>(properties.getVariant().getCategoryId(),
                 properties.getInstanceId(),
                 service);
     }
