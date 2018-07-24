@@ -20,37 +20,37 @@ public class DbsnpMonotonicAccessionGenerator<T> extends MonotonicAccessionGener
 
     @Override
     public synchronized void recoverState(long[] committedElements) throws AccessionIsNotPendingException {
-        throw new UnsupportedOperationException("New accessions should not be generated");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
     @Override
     public synchronized long[] generateAccessions(
             int numAccessionsToGenerate) throws AccessionCouldNotBeGeneratedException {
-        throw new UnsupportedOperationException("New accessions should not be generated");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
     @Override
     public synchronized void commit(long... accessions) throws AccessionIsNotPendingException {
-        throw new UnsupportedOperationException("New accessions should not be generated");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
     @Override
     public synchronized void release(long... accessions) throws AccessionIsNotPendingException {
-        throw new UnsupportedOperationException("New accessions should not be generated");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
     @Override
     public synchronized MonotonicRangePriorityQueue getAvailableRanges() {
-        throw new UnsupportedOperationException("New accessions should not be generated");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
     @Override
     public synchronized void postSave(SaveResponse response) {
-        throw new UnsupportedOperationException("New accessions should not be generated");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
     @Override
     public List<AccessionWrapper> generateAccessions(Map messages) throws AccessionCouldNotBeGeneratedException {
-        throw new UnsupportedOperationException("New accessions should not be generated");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 }

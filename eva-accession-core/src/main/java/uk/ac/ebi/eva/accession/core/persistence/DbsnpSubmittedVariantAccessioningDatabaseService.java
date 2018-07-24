@@ -42,7 +42,7 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
 
     @Override
     public long[] getAccessionsInRanges(Collection<MonotonicRange> ranges) {
-        throw new UnsupportedOperationException("New accessions should not be generated using this service");
+        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
 }
