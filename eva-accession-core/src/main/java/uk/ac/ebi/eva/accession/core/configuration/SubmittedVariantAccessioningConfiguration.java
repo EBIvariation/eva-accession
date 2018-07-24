@@ -31,6 +31,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
@@ -92,6 +93,7 @@ public class SubmittedVariantAccessioningConfiguration {
     @Bean
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
         return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
+                                                       dbsnpSubmittedVariantAccessionGenerator(),
                                                        submittedVariantAccessioningDatabaseService(),
                                                        dbsnpSubmittedVariantAccessioningDatabaseService(),
                                                        accessioningMonotonicInitSs());
@@ -102,6 +104,16 @@ public class SubmittedVariantAccessioningConfiguration {
         ApplicationProperties properties = applicationProperties();
         logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(
+                properties.getVariant().getBlockSize(),
+                properties.getVariant().getCategoryId(),
+                properties.getInstanceId(),
+                service);
+    }
+
+    @Bean
+    public DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator() {
+        ApplicationProperties properties = applicationProperties();
+        return new DbsnpMonotonicAccessionGenerator<>(
                 properties.getVariant().getBlockSize(),
                 properties.getVariant().getCategoryId(),
                 properties.getInstanceId(),

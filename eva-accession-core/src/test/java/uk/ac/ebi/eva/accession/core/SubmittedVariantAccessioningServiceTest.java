@@ -36,11 +36,16 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.IOperation;
+import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 
@@ -99,6 +104,14 @@ public class SubmittedVariantAccessioningServiceTest {
 
     private SubmittedVariant submittedVariantModified;
 
+    private BasicMonotonicAccessioningService<ISubmittedVariant, String> accessioningServiceDbsnp;
+
+    @Autowired
+    private DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpAccessionGenerator;
+
+    @Autowired
+    private DbsnpSubmittedVariantAccessioningDatabaseService dbServiceDbsnp;
+
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName("submitted-variants-test").build());
@@ -136,6 +149,10 @@ public class SubmittedVariantAccessioningServiceTest {
         submittedVariantModified = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319,
                                                         "C", "TCTC", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                         MATCHES_ASSEMBLY, true, VALIDATED);
+
+        accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
+                (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
+                 new SHA1HashingFunction());
     }
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
@@ -342,6 +359,13 @@ public class SubmittedVariantAccessioningServiceTest {
         assertFalse(service.getByAccessions(Collections.singletonList(ACCESSION_DBSNP_2)).isEmpty());
         service.merge(ACCESSION_DBSNP_1, ACCESSION_DBSNP_2, MERGE_REASON);
         assertVariantMerged(ACCESSION_DBSNP_1, ACCESSION_DBSNP_2, MERGE_REASON);
+    }
+
+    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @Test(expected = UnsupportedOperationException.class)
+    public void exceptionWhenCreateAccessionForDbsnpVariant() throws
+            AccessionCouldNotBeGeneratedException {
+        accessioningServiceDbsnp.getOrCreate(Collections.singletonList(submittedVariant));
     }
 
 }

@@ -30,6 +30,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
@@ -45,13 +46,14 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     private Long accessioningMonotonicInitSs;
 
     public SubmittedVariantAccessioningService(MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
+                                               DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpAccessionGenerator,
                                                MonotonicDatabaseService dbService,
                                                MonotonicDatabaseService dbServiceDbsnp,
                                                Long accessioningMonotonicInitSs) {
         this.accessioningService = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
                 (accessionGenerator, dbService, new SubmittedVariantSummaryFunction(), new SHA1HashingFunction());
         this.accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
-                (accessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
+                (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
                  new SHA1HashingFunction());
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
     }
@@ -74,9 +76,9 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
                           .collect(Collectors.toList());
     }
 
-    private Boolean contains(List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionWrapperList,
+    private Boolean contains(List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionWrappers,
                              ISubmittedVariant iSubmittedVariant) {
-        return accessionWrapperList.stream().anyMatch(
+        return accessionWrappers.stream().anyMatch(
                 accessionWrapper -> accessionWrapper.getData().equals(iSubmittedVariant));
     }
 
