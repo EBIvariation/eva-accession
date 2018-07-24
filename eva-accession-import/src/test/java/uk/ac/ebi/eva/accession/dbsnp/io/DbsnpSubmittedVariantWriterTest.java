@@ -31,7 +31,7 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.test.MongoTestConfiguration;
 
 import java.util.Arrays;

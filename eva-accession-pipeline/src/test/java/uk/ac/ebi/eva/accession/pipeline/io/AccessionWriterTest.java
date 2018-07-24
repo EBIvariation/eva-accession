@@ -64,7 +64,7 @@ public class AccessionWriterTest {
 
     private static final int TAXONOMY = 3880;
 
-    private static final long EXPECTED_ACCESSION = 10000000000L;
+    private static final long EXPECTED_ACCESSION = 5000000000L;
 
     private static final String CONTIG_1 = "contig_1";
 

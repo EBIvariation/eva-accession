@@ -21,7 +21,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 
 import java.util.List;
 
