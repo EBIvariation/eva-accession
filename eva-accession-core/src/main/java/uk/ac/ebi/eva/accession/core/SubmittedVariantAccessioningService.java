@@ -76,7 +76,8 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     private Boolean contains(List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionWrapperList,
                              ISubmittedVariant iSubmittedVariant) {
-        return accessionWrapperList.stream().anyMatch(x -> x.getData().equals(iSubmittedVariant));
+        return accessionWrapperList.stream().anyMatch(
+                accessionWrapper -> accessionWrapper.getData().equals(iSubmittedVariant));
     }
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> joinLists(

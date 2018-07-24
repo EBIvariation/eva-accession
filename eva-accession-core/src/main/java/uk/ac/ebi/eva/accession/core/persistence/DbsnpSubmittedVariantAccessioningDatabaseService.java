@@ -42,7 +42,7 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
 
     @Override
     public long[] getAccessionsInRanges(Collection<MonotonicRange> ranges) {
-        return new long[0];
+        throw new UnsupportedOperationException("New accessions should not be generated using this service");
     }
 
 }
