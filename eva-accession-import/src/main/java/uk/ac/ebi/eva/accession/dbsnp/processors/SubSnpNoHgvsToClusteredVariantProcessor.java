@@ -39,20 +39,27 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
         hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
+    /**
+     * Instantiate a {@link DbsnpClusteredVariantEntity} from a {@link SubSnpNoHgvs}.
+     *
+     * We define the type of the ClusteredVariant (RefSnp) as the type of the first alternate allele (according to
+     * VariantClassifier). If the alternate alleles represent different variant types, the SubmittedVariants of any
+     * different type will be declustered in {@link uk.ac.ebi.eva.accession.dbsnp.io.DbsnpVariantsWriter}.
+     */
     @Override
     public DbsnpClusteredVariantEntity process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         Region variantRegion = subSnpNoHgvs.getVariantRegion();
         List<String> alleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
-        VariantType type = VariantClassifier.getVariantClassification(subSnpNoHgvs.getReferenceInForwardStrand(),
-                                                                      alleles.get(0), // TODO which allele to use? we
-                                                                      // need the logic of the declustering to
-                                                                      // complete this
-                                                                      subSnpNoHgvs.getDbsnpVariantType().intValue());
+        VariantType typeOfTheFirstAlternateAllele = VariantClassifier.getVariantClassification(
+                subSnpNoHgvs.getReferenceInForwardStrand(),
+                alleles.get(0),
+                subSnpNoHgvs.getDbsnpVariantType().intValue());
+
         ClusteredVariant variant = new ClusteredVariant(subSnpNoHgvs.getAssembly(),
                                                         subSnpNoHgvs.getTaxonomyId(),
                                                         variantRegion.getChromosome(),
                                                         variantRegion.getStart(),
-                                                        type,
+                                                        typeOfTheFirstAlternateAllele,
                                                         subSnpNoHgvs.isSnpValidated());
 
         String hash = hashingFunction.apply(variant);

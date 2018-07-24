@@ -23,6 +23,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
@@ -67,8 +68,8 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         for (int i = 0; i < submittedVariants.size(); i++) {
             DbsnpSubmittedVariantEntity submittedVariant = submittedVariants.get(i);
             if (!submittedVariant.isAllelesMatch()) {
-                ISubmittedVariant model = submittedVariant.getModel();
-//                model.setClusteredVariantAccession(null);
+                SubmittedVariant model = submittedVariant.getModel();
+                model.setClusteredVariantAccession(null);
                 service.update(submittedVariant.getAccession(), i+1, model); // i+1: versions start with 1
             }
         }

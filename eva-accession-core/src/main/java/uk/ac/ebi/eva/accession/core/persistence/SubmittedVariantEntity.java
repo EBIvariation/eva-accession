@@ -116,7 +116,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         }
     }
 
-    public ISubmittedVariant getModel() {
+    public SubmittedVariant getModel() {
         SubmittedVariant variant = new SubmittedVariant(this);
         variant.setSupportedByEvidence(isSupportedByEvidence());
         variant.setAssemblyMatch(isAssemblyMatch());
