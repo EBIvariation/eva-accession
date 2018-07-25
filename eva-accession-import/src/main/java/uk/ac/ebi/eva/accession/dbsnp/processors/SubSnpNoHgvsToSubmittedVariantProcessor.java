@@ -47,7 +47,8 @@ public class SubSnpNoHgvsToSubmittedVariantProcessor
         String reference = subSnpNoHgvs.getReferenceInForwardStrand();
         boolean allelesMatch = subSnpNoHgvs.doAllelesMatch();
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
-        for (String alternate : alternateAlleles) {
+        for (int i = 0; i < alternateAlleles.size(); i++) {
+            String alternate = alternateAlleles.get(i);
             // a SubmittedVariant object is needed to calculate the hash to create the DbsnpSubmittedVariantEntity one
             SubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
                                                             getProjectAccession(subSnpNoHgvs),
@@ -59,7 +60,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessor
 
             String hash = hashingFunction.apply(variant);
             DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
-                                                                                          variant, 1);
+                                                                                          variant, i+1);
             ssVariantEntity.setCreatedDate(subSnpNoHgvs.getSsCreateTime().toLocalDateTime());
             variants.add(ssVariantEntity);
         }
