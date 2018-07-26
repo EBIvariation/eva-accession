@@ -86,12 +86,11 @@ public class SubSnpNoHgvs {
 
 
     public SubSnpNoHgvs(Long ssId, Long rsId, String reference, String alleles, String assembly, String batchHandle,
-                        String batchName,
-                        String chromosome, Long chromosomeStart, String contigName, long contigStart,
-                        DbsnpVariantType dbsnpVariantType,
-                        Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
-                        boolean subsnpValidated, boolean snpValidated, boolean frequencyExists, boolean genotypeExists,
-                        Timestamp ssCreateTime, Timestamp rsCreateTime, int taxonomyId) {
+                        String batchName, String chromosome, Long chromosomeStart, String contigName, long contigStart,
+                        DbsnpVariantType dbsnpVariantType, Orientation subsnpOrientation, Orientation snpOrientation,
+                        Orientation contigOrientation, boolean subsnpValidated, boolean snpValidated,
+                        boolean frequencyExists, boolean genotypeExists, Timestamp ssCreateTime, Timestamp rsCreateTime,
+                        int taxonomyId) {
         this.ssId = ssId;
         this.rsId = rsId;
         this.alleles = alleles;

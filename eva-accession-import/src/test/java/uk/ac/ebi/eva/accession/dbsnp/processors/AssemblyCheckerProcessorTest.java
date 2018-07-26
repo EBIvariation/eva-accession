@@ -83,10 +83,9 @@ public class AssemblyCheckerProcessorTest {
 
     private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, long chromosomeStart, String contig, long contigStart,
                                          String referenceAllele, DbsnpVariantType variantClass) {
-        return new SubSnpNoHgvs(SS_ID, RS_ID, referenceAllele, ALTERNATE_ALLELE, ASSEMBLY, "", "",
-                                chromosome, chromosomeStart, contig, contigStart, variantClass,
-                                Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                false, false, true, true, null, null,
+        return new SubSnpNoHgvs(SS_ID, RS_ID, referenceAllele, ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome,
+                                chromosomeStart, contig, contigStart, variantClass, Orientation.FORWARD,
+                                Orientation.FORWARD, Orientation.FORWARD, false, false, true, true, null, null,
                                 TAXONOMY);
     }
 

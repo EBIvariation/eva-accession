@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
@@ -51,7 +52,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
 
     private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
-    SubSnpNoHgvsToClusteredVariantProcessor processor;
+    private SubSnpNoHgvsToClusteredVariantProcessor processor;
 
     @Before
     public void setUp() throws Exception {
@@ -71,10 +72,8 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
-        // TODO: validated, match assembly and RS variant accession are being added into PR #28
 
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.SNV);
-        // TODO: compare createdDate and hash, as they are not compared in the equals method
     }
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpClusteredVariantEntity dbsnpSubmittedVariant,
@@ -95,6 +94,19 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         assertEquals(expectedType, dbsnpClusteredVariant.getType());
         assertEquals(expectedValidated, dbsnpClusteredVariant.isValidated());
         assertEquals(1, dbsnpClusteredVariant.getVersion());
+        assertEquals(getExpectedHash(chromosome, chromosomeStart, expectedType),
+                     dbsnpClusteredVariant.getHashedMessage());
+    }
+
+    public String getExpectedHash(String contig, long start, VariantType type) {
+        String summary = new StringBuilder()
+                .append(ASSEMBLY)
+                .append("_").append(TAXONOMY)
+                .append("_").append(contig)
+                .append("_").append(start)
+                .append("_").append(type)
+                .toString();
+        return new SHA1HashingFunction().apply(summary);
     }
 
     @Test

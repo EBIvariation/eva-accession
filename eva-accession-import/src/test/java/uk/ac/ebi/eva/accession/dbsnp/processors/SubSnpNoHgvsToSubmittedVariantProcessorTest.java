@@ -51,7 +51,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
-    SubSnpNoHgvsToSubmittedVariantProcessor processor;
+    private SubSnpNoHgvsToSubmittedVariantProcessor processor;
 
     @Before
     public void setUp() throws Exception {
@@ -70,7 +70,6 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "C");
-        // TODO: compare createdDate and hash, as they are not compared in the equals method
     }
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
