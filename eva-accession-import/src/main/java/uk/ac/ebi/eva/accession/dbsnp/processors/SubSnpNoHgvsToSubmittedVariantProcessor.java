@@ -59,8 +59,10 @@ public class SubSnpNoHgvsToSubmittedVariantProcessor
             variant.setValidated(subSnpNoHgvs.isSubsnpValidated());
 
             String hash = hashingFunction.apply(variant);
+            int version = i + 1;    // the soft standard in accession-commons is that versions start with 1
             DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
-                                                                                          variant, i+1);
+                                                                                          variant, version);
+
             ssVariantEntity.setCreatedDate(subSnpNoHgvs.getSsCreateTime().toLocalDateTime());
             variants.add(ssVariantEntity);
         }

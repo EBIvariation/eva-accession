@@ -65,12 +65,11 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     private void declusterAllelesMismatch(List<DbsnpSubmittedVariantEntity> submittedVariants)
             throws AccessionDeprecatedException, AccessionDoesNotExistException, AccessionMergedException,
                    HashAlreadyExistsException {
-        for (int i = 0; i < submittedVariants.size(); i++) {
-            DbsnpSubmittedVariantEntity submittedVariant = submittedVariants.get(i);
+        for (DbsnpSubmittedVariantEntity submittedVariant : submittedVariants) {
             if (!submittedVariant.isAllelesMatch()) {
                 SubmittedVariant model = submittedVariant.getModel();
                 model.setClusteredVariantAccession(null);
-                service.update(submittedVariant.getAccession(), i+1, model); // i+1: versions start with 1
+                service.update(submittedVariant.getAccession(), submittedVariant.getVersion(), model);
             }
         }
     }
