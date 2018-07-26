@@ -455,8 +455,9 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                         false, false, "ACACACACAC", CREATED_DATE, TAXONOMY);
 
         variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(GT)11", false, false);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(GT)14",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(AC)11",
+                               false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(AC)14",
                                false, false);
     }
 
