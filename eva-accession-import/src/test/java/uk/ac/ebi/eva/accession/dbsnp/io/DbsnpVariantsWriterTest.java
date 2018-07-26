@@ -117,6 +117,7 @@ public class DbsnpVariantsWriterTest {
         hashingFunctionClustered = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
     }
 
     @Test
@@ -229,5 +230,24 @@ public class DbsnpVariantsWriterTest {
         assertEquals(wrapper.getSubmittedVariants().get(0).getClusteredVariantAccession(),
                      operationEntities.get(0).getInactiveObjects().get(0).getClusteredVariantAccession());
         assertEquals(ssEntities.get(0).getAccession(), operationEntities.get(0).getAccession());
+    }
+
+    @Test
+    public void repeatedClusteredVariants() throws Exception {
+        boolean allelesMatch = false;
+        SubmittedVariant submittedVariant_1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START_1,
+                                                                   "reference", "alternate", CLUSTERED_VARIANT,
+                                                                   SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                                                   allelesMatch, VALIDATED);
+        DbsnpVariantsWrapper firstWrapper = buildSimpleWrapper();
+        firstWrapper.setSubmittedVariants(Collections.singletonList(
+                new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT,
+                                                hashingFunctionSubmitted.apply(submittedVariant_1),
+                                                submittedVariant_1)));
+        DbsnpVariantsWrapper secondWrapper = buildSimpleWrapper();
+
+        dbsnpVariantsWriter.write(Arrays.asList(firstWrapper, secondWrapper));
+
+        assertRsWasStored(firstWrapper);
     }
 }

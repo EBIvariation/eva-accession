@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
+import com.mongodb.DuplicateKeyException;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
@@ -22,6 +23,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
@@ -31,8 +33,13 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
@@ -52,14 +59,33 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     }
 
     @Override
-    public void write(List<? extends DbsnpVariantsWrapper> items) throws Exception {
-        for (DbsnpVariantsWrapper dbsnpVariantsWrapper : items) {
+    public void write(List<? extends DbsnpVariantsWrapper> wrappers) throws Exception {
+        for (DbsnpVariantsWrapper dbsnpVariantsWrapper : wrappers) {
             List<DbsnpSubmittedVariantEntity> submittedVariants = dbsnpVariantsWrapper.getSubmittedVariants();
             dbsnpSubmittedVariantWriter.write(submittedVariants);
-            dbsnpClusteredVariantWriter.write(Collections.singletonList(dbsnpVariantsWrapper.getClusteredVariant()));
             declusterAllelesMismatch(submittedVariants);
         }
 
+        writeClusteredVariants(wrappers);
+    }
+
+    private void writeClusteredVariants(List<? extends DbsnpVariantsWrapper> items) {
+        try {
+            Collection<DbsnpClusteredVariantEntity> uniqueClusteredVariants =
+                    items.stream()
+                         .map(DbsnpVariantsWrapper::getClusteredVariant)
+                         .collect(Collectors.toMap(DbsnpClusteredVariantEntity::getHashedMessage,
+                                                   a -> a,
+                                                   (a, b) -> a))
+                         .values();
+            dbsnpClusteredVariantWriter.write(new ArrayList<>(uniqueClusteredVariants));
+        } catch (DuplicateKeyException e) {
+            ; // even though we grouped by hash (not by accession: there can be several different documents with the
+            // same accession, those will have to be deprecated later) so that a ClusteredVariant is only written
+            // once, this is only within a chunk. It's possible that a ClusteredVariant is split across chunks. Also,
+            // doing inserts and ignore the exception seems a bit simpler than doing upserts, as that would require
+            // doing retries if we work concurrently:  https://jira.mongodb.org/browse/SERVER-14322
+        }
     }
 
     private void declusterAllelesMismatch(List<DbsnpSubmittedVariantEntity> submittedVariants)
