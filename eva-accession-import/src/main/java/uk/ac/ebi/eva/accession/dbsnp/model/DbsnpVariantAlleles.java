@@ -15,9 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.model;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,15 +28,21 @@ import java.util.stream.Collectors;
 
 public class DbsnpVariantAlleles {
 
-    public static final String STR_SEQUENCE_REGEX_GROUP = "sequence";
+    private static final String STR_MOTIF_REGEX_GROUP = "motif";
 
-    public static final String MICROSATELLITE_REGEX = "(?<" + STR_SEQUENCE_REGEX_GROUP + ">\\([a-zA-Z]+\\))\\d+";
+    private static final String BRACKETED_STR_MOTIF_REGEX_GROUP = "bracketedMotif";
 
-    private static final Pattern SINGLE_GROUP_MICROSATELLITE_PATTERN = Pattern.compile(MICROSATELLITE_REGEX);
+    /** This Regex captures a motif in a STR expression, i.e., 'GA' in '(GA)5' */
+    private static final String MOTIF_GROUP_REGEX = "(?<" + STR_MOTIF_REGEX_GROUP + ">[a-zA-Z]+)";
 
-    private static final Pattern MULTI_GROUP_MICROSATELLITE_PATTERN = Pattern.compile("(" + MICROSATELLITE_REGEX + ")+");
+    /** This regex captures a bracketed motif in a STR expression, i.e., '(GA)' in '(GA)5' */
+    private static final String BRACKETED_MOTIF_GROUP_REGEX = "(?<" + BRACKETED_STR_MOTIF_REGEX_GROUP + ">" +
+        "\\(" + MOTIF_GROUP_REGEX + "\\))";
 
-    private static final Pattern WORD_PATTERN = Pattern.compile("[a-zA-Z]+");
+    /** Regular expresion that captures a STR expression, like '(GA)5' */
+    private static final String STR_UNIT_REGEX = BRACKETED_MOTIF_GROUP_REGEX + "\\d*";
+
+    private static final Pattern STR_UNIT_PATTERN = Pattern.compile(STR_UNIT_REGEX);
 
     private String referenceAllele;
 
@@ -99,11 +108,10 @@ public class DbsnpVariantAlleles {
         return sequenceInForwardStrand.toString();
     }
 
-    // TODO: return all alleles, or just the alternate ones?
     public List<String> getAllelesInForwardStrand() {
-        String[] allelesArray = alleles.split("/");
+        String[] allelesArray =  StringUtils.split(alleles, "/");
         if (dbsnpVariantType.equals(DbsnpVariantType.MICROSATELLITE)) {
-            return getMicrosatelliteAlleles(allelesArray);
+            return getMicrosatelliteAllelesInForwardStrand(allelesArray);
         } else {
             if (allelesOrientation.equals(Orientation.FORWARD)) {
                 return Arrays.asList(allelesArray);
@@ -113,10 +121,15 @@ public class DbsnpVariantAlleles {
         }
     }
 
-    private List<String> getMicrosatelliteAlleles(String[] allelesArray) {
+    /** This method return a list containing each allele in a Microsatellite type variant, reversing and complementig
+     * them if necessary
+     * @param allelesArray Array containing all alleles
+     * @return List containing all alleles in the forward strand
+     */
+    private List<String> getMicrosatelliteAllelesInForwardStrand(String[] allelesArray) {
         allelesArray = decodeMicrosatelliteAlleles(allelesArray);
         if (allelesOrientation.equals(Orientation.REVERSE)) {
-            return Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteAllele).collect(
+            return Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteSequence).collect(
                     Collectors.toList());
         } else {
             return Arrays.asList(allelesArray);
@@ -124,38 +137,8 @@ public class DbsnpVariantAlleles {
     }
 
     /**
-     * Reverse and complement the sequences contained in a microsatellite, keeping the structure.
-     * I.e., (A)2(TC)8 reverse complement would be (GA)8(T)2
-     * @param microsatelliteAllele Allele to reverse
-     * @return Reversed and complemented allele
-     */
-    private String reverseComplementMicrosatelliteAllele(String microsatelliteAllele) {
-        // TODO: this method reverse and complement each nucleotides group in the alleles string, but it does not
-        //       reverse the group order. (A)2(TC)8 is being reversed to (T)2(GA)8 instead of (GA)8(T)2. Fix
-        Matcher matcher = MULTI_GROUP_MICROSATELLITE_PATTERN.matcher(microsatelliteAllele);
-        if (matcher.matches()) {
-            StringBuilder complementedMicrosatelliteAllele = new StringBuilder();
-            matcher = WORD_PATTERN.matcher(microsatelliteAllele);
-            int charactersToCopyStart = 0;
-            while (matcher.find()) {
-                int charactersToCopyEnd = matcher.start();
-                complementedMicrosatelliteAllele.append(microsatelliteAllele.substring(charactersToCopyStart, charactersToCopyEnd));
-                String sequence = matcher.group();
-                String complementedSequence = reverseComplement(sequence);
-                complementedMicrosatelliteAllele.append(complementedSequence);
-                charactersToCopyStart = matcher.end();
-            }
-            complementedMicrosatelliteAllele.append(
-                    microsatelliteAllele.substring(charactersToCopyStart, microsatelliteAllele.length()));
-            return complementedMicrosatelliteAllele.toString();
-        } else {
-            return microsatelliteAllele;
-        }
-    }
-
-    /**
      * This method decode the microsatellites alleles that are just represented as a number of repetitions, adding the
-     * repeated sequence. I.e., {"(AT)4","5","7"} would be decoded as {"(AT)4","(AT)5","(AT)7"}
+     * repeated motif. I.e., {"(AT)4","5","7"} would be decoded as {"(AT)4","(AT)5","(AT)7"}
      * @param allelesArray array that can contain alleles represented just by a number
      * @return Array where every allele has a sequence
      */
@@ -164,9 +147,9 @@ public class DbsnpVariantAlleles {
         for (int i=1; i<allelesArray.length; i++) {
             // if a allele in the array is a number, prepend to it the sequence found in the first allele
             if (NumberUtils.isDigits(allelesArray[i])) {
-                Matcher matcher = SINGLE_GROUP_MICROSATELLITE_PATTERN.matcher(firstAllele);
+                Matcher matcher = STR_UNIT_PATTERN.matcher(firstAllele);
                 if (matcher.matches()) {
-                    allelesArray[i] = matcher.group(STR_SEQUENCE_REGEX_GROUP) + allelesArray[i];
+                    allelesArray[i] = matcher.group(BRACKETED_STR_MOTIF_REGEX_GROUP) + allelesArray[i];
                 } else {
                     throw new IllegalArgumentException("Not parseable STR: " + firstAllele + "/" + allelesArray[i]);
                 }
@@ -174,5 +157,47 @@ public class DbsnpVariantAlleles {
         }
 
         return allelesArray;
+    }
+
+    /**
+     * Reverse and complement a sequence represented by one or several STRs
+     * I.e., (A)2(TC)8 reverse complement would be (GA)8(T)2 (the order of the STRs is also inverted)
+     * @param microsatellite STR sequence to reverse
+     * @return Reversed and complemented microsatellite
+     */
+    private String reverseComplementMicrosatelliteSequence(String microsatellite) {
+        // we have to reverse the order of the groups in the microsatellite, so we add them to a stack
+        Deque<String> stack = new ArrayDeque<>();
+        Matcher matcher = STR_UNIT_PATTERN.matcher(microsatellite);
+        while (matcher.find()) {
+            String microsatelliteUnit = matcher.group();
+            stack.addFirst(microsatelliteUnit);
+        }
+
+        // each STR string in the stack is now reversed/complemented, and added to the output string
+        StringBuilder reversedComplementedAllele = new StringBuilder();
+        for (String microsatelliteUnit : stack) {
+            reversedComplementedAllele.append(reverseComplementMicrosatelliteUnit(microsatelliteUnit));
+        }
+
+        return reversedComplementedAllele.toString();
+    }
+
+    /**
+     * This method reverses and complement a single microsatellite 'unit'. Each unit in a STR expression is a sequence
+     * motif and the number of times is repeated. I.e., the microsatellite "(AG)5(C)4" has the units "(AG)5" and "(C)4".
+     * The reverse complement for the unit "(AG)5" will be "(CT)5" (notice that each allele has been complemented but
+     * the sequence has been reversed also)
+     * @param str microsatellite unit to reverse and complement
+     * @return reversed complemented microsatellite unit
+     */
+    private String reverseComplementMicrosatelliteUnit(String str) {
+        Matcher matcher = STR_UNIT_PATTERN.matcher(str);
+        if (matcher.matches()) {
+            String sequence = matcher.group(STR_MOTIF_REGEX_GROUP);
+            return str.replaceFirst(sequence, reverseComplement(sequence));
+        } else {
+            return str;
+        }
     }
 }

@@ -421,6 +421,46 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
     }
 
     @Test
+    public void transformShortTandemRepeatReverseStrand() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(59831075L, 109775855L, "(AT)7/(AT)19", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.FORWARD, CONTIG_START, false,
+                                                     false, "AT", CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "AT", "(AT)7", false,
+                               false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "AT", "(AT)19", false,
+                               false);
+    }
+
+    @Test
+    public void transformMicrosatelliteCornerCases() throws Exception {
+        // There are STR variants that don't have repeated motifs
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(700214256L, 439714840L, "C/AGAGTTCAAGTTGCCCTA", ASSEMBLY,
+                                                     BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START,
+                                                     CONTIG_NAME, DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, CONTIG_START, false,
+                                                     false, "C", CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "C", "AGAGTTCAAGTTGCCCTA",
+                               false, true);
+
+        // there are STR variants where the alleles string is enclosed with square brackets
+        subSnpNoHgvs = new SubSnpNoHgvs(159831041L, 109548685L, "[(GT)11/14]", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                        CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, DbsnpVariantType.MICROSATELLITE,
+                                        Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD, CONTIG_START,
+                                        false, false, "ACACACACAC", CREATED_DATE, TAXONOMY);
+
+        variants = processor.process(subSnpNoHgvs);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(GT)11", false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(GT)14",
+                               false, false);
+    }
+
+    @Test
     public void transformVariantWithNoChromosomeCoordinates() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25962272L, 14745629L, "T", "A/C", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, null, null, CONTIG_NAME, CONTIG_START,

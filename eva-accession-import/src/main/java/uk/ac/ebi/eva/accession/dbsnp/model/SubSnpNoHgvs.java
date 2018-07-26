@@ -15,19 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.model;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-
 import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SubSnpNoHgvs {
 
@@ -36,8 +29,6 @@ public class SubSnpNoHgvs {
     private Long ssId;
 
     private Long rsId;
-
-    private String alleles;
 
     private String assembly;
 
@@ -53,13 +44,9 @@ public class SubSnpNoHgvs {
 
     private long contigStart;
 
+    private final DbsnpVariantAlleles dbSnpVariantAlleles;
+
     private DbsnpVariantType dbsnpVariantType;
-
-    private Orientation subsnpOrientation;
-
-    private Orientation snpOrientation;
-
-    private Orientation contigOrientation;
 
     private boolean subsnpValidated;
 
@@ -68,8 +55,6 @@ public class SubSnpNoHgvs {
     private boolean frequencyExists;
 
     private boolean genotypeExists;
-
-    private String reference;
 
     private Timestamp ssCreateTime;
 
@@ -93,7 +78,6 @@ public class SubSnpNoHgvs {
                         int taxonomyId) {
         this.ssId = ssId;
         this.rsId = rsId;
-        this.alleles = alleles;
         this.assembly = assembly;
         this.batchHandle = batchHandle;
         this.batchName = batchName;
@@ -102,17 +86,17 @@ public class SubSnpNoHgvs {
         this.contigName = contigName;
         this.contigStart = contigStart;
         this.dbsnpVariantType = dbsnpVariantType;
-        this.subsnpOrientation = subsnpOrientation;
-        this.snpOrientation = snpOrientation;
-        this.contigOrientation = contigOrientation;
         this.subsnpValidated = subsnpValidated;
         this.snpValidated = snpValidated;
         this.frequencyExists = frequencyExists;
         this.genotypeExists = genotypeExists;
-        this.reference = reference;
         this.ssCreateTime = ssCreateTime;
         this.rsCreateTime = rsCreateTime;
         this.taxonomyId = taxonomyId;
+        Orientation allelesOrientation = Orientation.getOrientation(
+                subsnpOrientation.getValue() * snpOrientation.getValue() * contigOrientation.getValue());
+        this.dbSnpVariantAlleles = new DbsnpVariantAlleles(reference, alleles, contigOrientation, allelesOrientation,
+                                                           this.dbsnpVariantType);
     }
 
     public Long getSsId() {
@@ -129,14 +113,6 @@ public class SubSnpNoHgvs {
 
     public void setRsId(Long rsId) {
         this.rsId = rsId;
-    }
-
-    public String getAlleles() {
-        return alleles;
-    }
-
-    public void setAlleles(String alleles) {
-        this.alleles = alleles;
     }
 
     public String getAssembly() {
@@ -195,30 +171,6 @@ public class SubSnpNoHgvs {
         this.dbsnpVariantType = dbsnpVariantType;
     }
 
-    public Orientation getSubsnpOrientation() {
-        return subsnpOrientation;
-    }
-
-    public void setSubsnpOrientation(Orientation subsnpOrientation) {
-        this.subsnpOrientation = subsnpOrientation;
-    }
-
-    public Orientation getSnpOrientation() {
-        return snpOrientation;
-    }
-
-    public void setSnpOrientation(Orientation snpOrientation) {
-        this.snpOrientation = snpOrientation;
-    }
-
-    public Orientation getContigOrientation() {
-        return contigOrientation;
-    }
-
-    public void setContigOrientation(Orientation contigOrientation) {
-        this.contigOrientation = contigOrientation;
-    }
-
     public long getContigStart() {
         return contigStart;
     }
@@ -259,14 +211,6 @@ public class SubSnpNoHgvs {
         this.genotypeExists = genotypeExists;
     }
 
-    public String getReference() {
-        return reference;
-    }
-
-    public void setReference(String reference) {
-        this.reference = reference;
-    }
-
     public Timestamp getSsCreateTime() {
         return ssCreateTime;
     }
@@ -300,11 +244,7 @@ public class SubSnpNoHgvs {
     }
 
     public String getReferenceInForwardStrand() {
-        if (contigOrientation.equals(Orientation.REVERSE)) {
-            return getTrimmedAllele(calculateReverseComplement(reference));
-        } else {
-            return getTrimmedAllele(reference);
-        }
+        return getTrimmedAllele(this.dbSnpVariantAlleles.getReferenceInForwardStrand());
     }
 
     /**
@@ -321,104 +261,17 @@ public class SubSnpNoHgvs {
         return allele;
     }
 
-    public List<String> getAlternateAllelesInForwardStrand() {
-        List<String> altAllelesInForwardStrand = new ArrayList<>();
+    // TODO: trim alternate alleles
 
-        List<String> alleles = getAllelesInForwardStrand();
-        String reference = getReferenceInForwardStrand();
-
-        for (String allele : alleles) {
-            if (!allele.equals(reference)) {
-                if (dbsnpVariantType.equals(DbsnpVariantType.MICROSATELLITE)) {
-                    altAllelesInForwardStrand.add(getMicrosatelliteAlternate(allele, alleles.get(0)));
-                } else {
-                    altAllelesInForwardStrand.add(allele);
-                }
-            }
-        }
-
-        return altAllelesInForwardStrand;
-    }
-
-    /**
-     * This method splits the alleles and convert them to the forward strand if necessary. This method will return all
-     * alleles, including the reference one
-     * @return Array containing each allele in the forward strand
-     */
     private List<String> getAllelesInForwardStrand() {
-        Orientation allelesOrientation;
-        try {
-            allelesOrientation = getAllelesOrientation();
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown alleles orientation for variant " + this, e);
-        }
-
-        // We use StringUtils because String.split does not remove the leading empty fields after splitting
-        Stream<String> trimmedAlleles = Arrays.stream(StringUtils.split(alleles, "/"))
-                                              .map(SubSnpNoHgvs::getTrimmedAllele);
-
-        if (allelesOrientation.equals(Orientation.FORWARD)) {
-            return trimmedAlleles.collect(Collectors.toList());
-        } else if (allelesOrientation.equals(Orientation.REVERSE)) {
-            return trimmedAlleles.map(SubSnpNoHgvs::calculateReverseComplement)
-                                 .collect(Collectors.toList());
-        } else {
-            throw new IllegalArgumentException(
-                    "Unknown alleles orientation " + allelesOrientation + " for variant " + this);
-        }
+        return dbSnpVariantAlleles.getAllelesInForwardStrand();
     }
 
-    private Orientation getAllelesOrientation() {
-        return Orientation.getOrientation(
-                this.subsnpOrientation.getValue() * this.snpOrientation.getValue() * this.contigOrientation.getValue());
-    }
+    public List<String> getAlternateAllelesInForwardStrand() {
+        String referenceAllele = getReferenceInForwardStrand();
+        List<String> alleles = getAllelesInForwardStrand();
 
-    private static String calculateReverseComplement(String alleleInReverseStrand) {
-        StringBuilder alleleInForwardStrand = new StringBuilder(alleleInReverseStrand).reverse();
-        for (int i = 0; i < alleleInForwardStrand.length(); i++) {
-            switch (alleleInForwardStrand.charAt(i)) {
-                // Capitalization holds a special meaning for dbSNP so we need to preserve it.
-                // See https://www.ncbi.nlm.nih.gov/books/NBK44414/#_Reports_Lowercase_Small_Sequence_Letteri_
-                case 'A':
-                    alleleInForwardStrand.setCharAt(i, 'T');
-                    break;
-                case 'a':
-                    alleleInForwardStrand.setCharAt(i, 't');
-                    break;
-                case 'C':
-                    alleleInForwardStrand.setCharAt(i, 'G');
-                    break;
-                case 'c':
-                    alleleInForwardStrand.setCharAt(i, 'g');
-                    break;
-                case 'G':
-                    alleleInForwardStrand.setCharAt(i, 'C');
-                    break;
-                case 'g':
-                    alleleInForwardStrand.setCharAt(i, 'c');
-                    break;
-                case 'T':
-                    alleleInForwardStrand.setCharAt(i, 'A');
-                    break;
-                case 't':
-                    alleleInForwardStrand.setCharAt(i, 'a');
-                    break;
-            }
-        }
-        return alleleInForwardStrand.toString();
-    }
-
-    private String getMicrosatelliteAlternate(String alternate, String firstAltAllele) {
-        if (NumberUtils.isDigits(alternate)) {
-            Matcher matcher = microsatellitePattern.matcher(firstAltAllele);
-            if (matcher.matches()) {
-                alternate = matcher.group(STR_SEQUENCE_REGEX_GROUP) + alternate;
-            } else {
-                throw new IllegalArgumentException("Not parseable STR: " + reference + "/" + alternate);
-            }
-        }
-
-        return alternate;
+        return alleles.stream().filter(allele -> !allele.equals(referenceAllele)).collect(Collectors.toList());
     }
 
     public boolean doAllelesMatch() {
