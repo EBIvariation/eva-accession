@@ -34,7 +34,6 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.accession.dbsnp.processors.AssemblyCheckerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor;
-import uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToVariantProcessor;
 
 import java.io.IOException;
 import java.nio.file.Path;

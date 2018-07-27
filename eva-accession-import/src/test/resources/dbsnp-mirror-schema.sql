@@ -21,6 +21,8 @@ CREATE TABLE dbsnp_variant_load_nohgvslink_d8c757988871529f37061fa9c79477a5 (
 	asn_from integer NULL,
 	phys_pos_from integer NULL,
 	lc_ngbr integer NULL,
+	snp_validation_status smallint NULL,
+	subsnp_validation_status smallint NULL,
 	genotype_exists integer NULL,
 	freq_exists integer NULL,
 	ss_create_time timestamp without time zone NULL,

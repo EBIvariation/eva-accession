@@ -83,9 +83,10 @@ public class AssemblyCheckerProcessorTest {
 
     private SubSnpNoHgvs newSubSnpNoHgvs(String chromosome, long chromosomeStart, String contig, long contigStart,
                                          String referenceAllele, DbsnpVariantType variantClass) {
-        return new SubSnpNoHgvs(SS_ID, RS_ID, ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome, chromosomeStart, contig,
-                                variantClass, Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
-                                contigStart, true, true, referenceAllele, null, TAXONOMY);
+        return new SubSnpNoHgvs(SS_ID, RS_ID, referenceAllele, ALTERNATE_ALLELE, ASSEMBLY, "", "", chromosome,
+                                chromosomeStart, contig, contigStart, variantClass, Orientation.FORWARD,
+                                Orientation.FORWARD, Orientation.FORWARD, false, false, true, true, null, null,
+                                TAXONOMY);
     }
 
     //SeqName Fasta

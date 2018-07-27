@@ -52,6 +52,10 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
 
     public static final String CONTIG_START_COLUMN = "contig_start";
 
+    public static final String SUBSNP_VALIDATED_COLUMN = "subsnp_validation_status";
+
+    public static final String SNP_VALIDATED_COLUMN = "snp_validation_status";
+
     public static final String FREQUENCY_EXISTS_COLUMN = "freq_exists";
 
     public static final String GENOTYPE_EXISTS_COLUMN = "genotype_exists";
@@ -59,6 +63,8 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
     public static final String REFERENCE_COLUMN = "reference";
 
     public static final String SS_CREATE_TIME_COLUMN = "ss_create_time";
+
+    public static final String RS_CREATE_TIME_COLUMN = "rs_create_time";
 
     public static final String TAXONOMY_ID_COLUMN = "tax_id";
 
@@ -74,6 +80,7 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
     public SubSnpNoHgvs mapRow(ResultSet resultSet, int i) throws SQLException {
         return new SubSnpNoHgvs(resultSet.getLong(SS_ID_COLUMN),
                                 resultSet.getLong(RS_ID_COLUMN),
+                                resultSet.getString(REFERENCE_COLUMN),
                                 resultSet.getString(ALLELES_COLUMN),
                                 assembly,
                                 resultSet.getString(BATCH_HANDLE_COLUMN),
@@ -81,15 +88,21 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
                                 resultSet.getString(CHROMOSOME_COLUMN),
                                 resultSet.getLong(CHROMOSOME_START_COLUMN),
                                 resultSet.getString(CONTIG_NAME_COLUMN),
+                                resultSet.getLong(CONTIG_START_COLUMN),
                                 DbsnpVariantType.getVariantClass(resultSet.getInt(SNP_CLASS_COLUMN)),
                                 Orientation.getOrientation(resultSet.getObject(SUBSNP_ORIENTATION_COLUMN, Integer.class)),
                                 Orientation.getOrientation(resultSet.getObject(SNP_ORIENTATION_COLUMN, Integer.class)),
                                 Orientation.getOrientation(resultSet.getObject(CONTIG_ORIENTATION_COLUMN, Integer.class)),
-                                resultSet.getLong(CONTIG_START_COLUMN),
+                                isValidated(resultSet.getInt(SUBSNP_VALIDATED_COLUMN)),
+                                isValidated(resultSet.getInt(SNP_VALIDATED_COLUMN)),
                                 resultSet.getBoolean(FREQUENCY_EXISTS_COLUMN),
                                 resultSet.getBoolean(GENOTYPE_EXISTS_COLUMN),
-                                resultSet.getString(REFERENCE_COLUMN),
                                 resultSet.getTimestamp(SS_CREATE_TIME_COLUMN),
+                                resultSet.getTimestamp(RS_CREATE_TIME_COLUMN),
                                 resultSet.getInt(TAXONOMY_ID_COLUMN));
+    }
+
+    private boolean isValidated(int validationStatusCode) throws SQLException {
+        return validationStatusCode != 0;
     }
 }

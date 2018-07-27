@@ -18,12 +18,16 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import uk.ac.ebi.eva.commons.core.models.Region;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SubSnpNoHgvs {
 
@@ -57,13 +61,19 @@ public class SubSnpNoHgvs {
 
     private Orientation contigOrientation;
 
+    private boolean subsnpValidated;
+
+    private boolean snpValidated;
+
     private boolean frequencyExists;
 
     private boolean genotypeExists;
 
     private String reference;
 
-    private Timestamp createTime;
+    private Timestamp ssCreateTime;
+
+    private Timestamp rsCreateTime;
 
     private int taxonomyId;
 
@@ -74,12 +84,13 @@ public class SubSnpNoHgvs {
      */
     private static Pattern microsatellitePattern = Pattern.compile("(?<" + STR_SEQUENCE_REGEX_GROUP + ">\\([ATCG]+\\))\\d+");
 
-    public SubSnpNoHgvs(Long ssId, Long rsId, String alleles, String assembly, String batchHandle, String batchName,
-                        String chromosome, Long chromosomeStart, String contigName, DbsnpVariantType dbsnpVariantType,
-                        Orientation subsnpOrientation, Orientation snpOrientation, Orientation contigOrientation,
-                        long contigStart, boolean frequencyExists, boolean genotypeExists, String reference,
-                        Timestamp createTime, int taxonomyId) {
 
+    public SubSnpNoHgvs(Long ssId, Long rsId, String reference, String alleles, String assembly, String batchHandle,
+                        String batchName, String chromosome, Long chromosomeStart, String contigName, long contigStart,
+                        DbsnpVariantType dbsnpVariantType, Orientation subsnpOrientation, Orientation snpOrientation,
+                        Orientation contigOrientation, boolean subsnpValidated, boolean snpValidated,
+                        boolean frequencyExists, boolean genotypeExists, Timestamp ssCreateTime, Timestamp rsCreateTime,
+                        int taxonomyId) {
         this.ssId = ssId;
         this.rsId = rsId;
         this.alleles = alleles;
@@ -94,13 +105,15 @@ public class SubSnpNoHgvs {
         this.subsnpOrientation = subsnpOrientation;
         this.snpOrientation = snpOrientation;
         this.contigOrientation = contigOrientation;
+        this.subsnpValidated = subsnpValidated;
+        this.snpValidated = snpValidated;
         this.frequencyExists = frequencyExists;
         this.genotypeExists = genotypeExists;
         this.reference = reference;
-        this.createTime = createTime;
+        this.ssCreateTime = ssCreateTime;
+        this.rsCreateTime = rsCreateTime;
         this.taxonomyId = taxonomyId;
     }
-
 
     public Long getSsId() {
         return ssId;
@@ -214,6 +227,22 @@ public class SubSnpNoHgvs {
         this.contigStart = contigStart;
     }
 
+    public boolean isSubsnpValidated() {
+        return subsnpValidated;
+    }
+
+    public void setSubsnpValidated(boolean subsnpValidated) {
+        this.subsnpValidated = subsnpValidated;
+    }
+
+    public boolean isSnpValidated() {
+        return snpValidated;
+    }
+
+    public void setSnpValidated(boolean snpValidated) {
+        this.snpValidated = snpValidated;
+    }
+
     public boolean isFrequencyExists() {
         return frequencyExists;
     }
@@ -238,12 +267,20 @@ public class SubSnpNoHgvs {
         this.reference = reference;
     }
 
-    public Timestamp getCreateTime() {
-        return createTime;
+    public Timestamp getSsCreateTime() {
+        return ssCreateTime;
     }
 
-    public void setCreateTime(Timestamp createTime) {
-        this.createTime = createTime;
+    public void setSsCreateTime(Timestamp ssCreateTime) {
+        this.ssCreateTime = ssCreateTime;
+    }
+
+    public Timestamp getRsCreateTime() {
+        return rsCreateTime;
+    }
+
+    public void setRsCreateTime(Timestamp rsCreateTime) {
+        this.rsCreateTime = rsCreateTime;
     }
 
     public int getTaxonomyId() {
@@ -264,22 +301,36 @@ public class SubSnpNoHgvs {
 
     public String getReferenceInForwardStrand() {
         if (contigOrientation.equals(Orientation.REVERSE)) {
-            return calculateReverseComplement(reference);
+            return getTrimmedAllele(calculateReverseComplement(reference));
         } else {
-            return reference;
+            return getTrimmedAllele(reference);
         }
+    }
+
+    /**
+     * Removes leading and trailing spaces. Replaces a dash allele with an empty string.
+     */
+    private static String getTrimmedAllele(String allele) {
+        if (allele == null) {
+            return "";
+        }
+        allele = allele.trim();
+        if (allele.equals("-")) {
+            return "";
+        }
+        return allele;
     }
 
     public List<String> getAlternateAllelesInForwardStrand() {
         List<String> altAllelesInForwardStrand = new ArrayList<>();
 
-        String[] alleles = getAllelesInForwardStrand();
+        List<String> alleles = getAllelesInForwardStrand();
         String reference = getReferenceInForwardStrand();
 
         for (String allele : alleles) {
             if (!allele.equals(reference)) {
                 if (dbsnpVariantType.equals(DbsnpVariantType.MICROSATELLITE)) {
-                    altAllelesInForwardStrand.add(getMicrosatelliteAlternate(allele, alleles[0]));
+                    altAllelesInForwardStrand.add(getMicrosatelliteAlternate(allele, alleles.get(0)));
                 } else {
                     altAllelesInForwardStrand.add(allele);
                 }
@@ -294,7 +345,7 @@ public class SubSnpNoHgvs {
      * alleles, including the reference one
      * @return Array containing each allele in the forward strand
      */
-    private String[] getAllelesInForwardStrand() {
+    private List<String> getAllelesInForwardStrand() {
         Orientation allelesOrientation;
         try {
             allelesOrientation = getAllelesOrientation();
@@ -303,12 +354,14 @@ public class SubSnpNoHgvs {
         }
 
         // We use StringUtils because String.split does not remove the leading empty fields after splitting
-        String[] dividedAlleles = StringUtils.split(alleles, "/");
+        Stream<String> trimmedAlleles = Arrays.stream(StringUtils.split(alleles, "/"))
+                                              .map(SubSnpNoHgvs::getTrimmedAllele);
 
         if (allelesOrientation.equals(Orientation.FORWARD)) {
-            return dividedAlleles;
+            return trimmedAlleles.collect(Collectors.toList());
         } else if (allelesOrientation.equals(Orientation.REVERSE)) {
-            return getReversedComplementedAlleles(dividedAlleles);
+            return trimmedAlleles.map(SubSnpNoHgvs::calculateReverseComplement)
+                                 .collect(Collectors.toList());
         } else {
             throw new IllegalArgumentException(
                     "Unknown alleles orientation " + allelesOrientation + " for variant " + this);
@@ -318,13 +371,6 @@ public class SubSnpNoHgvs {
     private Orientation getAllelesOrientation() {
         return Orientation.getOrientation(
                 this.subsnpOrientation.getValue() * this.snpOrientation.getValue() * this.contigOrientation.getValue());
-    }
-
-    private String[] getReversedComplementedAlleles(String[] alleles) {
-        for (int i=0; i < alleles.length; i++) {
-            alleles[i] = calculateReverseComplement(alleles[i]);
-        }
-        return alleles;
     }
 
     private static String calculateReverseComplement(String alleleInReverseStrand) {
@@ -377,7 +423,16 @@ public class SubSnpNoHgvs {
 
     public boolean doAllelesMatch() {
         String referenceInForwardStrand = getReferenceInForwardStrand();
-        String[] allAllelesInForwardStrand = getAllelesInForwardStrand();
-        return Arrays.stream(allAllelesInForwardStrand).anyMatch(allele -> allele.equals(referenceInForwardStrand));
+        List<String> allAllelesInForwardStrand = getAllelesInForwardStrand();
+        return allAllelesInForwardStrand.stream().anyMatch(allele -> allele.equals(referenceInForwardStrand));
     }
+
+    public Region getVariantRegion() {
+        if (getChromosome() != null) {
+            return new Region(getChromosome(), getChromosomeStart());
+        } else {
+            return new Region(getContigName(), getContigStart());
+        }
+    }
+
 }

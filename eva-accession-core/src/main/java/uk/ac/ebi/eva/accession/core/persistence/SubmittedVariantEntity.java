@@ -25,8 +25,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
-import java.util.Objects;
-
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<Long> implements ISubmittedVariant {
 
@@ -120,11 +118,10 @@ public class SubmittedVariantEntity extends AccessionedDocument<Long> implements
 
     public ISubmittedVariant getModel() {
         SubmittedVariant variant = new SubmittedVariant(this);
-        variant.setSupportedByEvidence(
-                supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence);
-        variant.setAssemblyMatch(assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch);
-        variant.setAllelesMatch(allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch);
-        variant.setValidated(validated == null ? DEFAULT_VALIDATED : validated);
+        variant.setSupportedByEvidence(isSupportedByEvidence());
+        variant.setAssemblyMatch(isAssemblyMatch());
+        variant.setAllelesMatch(isAllelesMatch());
+        variant.setValidated(isValidated());
         variant.setCreatedDate(getCreatedDate());
         return variant;
     }

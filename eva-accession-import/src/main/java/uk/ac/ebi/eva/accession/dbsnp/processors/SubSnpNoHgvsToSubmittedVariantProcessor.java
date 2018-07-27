@@ -29,11 +29,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgvs, List<DbsnpSubmittedVariantEntity>> {
+public class SubSnpNoHgvsToSubmittedVariantProcessor
+        implements ItemProcessor<SubSnpNoHgvs, List<DbsnpSubmittedVariantEntity>> {
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public SubSnpNoHgvsToVariantProcessor() {
+    public SubSnpNoHgvsToSubmittedVariantProcessor() {
         hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -54,11 +55,12 @@ public class SubSnpNoHgvsToVariantProcessor implements ItemProcessor<SubSnpNoHgv
                                                             reference, alternate, subSnpNoHgvs.getRsId());
             variant.setSupportedByEvidence(subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists());
             variant.setAllelesMatch(allelesMatch);
+            variant.setValidated(subSnpNoHgvs.isSubsnpValidated());
 
             String hash = hashingFunction.apply(variant);
             DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
                                                                                           variant);
-            ssVariantEntity.setCreatedDate(subSnpNoHgvs.getCreateTime().toLocalDateTime());
+            ssVariantEntity.setCreatedDate(subSnpNoHgvs.getSsCreateTime().toLocalDateTime());
             variants.add(ssVariantEntity);
         }
 
