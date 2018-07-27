@@ -188,9 +188,14 @@ public class DbsnpVariantAlleles {
         // we have to reverse the order of the groups in the microsatellite, so we add them to a stack
         Deque<String> stack = new ArrayDeque<>();
         Matcher matcher = STR_UNIT_PATTERN.matcher(microsatellite);
-        while (matcher.find()) {
-            String microsatelliteUnit = matcher.group();
-            stack.addFirst(microsatelliteUnit);
+        if (matcher.matches()) {
+            while (matcher.find()) {
+                String microsatelliteUnit = matcher.group();
+                stack.addFirst(microsatelliteUnit);
+            }
+        } else {
+            // this allele has no STRs, so we add the full sequence to the stack
+            stack.addFirst(microsatellite);
         }
 
         // each STR string in the stack is now reversed/complemented, and added to the output string
@@ -216,7 +221,7 @@ public class DbsnpVariantAlleles {
             String sequence = matcher.group(STR_MOTIF_REGEX_GROUP);
             return str.replaceFirst(sequence, reverseComplement(sequence));
         } else {
-            return str;
+            return reverseComplement(str);
         }
     }
 }
