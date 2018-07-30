@@ -244,24 +244,8 @@ public class SubSnpNoHgvs {
     }
 
     public String getReferenceInForwardStrand() {
-        return getTrimmedAllele(this.dbSnpVariantAlleles.getReferenceInForwardStrand());
+        return this.dbSnpVariantAlleles.getReferenceInForwardStrand();
     }
-
-    /**
-     * Removes leading and trailing spaces. Replaces a dash allele with an empty string.
-     */
-    private static String getTrimmedAllele(String allele) {
-        if (allele == null) {
-            return "";
-        }
-        allele = allele.trim();
-        if (allele.equals("-")) {
-            return "";
-        }
-        return allele;
-    }
-
-    // TODO: trim alternate alleles
 
     private List<String> getAllelesInForwardStrand() {
         return dbSnpVariantAlleles.getAllelesInForwardStrand();

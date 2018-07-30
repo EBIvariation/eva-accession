@@ -46,7 +46,7 @@ public class DbsnpVariantAlleles {
 
     private String referenceAllele;
 
-    private String alleles;
+    private String[] alleles;
 
     private Orientation referenceOrientation;
 
@@ -58,11 +58,30 @@ public class DbsnpVariantAlleles {
                                Orientation referenceOrientation,
                                Orientation allelesOrientation,
                                DbsnpVariantType dbsnpVariantType) {
-        this.referenceAllele = referenceAllele;
-        this.alleles = alleles;
+        this.referenceAllele = getTrimmedAllele(referenceAllele);
+        this.alleles = splitAndTrimAlleles(alleles);
         this.referenceOrientation = referenceOrientation;
         this.allelesOrientation = allelesOrientation;
         this.dbsnpVariantType = dbsnpVariantType;
+    }
+
+    /**
+     * Removes leading and trailing spaces. Replaces a dash allele with an empty string.
+     */
+    private static String getTrimmedAllele(String allele) {
+        if (allele == null) {
+            return "";
+        }
+        allele = allele.trim();
+        if (allele.equals("-")) {
+            return "";
+        }
+        return allele;
+    }
+
+    private String[] splitAndTrimAlleles(String alleles) {
+        return Arrays.stream(StringUtils.split(alleles, "/")).map(DbsnpVariantAlleles::getTrimmedAllele).
+                toArray(String[]::new);
     }
 
     public String getReferenceInForwardStrand() {
@@ -109,25 +128,23 @@ public class DbsnpVariantAlleles {
     }
 
     public List<String> getAllelesInForwardStrand() {
-        String[] allelesArray =  StringUtils.split(alleles, "/");
         if (dbsnpVariantType.equals(DbsnpVariantType.MICROSATELLITE)) {
-            return getMicrosatelliteAllelesInForwardStrand(allelesArray);
+            return getMicrosatelliteAllelesInForwardStrand();
         } else {
             if (allelesOrientation.equals(Orientation.FORWARD)) {
-                return Arrays.asList(allelesArray);
+                return Arrays.asList(alleles);
             } else {
-                return Arrays.stream(allelesArray).map(this::reverseComplement).collect(Collectors.toList());
+                return Arrays.stream(alleles).map(this::reverseComplement).collect(Collectors.toList());
             }
         }
     }
 
     /** This method return a list containing each allele in a Microsatellite type variant, reversing and complementig
      * them if necessary
-     * @param allelesArray Array containing all alleles
      * @return List containing all alleles in the forward strand
      */
-    private List<String> getMicrosatelliteAllelesInForwardStrand(String[] allelesArray) {
-        allelesArray = removeSurrondingSquareBrackets(allelesArray);
+    private List<String> getMicrosatelliteAllelesInForwardStrand() {
+        String[] allelesArray = removeSurrondingSquareBrackets(alleles);
         allelesArray = decodeMicrosatelliteAlleles(allelesArray);
         if (allelesOrientation.equals(Orientation.REVERSE)) {
             return Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteSequence).collect(
@@ -188,7 +205,7 @@ public class DbsnpVariantAlleles {
         // we have to reverse the order of the groups in the microsatellite, so we add them to a stack
         Deque<String> stack = new ArrayDeque<>();
         Matcher matcher = STR_UNIT_PATTERN.matcher(microsatellite);
-        if (matcher.matches()) {
+        if (matcher.groupCount() > 0) {
             while (matcher.find()) {
                 String microsatelliteUnit = matcher.group();
                 stack.addFirst(microsatelliteUnit);
