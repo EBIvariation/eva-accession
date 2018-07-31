@@ -36,12 +36,52 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private String alternateAllele;
 
-    private boolean supportedByEvidence;
+    private Long clusteredVariantAccession;
+
+    private Boolean supportedByEvidence;
+
+    private Boolean assemblyMatch;
+
+    private Boolean allelesMatch;
+
+    private Boolean validated;
 
     private LocalDateTime createdDate;
 
+    SubmittedVariant() {
+    }
+
+    /**
+     * This constructor sets the flags (supportedByEvidence, assemblyMatch, allelesMatch, validated) to its default
+     * value defined in {@link ISubmittedVariant}
+     *
+     * Important note: do not use this constructor for objects that will be stored in the accessioning database, as it
+     * would write the flags with an arbitrary value. This constructor is intended to create objects for querying only,
+     * where the flags are ignored.
+     */
+    public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession,
+                            String contig, long start, String referenceAllele, String alternateAllele,
+                            Long clusteredVariantAccession) {
+        this(assemblyAccession, taxonomyAccession, projectAccession, contig, start, referenceAllele, alternateAllele,
+             clusteredVariantAccession, DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, DEFAULT_ALLELES_MATCH,
+             DEFAULT_VALIDATED);
+    }
+
+    public SubmittedVariant(ISubmittedVariant variant) {
+        this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getProjectAccession(),
+             variant.getContig(), variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(),
+             variant.getClusteredVariantAccession(), variant.isSupportedByEvidence(), variant.isAssemblyMatch(),
+             variant.isAllelesMatch(), variant.isValidated());
+    }
+
+    /**
+     * This is the constructor that has to be used to instantiate objects that will be written in the accessioning
+     * database.
+     */
     public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
-                            long start, String referenceAllele, String alternateAllele, boolean supportedByEvidence) {
+                            long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
+                            Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
+                            Boolean validated) {
         if(Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
@@ -65,7 +105,11 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
+        this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
+        this.assemblyMatch = assemblyMatch;
+        this.allelesMatch = allelesMatch;
+        this.validated = validated;
         this.createdDate = null;
     }
 
@@ -133,12 +177,30 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public boolean isSupportedByEvidence() {
+    public Long getClusteredVariantAccession() {
+        return clusteredVariantAccession;
+    }
+
+    public void setClusteredVariantAccession(Long clusteredVariantAccession) {
+        this.clusteredVariantAccession = clusteredVariantAccession;
+    }
+
+    @Override
+    public Boolean isSupportedByEvidence() {
         return supportedByEvidence;
     }
 
     public void setSupportedByEvidence(boolean supportedByEvidence) {
         this.supportedByEvidence = supportedByEvidence;
+    }
+
+    @Override
+    public Boolean isAssemblyMatch() {
+        return assemblyMatch;
+    }
+
+    public void setAssemblyMatch(Boolean assemblyMatch) {
+        this.assemblyMatch = assemblyMatch;
     }
 
     @Override
@@ -151,25 +213,90 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
+    public Boolean isAllelesMatch() {
+        return allelesMatch;
+    }
+
+    public void setAllelesMatch(Boolean allelesMatch) {
+        this.allelesMatch = allelesMatch;
+    }
+
+    @Override
+    public Boolean isValidated() {
+        return validated;
+    }
+
+    public void setValidated(Boolean validated) {
+        this.validated = validated;
+    }
+
+    @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ISubmittedVariant)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SubmittedVariant)) {
+            return false;
+        }
 
-        ISubmittedVariant that = (ISubmittedVariant) o;
+        SubmittedVariant variant = (SubmittedVariant) o;
 
-        if (taxonomyAccession != that.getTaxonomyAccession()) return false;
-        if (start != that.getStart()) return false;
-        if (!assemblyAccession.equals(that.getAssemblyAccession())) return false;
-        if (!projectAccession.equals(that.getProjectAccession())) return false;
-        if (!contig.equals(that.getContig())) return false;
-        if (!referenceAllele.equals(that.getReferenceAllele())) return false;
-        return alternateAllele.equals(that.getAlternateAllele());
+        if (taxonomyAccession != variant.taxonomyAccession) {
+            return false;
+        }
+        if (start != variant.start) {
+            return false;
+        }
+        if (!assemblyAccession.equals(variant.assemblyAccession)) {
+            return false;
+        }
+        if (!projectAccession.equals(variant.projectAccession)) {
+            return false;
+        }
+        if (!contig.equals(variant.contig)) {
+            return false;
+        }
+        if (!referenceAllele.equals(variant.referenceAllele)) {
+            return false;
+        }
+        if (!alternateAllele.equals(variant.alternateAllele)) {
+            return false;
+        }
+        if (clusteredVariantAccession != null ? !clusteredVariantAccession.equals(
+                variant.clusteredVariantAccession) : variant.clusteredVariantAccession != null) {
+            return false;
+        }
+        if (supportedByEvidence != null ? !supportedByEvidence.equals(
+                variant.supportedByEvidence) : variant.supportedByEvidence != null) {
+            return false;
+        }
+        if (assemblyMatch != null ? !assemblyMatch.equals(variant.assemblyMatch) : variant.assemblyMatch != null) {
+            return false;
+        }
+        if (allelesMatch != null ? !allelesMatch.equals(variant.allelesMatch) : variant.allelesMatch != null) {
+            return false;
+        }
+        if (validated != null ? !validated.equals(variant.validated) : variant.validated != null) {
+            return false;
+        }
+        return true;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(assemblyAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele, alternateAllele);
+        int result = assemblyAccession.hashCode();
+        result = 31 * result + taxonomyAccession;
+        result = 31 * result + projectAccession.hashCode();
+        result = 31 * result + contig.hashCode();
+        result = 31 * result + (int) (start ^ (start >>> 32));
+        result = 31 * result + referenceAllele.hashCode();
+        result = 31 * result + alternateAllele.hashCode();
+        result = 31 * result + (clusteredVariantAccession != null ? clusteredVariantAccession.hashCode() : 0);
+        result = 31 * result + (supportedByEvidence != null ? supportedByEvidence.hashCode() : 0);
+        result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
+        result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
+        result = 31 * result + (validated != null ? validated.hashCode() : 0);
+        return result;
     }
 
     @Override
@@ -182,7 +309,11 @@ public class SubmittedVariant implements ISubmittedVariant {
                 ", start=" + start +
                 ", referenceAllele='" + referenceAllele + '\'' +
                 ", alternateAllele='" + alternateAllele + '\'' +
+                ", clusteredVariantAccession=" + clusteredVariantAccession +
                 ", supportedByEvidence=" + supportedByEvidence +
+                ", assemblyMatch=" + assemblyMatch +
+                ", allelesMatch=" + allelesMatch +
+                ", validated=" + validated +
                 ", createdDate=" + createdDate +
                 '}';
     }

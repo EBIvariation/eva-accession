@@ -1,0 +1,30 @@
+{
+  "dbsnpSubmittedVariantEntity": [
+    {
+      "_id" : "610EEAC8314DDB24F1BD1225F65AE4DFEB9F84BE",
+      "asm" : "GCA_000009999.3",
+      "tax" : 9999,
+      "study" : "DBSNP999",
+      "contig" : "21",
+      "start" : 20849999,
+      "ref" : "",
+      "alt" : "GG",
+      "evidence" : true,
+      "accession" : 2200000000,
+      "version" : 1
+    },
+    {
+      "_id" : "9587ADB2417604F9EC19414587331151AA30BCBF",
+      "asm" : "GCA_000009999.3",
+      "tax" : 9999,
+      "study" : "DBSNP111",
+      "contig" : "21",
+      "start" : 20849999,
+      "ref" : "",
+      "alt" : "GG",
+      "evidence" : true,
+      "accession" : 2200000001,
+      "version" : 1
+    }
+  ]
+}
