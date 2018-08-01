@@ -151,7 +151,6 @@ public class SubmittedVariantRenormalizationProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> normalizedVariants = renormalizer.process(Arrays.asList(variant, variant2));
 
-
         // The version is not compared in the equals method, so we have to compare it explicitly
         assertEquals(new DbsnpSubmittedVariantEntity(SS_ID, HASH, ASSEMBLY, TAXONOMY, PROJECT, "22", 2, "", "G", RS_ID,
                                                      DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
