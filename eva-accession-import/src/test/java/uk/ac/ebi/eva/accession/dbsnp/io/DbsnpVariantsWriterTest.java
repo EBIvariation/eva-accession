@@ -66,23 +66,7 @@ public class DbsnpVariantsWriterTest {
 
     private static final long EXPECTED_ACCESSION = 10000000000L;
 
-    private static final long EXPECTED_ACCESSION_2 = 10000000001L;
-
-    private static final String CONTIG_1 = "contig_1";
-
-    private static final String CONTIG_2 = "contig_2";
-
     private static final int START_1 = 100;
-
-    private static final int START_2 = 200;
-
-    private static final String ALTERNATE_ALLELE = "T";
-
-    private static final String REFERENCE_ALLELE = "A";
-
-    private static final int ACCESSION_COLUMN = 2;
-
-    private static final String ACCESSION_PREFIX = "ss";
 
     private static final Long CLUSTERED_VARIANT = 12L;
 

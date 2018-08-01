@@ -434,9 +434,9 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "AT", "(AT)7", false,
-                               false);
+                               false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "AT", "(AT)19", false,
-                               false);
+                               false, 2);
     }
 
     @Test
@@ -450,7 +450,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "C", "AGAGTTCAAGTTGCCCTA",
-                               false, true);
+                               false, true, 1);
 
         // there are STR variants where the alleles string is enclosed with square brackets
         subSnpNoHgvs = new SubSnpNoHgvs(159831041L, 109548685L, "ACACACACAC", "[(GT)11/14]", ASSEMBLY, BATCH_HANDLE,
@@ -461,9 +461,9 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
         variants = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(AC)11",
-                               false, false);
+                               false, false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(AC)14",
-                               false, false);
+                               false, false, 2);
     }
 
     @Test
