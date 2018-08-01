@@ -17,21 +17,31 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 
 public enum Orientation {
 
-    FORWARD,
+    FORWARD(1),
 
-    REVERSE,
+    REVERSE(-1),
 
-    UNKNOWN;
+    UNKNOWN(0);
+
+    private final int value;
+
+    Orientation(int value) {
+        this.value = value;
+    }
 
     public static Orientation getOrientation(Integer orientation) {
-        if (orientation == null) {
+        if (orientation == 0) {
             return UNKNOWN;
         } else if (orientation == 1) {
             return FORWARD;
         } else if (orientation == -1) {
             return REVERSE;
         } else {
-            throw new IllegalArgumentException("Orientation must be +1, -1 or null");
+            throw new IllegalArgumentException("Orientation must be +1, -1 or 0");
         }
+    }
+
+    public int getValue() {
+        return this.value;
     }
 }

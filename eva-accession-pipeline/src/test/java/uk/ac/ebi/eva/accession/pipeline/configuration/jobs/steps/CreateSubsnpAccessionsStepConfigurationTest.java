@@ -19,9 +19,10 @@ import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
@@ -32,7 +33,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SU
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class CreateSubsnpAccessionsStepConfigurationTest {
 
-    private static final int EXPECTED_VARIANTS = 299;
+    private static final int EXPECTED_VARIANTS = 22;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -45,7 +46,8 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
 
     @After
     public void tearDown() throws Exception {
-        new File(inputParameters.getOutputVcf()).delete();
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
+        Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
     }
 
     @Test
