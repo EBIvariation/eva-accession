@@ -23,7 +23,11 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 
-public class RenormalizationProcessor implements ItemProcessor<DbsnpSubmittedVariantEntity, DbsnpSubmittedVariantEntity> {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class RenormalizationProcessor implements
+        ItemProcessor<List<DbsnpSubmittedVariantEntity>, List<DbsnpSubmittedVariantEntity>> {
 
     private static final Logger logger = LoggerFactory.getLogger(RenormalizationProcessor.class);
 
@@ -34,7 +38,11 @@ public class RenormalizationProcessor implements ItemProcessor<DbsnpSubmittedVar
     }
 
     @Override
-    public DbsnpSubmittedVariantEntity process(DbsnpSubmittedVariantEntity variant) throws Exception {
+    public List<DbsnpSubmittedVariantEntity> process(List<DbsnpSubmittedVariantEntity> variants) throws Exception {
+        return variants.stream().map(this::process).collect(Collectors.toList());
+    }
+
+    private DbsnpSubmittedVariantEntity process(DbsnpSubmittedVariantEntity variant) {
         if (isAmbiguous(variant)) {
             return renormalize(variant);
         }

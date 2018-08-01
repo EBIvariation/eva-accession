@@ -24,6 +24,9 @@ import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -83,11 +86,12 @@ public class RenormalizationProcessorTest {
                                                                               RS_ID, IS_SUPPORTED_BY_EVIDENCE,
                                                                               MATCHES_ASSEMBLY, ALLELES_MATCH,
                                                                               VALIDATED, 1);
-        ISubmittedVariant renormalized = renormalizer.process(variant);
+        List<DbsnpSubmittedVariantEntity> renormalized = renormalizer.process(Collections.singletonList(variant));
         assertNotNull(renormalized);
-        assertEquals(expectedStart, renormalized.getStart());
-        assertEquals(expectedReference, renormalized.getReferenceAllele());
-        assertEquals(expectedAlternate, renormalized.getAlternateAllele());
+        assertEquals(1, renormalized.size());
+        assertEquals(expectedStart, renormalized.get(0).getStart());
+        assertEquals(expectedReference, renormalized.get(0).getReferenceAllele());
+        assertEquals(expectedAlternate, renormalized.get(0).getAlternateAllele());
     }
 
     @Test
@@ -127,28 +131,38 @@ public class RenormalizationProcessorTest {
     }
 
     @Test
-    public void variantIsCopiedCompletely() throws Exception {
-        // the boolean constants have no default values, to be sure that the values are being copied and are not simply
-        // being initialized to the default ones
+    public void variantsAreCopiedCompletely() throws Exception {
+        // this test is going to transform one list with two variants. One of the variants has the default flag values
+        // for the variant and the other the non default, to be sure the values are being copied
+
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(SS_ID, HASH, ASSEMBLY, TAXONOMY, PROJECT,
                                                                               "22", 3, "", "G", RS_ID,
                                                                               IS_SUPPORTED_BY_EVIDENCE,
                                                                               MATCHES_ASSEMBLY, ALLELES_MATCH,
                                                                               VALIDATED, 2);
+        long anotherSsId = SS_ID + 1;
+        String anotherHash = "other";
+        long anotherRsId = RS_ID + 1;
+        String otherProject = "otherProject";
+        DbsnpSubmittedVariantEntity variant2 = new DbsnpSubmittedVariantEntity(anotherSsId, anotherHash, ASSEMBLY,
+                                                                               TAXONOMY, otherProject, "22", 6, "C", "",
+                                                                               anotherRsId, !IS_SUPPORTED_BY_EVIDENCE,
+                                                                               !MATCHES_ASSEMBLY, !ALLELES_MATCH,
+                                                                               !VALIDATED, 3);
 
-        DbsnpSubmittedVariantEntity normalizedVariant = renormalizer.process(variant);
+        List<DbsnpSubmittedVariantEntity> normalizedVariants = renormalizer.process(Arrays.asList(variant, variant2));
 
-        assertEquals(SS_ID, normalizedVariant.getAccession());
-        assertEquals(HASH, normalizedVariant.getHashedMessage());
-        assertEquals(ASSEMBLY, normalizedVariant.getAssemblyAccession());
-        assertEquals(TAXONOMY, normalizedVariant.getTaxonomyAccession());
-        assertEquals(PROJECT, normalizedVariant.getProjectAccession());
-        assertEquals("22", normalizedVariant.getContig());
-        assertEquals(RS_ID, normalizedVariant.getClusteredVariantAccession());
-        assertEquals(IS_SUPPORTED_BY_EVIDENCE, normalizedVariant.isSupportedByEvidence());
-        assertEquals(MATCHES_ASSEMBLY, normalizedVariant.isAssemblyMatch());
-        assertEquals(ALLELES_MATCH, normalizedVariant.isAllelesMatch());
-        assertEquals(VALIDATED, normalizedVariant.isValidated());
-        assertEquals(2, normalizedVariant.getVersion());
+
+        // the version is compared in the equals method, so we have to compare it explicitly
+        assertEquals(new DbsnpSubmittedVariantEntity(SS_ID, HASH, ASSEMBLY, TAXONOMY, PROJECT, "22", 2, "", "G", RS_ID,
+                                                     IS_SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                     VALIDATED, 2),
+                     normalizedVariants.get(0));
+        assertEquals(2, normalizedVariants.get(0).getVersion());
+        assertEquals(new DbsnpSubmittedVariantEntity(anotherSsId, anotherHash, ASSEMBLY, TAXONOMY, otherProject, "22",
+                                                     5, "C", "", anotherRsId, !IS_SUPPORTED_BY_EVIDENCE,
+                                                     !MATCHES_ASSEMBLY, !ALLELES_MATCH, !VALIDATED, 3),
+                     normalizedVariants.get(1));
+        assertEquals(3, normalizedVariants.get(1).getVersion());
     }
 }

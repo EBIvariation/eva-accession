@@ -17,24 +17,43 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 
+import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+
+import java.util.List;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
 
     private SubSnpNoHgvsToSubmittedVariantProcessor subSnpNoHgvsToSubmittedVariantProcessor;
+
+    private RenormalizationProcessor renormalizationProcessor;
+
     private SubSnpNoHgvsToClusteredVariantProcessor subSnpNoHgvsToClusteredVariantProcessor;
 
-    public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor() {
+    public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(FastaSequenceReader fastaSequenceReader) {
         subSnpNoHgvsToSubmittedVariantProcessor = new SubSnpNoHgvsToSubmittedVariantProcessor();
+        renormalizationProcessor = new RenormalizationProcessor(fastaSequenceReader);
         subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor();
     }
 
     @Override
     public DbsnpVariantsWrapper process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         DbsnpVariantsWrapper dbsnpVariantsWrapper = new DbsnpVariantsWrapper();
-        dbsnpVariantsWrapper.setSubmittedVariants(subSnpNoHgvsToSubmittedVariantProcessor.process(subSnpNoHgvs));
-        dbsnpVariantsWrapper.setClusteredVariant(subSnpNoHgvsToClusteredVariantProcessor.process(subSnpNoHgvs));
+
+        // SSs
+        List<DbsnpSubmittedVariantEntity> submittedVariants = subSnpNoHgvsToSubmittedVariantProcessor.process(
+                subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> normalisedSubmittedVariants = renormalizationProcessor.process(
+                submittedVariants);
+        dbsnpVariantsWrapper.setSubmittedVariants(normalisedSubmittedVariants);
+
+        // RS
+        DbsnpClusteredVariantEntity clusteredVariant = subSnpNoHgvsToClusteredVariantProcessor.process(subSnpNoHgvs);
+        dbsnpVariantsWrapper.setClusteredVariant(clusteredVariant);
+
         // TODO create operations
         return dbsnpVariantsWrapper;
     }
