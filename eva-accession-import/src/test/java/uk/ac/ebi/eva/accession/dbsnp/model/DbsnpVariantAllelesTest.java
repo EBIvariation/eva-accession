@@ -36,6 +36,30 @@ public class DbsnpVariantAllelesTest {
 
         assertEquals("T", forwardAllelesSNV.getReferenceInForwardStrand());
         assertEquals(Arrays.asList("T", "G"), forwardAllelesSNV.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesInsertion = new DbsnpVariantAlleles("-", "-/T", Orientation.FORWARD,
+                                                                        Orientation.FORWARD, DbsnpVariantType.DIV);
+
+        assertEquals("", forwardAllelesInsertion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "T"), forwardAllelesInsertion.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesDeletion = new DbsnpVariantAlleles("TC", "-/TC", Orientation.FORWARD,
+                                                                        Orientation.FORWARD, DbsnpVariantType.DIV);
+
+        assertEquals("TC", forwardAllelesDeletion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "TC"), forwardAllelesDeletion.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles notEmptyReferenceInsertion = new DbsnpVariantAlleles("T", "T/TC", Orientation.FORWARD,
+                                                                        Orientation.FORWARD, DbsnpVariantType.DIV);
+
+        assertEquals("T", notEmptyReferenceInsertion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("T", "TC"), notEmptyReferenceInsertion.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles notEmptyReferenceDeletion = new DbsnpVariantAlleles("TGA", "T/TGA", Orientation.FORWARD,
+                                                                        Orientation.FORWARD, DbsnpVariantType.DIV);
+
+        assertEquals("TGA", notEmptyReferenceDeletion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("T", "TGA"), notEmptyReferenceDeletion.getAllelesInForwardStrand());
     }
 
     @Test
@@ -51,6 +75,18 @@ public class DbsnpVariantAllelesTest {
 
         assertEquals("A", forwardAllelesSNV.getReferenceInForwardStrand());
         assertEquals(Arrays.asList("T", "G"), forwardAllelesSNV.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesInsertion = new DbsnpVariantAlleles("-", "-/TC", Orientation.REVERSE,
+                                                                              Orientation.FORWARD, DbsnpVariantType.DIV);
+
+        assertEquals("", forwardAllelesInsertion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "TC"), forwardAllelesInsertion.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesDeletion = new DbsnpVariantAlleles("AG", "-/CT", Orientation.REVERSE,
+                                                                             Orientation.FORWARD, DbsnpVariantType.DIV);
+
+        assertEquals("CT", forwardAllelesDeletion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "CT"), forwardAllelesDeletion.getAllelesInForwardStrand());
     }
 
     @Test
@@ -66,6 +102,19 @@ public class DbsnpVariantAllelesTest {
 
         assertEquals("T", forwardAllelesSNV.getReferenceInForwardStrand());
         assertEquals(Arrays.asList("A", "C"), forwardAllelesSNV.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesInsertion = new DbsnpVariantAlleles("-", "-/TC", Orientation.FORWARD,
+                                                                              Orientation.REVERSE,
+                                                                              DbsnpVariantType.DIV);
+
+        assertEquals("", forwardAllelesInsertion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "GA"), forwardAllelesInsertion.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesDeletion = new DbsnpVariantAlleles("AG", "-/CT", Orientation.FORWARD,
+                                                                             Orientation.REVERSE, DbsnpVariantType.DIV);
+
+        assertEquals("AG", forwardAllelesDeletion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "AG"), forwardAllelesDeletion.getAllelesInForwardStrand());
     }
 
     @Test
@@ -81,6 +130,19 @@ public class DbsnpVariantAllelesTest {
 
         assertEquals("A", forwardAllelesSNV.getReferenceInForwardStrand());
         assertEquals(Arrays.asList("A", "C"), forwardAllelesSNV.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesInsertion = new DbsnpVariantAlleles("-", "-/TC", Orientation.REVERSE,
+                                                                              Orientation.REVERSE,
+                                                                              DbsnpVariantType.DIV);
+
+        assertEquals("", forwardAllelesInsertion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "GA"), forwardAllelesInsertion.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forwardAllelesDeletion = new DbsnpVariantAlleles("AG", "-/AG", Orientation.REVERSE,
+                                                                             Orientation.REVERSE, DbsnpVariantType.DIV);
+
+        assertEquals("CT", forwardAllelesDeletion.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "CT"), forwardAllelesDeletion.getAllelesInForwardStrand());
     }
 
     @Test

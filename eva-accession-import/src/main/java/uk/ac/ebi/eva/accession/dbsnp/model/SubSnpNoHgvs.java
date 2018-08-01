@@ -64,12 +64,6 @@ public class SubSnpNoHgvs {
 
     private boolean assemblyMatch;
 
-    /**
-     * This pattern will detect STRs like (A)5 or (TA)7, being the sequence group the not numeric part
-     */
-    private static Pattern microsatellitePattern = Pattern.compile("(?<" + STR_SEQUENCE_REGEX_GROUP + ">\\([ATCG]+\\))\\d+");
-
-
     public SubSnpNoHgvs(Long ssId, Long rsId, String reference, String alleles, String assembly, String batchHandle,
                         String batchName, String chromosome, Long chromosomeStart, String contigName, long contigStart,
                         DbsnpVariantType dbsnpVariantType, Orientation subsnpOrientation, Orientation snpOrientation,
@@ -244,7 +238,7 @@ public class SubSnpNoHgvs {
     }
 
     public String getReferenceInForwardStrand() {
-        return this.dbSnpVariantAlleles.getReferenceInForwardStrand();
+        return dbSnpVariantAlleles.getReferenceInForwardStrand();
     }
 
     private List<String> getAllelesInForwardStrand() {

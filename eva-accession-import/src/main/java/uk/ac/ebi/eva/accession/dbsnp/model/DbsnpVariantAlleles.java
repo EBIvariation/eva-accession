@@ -28,15 +28,15 @@ import java.util.stream.Collectors;
 
 public class DbsnpVariantAlleles {
 
-    private static final String STR_MOTIF_REGEX_GROUP = "motif";
+    private static final String STR_MOTIF_REGEX_GROUP_NAME = "motif";
 
-    private static final String BRACKETED_STR_MOTIF_REGEX_GROUP = "bracketedMotif";
+    private static final String BRACKETED_STR_MOTIF_REGEX_GROUP_NAME = "bracketedMotif";
 
     /** This Regex captures a motif in a STR expression, i.e., 'GA' in '(GA)5' */
-    private static final String MOTIF_GROUP_REGEX = "(?<" + STR_MOTIF_REGEX_GROUP + ">[a-zA-Z]+)";
+    private static final String MOTIF_GROUP_REGEX = "(?<" + STR_MOTIF_REGEX_GROUP_NAME + ">[a-zA-Z]+)";
 
     /** This regex captures a bracketed motif in a STR expression, i.e., '(GA)' in '(GA)5' */
-    private static final String BRACKETED_MOTIF_GROUP_REGEX = "(?<" + BRACKETED_STR_MOTIF_REGEX_GROUP + ">" +
+    private static final String BRACKETED_MOTIF_GROUP_REGEX = "(?<" + BRACKETED_STR_MOTIF_REGEX_GROUP_NAME + ">" +
         "\\(" + MOTIF_GROUP_REGEX + "\\))";
 
     /** Regular expresion that captures a STR expression, like '(GA)5' */
@@ -144,7 +144,7 @@ public class DbsnpVariantAlleles {
      * @return List containing all alleles in the forward strand
      */
     private List<String> getMicrosatelliteAllelesInForwardStrand() {
-        String[] allelesArray = removeSurrondingSquareBrackets(alleles);
+        String[] allelesArray = removeSurroundingSquareBrackets(alleles);
         allelesArray = decodeMicrosatelliteAlleles(allelesArray);
         if (allelesOrientation.equals(Orientation.REVERSE)) {
             return Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteSequence).collect(
@@ -155,12 +155,12 @@ public class DbsnpVariantAlleles {
     }
 
     /**
-     * There are some dbSNP STR variant alleles that are surronded by square brackets. This method removes them so the
+     * There are some dbSNP STR variant alleles that are surrounded by square brackets. This method removes them so the
      * variant can be parsed correctly
      * @param allelesArray Array containing all alleles
-     * @return Array containing all alleles, where the surronding square brackets have been removed
+     * @return Array containing all alleles, where the surrounding square brackets have been removed
      */
-    private String[] removeSurrondingSquareBrackets(String[] allelesArray) {
+    private String[] removeSurroundingSquareBrackets(String[] allelesArray) {
         if (allelesArray[0].charAt(0) == '[') {
             // All the STR patterns have been checked, and when the first character is a opening square bracket,
             // the closing one is the last one
@@ -185,7 +185,7 @@ public class DbsnpVariantAlleles {
             if (NumberUtils.isDigits(allelesArray[i])) {
                 Matcher matcher = STR_UNIT_PATTERN.matcher(firstAllele);
                 if (matcher.matches()) {
-                    allelesArray[i] = matcher.group(BRACKETED_STR_MOTIF_REGEX_GROUP) + allelesArray[i];
+                    allelesArray[i] = matcher.group(BRACKETED_STR_MOTIF_REGEX_GROUP_NAME) + allelesArray[i];
                 } else {
                     throw new IllegalArgumentException("Not parseable STR: " + firstAllele + "/" + allelesArray[i]);
                 }
@@ -235,7 +235,7 @@ public class DbsnpVariantAlleles {
     private String reverseComplementMicrosatelliteUnit(String str) {
         Matcher matcher = STR_UNIT_PATTERN.matcher(str);
         if (matcher.matches()) {
-            String sequence = matcher.group(STR_MOTIF_REGEX_GROUP);
+            String sequence = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
             return str.replaceFirst(sequence, reverseComplement(sequence));
         } else {
             return reverseComplement(str);
