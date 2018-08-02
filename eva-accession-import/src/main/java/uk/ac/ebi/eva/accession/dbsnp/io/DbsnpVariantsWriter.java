@@ -18,14 +18,9 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 import com.mongodb.DuplicateKeyException;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
@@ -42,13 +37,14 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
 
-    private SubmittedVariantAccessioningService service;
+    private DbsnpSubmittedVariantOperationWriter dbsnpSubmittedVariantOperationWriter;
 
-    public DbsnpVariantsWriter(MongoTemplate mongoTemplate, SubmittedVariantAccessioningService service) {
+
+    public DbsnpVariantsWriter(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.service = service;
         this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate);
         this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate);
+        this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate);
     }
 
     @Override
@@ -56,9 +52,12 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         for (DbsnpVariantsWrapper dbsnpVariantsWrapper : wrappers) {
             List<DbsnpSubmittedVariantEntity> submittedVariants = dbsnpVariantsWrapper.getSubmittedVariants();
             dbsnpSubmittedVariantWriter.write(submittedVariants);
-            declusterAllelesMismatch(submittedVariants);
-        }
 
+            List<DbsnpSubmittedVariantOperationEntity> operations = dbsnpVariantsWrapper.getOperations();
+            if (operations != null && !operations.isEmpty()) {
+                dbsnpSubmittedVariantOperationWriter.write(operations);
+            }
+        }
         writeClusteredVariants(wrappers);
     }
 
@@ -78,18 +77,6 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             // once, this is only within a chunk. It's possible that a ClusteredVariant is split across chunks. Also,
             // doing inserts and ignore the exception seems a bit simpler than doing upserts, as that would require
             // doing retries if we work concurrently:  https://jira.mongodb.org/browse/SERVER-14322
-        }
-    }
-
-    private void declusterAllelesMismatch(List<DbsnpSubmittedVariantEntity> submittedVariants)
-            throws AccessionDeprecatedException, AccessionDoesNotExistException, AccessionMergedException,
-                   HashAlreadyExistsException {
-        for (DbsnpSubmittedVariantEntity submittedVariant : submittedVariants) {
-            if (!submittedVariant.isAllelesMatch()) {
-                SubmittedVariant model = submittedVariant.getModel();
-                model.setClusteredVariantAccession(null);
-                service.update(submittedVariant.getAccession(), submittedVariant.getVersion(), model);
-            }
         }
     }
 

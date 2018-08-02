@@ -16,46 +16,108 @@
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
 import org.springframework.batch.item.ItemProcessor;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.commons.core.models.Region;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
 import java.util.List;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
 
-    private SubSnpNoHgvsToSubmittedVariantProcessor subSnpNoHgvsToSubmittedVariantProcessor;
-
     private SubmittedVariantRenormalizationProcessor renormalizationProcessor;
-
     private SubSnpNoHgvsToClusteredVariantProcessor subSnpNoHgvsToClusteredVariantProcessor;
+    private Function<ISubmittedVariant, String> hashingFunction;
 
     public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(FastaSequenceReader fastaSequenceReader) {
-        subSnpNoHgvsToSubmittedVariantProcessor = new SubSnpNoHgvsToSubmittedVariantProcessor();
         renormalizationProcessor = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
         subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor();
+        hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @Override
     public DbsnpVariantsWrapper process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         DbsnpVariantsWrapper dbsnpVariantsWrapper = new DbsnpVariantsWrapper();
-
-        // SS
-        List<DbsnpSubmittedVariantEntity> submittedVariants = subSnpNoHgvsToSubmittedVariantProcessor.process(
-                subSnpNoHgvs);
-        List<DbsnpSubmittedVariantEntity> normalisedSubmittedVariants = renormalizationProcessor.process(
-                submittedVariants);
-        dbsnpVariantsWrapper.setSubmittedVariants(normalisedSubmittedVariants);
-
-        // RS
+        List<DbsnpSubmittedVariantEntity> variants = new ArrayList<>();
+        List<DbsnpSubmittedVariantOperationEntity> operations = new ArrayList<>();
         DbsnpClusteredVariantEntity clusteredVariant = subSnpNoHgvsToClusteredVariantProcessor.process(subSnpNoHgvs);
-        dbsnpVariantsWrapper.setClusteredVariant(clusteredVariant);
-        dbsnpVariantsWrapper.setDbsnpVariantType(subSnpNoHgvs.getDbsnpVariantType());
 
-        // TODO create operations
+        List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
+        for (String alternateAllele : alternateAlleles) {
+            SubmittedVariant variant = subSnpNoHgvsToSubmittedVariant(subSnpNoHgvs, alternateAllele);
+            if (!variant.isAllelesMatch()) {
+                decluster(subSnpNoHgvs.getSsId(), variant, operations);
+            }
+
+            String hash = hashingFunction.apply(variant);
+            DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
+                                                                                          variant);
+            ssVariantEntity.setCreatedDate(subSnpNoHgvs.getSsCreateTime().toLocalDateTime());
+            variants.add(ssVariantEntity);
+        }
+
+        List<DbsnpSubmittedVariantEntity> normalisedSubmittedVariants = renormalizationProcessor.process(variants);
+
+        dbsnpVariantsWrapper.setDbsnpVariantType(subSnpNoHgvs.getDbsnpVariantType());
+        dbsnpVariantsWrapper.setClusteredVariant(clusteredVariant);
+        dbsnpVariantsWrapper.setSubmittedVariants(normalisedSubmittedVariants);
+        dbsnpVariantsWrapper.setOperations(operations);
         return dbsnpVariantsWrapper;
+    }
+
+    private SubmittedVariant subSnpNoHgvsToSubmittedVariant(SubSnpNoHgvs subSnpNoHgvs, String alternate) {
+        Region variantRegion = getVariantRegion(subSnpNoHgvs);
+        String reference = subSnpNoHgvs.getReferenceInForwardStrand();
+        SubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
+                                                        getProjectAccession(subSnpNoHgvs),
+                                                        variantRegion.getChromosome(), variantRegion.getStart(),
+                                                        reference, alternate, subSnpNoHgvs.getRsId());
+        variant.setSupportedByEvidence(subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists());
+        variant.setAllelesMatch(subSnpNoHgvs.doAllelesMatch());
+        variant.setValidated(subSnpNoHgvs.isSubsnpValidated());
+
+        return variant;
+    }
+
+    private Region getVariantRegion(SubSnpNoHgvs subSnpNoHgvs) {
+        if (subSnpNoHgvs.getChromosome() != null) {
+            return new Region(subSnpNoHgvs.getChromosome(), subSnpNoHgvs.getChromosomeStart());
+        } else {
+            return new Region(subSnpNoHgvs.getContigName(), subSnpNoHgvs.getContigStart());
+        }
+    }
+
+    private String getProjectAccession(SubSnpNoHgvs subSnpNoHgvs) {
+        return subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs.getBatchName();
+    }
+
+    private void decluster(Long ss, SubmittedVariant variant, List<DbsnpSubmittedVariantOperationEntity> operations) {
+        //Register decluster operation
+        DbsnpSubmittedVariantEntity ssVariantEntityNotDeclusteredVariant =
+                new DbsnpSubmittedVariantEntity(ss, hashingFunction.apply(variant), variant);
+        DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
+        DbsnpSubmittedVariantInactiveEntity inactiveEntity =
+                new DbsnpSubmittedVariantInactiveEntity(ssVariantEntityNotDeclusteredVariant);
+        operation.fill(EventType.UPDATED, ss, null, "Declustered (Alleles mismatch)",
+                       Collections.singletonList(inactiveEntity));
+        operations.add(operation);
+        //Decluster SS
+        variant.setClusteredVariantAccession(null);
     }
 }

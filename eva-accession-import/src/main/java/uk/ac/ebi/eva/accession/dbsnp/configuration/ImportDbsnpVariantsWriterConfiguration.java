@@ -39,6 +39,6 @@ public class ImportDbsnpVariantsWriterConfiguration {
                                            MongoTemplate mongoTemplate,
                                            SubmittedVariantAccessioningService service) throws Exception {
         logger.info("Injecting dbsnpVariantWriter with parameters: {}", parameters);
-        return new DbsnpVariantsWriter(mongoTemplate, service);
+        return new DbsnpVariantsWriter(mongoTemplate);
     }
 }

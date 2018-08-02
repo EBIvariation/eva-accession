@@ -16,9 +16,8 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.persistence;
 
-import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 
@@ -39,7 +38,7 @@ public class DbsnpVariantsWrapper {
 
     private DbsnpClusteredVariantEntity clusteredVariant;
 
-    private List<SubmittedVariantOperationEntity> operations;
+    private List<DbsnpSubmittedVariantOperationEntity> operations;
 
     DbsnpVariantType dbsnpVariantType;
 
@@ -62,11 +61,11 @@ public class DbsnpVariantsWrapper {
         this.clusteredVariant = clusteredVariant;
     }
 
-    public List<SubmittedVariantOperationEntity> getOperations() {
+    public List<DbsnpSubmittedVariantOperationEntity> getOperations() {
         return operations;
     }
 
-    public void setOperations(List<SubmittedVariantOperationEntity> operations) {
+    public void setOperations(List<DbsnpSubmittedVariantOperationEntity> operations) {
         this.operations = operations;
     }
 
