@@ -26,10 +26,12 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.commons.core.models.Region;
+import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,8 +45,16 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
 
+    private static final String DECLUSTERED_ALLELES_AND_TYPE_MISMATCH = "Declustered (Alleles and type mismatch)";
+
+    private static final String DECLUSTERED_ALLELES_MISMATCH = "Declustered (Alleles mismatch)";
+
+    private static final String DECLUSTERED_TYPE_MISMATCH = "Declustered (Type mismatch)";
+
     private SubmittedVariantRenormalizationProcessor renormalizationProcessor;
+
     private SubSnpNoHgvsToClusteredVariantProcessor subSnpNoHgvsToClusteredVariantProcessor;
+
     private Function<ISubmittedVariant, String> hashingFunction;
 
     public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(FastaSequenceReader fastaSequenceReader) {
@@ -63,9 +73,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
         for (String alternateAllele : alternateAlleles) {
             SubmittedVariant submittedVariant = subSnpNoHgvsToSubmittedVariant(subSnpNoHgvs, alternateAllele);
-            if (!submittedVariant.isAllelesMatch()) {
-                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations,
-                          "Declustered: None of the variant alleles match the reference allele");
+            boolean typeMatches = isSameType(clusteredVariant, submittedVariant, subSnpNoHgvs.getDbsnpVariantType());
+            if (!submittedVariant.isAllelesMatch() && !typeMatches) {
+                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_AND_TYPE_MISMATCH);
+            } else if (!submittedVariant.isAllelesMatch()) {
+                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_MISMATCH);
+            } else if (!typeMatches) {
+                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_TYPE_MISMATCH);
             }
 
             String hash = hashingFunction.apply(submittedVariant);
@@ -84,6 +98,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
         dbsnpVariantsWrapper.setSubmittedVariants(normalisedSubmittedVariants);
         dbsnpVariantsWrapper.setOperations(operations);
         return dbsnpVariantsWrapper;
+    }
+
+    private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant, SubmittedVariant submittedVariant, DbsnpVariantType dbsnpVariantType) {
+        return VariantClassifier.getVariantClassification(submittedVariant.getReferenceAllele(),
+                                                          submittedVariant.getAlternateAllele(),
+                                                          dbsnpVariantType.intValue())
+                                .equals(clusteredVariant.getType());
     }
 
     private SubmittedVariant subSnpNoHgvsToSubmittedVariant(SubSnpNoHgvs subSnpNoHgvs, String alternate) {
@@ -119,6 +140,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
         DbsnpSubmittedVariantInactiveEntity inactiveEntity =
                 new DbsnpSubmittedVariantInactiveEntity(nonDeclusteredVariantEntity);
         operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
+
         operations.add(operation);
         //Decluster submitted variant
         variant.setClusteredVariantAccession(null);
