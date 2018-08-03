@@ -29,13 +29,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
 
     private SubSnpNoHgvsToSubmittedVariantProcessor subSnpNoHgvsToSubmittedVariantProcessor;
 
-    private RenormalizationProcessor renormalizationProcessor;
+    private SubmittedVariantRenormalizationProcessor renormalizationProcessor;
 
     private SubSnpNoHgvsToClusteredVariantProcessor subSnpNoHgvsToClusteredVariantProcessor;
 
     public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(FastaSequenceReader fastaSequenceReader) {
         subSnpNoHgvsToSubmittedVariantProcessor = new SubSnpNoHgvsToSubmittedVariantProcessor();
-        renormalizationProcessor = new RenormalizationProcessor(fastaSequenceReader);
+        renormalizationProcessor = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
         subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor();
     }
 
@@ -43,7 +43,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
     public DbsnpVariantsWrapper process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         DbsnpVariantsWrapper dbsnpVariantsWrapper = new DbsnpVariantsWrapper();
 
-        // SSs
+        // SS
         List<DbsnpSubmittedVariantEntity> submittedVariants = subSnpNoHgvsToSubmittedVariantProcessor.process(
                 subSnpNoHgvs);
         List<DbsnpSubmittedVariantEntity> normalisedSubmittedVariants = renormalizationProcessor.process(

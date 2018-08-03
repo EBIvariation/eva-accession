@@ -49,7 +49,7 @@ public class SubmittedVariantEntityTest {
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
                                      REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true);
 
-        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant);
+        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());
     }
 
@@ -59,7 +59,7 @@ public class SubmittedVariantEntityTest {
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
                                      REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false);
 
-        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant);
+        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());
     }
 
@@ -69,7 +69,7 @@ public class SubmittedVariantEntityTest {
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
                                      REF_A, ALT_T, CLUSTERED_VARIANT);
 
-        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant);
+        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         variant.setSupportedByEvidence(true);
         variant.setAssemblyMatch(true);
         variant.setAllelesMatch(true);

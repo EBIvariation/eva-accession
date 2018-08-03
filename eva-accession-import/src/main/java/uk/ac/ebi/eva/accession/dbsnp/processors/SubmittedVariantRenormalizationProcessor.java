@@ -26,19 +26,19 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RenormalizationProcessor implements
+public class SubmittedVariantRenormalizationProcessor implements
         ItemProcessor<List<DbsnpSubmittedVariantEntity>, List<DbsnpSubmittedVariantEntity>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(RenormalizationProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantRenormalizationProcessor.class);
 
     private FastaSequenceReader fastaSequenceReader;
 
-    public RenormalizationProcessor(FastaSequenceReader fastaSequenceReader) {
+    public SubmittedVariantRenormalizationProcessor(FastaSequenceReader fastaSequenceReader) {
         this.fastaSequenceReader = fastaSequenceReader;
     }
 
     @Override
-    public List<DbsnpSubmittedVariantEntity> process(List<DbsnpSubmittedVariantEntity> variants) throws Exception {
+    public List<DbsnpSubmittedVariantEntity> process(List<DbsnpSubmittedVariantEntity> variants) {
         return variants.stream().map(this::process).collect(Collectors.toList());
     }
 
@@ -64,8 +64,8 @@ public class RenormalizationProcessor implements
      * 10: "" > "AGG" (desired representation). For deletions the explanation is the same.
      *
      * For the needed change,
-     * @see RenormalizationProcessor#renormalize(uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity)
-     * @see RenormalizationProcessor#renormalizeAllele(java.lang.String)
+     * @see SubmittedVariantRenormalizationProcessor#renormalize(uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity)
+     * @see SubmittedVariantRenormalizationProcessor#renormalizeAllele(java.lang.String)
      */
     private boolean isAmbiguous(ISubmittedVariant variant) {
         try {
@@ -104,6 +104,7 @@ public class RenormalizationProcessor implements
         String renormalizedReference = variant.getReferenceAllele();
         String renormalizedAlternate = variant.getAlternateAllele();
         long renormalizedStart = variant.getStart() - 1;
+
         if (variant.getReferenceAllele().isEmpty()) {
             renormalizedAlternate = renormalizeAllele(variant.getAlternateAllele());
         } else if (variant.getAlternateAllele().isEmpty()) {
@@ -111,8 +112,19 @@ public class RenormalizationProcessor implements
         } else {
             throw new AssertionError("Can not re-normalize due to non-standard INDEL: " + variant);
         }
-        DbsnpSubmittedVariantEntity renormalized = createNormalizedVariant(variant, renormalizedAlternate, renormalizedReference, renormalizedStart);
-        return renormalized;
+
+        return createNormalizedVariant(variant, renormalizedAlternate, renormalizedReference, renormalizedStart);
+    }
+
+    /**
+     * Just move the last nucleotide of the allele to the first position
+     */
+    private String renormalizeAllele(String allele) {
+        int length = allele.length();
+        char nucleotideThatShouldBeAtTheBeginning = allele.charAt(length - 1);
+        String alleleWithoutLastNucleotide = allele.substring(0, length - 1);
+        String renormalizedAllele = nucleotideThatShouldBeAtTheBeginning + alleleWithoutLastNucleotide;
+        return renormalizedAllele;
     }
 
     private DbsnpSubmittedVariantEntity createNormalizedVariant(DbsnpSubmittedVariantEntity variant,
@@ -127,15 +139,4 @@ public class RenormalizationProcessor implements
                                                variant.isValidated(), variant.getVersion());
     }
 
-
-    /**
-     * Just move the last nucleotide of the allele to the first position
-     */
-    private String renormalizeAllele(String allele) {
-        int length = allele.length();
-        char nucleotideThatShouldBeAtTheBeginning = allele.charAt(length - 1);
-        String alleleWithoutLastNucleotide = allele.substring(0, length - 1);
-        String renormalizedAllele = nucleotideThatShouldBeAtTheBeginning + alleleWithoutLastNucleotide;
-        return renormalizedAllele;
-    }
 }

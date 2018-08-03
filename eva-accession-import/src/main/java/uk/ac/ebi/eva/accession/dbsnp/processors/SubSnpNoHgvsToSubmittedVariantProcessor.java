@@ -59,7 +59,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessor
 
             String hash = hashingFunction.apply(variant);
             DbsnpSubmittedVariantEntity ssVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(), hash,
-                                                                                          variant);
+                                                                                          variant, 1);
             ssVariantEntity.setCreatedDate(subSnpNoHgvs.getSsCreateTime().toLocalDateTime());
             variants.add(ssVariantEntity);
         }

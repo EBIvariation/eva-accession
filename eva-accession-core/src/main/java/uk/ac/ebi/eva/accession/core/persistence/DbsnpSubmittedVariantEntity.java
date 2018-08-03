@@ -23,8 +23,8 @@ public class DbsnpSubmittedVariantEntity extends SubmittedVariantEntity {
         super();
     }
 
-    public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
-        super(accession, hashedMessage, model);
+    public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
+        super(accession, hashedMessage, model, version);
     }
 
     public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,

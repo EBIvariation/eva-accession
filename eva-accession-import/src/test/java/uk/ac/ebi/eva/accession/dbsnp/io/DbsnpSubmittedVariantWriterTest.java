@@ -53,21 +53,7 @@ public class DbsnpSubmittedVariantWriterTest {
 
     private static final long EXPECTED_ACCESSION_2 = 10000000001L;
 
-    private static final String CONTIG_1 = "contig_1";
-
-    private static final String CONTIG_2 = "contig_2";
-
     private static final int START_1 = 100;
-
-    private static final int START_2 = 200;
-
-    private static final String ALTERNATE_ALLELE = "T";
-
-    private static final String REFERENCE_ALLELE = "A";
-
-    private static final int ACCESSION_COLUMN = 2;
-
-    private static final String ACCESSION_PREFIX = "ss";
 
     private static final Long CLUSTERED_VARIANT = null;
 
@@ -104,7 +90,7 @@ public class DbsnpSubmittedVariantWriterTest {
                                                                  MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(EXPECTED_ACCESSION,
                                                                               hashingFunction.apply(submittedVariant),
-                                                                              submittedVariant);
+                                                                              submittedVariant, 1);
 
         dbsnpSubmittedVariantWriter.write(Collections.singletonList(variant));
 
@@ -127,9 +113,9 @@ public class DbsnpSubmittedVariantWriterTest {
                                                                        CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         DbsnpSubmittedVariantEntity firstVariant = new DbsnpSubmittedVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant);
+                EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant, 1);
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
-                EXPECTED_ACCESSION_2, hashingFunction.apply(secondSubmittedVariant), secondSubmittedVariant);
+                EXPECTED_ACCESSION_2, hashingFunction.apply(secondSubmittedVariant), secondSubmittedVariant, 1);
 
         dbsnpSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant));
 
@@ -150,7 +136,7 @@ public class DbsnpSubmittedVariantWriterTest {
                                                                  CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                                  MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant);
+                EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant, 1);
 
         thrown.expect(RuntimeException.class);
         dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));

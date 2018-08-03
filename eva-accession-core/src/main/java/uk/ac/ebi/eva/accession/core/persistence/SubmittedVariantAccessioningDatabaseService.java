@@ -35,7 +35,8 @@ public class SubmittedVariantAccessioningDatabaseService
         super(repository,
               accessionWrapper -> new SubmittedVariantEntity(accessionWrapper.getAccession(),
                                                              accessionWrapper.getHash(),
-                                                             accessionWrapper.getData()),
+                                                             accessionWrapper.getData(),
+                                                             accessionWrapper.getVersion()),
               SubmittedVariantEntity::getModel,
               inactiveAccessionService);
     }
