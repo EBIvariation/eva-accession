@@ -35,7 +35,8 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
         super(repository,
               accessionWrapper -> new DbsnpSubmittedVariantEntity(accessionWrapper.getAccession(),
                                                                   accessionWrapper.getHash(),
-                                                                  accessionWrapper.getData()),
+                                                                  accessionWrapper.getData(),
+                                                                  accessionWrapper.getVersion()),
               DbsnpSubmittedVariantEntity::getModel,
               inactiveService);
     }
