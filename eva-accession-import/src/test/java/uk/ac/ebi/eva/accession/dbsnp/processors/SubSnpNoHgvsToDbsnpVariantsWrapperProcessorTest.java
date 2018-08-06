@@ -71,7 +71,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
         assertEquals(1, dbsnpVariantsWrapper.getOperations().size());
         assertEquals(EventType.UPDATED, dbsnpVariantsWrapper.getOperations().get(0).getEventType());
         assertEquals(1, dbsnpVariantsWrapper.getOperations().get(0).getInactiveObjects().size());
-        assertEquals("Declustered (Alleles mismatch)", dbsnpVariantsWrapper.getOperations().get(0).getReason());
+        assertEquals("None of the variant alleles match the reference allele",
+                     dbsnpVariantsWrapper.getOperations().get(0).getReason());
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpVariantsWrapper.getOperations().get(0).getAccession());
     }
 
@@ -109,7 +110,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
         assertEquals(expectedReference, dbsnpSubmittedVariant.getReferenceAllele());
         assertEquals(expectedAlternate, dbsnpSubmittedVariant.getAlternateAllele());
         assertEquals(supportedByEvidence, dbsnpSubmittedVariant.isSupportedByEvidence());
-        assertEquals(true, dbsnpSubmittedVariant.isAssemblyMatch());
+        assertEquals(false, dbsnpSubmittedVariant.isAssemblyMatch());
         assertEquals(allelesMatch, dbsnpSubmittedVariant.isAllelesMatch());
         assertEquals(false, dbsnpSubmittedVariant.isValidated());
         assertEquals(CREATED_DATE.toLocalDateTime(), dbsnpSubmittedVariant.getCreatedDate());

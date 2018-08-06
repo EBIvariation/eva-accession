@@ -120,7 +120,6 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.SNV);
-
     }
 
     @Test
@@ -212,6 +211,32 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.INS);
+    }
+
+    @Test
+    public void transformDeletionAlternatesDifferentType() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "C", "-/T", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
+
+        assertProcessedVariant(subSnpNoHgvs, variant, VariantType.DEL);
+    }
+
+    @Test
+    public void transformMnv() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "C", "T/A", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.MNV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.REVERSE, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
+
+        assertProcessedVariant(subSnpNoHgvs, variant, VariantType.MNV);
     }
 
     @Test
@@ -354,7 +379,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
-        assertProcessedVariant(subSnpNoHgvs, variant, VariantType.SNV, false, CONTIG_NAME, CONTIG_START);
+        assertProcessedVariant(subSnpNoHgvs, variant, VariantType.MNV, false, CONTIG_NAME, CONTIG_START);
     }
 
     @Test

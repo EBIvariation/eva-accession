@@ -21,6 +21,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.Region;
@@ -42,24 +43,31 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
     /**
      * Instantiate a {@link DbsnpClusteredVariantEntity} from a {@link SubSnpNoHgvs}.
      *
-     * We define the type of the ClusteredVariant (RefSnp) as the type of the first alternate allele (according to
-     * VariantClassifier). If the alternate alleles represent different variant types, the SubmittedVariants of any
-     * different type will be declustered in {@link uk.ac.ebi.eva.accession.dbsnp.io.DbsnpVariantsWriter}.
+     * We define the type of the ClusteredVariant (RefSnp) depending on the dbsnp type. If the dbsnp type is DIV then
+     * it would depend on the first SubSnp having any of this types: INS, DEL or INDEL (according to
+     * {@link VariantClassifier}).
+     *
+     * If the dbsnp type is different from DIV it would be directly mapped to the corresponding type.
+     *
+     * If the alternate alleles represent different variant types, the {@link DbsnpClusteredVariantEntity} of any
+     * different type will be declustered in {@link SubSnpNoHgvsToDbsnpVariantsWrapperProcessor}.
      */
     @Override
     public DbsnpClusteredVariantEntity process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         Region variantRegion = subSnpNoHgvs.getVariantRegion();
-        List<String> alleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
-        VariantType typeOfTheFirstAlternateAllele = VariantClassifier.getVariantClassification(
-                subSnpNoHgvs.getReferenceInForwardStrand(),
-                alleles.get(0),
-                subSnpNoHgvs.getDbsnpVariantType().intValue());
+
+        VariantType variantType;
+        if (subSnpNoHgvs.getDbsnpVariantType() != DbsnpVariantType.DIV) {
+            variantType = getVariantType(subSnpNoHgvs);
+        } else {
+            variantType = getVariantTypeWhenDiv(subSnpNoHgvs);
+        }
 
         ClusteredVariant variant = new ClusteredVariant(subSnpNoHgvs.getAssembly(),
                                                         subSnpNoHgvs.getTaxonomyId(),
                                                         variantRegion.getChromosome(),
                                                         variantRegion.getStart(),
-                                                        typeOfTheFirstAlternateAllele,
+                                                        variantType,
                                                         subSnpNoHgvs.isSnpValidated());
 
         String hash = hashingFunction.apply(variant);
@@ -70,6 +78,50 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
 
         variantEntity.setCreatedDate(subSnpNoHgvs.getRsCreateTime().toLocalDateTime());
         return variantEntity;
+    }
+
+    /**
+     * If the RefSnp type cannot be determined because none of the variants are type INS, DEL or INDEL, the type INDEL
+     * is assigned by default and the SubSnps would be declustered in
+     * {@link SubSnpNoHgvsToDbsnpVariantsWrapperProcessor }
+     */
+    private VariantType getVariantTypeWhenDiv(SubSnpNoHgvs subSnpNoHgvs) {
+        VariantType variantType = null;
+        List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
+        VariantType ssVariantType;
+        for (String alternateAllele : alternateAlleles) {
+            ssVariantType = VariantClassifier.getVariantClassification(
+                    subSnpNoHgvs.getReferenceInForwardStrand(),
+                    alternateAllele,
+                    subSnpNoHgvs.getDbsnpVariantType().intValue());
+
+            if (ssVariantType == VariantType.INS || ssVariantType == VariantType.DEL ||
+                    ssVariantType == VariantType.INDEL) {
+                variantType = ssVariantType;
+                break;
+            }
+        }
+        if (variantType == null) {
+            variantType = VariantType.INDEL;
+        }
+        return variantType;
+    }
+
+    private VariantType getVariantType(SubSnpNoHgvs subSnpNoHgvs) {
+        switch (subSnpNoHgvs.getDbsnpVariantType()) {
+            case SNV:
+                return VariantType.SNV;
+            case MICROSATELLITE:
+                return VariantType.TANDEM_REPEAT;
+            case NAMED:
+                return VariantType.SEQUENCE_ALTERATION;
+            case NO_VARIATION:
+                return VariantType.NO_SEQUENCE_ALTERATION;
+            case MNV:
+                return VariantType.MNV;
+            default:
+                return null;
+        }
     }
 
 }

@@ -110,8 +110,7 @@ public class SubmittedVariantAccessioningConfiguration {
     public DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties();
         return new DbsnpMonotonicAccessionGenerator<>(properties.getVariant().getCategoryId(),
-                properties.getInstanceId(),
-                service);
+                                                      properties.getInstanceId(), service);
     }
 
     @Bean

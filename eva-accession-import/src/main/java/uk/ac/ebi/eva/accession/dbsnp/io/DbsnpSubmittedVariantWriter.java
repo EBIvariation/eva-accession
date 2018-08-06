@@ -30,7 +30,6 @@ public class DbsnpSubmittedVariantWriter implements ItemWriter<DbsnpSubmittedVar
 
     private static final Logger logger = LoggerFactory.getLogger(DbsnpSubmittedVariantWriter.class);
 
-    @Autowired
     private MongoTemplate mongoTemplate;
 
     public DbsnpSubmittedVariantWriter(MongoTemplate mongoTemplate) {

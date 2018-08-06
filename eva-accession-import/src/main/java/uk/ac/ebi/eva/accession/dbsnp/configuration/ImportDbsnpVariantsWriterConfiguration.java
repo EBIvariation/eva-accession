@@ -36,8 +36,7 @@ public class ImportDbsnpVariantsWriterConfiguration {
     @Bean(name = DBSNP_VARIANT_WRITER)
     @StepScope
     DbsnpVariantsWriter dbsnpVariantWriter(InputParameters parameters,
-                                           MongoTemplate mongoTemplate,
-                                           SubmittedVariantAccessioningService service) throws Exception {
+                                           MongoTemplate mongoTemplate) throws Exception {
         logger.info("Injecting dbsnpVariantWriter with parameters: {}", parameters);
         return new DbsnpVariantsWriter(mongoTemplate);
     }

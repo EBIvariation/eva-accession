@@ -112,8 +112,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         if (allelesMatch == null) {
             throw new IllegalArgumentException("allelesMatch should not be null, as null is used for default values");
         } else {
-            this.allelesMatch = allelesMatch == DEFAULT_ALLELES_MATCH ? null :
-                    allelesMatch;
+            this.allelesMatch = allelesMatch == DEFAULT_ALLELES_MATCH ? null : allelesMatch;
         }
 
         if (validated == null) {
@@ -123,7 +122,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         }
     }
 
-    public SubmittedVariant getModel() {
+    public ISubmittedVariant getModel() {
         SubmittedVariant variant = new SubmittedVariant(this);
         variant.setSupportedByEvidence(isSupportedByEvidence());
         variant.setAssemblyMatch(isAssemblyMatch());
