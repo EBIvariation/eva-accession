@@ -99,7 +99,7 @@ public class SubmittedVariantRenormalizationProcessorTest {
         assertNonAmbiguousDoesNotChange(3, "", "C");    // 2:G>GC
         assertNonAmbiguousDoesNotChange(3, "", "CGC");  // 2:G>GCGC
         assertNonAmbiguousDoesNotChange(5, "", "CGC");  // 4:G>GCGC
-        assertNonAmbiguousDoesNotChange(5, "", "CC");   // 2:G>GCC
+        assertNonAmbiguousDoesNotChange(5, "", "CC");   // 4:G>GCC
     }
 
     @Test
