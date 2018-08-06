@@ -62,6 +62,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
@@ -380,7 +381,7 @@ public class SubmittedVariantAccessioningServiceTest {
                                                                  "alt", CLUSTERED_VARIANT,
                                                                  NOT_DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                  DEFAULT_ASSEMBLY_MATCH,
-                                                                 ISubmittedVariant.DEFAULT_ALLELES_MATCH,
+                                                                 DEFAULT_ALLELES_MATCH,
                                                                  DEFAULT_VALIDATED);
 
         service.getOrCreate(Collections.singletonList(submittedVariant));

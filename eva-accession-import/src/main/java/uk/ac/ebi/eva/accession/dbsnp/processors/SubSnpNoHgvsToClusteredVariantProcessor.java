@@ -44,10 +44,10 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
      * Instantiate a {@link DbsnpClusteredVariantEntity} from a {@link SubSnpNoHgvs}.
      *
      * We define the type of the ClusteredVariant (RefSnp) depending on the dbsnp type. If the dbsnp type is DIV then
-     * it would depend on the first SubSnp having any of this types: INS, DEL or INDEL (according to
+     * it would depend on the first SubSnp having any of these types: INS, DEL or INDEL (according to
      * {@link VariantClassifier}).
      *
-     * If the dbsnp type is different from DIV it would be directly mapped to the corresponding type.
+     * If the dbsnp type is different from DIV it will be directly mapped to the corresponding type.
      *
      * If the alternate alleles represent different variant types, the {@link DbsnpClusteredVariantEntity} of any
      * different type will be declustered in {@link SubSnpNoHgvsToDbsnpVariantsWrapperProcessor}.
@@ -80,33 +80,6 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
         return variantEntity;
     }
 
-    /**
-     * If the RefSnp type cannot be determined because none of the variants are type INS, DEL or INDEL, the type INDEL
-     * is assigned by default and the SubSnps would be declustered in
-     * {@link SubSnpNoHgvsToDbsnpVariantsWrapperProcessor }
-     */
-    private VariantType getVariantTypeWhenDiv(SubSnpNoHgvs subSnpNoHgvs) {
-        VariantType variantType = null;
-        List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
-        VariantType ssVariantType;
-        for (String alternateAllele : alternateAlleles) {
-            ssVariantType = VariantClassifier.getVariantClassification(
-                    subSnpNoHgvs.getReferenceInForwardStrand(),
-                    alternateAllele,
-                    subSnpNoHgvs.getDbsnpVariantType().intValue());
-
-            if (ssVariantType == VariantType.INS || ssVariantType == VariantType.DEL ||
-                    ssVariantType == VariantType.INDEL) {
-                variantType = ssVariantType;
-                break;
-            }
-        }
-        if (variantType == null) {
-            variantType = VariantType.INDEL;
-        }
-        return variantType;
-    }
-
     private VariantType getVariantType(SubSnpNoHgvs subSnpNoHgvs) {
         switch (subSnpNoHgvs.getDbsnpVariantType()) {
             case SNV:
@@ -120,8 +93,30 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
             case MNV:
                 return VariantType.MNV;
             default:
-                return null;
+                throw new IllegalArgumentException(
+                        "The dbSNP variant type provided doesn't have a direct mapping to an EVA type");
         }
+    }
+
+    /**
+     * If the RefSnp type cannot be determined because none of the associated SubSnps are type INS, DEL or INDEL, the
+     * type INDEL is assigned by default, and the SubSnps should be declustered by
+     * {@link SubSnpNoHgvsToDbsnpVariantsWrapperProcessor}.
+     */
+    private VariantType getVariantTypeWhenDiv(SubSnpNoHgvs subSnpNoHgvs) {
+        List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
+        for (String alternateAllele : alternateAlleles) {
+            VariantType ssVariantType = VariantClassifier.getVariantClassification(
+                    subSnpNoHgvs.getReferenceInForwardStrand(),
+                    alternateAllele,
+                    subSnpNoHgvs.getDbsnpVariantType().intValue());
+
+            if (ssVariantType == VariantType.INS || ssVariantType == VariantType.DEL ||
+                    ssVariantType == VariantType.INDEL) {
+                return ssVariantType;
+            }
+        }
+        return VariantType.INDEL;
     }
 
 }

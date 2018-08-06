@@ -66,7 +66,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
             SubmittedVariant variant = subSnpNoHgvsToSubmittedVariant(subSnpNoHgvs, alternateAllele);
             if (!variant.isAllelesMatch()) {
                 decluster(subSnpNoHgvs.getSsId(), variant, operations,
-                          "None of the variant alleles match the reference allele");
+                          "Declustered: None of the variant alleles match the reference allele");
             }
 
             String hash = hashingFunction.apply(variant);

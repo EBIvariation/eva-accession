@@ -71,7 +71,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
         assertEquals(1, dbsnpVariantsWrapper.getOperations().size());
         assertEquals(EventType.UPDATED, dbsnpVariantsWrapper.getOperations().get(0).getEventType());
         assertEquals(1, dbsnpVariantsWrapper.getOperations().get(0).getInactiveObjects().size());
-        assertEquals("None of the variant alleles match the reference allele",
+        assertEquals("Declustered: None of the variant alleles match the reference allele",
                      dbsnpVariantsWrapper.getOperations().get(0).getReason());
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpVariantsWrapper.getOperations().get(0).getAccession());
     }
