@@ -27,10 +27,6 @@ public class DbsnpSubmittedVariantEntity extends SubmittedVariantEntity {
         super(accession, hashedMessage, model, version);
     }
 
-    public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
-        super(accession, hashedMessage, model, version);
-    }
-
     public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
                                        int taxonomyAccession, String projectAccession, String contig, long start,
                                        String referenceAllele, String alternateAllele,

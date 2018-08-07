@@ -23,7 +23,6 @@ import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
@@ -63,15 +62,16 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
 
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
         for (String alternateAllele : alternateAlleles) {
-            SubmittedVariant variant = subSnpNoHgvsToSubmittedVariant(subSnpNoHgvs, alternateAllele);
-            if (!variant.isAllelesMatch()) {
-                decluster(subSnpNoHgvs.getSsId(), variant, operations,
+            SubmittedVariant submittedVariant = subSnpNoHgvsToSubmittedVariant(subSnpNoHgvs, alternateAllele);
+            if (!submittedVariant.isAllelesMatch()) {
+                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations,
                           "Declustered: None of the variant alleles match the reference allele");
             }
 
-            String hash = hashingFunction.apply(variant);
+            String hash = hashingFunction.apply(submittedVariant);
             DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(),
-                                                                                                 hash, variant);
+                                                                                                 hash, submittedVariant,
+                                                                                                 1);
             submittedVariantEntity.setCreatedDate(getCreatedDate(subSnpNoHgvs));
             submittedVariants.add(submittedVariantEntity);
         }
@@ -114,7 +114,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                            List<DbsnpSubmittedVariantOperationEntity> operations, String reason) {
         //Register submitted variant decluster operation
         DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity =
-                new DbsnpSubmittedVariantEntity(accession, hashingFunction.apply(variant), variant);
+                new DbsnpSubmittedVariantEntity(accession, hashingFunction.apply(variant), variant, 1);
         DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
         DbsnpSubmittedVariantInactiveEntity inactiveEntity =
                 new DbsnpSubmittedVariantInactiveEntity(nonDeclusteredVariantEntity);

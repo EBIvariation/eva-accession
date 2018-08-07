@@ -37,7 +37,6 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
                                                                   accessionWrapper.getHash(),
                                                                   accessionWrapper.getData(),
                                                                   accessionWrapper.getVersion()),
-              DbsnpSubmittedVariantEntity::getModel,
               inactiveService);
     }
 

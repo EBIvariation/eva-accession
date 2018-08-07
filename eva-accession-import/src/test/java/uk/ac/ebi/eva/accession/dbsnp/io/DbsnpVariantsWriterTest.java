@@ -104,7 +104,7 @@ public class DbsnpVariantsWriterTest {
                                                                  DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                  DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
-                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant);
+                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
 
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
@@ -155,11 +155,11 @@ public class DbsnpVariantsWriterTest {
         DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity1 =
                 new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION,
                                                 hashingFunctionSubmitted.apply(submittedVariant1),
-                                                submittedVariant1);
+                                                submittedVariant1, 1);
         DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity2 =
                 new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION,
                                                 hashingFunctionSubmitted.apply(submittedVariant2),
-                                                submittedVariant2);
+                                                submittedVariant2, 1);
 
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Arrays.asList(dbsnpSubmittedVariantEntity1,
                                                                         dbsnpSubmittedVariantEntity2));
@@ -178,13 +178,13 @@ public class DbsnpVariantsWriterTest {
         DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity1 =
                 new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION,
                                                 hashingFunctionSubmitted.apply(submittedVariant1),
-                                                submittedVariant1);
+                                                submittedVariant1, 1);
 
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(dbsnpSubmittedVariantEntity1));
 
         DbsnpSubmittedVariantOperationEntity operationEntity = new DbsnpSubmittedVariantOperationEntity();
         DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity = new DbsnpSubmittedVariantEntity
-                (SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1);
+                (SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1, 1);
         DbsnpSubmittedVariantInactiveEntity dbsnpSubmittedVariantInactiveEntity =
                 new DbsnpSubmittedVariantInactiveEntity(dbsnpSubmittedVariantEntity);
         operationEntity.fill(EventType.UPDATED, SUBMITTED_VARIANT_ACCESSION, null, "Declustered",
@@ -228,7 +228,7 @@ public class DbsnpVariantsWriterTest {
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = new DbsnpSubmittedVariantEntity(
-                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1);
+                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1, 1);
         DbsnpVariantsWrapper firstWrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity1));
 
         SubmittedVariant submittedVariant2 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
@@ -236,7 +236,7 @@ public class DbsnpVariantsWriterTest {
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
-                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2);
+                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2, 1);
         DbsnpVariantsWrapper secondWrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
 
         dbsnpVariantsWriter.write(Arrays.asList(firstWrapper, secondWrapper));

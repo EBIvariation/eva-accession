@@ -1,16 +1,20 @@
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -39,22 +43,29 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
-    private SubSnpNoHgvs subSnpNoHgvs;
+    private static SubSnpNoHgvsToDbsnpVariantsWrapperProcessor processor;
 
-    private SubSnpNoHgvsToDbsnpVariantsWrapperProcessor processor;
+    private static FastaSequenceReader fastaSequenceReader;
 
-    @Before
-    public void setUp() throws Exception {
-        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor();
-        subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "C", ASSEMBLY, BATCH_HANDLE,
-                                        BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
-                                        CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
-                                        Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                        false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        fastaSequenceReader = new FastaSequenceReader(Paths.get("src/test/resources/Gallus_gallus-5.0.test.fa"));
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(fastaSequenceReader);
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        fastaSequenceReader.close();
     }
 
     @Test
     public void processSubmittedVariantAllelesMismatch() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "C", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
         DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
         assertSubmittedVariantDeclustered(dbsnpVariantsWrapper);
         assertDeclusterOperationsRegistered(subSnpNoHgvs, dbsnpVariantsWrapper);
@@ -100,7 +111,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                         String expectedAlternate, boolean supportedByEvidence, boolean allelesMatch,
                                         int expectedVersion) {
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
-//      TODO: Rs must be validated after ticket EVA-1278 is finished
+//      TODO: Rs must be validated after ticket EVA-1278 is finished - ie. (T)4 must be TTTT
 //        assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
         assertEquals(ASSEMBLY, dbsnpSubmittedVariant.getAssemblyAccession());
         assertEquals(TAXONOMY, dbsnpSubmittedVariant.getTaxonomyAccession());
