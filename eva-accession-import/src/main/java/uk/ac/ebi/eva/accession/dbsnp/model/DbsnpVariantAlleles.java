@@ -32,15 +32,20 @@ public class DbsnpVariantAlleles {
 
     private static final String BRACKETED_STR_MOTIF_REGEX_GROUP_NAME = "bracketedMotif";
 
-    /** This Regex captures a motif in a STR expression, i.e., 'GA' in '(GA)5' */
+    private static final String STR_COUNT_REGEX_GROUP_NAME = "count";
+
+    /** This Regex captures a motif in a STR expression, i.e. 'GA' in '(GA)5' */
     private static final String MOTIF_GROUP_REGEX = "(?<" + STR_MOTIF_REGEX_GROUP_NAME + ">[a-zA-Z]+)";
 
-    /** This regex captures a bracketed motif in a STR expression, i.e., '(GA)' in '(GA)5' */
+    /** This regex captures a bracketed motif in a STR expression, i.e. '(GA)' in '(GA)5' */
     private static final String BRACKETED_MOTIF_GROUP_REGEX = "(?<" + BRACKETED_STR_MOTIF_REGEX_GROUP_NAME + ">" +
         "\\(" + MOTIF_GROUP_REGEX + "\\))";
 
-    /** Regular expresion that captures a STR expression, like '(GA)5' */
-    private static final String STR_UNIT_REGEX = BRACKETED_MOTIF_GROUP_REGEX + "\\d*";
+    /** This regex captures how many times a motif is repeated, i.e. '5' in '(GA)5' */
+    private static final String COUNT_GROUP_REGEX = "(?<" + STR_COUNT_REGEX_GROUP_NAME + ">\\d*)";
+
+    /** Regular expression that captures a STR expression, like '(GA)5' */
+    private static final String STR_UNIT_REGEX = BRACKETED_MOTIF_GROUP_REGEX + COUNT_GROUP_REGEX;
 
     private static final Pattern STR_UNIT_PATTERN = Pattern.compile(STR_UNIT_REGEX);
 
@@ -146,6 +151,7 @@ public class DbsnpVariantAlleles {
     private List<String> getMicrosatelliteAllelesInForwardStrand() {
         String[] allelesArray = removeSurroundingSquareBrackets(alleles);
         allelesArray = decodeMicrosatelliteAlleles(allelesArray);
+
         if (allelesOrientation.equals(Orientation.REVERSE)) {
             return Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteSequence).collect(
                     Collectors.toList());
@@ -180,7 +186,7 @@ public class DbsnpVariantAlleles {
      */
     private String[] decodeMicrosatelliteAlleles(String[] allelesArray) {
         String firstAllele = allelesArray[0];
-        for (int i=1; i<allelesArray.length; i++) {
+        for (int i = 1; i < allelesArray.length; i++) {
             // if a allele in the array is a number, prepend to it the sequence found in the first allele. If the first
             // allele does not match the regular expression, don't modify the alleles
             if (NumberUtils.isDigits(allelesArray[i])) {
@@ -191,6 +197,23 @@ public class DbsnpVariantAlleles {
             }
         }
 
+        return allelesArray;
+    }
+
+    public String[] unrollMicrosatelliteAlleles(String[] allelesArray) {
+        for (int i = 0; i<allelesArray.length; i++) {
+            Matcher matcher = STR_UNIT_PATTERN.matcher(allelesArray[i]);
+            if (matcher.matches()) {
+                String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
+                int count = Integer.valueOf(matcher.group(STR_COUNT_REGEX_GROUP_NAME));
+                StringBuilder unrolledAllele = new StringBuilder();
+                for (int j=0; j < count; j++) {
+                    //allelesArray[i] = matcher.group(BRACKETED_STR_MOTIF_REGEX_GROUP_NAME) + allelesArray[i];
+                    unrolledAllele.append(motif);
+                }
+                allelesArray[i] = unrolledAllele.toString();
+            }
+        }
         return allelesArray;
     }
 
