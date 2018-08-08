@@ -89,14 +89,6 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                 decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, reasons);
             }
 
-//            if (!submittedVariant.isAllelesMatch() && !typeMatches) {
-//                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_AND_TYPE_MISMATCH);
-//            } else if (!submittedVariant.isAllelesMatch()) {
-//                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_MISMATCH);
-//            } else if (!typeMatches) {
-//                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_TYPE_MISMATCH);
-//            }
-
             String hash = hashingFunction.apply(submittedVariant);
             DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(),
                                                                                                  hash, submittedVariant,
