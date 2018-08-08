@@ -23,7 +23,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
+import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;

@@ -1,7 +1,7 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.core.SaveResponse;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
@@ -13,9 +13,9 @@ import java.util.Map;
 
 public class DbsnpMonotonicAccessionGenerator<T> extends MonotonicAccessionGenerator {
 
-    public DbsnpMonotonicAccessionGenerator(long blockSize, String categoryId, String applicationInstanceId,
+    public DbsnpMonotonicAccessionGenerator(String categoryId, String applicationInstanceId,
                                             ContiguousIdBlockService contiguousIdBlockService) {
-        super(blockSize, categoryId, applicationInstanceId, contiguousIdBlockService);
+        super(categoryId, applicationInstanceId, contiguousIdBlockService);
     }
 
     @Override

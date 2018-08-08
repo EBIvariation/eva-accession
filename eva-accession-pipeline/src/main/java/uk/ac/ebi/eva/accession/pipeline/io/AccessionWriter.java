@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;

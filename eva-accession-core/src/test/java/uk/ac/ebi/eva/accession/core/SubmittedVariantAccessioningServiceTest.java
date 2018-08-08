@@ -19,8 +19,8 @@ import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.Before;
 import com.mongodb.DBObject;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,20 +28,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.MongoDbFactory;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.core.OperationType;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.IOperation;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
@@ -57,12 +55,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -72,13 +75,7 @@ public class SubmittedVariantAccessioningServiceTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
-    private static final Boolean SUPPORTED_BY_EVIDENCE = true;
-
-    private static final Boolean MATCHES_ASSEMBLY = true;
-
     private static final Boolean ALLELES_MATCH = false;
-
-    private static final Boolean VALIDATED = false;
 
     private static final String PROJECT = "PRJEB21794";
 
@@ -107,8 +104,6 @@ public class SubmittedVariantAccessioningServiceTest {
     private SubmittedVariant dbsnpSubmittedVariant;
 
     private SubmittedVariant submittedVariantModified;
-
-    private BasicMonotonicAccessioningService<ISubmittedVariant, String> accessioningServiceDbsnp;
 
     @Autowired
     private DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpAccessionGenerator;
@@ -139,24 +134,23 @@ public class SubmittedVariantAccessioningServiceTest {
     @Before
     public void setUp() {
         submittedVariant = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319, "C", "T",
-                                                CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, true,
-                                                VALIDATED);
+                                                CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                DEFAULT_ASSEMBLY_MATCH, true,
+                                                DEFAULT_VALIDATED);
 
         newSubmittedVariant = new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt",
-                                                   CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, true,
-                                                   VALIDATED);
+                                                   CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                   DEFAULT_ASSEMBLY_MATCH, true,
+                                                   DEFAULT_VALIDATED);
 
         dbsnpSubmittedVariant = new SubmittedVariant("GCA_000009999.3", 9999, PROJECT_DBSNP, "21", 20849999, "", "GG",
-                                                     CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, true,
-                                                     VALIDATED);
+                                                     CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                     DEFAULT_ASSEMBLY_MATCH, true,
+                                                     DEFAULT_VALIDATED);
 
         submittedVariantModified = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319,
-                                                        "C", "TCTC", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, true, VALIDATED);
-
-        accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
-                (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
-                 new SHA1HashingFunction());
+                                                        "C", "TCTC", CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                        DEFAULT_ASSEMBLY_MATCH, true, DEFAULT_VALIDATED);
     }
 
     @Autowired
@@ -167,7 +161,8 @@ public class SubmittedVariantAccessioningServiceTest {
     public void sameAccessionsAreReturnedForIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
         List<SubmittedVariant> variants = Arrays.asList(
                 new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
-                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                                     DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, ALLELES_MATCH,
+                                     DEFAULT_VALIDATED),
                 newSubmittedVariant);
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
@@ -180,14 +175,13 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void sameAccessionsAreReturnedForEquivalentVariants() throws AccessionCouldNotBeGeneratedException {
         List<SubmittedVariant> originalVariants = Arrays.asList(
-                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
-                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", 10L,
+                                     DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, ALLELES_MATCH,
+                                     DEFAULT_VALIDATED),
                 newSubmittedVariant);
         List<SubmittedVariant> requestedVariants = Arrays.asList(
-                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null,
-                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED),
-                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null,
-                                     SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED));
+                new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null),
+                new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt", null));
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
                 originalVariants);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> retrievedAccessions = service.getOrCreate(
@@ -204,14 +198,14 @@ public class SubmittedVariantAccessioningServiceTest {
 
         long accession = submittedVariants.stream()
                                           .filter(x -> x.getData().getProjectAccession().equals(PROJECT))
-                                          .collect(Collectors.toList())
-                                          .get(0).getAccession();
+                                          .findAny().orElseThrow(NoSuchElementException::new)
+                                          .getAccession();
         assertEquals(ACCESSION, accession);
 
         long accessionDbsnp = submittedVariants.stream()
                                                .filter(x -> x.getData().getProjectAccession().equals(PROJECT_DBSNP))
-                                               .collect(Collectors.toList())
-                                               .get(0).getAccession();
+                                               .findAny().orElseThrow(NoSuchElementException::new)
+                                               .getAccession();
         assertEquals(ACCESSION_DBSNP_1, accessionDbsnp);
 
         assertEquals(3, submittedVariants.size());
@@ -237,13 +231,13 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void getByAccessionAndVersionFromBothRepositories() throws AccessionMergedException,
             AccessionDoesNotExistException, AccessionDeprecatedException {
-        AccessionWrapper<ISubmittedVariant, String, Long> submittedVariant = service.getByAccessionAndVersion(
+        AccessionWrapper<ISubmittedVariant, String, Long> retrievedSubmittedVariant = service.getByAccessionAndVersion(
                 ACCESSION, 1);
-        assertEquals(this.submittedVariant, submittedVariant.getData());
+        assertEquals(submittedVariant, retrievedSubmittedVariant.getData());
 
-        AccessionWrapper<ISubmittedVariant, String, Long> dbsnpSubmittedVariant = service.getByAccessionAndVersion(
-                ACCESSION_DBSNP_1, 1);
-        assertEquals(this.dbsnpSubmittedVariant, dbsnpSubmittedVariant.getData());
+        AccessionWrapper<ISubmittedVariant, String, Long> retrievedDbsnpSubmittedVariant =
+                service.getByAccessionAndVersion(ACCESSION_DBSNP_1, 1);
+        assertEquals(dbsnpSubmittedVariant, retrievedDbsnpSubmittedVariant.getData());
     }
 
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
@@ -258,15 +252,15 @@ public class SubmittedVariantAccessioningServiceTest {
             throws AccessionDeprecatedException, AccessionDoesNotExistException, AccessionMergedException {
         assertEquals(modifiedVariant, service.getByAccessionAndVersion(accession, 1).getData());
 
-        IOperation<Long> lastOperation;
+        IEvent<ISubmittedVariant, Long> lastOperation;
         if (accession >= accessioningMonotonicInitSs) {
-            lastOperation = inactiveService.getLastOperation(accession);
+            lastOperation = inactiveService.getLastEvent(accession);
         } else {
-            lastOperation = dbsnpInactiveService.getLastOperation(accession);
+            lastOperation = dbsnpInactiveService.getLastEvent(accession);
         }
-        assertEquals(OperationType.UPDATED, lastOperation.getOperationType());
-        assertEquals(accession, lastOperation.getAccessionIdOrigin().longValue());
-        assertNull(lastOperation.getAccessionIdDestination());
+        assertEquals(EventType.UPDATED, lastOperation.getEventType());
+        assertEquals(accession, lastOperation.getAccession().longValue());
+        assertNull(lastOperation.getMergedInto());
     }
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
@@ -311,15 +305,15 @@ public class SubmittedVariantAccessioningServiceTest {
     private void assertVariantDeprecated(long accession, String reason) {
         assertTrue(service.getByAccessions(Collections.singletonList(accession)).isEmpty());
 
-        IOperation<Long> lastOperation;
+        IEvent<ISubmittedVariant, Long> lastOperation;
         if (accession >= accessioningMonotonicInitSs) {
-            lastOperation = inactiveService.getLastOperation(accession);
+            lastOperation = inactiveService.getLastEvent(accession);
         } else {
-            lastOperation = dbsnpInactiveService.getLastOperation(accession);
+            lastOperation = dbsnpInactiveService.getLastEvent(accession);
         }
-        assertEquals(OperationType.DEPRECATED, lastOperation.getOperationType());
-        assertEquals(accession, lastOperation.getAccessionIdOrigin().longValue());
-        assertNull(lastOperation.getAccessionIdDestination());
+        assertEquals(EventType.DEPRECATED, lastOperation.getEventType());
+        assertEquals(accession, lastOperation.getAccession().longValue());
+        assertNull(lastOperation.getMergedInto());
         assertEquals(reason, lastOperation.getReason());
     }
 
@@ -346,15 +340,15 @@ public class SubmittedVariantAccessioningServiceTest {
         assertTrue(service.getByAccessions(Collections.singletonList(accessionOrigin)).isEmpty());
         assertFalse(service.getByAccessions(Collections.singletonList(accessionDestination)).isEmpty());
 
-        IOperation<Long> lastOperation;
+        IEvent<ISubmittedVariant, Long> lastOperation;
         if (accessionOrigin >= accessioningMonotonicInitSs) {
-            lastOperation = inactiveService.getLastOperation(accessionOrigin);
+            lastOperation = inactiveService.getLastEvent(accessionOrigin);
         } else {
-            lastOperation = dbsnpInactiveService.getLastOperation(accessionOrigin);
+            lastOperation = dbsnpInactiveService.getLastEvent(accessionOrigin);
         }
-        assertEquals(OperationType.MERGED_INTO, lastOperation.getOperationType());
-        assertEquals(accessionOrigin, lastOperation.getAccessionIdOrigin().longValue());
-        assertEquals(accessionDestination, lastOperation.getAccessionIdDestination().longValue());
+        assertEquals(EventType.MERGED, lastOperation.getEventType());
+        assertEquals(accessionOrigin, lastOperation.getAccession().longValue());
+        assertEquals(accessionDestination, lastOperation.getMergedInto().longValue());
         assertEquals(MERGE_REASON, lastOperation.getReason());
     }
 
@@ -372,19 +366,23 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test(expected = UnsupportedOperationException.class)
     public void exceptionWhenCreateAccessionForDbsnpVariant() throws
             AccessionCouldNotBeGeneratedException {
+        BasicMonotonicAccessioningService accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
+                (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
+                 new SHA1HashingFunction());
+
         accessioningServiceDbsnp.getOrCreate(Collections.singletonList(submittedVariant));
     }
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void defaultValuesAreNotStored() throws AccessionCouldNotBeGeneratedException {
-        boolean NOT_DEFAULT_SUPPORTED_BY_EVIDENCE = !ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
+        boolean NOT_DEFAULT_SUPPORTED_BY_EVIDENCE = !DEFAULT_SUPPORTED_BY_EVIDENCE;
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref",
                                                                  "alt", CLUSTERED_VARIANT,
                                                                  NOT_DEFAULT_SUPPORTED_BY_EVIDENCE,
-                                                                 ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH,
-                                                                 ISubmittedVariant.DEFAULT_ALLELES_MATCH,
-                                                                 ISubmittedVariant.DEFAULT_VALIDATED);
+                                                                 DEFAULT_ASSEMBLY_MATCH,
+                                                                 DEFAULT_ALLELES_MATCH,
+                                                                 DEFAULT_VALIDATED);
 
         service.getOrCreate(Collections.singletonList(submittedVariant));
 
@@ -397,5 +395,26 @@ public class SubmittedVariantAccessioningServiceTest {
         assertEquals(null, submittedVariantEntities.get(0).get("asmMatch"));
         assertEquals(null, submittedVariantEntities.get(0).get("allelesMatch"));
         assertEquals(null, submittedVariantEntities.get(0).get("validated"));
+    }
+
+    @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
+    @Test
+    public void getSeveralVariantsWithSameAccession() {
+        SubmittedVariant multiallelicSubmittedVariant1 = new SubmittedVariant("GCA_000009999.3", 9999, "DBSNP555",
+                                                                              "21", 20849999, "A", "G", 2200000002L,
+                                                                              DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                                              DEFAULT_ASSEMBLY_MATCH,
+                                                                              true, DEFAULT_VALIDATED);
+
+        SubmittedVariant multiallelicSubmittedVariant2 = new SubmittedVariant("GCA_000009999.3", 9999, "DBSNP555",
+                                                                              "21", 20849999, "A", "C", 2200000003L,
+                                                                              DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                                              DEFAULT_ASSEMBLY_MATCH,
+                                                                              true, DEFAULT_VALIDATED);
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(
+                Arrays.asList(multiallelicSubmittedVariant1, multiallelicSubmittedVariant2));
+        assertEquals(2, accessions.size());
+        assertEquals(1, accessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet()).size());
     }
 }

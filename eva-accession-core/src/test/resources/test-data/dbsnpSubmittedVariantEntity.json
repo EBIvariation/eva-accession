@@ -25,6 +25,32 @@
       "evidence" : true,
       "accession" : 2200000001,
       "version" : 1
+    },
+    {
+      "_id" : "BDC7EDCBDE97DFA804F6A7D51567177C8C66FF34",
+      "asm" : "GCA_000009999.3",
+      "tax" : 9999,
+      "study" : "DBSNP555",
+      "contig" : "21",
+      "start" : 20849999,
+      "ref" : "A",
+      "alt" : "G",
+      "evidence" : true,
+      "accession" : 2200000002,
+      "version" : 1
+    },
+    {
+      "_id" : "27AE8650CEAB6999004517537600870DF53CB28D",
+      "asm" : "GCA_000009999.3",
+      "tax" : 9999,
+      "study" : "DBSNP555",
+      "contig" : "21",
+      "start" : 20849999,
+      "ref" : "A",
+      "alt" : "C",
+      "evidence" : true,
+      "accession" : 2200000002,
+      "version" : 2
     }
   ]
 }

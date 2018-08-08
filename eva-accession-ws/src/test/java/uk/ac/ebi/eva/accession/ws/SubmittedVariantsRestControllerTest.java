@@ -30,8 +30,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
-import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
+import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;

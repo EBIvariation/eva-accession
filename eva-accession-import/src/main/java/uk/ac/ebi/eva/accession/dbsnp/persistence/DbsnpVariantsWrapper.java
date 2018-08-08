@@ -16,9 +16,10 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.persistence;
 
-import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 
 import java.util.List;
 
@@ -33,37 +34,46 @@ import java.util.List;
  */
 public class DbsnpVariantsWrapper {
 
-    private List<? extends ISubmittedVariant> submittedVariants;
+    private List<DbsnpSubmittedVariantEntity> submittedVariants;
 
-    private IClusteredVariant clusteredVariant;
+    private DbsnpClusteredVariantEntity clusteredVariant;
 
-    private List<SubmittedVariantOperationEntity> operations;
+    private List<DbsnpSubmittedVariantOperationEntity> operations;
+
+    DbsnpVariantType dbsnpVariantType;
 
     public DbsnpVariantsWrapper() {
     }
 
-    public List<? extends ISubmittedVariant> getSubmittedVariants() {
+    public List<DbsnpSubmittedVariantEntity> getSubmittedVariants() {
         return submittedVariants;
     }
 
-    public void setSubmittedVariants(List<? extends ISubmittedVariant> submittedVariants) {
+    public void setSubmittedVariants(List<DbsnpSubmittedVariantEntity> submittedVariants) {
         this.submittedVariants = submittedVariants;
     }
 
-    public IClusteredVariant getClusteredVariant() {
+    public DbsnpClusteredVariantEntity getClusteredVariant() {
         return clusteredVariant;
     }
 
-    public void setClusteredVariant(IClusteredVariant clusteredVariant) {
+    public void setClusteredVariant(DbsnpClusteredVariantEntity clusteredVariant) {
         this.clusteredVariant = clusteredVariant;
     }
 
-    public List<SubmittedVariantOperationEntity> getOperations() {
+    public List<DbsnpSubmittedVariantOperationEntity> getOperations() {
         return operations;
     }
 
-    public void setOperations(
-            List<SubmittedVariantOperationEntity> operations) {
+    public void setOperations(List<DbsnpSubmittedVariantOperationEntity> operations) {
         this.operations = operations;
+    }
+
+    public DbsnpVariantType getDbsnpVariantType() {
+        return dbsnpVariantType;
+    }
+
+    public void setDbsnpVariantType(DbsnpVariantType dbsnpVariantType) {
+        this.dbsnpVariantType = dbsnpVariantType;
     }
 }

@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
-import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
+import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;

@@ -1,35 +1,27 @@
-/*
- * Copyright 2014-2018 EMBL - European Bioinformatics Institute
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
+public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     private static final String ASSEMBLY = "AnyAssembly-1.0";
 
@@ -51,13 +43,49 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
 
     private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
-    private SubSnpNoHgvsToSubmittedVariantProcessor processor;
+    private static SubSnpNoHgvsToDbsnpVariantsWrapperProcessor processor;
 
-    @Before
-    public void setUp() throws Exception {
-        processor = new SubSnpNoHgvsToSubmittedVariantProcessor();
+    private static FastaSequenceReader fastaSequenceReader;
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        fastaSequenceReader = new FastaSequenceReader(Paths.get("src/test/resources/Gallus_gallus-5.0.test.fa"));
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(fastaSequenceReader);
     }
 
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        fastaSequenceReader.close();
+    }
+
+    @Test
+    public void processSubmittedVariantAllelesMismatch() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "C", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
+        assertSubmittedVariantDeclustered(dbsnpVariantsWrapper);
+        assertDeclusterOperationsRegistered(subSnpNoHgvs, dbsnpVariantsWrapper);
+        assertEquals(subSnpNoHgvs.getRsId(), dbsnpVariantsWrapper.getClusteredVariant().getAccession());
+    }
+
+    private void assertSubmittedVariantDeclustered(DbsnpVariantsWrapper dbsnpVariantsWrapper) {
+        assertEquals(1, dbsnpVariantsWrapper.getSubmittedVariants().size());
+        assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(0).getClusteredVariantAccession());
+    }
+
+    private void assertDeclusterOperationsRegistered(SubSnpNoHgvs subSnpNoHgvs,
+                                                     DbsnpVariantsWrapper dbsnpVariantsWrapper) {
+        assertEquals(1, dbsnpVariantsWrapper.getOperations().size());
+        assertEquals(EventType.UPDATED, dbsnpVariantsWrapper.getOperations().get(0).getEventType());
+        assertEquals(1, dbsnpVariantsWrapper.getOperations().get(0).getInactiveObjects().size());
+        assertEquals("Declustered: None of the variant alleles match the reference allele",
+                     dbsnpVariantsWrapper.getOperations().get(0).getReason());
+        assertEquals(subSnpNoHgvs.getSsId(), dbsnpVariantsWrapper.getOperations().get(0).getAccession());
+    }
 
     @Test
     public void transformSnpForwardOrientations() throws Exception {
@@ -67,7 +95,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "C");
     }
@@ -75,14 +103,16 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
                                         String expectedReference, String expectedAlternate) {
         this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, CHROMOSOME, CHROMOSOME_START,
-                                    expectedReference, expectedAlternate, false, true);
+                                    expectedReference, expectedAlternate, false, true, 1);
     }
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
                                         String expectedContig, long expectedStart, String expectedReference,
-                                        String expectedAlternate, boolean supportedByEvidence, boolean allelesMatch) {
+                                        String expectedAlternate, boolean supportedByEvidence, boolean allelesMatch,
+                                        int expectedVersion) {
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
-        assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
+//      TODO: Rs must be validated after ticket EVA-1278 is finished - ie. (T)4 must be TTTT
+//        assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
         assertEquals(ASSEMBLY, dbsnpSubmittedVariant.getAssemblyAccession());
         assertEquals(TAXONOMY, dbsnpSubmittedVariant.getTaxonomyAccession());
         assertEquals(PROJECT_ACCESSION, dbsnpSubmittedVariant.getProjectAccession());
@@ -91,11 +121,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
         assertEquals(expectedReference, dbsnpSubmittedVariant.getReferenceAllele());
         assertEquals(expectedAlternate, dbsnpSubmittedVariant.getAlternateAllele());
         assertEquals(supportedByEvidence, dbsnpSubmittedVariant.isSupportedByEvidence());
-        assertEquals(true, dbsnpSubmittedVariant.isAssemblyMatch());
+        assertEquals(false, dbsnpSubmittedVariant.isAssemblyMatch());
         assertEquals(allelesMatch, dbsnpSubmittedVariant.isAllelesMatch());
         assertEquals(false, dbsnpSubmittedVariant.isValidated());
         assertEquals(CREATED_DATE.toLocalDateTime(), dbsnpSubmittedVariant.getCreatedDate());
-        assertEquals(1, dbsnpSubmittedVariant.getVersion());
+        assertEquals(expectedVersion, dbsnpSubmittedVariant.getVersion());
         assertEquals(getExpectedHash(expectedContig, expectedStart, expectedReference, expectedAlternate),
                      dbsnpSubmittedVariant.getHashedMessage());
     }
@@ -122,7 +152,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "G");
 
@@ -137,7 +167,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "A");
     }
@@ -150,7 +180,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "A");
     }
@@ -163,7 +193,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "G");
     }
@@ -176,7 +206,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "G");
     }
@@ -189,7 +219,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "A");
     }
@@ -202,7 +232,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "C");
     }
@@ -215,7 +245,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "", "T");
 
@@ -224,7 +254,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                         Orientation.FORWARD, Orientation.REVERSE, Orientation.REVERSE, false, false,
                                         false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        variants = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "AG");
     }
@@ -237,7 +267,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "T", "");
 
@@ -246,7 +276,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                         Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, false, false,
                                         false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        variants = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "TG", "T");
     }
@@ -258,7 +288,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "C", "TA");
     }
@@ -271,7 +301,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "T", "");
     }
@@ -284,20 +314,20 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.FORWARD, false, true, false, true,
                                                      CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true, 1);
 
         // variant with genotypes but no frequencies
         subSnpNoHgvs.setFrequencyExists(false);
         subSnpNoHgvs.setGenotypeExists(true);
-        variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true, 1);
 
         // variant with frequencies but no genotypes
         subSnpNoHgvs.setFrequencyExists(true);
         subSnpNoHgvs.setGenotypeExists(false);
-        variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true, 1);
     }
 
     @Test
@@ -308,10 +338,10 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "C");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "A", "G");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "A", "C", false, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "A", "G", false, true, 1);
     }
 
     @Test
@@ -322,7 +352,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "TTA", "ATC");
     }
@@ -335,10 +365,10 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), "AC", "TC");
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), "AC", "TA");
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "AC", "TC", false, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "AC", "TA", false, true, 1);
     }
 
     @Test
@@ -349,7 +379,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
                                                      Orientation.FORWARD, false, false, false, false, CREATED_DATE,
                                                      CREATED_DATE, TAXONOMY);
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "C", "A");
 
         // reverse strand
@@ -357,7 +387,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                         CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.SNV,
                                         Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, false, false,
                                         false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
-        variants = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "G");
     }
 
@@ -369,7 +399,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
                                                      Orientation.FORWARD, false, false, false, false, CREATED_DATE,
                                                      CREATED_DATE, TAXONOMY);
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "C", "A");
 
         // reverse strand
@@ -377,7 +407,7 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                         CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.SNV,
                                         Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, false, false,
                                         false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
-        variants = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "A", "G");
     }
 
@@ -389,35 +419,38 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "(T)4", false, false);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "(T)5", false, false);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "T", "(T)7", false, false);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "(T)4", false, false,
+                               1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "(T)5", false, false,
+                               1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "T", "(T)7", false, false,
+                               1);
 
         subSnpNoHgvs = new SubSnpNoHgvs(244316767L, 315216130L, "TA", "(TA)14(CA)2TA/-", ASSEMBLY, BATCH_HANDLE,
                                         BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
                                         DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD, Orientation.REVERSE,
                                         Orientation.REVERSE, false, false, false, false, CREATED_DATE, CREATED_DATE,
                                         TAXONOMY);
-        variants = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "TA", "(TA)14(CA)2TA",
-                               false, false);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "TA", "", false, false);
+                               false, false, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "TA", "", false, false, 1);
 
         subSnpNoHgvs = new SubSnpNoHgvs(702701141L, 718200201L, "A", "(A)2(TA)8/(A)2(TA)6/(A)2(TA)7/(A)4(TA)9",
                                         ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                         CONTIG_START, DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD,
                                         Orientation.FORWARD, Orientation.FORWARD, false, false, false, false,
                                         CREATED_DATE, CREATED_DATE, TAXONOMY);
-        variants = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)8", false,
-                               false);
+                               false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)6", false,
-                               false);
+                               false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "A", "(A)2(TA)7", false,
-                               false);
+                               false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(3), CHROMOSOME, CHROMOSOME_START, "A", "(A)4(TA)9", false,
-                               false);
+                               false, 1);
     }
 
     @Test
@@ -428,11 +461,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
                                                      false, false, false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "AT", "(AT)7", false,
-                               false);
+                               false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "AT", "(AT)19", false,
-                               false);
+                               false, 1);
     }
 
     @Test
@@ -444,9 +477,9 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD,
                                                      false, false, false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "C", "AGAGTTCAAGTTGCCCTA",
-                               false, true);
+                               false, true, 1);
 
         // there are STR variants where the alleles string is enclosed with square brackets
         subSnpNoHgvs = new SubSnpNoHgvs(159831041L, 109548685L, "ACACACACAC", "[(GT)11/14]", ASSEMBLY, BATCH_HANDLE,
@@ -455,11 +488,11 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                         Orientation.FORWARD, false, false, false, false, CREATED_DATE, CREATED_DATE,
                                         TAXONOMY);
 
-        variants = processor.process(subSnpNoHgvs);
+        variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(AC)11",
-                               false, false);
+                               false, false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "ACACACACAC", "(AC)14",
-                               false, false);
+                               false, false, 1);
     }
 
     @Test
@@ -470,9 +503,9 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, false, false, false, false, CREATED_DATE,
                                                      CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "G", false, true);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "G", false, true, 1);
     }
 
     @Test
@@ -483,11 +516,10 @@ public class SubSnpNoHgvsToSubmittedVariantProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "A", false, false);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "C", false, false);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "A", false, false, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "C", false, false, 1);
     }
-
 
 }
