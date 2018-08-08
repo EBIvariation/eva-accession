@@ -127,8 +127,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
         assertEquals(2, dbsnpVariantsWrapper.getOperations().size());
         assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_TYPE_MISMATCH)),
                          subSnpNoHgvsTypeMismatch.getSsId(), 0);
-        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_TYPE_MISMATCH))
-                , subSnpNoHgvsTypeMismatch.getSsId(), 1);
+        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_TYPE_MISMATCH)),
+                         subSnpNoHgvsTypeMismatch.getSsId(), 1);
 
         //Check Rs
         assertEquals(subSnpNoHgvsTypeMismatch.getRsId(), dbsnpVariantsWrapper.getClusteredVariant().getAccession());
