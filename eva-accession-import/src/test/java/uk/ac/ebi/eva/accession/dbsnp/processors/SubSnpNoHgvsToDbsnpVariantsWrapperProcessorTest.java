@@ -87,7 +87,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     @Test
     public void processSubmittedVariantTypeMismatch() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvsTypeMismatch = new SubSnpNoHgvs(25928972L, 14718243L, "G", "G/T/TT/-", ASSEMBLY,
+        SubSnpNoHgvs subSnpNoHgvsTypeMismatch = new SubSnpNoHgvs(25928972L, 14718243L, "G", "G/-/T/TT", ASSEMBLY,
                                                                  BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START,
                                                                  CONTIG_NAME, CONTIG_START, DbsnpVariantType.DIV,
                                                                  Orientation.FORWARD, Orientation.FORWARD,
@@ -113,7 +113,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     @Test
     public void processSubmittedVariantAllelesAndTypeMismatch() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvsAlleleAndTypeMismatch = new SubSnpNoHgvs(25928972L, 14718243L, "G", "T/TT/-", ASSEMBLY,
+        SubSnpNoHgvs subSnpNoHgvsAlleleAndTypeMismatch = new SubSnpNoHgvs(25928972L, 14718243L, "G", "-/T/TT", ASSEMBLY,
                                                                           BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
                                                                           CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
                                                                           DbsnpVariantType.DIV, Orientation.FORWARD,
