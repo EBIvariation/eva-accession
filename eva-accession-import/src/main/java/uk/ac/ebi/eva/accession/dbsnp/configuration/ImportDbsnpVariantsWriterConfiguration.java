@@ -20,15 +20,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.io.DbsnpVariantsWriter;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_WRITER;
 
 @Configuration
+@Import({SubmittedVariantAccessioningConfiguration.class})
 public class ImportDbsnpVariantsWriterConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ImportDbsnpVariantsWriterConfiguration.class);
