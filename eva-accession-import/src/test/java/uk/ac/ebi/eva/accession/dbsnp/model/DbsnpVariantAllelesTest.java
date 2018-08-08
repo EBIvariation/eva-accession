@@ -183,15 +183,25 @@ public class DbsnpVariantAllelesTest {
 
     @Test
     public void unrollSTRAlleles() {
-        DbsnpVariantAlleles forwardAllelesSTR = new DbsnpVariantAlleles("T", "(T)4/5/7", Orientation.FORWARD,
+        DbsnpVariantAlleles complexSTR1 = new DbsnpVariantAlleles("T", "(T)4/5/7", Orientation.FORWARD,
                                                                         Orientation.FORWARD,
                                                                         DbsnpVariantType.MICROSATELLITE);
 
-        assertArrayEquals(new String[]{"TTTT", "TTTTT", "TTTTTTT"}, forwardAllelesSTR.unrollMicrosatelliteAlleles(new String[]{"(T)4", "(T)5", "(T)7"}));
+        assertArrayEquals(new String[]{"TTTT", "TTTTT", "TTTTTTT"}, complexSTR1.unrollMicrosatelliteAlleles(new String[]{"(T)4", "(T)5", "(T)7"}));
 
         DbsnpVariantAlleles complexSTR2 = new DbsnpVariantAlleles("T", "(T)4(ACT)3AG(C)5", Orientation.FORWARD,
                                                                   Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
 
         assertArrayEquals(new String[] {"TTTTACTACTACTAGCCCCC"}, complexSTR2.unrollMicrosatelliteAlleles(new String[]{"(T)4(ACT)3AG(C)5"}));
+
+        DbsnpVariantAlleles complexSTR3 = new DbsnpVariantAlleles("T", "AG(T)4(ACT)3(C)5", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertArrayEquals(new String[] {"AGTTTTACTACTACTCCCCC"}, complexSTR3.unrollMicrosatelliteAlleles(new String[]{"AG(T)4(ACT)3(C)5"}));
+
+        DbsnpVariantAlleles complexSTR4 = new DbsnpVariantAlleles("T", "(T)4(ACT)3(C)5AG", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertArrayEquals(new String[] {"TTTTACTACTACTCCCCCAG"}, complexSTR4.unrollMicrosatelliteAlleles(new String[]{"(T)4(ACT)3(C)5AG"}));
     }
 }

@@ -34,6 +34,8 @@ public class DbsnpVariantAlleles {
 
     private static final String STR_COUNT_REGEX_GROUP_NAME = "count";
 
+    private static final String BASES_REGEX_GROUP_NAME = "bases";
+
     /** This Regex captures a motif in a STR expression, i.e. 'GA' in '(GA)5' */
     private static final String MOTIF_GROUP_REGEX = "(?<" + STR_MOTIF_REGEX_GROUP_NAME + ">[a-zA-Z]+)";
 
@@ -44,10 +46,16 @@ public class DbsnpVariantAlleles {
     /** This regex captures how many times a motif is repeated, i.e. '5' in '(GA)5' */
     private static final String COUNT_GROUP_REGEX = "(?<" + STR_COUNT_REGEX_GROUP_NAME + ">\\d*)";
 
+    private static final String BASES_GROUP_REGEX = "(?<" + BASES_REGEX_GROUP_NAME + ">[a-zA-Z]+)";
+
     /** Regular expression that captures a STR expression, like '(GA)5' */
     private static final String STR_UNIT_REGEX = BRACKETED_MOTIF_GROUP_REGEX + COUNT_GROUP_REGEX;
 
+    private static final String ANY_UNIT_REGEX = "(" + STR_UNIT_REGEX + "|" + BASES_GROUP_REGEX + ")";
+
     private static final Pattern STR_UNIT_PATTERN = Pattern.compile(STR_UNIT_REGEX);
+
+    private static final Pattern ANY_UNIT_PATTERN = Pattern.compile(ANY_UNIT_REGEX);
 
     private String referenceAllele;
 
@@ -202,17 +210,22 @@ public class DbsnpVariantAlleles {
 
     public String[] unrollMicrosatelliteAlleles(String[] allelesArray) {
         for (int i = 0; i<allelesArray.length; i++) {
-            Matcher matcher = STR_UNIT_PATTERN.matcher(allelesArray[i]);
-            if (matcher.matches()) {
-                String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
-                int count = Integer.valueOf(matcher.group(STR_COUNT_REGEX_GROUP_NAME));
-                StringBuilder unrolledAllele = new StringBuilder();
-                for (int j=0; j < count; j++) {
-                    //allelesArray[i] = matcher.group(BRACKETED_STR_MOTIF_REGEX_GROUP_NAME) + allelesArray[i];
+            StringBuilder unrolledAllele = new StringBuilder();
+            Matcher matcher = ANY_UNIT_PATTERN.matcher(allelesArray[i]);
+
+            while (matcher.find()) {
+                if (matcher.group(STR_MOTIF_REGEX_GROUP_NAME) != null) {
+                    String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
+                    int count = Integer.valueOf(matcher.group(STR_COUNT_REGEX_GROUP_NAME));
+                    for (int j = 0; j < count; j++) {
+                        unrolledAllele.append(motif);
+                    }
+                } else if (matcher.group(BASES_REGEX_GROUP_NAME) != null) {
+                    String motif = matcher.group(BASES_REGEX_GROUP_NAME);
                     unrolledAllele.append(motif);
                 }
-                allelesArray[i] = unrolledAllele.toString();
             }
+            allelesArray[i] = unrolledAllele.toString();
         }
         return allelesArray;
     }
