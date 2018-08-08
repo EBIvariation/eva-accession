@@ -275,21 +275,23 @@ public class DbsnpVariantAlleles {
      * @return Array containing all the unrolled alleles
      */
     private String[] unrollMicrosatelliteAlleles(String[] allelesArray) {
-        for (int i = 0; i<allelesArray.length; i++) {
+        for (int i = 0; i < allelesArray.length; i++) {
+            String allele = allelesArray[i];
             StringBuilder unrolledAllele = new StringBuilder();
-            Matcher matcher = ANY_UNIT_PATTERN.matcher(allelesArray[i]);
 
+            Matcher matcher = ANY_UNIT_PATTERN.matcher(allele);
             while (matcher.find()) {
-                if (matcher.group(STR_MOTIF_REGEX_GROUP_NAME) != null) {
+                String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
+                String bases = matcher.group(BASES_REGEX_GROUP_NAME);
+
+                if (motif != null) {
                     // If a motif is detected, append it 'count' times
-                    String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
                     int count = Integer.valueOf(matcher.group(STR_COUNT_REGEX_GROUP_NAME));
                     for (int j = 0; j < count; j++) {
                         unrolledAllele.append(motif);
                     }
-                } else if (matcher.group(BASES_REGEX_GROUP_NAME) != null) {
+                } else if (bases != null) {
                     // If a list of bases is detected, append as is
-                    String bases = matcher.group(BASES_REGEX_GROUP_NAME);
                     unrolledAllele.append(bases);
                 }
             }
