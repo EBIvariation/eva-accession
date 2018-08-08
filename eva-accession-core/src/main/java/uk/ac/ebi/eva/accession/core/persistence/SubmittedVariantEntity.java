@@ -47,7 +47,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     @Field("alt")
     private String alternateAllele;
 
-    @Indexed
+    @Indexed(background = true)
     @Field("rs")
     private Long clusteredVariantAccession;
 
