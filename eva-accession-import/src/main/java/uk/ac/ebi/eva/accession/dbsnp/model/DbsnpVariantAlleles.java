@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
@@ -46,11 +47,13 @@ public class DbsnpVariantAlleles {
     /** This regex captures how many times a motif is repeated, i.e. '5' in '(GA)5' */
     private static final String COUNT_GROUP_REGEX = "(?<" + STR_COUNT_REGEX_GROUP_NAME + ">\\d*)";
 
+    /** This regex captures a plain sequence of bases */
     private static final String BASES_GROUP_REGEX = "(?<" + BASES_REGEX_GROUP_NAME + ">[a-zA-Z]+)";
 
-    /** Regular expression that captures a STR expression, like '(GA)5' */
+    /** Regular expression that captures an STR expression, like '(GA)5' */
     private static final String STR_UNIT_REGEX = BRACKETED_MOTIF_GROUP_REGEX + COUNT_GROUP_REGEX;
 
+    /** Regular expression that captures an STR expression like '(GA)5', or a plain sequence of bases like 'ACG' */
     private static final String ANY_UNIT_REGEX = "(" + STR_UNIT_REGEX + "|" + BASES_GROUP_REGEX + ")";
 
     private static final Pattern STR_UNIT_PATTERN = Pattern.compile(STR_UNIT_REGEX);
@@ -152,25 +155,30 @@ public class DbsnpVariantAlleles {
         }
     }
 
-    /** This method return a list containing each allele in a Microsatellite type variant, reversing and complementig
-     * them if necessary
+    /**
+     * This method returns a list containing each allele in a microsatellite type variant in forward strand. If the
+     * variant is in the reverse strand, then the alleles are reversed and complemented. If expressed with the
+     * compressed syntax, alleles are also unrolled, e.g. (T)4 becomes TTTT.
+     *
      * @return List containing all alleles in the forward strand
      */
     private List<String> getMicrosatelliteAllelesInForwardStrand() {
-        String[] allelesArray = removeSurroundingSquareBrackets(alleles);
-        allelesArray = decodeMicrosatelliteAlleles(allelesArray);
+        String[] allelesArray = decodeMicrosatelliteAlleles(removeSurroundingSquareBrackets(alleles));
 
         if (allelesOrientation.equals(Orientation.REVERSE)) {
-            return Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteSequence).collect(
-                    Collectors.toList());
-        } else {
-            return Arrays.asList(allelesArray);
+            allelesArray = Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteSequence)
+                                 .toArray(String[]::new);
         }
+
+        String[] unrolledAllelesArray = unrollMicrosatelliteAlleles(allelesArray);
+
+        return new ArrayList<>(Arrays.asList(unrolledAllelesArray));
     }
 
     /**
      * There are some dbSNP STR variant alleles that are surrounded by square brackets. This method removes them so the
      * variant can be parsed correctly
+     *
      * @param allelesArray Array containing all alleles
      * @return Array containing all alleles, where the surrounding square brackets have been removed
      */
@@ -187,8 +195,9 @@ public class DbsnpVariantAlleles {
     }
 
     /**
-     * This method decode the microsatellites alleles that are just represented as a number of repetitions, adding the
-     * repeated motif. I.e., {"(AT)4","5","7"} would be decoded as {"(AT)4","(AT)5","(AT)7"}
+     * This method decodes the microsatellites alleles that are just represented as a number of repetitions, adding the
+     * repeated motif, i.e. {"(AT)4","5","7"} would be decoded as {"(AT)4","(AT)5","(AT)7"}
+     *
      * @param allelesArray array that can contain alleles represented just by a number
      * @return Array where every allele has a sequence
      */
@@ -208,31 +217,10 @@ public class DbsnpVariantAlleles {
         return allelesArray;
     }
 
-    public String[] unrollMicrosatelliteAlleles(String[] allelesArray) {
-        for (int i = 0; i<allelesArray.length; i++) {
-            StringBuilder unrolledAllele = new StringBuilder();
-            Matcher matcher = ANY_UNIT_PATTERN.matcher(allelesArray[i]);
-
-            while (matcher.find()) {
-                if (matcher.group(STR_MOTIF_REGEX_GROUP_NAME) != null) {
-                    String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
-                    int count = Integer.valueOf(matcher.group(STR_COUNT_REGEX_GROUP_NAME));
-                    for (int j = 0; j < count; j++) {
-                        unrolledAllele.append(motif);
-                    }
-                } else if (matcher.group(BASES_REGEX_GROUP_NAME) != null) {
-                    String motif = matcher.group(BASES_REGEX_GROUP_NAME);
-                    unrolledAllele.append(motif);
-                }
-            }
-            allelesArray[i] = unrolledAllele.toString();
-        }
-        return allelesArray;
-    }
-
     /**
-     * Reverse and complement a sequence represented by one or several STRs
-     * I.e., (A)2(TC)8 reverse complement would be (GA)8(T)2 (the order of the STRs is also inverted)
+     * Reverse and complement a sequence represented by one or several STRs, i.e. (A)2(TC)8 reverse complement would
+     * be (GA)8(T)2 (the order of the STRs is also reversed).
+     *
      * @param microsatellite STR sequence to reverse
      * @return Reversed and complemented microsatellite
      */
@@ -261,9 +249,10 @@ public class DbsnpVariantAlleles {
 
     /**
      * This method reverses and complement a single microsatellite 'unit'. Each unit in a STR expression is a sequence
-     * motif and the number of times is repeated. I.e., the microsatellite "(AG)5(C)4" has the units "(AG)5" and "(C)4".
+     * motif and the number of times is repeated, i.e. the microsatellite "(AG)5(C)4" has the units "(AG)5" and "(C)4".
      * The reverse complement for the unit "(AG)5" will be "(CT)5" (notice that each allele has been complemented but
-     * the sequence has been reversed also)
+     * the sequence has been also reversed).
+     *
      * @param str microsatellite unit to reverse and complement
      * @return reversed complemented microsatellite unit
      */
@@ -276,4 +265,37 @@ public class DbsnpVariantAlleles {
             return reverseComplement(str);
         }
     }
+
+    /**
+     * This method unroll all the microsatellite 'units' in an allele. Each unit is a sequence motif and the number of
+     * times it is repeated, i.e. the microsatellite "(AG)5(C)4" has the units "(AG)5" and "(C)4". If expressed with the
+     * compressed syntax, alleles are also unrolled, e.g. (T)4 becomes TTTT.
+     *
+     * @param allelesArray Array containing all alleles
+     * @return Array containing all the unrolled alleles
+     */
+    private String[] unrollMicrosatelliteAlleles(String[] allelesArray) {
+        for (int i = 0; i<allelesArray.length; i++) {
+            StringBuilder unrolledAllele = new StringBuilder();
+            Matcher matcher = ANY_UNIT_PATTERN.matcher(allelesArray[i]);
+
+            while (matcher.find()) {
+                if (matcher.group(STR_MOTIF_REGEX_GROUP_NAME) != null) {
+                    // If a motif is detected, append it 'count' times
+                    String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
+                    int count = Integer.valueOf(matcher.group(STR_COUNT_REGEX_GROUP_NAME));
+                    for (int j = 0; j < count; j++) {
+                        unrolledAllele.append(motif);
+                    }
+                } else if (matcher.group(BASES_REGEX_GROUP_NAME) != null) {
+                    // If a list of bases is detected, append as is
+                    String bases = matcher.group(BASES_REGEX_GROUP_NAME);
+                    unrolledAllele.append(bases);
+                }
+            }
+            allelesArray[i] = unrolledAllele.toString();
+        }
+        return allelesArray;
+    }
+
 }
