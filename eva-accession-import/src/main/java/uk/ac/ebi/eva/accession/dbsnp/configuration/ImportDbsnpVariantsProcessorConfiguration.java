@@ -31,6 +31,7 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.accession.dbsnp.processors.AssemblyCheckerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor;
+import uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -50,13 +51,15 @@ public class ImportDbsnpVariantsProcessorConfiguration {
             InputParameters parameters,
             ContigReplacerProcessor contigReplacerProcessor,
             AssemblyCheckerProcessor assemblyCheckerProcessor,
-            SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor)
+            SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor,
+            SubmittedVariantDeclusterProcessor submittedVariantDeclusterProcessor)
             throws Exception {
         logger.info("Injecting dbsnpVariantProcessor with parameters: {}", parameters);
         CompositeItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> compositeProcessor = new CompositeItemProcessor<>();
         compositeProcessor.setDelegates(Arrays.asList(contigReplacerProcessor,
                                                       assemblyCheckerProcessor,
-                                                      subSnpNoHgvsToDbsnpVariantsWrapperProcessor));
+                                                      subSnpNoHgvsToDbsnpVariantsWrapperProcessor,
+                                                      submittedVariantDeclusterProcessor));
         return compositeProcessor;
     }
 
@@ -86,6 +89,11 @@ public class ImportDbsnpVariantsProcessorConfiguration {
     SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor(
             FastaSequenceReader fastaSequenceReader) {
         return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(fastaSequenceReader);
+    }
+
+    @Bean
+    SubmittedVariantDeclusterProcessor submittedVariantDeclusterProcessor() {
+        return new SubmittedVariantDeclusterProcessor();
     }
 
 }

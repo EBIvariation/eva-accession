@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
@@ -30,16 +29,10 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED;
-import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED_ALLELES_MISMATCH;
-import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED_TYPE_MISMATCH;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
@@ -79,7 +72,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     }
 
     @Test
-    public void processSubmittedVariantAllelesMismatch() throws Exception {
+    public void processSubSnpNoHgvsToWrapper() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
                                                      CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
                                                      DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
@@ -88,90 +81,10 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
 
-        //Check Decluster
         assertEquals(1, dbsnpVariantsWrapper.getSubmittedVariants().size());
-        assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(0).getClusteredVariantAccession());
-
-        //Check Operations
-        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_ALLELES_MISMATCH)),
-                         subSnpNoHgvs.getSsId(), 0);
-
-        //Check Rs
-        assertEquals(subSnpNoHgvs.getRsId(), dbsnpVariantsWrapper.getClusteredVariant().getAccession());
-    }
-
-    private String getReason(List<String> reasons){
-        StringBuilder reason = new StringBuilder(DECLUSTERED);
-        reasons.forEach(reason::append);
-        return reason.toString();
-    }
-
-    @Test
-    public void processSubmittedVariantTypeMismatch() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvsTypeMismatch = new SubSnpNoHgvs(25928972L, 14718243L, "G", "G/-/T/TT", ASSEMBLY,
-                                                                 BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START,
-                                                                 CONTIG_NAME, CONTIG_START, DbsnpVariantType.DIV,
-                                                                 Orientation.FORWARD, Orientation.FORWARD,
-                                                                 Orientation.FORWARD, false, false, false, false,
-                                                                 CREATED_DATE, CREATED_DATE, TAXONOMY);
-
-        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvsTypeMismatch);
-
-        //Check Decluster
-        assertEquals(3, dbsnpVariantsWrapper.getSubmittedVariants().size());
-        assertNotNull(dbsnpVariantsWrapper.getSubmittedVariants().get(0).getClusteredVariantAccession());
-        assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(1).getClusteredVariantAccession());
-        assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(2).getClusteredVariantAccession());
-
-        //Check Operations
-        assertEquals(2, dbsnpVariantsWrapper.getOperations().size());
-        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_TYPE_MISMATCH)),
-                         subSnpNoHgvsTypeMismatch.getSsId(), 0);
-        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_TYPE_MISMATCH)),
-                         subSnpNoHgvsTypeMismatch.getSsId(), 1);
-
-        //Check Rs
-        assertEquals(subSnpNoHgvsTypeMismatch.getRsId(), dbsnpVariantsWrapper.getClusteredVariant().getAccession());
-    }
-
-    @Test
-    public void processSubmittedVariantAllelesAndTypeMismatch() throws Exception {
-        SubSnpNoHgvs subSnpNoHgvsAlleleAndTypeMismatch = new SubSnpNoHgvs(25928972L, 14718243L, "G", "-/T/TT", ASSEMBLY,
-                                                                          BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
-                                                                          CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
-                                                                          DbsnpVariantType.DIV, Orientation.FORWARD,
-                                                                          Orientation.FORWARD, Orientation.FORWARD,
-                                                                          false, false, false, false, CREATED_DATE,
-                                                                          CREATED_DATE, TAXONOMY);
-
-        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvsAlleleAndTypeMismatch);
-
-        //Check Decluster
-        assertEquals(3, dbsnpVariantsWrapper.getSubmittedVariants().size());
-        assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(0).getClusteredVariantAccession());
-        assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(1).getClusteredVariantAccession());
-        assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(2).getClusteredVariantAccession());
-
-        //Check Operations
-        assertEquals(3, dbsnpVariantsWrapper.getOperations().size());
-        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_ALLELES_MISMATCH)),
-                         subSnpNoHgvsAlleleAndTypeMismatch.getSsId(), 0);
-        assertOperations(dbsnpVariantsWrapper, getReason(Arrays.asList(DECLUSTERED_ALLELES_MISMATCH,
-                                                                       DECLUSTERED_TYPE_MISMATCH)),
-                                                         subSnpNoHgvsAlleleAndTypeMismatch.getSsId(), 1);
-        assertOperations(dbsnpVariantsWrapper, getReason(Arrays.asList(DECLUSTERED_ALLELES_MISMATCH,
-                                                                       DECLUSTERED_TYPE_MISMATCH)),
-                         subSnpNoHgvsAlleleAndTypeMismatch.getSsId(), 2);
-
-        //Check Rs
-        assertEquals(subSnpNoHgvsAlleleAndTypeMismatch.getRsId(), dbsnpVariantsWrapper.getClusteredVariant().getAccession());
-    }
-
-    private void assertOperations(DbsnpVariantsWrapper dbsnpVariantsWrapper, String reason, Long ss, int index) {
-        assertEquals(EventType.UPDATED, dbsnpVariantsWrapper.getOperations().get(index).getEventType());
-        assertEquals(1, dbsnpVariantsWrapper.getOperations().get(index).getInactiveObjects().size());
-        assertEquals(reason, dbsnpVariantsWrapper.getOperations().get(index).getReason());
-        assertEquals(ss, dbsnpVariantsWrapper.getOperations().get(index).getAccession());
+        assertNotNull(dbsnpVariantsWrapper.getClusteredVariant());
+        assertEquals(0, dbsnpVariantsWrapper.getOperations().size());
+        assertEquals(DbsnpVariantType.SNV, dbsnpVariantsWrapper.getDbsnpVariantType());
     }
 
     @Test
@@ -198,8 +111,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                         String expectedAlternate, boolean supportedByEvidence, boolean allelesMatch,
                                         int expectedVersion) {
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
-//      TODO: Rs must be validated after ticket EVA-1278 is finished - ie. (T)4 must be TTTT
-//        assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
+        assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
         assertEquals(ASSEMBLY, dbsnpSubmittedVariant.getAssemblyAccession());
         assertEquals(TAXONOMY, dbsnpSubmittedVariant.getTaxonomyAccession());
         assertEquals(PROJECT_ACCESSION, dbsnpSubmittedVariant.getProjectAccession());
