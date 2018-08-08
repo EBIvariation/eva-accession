@@ -203,14 +203,17 @@ public class DbsnpVariantAlleles {
      */
     private String[] decodeMicrosatelliteAlleles(String[] allelesArray) {
         String firstAllele = allelesArray[0];
+        Matcher matcher = STR_UNIT_PATTERN.matcher(firstAllele);
+
+        if (!matcher.matches()) {
+            return allelesArray;
+        }
+
         for (int i = 1; i < allelesArray.length; i++) {
-            // if a allele in the array is a number, prepend to it the sequence found in the first allele. If the first
+            // if an allele in the array is a number, prepend to it the sequence found in the first allele. If the first
             // allele does not match the regular expression, don't modify the alleles
             if (NumberUtils.isDigits(allelesArray[i])) {
-                Matcher matcher = STR_UNIT_PATTERN.matcher(firstAllele);
-                if (matcher.matches()) {
-                    allelesArray[i] = matcher.group(BRACKETED_STR_MOTIF_REGEX_GROUP_NAME) + allelesArray[i];
-                }
+                allelesArray[i] = matcher.group(BRACKETED_STR_MOTIF_REGEX_GROUP_NAME) + allelesArray[i];
             }
         }
 
