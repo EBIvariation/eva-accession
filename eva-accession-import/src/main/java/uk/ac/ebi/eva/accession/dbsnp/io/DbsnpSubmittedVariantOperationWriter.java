@@ -29,7 +29,6 @@ import java.util.List;
 
 public class DbsnpSubmittedVariantOperationWriter implements ItemWriter<DbsnpSubmittedVariantOperationEntity> {
 
-    @Autowired
     private MongoTemplate mongoTemplate;
 
     public DbsnpSubmittedVariantOperationWriter(MongoTemplate mongoTemplate) {

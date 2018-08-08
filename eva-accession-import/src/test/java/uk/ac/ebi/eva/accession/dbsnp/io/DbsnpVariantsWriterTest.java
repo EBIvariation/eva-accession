@@ -83,7 +83,6 @@ public class DbsnpVariantsWriterTest {
 
     private Function<IClusteredVariant, String> hashingFunctionClustered;
 
-
     @Autowired
     private MongoTemplate mongoTemplate;
 
