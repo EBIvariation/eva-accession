@@ -30,11 +30,16 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED;
+import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED_ALLELES_MISMATCH;
+import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED_TYPE_MISMATCH;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
@@ -59,12 +64,6 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
     private static SubSnpNoHgvsToDbsnpVariantsWrapperProcessor processor;
-
-    private static final String DECLUSTERED_ALLELES_AND_TYPE_MISMATCH = "Declustered (Alleles and type mismatch)";
-
-    private static final String DECLUSTERED_ALLELES_MISMATCH = "Declustered (Alleles mismatch)";
-
-    private static final String DECLUSTERED_TYPE_MISMATCH = "Declustered (Type mismatch)";
 
     private static FastaSequenceReader fastaSequenceReader;
 
@@ -94,10 +93,17 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
         assertNull(dbsnpVariantsWrapper.getSubmittedVariants().get(0).getClusteredVariantAccession());
 
         //Check Operations
-        assertOperations(dbsnpVariantsWrapper, DECLUSTERED_ALLELES_MISMATCH, subSnpNoHgvs.getSsId(), 0);
+        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_ALLELES_MISMATCH)),
+                         subSnpNoHgvs.getSsId(), 0);
 
         //Check Rs
         assertEquals(subSnpNoHgvs.getRsId(), dbsnpVariantsWrapper.getClusteredVariant().getAccession());
+    }
+
+    private String getReason(List<String> reasons){
+        StringBuilder reason = new StringBuilder(DECLUSTERED);
+        reasons.forEach(reason::append);
+        return reason.toString();
     }
 
     @Test
@@ -119,8 +125,10 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         //Check Operations
         assertEquals(2, dbsnpVariantsWrapper.getOperations().size());
-        assertOperations(dbsnpVariantsWrapper, DECLUSTERED_TYPE_MISMATCH, subSnpNoHgvsTypeMismatch.getSsId(), 0);
-        assertOperations(dbsnpVariantsWrapper, DECLUSTERED_TYPE_MISMATCH, subSnpNoHgvsTypeMismatch.getSsId(), 1);
+        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_TYPE_MISMATCH)),
+                         subSnpNoHgvsTypeMismatch.getSsId(), 0);
+        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_TYPE_MISMATCH))
+                , subSnpNoHgvsTypeMismatch.getSsId(), 1);
 
         //Check Rs
         assertEquals(subSnpNoHgvsTypeMismatch.getRsId(), dbsnpVariantsWrapper.getClusteredVariant().getAccession());
@@ -146,11 +154,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         //Check Operations
         assertEquals(3, dbsnpVariantsWrapper.getOperations().size());
-        assertOperations(dbsnpVariantsWrapper, DECLUSTERED_ALLELES_MISMATCH,
+        assertOperations(dbsnpVariantsWrapper, getReason(Collections.singletonList(DECLUSTERED_ALLELES_MISMATCH)),
                          subSnpNoHgvsAlleleAndTypeMismatch.getSsId(), 0);
-        assertOperations(dbsnpVariantsWrapper, DECLUSTERED_ALLELES_AND_TYPE_MISMATCH,
-                         subSnpNoHgvsAlleleAndTypeMismatch.getSsId(), 1);
-        assertOperations(dbsnpVariantsWrapper, DECLUSTERED_ALLELES_AND_TYPE_MISMATCH,
+        assertOperations(dbsnpVariantsWrapper, getReason(Arrays.asList(DECLUSTERED_ALLELES_MISMATCH,
+                                                                       DECLUSTERED_TYPE_MISMATCH)),
+                                                         subSnpNoHgvsAlleleAndTypeMismatch.getSsId(), 1);
+        assertOperations(dbsnpVariantsWrapper, getReason(Arrays.asList(DECLUSTERED_ALLELES_MISMATCH,
+                                                                       DECLUSTERED_TYPE_MISMATCH)),
                          subSnpNoHgvsAlleleAndTypeMismatch.getSsId(), 2);
 
         //Check Rs

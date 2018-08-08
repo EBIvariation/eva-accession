@@ -45,11 +45,13 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
 
-    private static final String DECLUSTERED_ALLELES_AND_TYPE_MISMATCH = "Declustered (Alleles and type mismatch)";
+    static final String DECLUSTERED = "Declustered: ";
 
-    private static final String DECLUSTERED_ALLELES_MISMATCH = "Declustered (Alleles mismatch)";
+    static final String DECLUSTERED_ALLELES_MISMATCH =
+            "None of the variant alleles match the reference allele. ";
 
-    private static final String DECLUSTERED_TYPE_MISMATCH = "Declustered (Type mismatch)";
+    static final String DECLUSTERED_TYPE_MISMATCH =
+            "The variant type inferred from the alleles does not match the one asserted by dbSNP. ";
 
     private SubmittedVariantRenormalizationProcessor renormalizationProcessor;
 
@@ -73,14 +75,27 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
         for (String alternateAllele : alternateAlleles) {
             SubmittedVariant submittedVariant = subSnpNoHgvsToSubmittedVariant(subSnpNoHgvs, alternateAllele);
-            boolean typeMatches = isSameType(clusteredVariant, submittedVariant, subSnpNoHgvs.getDbsnpVariantType());
-            if (!submittedVariant.isAllelesMatch() && !typeMatches) {
-                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_AND_TYPE_MISMATCH);
-            } else if (!submittedVariant.isAllelesMatch()) {
-                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_MISMATCH);
-            } else if (!typeMatches) {
-                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_TYPE_MISMATCH);
+
+            List<String> reasons = new ArrayList<>();
+            if (!submittedVariant.isAllelesMatch()) {
+                reasons.add(DECLUSTERED_ALLELES_MISMATCH);
             }
+            boolean typeMatches = isSameType(clusteredVariant, submittedVariant, subSnpNoHgvs.getDbsnpVariantType());
+            if (!typeMatches) {
+                reasons.add(DECLUSTERED_TYPE_MISMATCH);
+            }
+
+            if (!reasons.isEmpty()) {
+                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, reasons);
+            }
+
+//            if (!submittedVariant.isAllelesMatch() && !typeMatches) {
+//                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_AND_TYPE_MISMATCH);
+//            } else if (!submittedVariant.isAllelesMatch()) {
+//                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_ALLELES_MISMATCH);
+//            } else if (!typeMatches) {
+//                decluster(subSnpNoHgvs.getSsId(), submittedVariant, operations, DECLUSTERED_TYPE_MISMATCH);
+//            }
 
             String hash = hashingFunction.apply(submittedVariant);
             DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(),
@@ -100,7 +115,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
         return dbsnpVariantsWrapper;
     }
 
-    private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant, SubmittedVariant submittedVariant, DbsnpVariantType dbsnpVariantType) {
+    private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant, SubmittedVariant submittedVariant,
+                               DbsnpVariantType dbsnpVariantType) {
         return VariantClassifier.getVariantClassification(submittedVariant.getReferenceAllele(),
                                                           submittedVariant.getAlternateAllele(),
                                                           dbsnpVariantType.intValue())
@@ -132,16 +148,20 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
     }
 
     private void decluster(Long accession, SubmittedVariant variant,
-                           List<DbsnpSubmittedVariantOperationEntity> operations, String reason) {
+                           List<DbsnpSubmittedVariantOperationEntity> operations, List<String> reasons) {
         //Register submitted variant decluster operation
         DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity =
                 new DbsnpSubmittedVariantEntity(accession, hashingFunction.apply(variant), variant, 1);
         DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
         DbsnpSubmittedVariantInactiveEntity inactiveEntity =
                 new DbsnpSubmittedVariantInactiveEntity(nonDeclusteredVariantEntity);
-        operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
 
+        StringBuilder reason = new StringBuilder(DECLUSTERED);
+        reasons.forEach(reason::append);
+        operation.fill(EventType.UPDATED, accession, null, reason.toString(),
+                       Collections.singletonList(inactiveEntity));
         operations.add(operation);
+
         //Decluster submitted variant
         variant.setClusteredVariantAccession(null);
     }
