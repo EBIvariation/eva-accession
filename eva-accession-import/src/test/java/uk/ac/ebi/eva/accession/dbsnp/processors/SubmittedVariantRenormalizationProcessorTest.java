@@ -35,7 +35,6 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 public class SubmittedVariantRenormalizationProcessorTest {
 
     private static final String ASSEMBLY = "assembly";
