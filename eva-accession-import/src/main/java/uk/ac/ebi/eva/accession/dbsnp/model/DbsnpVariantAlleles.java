@@ -44,8 +44,11 @@ public class DbsnpVariantAlleles {
     private static final String BRACKETED_MOTIF_GROUP_REGEX = "(?<" + BRACKETED_STR_MOTIF_REGEX_GROUP_NAME + ">" +
         "\\(" + MOTIF_GROUP_REGEX + "\\))";
 
-    /** This regex captures how many times a motif is repeated, i.e. '5' in '(GA)5' */
-    private static final String COUNT_GROUP_REGEX = "(?<" + STR_COUNT_REGEX_GROUP_NAME + ">(\\d*|-))";
+    /**
+     * This regex captures how many times a motif is repeated, i.e. '5' in '(GA)5', '-' in '(GA)-', or '' in '(GA)'
+     * Dash must have greater priority than the empty string in order to be captured correctly.
+     */
+    private static final String COUNT_GROUP_REGEX = "(?<" + STR_COUNT_REGEX_GROUP_NAME + ">(\\-|\\d*))";
 
     /** This regex captures a plain sequence of bases */
     private static final String BASES_GROUP_REGEX = "(?<" + BASES_REGEX_GROUP_NAME + ">[a-zA-Z]+)";
@@ -289,8 +292,11 @@ public class DbsnpVariantAlleles {
 
     /**
      * This method unroll all the microsatellite 'units' in an allele. Each unit is a sequence motif and the number of
-     * times it is repeated, i.e. the microsatellite "(AG)5(C)4" has the units "(AG)5" and "(C)4". If expressed with the
-     * compressed syntax, alleles are also unrolled, e.g. (T)4 becomes TTTT.
+     * times it is repeated, i.e. the microsatellite "(AG)5(C)4" has the units "(AG)5" and "(C)4".
+     *
+     * If expressed with the compressed syntax, units are also unrolled, e.g. (T)4 becomes TTTT.
+     * If you count is provided, the unit is kept as is, e.g. (T) becomes T.
+     * If the count is a dash, the unit is deleted, e.g. A(T)- becomes A.
      *
      * @param allelesArray Array containing all alleles
      * @return Array containing all the unrolled alleles
@@ -308,7 +314,7 @@ public class DbsnpVariantAlleles {
 
                 if (motif != null) {
                     // If a motif is detected, append it 'count' times
-                    int actualCount = NumberUtils.isDigits(count) ? Integer.valueOf(count) : 0;
+                    int actualCount = NumberUtils.isDigits(count) ? Integer.valueOf(count) : (count.isEmpty() ? 1 : 0);
                     for (int j = 0; j < actualCount; j++) {
                         unrolledAllele.append(motif);
                     }
