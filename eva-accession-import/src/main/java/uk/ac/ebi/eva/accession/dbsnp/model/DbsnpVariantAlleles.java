@@ -45,7 +45,7 @@ public class DbsnpVariantAlleles {
         "\\(" + MOTIF_GROUP_REGEX + "\\))";
 
     /** This regex captures how many times a motif is repeated, i.e. '5' in '(GA)5' */
-    private static final String COUNT_GROUP_REGEX = "(?<" + STR_COUNT_REGEX_GROUP_NAME + ">\\d*)";
+    private static final String COUNT_GROUP_REGEX = "(?<" + STR_COUNT_REGEX_GROUP_NAME + ">(\\d*|-))";
 
     /** This regex captures a plain sequence of bases */
     private static final String BASES_GROUP_REGEX = "(?<" + BASES_REGEX_GROUP_NAME + ">[a-zA-Z]+)";
@@ -286,11 +286,12 @@ public class DbsnpVariantAlleles {
             while (matcher.find()) {
                 String motif = matcher.group(STR_MOTIF_REGEX_GROUP_NAME);
                 String bases = matcher.group(BASES_REGEX_GROUP_NAME);
+                String count = matcher.group(STR_COUNT_REGEX_GROUP_NAME);
 
                 if (motif != null) {
                     // If a motif is detected, append it 'count' times
-                    int count = Integer.valueOf(matcher.group(STR_COUNT_REGEX_GROUP_NAME));
-                    for (int j = 0; j < count; j++) {
+                    int actualCount = NumberUtils.isDigits(count) ? Integer.valueOf(count) : 0;
+                    for (int j = 0; j < actualCount; j++) {
                         unrolledAllele.append(motif);
                     }
                 } else if (bases != null) {
