@@ -15,13 +15,18 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.model;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
 public class DbsnpVariantAllelesTest {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void forwardAllelesAndReference() {
@@ -223,4 +228,44 @@ public class DbsnpVariantAllelesTest {
 
         assertEquals(Arrays.asList("TTTTACTACTACTCCCCCAG"), complexSTR4.getAllelesInForwardStrand());
     }
+
+    @Test
+    public void emptySTRAllele() {
+        DbsnpVariantAlleles empty1 = new DbsnpVariantAlleles("T", "(T)", Orientation.FORWARD,
+                                                             Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", empty1.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList(""), empty1.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles empty2 = new DbsnpVariantAlleles("T", "(T)-", Orientation.FORWARD,
+                                                             Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", empty2.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList(""), empty2.getAllelesInForwardStrand());
+    }
+
+    @Test
+    public void invalidSTRAlleles() {
+        DbsnpVariantAlleles invalid1 = new DbsnpVariantAlleles("T", "(T)_4", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", invalid1.getReferenceInForwardStrand());
+        thrown.expect(IllegalArgumentException.class);
+        invalid1.getAllelesInForwardStrand();
+
+        DbsnpVariantAlleles invalid2 = new DbsnpVariantAlleles("T", "TGJibb_1$_erishGTA", Orientation.FORWARD,
+                                                               Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", invalid2.getReferenceInForwardStrand());
+        thrown.expect(IllegalArgumentException.class);
+        invalid2.getAllelesInForwardStrand();
+
+        DbsnpVariantAlleles invalid3 = new DbsnpVariantAlleles("T", "(TG)3Jibb_1$_erish(GT)2A", Orientation.FORWARD,
+                                                               Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", invalid3.getReferenceInForwardStrand());
+        thrown.expect(IllegalArgumentException.class);
+        invalid3.getAllelesInForwardStrand();
+    }
+
 }

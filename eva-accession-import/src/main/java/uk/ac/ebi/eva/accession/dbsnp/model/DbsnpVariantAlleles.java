@@ -60,6 +60,8 @@ public class DbsnpVariantAlleles {
 
     private static final Pattern ANY_UNIT_PATTERN = Pattern.compile(ANY_UNIT_REGEX);
 
+    private static final Pattern ONLY_VALID_UNITS_PATTERN = Pattern.compile("^(" + ANY_UNIT_REGEX + ")+$");
+
     private String referenceAllele;
 
     private String[] alleles;
@@ -164,6 +166,7 @@ public class DbsnpVariantAlleles {
      */
     private List<String> getMicrosatelliteAllelesInForwardStrand() {
         String[] allelesArray = decodeMicrosatelliteAlleles(removeSurroundingSquareBrackets(alleles));
+        checkMicrosatelliteAlleles(allelesArray);
 
         if (allelesOrientation.equals(Orientation.REVERSE)) {
             allelesArray = Arrays.stream(allelesArray).map(this::reverseComplementMicrosatelliteSequence)
@@ -218,6 +221,21 @@ public class DbsnpVariantAlleles {
         }
 
         return allelesArray;
+    }
+
+    /**
+     * Checks that all the alleles correspond to an STR variant.
+     *
+     * @param allelesArray alleles to be validated
+     */
+    public void checkMicrosatelliteAlleles(String[] allelesArray) {
+        for (String allele : allelesArray) {
+            if (allele.isEmpty() || ONLY_VALID_UNITS_PATTERN.matcher(allele).matches()) {
+                continue;
+            }
+
+            throw new IllegalArgumentException("Allele '" + allele + "' is not a valid STR");
+        }
     }
 
     /**
