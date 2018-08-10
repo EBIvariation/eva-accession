@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -133,9 +134,12 @@ public class DbsnpClusteredVariantWriterTest {
         DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(clusteredVariant), clusteredVariant);
 
-        thrown.expect(RuntimeException.class);
-        dbsnpClusteredVariantWriter.write(Arrays.asList(variant, variant));
-        // TODO: check importCounts counts once Fongo is replaced by Mongo
+        thrown.expect(BulkOperationException.class);
+        try {
+            dbsnpClusteredVariantWriter.write(Arrays.asList(variant, variant));
+        } finally {
+            assertEquals(1, importCounts.getClusteredVariantsWritten());
+        }
     }
 
     @Test
@@ -149,9 +153,12 @@ public class DbsnpClusteredVariantWriterTest {
         DbsnpClusteredVariantEntity duplicateVariant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(duplicateClusteredVariant), duplicateClusteredVariant);
 
-        thrown.expect(RuntimeException.class);
-        dbsnpClusteredVariantWriter.write(Arrays.asList(variant, duplicateVariant));
-        // TODO: check importCounts counts once Fongo is replaced by Mongo
+        thrown.expect(BulkOperationException.class);
+        try {
+            dbsnpClusteredVariantWriter.write(Arrays.asList(variant, duplicateVariant));
+        } finally {
+            assertEquals(1, importCounts.getClusteredVariantsWritten());
+        }
     }
 
     @Test
@@ -186,19 +193,17 @@ public class DbsnpClusteredVariantWriterTest {
 
         // we expect an exception caused by the duplicate variant when inserting the batch
         boolean exceptionThrown = false;
+        thrown.expect(BulkOperationException.class);
         try {
             dbsnpClusteredVariantWriter.write(
                     batch);
-        } catch (RuntimeException e) {
-            exceptionThrown = true;
+        } finally {
+            // 5 variants should have been inserted, and the duplicate one is not any of them
+            List<DbsnpClusteredVariantEntity> accessions = mongoTemplate.find(new Query(),
+                                                                              DbsnpClusteredVariantEntity.class);
+            assertEquals(5, accessions.size());
+            assertFalse(accessions.contains(duplicateVariant));
+            assertEquals(5, importCounts.getClusteredVariantsWritten());
         }
-        assertTrue(exceptionThrown);
-
-        // 5 variants should have been inserted, and the duplicate one is not any of them
-        List<DbsnpClusteredVariantEntity> accessions = mongoTemplate.find(new Query(),
-                                                                          DbsnpClusteredVariantEntity.class);
-        assertEquals(5, accessions.size());
-        assertFalse(accessions.contains(duplicateVariant));
-        // TODO: check importCounts counts once Fongo is replaced by Mongo
     }
 }

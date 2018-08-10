@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -144,9 +145,12 @@ public class DbsnpSubmittedVariantWriterTest {
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant, 1);
 
-        thrown.expect(RuntimeException.class);
-        dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));
-        // TODO: check importCounts counts once Fongo is replaced by Mongo
+        thrown.expect(BulkOperationException.class);
+        try {
+            dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));
+        } finally {
+            assertEquals(1, importCounts.getSubmittedVariantsWritten());
+        }
     }
 
 }
