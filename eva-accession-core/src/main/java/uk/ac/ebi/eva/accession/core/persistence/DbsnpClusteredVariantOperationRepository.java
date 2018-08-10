@@ -17,11 +17,9 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
-import org.springframework.stereotype.Repository;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 
-@Repository
-public interface DbsnpClusteredVariantAccessioningRepository extends
-        IAccessionedObjectRepository<DbsnpClusteredVariantEntity, Long> {
+public interface DbsnpClusteredVariantOperationRepository extends IHistoryRepository<Long,
+        DbsnpClusteredVariantOperationEntity, String> {
 
 }

@@ -56,11 +56,7 @@ public class SubmittedVariantsRestControllerTest {
     @Autowired
     private TestRestTemplate testRestTemplate;
 
-    private static final Long ACCESSION = 10000000001L;
-
     private static final String URL = "/v1/submitted-variants/";
-
-    private static final Long CLUSTERED_VARIANT = null;
 
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
@@ -96,6 +92,7 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     public List<SubmittedVariant> getListOfVariantMessages() {
+        Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
                                                          CLUSTERED_VARIANT);
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",

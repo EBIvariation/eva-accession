@@ -16,6 +16,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.persistence;
 
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;

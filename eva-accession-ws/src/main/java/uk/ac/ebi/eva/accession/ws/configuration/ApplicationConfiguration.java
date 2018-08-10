@@ -25,13 +25,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 
 @Configuration
-@Import({SubmittedVariantAccessioningConfiguration.class})
+@Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 public class ApplicationConfiguration {
 
     @Bean
@@ -43,8 +47,15 @@ public class ApplicationConfiguration {
     }
 
     @Bean
-    public BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController(
+    public BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicClusteredRestController(
+            ClusteredVariantAccessioningService service) {
+        return new BasicRestController<>(service, ClusteredVariant::new);
+    }
+
+    @Bean
+    public BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicSubmittedRestController(
             SubmittedVariantAccessioningService service) {
         return new BasicRestController<>(service, SubmittedVariant::new);
     }
+
 }

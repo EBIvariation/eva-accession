@@ -18,10 +18,10 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import java.util.ArrayList;
