@@ -15,13 +15,18 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.model;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
 public class DbsnpVariantAllelesTest {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void forwardAllelesAndReference() {
@@ -146,22 +151,166 @@ public class DbsnpVariantAllelesTest {
     }
 
     @Test
+    public void squareBracketsAreIgnored() {
+        DbsnpVariantAlleles squareBrackets = new DbsnpVariantAlleles("ACACACACAC", "[(GT)11/4]", Orientation.FORWARD,
+                                                                     Orientation.FORWARD,
+                                                                     DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("ACACACACAC", squareBrackets.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GTGTGTGTGTGTGTGTGTGTGT", "GTGTGTGT"), squareBrackets.getAllelesInForwardStrand());
+    }
+
+    @Test
     public void forwardSTRAlleles() {
-        DbsnpVariantAlleles forwardAllelesMNV = new DbsnpVariantAlleles("T", "(T)4/5/7", Orientation.FORWARD,
+        DbsnpVariantAlleles forward1 = new DbsnpVariantAlleles("T", "(T)4/5/7", Orientation.FORWARD,
                                                                         Orientation.FORWARD,
                                                                         DbsnpVariantType.MICROSATELLITE);
 
-        assertEquals("T", forwardAllelesMNV.getReferenceInForwardStrand());
-        assertEquals(Arrays.asList("(T)4", "(T)5", "(T)7"), forwardAllelesMNV.getAllelesInForwardStrand());
+        assertEquals("T", forward1.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("TTTT", "TTTTT", "TTTTTTT"), forward1.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forward2 = new DbsnpVariantAlleles("T", "-/(AT)2/(AT)4/(AT)1", Orientation.FORWARD,
+                                                               Orientation.FORWARD,
+                                                               DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", forward2.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "ATAT", "ATATATAT", "AT"), forward2.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles forward3 = new DbsnpVariantAlleles("CT", "-/CT/CTATCT(CT)1/CTATCTATCT", Orientation.FORWARD,
+                                                               Orientation.FORWARD,
+                                                               DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("CT", forward3.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("", "CT", "CTATCTCT", "CTATCTATCT"), forward3.getAllelesInForwardStrand());
     }
 
     @Test
     public void reverseSTRAlleles() {
-        DbsnpVariantAlleles forwardAllelesMNV = new DbsnpVariantAlleles("AT", "(A)2(TC)8/(TA)3", Orientation.FORWARD,
+        DbsnpVariantAlleles reverseAllelesSTR = new DbsnpVariantAlleles("AT", "(A)2(TC)8/(TA)3", Orientation.FORWARD,
                                                                         Orientation.REVERSE,
                                                                         DbsnpVariantType.MICROSATELLITE);
 
-        assertEquals("AT", forwardAllelesMNV.getReferenceInForwardStrand());
-        assertEquals(Arrays.asList("(GA)8(T)2", "(TA)3"), forwardAllelesMNV.getAllelesInForwardStrand());
+        assertEquals("AT", reverseAllelesSTR.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GAGAGAGAGAGAGAGATT", "TATATA"), reverseAllelesSTR.getAllelesInForwardStrand());
     }
+
+    @Test
+    public void dashCountSTRAlleles() {
+        DbsnpVariantAlleles dashCountOnly = new DbsnpVariantAlleles("AT", "(AT)-", Orientation.FORWARD,
+                                                                    Orientation.FORWARD,
+                                                                    DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("AT", dashCountOnly.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList(""), dashCountOnly.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles dashAndOtherCounts = new DbsnpVariantAlleles("AC", "(AC)3/(A)1(AC)2/(A)1(AC)1/(A)1(AC)-",
+                                                                         Orientation.FORWARD, Orientation.FORWARD,
+                                                                         DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("AC", dashAndOtherCounts.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("ACACAC", "AACAC", "AAC", "A"), dashAndOtherCounts.getAllelesInForwardStrand());
+    }
+
+    @Test
+    public void noCountSTRAlleles() {
+        DbsnpVariantAlleles emptyCountOnly = new DbsnpVariantAlleles("AT", "(AT)", Orientation.FORWARD,
+                                                                     Orientation.FORWARD,
+                                                                     DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("AT", emptyCountOnly.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("AT"), emptyCountOnly.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles emptyAndOtherCounts = new DbsnpVariantAlleles("AC", "(A)(AC)2/(A)1(AC)",
+                                                                          Orientation.FORWARD, Orientation.FORWARD,
+                                                                          DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("AC", emptyAndOtherCounts.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("AACAC", "AAC"), emptyAndOtherCounts.getAllelesInForwardStrand());
+    }
+
+    @Test
+    public void emptySTRAllele() {
+        DbsnpVariantAlleles empty1 = new DbsnpVariantAlleles("T", "(T)-", Orientation.FORWARD,
+                                                             Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", empty1.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList(""), empty1.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles empty2 = new DbsnpVariantAlleles("TAC", "(T)-(AC)-", Orientation.FORWARD,
+                                                             Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("TAC", empty2.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList(""), empty2.getAllelesInForwardStrand());
+    }
+
+    @Test
+    public void complexSTRAlleles() {
+        DbsnpVariantAlleles complexSTR1 = new DbsnpVariantAlleles("T", "(T)4(ACT)3AG(C)5", Orientation.FORWARD,
+                                                                 Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", complexSTR1.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("TTTTACTACTACTAGCCCCC"), complexSTR1.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles complexSTR2 = new DbsnpVariantAlleles("T", "(T)4(ACT)3AG(C)5/(T)4AG", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", complexSTR2.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("TTTTACTACTACTAGCCCCC", "TTTTAG"), complexSTR2.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles complexSTR3 = new DbsnpVariantAlleles("T", "AG(T)4(ACT)3(C)5", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals(Arrays.asList("AGTTTTACTACTACTCCCCC"), complexSTR3.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles complexSTR4 = new DbsnpVariantAlleles("T", "(T)4(ACT)3(C)5AG", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals(Arrays.asList("TTTTACTACTACTCCCCCAG"), complexSTR4.getAllelesInForwardStrand());
+    }
+
+    @Test
+    public void whitespaceInSTRAlleles() {
+        DbsnpVariantAlleles whitespace1 = new DbsnpVariantAlleles("GT", "(GT)9 GGGTAC", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("GT", whitespace1.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GTGTGTGTGTGTGTGTGTGGGTAC"), whitespace1.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles whitespace2 = new DbsnpVariantAlleles("GT", " (GT)9 GTGTAC", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("GT", whitespace2.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GTGTGTGTGTGTGTGTGTGTGTAC"), whitespace2.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles whitespace3 = new DbsnpVariantAlleles("GT", "(GT)9 GTAC ", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("GT", whitespace3.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GTGTGTGTGTGTGTGTGTGTAC"), whitespace3.getAllelesInForwardStrand());
+    }
+
+    @Test
+    public void invalidSTRAlleles() {
+        DbsnpVariantAlleles invalid1 = new DbsnpVariantAlleles("T", "(T)_4", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", invalid1.getReferenceInForwardStrand());
+        thrown.expect(IllegalArgumentException.class);
+        invalid1.getAllelesInForwardStrand();
+
+        DbsnpVariantAlleles invalid2 = new DbsnpVariantAlleles("T", "TGJibb_1$_erishGTA", Orientation.FORWARD,
+                                                               Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", invalid2.getReferenceInForwardStrand());
+        thrown.expect(IllegalArgumentException.class);
+        invalid2.getAllelesInForwardStrand();
+
+        DbsnpVariantAlleles invalid3 = new DbsnpVariantAlleles("T", "(TG)3Jibb_1$_erish(GT)2A", Orientation.FORWARD,
+                                                               Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("T", invalid3.getReferenceInForwardStrand());
+        thrown.expect(IllegalArgumentException.class);
+        invalid3.getAllelesInForwardStrand();
+    }
+
 }
