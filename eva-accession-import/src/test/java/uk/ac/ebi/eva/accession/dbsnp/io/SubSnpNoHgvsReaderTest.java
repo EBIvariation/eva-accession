@@ -28,15 +28,13 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.dbsnp.configuration.DbsnpDataSource;
-import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
+import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource({"classpath:application.properties"})

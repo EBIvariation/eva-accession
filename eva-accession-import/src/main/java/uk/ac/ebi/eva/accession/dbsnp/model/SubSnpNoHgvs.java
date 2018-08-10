@@ -19,7 +19,6 @@ import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SubSnpNoHgvs {

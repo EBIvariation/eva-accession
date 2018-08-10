@@ -21,7 +21,7 @@ import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class DbsnpVariantAllelesTest {
 

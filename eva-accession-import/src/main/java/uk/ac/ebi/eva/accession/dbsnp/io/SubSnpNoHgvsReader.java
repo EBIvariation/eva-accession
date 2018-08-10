@@ -19,8 +19,6 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
-import org.springframework.jdbc.core.ArgumentPreparedStatementSetter;
-import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.util.DigestUtils;
 
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;

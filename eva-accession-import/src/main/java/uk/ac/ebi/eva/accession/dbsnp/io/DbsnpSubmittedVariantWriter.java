@@ -17,7 +17,6 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import com.mongodb.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
