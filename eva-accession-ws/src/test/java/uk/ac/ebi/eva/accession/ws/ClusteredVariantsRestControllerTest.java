@@ -33,6 +33,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
@@ -56,7 +57,7 @@ import static org.junit.Assert.assertEquals;
 public class ClusteredVariantsRestControllerTest {
 
     @Autowired
-    DbsnpClusteredVariantAccessioningRepository repository;
+    private DbsnpClusteredVariantAccessioningRepository repository;
 
     @Autowired
     private BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
@@ -68,11 +69,14 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
-        Iterable<DbsnpClusteredVariantEntity> generatedAccessions = repository.save(getListOfVariantMessages());
-        Stream<DbsnpClusteredVariantEntity> entityStream = StreamSupport.stream(generatedAccessions.spliterator(), false);
+        // No new dbSNP accessions can be generated, so the variants can only be stored directly using a repository
+        // TODO
+        List<DbsnpClusteredVariantEntity> variantsToSave = getListOfVariantMessages();
+        repository.save(variantsToSave);
 
-        String accessions = entityStream.map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
+        String accessions = variantsToSave.stream().map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
         String getVariantsUrl = URL + accessions;
+
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
                 getVariantsResponse =
                 testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
