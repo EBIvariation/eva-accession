@@ -85,7 +85,8 @@ public class ClusteredVariantAccessioningConfiguration {
 
     @Bean
     public ClusteredVariantAccessioningService ClusteredVariantAccessioningService() {
-        return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessioningDatabaseService());
+        return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
+                                                       dbsnpClusteredVariantAccessioningDatabaseService());
     }
 
     @Bean

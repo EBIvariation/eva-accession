@@ -84,12 +84,6 @@ public class SubmittedVariantAccessioningConfiguration {
         return service.getBlockParameters(categoryId).getBlockStartValue();
     }
 
-//    @Bean
-//    @ConfigurationProperties(prefix = "accessioning")
-//    public ApplicationProperties applicationProperties() {
-//        return new ApplicationProperties();
-//    }
-
     @Bean
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
         return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
