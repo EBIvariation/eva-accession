@@ -182,21 +182,17 @@ public class DbsnpVariantAlleles {
     }
 
     /**
-     * There are some dbSNP STR variant alleles that are surrounded by square brackets. This method removes them so the
-     * variant can be parsed correctly
+     * Some STR variant alleles are surrounded by square brackets. This method removes them so the variant can be parsed
+     * correctly.
      *
      * @param allelesArray Array containing all alleles
      * @return Array containing all alleles, where the surrounding square brackets have been removed
      */
     private String[] removeSurroundingSquareBrackets(String[] allelesArray) {
-        if (allelesArray[0].charAt(0) == '[') {
-            // All the STR patterns have been checked, and when the first character is a opening square bracket,
-            // the closing one is the last one
-            allelesArray[0] = allelesArray[0].substring(1);
-            int lastAlleleIndex = allelesArray.length -1;
-            allelesArray[lastAlleleIndex] = allelesArray[lastAlleleIndex].substring(0, allelesArray[lastAlleleIndex]
-                    .length() - 1);
+        for (int i = 0; i < allelesArray.length; i++) {
+            allelesArray[i] = allelesArray[i].replace("[", "").replace("]", "");
         }
+
         return allelesArray;
     }
 
