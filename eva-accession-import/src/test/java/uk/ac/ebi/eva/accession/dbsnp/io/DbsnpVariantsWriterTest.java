@@ -41,7 +41,6 @@ import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
-import uk.ac.ebi.eva.accession.dbsnp.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Arrays;
@@ -59,8 +58,7 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @TestPropertySource("classpath:test-variants-writer.properties")
-@ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class,
-        SubmittedVariantAccessioningConfiguration.class})
+@ContextConfiguration(classes = {MongoConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 public class DbsnpVariantsWriterTest {
 
     private static final int TAXONOMY_1 = 3880;
