@@ -63,7 +63,7 @@ public class DbsnpVariantAlleles {
 
     private static final Pattern ANY_UNIT_PATTERN = Pattern.compile(ANY_UNIT_REGEX);
 
-    private static final Pattern ONLY_VALID_UNITS_PATTERN = Pattern.compile("^(" + ANY_UNIT_REGEX + ")+$");
+    private static final Pattern ONLY_VALID_UNITS_PATTERN = Pattern.compile("^\\s*(" + ANY_UNIT_REGEX + "\\s*)+$");
 
     private String referenceAllele;
 

@@ -245,6 +245,27 @@ public class DbsnpVariantAllelesTest {
     }
 
     @Test
+    public void whitespaceInSTRAlleles() {
+        DbsnpVariantAlleles whitespace1 = new DbsnpVariantAlleles("GT", "(GT)9 GGGTAC", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("GT", whitespace1.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GTGTGTGTGTGTGTGTGTGGGTAC"), whitespace1.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles whitespace2 = new DbsnpVariantAlleles("GT", " (GT)9 GTGTAC", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("GT", whitespace2.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GTGTGTGTGTGTGTGTGTGTGTAC"), whitespace2.getAllelesInForwardStrand());
+
+        DbsnpVariantAlleles whitespace3 = new DbsnpVariantAlleles("GT", "(GT)9 GTAC ", Orientation.FORWARD,
+                                                                  Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
+
+        assertEquals("GT", whitespace3.getReferenceInForwardStrand());
+        assertEquals(Arrays.asList("GTGTGTGTGTGTGTGTGTGTAC"), whitespace3.getAllelesInForwardStrand());
+    }
+
+    @Test
     public void invalidSTRAlleles() {
         DbsnpVariantAlleles invalid1 = new DbsnpVariantAlleles("T", "(T)_4", Orientation.FORWARD,
                                                                   Orientation.FORWARD, DbsnpVariantType.MICROSATELLITE);
