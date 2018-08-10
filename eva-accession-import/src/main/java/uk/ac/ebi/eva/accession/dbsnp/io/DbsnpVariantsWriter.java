@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
@@ -31,20 +32,17 @@ import java.util.stream.Collectors;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
-    private MongoTemplate mongoTemplate;
-
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
 
     private DbsnpSubmittedVariantOperationWriter dbsnpSubmittedVariantOperationWriter;
 
-
-    public DbsnpVariantsWriter(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = mongoTemplate;
-        this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate);
-        this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate);
-        this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate);
+    public DbsnpVariantsWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
+        this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
+        this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
+        this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
+                                                                                             importCounts);
     }
 
     @Override

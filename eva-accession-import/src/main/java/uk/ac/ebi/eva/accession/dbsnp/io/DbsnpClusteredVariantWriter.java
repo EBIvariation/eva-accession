@@ -15,32 +15,42 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mongodb.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.List;
 
 public class DbsnpClusteredVariantWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
 
-    private static final Logger logger = LoggerFactory.getLogger(DbsnpClusteredVariantWriter.class);
-
     private MongoTemplate mongoTemplate;
 
-    public DbsnpClusteredVariantWriter(MongoTemplate mongoTemplate) {
+    private ImportCounts importCounts;
+
+    public DbsnpClusteredVariantWriter(MongoTemplate mongoTemplate,
+                                       ImportCounts importCounts) {
         this.mongoTemplate = mongoTemplate;
+        this.importCounts = importCounts;
     }
 
     @Override
     public void write(List<? extends DbsnpClusteredVariantEntity> importedClusteredVariants) {
-        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              DbsnpClusteredVariantEntity.class);
-        bulkOperations.insert(importedClusteredVariants);
-        bulkOperations.execute();
+        try {
+            BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                                  DbsnpClusteredVariantEntity.class);
+            bulkOperations.insert(importedClusteredVariants);
+            bulkOperations.execute();
+            importCounts.addClusteredVariantsWritten(importedClusteredVariants.size());
+        } catch (BulkOperationException e) {
+            BulkWriteResult bulkWriteResult = e.getResult();
+            importCounts.addClusteredVariantsWritten(bulkWriteResult.getInsertedCount());
+            throw e;
+        }
     }
 
 }

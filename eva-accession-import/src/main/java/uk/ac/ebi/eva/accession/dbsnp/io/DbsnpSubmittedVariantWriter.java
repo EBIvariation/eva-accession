@@ -15,33 +15,43 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mongodb.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
 import java.util.List;
 
 public class DbsnpSubmittedVariantWriter implements ItemWriter<DbsnpSubmittedVariantEntity> {
 
-    private static final Logger logger = LoggerFactory.getLogger(DbsnpSubmittedVariantWriter.class);
-
     private MongoTemplate mongoTemplate;
 
-    public DbsnpSubmittedVariantWriter(MongoTemplate mongoTemplate) {
+    private ImportCounts importCounts;
+
+    public DbsnpSubmittedVariantWriter(MongoTemplate mongoTemplate,
+                                       ImportCounts importCounts) {
         this.mongoTemplate = mongoTemplate;
+        this.importCounts = importCounts;
     }
 
     @Override
     public void write(List<? extends DbsnpSubmittedVariantEntity> importedSubmittedVariants) {
-        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              DbsnpSubmittedVariantEntity.class);
-        bulkOperations.insert(importedSubmittedVariants);
-        bulkOperations.execute();
+        try {
+            BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                                  DbsnpSubmittedVariantEntity.class);
+            bulkOperations.insert(importedSubmittedVariants);
+            bulkOperations.execute();
+            importCounts.addSubmittedVariantsWritten(importedSubmittedVariants.size());
+        } catch (BulkOperationException e) {
+            BulkWriteResult bulkWriteResult = e.getResult();
+            importCounts.addSubmittedVariantsWritten(bulkWriteResult.getInsertedCount());
+            throw e;
+        }
     }
 
 }

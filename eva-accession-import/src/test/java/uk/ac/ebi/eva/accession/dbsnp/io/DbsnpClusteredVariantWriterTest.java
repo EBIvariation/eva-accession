@@ -32,6 +32,7 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
@@ -41,6 +42,8 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test-variants-writer.properties")
@@ -70,9 +73,12 @@ public class DbsnpClusteredVariantWriterTest {
 
     private Function<IClusteredVariant, String> hashingFunction;
 
+    private ImportCounts importCounts;
+
     @Before
     public void setUp() throws Exception {
-        dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate);
+        importCounts = new ImportCounts();
+        dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
     }
@@ -91,6 +97,7 @@ public class DbsnpClusteredVariantWriterTest {
                                                                           DbsnpClusteredVariantEntity.class);
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
+        assertEquals(1, importCounts.getClusteredVariantsWritten());
 
         assertEquals(clusteredVariant, accessions.get(0).getModel());
     }
@@ -113,6 +120,7 @@ public class DbsnpClusteredVariantWriterTest {
         assertEquals(2, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
         assertEquals(EXPECTED_ACCESSION_2, (long) accessions.get(1).getAccession());
+        assertEquals(2, importCounts.getClusteredVariantsWritten());
 
         assertEquals(firstClusteredVariant, accessions.get(0).getModel());
         assertEquals(secondClusteredVariant, accessions.get(1).getModel());
@@ -127,6 +135,7 @@ public class DbsnpClusteredVariantWriterTest {
 
         thrown.expect(RuntimeException.class);
         dbsnpClusteredVariantWriter.write(Arrays.asList(variant, variant));
+        // TODO: check importCounts counts once Fongo is replaced by Mongo
     }
 
     @Test
@@ -142,5 +151,54 @@ public class DbsnpClusteredVariantWriterTest {
 
         thrown.expect(RuntimeException.class);
         dbsnpClusteredVariantWriter.write(Arrays.asList(variant, duplicateVariant));
+        // TODO: check importCounts counts once Fongo is replaced by Mongo
+    }
+
+    @Test
+    public void allNonDuplicatedRecordsWillBeWritten() {
+        // batch of 6 variants, 5 unique and 1 duplicate that is in the middle of the batch
+        ClusteredVariant firstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                 VARIANT_TYPE, false);
+        ClusteredVariant secondClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_2, "contig", START_1,
+                                                                       VARIANT_TYPE, VALIDATED);
+        ClusteredVariant thirdClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig_3", START_1,
+                                                                       VARIANT_TYPE, VALIDATED);
+        ClusteredVariant duplicateFirstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                               VARIANT_TYPE, true);
+        ClusteredVariant fourthClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig_4", START_1,
+                                                                      VARIANT_TYPE, VALIDATED);
+        ClusteredVariant fifthClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig_5", START_1,
+                                                                      VARIANT_TYPE, VALIDATED);
+        DbsnpClusteredVariantEntity firstVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(firstClusteredVariant), firstClusteredVariant);
+        DbsnpClusteredVariantEntity secondVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION_2, hashingFunction.apply(secondClusteredVariant), secondClusteredVariant);
+        DbsnpClusteredVariantEntity thirdVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION_2 + 1, hashingFunction.apply(thirdClusteredVariant), thirdClusteredVariant);
+        DbsnpClusteredVariantEntity fourthVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION_2 + 2, hashingFunction.apply(fourthClusteredVariant), fourthClusteredVariant);
+        DbsnpClusteredVariantEntity duplicateVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(duplicateFirstClusteredVariant), duplicateFirstClusteredVariant);
+        DbsnpClusteredVariantEntity fifthVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION_2 + 3, hashingFunction.apply(fifthClusteredVariant), fifthClusteredVariant);
+        List<DbsnpClusteredVariantEntity> batch = Arrays.asList(firstVariant, secondVariant, thirdVariant,
+                                                                duplicateVariant, fourthVariant, fifthVariant);
+
+        // we expect an exception caused by the duplicate variant when inserting the batch
+        boolean exceptionThrown = false;
+        try {
+            dbsnpClusteredVariantWriter.write(
+                    batch);
+        } catch (RuntimeException e) {
+            exceptionThrown = true;
+        }
+        assertTrue(exceptionThrown);
+
+        // 5 variants should have been inserted, and the duplicate one is not any of them
+        List<DbsnpClusteredVariantEntity> accessions = mongoTemplate.find(new Query(),
+                                                                          DbsnpClusteredVariantEntity.class);
+        assertEquals(5, accessions.size());
+        assertFalse(accessions.contains(duplicateVariant));
+        // TODO: check importCounts counts once Fongo is replaced by Mongo
     }
 }

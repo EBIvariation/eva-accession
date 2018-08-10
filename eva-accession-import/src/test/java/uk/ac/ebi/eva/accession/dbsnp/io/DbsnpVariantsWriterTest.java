@@ -39,6 +39,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEnt
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -84,9 +85,12 @@ public class DbsnpVariantsWriterTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    private ImportCounts importCounts;
+
     @Before
     public void setUp() throws Exception {
-        dbsnpVariantsWriter = new DbsnpVariantsWriter(mongoTemplate);
+        importCounts = new ImportCounts();
+        dbsnpVariantsWriter = new DbsnpVariantsWriter(mongoTemplate, importCounts);
         hashingFunctionSubmitted = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         hashingFunctionClustered = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
@@ -128,6 +132,7 @@ public class DbsnpVariantsWriterTest {
             assertEquals(expectedVariants, ssEntities.size());
             assertEquals(wrapper.getSubmittedVariants().get(i), ssEntities.get(i));
         }
+        assertEquals(expectedVariants, importCounts.getSubmittedVariantsWritten());
     }
 
     private void assertClusteredVariantStored(DbsnpVariantsWrapper wrapper) {
@@ -135,6 +140,7 @@ public class DbsnpVariantsWriterTest {
                                                                           DbsnpClusteredVariantEntity.class);
         assertEquals(1, rsEntities.size());
         assertEquals(wrapper.getClusteredVariant(), rsEntities.get(0));
+        assertEquals(1, importCounts.getClusteredVariantsWritten());
     }
 
     @Test
@@ -202,6 +208,7 @@ public class DbsnpVariantsWriterTest {
         assertEquals(1, wrapper.getSubmittedVariants().size());
         assertEquals(wrapper.getSubmittedVariants().get(0), ssEntities.get(0));
         assertNull(ssEntities.get(0).getClusteredVariantAccession());
+        assertEquals(1, importCounts.getSubmittedVariantsWritten());
     }
 
     private void assertDeclusteringHistoryStored(DbsnpVariantsWrapper wrapper) {
@@ -215,6 +222,7 @@ public class DbsnpVariantsWriterTest {
         assertEquals(wrapper.getSubmittedVariants().get(0).getClusteredVariantAccession(),
                      operationEntities.get(0).getInactiveObjects().get(0).getClusteredVariantAccession());
         assertEquals(ssEntities.get(0).getAccession(), operationEntities.get(0).getAccession());
+        assertEquals(1, importCounts.getOperationsWritten());
     }
 
     @Test

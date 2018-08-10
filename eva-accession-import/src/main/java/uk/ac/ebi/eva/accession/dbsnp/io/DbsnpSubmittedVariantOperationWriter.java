@@ -18,12 +18,14 @@
 
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
+import com.mongodb.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
 import java.util.List;
 
@@ -31,16 +33,27 @@ public class DbsnpSubmittedVariantOperationWriter implements ItemWriter<DbsnpSub
 
     private MongoTemplate mongoTemplate;
 
-    public DbsnpSubmittedVariantOperationWriter(MongoTemplate mongoTemplate) {
+    private ImportCounts importCounts;
+
+    public DbsnpSubmittedVariantOperationWriter(MongoTemplate mongoTemplate,
+                                                ImportCounts importCounts) {
         this.mongoTemplate = mongoTemplate;
+        this.importCounts = importCounts;
     }
 
     @Override
     public void write(List<? extends DbsnpSubmittedVariantOperationEntity> importedSubmittedVariantsOperations)
             throws Exception {
-        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              DbsnpSubmittedVariantOperationEntity.class);
-        bulkOperations.insert(importedSubmittedVariantsOperations);
-        bulkOperations.execute();
+        try {
+            BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                                  DbsnpSubmittedVariantOperationEntity.class);
+            bulkOperations.insert(importedSubmittedVariantsOperations);
+            bulkOperations.execute();
+            importCounts.addOperationsWritten(importedSubmittedVariantsOperations.size());
+        } catch (BulkOperationException e) {
+            BulkWriteResult bulkWriteResult = e.getResult();
+            importCounts.addOperationsWritten(bulkWriteResult.getInsertedCount());
+            throw e;
+        }
     }
 }
