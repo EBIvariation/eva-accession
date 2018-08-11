@@ -46,7 +46,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
@@ -74,7 +73,13 @@ public class SubmittedVariantsRestControllerTest {
     @Before
     public void setUp() throws AccessionCouldNotBeGeneratedException {
         repository.deleteAll();
-        generatedAccessions = service.getOrCreate(getListOfVariantMessages());
+
+        Long CLUSTERED_VARIANT = null;
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                CLUSTERED_VARIANT);
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                CLUSTERED_VARIANT);
+        generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
     }
 
     @After
@@ -83,7 +88,7 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetVariantsRestTemplate() throws AccessionCouldNotBeGeneratedException {
+    public void testGetVariantsRestTemplate() {
         String identifiers = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
                 Collectors.joining(","));
         String getVariantsUrl = URL + identifiers;
@@ -105,7 +110,7 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetVariantsController() throws AccessionCouldNotBeGeneratedException {
+    public void testGetVariantsController() {
         List<Long> identifiers = generatedAccessions.stream().map(acc -> acc.getAccession()).collect(Collectors.toList());
 
         List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
@@ -124,14 +129,5 @@ public class SubmittedVariantsRestControllerTest {
             assertEquals(ISubmittedVariant.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
             assertEquals(ISubmittedVariant.DEFAULT_VALIDATED, variant.isValidated());
         }
-    }
-
-    private List<SubmittedVariant> getListOfVariantMessages() {
-        Long CLUSTERED_VARIANT = null;
-        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
-        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
-        return asList(variant1, variant2);
     }
 }

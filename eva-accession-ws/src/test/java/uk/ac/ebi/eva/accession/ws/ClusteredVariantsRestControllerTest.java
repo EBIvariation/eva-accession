@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.ws;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,30 +26,30 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.util.StreamUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
-import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
@@ -56,26 +58,48 @@ import static org.junit.Assert.assertEquals;
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class ClusteredVariantsRestControllerTest {
 
+    private static final String URL = "/v1/clustered-variants/";
+
     @Autowired
     private DbsnpClusteredVariantAccessioningRepository repository;
 
     @Autowired
-    private BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
+    private ClusteredVariantsRestController controller;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
 
-    private static final String URL = "/v1/clustered-variants/";
+    private Iterable<DbsnpClusteredVariantEntity> generatedAccessions;
+
+    @Before
+    public void setUp() {
+        repository.deleteAll();
+
+        ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 1101, "CHROM1", 1234, VariantType.SNV, false);
+        ClusteredVariant variant2 = new ClusteredVariant("ASMACC02", 1102, "CHROM2", 1234, VariantType.MNV, false);
+
+        DbsnpClusteredVariantSummaryFunction function = new DbsnpClusteredVariantSummaryFunction();
+        DbsnpClusteredVariantEntity entity1 = new DbsnpClusteredVariantEntity(1L, function.apply(variant1), variant1);
+        DbsnpClusteredVariantEntity entity2 = new DbsnpClusteredVariantEntity(2L, function.apply(variant2), variant2);
+
+        // No new dbSNP accessions can be generated, so the variants can only be stored directly using a repository
+        // TODO When the support for new EVA accessions is implemented, this could be changed
+        // In order to do so, replicate the structure of {@link ClusteredVariantRestController}
+        generatedAccessions = repository.save(Arrays.asList(entity1, entity2));
+
+        System.out.println("Generated accessions = " + generatedAccessions);
+    }
+
+    @After
+    public void tearDown() {
+        repository.deleteAll();
+    }
 
     @Test
-    public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
-        // No new dbSNP accessions can be generated, so the variants can only be stored directly using a repository
-        // TODO
-        List<DbsnpClusteredVariantEntity> variantsToSave = getListOfVariantMessages();
-        repository.save(variantsToSave);
-
-        String accessions = variantsToSave.stream().map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
-        String getVariantsUrl = URL + accessions;
+    public void testGetVariantsRestApi() {
+        String identifiers = StreamUtils.createStreamFromIterator(generatedAccessions.iterator())
+                .map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
+        String getVariantsUrl = URL + identifiers;
 
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
                 getVariantsResponse =
@@ -93,20 +117,21 @@ public class ClusteredVariantsRestControllerTest {
         assertDefaultFlags(getVariantsResponse.getBody());
     }
 
+    @Test
+    public void testGetVariantsController() {
+        List<Long> identifiers = StreamUtils.createStreamFromIterator(generatedAccessions.iterator())
+                .map(acc -> acc.getAccession()).collect(Collectors.toList());
+
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+                controller.get(identifiers);
+
+        assertEquals(2, getVariantsResponse.size());
+        assertDefaultFlags(getVariantsResponse);
+    }
+
     private void assertDefaultFlags(
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> body) {
         ClusteredVariant variant = body.get(0).getData();
         assertEquals(IClusteredVariant.DEFAULT_VALIDATED, variant.isValidated());
-    }
-
-    public List<DbsnpClusteredVariantEntity> getListOfVariantMessages() {
-        ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 1101, "CHROM1", 1234, VariantType.SNV, false);
-        ClusteredVariant variant2 = new ClusteredVariant("ASMACC02", 1102, "CHROM2", 1234, VariantType.MNV, false);
-
-        DbsnpClusteredVariantSummaryFunction function = new DbsnpClusteredVariantSummaryFunction();
-        DbsnpClusteredVariantEntity entity1 = new DbsnpClusteredVariantEntity(1L, function.apply(variant1), variant1);
-        DbsnpClusteredVariantEntity entity2 = new DbsnpClusteredVariantEntity(2L, function.apply(variant2), variant2);
-
-        return asList(entity1, entity2);
     }
 }
