@@ -66,10 +66,6 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     protected SubmittedVariantEntity() {
     }
 
-    public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model) {
-        this(accession, hashedMessage, model, 1);
-    }
-
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
