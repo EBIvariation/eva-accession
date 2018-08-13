@@ -51,20 +51,11 @@ public class ClusteredVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantAccessioningConfiguration.class);
 
-//    @Autowired
-//    private ClusteredVariantAccessioningRepository repository;
-
     @Autowired
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
 
-//    @Autowired
-//    private ClusteredVariantOperationRepository operationRepository;
-
     @Autowired
     private DbsnpClusteredVariantOperationRepository dbsnpOperationRepository;
-
-//    @Autowired
-//    private ClusteredVariantInactiveService inactiveService;
 
     @Autowired
     private DbsnpClusteredVariantInactiveService dbsnpInactiveService;
@@ -106,32 +97,15 @@ public class ClusteredVariantAccessioningConfiguration {
                                                       properties.getInstanceId(), service);
     }
 
-//    @Bean
-//    public ClusteredVariantAccessioningDatabaseService ClusteredVariantAccessioningDatabaseService() {
-//        return new ClusteredVariantAccessioningDatabaseService(repository, inactiveService);
-//    }
-
     @Bean
     public DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
         return new DbsnpClusteredVariantAccessioningDatabaseService(dbsnpRepository, dbsnpInactiveService);
     }
 
-//    @Bean
-//    public ClusteredVariantOperationRepository ClusteredVariantOperationRepository() {
-//        return operationRepository;
-//    }
-
     @Bean
     public DbsnpClusteredVariantOperationRepository dbsnpClusteredVariantOperationRepository() {
         return dbsnpOperationRepository;
     }
-
-//    @Bean
-//    public ClusteredVariantInactiveService ClusteredVariantInactiveService() {
-//        return new ClusteredVariantInactiveService(operationRepository,
-//                                                   ClusteredVariantInactiveEntity::new,
-//                                                   ClusteredVariantOperationEntity::new);
-//    }
 
     @Bean
     public DbsnpClusteredVariantInactiveService dbsnpClusteredVariantInactiveService() {
