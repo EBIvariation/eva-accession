@@ -15,7 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
+import com.mongodb.BulkWriteError;
 import com.mongodb.BulkWriteResult;
+import com.mongodb.ErrorCategory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
@@ -25,6 +27,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DbsnpSubmittedVariantWriter implements ItemWriter<DbsnpSubmittedVariantEntity> {
 
@@ -49,8 +52,16 @@ public class DbsnpSubmittedVariantWriter implements ItemWriter<DbsnpSubmittedVar
         } catch (BulkOperationException e) {
             BulkWriteResult bulkWriteResult = e.getResult();
             importCounts.addSubmittedVariantsWritten(bulkWriteResult.getInsertedCount());
+            // TODO: this duplicate key errors should be added as merge operations in EVA-1188
+            List<BulkWriteError> duplicateKeyErrors = e.getErrors().stream().filter(this::isDuplicateKeyError).collect(
+                    Collectors.toList());
             throw e;
         }
+    }
+
+    private boolean isDuplicateKeyError(BulkWriteError error) {
+        ErrorCategory errorCategory = ErrorCategory.fromErrorCode(error.getCode());
+        return errorCategory.equals(ErrorCategory.DUPLICATE_KEY);
     }
 
 }
