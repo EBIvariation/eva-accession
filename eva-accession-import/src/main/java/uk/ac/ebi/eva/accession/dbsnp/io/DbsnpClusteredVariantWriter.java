@@ -15,7 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
+import com.mongodb.BulkWriteError;
 import com.mongodb.BulkWriteResult;
+import com.mongodb.ErrorCategory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
@@ -49,8 +51,17 @@ public class DbsnpClusteredVariantWriter implements ItemWriter<DbsnpClusteredVar
         } catch (BulkOperationException e) {
             BulkWriteResult bulkWriteResult = e.getResult();
             importCounts.addClusteredVariantsWritten(bulkWriteResult.getInsertedCount());
-            throw e;
+            // the duplicate key errors don't need to be thrownbecause they are expected,
+            // but any other error should be thrown
+            if (e.getErrors().stream().anyMatch(this::isNotDuplicateKeyError)) {
+                throw e;
+            }
         }
+    }
+
+    private boolean isNotDuplicateKeyError(BulkWriteError error) {
+        ErrorCategory errorCategory = ErrorCategory.fromErrorCode(error.getCode());
+        return !errorCategory.equals(ErrorCategory.DUPLICATE_KEY);
     }
 
 }

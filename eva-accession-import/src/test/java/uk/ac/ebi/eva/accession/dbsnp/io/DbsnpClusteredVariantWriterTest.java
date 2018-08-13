@@ -128,50 +128,20 @@ public class DbsnpClusteredVariantWriterTest {
     }
 
     @Test
-    public void failsOnDuplicateVariant() throws Exception {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
-                                                                 VARIANT_TYPE, VALIDATED);
-        DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(clusteredVariant), clusteredVariant);
-
-        thrown.expect(BulkOperationException.class);
-        try {
-            dbsnpClusteredVariantWriter.write(Arrays.asList(variant, variant));
-        } finally {
-            assertEquals(1, importCounts.getClusteredVariantsWritten());
-        }
-    }
-
-    @Test
-    public void failsOnDuplicateNonIdenticalVariant() throws Exception {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
-                                                                 VARIANT_TYPE, false);
-        ClusteredVariant duplicateClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
-                                                                 VARIANT_TYPE, true);
-        DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(clusteredVariant), clusteredVariant);
-        DbsnpClusteredVariantEntity duplicateVariant = new DbsnpClusteredVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(duplicateClusteredVariant), duplicateClusteredVariant);
-
-        thrown.expect(BulkOperationException.class);
-        try {
-            dbsnpClusteredVariantWriter.write(Arrays.asList(variant, duplicateVariant));
-        } finally {
-            assertEquals(1, importCounts.getClusteredVariantsWritten());
-        }
-    }
-
-    @Test
     public void allNonDuplicatedRecordsWillBeWritten() {
-        // batch of 6 variants, 5 unique and 1 duplicate that is in the middle of the batch
+        // batch of 6 variants, 5 unique and 2 duplicates that are in the middle of the batch
         ClusteredVariant firstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
                                                                  VARIANT_TYPE, false);
         ClusteredVariant secondClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_2, "contig", START_1,
                                                                        VARIANT_TYPE, VALIDATED);
         ClusteredVariant thirdClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig_3", START_1,
                                                                        VARIANT_TYPE, VALIDATED);
-        ClusteredVariant duplicateFirstClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
-                                                                               VARIANT_TYPE, true);
+        ClusteredVariant identicalFirstClusteredVariantDuplicate = new ClusteredVariant("assembly", TAXONOMY_1,
+                                                                                        "contig", START_1, VARIANT_TYPE,
+                                                                                        false);
+        ClusteredVariant notIdenticalFirstClusteredVariantDuplicate = new ClusteredVariant("assembly", TAXONOMY_1,
+                                                                                           "contig", START_1,
+                                                                                           VARIANT_TYPE, true);
         ClusteredVariant fourthClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig_4", START_1,
                                                                       VARIANT_TYPE, VALIDATED);
         ClusteredVariant fifthClusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig_5", START_1,
@@ -184,26 +154,24 @@ public class DbsnpClusteredVariantWriterTest {
                 EXPECTED_ACCESSION_2 + 1, hashingFunction.apply(thirdClusteredVariant), thirdClusteredVariant);
         DbsnpClusteredVariantEntity fourthVariant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION_2 + 2, hashingFunction.apply(fourthClusteredVariant), fourthClusteredVariant);
-        DbsnpClusteredVariantEntity duplicateVariant = new DbsnpClusteredVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(duplicateFirstClusteredVariant), duplicateFirstClusteredVariant);
+        DbsnpClusteredVariantEntity identicalDuplicateVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(identicalFirstClusteredVariantDuplicate),
+                identicalFirstClusteredVariantDuplicate);
+        DbsnpClusteredVariantEntity notIdenticalDuplicateVariant = new DbsnpClusteredVariantEntity(
+                EXPECTED_ACCESSION, hashingFunction.apply(notIdenticalFirstClusteredVariantDuplicate),
+                notIdenticalFirstClusteredVariantDuplicate);
         DbsnpClusteredVariantEntity fifthVariant = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION_2 + 3, hashingFunction.apply(fifthClusteredVariant), fifthClusteredVariant);
         List<DbsnpClusteredVariantEntity> batch = Arrays.asList(firstVariant, secondVariant, thirdVariant,
-                                                                duplicateVariant, fourthVariant, fifthVariant);
+                                                                identicalDuplicateVariant, notIdenticalDuplicateVariant,
+                                                                fourthVariant, fifthVariant);
 
-        // we expect an exception caused by the duplicate variant when inserting the batch
-        boolean exceptionThrown = false;
-        thrown.expect(BulkOperationException.class);
-        try {
-            dbsnpClusteredVariantWriter.write(
-                    batch);
-        } finally {
-            // 5 variants should have been inserted, and the duplicate one is not any of them
-            List<DbsnpClusteredVariantEntity> accessions = mongoTemplate.find(new Query(),
-                                                                              DbsnpClusteredVariantEntity.class);
-            assertEquals(5, accessions.size());
-            assertFalse(accessions.contains(duplicateVariant));
-            assertEquals(5, importCounts.getClusteredVariantsWritten());
-        }
+        dbsnpClusteredVariantWriter.write(batch);
+        // 5 variants should have been inserted, and the duplicate one is not any of them
+        List<DbsnpClusteredVariantEntity> accessions = mongoTemplate.find(new Query(),
+                                                                          DbsnpClusteredVariantEntity.class);
+        assertEquals(5, accessions.size());
+        assertFalse(accessions.contains(notIdenticalDuplicateVariant));
+        assertEquals(5, importCounts.getClusteredVariantsWritten());
     }
 }
