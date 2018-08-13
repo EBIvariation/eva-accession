@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.ExecutionContext;
 
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
@@ -36,6 +37,20 @@ public class ImportDbsnpVariantsStepProgressListener extends GenericProgressList
     }
 
     @Override
+    public void beforeStep(StepExecution stepExecution) {
+        super.beforeStep(stepExecution);
+
+        // if the number of variants written is stored in the execution context, it means this job is restarting and we
+        // should initialize the import counts with the values stored in the execution context
+        ExecutionContext executionContext = stepExecution.getExecutionContext();
+        if (executionContext.containsKey(ImportCounts.SUBMITTED_VARIANTS_WRITTEN)) {
+            importCounts.setSubmittedVariantsWritten(executionContext.getLong(ImportCounts.SUBMITTED_VARIANTS_WRITTEN));
+            importCounts.setClusteredVariantsWritten(executionContext.getLong(ImportCounts.CLUSTERED_VARIANTS_WRITTEN));
+            importCounts.setOperationsWritten(executionContext.getLong(ImportCounts.OPERATIONS_WRITTEN));
+        }
+    }
+
+    @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = super.afterStep(stepExecution);
 
@@ -44,6 +59,12 @@ public class ImportDbsnpVariantsStepProgressListener extends GenericProgressList
         logger.info("Step {} finished: Items read = {}, ss written = {}, rs written = {}, operations written = {}",
                     stepName, numTotalItemsRead, importCounts.getSubmittedVariantsWritten(),
                     importCounts.getClusteredVariantsWritten(), importCounts.getOperationsWritten());
+
+        // add import counts to execution context, so they can be retrieved later if the job is restarted
+        ExecutionContext executionContext = stepExecution.getExecutionContext();
+        executionContext.putLong(ImportCounts.SUBMITTED_VARIANTS_WRITTEN, importCounts.getSubmittedVariantsWritten());
+        executionContext.putLong(ImportCounts.CLUSTERED_VARIANTS_WRITTEN, importCounts.getClusteredVariantsWritten());
+        executionContext.putLong(ImportCounts.OPERATIONS_WRITTEN, importCounts.getOperationsWritten());
 
         return status;
     }

@@ -17,6 +17,12 @@ package uk.ac.ebi.eva.accession.dbsnp.listeners;
 
 public class ImportCounts {
 
+    public static final String SUBMITTED_VARIANTS_WRITTEN = "submittedVariantsWritten";
+
+    public static final String CLUSTERED_VARIANTS_WRITTEN = "clusteredVariantsWritten";
+
+    public static final String OPERATIONS_WRITTEN = "operationsWritten";
+
     private long clusteredVariantsWritten;
 
     private long operationsWritten;
@@ -45,11 +51,23 @@ public class ImportCounts {
         return clusteredVariantsWritten;
     }
 
-    public long getSubmittedVariantsWritten() {
-        return submittedVariantsWritten;
+    public void setClusteredVariantsWritten(long clusteredVariantsWritten) {
+        this.clusteredVariantsWritten = clusteredVariantsWritten;
     }
 
     public long getOperationsWritten() {
         return operationsWritten;
+    }
+
+    public void setOperationsWritten(long operationsWritten) {
+        this.operationsWritten = operationsWritten;
+    }
+
+    public long getSubmittedVariantsWritten() {
+        return submittedVariantsWritten;
+    }
+
+    public void setSubmittedVariantsWritten(long submittedVariantsWritten) {
+        this.submittedVariantsWritten = submittedVariantsWritten;
     }
 }
