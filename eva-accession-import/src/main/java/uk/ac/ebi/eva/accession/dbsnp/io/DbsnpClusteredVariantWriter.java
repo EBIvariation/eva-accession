@@ -51,8 +51,8 @@ public class DbsnpClusteredVariantWriter implements ItemWriter<DbsnpClusteredVar
         } catch (BulkOperationException e) {
             BulkWriteResult bulkWriteResult = e.getResult();
             importCounts.addClusteredVariantsWritten(bulkWriteResult.getInsertedCount());
-            // the duplicate key errors don't need to be thrownbecause they are expected,
-            // but any other error should be thrown
+            // Duplicate key errors don't need to be thrown because it is expected that a single clustered variant will
+            // be linked to more than one SS, effectively generating a duplication. Any other errors should be thrown.
             if (e.getErrors().stream().anyMatch(this::isNotDuplicateKeyError)) {
                 throw e;
             }
