@@ -16,7 +16,7 @@
 package uk.ac.ebi.eva.accession.dbsnp.parameters;
 
 import org.springframework.batch.core.JobParameters;
-
+import org.springframework.batch.core.JobParametersBuilder;
 
 public class InputParameters {
 
@@ -37,13 +37,15 @@ public class InputParameters {
     private int pageSize;
 
     public JobParameters toJobParameters() {
-        throw new UnsupportedOperationException("implementation incomplete. make sure all the fields are used");
-//        return new JobParametersBuilder()
-//                .addString("fasta", fasta)
-//                .addLong("taxonomyAccession", (long)taxonomyAccession)
-//                .addString("assemblyAccession", assemblyAccession)
-//                .addLong("chunkSize", (long)chunkSize)
-//                .toJobParameters();
+        return new JobParametersBuilder()
+                .addString("fasta", fasta)
+                .addLong("taxonomyAccession", (long) taxonomyAccession)
+                .addString("assemblyAccession", assemblyAccession)
+                .addString("asseblyName", assemblyName)
+                .addString("assemblyReportUrl", assemblyReportUrl)
+                .addLong("chunkSize", (long) chunkSize, false)
+                .addLong("pageSize", (long) pageSize, false)
+                .toJobParameters();
     }
 
     public String getFasta() {
