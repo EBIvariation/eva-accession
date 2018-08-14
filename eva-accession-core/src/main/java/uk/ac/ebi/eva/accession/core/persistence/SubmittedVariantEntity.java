@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVariant, Long> implements ISubmittedVariant {
 
+    @Indexed(background = true)
     @Field("asm")
     private String assemblyAccession;
 
