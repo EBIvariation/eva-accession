@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.item.ExecutionContext;
 
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
@@ -51,6 +52,13 @@ public class ImportDbsnpVariantsStepProgressListener extends GenericProgressList
     }
 
     @Override
+    public void afterChunk(ChunkContext context) {
+        super.afterChunk(context);
+        ExecutionContext executionContext = context.getStepContext().getStepExecution().getExecutionContext();
+        addImportCountsToExecutionContext(executionContext);
+    }
+
+    @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = super.afterStep(stepExecution);
 
@@ -62,10 +70,14 @@ public class ImportDbsnpVariantsStepProgressListener extends GenericProgressList
 
         // add import counts to execution context, so they can be retrieved later if the job is restarted
         ExecutionContext executionContext = stepExecution.getExecutionContext();
+        addImportCountsToExecutionContext(executionContext);
+
+        return status;
+    }
+
+    private void addImportCountsToExecutionContext(ExecutionContext executionContext) {
         executionContext.putLong(ImportCounts.SUBMITTED_VARIANTS_WRITTEN, importCounts.getSubmittedVariantsWritten());
         executionContext.putLong(ImportCounts.CLUSTERED_VARIANTS_WRITTEN, importCounts.getClusteredVariantsWritten());
         executionContext.putLong(ImportCounts.OPERATIONS_WRITTEN, importCounts.getOperationsWritten());
-
-        return status;
     }
 }

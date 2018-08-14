@@ -35,12 +35,12 @@ public class GenericProgressListener<I, O> extends StepListenerSupport<I, O> {
 
     public GenericProgressListener(long chunkSize) {
         this.chunkSize = chunkSize;
-        this.numItemsRead = 0;
     }
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
         logger.debug("Starting a step");
+        numItemsRead = stepExecution.getReadCount();
     }
 
     @Override

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,6 +53,12 @@ public class ListenersConfiguration {
                 return stepExecution.getExitStatus();
             }
         };
+    }
+
+    @Bean
+    @StepScope
+    public ImportCounts importCounts() {
+        return new ImportCounts();
     }
 
     @Bean(IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER)
