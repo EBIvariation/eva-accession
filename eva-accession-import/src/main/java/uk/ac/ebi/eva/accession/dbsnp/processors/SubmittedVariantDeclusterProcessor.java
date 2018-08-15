@@ -85,10 +85,14 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
 
     private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant, SubmittedVariant submittedVariant,
                                DbsnpVariantType dbsnpVariantType) {
-        return VariantClassifier.getVariantClassification(submittedVariant.getReferenceAllele(),
-                                                          submittedVariant.getAlternateAllele(),
-                                                          dbsnpVariantType.intValue())
-                                .equals(clusteredVariant.getType());
+        try {
+            return VariantClassifier.getVariantClassification(submittedVariant.getReferenceAllele(),
+                                                              submittedVariant.getAlternateAllele(),
+                                                              dbsnpVariantType.intValue())
+                                    .equals(clusteredVariant.getType());
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     private DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity,
