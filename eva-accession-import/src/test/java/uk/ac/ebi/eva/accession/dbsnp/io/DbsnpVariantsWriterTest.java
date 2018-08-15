@@ -96,6 +96,7 @@ public class DbsnpVariantsWriterTest {
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
+        mongoTemplate.dropCollection("dbsnpClusteredVariantEntityDeclustered");
     }
 
     @Test
@@ -199,6 +200,7 @@ public class DbsnpVariantsWriterTest {
         assertSubmittedVariantDeclusteredStored(wrapper);
         assertClusteredVariantStored(wrapper);
         assertDeclusteringHistoryStored(wrapper);
+        assertClusterVariantDeclusteredStored(wrapper);
     }
 
     private void assertSubmittedVariantDeclusteredStored(DbsnpVariantsWrapper wrapper) {
@@ -223,6 +225,13 @@ public class DbsnpVariantsWriterTest {
                      operationEntities.get(0).getInactiveObjects().get(0).getClusteredVariantAccession());
         assertEquals(ssEntities.get(0).getAccession(), operationEntities.get(0).getAccession());
         assertEquals(1, importCounts.getOperationsWritten());
+    }
+
+    private void assertClusterVariantDeclusteredStored(DbsnpVariantsWrapper wrapper) {
+        List<DbsnpClusteredVariantEntity> rsDeclusteredEntities = mongoTemplate.find
+                (new Query(), DbsnpClusteredVariantEntity.class, "dbsnpClusteredVariantEntityDeclustered");
+        assertEquals(1, rsDeclusteredEntities.size());
+        assertEquals(wrapper.getClusteredVariant(), rsDeclusteredEntities.get(0));
     }
 
     @Test
