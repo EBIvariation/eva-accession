@@ -22,11 +22,11 @@ public class InputParameters {
 
     private String fasta;
 
-    private String assemblyReportUrl;
-
     private String assemblyAccession;
 
     private String assemblyName;
+
+    private String assemblyReportUrl;
 
     private int taxonomyAccession;
 
@@ -41,7 +41,7 @@ public class InputParameters {
                 .addString("fasta", fasta)
                 .addLong("taxonomyAccession", (long) taxonomyAccession)
                 .addString("assemblyAccession", assemblyAccession)
-                .addString("asseblyName", assemblyName)
+                .addString("assemblyName", assemblyName)
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .addLong("pageSize", (long) pageSize, false)
