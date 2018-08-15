@@ -89,6 +89,45 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     }
 
     @Test
+    public void processSubSnpNoHgvsToWrapperMultipleAlternates() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "G/C/T", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
+
+        assertEquals(3, dbsnpVariantsWrapper.getSubmittedVariants().size());
+        assertNotNull(dbsnpVariantsWrapper.getClusteredVariant());
+        assertNull(dbsnpVariantsWrapper.getOperations());
+        assertEquals(DbsnpVariantType.SNV, dbsnpVariantsWrapper.getDbsnpVariantType());
+
+        assertEquals("G", dbsnpVariantsWrapper.getSubmittedVariants().get(0).getAlternateAllele());
+        assertEquals("C", dbsnpVariantsWrapper.getSubmittedVariants().get(1).getAlternateAllele());
+        assertEquals("T", dbsnpVariantsWrapper.getSubmittedVariants().get(2).getAlternateAllele());
+    }
+
+    @Test
+    public void processSubSnpNoHgvsToWrapperReferenceInAlternates() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "A/C/T", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
+
+        assertEquals(2, dbsnpVariantsWrapper.getSubmittedVariants().size());
+        assertNotNull(dbsnpVariantsWrapper.getClusteredVariant());
+        assertNull(dbsnpVariantsWrapper.getOperations());
+        assertEquals(DbsnpVariantType.SNV, dbsnpVariantsWrapper.getDbsnpVariantType());
+
+        assertEquals("C", dbsnpVariantsWrapper.getSubmittedVariants().get(0).getAlternateAllele());
+        assertEquals("T", dbsnpVariantsWrapper.getSubmittedVariants().get(1).getAlternateAllele());
+    }
+
+    @Test
     public void transformSnpForwardOrientations() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "A/C", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 EMBL - European Bioinformatics Institute
+ * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
@@ -80,7 +79,8 @@ public class SubmittedVariantDeclusterProcessorTest {
 
     @Test
     public void processSubmittedVariantAllelesMismatch() throws Exception {
-        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities("A", "C", false);
+        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities
+                ("A", new String[] {"C"}, false);
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(submittedVariantEntities, DbsnpVariantType.SNV,
                                                           VariantType.SNV);
         processor.process(wrapper);
@@ -96,8 +96,8 @@ public class SubmittedVariantDeclusterProcessorTest {
 
     @Test
     public void processSubmittedVariantTypeMismatch() throws Exception {
-        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities("G", "-/T/TT",
-                                                                                                    true);
+        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities
+                ("G", new String[] {"-", "G", "T", "TT"}, true);
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(submittedVariantEntities, DbsnpVariantType.DIV,
                                                           VariantType.DEL);
         processor.process(wrapper);
@@ -118,8 +118,8 @@ public class SubmittedVariantDeclusterProcessorTest {
 
     @Test
     public void processSubmittedVariantAllelesAndTypeMismatch() throws Exception {
-        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities("G", "-/T/TT",
-                                                                                                    false);
+        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities
+                ("G", new String[] {"-", "T", "TT"}, false);
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(submittedVariantEntities, DbsnpVariantType.DIV,
                                                           VariantType.DEL);
         processor.process(wrapper);
@@ -140,23 +140,25 @@ public class SubmittedVariantDeclusterProcessorTest {
                         wrapper.getSubmittedVariants().get(2).getAccession(), 2);
     }
 
-    private List<DbsnpSubmittedVariantEntity> createSubmittedVariantEntities(String reference, String alternate,
+    private List<DbsnpSubmittedVariantEntity> createSubmittedVariantEntities(String reference, String[] alternates,
                                                                              boolean allelesMatch) {
         List<DbsnpSubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
-        String[] alternates = Arrays.stream(StringUtils.split(alternate, "/")).toArray(String[]::new);
-        for (String allele : alternates) {
-            if (allele.equals("-")) {
-                allele = "";
+        for (String alternate : alternates) {
+            if (alternate.equals("-")) {
+                alternate = "";
             }
-            SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT_ACCESSION, CONTIG,
-                                                                     START, reference, allele,
-                                                                     CLUSTERED_VARIANT_ACCESSION,
-                                                                     DEFAULT_SUPPORTED_BY_EVIDENCE,
-                                                                     DEFAULT_ASSEMBLY_MATCH, allelesMatch,
-                                                                     DEFAULT_VALIDATED);
-            DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
-                    SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
-            submittedVariantEntities.add(submittedVariantEntity);
+            if (!reference.equals(alternate)) {
+                SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT_ACCESSION, CONTIG,
+                                                                         START, reference, alternate,
+                                                                         CLUSTERED_VARIANT_ACCESSION,
+                                                                         DEFAULT_SUPPORTED_BY_EVIDENCE,
+                                                                         DEFAULT_ASSEMBLY_MATCH, allelesMatch,
+                                                                         DEFAULT_VALIDATED);
+                DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
+                        SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant,
+                        1);
+                submittedVariantEntities.add(submittedVariantEntity);
+            }
         }
         return submittedVariantEntities;
     }
@@ -184,9 +186,7 @@ public class SubmittedVariantDeclusterProcessorTest {
     }
 
     private String getReason(List<String> reasons){
-        StringBuilder reason = new StringBuilder(DECLUSTERED);
-        reasons.forEach(reason::append);
-        return reason.toString();
+        return DECLUSTERED + String.join(" ", reasons);
     }
 
 }

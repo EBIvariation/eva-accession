@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 EMBL - European Bioinformatics Institute
+ * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,16 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
     static final String DECLUSTERED = "Declustered: ";
 
     static final String DECLUSTERED_ALLELES_MISMATCH =
-            "None of the variant alleles match the reference allele. ";
+            "None of the variant alleles match the reference allele.";
 
     static final String DECLUSTERED_TYPE_MISMATCH =
-            "The variant type inferred from the alleles does not match the one asserted by dbSNP. ";
+            "The variant type inferred from the alleles does not match the one asserted by dbSNP.";
+
+    private Function<ISubmittedVariant, String> hashingFunction;
 
     public SubmittedVariantDeclusterProcessor() {
+        hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+
     }
 
     @Override
@@ -57,17 +61,17 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
             SubmittedVariant submittedVariant = new SubmittedVariant(submittedVariantEntity);
             List<String> reasons = new ArrayList<>();
             if (variantNeedsDecluster(dbsnpVariantsWrapper, submittedVariant, reasons)) {
-                decluster(submittedVariantEntity, submittedVariant, operations, submittedVariants, reasons);
-            } else {
-                submittedVariants.add(submittedVariantEntity);
+                submittedVariantEntity = decluster(submittedVariantEntity, submittedVariant, operations, reasons);
             }
+            submittedVariants.add(submittedVariantEntity);
         }
         dbsnpVariantsWrapper.setSubmittedVariants(submittedVariants);
         dbsnpVariantsWrapper.setOperations(operations);
         return dbsnpVariantsWrapper;
     }
 
-    private boolean variantNeedsDecluster(DbsnpVariantsWrapper wrapper, SubmittedVariant submittedVariant, List<String> reasons) {
+    private boolean variantNeedsDecluster(DbsnpVariantsWrapper wrapper, SubmittedVariant submittedVariant,
+                                          List<String> reasons) {
         if (!submittedVariant.isAllelesMatch()) {
             reasons.add(DECLUSTERED_ALLELES_MISMATCH);
         }
@@ -87,17 +91,16 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
                                 .equals(clusteredVariant.getType());
     }
 
-    private void decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity, SubmittedVariant variant,
-                           List<DbsnpSubmittedVariantOperationEntity> operations,
-                           List<DbsnpSubmittedVariantEntity> submittedVariants,
-                           List<String> reasons) {
+    private DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity,
+                                                  SubmittedVariant variant,
+                                                  List<DbsnpSubmittedVariantOperationEntity> operations,
+                                                  List<String> reasons) {
         //Register submitted variant decluster operation
         DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
         DbsnpSubmittedVariantInactiveEntity inactiveEntity =
                 new DbsnpSubmittedVariantInactiveEntity(nonDeclusteredVariantEntity);
 
-        StringBuilder reason = new StringBuilder(DECLUSTERED);
-        reasons.forEach(reason::append);
+        String reason = DECLUSTERED + String.join(" ", reasons);
         Long accession = nonDeclusteredVariantEntity.getAccession();
         operation.fill(EventType.UPDATED, accession, null, reason.toString(),
                        Collections.singletonList(inactiveEntity));
@@ -105,10 +108,9 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
 
         //Decluster submitted variant
         variant.setClusteredVariantAccession(null);
-        String hash = nonDeclusteredVariantEntity.getHashedMessage();
+        String hash = hashingFunction.apply(variant);
         int version = nonDeclusteredVariantEntity.getVersion();
-        DbsnpSubmittedVariantEntity declusteredVariantEntity = new DbsnpSubmittedVariantEntity(accession, hash, variant,
-                                                                                               version);
-        submittedVariants.add(declusteredVariantEntity);
+
+        return new DbsnpSubmittedVariantEntity(accession, hash, variant, version);
     }
 }
