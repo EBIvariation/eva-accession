@@ -45,9 +45,9 @@ import static org.junit.Assert.assertNull;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
-import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED;
-import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED_ALLELES_MISMATCH;
-import static uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor.DECLUSTERED_TYPE_MISMATCH;
+import static uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor.DECLUSTERED;
+import static uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor.DECLUSTERED_ALLELES_MISMATCH;
+import static uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor.DECLUSTERED_TYPE_MISMATCH;
 
 public class SubmittedVariantDeclusterProcessorTest {
 

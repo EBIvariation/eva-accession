@@ -40,14 +40,6 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
 
-    static final String DECLUSTERED = "Declustered: ";
-
-    static final String DECLUSTERED_ALLELES_MISMATCH =
-            "None of the variant alleles match the reference allele. ";
-
-    static final String DECLUSTERED_TYPE_MISMATCH =
-            "The variant type inferred from the alleles does not match the one asserted by dbSNP. ";
-
     private SubmittedVariantRenormalizationProcessor renormalizationProcessor;
 
     private SubSnpNoHgvsToClusteredVariantProcessor subSnpNoHgvsToClusteredVariantProcessor;
@@ -64,7 +56,6 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
     public DbsnpVariantsWrapper process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         DbsnpVariantsWrapper dbsnpVariantsWrapper = new DbsnpVariantsWrapper();
         List<DbsnpSubmittedVariantEntity> submittedVariants = new ArrayList<>();
-        List<DbsnpSubmittedVariantOperationEntity> operations = new ArrayList<>();
         DbsnpClusteredVariantEntity clusteredVariant = subSnpNoHgvsToClusteredVariantProcessor.process(subSnpNoHgvs);
 
         List<String> alternateAlleles = subSnpNoHgvs.getAlternateAllelesInForwardStrand();
@@ -79,7 +70,6 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
         dbsnpVariantsWrapper.setDbsnpVariantType(subSnpNoHgvs.getDbsnpVariantType());
         dbsnpVariantsWrapper.setClusteredVariant(clusteredVariant);
         dbsnpVariantsWrapper.setSubmittedVariants(normalisedSubmittedVariants);
-        dbsnpVariantsWrapper.setOperations(operations);
         return dbsnpVariantsWrapper;
     }
 

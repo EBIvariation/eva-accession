@@ -33,6 +33,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
@@ -83,7 +84,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         assertEquals(1, dbsnpVariantsWrapper.getSubmittedVariants().size());
         assertNotNull(dbsnpVariantsWrapper.getClusteredVariant());
-        assertEquals(0, dbsnpVariantsWrapper.getOperations().size());
+        assertNull(dbsnpVariantsWrapper.getOperations());
         assertEquals(DbsnpVariantType.SNV, dbsnpVariantsWrapper.getDbsnpVariantType());
     }
 
