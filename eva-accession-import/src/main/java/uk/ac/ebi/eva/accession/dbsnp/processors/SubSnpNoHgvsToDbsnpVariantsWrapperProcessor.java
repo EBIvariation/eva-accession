@@ -25,6 +25,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
+import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.commons.core.models.Region;
@@ -46,9 +47,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(FastaSequenceReader fastaSequenceReader) {
+    private String assemblyAccession;
+
+    public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(String assemblyAccession,
+                                                       FastaSequenceReader fastaSequenceReader) {
+        this.assemblyAccession = assemblyAccession;
         renormalizationProcessor = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
-        subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor();
+        subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor(assemblyAccession);
         hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -91,7 +96,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
             assemblyMatch is set to false because null is not allowed but the assembly checker should determine the
             real value of assemblyMatch.
          */
-        SubmittedVariant variant = new SubmittedVariant(subSnpNoHgvs.getAssembly(), subSnpNoHgvs.getTaxonomyId(),
+        SubmittedVariant variant = new SubmittedVariant(this.assemblyAccession, subSnpNoHgvs.getTaxonomyId(),
                                                         getProjectAccession(subSnpNoHgvs),
                                                         variantRegion.getChromosome(), variantRegion.getStart(),
                                                         reference, alternate, subSnpNoHgvs.getRsId(),

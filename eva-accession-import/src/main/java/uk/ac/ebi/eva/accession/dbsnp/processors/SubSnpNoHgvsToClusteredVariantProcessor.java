@@ -36,8 +36,11 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
 
     private Function<IClusteredVariant, String> hashingFunction;
 
-    public SubSnpNoHgvsToClusteredVariantProcessor() {
-        hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+    private String assemblyAccession;
+
+    public SubSnpNoHgvsToClusteredVariantProcessor(String assemblyAccession) {
+        this.hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        this.assemblyAccession = assemblyAccession;
     }
 
     /**
@@ -63,7 +66,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
             variantType = getVariantTypeWhenDiv(subSnpNoHgvs);
         }
 
-        ClusteredVariant variant = new ClusteredVariant(subSnpNoHgvs.getAssembly(),
+        ClusteredVariant variant = new ClusteredVariant(assemblyAccession,
                                                         subSnpNoHgvs.getTaxonomyId(),
                                                         variantRegion.getChromosome(),
                                                         variantRegion.getStart(),

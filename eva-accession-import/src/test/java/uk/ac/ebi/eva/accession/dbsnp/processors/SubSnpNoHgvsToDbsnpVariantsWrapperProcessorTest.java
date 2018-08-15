@@ -39,6 +39,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     private static final String ASSEMBLY = "AnyAssembly-1.0";
 
+    private static final String ASSEMBLY_ACCESSION = "GCA_123456789";
+
     private static final String PROJECT_ACCESSION = "HANDLE_NAME";
 
     private static final String BATCH_HANDLE = "HANDLE";
@@ -64,7 +66,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         fastaSequenceReader = new FastaSequenceReader(Paths.get("src/test/resources/Gallus_gallus-5.0.test.fa"));
-        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(fastaSequenceReader);
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader);
     }
 
     @AfterClass
@@ -152,7 +154,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                         int expectedVersion) {
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
         assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
-        assertEquals(ASSEMBLY, dbsnpSubmittedVariant.getAssemblyAccession());
+        assertEquals(ASSEMBLY_ACCESSION, dbsnpSubmittedVariant.getAssemblyAccession());
         assertEquals(TAXONOMY, dbsnpSubmittedVariant.getTaxonomyAccession());
         assertEquals(PROJECT_ACCESSION, dbsnpSubmittedVariant.getProjectAccession());
         assertEquals(expectedContig, dbsnpSubmittedVariant.getContig());
@@ -171,7 +173,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     public String getExpectedHash(String contig, long start, String reference, String alternate) {
         String summary = new StringBuilder()
-                .append(ASSEMBLY)
+                .append(ASSEMBLY_ACCESSION)
                 .append("_").append(TAXONOMY)
                 .append("_").append(PROJECT_ACCESSION)
                 .append("_").append(contig)
