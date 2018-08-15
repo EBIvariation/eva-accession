@@ -19,7 +19,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
@@ -70,7 +70,8 @@ public class AccessionWrapperComparatorTest {
     private AccessionWrapper<ISubmittedVariant, String, Long> buildMockAccessionWrapper(String contig, int position) {
         return new AccessionWrapper<>(null,
                                       null,
-                                      new SubmittedVariant("", 0, "", contig, position, "", "", false));
+                                      new SubmittedVariant("", 0, "", contig, position, "", "", null, null, null, null,
+                                                           null));
     }
 
     @Test
@@ -140,7 +141,7 @@ public class AccessionWrapperComparatorTest {
     }
 
     private SubmittedVariant buildMockVariant(String contig) {
-        return new SubmittedVariant("", 0, "", contig, 0, "", "", false);
+        return new SubmittedVariant("", 0, "", contig, 0, "", "", null, null, null, null, null);
     }
 
     @Test

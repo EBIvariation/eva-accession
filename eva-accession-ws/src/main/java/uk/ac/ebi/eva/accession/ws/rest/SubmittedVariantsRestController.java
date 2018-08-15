@@ -23,10 +23,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.ac.ebi.ampt2d.commons.accession.rest.AccessionResponseDTO;
-import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestController;
+import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
 import java.util.List;
 
@@ -35,16 +36,16 @@ import java.util.List;
 @Api(tags = {"Submitted variants"})
 public class SubmittedVariantsRestController {
 
-    private final BasicRestController<SubmittedVariantDTO, ISubmittedVariant, String, Long> basicRestController;
+    private final BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController;
 
     public SubmittedVariantsRestController(
-            BasicRestController<SubmittedVariantDTO, ISubmittedVariant, String, Long> basicRestController) {
+            BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController) {
         this.basicRestController = basicRestController;
     }
 
     @ApiOperation(value = "Find submitted variants by identifier")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
-    public List<AccessionResponseDTO<SubmittedVariantDTO, ISubmittedVariant, String, Long>> get(
+    public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> get(
             @PathVariable List<Long> identifiers) {
         return basicRestController.get(identifiers);
     }

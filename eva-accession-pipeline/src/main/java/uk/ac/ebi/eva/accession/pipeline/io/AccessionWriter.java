@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
@@ -47,8 +47,7 @@ public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
     @Override
     public void write(List<? extends ISubmittedVariant> variants) throws Exception {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(variants);
-        accessions.sort(new AccessionWrapperComparator(variants));
-        accessionReportWriter.write(accessions);
+        accessionReportWriter.write(accessions, new AccessionWrapperComparator(variants));
         checkCountsMatch(variants, accessions);
     }
 
@@ -66,7 +65,8 @@ public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
             }
 
             List<ISubmittedVariant> variantsWithoutAccession = distinctVariants.stream()
-                                                                               .filter(v -> !accessionedVariants.contains(v))
+                                                                               .filter(v -> !accessionedVariants
+                                                                                       .contains(v))
                                                                                .collect(Collectors.toList());
             if (variantsWithoutAccession.size() != 0) {
                 logger.error("A problem occurred while accessioning a chunk. Total num variants = {}, distinct = {}, " +

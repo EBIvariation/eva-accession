@@ -39,21 +39,26 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_ORIE
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_START_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.FREQUENCY_EXISTS_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.GENOTYPE_EXISTS_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.LOAD_ORDER_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.REFERENCE_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.RS_CREATE_TIME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.RS_ID_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_CLASS_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_ORIENTATION_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SNP_VALIDATED_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SS_CREATE_TIME_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SS_ID_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SUBSNP_ORIENTATION_COLUMN;
+import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.SUBSNP_VALIDATED_COLUMN;
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.TAXONOMY_ID_COLUMN;
 
 public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
 
     private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsReader.class);
 
-    public SubSnpNoHgvsReader(int batch, String assembly, DataSource dataSource,
-                              int pageSize) throws Exception {
+    public SubSnpNoHgvsReader(String assembly, DataSource dataSource, int pageSize) throws Exception {
         setDataSource(dataSource);
         setSql(buildSql(assembly));
-        setPreparedStatementSetter(buildPreparedStatementSetter(batch));
         setRowMapper(new SubSnpNoHgvsRowMapper(assembly));
         setFetchSize(pageSize);
     }
@@ -73,12 +78,15 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
         logger.debug("querying table {} for assembly {}", tableName, assembly);
         String sql =
                 "SELECT " +
-                        ALLELES_COLUMN +
+                        SS_ID_COLUMN +
+                        "," + RS_ID_COLUMN +
+                        "," + ALLELES_COLUMN +
                         "," + BATCH_HANDLE_COLUMN +
                         "," + BATCH_NAME_COLUMN +
                         "," + CHROMOSOME_COLUMN +
                         "," + CHROMOSOME_START_COLUMN +
                         "," + CONTIG_NAME_COLUMN +
+                        "," + SNP_CLASS_COLUMN +
                         "," + SUBSNP_ORIENTATION_COLUMN +
                         "," + SNP_ORIENTATION_COLUMN +
                         "," + CONTIG_ORIENTATION_COLUMN +
@@ -86,23 +94,19 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
                         "," + FREQUENCY_EXISTS_COLUMN +
                         "," + GENOTYPE_EXISTS_COLUMN +
                         "," + REFERENCE_COLUMN +
+                        "," + SUBSNP_VALIDATED_COLUMN +
+                        "," + SNP_VALIDATED_COLUMN +
                         "," + SS_CREATE_TIME_COLUMN +
+                        "," + RS_CREATE_TIME_COLUMN +
                         "," + TAXONOMY_ID_COLUMN +
                         " FROM " + tableName +
-                        " WHERE batch_id = ? ";
+                        " ORDER BY " + LOAD_ORDER_COLUMN;
 
         return sql;
     }
 
     private String hash(String string) {
         return DigestUtils.md5DigestAsHex(string.getBytes());
-    }
-
-    private PreparedStatementSetter buildPreparedStatementSetter(int batch) {
-        PreparedStatementSetter preparedStatementSetter = new ArgumentPreparedStatementSetter(
-                new Object[]{batch}
-        );
-        return preparedStatementSetter;
     }
 
 }

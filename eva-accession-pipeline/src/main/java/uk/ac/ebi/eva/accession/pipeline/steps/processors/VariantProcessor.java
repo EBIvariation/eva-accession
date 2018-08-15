@@ -25,6 +25,20 @@ import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVariant> {
 
+    private static final Long UNDEFINED_CLUSTERED_VARIANT = null;
+
+    // assumed by this pipeline, independent of the default in ISubmittedVariant
+    private static final Boolean SUPPORTED_BY_EVIDENCE = true;
+
+    // assumed by this pipeline, independent of the default in ISubmittedVariant
+    private static final Boolean MATCHES_ASSEMBLY = true;
+
+    // can only be false in eva-accession-import, independent of the default in ISubmittedVariant
+    private static final Boolean ALLELES_MATCH = true;
+
+    // assumed by this pipeline, independent of the default in ISubmittedVariant
+    private static final Boolean VALIDATED = false;
+
     private String assemblyAccession;
 
     private int taxonomyAccession;
@@ -40,6 +54,11 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
     @Override
     public ISubmittedVariant process(final IVariant variant) throws Exception {
         return new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession, variant.getChromosome(),
-                                    variant.getStart(), variant.getReference(), variant.getAlternate(), true);
+                                    variant.getStart(), variant.getReference(), variant.getAlternate(),
+                                    UNDEFINED_CLUSTERED_VARIANT,
+                                    SUPPORTED_BY_EVIDENCE,
+                                    MATCHES_ASSEMBLY,
+                                    ALLELES_MATCH,
+                                    VALIDATED);
     }
 }

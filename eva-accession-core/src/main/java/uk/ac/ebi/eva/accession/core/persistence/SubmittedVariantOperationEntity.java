@@ -18,8 +18,11 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.data.mongodb.core.mapping.Document;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.OperationDocument;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
+
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 
 @Document
-public class SubmittedVariantOperationEntity extends OperationDocument<Long, SubmittedVariantInactiveEntity> {
+public class SubmittedVariantOperationEntity extends EventDocument<ISubmittedVariant, Long,
+        SubmittedVariantInactiveEntity> {
 }

@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,11 +31,18 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
 @Configuration
@@ -48,13 +56,30 @@ public class SubmittedVariantAccessioningConfiguration {
     private SubmittedVariantAccessioningRepository repository;
 
     @Autowired
+    private DbsnpSubmittedVariantAccessioningRepository dbsnpRepository;
+
+    @Autowired
     private SubmittedVariantOperationRepository operationRepository;
+
+    @Autowired
+    private DbsnpSubmittedVariantOperationRepository dbsnpOperationRepository;
 
     @Autowired
     private SubmittedVariantInactiveService inactiveService;
 
     @Autowired
+    private DbsnpSubmittedVariantInactiveService dbsnpInactiveService;
+
+    @Autowired
     private ContiguousIdBlockService service;
+
+    @Value("${accessioning.variant.categoryId}")
+    private String categoryId;
+
+    @Bean
+    public Long accessioningMonotonicInitSs() {
+        return service.getBlockParameters(categoryId).getBlockStartValue();
+    }
 
     @Bean
     @ConfigurationProperties(prefix = "accessioning")
@@ -65,12 +90,47 @@ public class SubmittedVariantAccessioningConfiguration {
     @Bean
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
         return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
-                                                       submittedVariantAccessioningDatabaseService());
+                                                       dbsnpSubmittedVariantAccessionGenerator(),
+                                                       submittedVariantAccessioningDatabaseService(),
+                                                       dbsnpSubmittedVariantAccessioningDatabaseService(),
+                                                       accessioningMonotonicInitSs());
+    }
+
+    @Bean
+    public MonotonicAccessionGenerator<ISubmittedVariant> submittedVariantAccessionGenerator() {
+        ApplicationProperties properties = applicationProperties();
+        logger.debug("Using application properties: " + properties.toString());
+        return new MonotonicAccessionGenerator<>(
+                properties.getVariant().getCategoryId(),
+                properties.getInstanceId(),
+                service);
+    }
+
+    @Bean
+    public DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator() {
+        ApplicationProperties properties = applicationProperties();
+        return new DbsnpMonotonicAccessionGenerator<>(properties.getVariant().getCategoryId(),
+                                                      properties.getInstanceId(), service);
+    }
+
+    @Bean
+    public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
+        return new SubmittedVariantAccessioningDatabaseService(repository, inactiveService);
+    }
+
+    @Bean
+    public DbsnpSubmittedVariantAccessioningDatabaseService dbsnpSubmittedVariantAccessioningDatabaseService() {
+        return new DbsnpSubmittedVariantAccessioningDatabaseService(dbsnpRepository, dbsnpInactiveService);
     }
 
     @Bean
     public SubmittedVariantOperationRepository submittedVariantOperationRepository() {
         return operationRepository;
+    }
+
+    @Bean
+    public DbsnpSubmittedVariantOperationRepository dbsnpSubmittedVariantOperationRepository() {
+        return dbsnpOperationRepository;
     }
 
     @Bean
@@ -81,19 +141,10 @@ public class SubmittedVariantAccessioningConfiguration {
     }
 
     @Bean
-    public SubmittedVariantAccessioningDatabaseService submittedVariantAccessioningDatabaseService() {
-        return new SubmittedVariantAccessioningDatabaseService(repository, inactiveService);
-    }
-
-    @Bean
-    public MonotonicAccessionGenerator<ISubmittedVariant> submittedVariantAccessionGenerator() {
-        ApplicationProperties properties = applicationProperties();
-        logger.debug("Using application properties: " + properties.toString());
-        return new MonotonicAccessionGenerator<>(
-                properties.getVariant().getBlockSize(),
-                properties.getVariant().getCategoryId(),
-                properties.getInstanceId(),
-                service);
+    public DbsnpSubmittedVariantInactiveService dbsnpSubmittedVariantInactiveService() {
+        return new DbsnpSubmittedVariantInactiveService(dbsnpOperationRepository,
+                                                        DbsnpSubmittedVariantInactiveEntity::new,
+                                                        DbsnpSubmittedVariantOperationEntity::new);
     }
 
 }

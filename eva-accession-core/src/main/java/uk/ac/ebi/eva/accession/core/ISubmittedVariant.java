@@ -22,10 +22,20 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import java.time.LocalDateTime;
 
 /**
- * Abstract representation of the fields that uniquely identify an accessioned submitted variant. Implemented by the
- * entity serialized into the database {@link SubmittedVariantEntity} and the message/DTO used by the REST API.
+ * Abstract representation of the fields that uniquely identify an accessioned submitted variant.
+ *
+ * Implemented by the basic bean {@link SubmittedVariant}, the entity for EVA accessions
+ * {@link SubmittedVariantEntity}, and the entities for DbSNP accessions (Subsnps with and without coordinates).
  */
 public interface ISubmittedVariant {
+
+    boolean DEFAULT_SUPPORTED_BY_EVIDENCE = true;
+
+    boolean DEFAULT_ASSEMBLY_MATCH = true;
+
+    boolean DEFAULT_ALLELES_MATCH = true;
+
+    boolean DEFAULT_VALIDATED = false;
 
     String getAssemblyAccession();
 
@@ -41,10 +51,33 @@ public interface ISubmittedVariant {
 
     String getAlternateAllele();
 
+    Long getClusteredVariantAccession();
+
     /**
-     * @return True if this submitted variant is supported by genotypes or frequencies
+     * @return True if this submitted variant is supported by genotypes or frequencies. Nullable (= true) when
+     * serialized to database in order to reduce disk usage.
      */
-    boolean isSupportedByEvidence();
+    Boolean isSupportedByEvidence();
+
+    /**
+     * @return True if the reference allele matches the reference genome. Nullable (= true) when serialized to
+     * database in order to reduce disk usage.
+     */
+    Boolean isAssemblyMatch();
+
+    /**
+     * @return False if reference allele was not found in the alleles list. Nullable (= true) when serialized to
+     * database in order to reduce disk usage.
+     */
+    Boolean isAllelesMatch();
+
+    /**
+     * @return True if the variant was curated manually, and not only detected by computational methods.
+     * see https://www.ncbi.nlm.nih.gov/books/NBK21088/table/ch5.ch5_t4/?report=objectonly . Nullable (= false) when
+     * serialized to database in order to reduce disk usage.
+     */
+    Boolean isValidated();
 
     LocalDateTime getCreatedDate();
+
 }
