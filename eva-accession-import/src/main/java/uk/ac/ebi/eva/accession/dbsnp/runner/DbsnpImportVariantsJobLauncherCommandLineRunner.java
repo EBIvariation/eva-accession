@@ -29,32 +29,44 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.autoconfigure.batch.JobLauncherCommandLineRunner;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Component;
+import org.springframework.util.PatternMatchUtils;
 
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
+import uk.ac.ebi.eva.commons.batch.exception.NoJobToExecuteException;
+import uk.ac.ebi.eva.commons.batch.exception.NoParametersHaveBeenPassedException;
 import uk.ac.ebi.eva.commons.batch.exception.NoPreviousJobExecutionException;
+import uk.ac.ebi.eva.commons.batch.exception.UnknownJobException;
+import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
 
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_JOB;
+import java.util.Collection;
 
 @Component
 public class DbsnpImportVariantsJobLauncherCommandLineRunner extends JobLauncherCommandLineRunner implements
-        ExitCodeGenerator {
+        ApplicationEventPublisherAware, ExitCodeGenerator {
+
+    private static final Logger logger = LoggerFactory.getLogger(DbsnpImportVariantsJobLauncherCommandLineRunner.class);
+
+    public static final String SPRING_BATCH_JOB_NAME_PROPERTY = "spring.batch.job.names";
 
     public static final int EXIT_WITHOUT_ERRORS = 0;
 
     public static final int EXIT_WITH_ERRORS = 1;
 
-    private static final Logger logger = LoggerFactory.getLogger(DbsnpImportVariantsJobLauncherCommandLineRunner.class);
+    @Value("${" + SPRING_BATCH_JOB_NAME_PROPERTY + ":#{null}}")
+    private String jobName;
 
-    private final JobRepository jobRepository;
+    private Collection<Job> jobs;
+
+    private JobRepository jobRepository;
 
     @Autowired
-    @Qualifier(IMPORT_DBSNP_VARIANTS_JOB)
-    private Job importDbsnpVariantsJob;
+    private JobExecutionApplicationListener jobExecutionApplicationListener;
 
     @Autowired
     private InputParameters inputParameters;
@@ -67,36 +79,73 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunner extends JobLauncher
         this.jobRepository = jobRepository;
     }
 
-    @Override
-    public void run(String... args) throws JobExecutionException {
-        JobParameters jobParameters = inputParameters.toJobParameters();
-        try {
-            abnormalExit = false;
-            if (inputParameters.isForceRestart()) {
-                JobStatusManager.markLastJobAsFailed(jobRepository, IMPORT_DBSNP_VARIANTS_JOB, jobParameters);
-            }
-            this.execute(importDbsnpVariantsJob, jobParameters);
-        } catch (NoPreviousJobExecutionException e) {
-            logger.error("Job force restart failed: " + e.getMessage());
-            abnormalExit = true;
-        }
+
+    @Autowired(required = false)
+    public void setJobs(Collection<Job> jobs) {
+        this.jobs = jobs;
     }
 
     @Override
-    public void execute(Job job,
-                        JobParameters jobParameters) throws JobParametersNotFoundException,
-            JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException,
-            JobInstanceAlreadyCompleteException {
-        logger.info("Running job '" + job.getName() + "' with parameters: " + jobParameters);
-        super.execute(job, jobParameters);
+    public void setJobNames(String jobName) {
+        this.jobName = jobName;
+        super.setJobNames(jobName);
     }
 
     @Override
     public int getExitCode() {
-        if (abnormalExit) {
-            return EXIT_WITH_ERRORS;
-        } else {
+        if (!abnormalExit && jobExecutionApplicationListener.isJobExecutionComplete()) {
             return EXIT_WITHOUT_ERRORS;
+        } else {
+            return EXIT_WITH_ERRORS;
         }
+    }
+
+    @Override
+    public void run(String... args) throws JobExecutionException {
+        try {
+            abnormalExit = false;
+
+            // TODO: different jobs can have different parameters
+            JobParameters jobParameters = inputParameters.toJobParameters();
+
+            JobStatusManager.checkIfJobNameHasBeenDefined(jobName);
+            JobStatusManager.checkIfPropertiesHaveBeenProvided(jobParameters);
+            if (inputParameters.isForceRestart()) {
+                markPreviousJobAsFailed(jobParameters);
+            }
+            launchJob(jobParameters);
+        } catch (NoJobToExecuteException | NoParametersHaveBeenPassedException | NoPreviousJobExecutionException
+                | UnknownJobException | JobParametersInvalidException | JobExecutionAlreadyRunningException e) {
+            logger.error(e.getMessage());
+            logger.debug("Error trace", e);
+            abnormalExit = true;
+        }
+
+    }
+
+    private void launchJob(JobParameters jobParameters) throws JobExecutionException, UnknownJobException {
+        for (Job job : this.jobs) {
+            // TODO is PatternMatchUtils necessary because the jobs discovered by Spring include package name? if not, remove it
+            if (PatternMatchUtils.simpleMatch(jobName, job.getName())) {
+                execute(job, jobParameters);
+                return;
+            }
+        }
+
+        throw new UnknownJobException(jobName);
+    }
+
+    @Override
+    protected void execute(Job job, JobParameters jobParameters) throws JobExecutionAlreadyRunningException,
+            JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException,
+            JobParametersNotFoundException {
+        logger.info("Running job '" + jobName + "' with parameters: " + jobParameters);
+        super.execute(job, jobParameters);
+    }
+
+    private void markPreviousJobAsFailed(JobParameters jobParameters) throws
+            NoPreviousJobExecutionException {
+        logger.info("Force restartPreviousExecution of job '" + jobName + "' with parameters: " + jobParameters);
+        JobStatusManager.markLastJobAsFailed(jobRepository, jobName, jobParameters);
     }
 }
