@@ -1,5 +1,7 @@
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
@@ -8,6 +10,8 @@ import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {
+
+    private static Logger logger = LoggerFactory.getLogger(AssemblyCheckerProcessor.class);
 
     private ContigMapping contigMapping;
 
@@ -37,15 +41,14 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
 
         long end = calculateReferenceAlleleEndPosition(subSnpNoHgvs.getReferenceInForwardStrand(), start);
         String sequence;
+        boolean matches = false;
         try {
             sequence = getSequenceUsingSynonyms(contigSynonyms, start, end);
-            if (sequence.equals(subSnpNoHgvs.getReferenceInForwardStrand())) {
-                subSnpNoHgvs.setAssemblyMatch(true);
-            } else {
-                subSnpNoHgvs.setAssemblyMatch(false);
-            }
+            matches = sequence.equals(subSnpNoHgvs.getReferenceInForwardStrand());
         } catch (IllegalArgumentException ex) {
-            subSnpNoHgvs.setAssemblyMatch(false);
+            logger.warn(ex.getLocalizedMessage());
+        } finally {
+            subSnpNoHgvs.setAssemblyMatch(matches);
         }
 
         return subSnpNoHgvs;
