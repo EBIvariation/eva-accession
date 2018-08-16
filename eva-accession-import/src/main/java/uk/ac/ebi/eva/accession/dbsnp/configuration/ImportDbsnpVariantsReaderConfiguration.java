@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,6 +30,7 @@ import javax.sql.DataSource;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_READER;
 
 @Configuration
+@EnableConfigurationProperties({DbsnpDataSource.class})
 public class ImportDbsnpVariantsReaderConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ImportDbsnpVariantsReaderConfiguration.class);

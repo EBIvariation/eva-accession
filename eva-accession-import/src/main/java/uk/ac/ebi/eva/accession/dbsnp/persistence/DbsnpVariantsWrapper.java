@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.dbsnp.persistence;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 
 import java.util.List;

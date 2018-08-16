@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.pipeline.configuration;
+package uk.ac.ebi.eva.accession.dbsnp.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

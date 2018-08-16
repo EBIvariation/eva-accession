@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVariant, Long> implements ISubmittedVariant {
 
+    @Indexed(background = true)
     @Field("asm")
     private String assemblyAccession;
 
@@ -47,7 +48,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     @Field("alt")
     private String alternateAllele;
 
-    @Indexed
+    @Indexed(background = true)
     @Field("rs")
     private Long clusteredVariantAccession;
 

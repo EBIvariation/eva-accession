@@ -12,20 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package uk.ac.ebi.eva.accession.pipeline.configuration;
+package uk.ac.ebi.eva.accession.dbsnp;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
-import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
+@EnableBatchProcessing
+@SpringBootApplication
+public class Application {
 
-@Configuration
-public class RunnerConfiguration {
-
-    @Bean
-    public JobExecutionApplicationListener jobExecutionApplicationListener() {
-        return new JobExecutionApplicationListener();
+    public static void main(String[] args) {
+        ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
+        System.exit(SpringApplication.exit(context));
     }
 }

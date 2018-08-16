@@ -1,11 +1,11 @@
 /*
- * Copyright 2014-2018 EMBL - European Bioinformatics Institute
+ * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,8 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
 
     private static final String ASSEMBLY = "AnyAssembly-1.0";
 
+    private static final String ASSEMBLY_ACCESSION = "GCA_123456789";
+
     private static final String PROJECT_ACCESSION = "HANDLE_NAME";
 
     private static final String BATCH_HANDLE = "HANDLE";
@@ -56,7 +58,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
 
     @Before
     public void setUp() throws Exception {
-        processor = new SubSnpNoHgvsToClusteredVariantProcessor();
+        processor = new SubSnpNoHgvsToClusteredVariantProcessor(ASSEMBLY_ACCESSION);
     }
 
     @After
@@ -87,7 +89,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                         long chromosomeStart) {
 
         assertEquals(subSnpNoHgvs.getRsId(), dbsnpClusteredVariant.getAccession());
-        assertEquals(ASSEMBLY, dbsnpClusteredVariant.getAssemblyAccession());
+        assertEquals(ASSEMBLY_ACCESSION, dbsnpClusteredVariant.getAssemblyAccession());
         assertEquals(TAXONOMY, dbsnpClusteredVariant.getTaxonomyAccession());
         assertEquals(chromosome, dbsnpClusteredVariant.getContig());
         assertEquals(chromosomeStart, dbsnpClusteredVariant.getStart());
@@ -100,7 +102,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
 
     public String getExpectedHash(String contig, long start, VariantType type) {
         String summary = new StringBuilder()
-                .append(ASSEMBLY)
+                .append(ASSEMBLY_ACCESSION)
                 .append("_").append(TAXONOMY)
                 .append("_").append(contig)
                 .append("_").append(start)

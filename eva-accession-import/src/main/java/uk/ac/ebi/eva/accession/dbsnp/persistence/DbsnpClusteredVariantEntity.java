@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.persistence;
 
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
@@ -29,6 +30,7 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 public class DbsnpClusteredVariantEntity extends AccessionedDocument<IClusteredVariant, Long> implements
         IClusteredVariant {
 
+    @Indexed(background = true)
     @Field("asm")
     private String assemblyAccession;
 

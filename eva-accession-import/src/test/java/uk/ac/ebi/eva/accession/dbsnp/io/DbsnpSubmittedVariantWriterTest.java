@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -33,6 +34,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -75,9 +77,12 @@ public class DbsnpSubmittedVariantWriterTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    private ImportCounts importCounts;
+
     @Before
     public void setUp() throws Exception {
-        dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate);
+        importCounts = new ImportCounts();
+        dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
         hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
     }
@@ -98,6 +103,7 @@ public class DbsnpSubmittedVariantWriterTest {
                                                                           DbsnpSubmittedVariantEntity.class);
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
+        assertEquals(1, importCounts.getSubmittedVariantsWritten());
 
         assertEquals(submittedVariant, accessions.get(0).getModel());
     }
@@ -124,6 +130,7 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(2, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
         assertEquals(EXPECTED_ACCESSION_2, (long) accessions.get(1).getAccession());
+        assertEquals(2, importCounts.getSubmittedVariantsWritten());
 
         assertEquals(firstSubmittedVariant, accessions.get(0).getModel());
         assertEquals(secondSubmittedVariant, accessions.get(1).getModel());
@@ -138,8 +145,12 @@ public class DbsnpSubmittedVariantWriterTest {
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant, 1);
 
-        thrown.expect(RuntimeException.class);
-        dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));
+        thrown.expect(BulkOperationException.class);
+        try {
+            dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));
+        } finally {
+            assertEquals(1, importCounts.getSubmittedVariantsWritten());
+        }
     }
 
 }

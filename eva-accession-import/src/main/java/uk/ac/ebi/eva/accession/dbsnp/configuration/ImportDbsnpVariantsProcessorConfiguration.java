@@ -87,8 +87,8 @@ public class ImportDbsnpVariantsProcessorConfiguration {
 
     @Bean
     SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor(
-            FastaSequenceReader fastaSequenceReader) {
-        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(fastaSequenceReader);
+            InputParameters parameters, FastaSequenceReader fastaSequenceReader) {
+        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(), fastaSequenceReader);
     }
 
     @Bean
