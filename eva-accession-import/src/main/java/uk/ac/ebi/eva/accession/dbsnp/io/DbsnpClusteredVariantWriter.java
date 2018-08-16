@@ -34,8 +34,7 @@ public class DbsnpClusteredVariantWriter implements ItemWriter<DbsnpClusteredVar
 
     private ImportCounts importCounts;
 
-    public DbsnpClusteredVariantWriter(MongoTemplate mongoTemplate,
-                                       ImportCounts importCounts) {
+    public DbsnpClusteredVariantWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
         this.mongoTemplate = mongoTemplate;
         this.importCounts = importCounts;
     }

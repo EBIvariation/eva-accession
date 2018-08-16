@@ -14,6 +14,7 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
@@ -37,6 +38,8 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
 
     private static final Boolean VALIDATED = false;
 
+    private ImportCounts importCounts;
+
     private DbsnpClusteredVariantDeclusteredWriter writer;
 
     private Function<IClusteredVariant, String> hashingFunction;
@@ -46,6 +49,7 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
 
     @Before
     public void setUp() throws Exception {
+        importCounts = new ImportCounts();
         writer = new DbsnpClusteredVariantDeclusteredWriter(mongoTemplate);
         hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DBSNP_CLUSTERED_VARIANT_DECLUSTERED);

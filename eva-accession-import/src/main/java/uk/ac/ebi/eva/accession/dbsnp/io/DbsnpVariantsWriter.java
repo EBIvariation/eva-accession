@@ -25,11 +25,8 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
@@ -80,24 +77,13 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private void writeClusteredVariantsDeclustered(List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered) {
         if (!clusteredVariantsDeclustered.isEmpty()) {
-            try {
-                Collection<DbsnpClusteredVariantEntity> uniqueClusteredVariants =
-                        clusteredVariantsDeclustered.stream()
-                             .collect(Collectors.toMap(DbsnpClusteredVariantEntity::getHashedMessage,
-                                                       a -> a,
-                                                       (a, b) -> a))
-                             .values();
-                dbsnpClusteredVariantDeclusteredWriter.write(new ArrayList<>(uniqueClusteredVariants));
-            } catch (DuplicateKeyException e) {
-            /*
-                We don't group by accession because several documents can have the same one. This will have to be
-                cleaned up later via merge, deprecation or other means. But even though we group by hash so that a
-                ClusteredVariant is only written once, this is only guaranteed within a chunk. It's possible that a
-                ClusteredVariant is split across chunks. Also, performing inserts and ignoring the exception seems a
-                bit simpler than performing upserts, as that would require retries if executing concurrently.
-                See https://jira.mongodb.org/browse/SERVER-14322
-             */
-            }
+            Collection<DbsnpClusteredVariantEntity> uniqueClusteredVariants =
+                    clusteredVariantsDeclustered.stream()
+                         .collect(Collectors.toMap(DbsnpClusteredVariantEntity::getHashedMessage,
+                                                   a -> a,
+                                                   (a, b) -> a))
+                         .values();
+            dbsnpClusteredVariantDeclusteredWriter.write(new ArrayList<>(uniqueClusteredVariants));
         }
     }
 
