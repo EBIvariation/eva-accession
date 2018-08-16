@@ -14,6 +14,8 @@ public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpC
 
     private static final Logger logger = LoggerFactory.getLogger(DbsnpClusteredVariantWriter.class);
 
+    static final String DBSNP_CLUSTERED_VARIANT_DECLUSTERED = "dbsnpClusteredVariantEntityDeclustered";
+
     private MongoTemplate mongoTemplate;
 
     public DbsnpClusteredVariantDeclusteredWriter(MongoTemplate mongoTemplate) {
@@ -24,7 +26,7 @@ public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpC
     public void write(List<? extends DbsnpClusteredVariantEntity> importedClusteredVariants) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               DbsnpClusteredVariantEntity.class,
-                                                              "dbsnpClusteredVariantEntityDeclustered");
+                                                              DBSNP_CLUSTERED_VARIANT_DECLUSTERED);
         bulkOperations.insert(importedClusteredVariants);
         bulkOperations.execute();
     }

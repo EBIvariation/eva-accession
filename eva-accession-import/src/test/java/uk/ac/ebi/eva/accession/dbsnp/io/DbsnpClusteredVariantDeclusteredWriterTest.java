@@ -20,20 +20,18 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import java.util.Collections;
 import java.util.function.Function;
 
+import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED;
+
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test-variants-writer.properties")
 @ContextConfiguration(classes = {MongoConfiguration.class})
 public class DbsnpClusteredVariantDeclusteredWriterTest {
 
-    private static final int TAXONOMY_1 = 3880;
-
-    private static final int TAXONOMY_2 = 3882;
+    private static final int TAXONOMY = 3880;
 
     private static final long EXPECTED_ACCESSION = 10000000000L;
 
-    private static final long EXPECTED_ACCESSION_2 = 10000000001L;
-
-    private static final int START_1 = 100;
+    private static final int START = 100;
 
     private static final VariantType VARIANT_TYPE = VariantType.SNV;
 
@@ -50,12 +48,12 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
     public void setUp() throws Exception {
         writer = new DbsnpClusteredVariantDeclusteredWriter(mongoTemplate);
         hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
-        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.dropCollection(DBSNP_CLUSTERED_VARIANT_DECLUSTERED);
     }
 
     @Test
     public void writeDeclusteredRs() {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY, "contig", START,
                                                                  VARIANT_TYPE, VALIDATED);
         DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(EXPECTED_ACCESSION,
                                                                               hashingFunction.apply(clusteredVariant),

@@ -55,6 +55,7 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MAT
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
+import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -96,7 +97,7 @@ public class DbsnpVariantsWriterTest {
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
-        mongoTemplate.dropCollection("dbsnpClusteredVariantEntityDeclustered");
+        mongoTemplate.dropCollection(DBSNP_CLUSTERED_VARIANT_DECLUSTERED);
     }
 
     @Test
@@ -175,24 +176,18 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void declusterVariantWithMismatchingAlleles() throws Exception {
         boolean allelesMatch = false;
-        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
-                                                                  "reference", "alternate", null,
-                                                                  DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
-                                                                  allelesMatch, DEFAULT_VALIDATED);
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+                                                                 "reference", "alternate", null,
+                                                                 DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
+                                                                 allelesMatch, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity1 =
                 new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION,
-                                                hashingFunctionSubmitted.apply(submittedVariant1),
-                                                submittedVariant1, 1);
+                                                hashingFunctionSubmitted.apply(submittedVariant),
+                                                submittedVariant, 1);
 
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(dbsnpSubmittedVariantEntity1));
 
-        DbsnpSubmittedVariantOperationEntity operationEntity = new DbsnpSubmittedVariantOperationEntity();
-        DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity = new DbsnpSubmittedVariantEntity
-                (SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1, 1);
-        DbsnpSubmittedVariantInactiveEntity dbsnpSubmittedVariantInactiveEntity =
-                new DbsnpSubmittedVariantInactiveEntity(dbsnpSubmittedVariantEntity);
-        operationEntity.fill(EventType.UPDATED, SUBMITTED_VARIANT_ACCESSION, null, "Declustered",
-                             Collections.singletonList(dbsnpSubmittedVariantInactiveEntity));
+        DbsnpSubmittedVariantOperationEntity operationEntity = createOperation(submittedVariant);
         wrapper.setOperations(Collections.singletonList(operationEntity));
 
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
@@ -217,7 +212,7 @@ public class DbsnpVariantsWriterTest {
         List<DbsnpSubmittedVariantEntity> ssEntities =
                 mongoTemplate.find(new Query(), DbsnpSubmittedVariantEntity.class);
         List<DbsnpSubmittedVariantOperationEntity> operationEntities =
-                mongoTemplate.find( new Query(), DbsnpSubmittedVariantOperationEntity.class);
+                mongoTemplate.find(new Query(), DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(1, operationEntities.size());
         assertEquals(EventType.UPDATED, operationEntities.get(0).getEventType());
         assertEquals(1, operationEntities.get(0).getInactiveObjects().size());
@@ -255,5 +250,53 @@ public class DbsnpVariantsWriterTest {
 
         dbsnpVariantsWriter.write(Arrays.asList(firstWrapper, secondWrapper));
         assertClusteredVariantStored(firstWrapper);
+    }
+
+    @Test
+    public void repeatedClusteredVariantsDeclustered() throws Exception {
+        boolean allelesMatch = false;
+        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
+                                                                  "reference", "alternate", CLUSTERED_VARIANT_ACCESSION,
+                                                                  DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
+                                                                  allelesMatch, DEFAULT_VALIDATED);
+        DbsnpSubmittedVariantEntity submittedVariantEntity1 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1, 1);
+        DbsnpVariantsWrapper firstWrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity1));
+
+        SubmittedVariant submittedVariant2 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+                                                                  "reference", "alternate", CLUSTERED_VARIANT_ACCESSION,
+                                                                  DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
+                                                                  DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2, 1);
+        DbsnpVariantsWrapper secondWrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
+
+        DbsnpSubmittedVariantOperationEntity operationEntity1 = createOperation(submittedVariant1);
+        firstWrapper.setOperations(Collections.singletonList(operationEntity1));
+        DbsnpSubmittedVariantOperationEntity operationEntity2 = createOperation(submittedVariant2);
+        secondWrapper.setOperations(Collections.singletonList(operationEntity2));
+
+        dbsnpVariantsWriter.write(Arrays.asList(firstWrapper, secondWrapper));
+        assertClusteredVariantStored(firstWrapper);
+        assertClusteredVariantDeclusteredStored(firstWrapper);
+    }
+
+    private DbsnpSubmittedVariantOperationEntity createOperation(SubmittedVariant submittedVariant1) {
+        DbsnpSubmittedVariantOperationEntity operationEntity = new DbsnpSubmittedVariantOperationEntity();
+        DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity = new DbsnpSubmittedVariantEntity
+                (SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1, 1);
+        DbsnpSubmittedVariantInactiveEntity dbsnpSubmittedVariantInactiveEntity =
+                new DbsnpSubmittedVariantInactiveEntity(dbsnpSubmittedVariantEntity);
+        operationEntity.fill(EventType.UPDATED, SUBMITTED_VARIANT_ACCESSION, null, "Declustered",
+                             Collections.singletonList(dbsnpSubmittedVariantInactiveEntity));
+        return operationEntity;
+    }
+
+    private void assertClusteredVariantDeclusteredStored(DbsnpVariantsWrapper wrapper) {
+        List<DbsnpClusteredVariantEntity> rsDeclusteredEntities = mongoTemplate.find(new Query(),
+                                                                                     DbsnpClusteredVariantEntity.class,
+                                                                                     DBSNP_CLUSTERED_VARIANT_DECLUSTERED);
+        assertEquals(1, rsDeclusteredEntities.size());
+        assertEquals(wrapper.getClusteredVariant(), rsDeclusteredEntities.get(0));
     }
 }
