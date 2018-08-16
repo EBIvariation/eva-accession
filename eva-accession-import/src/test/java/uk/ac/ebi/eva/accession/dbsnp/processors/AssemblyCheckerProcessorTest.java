@@ -178,4 +178,12 @@ public class AssemblyCheckerProcessorTest {
         assertTrue(processorUcsc.process(input).isAssemblyMatch());
     }
 
+    // Other
+
+    @Test
+    public void validReferenceSeqNameInvalidCoordinates() throws Exception {
+        SubSnpNoHgvs input = newSubSnpNoHgvs(null, 0, UCSC_1, Integer.MAX_VALUE, REFERENCE_ALLELE_1, DbsnpVariantType.SNV);
+        assertFalse(processorSeqName.process(input).isAssemblyMatch());
+    }
+
 }
