@@ -79,7 +79,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private void writeClusteredVariantsDeclustered(List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered) {
         if (!clusteredVariantsDeclustered.isEmpty()) {
-            dbsnpClusteredVariantDeclusteredWriter.write(new ArrayList<>(clusteredVariantsDeclustered));
+            dbsnpClusteredVariantDeclusteredWriter.write(clusteredVariantsDeclustered);
         }
     }
 

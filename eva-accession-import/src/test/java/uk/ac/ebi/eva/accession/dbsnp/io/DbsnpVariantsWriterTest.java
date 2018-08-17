@@ -55,7 +55,8 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MAT
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
-import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
+import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter
+        .DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -205,7 +206,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpSubmittedVariantInactiveEntity dbsnpSubmittedVariantInactiveEntity =
                 new DbsnpSubmittedVariantInactiveEntity(dbsnpSubmittedVariantEntity);
         operationEntity.fill(EventType.UPDATED, SUBMITTED_VARIANT_ACCESSION, null, "Declustered",
-                Collections.singletonList(dbsnpSubmittedVariantInactiveEntity));
+                             Collections.singletonList(dbsnpSubmittedVariantInactiveEntity));
         return operationEntity;
     }
 
@@ -235,7 +236,7 @@ public class DbsnpVariantsWriterTest {
 
     private void assertClusterVariantDeclusteredStored(DbsnpVariantsWrapper wrapper) {
         List<DbsnpClusteredVariantEntity> rsDeclusteredEntities = mongoTemplate.find
-                (new Query(), DbsnpClusteredVariantEntity.class, "dbsnpClusteredVariantEntityDeclustered");
+                (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
         assertEquals(1, rsDeclusteredEntities.size());
         assertEquals(wrapper.getClusteredVariant(), rsDeclusteredEntities.get(0));
     }
@@ -289,14 +290,6 @@ public class DbsnpVariantsWriterTest {
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
         assertClusteredVariantStored(wrapper1);
-        assertClusteredVariantDeclusteredStored(wrapper1);
-    }
-
-    private void assertClusteredVariantDeclusteredStored(DbsnpVariantsWrapper wrapper) {
-        List<DbsnpClusteredVariantEntity> rsDeclusteredEntities = mongoTemplate.find(new Query(),
-                                                                                     DbsnpClusteredVariantEntity.class,
-                DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
-        assertEquals(1, rsDeclusteredEntities.size());
-        assertEquals(wrapper.getClusteredVariant(), rsDeclusteredEntities.get(0));
+        assertClusterVariantDeclusteredStored(wrapper1);
     }
 }

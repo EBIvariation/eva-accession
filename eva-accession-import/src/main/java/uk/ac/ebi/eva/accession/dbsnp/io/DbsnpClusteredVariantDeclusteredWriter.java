@@ -46,7 +46,7 @@ public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpC
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                                   DbsnpClusteredVariantEntity.class,
-                    DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
+                                                                  DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
             bulkOperations.insert(importedClusteredVariants);
             bulkOperations.execute();
         } catch (BulkOperationException e) {

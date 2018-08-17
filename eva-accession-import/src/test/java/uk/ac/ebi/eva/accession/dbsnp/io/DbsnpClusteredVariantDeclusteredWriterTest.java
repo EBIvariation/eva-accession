@@ -40,7 +40,8 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
+import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter
+        .DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test-variants-writer.properties")
@@ -76,31 +77,33 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
         DbsnpClusteredVariantEntity variant = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
         writer.write(Collections.singletonList(variant));
 
-        List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find
-                (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
+        List<DbsnpClusteredVariantEntity> rsEntities =
+                mongoTemplate.find(new Query(), DbsnpClusteredVariantEntity.class,
+                                   DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
 
         assertEquals(1, rsEntities.size());
         assertEquals(variant, rsEntities.get(0));
     }
 
     private DbsnpClusteredVariantEntity newDbsnpClusteredVariantEntity(int start, Long accession) {
-        ClusteredVariant clusteredVariantDuplicated = new ClusteredVariant("assembly", TAXONOMY, "contig", start,
-                VARIANT_TYPE, VALIDATED);
-        return new DbsnpClusteredVariantEntity(accession,
-                hashingFunction.apply(clusteredVariantDuplicated), clusteredVariantDuplicated);
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY, "contig", start, VARIANT_TYPE,
+                                                                 VALIDATED);
+        return new DbsnpClusteredVariantEntity(accession, hashingFunction.apply(clusteredVariant), clusteredVariant);
     }
 
     @Test
     public void writeMultipleDistinctDeclusteredRss() {
         DbsnpClusteredVariantEntity variant1 = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
-        DbsnpClusteredVariantEntity variant2 = newDbsnpClusteredVariantEntity(START+1, EXPECTED_ACCESSION+1);
+        DbsnpClusteredVariantEntity variant2 = newDbsnpClusteredVariantEntity(START + 1, EXPECTED_ACCESSION + 1);
         writer.write(Arrays.asList(variant1, variant2));
 
-        List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find
-                (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
+        List<DbsnpClusteredVariantEntity> rsEntities =
+                mongoTemplate.find(new Query(), DbsnpClusteredVariantEntity.class,
+                                   DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
 
         assertEquals(2, rsEntities.size());
         assertEquals(variant1, rsEntities.get(0));
+        assertEquals(variant2, rsEntities.get(1));
     }
 
     @Test
