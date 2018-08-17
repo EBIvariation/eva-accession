@@ -98,8 +98,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                                                         getProjectAccession(subSnpNoHgvs),
                                                         variantRegion.getChromosome(), variantRegion.getStart(),
                                                         reference, alternate, subSnpNoHgvs.getRsId(),
-                                                        DEFAULT_SUPPORTED_BY_EVIDENCE, false, DEFAULT_ALLELES_MATCH,
-                                                        DEFAULT_VALIDATED);
+                                                        DEFAULT_SUPPORTED_BY_EVIDENCE, subSnpNoHgvs.isAssemblyMatch(),
+                                                        DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
         variant.setSupportedByEvidence(subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists());
         variant.setAllelesMatch(subSnpNoHgvs.doAllelesMatch());
         variant.setValidated(subSnpNoHgvs.isSubsnpValidated());
