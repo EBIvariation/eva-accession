@@ -26,7 +26,9 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
@@ -37,15 +39,19 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private DbsnpSubmittedVariantOperationWriter dbsnpSubmittedVariantOperationWriter;
 
+    private DbsnpClusteredVariantDeclusteredWriter dbsnpClusteredVariantDeclusteredWriter;
+
     public DbsnpVariantsWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
         this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
         this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
                                                                                              importCounts);
+        this.dbsnpClusteredVariantDeclusteredWriter = new DbsnpClusteredVariantDeclusteredWriter(mongoTemplate);
     }
 
     @Override
     public void write(List<? extends DbsnpVariantsWrapper> wrappers) throws Exception {
+        Set<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered = new HashSet<>();
         for (DbsnpVariantsWrapper dbsnpVariantsWrapper : wrappers) {
             List<DbsnpSubmittedVariantEntity> submittedVariants = dbsnpVariantsWrapper.getSubmittedVariants();
             dbsnpSubmittedVariantWriter.write(submittedVariants);
@@ -53,9 +59,11 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             List<DbsnpSubmittedVariantOperationEntity> operations = dbsnpVariantsWrapper.getOperations();
             if (operations != null && !operations.isEmpty()) {
                 dbsnpSubmittedVariantOperationWriter.write(operations);
+                clusteredVariantsDeclustered.add(dbsnpVariantsWrapper.getClusteredVariant());
             }
         }
         writeClusteredVariants(wrappers);
+        writeClusteredVariantsDeclustered(new ArrayList<>(clusteredVariantsDeclustered));
     }
 
     private void writeClusteredVariants(List<? extends DbsnpVariantsWrapper> items) {
@@ -67,6 +75,12 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                                (a, b) -> a))
                      .values();
         dbsnpClusteredVariantWriter.write(new ArrayList<>(uniqueClusteredVariants));
+    }
+
+    private void writeClusteredVariantsDeclustered(List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered) {
+        if (!clusteredVariantsDeclustered.isEmpty()) {
+            dbsnpClusteredVariantDeclusteredWriter.write(clusteredVariantsDeclustered);
+        }
     }
 
 }

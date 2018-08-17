@@ -23,33 +23,34 @@ import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.List;
 
-public class DbsnpClusteredVariantWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
+/**
+ * Writes into a separate collection those clustered variants (RS) for which at least one submitted variant (SS) has
+ * been declustered.
+ */
+public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
+
+    static final String DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME = "dbsnpClusteredVariantEntityDeclustered";
 
     private MongoTemplate mongoTemplate;
 
-    private ImportCounts importCounts;
-
-    public DbsnpClusteredVariantWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
+    public DbsnpClusteredVariantDeclusteredWriter(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.importCounts = importCounts;
     }
 
     @Override
     public void write(List<? extends DbsnpClusteredVariantEntity> importedClusteredVariants) {
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  DbsnpClusteredVariantEntity.class);
+                                                                  DbsnpClusteredVariantEntity.class,
+                                                                  DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
             bulkOperations.insert(importedClusteredVariants);
             bulkOperations.execute();
-            importCounts.addClusteredVariantsWritten(importedClusteredVariants.size());
         } catch (BulkOperationException e) {
             BulkWriteResult bulkWriteResult = e.getResult();
-            importCounts.addClusteredVariantsWritten(bulkWriteResult.getInsertedCount());
             // Duplicate key errors don't need to be thrown because it is expected that a single clustered variant will
             // be linked to more than one SS, effectively generating a duplication. Any other errors should be thrown.
             if (e.getErrors().stream().anyMatch(this::isNotDuplicateKeyError)) {
