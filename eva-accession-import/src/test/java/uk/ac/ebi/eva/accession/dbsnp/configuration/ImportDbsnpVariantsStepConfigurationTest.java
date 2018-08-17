@@ -26,15 +26,24 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
@@ -42,7 +51,9 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 
-    private static final int EXPECTED_VARIANTS = 5;
+    private static final int EXPECTED_SUBMITTED_VARIANTS = 5;
+
+    private static final int EXPECTED_CLUSTERED_VARIANTS = 3;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -68,7 +79,18 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(IMPORT_DBSNP_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-        long numVariantsInDatabase = submittedVariantRepository.count();
-        assertEquals(EXPECTED_VARIANTS, numVariantsInDatabase);
+        assertEquals(EXPECTED_SUBMITTED_VARIANTS, submittedVariantRepository.count());
+        assertEquals(EXPECTED_CLUSTERED_VARIANTS, clusteredVariantRepository.count());
+
+        List<DbsnpSubmittedVariantEntity> storedSubmittedVariants = new ArrayList<>();
+        submittedVariantRepository.findAll().forEach(storedSubmittedVariants::add);
+
+        Set<Long> variantsThatMatchAssembly = storedSubmittedVariants.stream().filter(
+                SubmittedVariantEntity::isAssemblyMatch).map(SubmittedVariantEntity::getAccession).collect(
+                Collectors.toSet());
+        List<Long> expectedAssemblyMatchVariants = Arrays.asList(26201546L, 1540359250L, 25312601L);
+        assertEquals(3, variantsThatMatchAssembly.size());
+        assertTrue(variantsThatMatchAssembly.containsAll(expectedAssemblyMatchVariants));
+
     }
 }
