@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.configuration;
 
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
@@ -26,8 +26,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
@@ -42,26 +42,33 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 
-    private static final int EXPECTED_VARIANTS = 14;
+    private static final int EXPECTED_VARIANTS = 5;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
-    private SubmittedVariantAccessioningRepository repository;
+    private DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository;
+
+    @Autowired
+    private DbsnpClusteredVariantAccessioningRepository clusteredVariantRepository;
 
     @Autowired
     private InputParameters inputParameters;
 
+    @Before
+    public void setUp() throws Exception {
+        submittedVariantRepository.deleteAll();
+        clusteredVariantRepository.deleteAll();
+    }
+
     @Test
     @DirtiesContext
-    @Ignore("In order to make this test pass, we have to implement DbsnpVariantsWriter")
     public void executeStep() throws IOException {
-
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(IMPORT_DBSNP_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-        long numVariantsInDatabase = repository.count();
+        long numVariantsInDatabase = submittedVariantRepository.count();
         assertEquals(EXPECTED_VARIANTS, numVariantsInDatabase);
     }
 }
