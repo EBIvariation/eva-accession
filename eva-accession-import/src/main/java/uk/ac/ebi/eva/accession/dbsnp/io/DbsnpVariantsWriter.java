@@ -24,7 +24,11 @@ import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
@@ -59,7 +63,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             }
         }
         writeClusteredVariants(wrappers);
-        writeClusteredVariantsDeclustered(new ArrayList<>(clusteredVariantsDeclustered));
+        dbsnpClusteredVariantDeclusteredWriter.write(new ArrayList<>(clusteredVariantsDeclustered));
     }
 
     private void writeClusteredVariants(List<? extends DbsnpVariantsWrapper> items) {
@@ -71,12 +75,6 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                                (a, b) -> a))
                      .values();
         dbsnpClusteredVariantWriter.write(new ArrayList<>(uniqueClusteredVariants));
-    }
-
-    private void writeClusteredVariantsDeclustered(List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered) {
-        if (!clusteredVariantsDeclustered.isEmpty()) {
-            dbsnpClusteredVariantDeclusteredWriter.write(clusteredVariantsDeclustered);
-        }
     }
 
 }

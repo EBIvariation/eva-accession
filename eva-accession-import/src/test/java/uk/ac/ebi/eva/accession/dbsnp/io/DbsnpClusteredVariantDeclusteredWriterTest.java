@@ -30,11 +30,11 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -73,12 +73,41 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
 
     @Test
     public void writeDeclusteredRs() {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY, "contig", START,
-                                                                 VARIANT_TYPE, VALIDATED);
-        DbsnpClusteredVariantEntity variant = new DbsnpClusteredVariantEntity(EXPECTED_ACCESSION,
-                                                                              hashingFunction.apply(clusteredVariant),
-                                                                              clusteredVariant);
+        DbsnpClusteredVariantEntity variant = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
         writer.write(Collections.singletonList(variant));
+
+        List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find
+                (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
+
+        assertEquals(1, rsEntities.size());
+        assertEquals(variant, rsEntities.get(0));
+    }
+
+    private DbsnpClusteredVariantEntity newDbsnpClusteredVariantEntity(int start, Long accession) {
+        ClusteredVariant clusteredVariantDuplicated = new ClusteredVariant("assembly", TAXONOMY, "contig", start,
+                VARIANT_TYPE, VALIDATED);
+        return new DbsnpClusteredVariantEntity(accession,
+                hashingFunction.apply(clusteredVariantDuplicated), clusteredVariantDuplicated);
+    }
+
+    @Test
+    public void writeMultipleDistinctDeclusteredRss() {
+        DbsnpClusteredVariantEntity variant1 = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
+        DbsnpClusteredVariantEntity variant2 = newDbsnpClusteredVariantEntity(START+1, EXPECTED_ACCESSION+1);
+        writer.write(Arrays.asList(variant1, variant2));
+
+        List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find
+                (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
+
+        assertEquals(2, rsEntities.size());
+        assertEquals(variant1, rsEntities.get(0));
+    }
+
+    @Test
+    public void writeMultipleDuplicateDeclusteredRss() {
+        DbsnpClusteredVariantEntity variant = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
+        DbsnpClusteredVariantEntity variantDuplicated = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
+        writer.write(Arrays.asList(variant, variantDuplicated));
 
         List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find
                 (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
