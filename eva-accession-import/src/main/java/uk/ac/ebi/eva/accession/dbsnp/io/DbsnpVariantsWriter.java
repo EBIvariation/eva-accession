@@ -24,9 +24,7 @@ import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
@@ -49,7 +47,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     @Override
     public void write(List<? extends DbsnpVariantsWrapper> wrappers) throws Exception {
-        List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered = new ArrayList<>();
+        Set<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered = new HashSet<>();
         for (DbsnpVariantsWrapper dbsnpVariantsWrapper : wrappers) {
             List<DbsnpSubmittedVariantEntity> submittedVariants = dbsnpVariantsWrapper.getSubmittedVariants();
             dbsnpSubmittedVariantWriter.write(submittedVariants);
@@ -61,7 +59,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             }
         }
         writeClusteredVariants(wrappers);
-        writeClusteredVariantsDeclustered(clusteredVariantsDeclustered);
+        writeClusteredVariantsDeclustered(new ArrayList<>(clusteredVariantsDeclustered));
     }
 
     private void writeClusteredVariants(List<? extends DbsnpVariantsWrapper> items) {
@@ -77,13 +75,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private void writeClusteredVariantsDeclustered(List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered) {
         if (!clusteredVariantsDeclustered.isEmpty()) {
-            Collection<DbsnpClusteredVariantEntity> uniqueClusteredVariants =
-                    clusteredVariantsDeclustered.stream()
-                         .collect(Collectors.toMap(DbsnpClusteredVariantEntity::getHashedMessage,
-                                                   a -> a,
-                                                   (a, b) -> a))
-                         .values();
-            dbsnpClusteredVariantDeclusteredWriter.write(new ArrayList<>(uniqueClusteredVariants));
+            dbsnpClusteredVariantDeclusteredWriter.write(clusteredVariantsDeclustered);
         }
     }
 

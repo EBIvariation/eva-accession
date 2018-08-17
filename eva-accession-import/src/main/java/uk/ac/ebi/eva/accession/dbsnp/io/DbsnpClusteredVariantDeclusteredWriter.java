@@ -18,21 +18,22 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 import com.mongodb.BulkWriteError;
 import com.mongodb.BulkWriteResult;
 import com.mongodb.ErrorCategory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.List;
 
+/**
+ * Writes into a separate collection those clustered variants (RS) for which at least one submitted variant (SS) has
+ * been declustered.
+ */
 public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
 
-    static final String DBSNP_CLUSTERED_VARIANT_DECLUSTERED = "dbsnpClusteredVariantEntityDeclustered";
+    static final String DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME = "dbsnpClusteredVariantEntityDeclustered";
 
     private MongoTemplate mongoTemplate;
 
@@ -45,7 +46,7 @@ public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpC
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                                   DbsnpClusteredVariantEntity.class,
-                                                                  DBSNP_CLUSTERED_VARIANT_DECLUSTERED);
+                    DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
             bulkOperations.insert(importedClusteredVariants);
             bulkOperations.execute();
         } catch (BulkOperationException e) {
