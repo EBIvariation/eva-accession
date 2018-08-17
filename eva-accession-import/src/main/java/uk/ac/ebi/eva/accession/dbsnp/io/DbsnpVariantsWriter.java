@@ -63,7 +63,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             }
         }
         writeClusteredVariants(wrappers);
-        dbsnpClusteredVariantDeclusteredWriter.write(new ArrayList<>(clusteredVariantsDeclustered));
+        writeClusteredVariantsDeclustered(new ArrayList<>(clusteredVariantsDeclustered));
     }
 
     private void writeClusteredVariants(List<? extends DbsnpVariantsWrapper> items) {
@@ -75,6 +75,12 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                                (a, b) -> a))
                      .values();
         dbsnpClusteredVariantWriter.write(new ArrayList<>(uniqueClusteredVariants));
+    }
+
+    private void writeClusteredVariantsDeclustered(List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered) {
+        if (!clusteredVariantsDeclustered.isEmpty()) {
+            dbsnpClusteredVariantDeclusteredWriter.write(new ArrayList<>(clusteredVariantsDeclustered));
+        }
     }
 
 }
