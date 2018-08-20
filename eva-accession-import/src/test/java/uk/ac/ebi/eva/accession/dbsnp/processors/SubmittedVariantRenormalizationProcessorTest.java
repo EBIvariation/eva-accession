@@ -54,7 +54,8 @@ public class SubmittedVariantRenormalizationProcessorTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        fastaSequenceReader = new FastaSequenceReader(Paths.get("src/test/resources/Gallus_gallus-5.0.test.fa"));
+        fastaSequenceReader = new FastaSequenceReader(
+                Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
         renormalizer = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
     }
 
