@@ -28,6 +28,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
@@ -51,9 +52,9 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 
-    private static final int EXPECTED_SUBMITTED_VARIANTS = 5;
+    private static final int EXPECTED_SUBMITTED_VARIANTS = 6;
 
-    private static final int EXPECTED_CLUSTERED_VARIANTS = 3;
+    private static final int EXPECTED_CLUSTERED_VARIANTS = 4;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -80,8 +81,7 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         assertEquals(EXPECTED_SUBMITTED_VARIANTS, submittedVariantRepository.count());
-        // TODO: the following assert is failing and 4 RSs are being written instead of 3
-        // assertEquals(EXPECTED_CLUSTERED_VARIANTS, clusteredVariantRepository.count());
+        assertEquals(EXPECTED_CLUSTERED_VARIANTS, clusteredVariantRepository.count());
 
         List<DbsnpSubmittedVariantEntity> storedSubmittedVariants = new ArrayList<>();
         submittedVariantRepository.findAll().forEach(storedSubmittedVariants::add);
@@ -89,9 +89,8 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         Set<Long> variantsThatMatchAssembly = storedSubmittedVariants.stream().filter(
                 SubmittedVariantEntity::isAssemblyMatch).map(SubmittedVariantEntity::getAccession).collect(
                 Collectors.toSet());
-        List<Long> expectedAssemblyMatchVariants = Arrays.asList(26201546L, 1540359250L, 25312601L);
+        List<Long> expectedAssemblyMatchVariants = Arrays.asList(26201546L, 1540359250L, 25312602L);
         assertEquals(3, variantsThatMatchAssembly.size());
         assertTrue(variantsThatMatchAssembly.containsAll(expectedAssemblyMatchVariants));
-
     }
 }
