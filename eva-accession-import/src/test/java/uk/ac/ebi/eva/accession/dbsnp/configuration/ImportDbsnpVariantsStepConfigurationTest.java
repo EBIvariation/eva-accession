@@ -53,7 +53,7 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 
-    private static final int EXPECTED_SUBMITTED_VARIANTS = 6;
+    private static final int EXPECTED_SUBMITTED_VARIANTS = 7;
 
     private static final int EXPECTED_CLUSTERED_VARIANTS = 4;
 
@@ -94,6 +94,13 @@ public class ImportDbsnpVariantsStepConfigurationTest {
                                                                 SubmittedVariantEntity::isSupportedByEvidence);
         assertFilteredVariantsAre(variantsSupportedByEvidencce,
                                   Arrays.asList(26201546L, 25062583L, 25312601L, 27587141L, 25312602L));
+        Set<Long> variantsThatMatchAlleles = filterVariants(storedSubmittedVariants,
+                                                            SubmittedVariantEntity::isAllelesMatch);
+        assertFilteredVariantsAre(variantsThatMatchAlleles,
+                                  Arrays.asList(26201546L, 1540359250L, 25062583L, 25312601L, 25312602L));
+        Set<Long> validatedVariants = filterVariants(storedSubmittedVariants, SubmittedVariantEntity::isValidated);
+        assertFilteredVariantsAre(validatedVariants,
+                                  Arrays.asList(26201546L, 25312601L, 27587141L, 25312602L));
     }
 
     private Set<Long> filterVariants(List<DbsnpSubmittedVariantEntity> unfilteredVariants,
