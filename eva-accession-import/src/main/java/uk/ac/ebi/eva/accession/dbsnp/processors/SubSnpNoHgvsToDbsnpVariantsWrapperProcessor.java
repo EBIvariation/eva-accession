@@ -33,10 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
-import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
-import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
-
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
 
     private SubmittedVariantRenormalizationProcessor renormalizationProcessor;
@@ -89,22 +85,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
 
     private SubmittedVariant subSnpNoHgvsToSubmittedVariant(SubSnpNoHgvs subSnpNoHgvs, String alternate) {
         Region variantRegion = subSnpNoHgvs.getVariantRegion();
-        String reference = subSnpNoHgvs.getReferenceInForwardStrand();
-        /*
-            assemblyMatch is set to false because null is not allowed but the assembly checker should determine the
-            real value of assemblyMatch.
-         */
-        SubmittedVariant variant = new SubmittedVariant(this.assemblyAccession, subSnpNoHgvs.getTaxonomyId(),
-                                                        getProjectAccession(subSnpNoHgvs),
-                                                        variantRegion.getChromosome(), variantRegion.getStart(),
-                                                        reference, alternate, subSnpNoHgvs.getRsId(),
-                                                        DEFAULT_SUPPORTED_BY_EVIDENCE, subSnpNoHgvs.isAssemblyMatch(),
-                                                        DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
-        variant.setSupportedByEvidence(subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists());
-        variant.setAllelesMatch(subSnpNoHgvs.doAllelesMatch());
-        variant.setValidated(subSnpNoHgvs.isSubsnpValidated());
-
-        return variant;
+        return new SubmittedVariant(this.assemblyAccession, subSnpNoHgvs.getTaxonomyId(),
+                                    getProjectAccession(subSnpNoHgvs), variantRegion.getChromosome(),
+                                    variantRegion.getStart(), subSnpNoHgvs.getReferenceInForwardStrand(), alternate,
+                                    subSnpNoHgvs.getRsId(),
+                                    subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists(),
+                                    subSnpNoHgvs.isAssemblyMatch(), subSnpNoHgvs.doAllelesMatch(),
+                                    subSnpNoHgvs.isSubsnpValidated());
     }
 
     private String getProjectAccession(SubSnpNoHgvs subSnpNoHgvs) {
