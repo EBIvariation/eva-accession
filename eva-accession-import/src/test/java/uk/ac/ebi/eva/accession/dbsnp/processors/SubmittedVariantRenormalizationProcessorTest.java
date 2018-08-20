@@ -70,12 +70,24 @@ public class SubmittedVariantRenormalizationProcessorTest {
         assertNonAmbiguousDoesNotChange(3, "CG", "GC"); // 2:GCG>GGC
     }
 
-    private void assertNonAmbiguousDoesNotChange(int position, String reference, String alternate) throws Exception {
-        assertMatchesExpected(position, reference, alternate, position, reference, alternate, true);
+    private void assertNonAmbiguousDoesNotChange(int position, String reference, String alternate) {
+        assertMatchesExpected(position, reference, alternate, position, reference, alternate, false);
     }
 
-    private void assertMatchesExpected(int position, String reference, String alternate, int expectedStart,
-                                       String expectedReference, String expectedAlternate, boolean hashDoesNotChange) {
+    private void assertAmbiguousVariantIsRenormalized(int position, String reference, String alternate,
+                                                      int renormalizedVariantExpectedStart,
+                                                      String renormalizedVariantExpectedReference,
+                                                      String renormalizedVariantExpectedAlternate) {
+
+        assertMatchesExpected(position, reference, alternate, renormalizedVariantExpectedStart,
+                              renormalizedVariantExpectedReference, renormalizedVariantExpectedAlternate, true);
+    }
+
+    private void assertMatchesExpected(int position, String reference, String alternate,
+                                       int expectedStartAfterRenormalization,
+                                       String expectedReferenceAfterRenormalization,
+                                       String expectedAlternateAfterRenormalization,
+                                       boolean hashShouldHaveBeenRecalculated) {
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(SS_ID, HASH, ASSEMBLY, TAXONOMY, PROJECT,
                                                                               "22", position, reference, alternate,
                                                                               RS_ID, DEFAULT_SUPPORTED_BY_EVIDENCE,
@@ -85,10 +97,11 @@ public class SubmittedVariantRenormalizationProcessorTest {
         List<DbsnpSubmittedVariantEntity> renormalized = renormalizer.process(Collections.singletonList(variant));
         assertNotNull(renormalized);
         assertEquals(1, renormalized.size());
-        assertEquals(expectedStart, renormalized.get(0).getStart());
-        assertEquals(expectedReference, renormalized.get(0).getReferenceAllele());
-        assertEquals(expectedAlternate, renormalized.get(0).getAlternateAllele());
-        assertEquals(hashDoesNotChange, variant.getHashedMessage().equals(renormalized.get(0).getHashedMessage()));
+        assertEquals(expectedStartAfterRenormalization, renormalized.get(0).getStart());
+        assertEquals(expectedReferenceAfterRenormalization, renormalized.get(0).getReferenceAllele());
+        assertEquals(expectedAlternateAfterRenormalization, renormalized.get(0).getAlternateAllele());
+        boolean hashHasBeenRecalculated = !variant.getHashedMessage().equals(renormalized.get(0).getHashedMessage());
+        assertEquals(hashShouldHaveBeenRecalculated, hashHasBeenRecalculated);
     }
 
     @Test
@@ -112,19 +125,19 @@ public class SubmittedVariantRenormalizationProcessorTest {
 
     @Test
     public void ambiguousInsertions() throws Exception {
-        assertMatchesExpected(3, "", "G", 2, "", "G", false);   // 2:G>GG
-        assertMatchesExpected(3, "", "CG", 2, "", "GC", false); // 2:G>GCG
-        assertMatchesExpected(5, "", "CG", 4, "", "GC", false); // 4:G>GCG
-        assertMatchesExpected(7, "", "C", 6, "", "C", false);   // 6:C>CC
-        assertMatchesExpected(7, "", "CC", 6, "", "CC", false); // 6:C>CCC
-        assertMatchesExpected(7, "", "CCC", 6, "", "CCC", false);   // 6:C>CCCC
+        assertAmbiguousVariantIsRenormalized(3, "", "G", 2, "", "G");   // 2:G>GG
+        assertAmbiguousVariantIsRenormalized(3, "", "CG", 2, "", "GC"); // 2:G>GCG
+        assertAmbiguousVariantIsRenormalized(5, "", "CG", 4, "", "GC"); // 4:G>GCG
+        assertAmbiguousVariantIsRenormalized(7, "", "C", 6, "", "C");   // 6:C>CC
+        assertAmbiguousVariantIsRenormalized(7, "", "CC", 6, "", "CC"); // 6:C>CCC
+        assertAmbiguousVariantIsRenormalized(7, "", "CCC", 6, "", "CCC");   // 6:C>CCCC
     }
 
     @Test
     public void ambiguousDeletions() throws Exception {
-        assertMatchesExpected(3, "CG", "", 2, "GC", "", false); // 2:GCG>G
-        assertMatchesExpected(5, "CG", "", 4, "GC", "", false); // 4:GCG>G
-        assertMatchesExpected(6, "C", "", 5, "C", "", false);   // 5:CC>C
+        assertAmbiguousVariantIsRenormalized(3, "CG", "", 2, "GC", ""); // 2:GCG>G
+        assertAmbiguousVariantIsRenormalized(5, "CG", "", 4, "GC", ""); // 4:GCG>G
+        assertAmbiguousVariantIsRenormalized(6, "C", "", 5, "C", "");   // 5:CC>C
     }
 
     /**
