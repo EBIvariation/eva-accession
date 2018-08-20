@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -86,11 +87,23 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         List<DbsnpSubmittedVariantEntity> storedSubmittedVariants = new ArrayList<>();
         submittedVariantRepository.findAll().forEach(storedSubmittedVariants::add);
 
-        Set<Long> variantsThatMatchAssembly = storedSubmittedVariants.stream().filter(
-                SubmittedVariantEntity::isAssemblyMatch).map(SubmittedVariantEntity::getAccession).collect(
+        Set<Long> variantsThatMatchAssembly = filterVariants(storedSubmittedVariants,
+                                                             SubmittedVariantEntity::isAssemblyMatch);
+        assertFilteredVariantsAre(variantsThatMatchAssembly, Arrays.asList(26201546L, 1540359250L, 25312602L));
+        Set<Long> variantsSupportedByEvidencce = filterVariants(storedSubmittedVariants,
+                                                                SubmittedVariantEntity::isSupportedByEvidence);
+        assertFilteredVariantsAre(variantsSupportedByEvidencce,
+                                  Arrays.asList(26201546L, 25062583L, 25312601L, 27587141L, 25312602L));
+    }
+
+    private Set<Long> filterVariants(List<DbsnpSubmittedVariantEntity> unfilteredVariants,
+                                     Predicate<DbsnpSubmittedVariantEntity> predicate) {
+        return unfilteredVariants.stream().filter(predicate).map(SubmittedVariantEntity::getAccession).collect(
                 Collectors.toSet());
-        List<Long> expectedAssemblyMatchVariants = Arrays.asList(26201546L, 1540359250L, 25312602L);
-        assertEquals(3, variantsThatMatchAssembly.size());
-        assertTrue(variantsThatMatchAssembly.containsAll(expectedAssemblyMatchVariants));
+    }
+
+    private void assertFilteredVariantsAre(Set<Long> variantsToCheck, List<Long> expectedVariants) {
+        assertEquals(expectedVariants.size(), variantsToCheck.size());
+        assertTrue(variantsToCheck.containsAll(expectedVariants));
     }
 }
