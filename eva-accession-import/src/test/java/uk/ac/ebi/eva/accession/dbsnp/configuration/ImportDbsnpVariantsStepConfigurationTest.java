@@ -26,12 +26,16 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
@@ -41,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -53,9 +58,9 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 
-    private static final int EXPECTED_SUBMITTED_VARIANTS = 7;
+    private static final int EXPECTED_SUBMITTED_VARIANTS = 8;
 
-    private static final int EXPECTED_CLUSTERED_VARIANTS = 4;
+    private static final int EXPECTED_CLUSTERED_VARIANTS = 5;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -90,15 +95,16 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         clusteredVariantRepository.findAll().forEach(storedClusteredVariants::add);
 
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAssemblyMatch,
-                                     Arrays.asList(26201546L, 1540359250L, 25312602L));
+                                     Arrays.asList(26201546L, 1540359250L, 88888888L, 9999999L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isSupportedByEvidence,
-                                     Arrays.asList(26201546L, 25062583L, 25312601L, 27587141L, 25312602L));
+                                     Arrays.asList(26201546L, 25062583L, 25312601L, 27587141L, 88888888L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAllelesMatch,
-                                     Arrays.asList(26201546L, 1540359250L, 25062583L, 25312601L, 25312602L));
+                                     Arrays.asList(26201546L, 1540359250L, 25062583L, 25312601L, 88888888L, 9999999L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isValidated,
-                                     Arrays.asList(26201546L, 25312601L, 27587141L, 25312602L));
+                                     Arrays.asList(26201546L, 25312601L, 27587141L, 88888888L));
         checkFlagInClusteredVariants(storedClusteredVariants, DbsnpClusteredVariantEntity::isValidated,
-                                     Arrays.asList(13823349L, 13823350L));
+                                     Arrays.asList(13823349L, 7777777L));
+        checkRenormalizedVariant(storedSubmittedVariants, storedClusteredVariants);
     }
 
     private void checkFlagInSubmittedVariants(List<DbsnpSubmittedVariantEntity> unfilteredVariants,
@@ -118,4 +124,23 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         assertEquals(expectedVariants.size(), variantsToCheck.size());
         assertTrue(variantsToCheck.containsAll(expectedVariants));
     }
+
+    private void checkRenormalizedVariant(List<DbsnpSubmittedVariantEntity> submittedVariants,
+                                          List<DbsnpClusteredVariantEntity> clusteredVariants) {
+        DbsnpSubmittedVariantEntity submittedVariant = submittedVariants.stream().filter(
+                ss -> ss.getAccession().equals(9999999L)).findFirst().get();
+        SubmittedVariant expectedVariant = new SubmittedVariant("GCF_000002315.4", 9031, "HANDLE_BATCH", "22", 2, "GC",
+                                                                "", 6666666L, false, true, true, false);
+        assertEquals(expectedVariant, submittedVariant.getModel());
+        // the hash should have been recalculated with the new model
+        Function<ISubmittedVariant, String> hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        assertEquals(hashingFunction.apply(expectedVariant), submittedVariant.getHashedMessage());
+
+        DbsnpClusteredVariantEntity clusteredVariant = clusteredVariants.stream().filter(
+                rs -> rs.getAccession().equals(6666666L)).findFirst().get();
+        // the RS coordinates are not modified by renormalisation
+        assertEquals(3, clusteredVariant.getStart());
+    }
+
 }
