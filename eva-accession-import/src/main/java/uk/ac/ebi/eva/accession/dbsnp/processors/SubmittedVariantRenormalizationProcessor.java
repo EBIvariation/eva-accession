@@ -18,12 +18,16 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SubmittedVariantRenormalizationProcessor implements
@@ -33,8 +37,11 @@ public class SubmittedVariantRenormalizationProcessor implements
 
     private FastaSequenceReader fastaSequenceReader;
 
+    private Function<ISubmittedVariant, String> hashingFunction;
+
     public SubmittedVariantRenormalizationProcessor(FastaSequenceReader fastaSequenceReader) {
         this.fastaSequenceReader = fastaSequenceReader;
+        hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @Override
@@ -130,13 +137,20 @@ public class SubmittedVariantRenormalizationProcessor implements
     private DbsnpSubmittedVariantEntity createNormalizedVariant(DbsnpSubmittedVariantEntity variant,
                                                                 String renormalizedAlternate,
                                                                 String renormalizedReference, long renormalizedStart) {
-        return new DbsnpSubmittedVariantEntity(variant.getAccession(), variant.getHashedMessage(),
-                                               variant.getAssemblyAccession(), variant.getTaxonomyAccession(),
-                                               variant.getProjectAccession(), variant.getContig(), renormalizedStart,
-                                               renormalizedReference, renormalizedAlternate,
-                                               variant.getClusteredVariantAccession(), variant.isSupportedByEvidence(),
-                                               variant.isAssemblyMatch(), variant.isAllelesMatch(),
-                                               variant.isValidated(), variant.getVersion());
+        ISubmittedVariant normalizedVariantModel = new SubmittedVariant(variant.getAssemblyAccession(),
+                                                                        variant.getTaxonomyAccession(),
+                                                                        variant.getProjectAccession(),
+                                                                        variant.getContig(), renormalizedStart,
+                                                                        renormalizedReference, renormalizedAlternate,
+                                                                        variant.getClusteredVariantAccession(),
+                                                                        variant.isSupportedByEvidence(),
+                                                                        variant.isAssemblyMatch(),
+                                                                        variant.isAllelesMatch(),
+                                                                        variant.isValidated());
+        return new DbsnpSubmittedVariantEntity(variant.getAccession(), hashingFunction.apply(normalizedVariantModel),
+                                               normalizedVariantModel, variant.getVersion());
+
     }
+
 
 }

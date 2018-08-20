@@ -71,11 +71,11 @@ public class SubmittedVariantRenormalizationProcessorTest {
     }
 
     private void assertNonAmbiguousDoesNotChange(int position, String reference, String alternate) throws Exception {
-        assertMatchesExpected(position, reference, alternate, position, reference, alternate);
+        assertMatchesExpected(position, reference, alternate, position, reference, alternate, true);
     }
 
     private void assertMatchesExpected(int position, String reference, String alternate, int expectedStart,
-                                       String expectedReference, String expectedAlternate) throws Exception {
+                                       String expectedReference, String expectedAlternate, boolean hashDoesNotChange) {
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(SS_ID, HASH, ASSEMBLY, TAXONOMY, PROJECT,
                                                                               "22", position, reference, alternate,
                                                                               RS_ID, DEFAULT_SUPPORTED_BY_EVIDENCE,
@@ -88,6 +88,7 @@ public class SubmittedVariantRenormalizationProcessorTest {
         assertEquals(expectedStart, renormalized.get(0).getStart());
         assertEquals(expectedReference, renormalized.get(0).getReferenceAllele());
         assertEquals(expectedAlternate, renormalized.get(0).getAlternateAllele());
+        assertEquals(hashDoesNotChange, variant.getHashedMessage().equals(renormalized.get(0).getHashedMessage()));
     }
 
     @Test
@@ -111,19 +112,19 @@ public class SubmittedVariantRenormalizationProcessorTest {
 
     @Test
     public void ambiguousInsertions() throws Exception {
-        assertMatchesExpected(3, "", "G", 2, "", "G");   // 2:G>GG
-        assertMatchesExpected(3, "", "CG", 2, "", "GC"); // 2:G>GCG
-        assertMatchesExpected(5, "", "CG", 4, "", "GC"); // 4:G>GCG
-        assertMatchesExpected(7, "", "C", 6, "", "C");   // 6:C>CC
-        assertMatchesExpected(7, "", "CC", 6, "", "CC"); // 6:C>CCC
-        assertMatchesExpected(7, "", "CCC", 6, "", "CCC");   // 6:C>CCCC
+        assertMatchesExpected(3, "", "G", 2, "", "G", false);   // 2:G>GG
+        assertMatchesExpected(3, "", "CG", 2, "", "GC", false); // 2:G>GCG
+        assertMatchesExpected(5, "", "CG", 4, "", "GC", false); // 4:G>GCG
+        assertMatchesExpected(7, "", "C", 6, "", "C", false);   // 6:C>CC
+        assertMatchesExpected(7, "", "CC", 6, "", "CC", false); // 6:C>CCC
+        assertMatchesExpected(7, "", "CCC", 6, "", "CCC", false);   // 6:C>CCCC
     }
 
     @Test
     public void ambiguousDeletions() throws Exception {
-        assertMatchesExpected(3, "CG", "", 2, "GC", ""); // 2:GCG>G
-        assertMatchesExpected(5, "CG", "", 4, "GC", ""); // 4:GCG>G
-        assertMatchesExpected(6, "C", "", 5, "C", "");   // 5:CC>C
+        assertMatchesExpected(3, "CG", "", 2, "GC", "", false); // 2:GCG>G
+        assertMatchesExpected(5, "CG", "", 4, "GC", "", false); // 4:GCG>G
+        assertMatchesExpected(6, "C", "", 5, "C", "", false);   // 5:CC>C
     }
 
     /**
