@@ -64,7 +64,7 @@ public class SubSnpNoHgvsReaderTest {
     public void readChickenVariants() throws Exception {
         reader = buildReader(CHICKEN_ASSEMBY, PAGE_SIZE);
         List<SubSnpNoHgvs> variants = readAll(reader);
-        assertEquals(5, variants.size());
+        assertEquals(7, variants.size());
     }
 
     @Test

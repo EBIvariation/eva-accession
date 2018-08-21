@@ -33,6 +33,7 @@ import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsReaderConf
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsStepConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsWriterConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ListenersConfiguration;
 
 import javax.sql.DataSource;
 
@@ -45,7 +46,8 @@ import javax.sql.DataSource;
         ImportDbsnpVariantsProcessorConfiguration.class,
         ImportDbsnpVariantsWriterConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
-        InputParametersConfiguration.class})
+        InputParametersConfiguration.class,
+        ListenersConfiguration.class})
 public class BatchTestConfiguration {
 
     @Autowired
