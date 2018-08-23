@@ -24,6 +24,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.dbsnp.io.DbsnpVariantsWriter;
@@ -43,9 +45,12 @@ public class ImportDbsnpVariantsWriterConfiguration {
     DbsnpVariantsWriter dbsnpVariantWriter(InputParameters parameters, MongoTemplate mongoTemplate,
                                            ImportCounts importCounts,
                                            DbsnpSubmittedVariantOperationRepository operationRepository,
-                                           DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository)
+                                           DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository,
+                                           DbsnpClusteredVariantOperationRepository clusteredOperationRepository,
+                                           DbsnpClusteredVariantAccessioningRepository clusteredVariantRepository)
             throws Exception {
         logger.info("Injecting dbsnpVariantWriter with parameters: {}", parameters);
-        return new DbsnpVariantsWriter(mongoTemplate, operationRepository, submittedVariantRepository, importCounts);
+        return new DbsnpVariantsWriter(mongoTemplate, operationRepository, submittedVariantRepository,
+                                       clusteredOperationRepository, clusteredVariantRepository, importCounts);
     }
 }
