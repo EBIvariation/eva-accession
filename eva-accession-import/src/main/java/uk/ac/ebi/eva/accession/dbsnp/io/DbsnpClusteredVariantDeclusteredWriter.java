@@ -23,7 +23,7 @@ import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.List;
 
