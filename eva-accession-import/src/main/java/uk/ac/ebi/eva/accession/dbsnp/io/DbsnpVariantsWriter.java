@@ -25,9 +25,11 @@ import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
@@ -51,7 +53,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(DUPLICATE_KEY_ERROR_MESSAGE_REGEX);
 
-    private MongoTemplate mongoTemplate;
+    private DbsnpSubmittedVariantOperationRepository operationRepository;
+
+    private DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository;
 
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
@@ -61,8 +65,12 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private DbsnpClusteredVariantDeclusteredWriter dbsnpClusteredVariantDeclusteredWriter;
 
-    public DbsnpVariantsWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
-        this.mongoTemplate = mongoTemplate;
+    public DbsnpVariantsWriter(MongoTemplate mongoTemplate,
+                               DbsnpSubmittedVariantOperationRepository operationRepository,
+                               DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository,
+                               ImportCounts importCounts) {
+        this.operationRepository = operationRepository;
+        this.submittedVariantRepository = submittedVariantRepository;
         this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
         this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
@@ -93,29 +101,34 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private void addMergeOperationsToWrapper(DbsnpVariantsWrapper dbsnpVariantsWrapper,
                                              List<DbsnpSubmittedVariantEntity> submittedVariants,
-                                             BulkOperationException e) {
+                                             BulkOperationException exception) {
         if (dbsnpVariantsWrapper.getOperations() == null) {
             dbsnpVariantsWrapper.setOperations(new ArrayList<>());
         }
-        e.getErrors().stream().filter(this::isDuplicateKeyError).forEach(error -> {
-            Matcher matcher = DUPLICATE_KEY_PATTERN.matcher(error.getMessage());
+        exception.getErrors()
+                 .stream()
+                 .filter(this::isDuplicateKeyError)
+                 .map(error -> {
+                     Matcher matcher = DUPLICATE_KEY_PATTERN.matcher(error.getMessage());
 
-            if (matcher.find()) {
-                String hash = matcher.group(DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME);
+                     if (!matcher.find()) {
+                         throw new IllegalStateException(
+                                 "A duplicate key exception was caught, but the message couldn't be parsed correctly",
+                                 exception);
+                     } else {
+                         String hash = matcher.group(DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME);
+                         return hash;
+                     }
+                 })
+                 .distinct()
+                 .forEach(hash -> {
+                     DbsnpSubmittedVariantEntity mergedInto = submittedVariantRepository.findOne(hash);
+                     List<DbsnpSubmittedVariantOperationEntity> merges = buildMergeOperations(submittedVariants,
+                                                                                              hash,
+                                                                                              mergedInto);
 
-                DbsnpSubmittedVariantEntity mergedInto = mongoTemplate.findOne(
-                        new Query().addCriteria(Criteria.where("_id").is(hash)),
-                        DbsnpSubmittedVariantEntity.class);
-                Stream<DbsnpSubmittedVariantOperationEntity> merges = buildMergeOperations(submittedVariants,
-                                                                                           hash,
-                                                                                           mergedInto);
-
-                merges.forEach(mergeOperation -> dbsnpVariantsWrapper.getOperations().add(mergeOperation));
-            } else {
-                throw new IllegalStateException(
-                        "A duplicate key exception was caught, but the message couldn't be parsed correctly", e);
-            }
-        });
+                     dbsnpVariantsWrapper.getOperations().addAll(merges);
+                 });
     }
 
     /**
@@ -124,14 +137,29 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
      * If the subsnp accession is the same, it doesn't make sense to merge it into itself, so the duplicate exception
      * can be ignored.
      */
-    private Stream<DbsnpSubmittedVariantOperationEntity> buildMergeOperations(
+    private List<DbsnpSubmittedVariantOperationEntity> buildMergeOperations(
             List<DbsnpSubmittedVariantEntity> submittedVariants, String hash, DbsnpSubmittedVariantEntity mergedInto) {
-        // TODO Multiple accession origin*s*: only one duplicate is thrown per hash
-        // so multiple duplicates could be present in a single chunk
-        return submittedVariants
-                .stream()
-                .filter(v -> v.getHashedMessage().equals(hash) && !v.getAccession().equals(mergedInto.getAccession()))
-                .map(origin -> buildMergeOperation(origin, mergedInto));
+        return removeDuplicatesWithSameHashAndAccession(submittedVariants)
+                .filter(v -> v.getHashedMessage().equals(hash)
+                        && !v.getAccession().equals(mergedInto.getAccession())
+                        && !isAlreadyMerged(v.getAccession()))
+                .map(origin -> buildMergeOperation(origin, mergedInto))
+                .collect(Collectors.toList());
+    }
+
+    private Stream<DbsnpSubmittedVariantEntity> removeDuplicatesWithSameHashAndAccession(
+            List<DbsnpSubmittedVariantEntity> submittedVariants) {
+        return submittedVariants.stream()
+                                .collect(Collectors.toMap(v -> v.getHashedMessage() + v.getAccession().toString(),
+                                                          v -> v,
+                                                          (a, b) -> a))
+                                .values()
+                                .stream();
+    }
+
+    private boolean isAlreadyMerged(Long accession) {
+        List<DbsnpSubmittedVariantOperationEntity> merges = operationRepository.findAllByAccession(accession);
+        return !merges.isEmpty();
     }
 
     private DbsnpSubmittedVariantOperationEntity buildMergeOperation(DbsnpSubmittedVariantEntity origin,

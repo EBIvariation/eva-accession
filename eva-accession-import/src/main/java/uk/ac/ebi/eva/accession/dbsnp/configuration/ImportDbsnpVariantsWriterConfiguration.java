@@ -24,6 +24,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.dbsnp.io.DbsnpVariantsWriter;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
@@ -38,11 +40,12 @@ public class ImportDbsnpVariantsWriterConfiguration {
 
     @Bean(name = DBSNP_VARIANT_WRITER)
     @StepScope
-    DbsnpVariantsWriter dbsnpVariantWriter(InputParameters parameters,
-                                           MongoTemplate mongoTemplate,
-                                           ImportCounts importCounts) throws Exception {
-
+    DbsnpVariantsWriter dbsnpVariantWriter(InputParameters parameters, MongoTemplate mongoTemplate,
+                                           ImportCounts importCounts,
+                                           DbsnpSubmittedVariantOperationRepository operationRepository,
+                                           DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository)
+            throws Exception {
         logger.info("Injecting dbsnpVariantWriter with parameters: {}", parameters);
-        return new DbsnpVariantsWriter(mongoTemplate, importCounts);
+        return new DbsnpVariantsWriter(mongoTemplate, operationRepository, submittedVariantRepository, importCounts);
     }
 }
