@@ -81,10 +81,8 @@ public class ClusteredVariantsRestControllerTest {
 
         // No new dbSNP accessions can be generated, so the variants can only be stored directly using a repository
         // TODO When the support for new EVA accessions is implemented, this could be changed
-        // In order to do so, replicate the structure of {@link ClusteredVariantRestController}
+        // In order to do so, replicate the structure of {@link SubmittedVariantsRestControllerTest}
         generatedAccessions = repository.save(Arrays.asList(entity1, entity2));
-
-        System.out.println("Generated accessions = " + generatedAccessions);
     }
 
     @After
