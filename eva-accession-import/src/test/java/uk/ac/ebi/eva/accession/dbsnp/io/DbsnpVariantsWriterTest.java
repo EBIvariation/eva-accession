@@ -35,9 +35,11 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
@@ -81,6 +83,8 @@ public class DbsnpVariantsWriterTest {
 
     private static final Long SUBMITTED_VARIANT_ACCESSION_2 = 16L;
 
+    private static final Long SUBMITTED_VARIANT_ACCESSION_3 = 17L;
+
     private DbsnpVariantsWriter dbsnpVariantsWriter;
 
     private Function<ISubmittedVariant, String> hashingFunctionSubmitted;
@@ -92,10 +96,17 @@ public class DbsnpVariantsWriterTest {
 
     private ImportCounts importCounts;
 
+    @Autowired
+    private DbsnpSubmittedVariantOperationRepository operationRepository;
+
+    @Autowired
+    private DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository;
+
     @Before
     public void setUp() throws Exception {
         importCounts = new ImportCounts();
-        dbsnpVariantsWriter = new DbsnpVariantsWriter(mongoTemplate, importCounts);
+        dbsnpVariantsWriter = new DbsnpVariantsWriter(mongoTemplate, operationRepository, submittedVariantRepository,
+                                                      importCounts);
         hashingFunctionSubmitted = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         hashingFunctionClustered = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
@@ -115,7 +126,7 @@ public class DbsnpVariantsWriterTest {
 
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
-        assertSubmittedVariantsStored(wrapper, 1);
+        assertSubmittedVariantsStored(1, submittedVariantEntity);
         assertClusteredVariantStored(wrapper);
     }
 
@@ -131,14 +142,15 @@ public class DbsnpVariantsWriterTest {
         return wrapper;
     }
 
-    private void assertSubmittedVariantsStored(DbsnpVariantsWrapper wrapper, int expectedVariants) {
+    private void assertSubmittedVariantsStored(int expectedVariants, DbsnpSubmittedVariantEntity... submittedVariants) {
         List<DbsnpSubmittedVariantEntity> ssEntities = mongoTemplate.find(new Query(),
                                                                           DbsnpSubmittedVariantEntity.class);
-        for (int i = 0; i < expectedVariants; i++) {
-            assertEquals(expectedVariants, ssEntities.size());
-            assertEquals(wrapper.getSubmittedVariants().get(i), ssEntities.get(i));
-        }
+        assertEquals(expectedVariants, ssEntities.size());
+        assertEquals(expectedVariants, submittedVariants.length);
         assertEquals(expectedVariants, importCounts.getSubmittedVariantsWritten());
+        for (int i = 0; i < expectedVariants; i++) {
+            assertTrue(ssEntities.contains(submittedVariants[i]));
+        }
     }
 
     private void assertClusteredVariantStored(DbsnpVariantsWrapper wrapper) {
@@ -173,7 +185,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Arrays.asList(dbsnpSubmittedVariantEntity1,
                                                                         dbsnpSubmittedVariantEntity2));
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
-        assertSubmittedVariantsStored(wrapper, 2);
+        assertSubmittedVariantsStored(2, dbsnpSubmittedVariantEntity1, dbsnpSubmittedVariantEntity2);
         assertClusteredVariantStored(wrapper);
     }
 
@@ -307,7 +319,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
 
         // Try to write twice, the second time it will be considered a duplicate
-        dbsnpVariantsWriter.write(Arrays.asList(wrapper));
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
 
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
                 SUBMITTED_VARIANT_ACCESSION_2, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
@@ -316,15 +328,115 @@ public class DbsnpVariantsWriterTest {
         dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2, wrapper));
 
         assertClusteredVariantStored(wrapper);
+        assertSubmittedVariantsStored(1, submittedVariantEntity);
+        assertMergeOperationStored(1);
+    }
 
-        List<DbsnpSubmittedVariantEntity> ssEntities = mongoTemplate.find(new Query(),
-                                                                          DbsnpSubmittedVariantEntity.class);
-        assertTrue(ssEntities.contains(submittedVariantEntity));
-        assertEquals(1, importCounts.getSubmittedVariantsWritten());
-
+    private void assertMergeOperationStored(int expectedOperations) {
         List<DbsnpSubmittedVariantOperationEntity> operationEntities = mongoTemplate.find(
                 new Query(), DbsnpSubmittedVariantOperationEntity.class);
-        assertEquals(1, operationEntities.size());
+        assertEquals(expectedOperations, operationEntities.size());
+    }
+
+    @Test
+    public void mergeOnlyOnceDuplicateSubmittedVariants() throws Exception {
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+                                                                 "reference", "alternate", CLUSTERED_VARIANT_ACCESSION,
+                                                                 DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
+                                                                 DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
+        DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
+
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
+
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_2, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
+        DbsnpVariantsWrapper wrapper3 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
+
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper2, wrapper3));
+
+        assertClusteredVariantStored(wrapper);
+        assertSubmittedVariantsStored(1, submittedVariantEntity);
+        assertMergeOperationStored(1);
+    }
+
+    @Test
+    public void mergeOnlyOnceDuplicateSubmittedVariantsInTheSameWrapper() throws Exception {
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+                                                                 "reference", "alternate", CLUSTERED_VARIANT_ACCESSION,
+                                                                 DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
+                                                                 DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
+        DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
+
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
+
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_2, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity2,
+                                                                         submittedVariantEntity2));
+
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper2));
+
+        assertClusteredVariantStored(wrapper);
+        assertSubmittedVariantsStored(1, submittedVariantEntity);
+        assertMergeOperationStored(1);
+    }
+
+    @Test
+    public void mergeThreeDuplicateSubmittedVariants() throws Exception {
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+                                                                 "reference", "alternate", CLUSTERED_VARIANT_ACCESSION,
+                                                                 DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
+                                                                 DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
+        DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
+
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
+
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_2, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity2));
+
+        DbsnpSubmittedVariantEntity submittedVariantEntity3 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_3, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper3 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity3));
+
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2, wrapper, wrapper3));
+
+        assertClusteredVariantStored(wrapper);
+        assertSubmittedVariantsStored(1, submittedVariantEntity);
+        assertMergeOperationStored(2);
+    }
+
+    @Test
+    public void mergeThreeDuplicateSubmittedVariantsInTheSameWrapper() throws Exception {
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+                                                                 "reference", "alternate", CLUSTERED_VARIANT_ACCESSION,
+                                                                 DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
+                                                                 DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED);
+        DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
+
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
+
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_2, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpSubmittedVariantEntity submittedVariantEntity3 = new DbsnpSubmittedVariantEntity(
+                SUBMITTED_VARIANT_ACCESSION_3, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity2,
+                                                                         submittedVariantEntity3));
+
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2, wrapper));
+
+        assertClusteredVariantStored(wrapper);
+        assertSubmittedVariantsStored(1, submittedVariantEntity);
+        assertMergeOperationStored(2);
     }
 
 }
