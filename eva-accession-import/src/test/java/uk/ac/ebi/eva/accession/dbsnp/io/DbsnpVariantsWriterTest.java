@@ -44,6 +44,7 @@ import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Arrays;
@@ -220,7 +221,8 @@ public class DbsnpVariantsWriterTest {
                 (SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1, 1);
         DbsnpSubmittedVariantInactiveEntity dbsnpSubmittedVariantInactiveEntity =
                 new DbsnpSubmittedVariantInactiveEntity(dbsnpSubmittedVariantEntity);
-        operationEntity.fill(EventType.UPDATED, SUBMITTED_VARIANT_ACCESSION_1, null, "Declustered",
+        operationEntity.fill(EventType.UPDATED, SUBMITTED_VARIANT_ACCESSION_1, null,
+                             SubmittedVariantDeclusterProcessor.DECLUSTERED,
                              Collections.singletonList(dbsnpSubmittedVariantInactiveEntity));
         return operationEntity;
     }
@@ -318,18 +320,20 @@ public class DbsnpVariantsWriterTest {
                 SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity));
 
-        // Try to write twice, the second time it will be considered a duplicate
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
 
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
                 SUBMITTED_VARIANT_ACCESSION_2, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
         DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
 
+        // Try to write wrapper twice, the second time it will be considered a duplicate and ignored
+        // wrapper2 will be merged into the previous accession
         dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2, wrapper));
 
         assertClusteredVariantStored(wrapper);
         assertSubmittedVariantsStored(1, submittedVariantEntity);
         assertMergeOperationStored(1);
+        assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
 
     private void assertMergeOperationStored(int expectedOperations) {
@@ -355,6 +359,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
         DbsnpVariantsWrapper wrapper3 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
 
+        // wrapper3 should not issue another identical merge event
         dbsnpVariantsWriter.write(Arrays.asList(wrapper2, wrapper3));
 
         assertClusteredVariantStored(wrapper);
@@ -379,6 +384,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity2,
                                                                          submittedVariantEntity2));
 
+        // should not issue another identical merge event for the second variant in wrapper2
         dbsnpVariantsWriter.write(Arrays.asList(wrapper2));
 
         assertClusteredVariantStored(wrapper);
