@@ -20,8 +20,6 @@ import com.mongodb.ErrorCategory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
@@ -32,6 +30,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEn
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,11 +91,18 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             List<DbsnpSubmittedVariantOperationEntity> operations = dbsnpVariantsWrapper.getOperations();
             if (operations != null && !operations.isEmpty()) {
                 dbsnpSubmittedVariantOperationWriter.write(operations);
-                clusteredVariantsDeclustered.add(dbsnpVariantsWrapper.getClusteredVariant());
+                if (operations.stream().anyMatch(this::isDeclusteringOperation)) {
+                    clusteredVariantsDeclustered.add(dbsnpVariantsWrapper.getClusteredVariant());
+                }
             }
         }
         writeClusteredVariants(wrappers);
         writeClusteredVariantsDeclustered(new ArrayList<>(clusteredVariantsDeclustered));
+    }
+
+    private boolean isDeclusteringOperation(DbsnpSubmittedVariantOperationEntity operation) {
+        return operation.getEventType().equals(EventType.UPDATED) &&
+                operation.getReason().startsWith(SubmittedVariantDeclusterProcessor.DECLUSTERED);
     }
 
     private void addMergeOperationsToWrapper(DbsnpVariantsWrapper dbsnpVariantsWrapper,
@@ -105,7 +111,18 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         if (dbsnpVariantsWrapper.getOperations() == null) {
             dbsnpVariantsWrapper.setOperations(new ArrayList<>());
         }
-        exception.getErrors()
+        extractUniqueHashes(exception)
+                .forEach(hash -> {
+                    DbsnpSubmittedVariantEntity mergedInto = submittedVariantRepository.findOne(hash);
+                    List<DbsnpSubmittedVariantOperationEntity> merges = buildMergeOperations(submittedVariants, hash,
+                                                                                             mergedInto);
+
+                    dbsnpVariantsWrapper.getOperations().addAll(merges);
+                });
+    }
+
+    private Stream<String> extractUniqueHashes(BulkOperationException exception) {
+        return exception.getErrors()
                  .stream()
                  .filter(this::isDuplicateKeyError)
                  .map(error -> {
@@ -120,19 +137,15 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                          return hash;
                      }
                  })
-                 .distinct()
-                 .forEach(hash -> {
-                     DbsnpSubmittedVariantEntity mergedInto = submittedVariantRepository.findOne(hash);
-                     List<DbsnpSubmittedVariantOperationEntity> merges = buildMergeOperations(submittedVariants,
-                                                                                              hash,
-                                                                                              mergedInto);
-
-                     dbsnpVariantsWrapper.getOperations().addAll(merges);
-                 });
+                 .distinct();
     }
 
     /**
-     * Build a list of merge operations for submitted variants with the same hash and different subsnp accession.
+     * Build a list of merge operations for *distinct* new submitted variants that will be merged into existing
+     * submitted variants.
+     *
+     * Two submitted variants have to be merged if they have the same hash and different subsnp accession, and only if
+     * the new one wasn't merged before.
      *
      * If the subsnp accession is the same, it doesn't make sense to merge it into itself, so the duplicate exception
      * can be ignored.
