@@ -26,7 +26,7 @@ public class DbsnpSubmittedVariantSummaryFunction implements Function<ISubmitted
     @Override
     public String apply(ISubmittedVariant model) {
         return new StringBuilder()
-                .append(model.getAssemblyAccession())
+                .append(model.getReferenceAccession())
                 .append("_").append(model.getTaxonomyAccession())
                 .append("_").append(model.getProjectAccession())
                 .append("_").append(model.getContig())

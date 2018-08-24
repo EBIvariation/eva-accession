@@ -172,7 +172,7 @@ public class AccessionReportWriter {
         if (contextBase.isEmpty()) {
             throw new IllegalStateException("fastaSequenceReader should have returned a non-empty sequence");
         } else {
-            return new SubmittedVariant(normalizedVariant.getAssemblyAccession(),
+            return new SubmittedVariant(normalizedVariant.getReferenceAccession(),
                                         normalizedVariant.getTaxonomyAccession(),
                                         normalizedVariant.getProjectAccession(),
                                         normalizedVariant.getContig(),

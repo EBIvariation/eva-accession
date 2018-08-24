@@ -28,8 +28,8 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmittedVariant, Long>
         implements ISubmittedVariant {
 
-    @Field("asm")
-    private String assemblyAccession;
+    @Field("refAcc")
+    private String referenceAccession;
 
     @Field("tax")
     private int taxonomyAccession;
@@ -67,7 +67,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
 
     public SubmittedVariantInactiveEntity(SubmittedVariantEntity submittedVariantEntity) {
         super(submittedVariantEntity);
-        this.assemblyAccession = submittedVariantEntity.getAssemblyAccession();
+        this.referenceAccession = submittedVariantEntity.getReferenceAccession();
         this.taxonomyAccession = submittedVariantEntity.getTaxonomyAccession();
         this.projectAccession = submittedVariantEntity.getProjectAccession();
         this.contig = submittedVariantEntity.getContig();
@@ -82,8 +82,8 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     }
 
     @Override
-    public String getAssemblyAccession() {
-        return assemblyAccession;
+    public String getReferenceAccession() {
+        return referenceAccession;
     }
 
     @Override
@@ -163,7 +163,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
         if (start != that.start) {
             return false;
         }
-        if (!assemblyAccession.equals(that.assemblyAccession)) {
+        if (!referenceAccession.equals(that.referenceAccession)) {
             return false;
         }
         if (!projectAccession.equals(that.projectAccession)) {
@@ -197,7 +197,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
 
     @Override
     public int hashCode() {
-        int result = assemblyAccession.hashCode();
+        int result = referenceAccession.hashCode();
         result = 31 * result + taxonomyAccession;
         result = 31 * result + projectAccession.hashCode();
         result = 31 * result + contig.hashCode();

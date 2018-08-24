@@ -22,7 +22,7 @@ import java.util.Objects;
 
 public class SubmittedVariant implements ISubmittedVariant {
 
-    private String assemblyAccession;
+    private String referenceAccession;
 
     private int taxonomyAccession;
 
@@ -59,16 +59,16 @@ public class SubmittedVariant implements ISubmittedVariant {
      * would write the flags with an arbitrary value. This constructor is intended to create objects for querying only,
      * where the flags are ignored.
      */
-    public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession,
+    public SubmittedVariant(String referenceAccession, int taxonomyAccession, String projectAccession,
                             String contig, long start, String referenceAllele, String alternateAllele,
                             Long clusteredVariantAccession) {
-        this(assemblyAccession, taxonomyAccession, projectAccession, contig, start, referenceAllele, alternateAllele,
+        this(referenceAccession, taxonomyAccession, projectAccession, contig, start, referenceAllele, alternateAllele,
              clusteredVariantAccession, DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, DEFAULT_ALLELES_MATCH,
              DEFAULT_VALIDATED);
     }
 
     public SubmittedVariant(ISubmittedVariant variant) {
-        this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getProjectAccession(),
+        this(variant.getReferenceAccession(), variant.getTaxonomyAccession(), variant.getProjectAccession(),
              variant.getContig(), variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(),
              variant.getClusteredVariantAccession(), variant.isSupportedByEvidence(), variant.isAssemblyMatch(),
              variant.isAllelesMatch(), variant.isValidated());
@@ -78,11 +78,11 @@ public class SubmittedVariant implements ISubmittedVariant {
      * This is the constructor that has to be used to instantiate objects that will be written in the accessioning
      * database.
      */
-    public SubmittedVariant(String assemblyAccession, int taxonomyAccession, String projectAccession, String contig,
+    public SubmittedVariant(String referenceAccession, int taxonomyAccession, String projectAccession, String contig,
                             long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
                             Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
                             Boolean validated) {
-        if(Objects.isNull(assemblyAccession)) {
+        if(Objects.isNull(referenceAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
         if(Objects.isNull(projectAccession)) {
@@ -98,7 +98,7 @@ public class SubmittedVariant implements ISubmittedVariant {
             throw new IllegalArgumentException("Alternate allele is required");
         }
 
-        this.assemblyAccession = assemblyAccession;
+        this.referenceAccession = referenceAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
         this.contig = contig;
@@ -114,12 +114,12 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
-    public String getAssemblyAccession() {
-        return assemblyAccession;
+    public String getReferenceAccession() {
+        return referenceAccession;
     }
 
-    public void setAssemblyAccession(String assemblyAccession) {
-        this.assemblyAccession = assemblyAccession;
+    public void setReferenceAccession(String referenceAccession) {
+        this.referenceAccession = referenceAccession;
     }
 
     @Override
@@ -247,7 +247,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         if (start != variant.start) {
             return false;
         }
-        if (!assemblyAccession.equals(variant.assemblyAccession)) {
+        if (!referenceAccession.equals(variant.referenceAccession)) {
             return false;
         }
         if (!projectAccession.equals(variant.projectAccession)) {
@@ -284,7 +284,7 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     @Override
     public int hashCode() {
-        int result = assemblyAccession.hashCode();
+        int result = referenceAccession.hashCode();
         result = 31 * result + taxonomyAccession;
         result = 31 * result + projectAccession.hashCode();
         result = 31 * result + contig.hashCode();
@@ -302,7 +302,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     @Override
     public String toString() {
         return "SubmittedVariant{" +
-                "assemblyAccession='" + assemblyAccession + '\'' +
+                "referenceAccession='" + referenceAccession + '\'' +
                 ", taxonomyAccession=" + taxonomyAccession +
                 ", projectAccession='" + projectAccession + '\'' +
                 ", contig='" + contig + '\'' +
