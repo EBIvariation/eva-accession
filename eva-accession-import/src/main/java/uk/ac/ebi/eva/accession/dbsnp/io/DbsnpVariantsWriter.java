@@ -15,23 +15,46 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
+import com.mongodb.BulkWriteError;
+import com.mongodb.ErrorCategory;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
+
+    private final String DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME = "IDKEY";
+
+    private final String DUPLICATE_KEY_ERROR_MESSAGE_REGEX = "index:\\s.*\\{\\s?\\:\\s?\"(?<"
+            + DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME + ">[a-zA-Z0-9]+)\"\\s?\\}";
+
+    private final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(DUPLICATE_KEY_ERROR_MESSAGE_REGEX);
+
+    private DbsnpSubmittedVariantOperationRepository operationRepository;
+
+    private DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository;
 
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
@@ -41,7 +64,12 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private DbsnpClusteredVariantDeclusteredWriter dbsnpClusteredVariantDeclusteredWriter;
 
-    public DbsnpVariantsWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
+    public DbsnpVariantsWriter(MongoTemplate mongoTemplate,
+                               DbsnpSubmittedVariantOperationRepository operationRepository,
+                               DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository,
+                               ImportCounts importCounts) {
+        this.operationRepository = operationRepository;
+        this.submittedVariantRepository = submittedVariantRepository;
         this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
         this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
@@ -54,16 +82,110 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         Set<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered = new HashSet<>();
         for (DbsnpVariantsWrapper dbsnpVariantsWrapper : wrappers) {
             List<DbsnpSubmittedVariantEntity> submittedVariants = dbsnpVariantsWrapper.getSubmittedVariants();
-            dbsnpSubmittedVariantWriter.write(submittedVariants);
+            try {
+                dbsnpSubmittedVariantWriter.write(submittedVariants);
+            } catch (BulkOperationException exception) {
+                addMergeOperationsToWrapper(dbsnpVariantsWrapper, submittedVariants, exception);
+            }
 
             List<DbsnpSubmittedVariantOperationEntity> operations = dbsnpVariantsWrapper.getOperations();
             if (operations != null && !operations.isEmpty()) {
                 dbsnpSubmittedVariantOperationWriter.write(operations);
-                clusteredVariantsDeclustered.add(dbsnpVariantsWrapper.getClusteredVariant());
+                if (operations.stream().anyMatch(this::isDeclusteringOperation)) {
+                    clusteredVariantsDeclustered.add(dbsnpVariantsWrapper.getClusteredVariant());
+                }
             }
         }
         writeClusteredVariants(wrappers);
         writeClusteredVariantsDeclustered(new ArrayList<>(clusteredVariantsDeclustered));
+    }
+
+    private boolean isDeclusteringOperation(DbsnpSubmittedVariantOperationEntity operation) {
+        return operation.getEventType().equals(EventType.UPDATED) &&
+                operation.getReason().startsWith(SubmittedVariantDeclusterProcessor.DECLUSTERED);
+    }
+
+    private void addMergeOperationsToWrapper(DbsnpVariantsWrapper dbsnpVariantsWrapper,
+                                             List<DbsnpSubmittedVariantEntity> submittedVariants,
+                                             BulkOperationException exception) {
+        if (dbsnpVariantsWrapper.getOperations() == null) {
+            dbsnpVariantsWrapper.setOperations(new ArrayList<>());
+        }
+        extractUniqueHashes(exception)
+                .forEach(hash -> {
+                    DbsnpSubmittedVariantEntity mergedInto = submittedVariantRepository.findOne(hash);
+                    List<DbsnpSubmittedVariantOperationEntity> merges = buildMergeOperations(submittedVariants, hash,
+                                                                                             mergedInto);
+
+                    dbsnpVariantsWrapper.getOperations().addAll(merges);
+                });
+    }
+
+    private Stream<String> extractUniqueHashes(BulkOperationException exception) {
+        return exception.getErrors()
+                 .stream()
+                 .filter(this::isDuplicateKeyError)
+                 .map(error -> {
+                     Matcher matcher = DUPLICATE_KEY_PATTERN.matcher(error.getMessage());
+
+                     if (!matcher.find()) {
+                         throw new IllegalStateException(
+                                 "A duplicate key exception was caught, but the message couldn't be parsed correctly",
+                                 exception);
+                     } else {
+                         String hash = matcher.group(DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME);
+                         return hash;
+                     }
+                 })
+                 .distinct();
+    }
+
+    /**
+     * Build a list of merge operations for *distinct* new submitted variants that will be merged into existing
+     * submitted variants.
+     *
+     * Two submitted variants have to be merged if they have the same hash and different subsnp accession, and only if
+     * the new one wasn't merged before.
+     *
+     * If the subsnp accession is the same, it doesn't make sense to merge it into itself, so the duplicate exception
+     * can be ignored.
+     */
+    private List<DbsnpSubmittedVariantOperationEntity> buildMergeOperations(
+            List<DbsnpSubmittedVariantEntity> submittedVariants, String hash, DbsnpSubmittedVariantEntity mergedInto) {
+        return removeDuplicatesWithSameHashAndAccession(submittedVariants)
+                .filter(v -> v.getHashedMessage().equals(hash)
+                        && !v.getAccession().equals(mergedInto.getAccession())
+                        && !isAlreadyMerged(v.getAccession()))
+                .map(origin -> buildMergeOperation(origin, mergedInto))
+                .collect(Collectors.toList());
+    }
+
+    private Stream<DbsnpSubmittedVariantEntity> removeDuplicatesWithSameHashAndAccession(
+            List<DbsnpSubmittedVariantEntity> submittedVariants) {
+        return submittedVariants.stream()
+                                .collect(Collectors.toMap(v -> v.getHashedMessage() + v.getAccession().toString(),
+                                                          v -> v,
+                                                          (a, b) -> a))
+                                .values()
+                                .stream();
+    }
+
+    private boolean isAlreadyMerged(Long accession) {
+        List<DbsnpSubmittedVariantOperationEntity> merges = operationRepository.findAllByAccession(accession);
+        return !merges.isEmpty();
+    }
+
+    private DbsnpSubmittedVariantOperationEntity buildMergeOperation(DbsnpSubmittedVariantEntity origin,
+                                                                     DbsnpSubmittedVariantEntity mergedInto) {
+        DbsnpSubmittedVariantInactiveEntity inactiveEntity = new DbsnpSubmittedVariantInactiveEntity(origin);
+
+        // TODO Use library if possible
+        DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
+        operation.fill(EventType.MERGED, origin.getAccession(), mergedInto.getAccession(),
+                       "Identical submitted variant received multiple SS identifiers",
+                       Arrays.asList(inactiveEntity));
+
+        return operation;
     }
 
     private void writeClusteredVariants(List<? extends DbsnpVariantsWrapper> items) {
@@ -83,4 +205,8 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         }
     }
 
+    private boolean isDuplicateKeyError(BulkWriteError error) {
+        ErrorCategory errorCategory = ErrorCategory.fromErrorCode(error.getCode());
+        return errorCategory.equals(ErrorCategory.DUPLICATE_KEY);
+    }
 }

@@ -37,7 +37,7 @@ import java.util.function.Function;
 
 public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVariantsWrapper, DbsnpVariantsWrapper> {
 
-    static final String DECLUSTERED = "Declustered: ";
+    public static final String DECLUSTERED = "Declustered: ";
 
     static final String DECLUSTERED_ALLELES_MISMATCH =
             "None of the variant alleles match the reference allele.";
