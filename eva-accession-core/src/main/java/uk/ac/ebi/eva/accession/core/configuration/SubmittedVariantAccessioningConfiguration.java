@@ -47,7 +47,7 @@ import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
 @Configuration
 @EnableSpringDataContiguousIdService
-@Import({MongoConfiguration.class})
+@Import({ApplicationPropertiesConfiguration.class, MongoConfiguration.class})
 public class SubmittedVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningConfiguration.class);
@@ -73,18 +73,15 @@ public class SubmittedVariantAccessioningConfiguration {
     @Autowired
     private ContiguousIdBlockService service;
 
-    @Value("${accessioning.variant.categoryId}")
+    @Autowired
+    private ApplicationProperties applicationProperties;
+
+    @Value("${accessioning.submitted.categoryId}")
     private String categoryId;
 
     @Bean
     public Long accessioningMonotonicInitSs() {
         return service.getBlockParameters(categoryId).getBlockStartValue();
-    }
-
-    @Bean
-    @ConfigurationProperties(prefix = "accessioning")
-    public ApplicationProperties applicationProperties() {
-        return new ApplicationProperties();
     }
 
     @Bean
@@ -98,18 +95,18 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Bean
     public MonotonicAccessionGenerator<ISubmittedVariant> submittedVariantAccessionGenerator() {
-        ApplicationProperties properties = applicationProperties();
+        ApplicationProperties properties = applicationProperties;
         logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(
-                properties.getVariant().getCategoryId(),
+                properties.getSubmitted().getCategoryId(),
                 properties.getInstanceId(),
                 service);
     }
 
     @Bean
     public DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator() {
-        ApplicationProperties properties = applicationProperties();
-        return new DbsnpMonotonicAccessionGenerator<>(properties.getVariant().getCategoryId(),
+        ApplicationProperties properties = applicationProperties;
+        return new DbsnpMonotonicAccessionGenerator<>(properties.getSubmitted().getCategoryId(),
                                                       properties.getInstanceId(), service);
     }
 

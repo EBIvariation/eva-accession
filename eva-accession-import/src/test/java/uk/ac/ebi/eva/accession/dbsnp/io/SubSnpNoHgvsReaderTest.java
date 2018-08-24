@@ -73,11 +73,8 @@ public class SubSnpNoHgvsReaderTest {
         reader = buildReader("UNKNOWN_ASSEMBLY", PAGE_SIZE);
     }
 
-    private SubSnpNoHgvsReader buildReader(String assembly, int pageSize)
-            throws Exception {
-        SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(assembly,
-                                                                 dbsnpDataSource.getDatasource(),
-                                                                 pageSize);
+    private SubSnpNoHgvsReader buildReader(String assembly, int pageSize) throws Exception {
+        SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(assembly, dbsnpDataSource.getDatasource(), pageSize);
         fieldsReader.afterPropertiesSet();
         ExecutionContext executionContext = new ExecutionContext();
         fieldsReader.open(executionContext);

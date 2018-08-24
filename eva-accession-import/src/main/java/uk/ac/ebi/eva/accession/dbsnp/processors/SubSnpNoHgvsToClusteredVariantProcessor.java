@@ -23,7 +23,7 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.Region;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;

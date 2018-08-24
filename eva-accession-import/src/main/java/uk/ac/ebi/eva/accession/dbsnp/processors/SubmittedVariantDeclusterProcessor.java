@@ -21,12 +21,12 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 

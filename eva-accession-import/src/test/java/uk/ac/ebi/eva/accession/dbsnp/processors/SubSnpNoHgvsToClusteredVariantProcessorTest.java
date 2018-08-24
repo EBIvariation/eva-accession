@@ -23,7 +23,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.sql.Timestamp;

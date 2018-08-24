@@ -21,29 +21,41 @@ public class ApplicationProperties {
 
     private String instanceId;
 
-    private VariantAccessioningProperties variant;
+    private VariantAccessioningProperties submitted;
+
+    private VariantAccessioningProperties clustered;
+
 
     public String getInstanceId() {
         return instanceId;
     }
 
-    public VariantAccessioningProperties getVariant() {
-        return variant;
+    public VariantAccessioningProperties getSubmitted() {
+        return submitted;
+    }
+
+    public VariantAccessioningProperties getClustered() {
+        return clustered;
     }
 
     public void setInstanceId(String instanceId) {
         this.instanceId = instanceId;
     }
 
-    public void setVariant(VariantAccessioningProperties variant) {
-        this.variant = variant;
+    public void setSubmitted(VariantAccessioningProperties submitted) {
+        this.submitted = submitted;
+    }
+
+    public void setClustered(VariantAccessioningProperties clustered) {
+        this.clustered = clustered;
     }
 
     @Override
     public String toString() {
         return "ApplicationProperties{" +
                 "instanceId='" + instanceId + '\'' +
-                ", variant=" + variant +
+                ", submitted=" + submitted +
+                ", clustered=" + clustered +
                 '}';
     }
 }

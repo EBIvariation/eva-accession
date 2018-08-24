@@ -142,6 +142,11 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     }
 
     @Override
+    public ISubmittedVariant getModel() {
+        return new SubmittedVariant(this);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -207,8 +212,4 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
         return result;
     }
 
-    @Override
-    public ISubmittedVariant getModel() {
-        return new SubmittedVariant(this);
-    }
 }

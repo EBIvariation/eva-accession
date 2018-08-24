@@ -31,9 +31,9 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -94,7 +94,7 @@ public class DbsnpClusteredVariantWriterTest {
     private ClusteredVariant clusteredVariant3;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         importCounts = new ImportCounts();
         dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -117,9 +117,8 @@ public class DbsnpClusteredVariantWriterTest {
     }
 
     @Test
-    public void saveSingleAccession() throws Exception {
+    public void saveSingleAccession() {
         dbsnpClusteredVariantWriter.write(Collections.singletonList(variantEntity1));
-
         assertJustOneVariantHasBeenStored();
     }
 
@@ -149,9 +148,8 @@ public class DbsnpClusteredVariantWriterTest {
     }
 
     @Test
-    public void saveDifferentVariants() throws Exception {
+    public void saveDifferentVariants() {
         dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity2, variantEntity3));
-
         assertAllUniqueVariantsHaveBeenStored();
     }
 

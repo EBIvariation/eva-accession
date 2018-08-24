@@ -17,11 +17,13 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
-import org.springframework.stereotype.Repository;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
+import org.springframework.data.mongodb.core.mapping.Document;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
-@Repository
-public interface DbsnpClusteredVariantAccessioningRepository extends
-        IAccessionedObjectRepository<DbsnpClusteredVariantEntity, Long> {
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
+
+@Document
+public class DbsnpClusteredVariantOperationEntity extends EventDocument<IClusteredVariant, Long,
+        DbsnpClusteredVariantInactiveEntity> {
 
 }

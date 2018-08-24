@@ -37,6 +37,10 @@ public class ClusteredVariant implements IClusteredVariant {
 
     private LocalDateTime createdDate;
 
+    ClusteredVariant() {
+
+    }
+
     public ClusteredVariant(IClusteredVariant variant) {
         this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getContig(), variant.getStart(),
              variant.getType(), variant.isValidated());

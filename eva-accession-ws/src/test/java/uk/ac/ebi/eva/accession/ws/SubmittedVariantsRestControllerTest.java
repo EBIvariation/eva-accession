@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.ws;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,18 +32,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
@@ -50,26 +54,45 @@ import static org.junit.Assert.assertEquals;
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class SubmittedVariantsRestControllerTest {
 
+    private static final String URL = "/v1/submitted-variants/";
+
     @Autowired
-    private BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController;
+    private SubmittedVariantAccessioningRepository repository;
+
+    @Autowired
+    private SubmittedVariantAccessioningService service;
+
+    @Autowired
+    private SubmittedVariantsRestController controller;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
 
-    private static final Long ACCESSION = 10000000001L;
+    private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
-    private static final String URL = "/v1/submitted-variants/";
+    @Before
+    public void setUp() throws AccessionCouldNotBeGeneratedException {
+        repository.deleteAll();
 
-    private static final Long CLUSTERED_VARIANT = null;
+        Long CLUSTERED_VARIANT = null;
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                CLUSTERED_VARIANT);
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                CLUSTERED_VARIANT);
+        generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
+    }
+
+    @After
+    public void tearDown() {
+        repository.deleteAll();
+    }
 
     @Test
-    public void testGetVariantsRestApi() throws AccessionCouldNotBeGeneratedException {
-        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> generatedAccessions =
-                basicRestController.generateAccessions(getListOfVariantMessages());
-        assertEquals(2, generatedAccessions.size());
-        String accessions = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
+    public void testGetVariantsRestTemplate() {
+        String identifiers = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
                 Collectors.joining(","));
-        String getVariantsUrl = URL + accessions;
+        String getVariantsUrl = URL + identifiers;
+
         ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                 getVariantsResponse =
                 testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
@@ -86,20 +109,25 @@ public class SubmittedVariantsRestControllerTest {
         assertDefaultFlags(getVariantsResponse.getBody());
     }
 
-    private void assertDefaultFlags(
-            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
-        SubmittedVariant variant = body.get(0).getData();
-        assertEquals(ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
-        assertEquals(ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH, variant.isAssemblyMatch());
-        assertEquals(ISubmittedVariant.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
-        assertEquals(ISubmittedVariant.DEFAULT_VALIDATED, variant.isValidated());
+    @Test
+    public void testGetVariantsController() {
+        List<Long> identifiers = generatedAccessions.stream().map(acc -> acc.getAccession()).collect(Collectors.toList());
+
+        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
+                controller.get(identifiers);
+
+        assertEquals(2, getVariantsResponse.size());
+        assertDefaultFlags(getVariantsResponse);
     }
 
-    public List<SubmittedVariant> getListOfVariantMessages() {
-        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
-        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
-        return asList(variant1, variant2);
+    private void assertDefaultFlags(
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
+        for (AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> dto : body) {
+            SubmittedVariant variant = dto.getData();
+            assertEquals(ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
+            assertEquals(ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH, variant.isAssemblyMatch());
+            assertEquals(ISubmittedVariant.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
+            assertEquals(ISubmittedVariant.DEFAULT_VALIDATED, variant.isValidated());
+        }
     }
 }
