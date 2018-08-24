@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,6 +44,7 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static uk.ac.ebi.eva.commons.core.models.VariantType.INDEL;
 import static uk.ac.ebi.eva.commons.core.models.VariantType.SNV;
 
@@ -132,9 +134,19 @@ public class DbsnpClusteredVariantWriterTest {
         assertEquals(1, importCounts.getClusteredVariantsWritten());
     }
 
+    @Test(expected = BulkOperationException.class)
+    public void exceptionThrownOnDuplicateIdenticalVariant() {
+        dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1));
+    }
+
     @Test
     public void duplicateIdenticalVariantIsStoredJustOnce() {
-        dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1));
+        try {
+            dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1));
+            fail();
+        } catch (Exception e) {
+            // it's correct and expected that an exception is thrown here
+        }
 
         assertJustOneVariantHasBeenStored();
     }
@@ -142,8 +154,13 @@ public class DbsnpClusteredVariantWriterTest {
 
     @Test
     public void duplicateNotIdenticalVariantIsStoredJustOnce() {
-        dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, duplicateVariantEntity1));
-
+        try {
+            dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, duplicateVariantEntity1));
+            fail();
+        } catch (Exception e) {
+            // it's correct and expected that an exception is thrown here
+        }
+        
         assertJustOneVariantHasBeenStored();
     }
 
@@ -172,6 +189,12 @@ public class DbsnpClusteredVariantWriterTest {
         List<DbsnpClusteredVariantEntity> batch = Arrays.asList(variantEntity1, variantEntity2, duplicateVariantEntity1,
                                                                 variantEntity3);
 
-        dbsnpClusteredVariantWriter.write(batch);
+        try {
+            dbsnpClusteredVariantWriter.write(batch);
+            fail();
+        } catch (Exception e) {
+            // it's correct and expected that an exception is thrown here
+        }
+        assertAllUniqueVariantsHaveBeenStored();
     }
 }
