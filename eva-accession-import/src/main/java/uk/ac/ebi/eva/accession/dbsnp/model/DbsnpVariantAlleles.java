@@ -106,7 +106,7 @@ public class DbsnpVariantAlleles {
     }
 
     public String getReferenceInForwardStrand() {
-        if (referenceOrientation.equals(Orientation.FORWARD)) {
+        if (referenceOrientation.equals(Orientation.FORWARD) || referenceOrientation.equals(Orientation.UNKNOWN)) {
             return referenceAllele;
         } else {
             return reverseComplement(referenceAllele);
@@ -152,7 +152,7 @@ public class DbsnpVariantAlleles {
         if (dbsnpVariantType.equals(DbsnpVariantType.MICROSATELLITE)) {
             return getMicrosatelliteAllelesInForwardStrand();
         } else {
-            if (allelesOrientation.equals(Orientation.FORWARD)) {
+            if (allelesOrientation.equals(Orientation.FORWARD) || referenceOrientation.equals(Orientation.UNKNOWN)) {
                 return Arrays.asList(alleles);
             } else {
                 return Arrays.stream(alleles).map(this::reverseComplement).collect(Collectors.toList());
