@@ -27,12 +27,12 @@ public class DbsnpSubmittedVariantEntity extends SubmittedVariantEntity {
         super(accession, hashedMessage, model, version);
     }
 
-    public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, String referenceAccession,
+    public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, String referenceSequenceAccession,
                                        int taxonomyAccession, String projectAccession, String contig, long start,
                                        String referenceAllele, String alternateAllele,
                                        Long clusteredVariantAccession, Boolean isSupportedByEvidence,
                                        Boolean matchesAssembly, Boolean allelesMatch, Boolean validated, int version) {
-        super(accession, hashedMessage, referenceAccession, taxonomyAccession, projectAccession, contig, start,
+        super(accession, hashedMessage, referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
               referenceAllele, alternateAllele, clusteredVariantAccession, isSupportedByEvidence, matchesAssembly,
               allelesMatch, validated, version);
     }

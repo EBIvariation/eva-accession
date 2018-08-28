@@ -37,7 +37,7 @@ public interface ISubmittedVariant {
 
     boolean DEFAULT_VALIDATED = false;
 
-    String getReferenceAccession();
+    String getReferenceSequenceAccession();
 
     int getTaxonomyAccession();
 

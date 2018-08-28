@@ -29,8 +29,8 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVariant, Long> implements ISubmittedVariant {
 
     @Indexed(background = true)
-    @Field("refAcc")
-    private String referenceAccession;
+    @Field("seq")
+    private String referenceSequenceAccession;
 
     @Field("tax")
     private int taxonomyAccession;
@@ -68,19 +68,19 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
-        this(accession, hashedMessage, model.getReferenceAccession(), model.getTaxonomyAccession(),
+        this(accession, hashedMessage, model.getReferenceSequenceAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
              model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
              model.isAssemblyMatch(), model.isAllelesMatch(), model.isValidated(), version);
     }
 
-    public SubmittedVariantEntity(Long accession, String hashedMessage, String referenceAccession,
+    public SubmittedVariantEntity(Long accession, String hashedMessage, String referenceSequenceAccession,
                                   int taxonomyAccession, String projectAccession, String contig, long start,
                                   String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
                                   Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
                                   Boolean validated, int version) {
         super(hashedMessage, accession, version);
-        this.referenceAccession = referenceAccession;
+        this.referenceSequenceAccession = referenceSequenceAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
         this.contig = contig;
@@ -127,8 +127,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     }
 
     @Override
-    public String getReferenceAccession() {
-        return referenceAccession;
+    public String getReferenceSequenceAccession() {
+        return referenceSequenceAccession;
     }
 
     @Override
@@ -203,7 +203,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         if (start != that.start) {
             return false;
         }
-        if (!referenceAccession.equals(that.referenceAccession)) {
+        if (!referenceSequenceAccession.equals(that.referenceSequenceAccession)) {
             return false;
         }
         if (!projectAccession.equals(that.projectAccession)) {
@@ -237,7 +237,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     @Override
     public int hashCode() {
-        int result = referenceAccession.hashCode();
+        int result = referenceSequenceAccession.hashCode();
         result = 31 * result + taxonomyAccession;
         result = 31 * result + projectAccession.hashCode();
         result = 31 * result + contig.hashCode();
@@ -255,7 +255,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     @Override
     public String toString() {
         return "SubmittedVariantEntity{" +
-                "referenceAccession='" + referenceAccession + '\'' +
+                "referenceSequenceAccession='" + referenceSequenceAccession + '\'' +
                 ", taxonomyAccession=" + taxonomyAccession +
                 ", projectAccession='" + projectAccession + '\'' +
                 ", contig='" + contig + '\'' +
