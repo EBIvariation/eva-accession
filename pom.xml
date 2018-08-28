@@ -56,6 +56,11 @@
                 <scope>test</scope>
                 <version>2.1.1</version>
             </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.2.5</version>
+            </dependency>
 
             <dependency>
                 <groupId>io.springfox</groupId>
