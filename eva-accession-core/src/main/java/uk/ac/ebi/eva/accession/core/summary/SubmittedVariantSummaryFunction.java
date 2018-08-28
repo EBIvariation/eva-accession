@@ -26,7 +26,7 @@ public class SubmittedVariantSummaryFunction implements Function<ISubmittedVaria
     @Override
     public String apply(ISubmittedVariant model) {
         return new StringBuilder()
-                .append(model.getAssemblyAccession())
+                .append(model.getReferenceSequenceAccession())
                 .append("_").append(model.getProjectAccession())
                 .append("_").append(model.getContig())
                 .append("_").append(model.getStart())

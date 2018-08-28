@@ -155,7 +155,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                         int expectedVersion) {
         assertEquals(subSnpNoHgvs.getSsId(), dbsnpSubmittedVariant.getAccession());
         assertEquals(subSnpNoHgvs.getRsId(), dbsnpSubmittedVariant.getClusteredVariantAccession());
-        assertEquals(ASSEMBLY_ACCESSION, dbsnpSubmittedVariant.getAssemblyAccession());
+        assertEquals(ASSEMBLY_ACCESSION, dbsnpSubmittedVariant.getReferenceSequenceAccession());
         assertEquals(TAXONOMY, dbsnpSubmittedVariant.getTaxonomyAccession());
         assertEquals(PROJECT_ACCESSION, dbsnpSubmittedVariant.getProjectAccession());
         assertEquals(expectedContig, dbsnpSubmittedVariant.getContig());

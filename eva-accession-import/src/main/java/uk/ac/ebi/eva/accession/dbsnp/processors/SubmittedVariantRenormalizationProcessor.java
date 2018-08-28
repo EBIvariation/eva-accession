@@ -137,7 +137,7 @@ public class SubmittedVariantRenormalizationProcessor implements
     private DbsnpSubmittedVariantEntity createNormalizedVariant(DbsnpSubmittedVariantEntity variant,
                                                                 String renormalizedAlternate,
                                                                 String renormalizedReference, long renormalizedStart) {
-        ISubmittedVariant normalizedVariantModel = new SubmittedVariant(variant.getAssemblyAccession(),
+        ISubmittedVariant normalizedVariantModel = new SubmittedVariant(variant.getReferenceSequenceAccession(),
                                                                         variant.getTaxonomyAccession(),
                                                                         variant.getProjectAccession(),
                                                                         variant.getContig(), renormalizedStart,
