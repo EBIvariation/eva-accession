@@ -26,9 +26,11 @@ import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.StudyMapping;
 
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -183,6 +185,24 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                 .append("_").append(alternate)
                 .toString();
         return new SHA1HashingFunction().apply(summary);
+    }
+
+    @Test
+    public void mapEvaStudyId() throws Exception {
+        List<StudyMapping> studyMappings = new ArrayList<>();
+        String handle = "HANDLE_TO_BE_REPLACED";
+        String batchName = "BATCH_NAME_TO_BE_REPLACED";
+        String evaStudyId = "EVA_STUDY_ID";
+        studyMappings.add(new StudyMapping(evaStudyId, handle, batchName));
+
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "A/C", ASSEMBLY, handle,
+                                                     batchName, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+        assertEquals(evaStudyId, variants.get(0).getProjectAccession());
     }
 
     @Test
