@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 
@@ -53,13 +54,6 @@ import java.util.stream.Stream;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
-    private final String DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME = "IDKEY";
-
-    private final String DUPLICATE_KEY_ERROR_MESSAGE_REGEX = "index:\\s.*\\{\\s?\\:\\s?\"(?<"
-            + DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME + ">[a-zA-Z0-9]+)\"\\s?\\}";
-
-    private final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(DUPLICATE_KEY_ERROR_MESSAGE_REGEX);
-
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
@@ -90,9 +84,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                                                                              importCounts);
         this.dbsnpClusteredVariantDeclusteredWriter = new DbsnpClusteredVariantDeclusteredWriter(mongoTemplate);
 
-        submittedOperationBuilder = new MergeOperationBuilder<>(
+        this.submittedOperationBuilder = new MergeOperationBuilder<>(
                 submittedOperationRepository, submittedVariantRepository, this::buildSubmittedMergeOperation);
-        clusteredOperationBuilder = new MergeOperationBuilder<>(
+        this.clusteredOperationBuilder = new MergeOperationBuilder<>(
                 clusteredOperationRepository, clusteredVariantRepository, this::buildClusteredMergeOperation);
     }
 
@@ -172,9 +166,20 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         }
     }
 
-    private class MergeOperationBuilder<ENTITY extends AccessionedDocument<?, Long>, OPERATION_ENTITY> {
+    private class MergeOperationBuilder<ENTITY extends AccessionedDocument<?, Long>,
+            OPERATION_ENTITY extends EventDocument<?, Long, ?>> {
+
+        private final String DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME = "IDKEY";
+
+        private final String DUPLICATE_KEY_ERROR_MESSAGE_REGEX = "index:\\s.*\\{\\s?\\:\\s?\"(?<"
+                + DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME + ">[a-zA-Z0-9]+)\"\\s?\\}";
+
+        private final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(DUPLICATE_KEY_ERROR_MESSAGE_REGEX);
+
         IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository;
+
         IAccessionedObjectRepository<ENTITY, Long> variantRepository;
+
         BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory;
 
         MergeOperationBuilder(IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository,
@@ -208,9 +213,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                 Matcher matcher = DUPLICATE_KEY_PATTERN.matcher(error.getMessage());
 
                                 if (!matcher.find()) {
-                                    throw new IllegalStateException(
-                                            "A duplicate key exception was caught, but the message couldn't be parsed correctly",
-                                            exception);
+                                    throw new IllegalStateException("A duplicate key exception was caught, but the " +
+                                                                            "message couldn't be parsed correctly",
+                                                                    exception);
                                 } else {
                                     String hash = matcher.group(DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME);
                                     return hash;
@@ -245,7 +250,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
         private boolean isAlreadyMerged(Long accession) {
             List<OPERATION_ENTITY> merges = operationRepository.findAllByAccession(accession);
-            return !merges.isEmpty();
+            return merges.stream().anyMatch(operation -> operation.getEventType().equals(EventType.MERGED));
         }
     }
 }

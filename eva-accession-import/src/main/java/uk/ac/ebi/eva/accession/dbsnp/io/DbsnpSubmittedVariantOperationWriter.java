@@ -35,8 +35,7 @@ public class DbsnpSubmittedVariantOperationWriter implements ItemWriter<DbsnpSub
 
     private ImportCounts importCounts;
 
-    public DbsnpSubmittedVariantOperationWriter(MongoTemplate mongoTemplate,
-                                                ImportCounts importCounts) {
+    public DbsnpSubmittedVariantOperationWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
         this.mongoTemplate = mongoTemplate;
         this.importCounts = importCounts;
     }
