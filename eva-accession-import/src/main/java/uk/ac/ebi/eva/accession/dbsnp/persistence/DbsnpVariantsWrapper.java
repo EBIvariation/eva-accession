@@ -72,14 +72,6 @@ public class DbsnpVariantsWrapper {
         this.operations = operations;
     }
 
-    public void addOperation(DbsnpSubmittedVariantOperationEntity operation) {
-        if (operations == null) {
-            setOperations(new ArrayList<>());
-        }
-
-        operations.add(operation);
-    }
-
     public DbsnpVariantType getDbsnpVariantType() {
         return dbsnpVariantType;
     }
