@@ -117,28 +117,36 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     @Override
     public void write(List<? extends DbsnpVariantsWrapper> wrappers) throws Exception {
         Set<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered = new HashSet<>();
+        List<DbsnpSubmittedVariantOperationEntity> declusterOperations = new ArrayList<>();
+
         for (DbsnpVariantsWrapper dbsnpVariantsWrapper : wrappers) {
-            List<DbsnpSubmittedVariantOperationEntity> operations = dbsnpVariantsWrapper.getOperations();
-            if (operations != null && !operations.isEmpty()) {
-                dbsnpSubmittedVariantOperationWriter.write(operations);
+            List<DbsnpSubmittedVariantOperationEntity> otherOperations = dbsnpVariantsWrapper.getOperations();
+            if (otherOperations != null && !otherOperations.isEmpty()) {
+                declusterOperations.addAll(otherOperations);
                 clusteredVariantsDeclustered.add(dbsnpVariantsWrapper.getClusteredVariant());
             }
-
-            List<DbsnpSubmittedVariantOperationEntity> mergeOperations = writeSubmittedVariants(dbsnpVariantsWrapper);
-            if (!mergeOperations.isEmpty()) {
-                dbsnpSubmittedVariantOperationWriter.write(mergeOperations);
-            }
-        }
-        List<DbsnpClusteredVariantOperationEntity> mergeOperations = writeClusteredVariants(wrappers);
-        if (!mergeOperations.isEmpty()) {
-            dbsnpClusteredVariantOperationWriter.write(mergeOperations);
         }
         writeClusteredVariantsDeclustered(new ArrayList<>(clusteredVariantsDeclustered));
+        if (!declusterOperations.isEmpty()) {
+            dbsnpSubmittedVariantOperationWriter.write(declusterOperations);
+        }
+
+        List<DbsnpSubmittedVariantOperationEntity> mergeSubmittedOperations = writeSubmittedVariants(wrappers);
+        if (!mergeSubmittedOperations.isEmpty()) {
+            dbsnpSubmittedVariantOperationWriter.write(mergeSubmittedOperations);
+        }
+
+        List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations = writeClusteredVariants(wrappers);
+        if (!mergeClusteredOperations.isEmpty()) {
+            dbsnpClusteredVariantOperationWriter.write(mergeClusteredOperations);
+        }
     }
 
     private List<DbsnpSubmittedVariantOperationEntity> writeSubmittedVariants(
-            DbsnpVariantsWrapper dbsnpVariantsWrapper) {
-        List<DbsnpSubmittedVariantEntity> submittedVariants = dbsnpVariantsWrapper.getSubmittedVariants();
+            List<? extends DbsnpVariantsWrapper> wrappers) {
+        List<DbsnpSubmittedVariantEntity> submittedVariants = wrappers.stream()
+                                                                      .flatMap(w -> w.getSubmittedVariants().stream())
+                                                                      .collect(Collectors.toList());
         try {
             dbsnpSubmittedVariantWriter.write(submittedVariants);
             return Collections.emptyList();
@@ -148,10 +156,10 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     }
 
     private List<DbsnpClusteredVariantOperationEntity> writeClusteredVariants(
-            List<? extends DbsnpVariantsWrapper> items) {
-        List<DbsnpClusteredVariantEntity> clusteredVariants = items.stream()
-                                                                   .map(DbsnpVariantsWrapper::getClusteredVariant)
-                                                                   .collect(Collectors.toList());
+            List<? extends DbsnpVariantsWrapper> wrappers) {
+        List<DbsnpClusteredVariantEntity> clusteredVariants = wrappers.stream()
+                                                                      .map(DbsnpVariantsWrapper::getClusteredVariant)
+                                                                      .collect(Collectors.toList());
         try {
             dbsnpClusteredVariantWriter.write(clusteredVariants);
             return Collections.emptyList();
