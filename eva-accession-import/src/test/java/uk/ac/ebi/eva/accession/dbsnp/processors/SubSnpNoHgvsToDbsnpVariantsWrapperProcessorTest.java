@@ -195,7 +195,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
         String handle = "HANDLE_TO_BE_REPLACED";
         String batchName = "BATCH_NAME_TO_BE_REPLACED";
         String evaStudyId = "EVA_STUDY_ID";
-        projectAccessionMappings.add(new ProjectAccessionMapping(evaStudyId, handle, batchName));
+        projectAccessionMappings.add(new ProjectAccessionMapping(evaStudyId, handle, batchName, TAXONOMY));
 
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "A/C", ASSEMBLY, handle,
                                                      batchName, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,

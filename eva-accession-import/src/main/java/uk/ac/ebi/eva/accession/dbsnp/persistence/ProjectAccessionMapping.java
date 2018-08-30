@@ -19,17 +19,24 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 public class ProjectAccessionMapping {
+    
     private String evaStudyId;
+
     private String dbsnpBatchHandle;
+
     private String dbsnpBatchName;
+
+    private int taxonomyAccession;
 
     ProjectAccessionMapping() {
     }
 
-    public ProjectAccessionMapping(String evaStudyId, String dbsnpBatchHandle, String dbsnpBatchName) {
+    public ProjectAccessionMapping(String evaStudyId, String dbsnpBatchHandle, String dbsnpBatchName,
+                                   int taxonomyAccession) {
         this.evaStudyId = evaStudyId;
         this.dbsnpBatchHandle = dbsnpBatchHandle;
         this.dbsnpBatchName = dbsnpBatchName;
+        this.taxonomyAccession = taxonomyAccession;
     }
 
     public String getEvaStudyId() {
@@ -54,5 +61,13 @@ public class ProjectAccessionMapping {
 
     public void setDbsnpBatchName(String dbsnpBatchName) {
         this.dbsnpBatchName = dbsnpBatchName;
+    }
+
+    public int getTaxonomyAccession() {
+        return taxonomyAccession;
+    }
+
+    public void setTaxonomyAccession(int taxonomyAccession) {
+        this.taxonomyAccession = taxonomyAccession;
     }
 }

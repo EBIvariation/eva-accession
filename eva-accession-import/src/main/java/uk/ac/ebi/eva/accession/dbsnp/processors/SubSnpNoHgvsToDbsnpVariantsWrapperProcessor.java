@@ -106,6 +106,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                                                                            .equals(subSnpNoHgvs.getBatchHandle()))
                                                            .filter(sm -> sm.getDbsnpBatchName()
                                                                            .equals(subSnpNoHgvs.getBatchName()))
+                                                           .filter(sm -> sm.getTaxonomyAccession()
+                                                                           == subSnpNoHgvs.getTaxonomyId())
                                                            .map(ProjectAccessionMapping::getEvaStudyId)
                                                            .findFirst();
 
