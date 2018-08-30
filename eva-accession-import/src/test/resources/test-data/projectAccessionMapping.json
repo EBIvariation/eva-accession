@@ -1,0 +1,17 @@
+{
+  "projectAccessionMapping": [
+    {
+      "evaStudyId": "PRJEB23",
+      "dbsnpBatchHandle": "handle_1",
+      "dbsnpBatchName": "batch_name_1",
+      "taxonomyAccession": 42
+    },
+    {
+      "evaStudyId": "PRJEB34",
+      "dbsnpBatchHandle": "handle_2",
+      "dbsnpBatchName": "batch_name_2",
+      "taxonomyAccession": 7
+    }
+  ]
+
+}

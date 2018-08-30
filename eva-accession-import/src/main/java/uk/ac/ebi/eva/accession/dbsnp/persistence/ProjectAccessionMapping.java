@@ -19,7 +19,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 public class ProjectAccessionMapping {
-    
+
     private String evaStudyId;
 
     private String dbsnpBatchHandle;
@@ -69,5 +69,38 @@ public class ProjectAccessionMapping {
 
     public void setTaxonomyAccession(int taxonomyAccession) {
         this.taxonomyAccession = taxonomyAccession;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ProjectAccessionMapping)) {
+            return false;
+        }
+
+        ProjectAccessionMapping that = (ProjectAccessionMapping) o;
+
+        if (taxonomyAccession != that.taxonomyAccession) {
+            return false;
+        }
+        if (evaStudyId != null ? !evaStudyId.equals(that.evaStudyId) : that.evaStudyId != null) {
+            return false;
+        }
+        if (dbsnpBatchHandle != null ? !dbsnpBatchHandle
+                .equals(that.dbsnpBatchHandle) : that.dbsnpBatchHandle != null) {
+            return false;
+        }
+        return dbsnpBatchName != null ? dbsnpBatchName.equals(that.dbsnpBatchName) : that.dbsnpBatchName == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = evaStudyId != null ? evaStudyId.hashCode() : 0;
+        result = 31 * result + (dbsnpBatchHandle != null ? dbsnpBatchHandle.hashCode() : 0);
+        result = 31 * result + (dbsnpBatchName != null ? dbsnpBatchName.hashCode() : 0);
+        result = 31 * result + taxonomyAccession;
+        return result;
     }
 }
