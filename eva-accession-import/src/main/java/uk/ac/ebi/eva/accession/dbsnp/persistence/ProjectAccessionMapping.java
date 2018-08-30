@@ -18,15 +18,15 @@ package uk.ac.ebi.eva.accession.dbsnp.persistence;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
-public class StudyMapping {
+public class ProjectAccessionMapping {
     private String evaStudyId;
     private String dbsnpBatchHandle;
     private String dbsnpBatchName;
 
-    StudyMapping() {
+    ProjectAccessionMapping() {
     }
 
-    public StudyMapping(String evaStudyId, String dbsnpBatchHandle, String dbsnpBatchName) {
+    public ProjectAccessionMapping(String evaStudyId, String dbsnpBatchHandle, String dbsnpBatchName) {
         this.evaStudyId = evaStudyId;
         this.dbsnpBatchHandle = dbsnpBatchHandle;
         this.dbsnpBatchName = dbsnpBatchName;

@@ -29,7 +29,7 @@ import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.StudyMapping;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.ProjectAccessionMapping;
 import uk.ac.ebi.eva.accession.dbsnp.processors.AssemblyCheckerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor;
@@ -90,14 +90,15 @@ public class ImportDbsnpVariantsProcessorConfiguration {
 
     @Bean
     SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor(
-            InputParameters parameters, FastaSequenceReader fastaSequenceReader, List<StudyMapping> studyMappings) {
+            InputParameters parameters, FastaSequenceReader fastaSequenceReader,
+            List<ProjectAccessionMapping> projectAccessionMappings) {
         return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(), fastaSequenceReader,
-                                                               studyMappings);
+                                                               projectAccessionMappings);
     }
 
     @Bean
-    List<StudyMapping> studyMappings(MongoTemplate mongoTemplate) {
-        return mongoTemplate.findAll(StudyMapping.class);
+    List<ProjectAccessionMapping> projectAccessionMappings(MongoTemplate mongoTemplate) {
+        return mongoTemplate.findAll(ProjectAccessionMapping.class);
     }
 
     @Bean

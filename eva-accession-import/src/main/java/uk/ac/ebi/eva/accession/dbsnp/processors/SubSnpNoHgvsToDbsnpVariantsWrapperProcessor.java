@@ -26,7 +26,7 @@ import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.StudyMapping;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.ProjectAccessionMapping;
 import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.time.LocalDateTime;
@@ -45,16 +45,16 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
 
     private String assemblyAccession;
 
-    private List<StudyMapping> studyMappings;
+    private List<ProjectAccessionMapping> projectAccessionMappings;
 
     public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(String assemblyAccession,
                                                        FastaSequenceReader fastaSequenceReader,
-                                                       List<StudyMapping> studyMappings) {
+                                                       List<ProjectAccessionMapping> projectAccessionMappings) {
         this.assemblyAccession = assemblyAccession;
         this.renormalizationProcessor = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
         this.subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor(assemblyAccession);
         this.hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
-        this.studyMappings = studyMappings;
+        this.projectAccessionMappings = projectAccessionMappings;
     }
 
     @Override
@@ -101,13 +101,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
     }
 
     private String getProjectAccession(SubSnpNoHgvs subSnpNoHgvs) {
-        Optional<String> studyId = studyMappings.stream()
-                                                .filter(sm -> sm.getDbsnpBatchHandle()
-                                                                .equals(subSnpNoHgvs.getBatchHandle()))
-                                                .filter(sm -> sm.getDbsnpBatchName()
-                                                                .equals(subSnpNoHgvs.getBatchName()))
-                                                .map(StudyMapping::getEvaStudyId)
-                                                .findFirst();
+        Optional<String> studyId = projectAccessionMappings.stream()
+                                                           .filter(sm -> sm.getDbsnpBatchHandle()
+                                                                           .equals(subSnpNoHgvs.getBatchHandle()))
+                                                           .filter(sm -> sm.getDbsnpBatchName()
+                                                                           .equals(subSnpNoHgvs.getBatchName()))
+                                                           .map(ProjectAccessionMapping::getEvaStudyId)
+                                                           .findFirst();
 
         return studyId.orElse(subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs.getBatchName());
     }
