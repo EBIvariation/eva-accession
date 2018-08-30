@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
-@TestPropertySource("classpath:application.properties")
+@TestPropertySource("classpath:test-project-accession-mapping.properties")
 public class ProjectAccessionMappingTest {
 
     @Autowired
@@ -51,7 +51,7 @@ public class ProjectAccessionMappingTest {
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName("dbsnp-import-test").build());
+            MongoDbConfigurationBuilder.mongoDb().databaseName("testProjectAccessionMapping").build());
 
     @Test
     @UsingDataSet(locations = "/test-data/projectAccessionMapping.json")
