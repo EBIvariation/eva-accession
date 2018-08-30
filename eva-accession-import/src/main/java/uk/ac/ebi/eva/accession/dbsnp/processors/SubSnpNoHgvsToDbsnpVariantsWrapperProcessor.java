@@ -26,11 +26,13 @@ import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.StudyMapping;
 import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcessor<SubSnpNoHgvs, DbsnpVariantsWrapper> {
@@ -43,12 +45,16 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
 
     private String assemblyAccession;
 
+    private List<StudyMapping> studyMappings;
+
     public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(String assemblyAccession,
-                                                       FastaSequenceReader fastaSequenceReader) {
+                                                       FastaSequenceReader fastaSequenceReader,
+                                                       List<StudyMapping> studyMappings) {
         this.assemblyAccession = assemblyAccession;
-        renormalizationProcessor = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
-        subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor(assemblyAccession);
-        hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        this.renormalizationProcessor = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
+        this.subSnpNoHgvsToClusteredVariantProcessor = new SubSnpNoHgvsToClusteredVariantProcessor(assemblyAccession);
+        this.hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        this.studyMappings = studyMappings;
     }
 
     @Override
@@ -95,7 +101,15 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
     }
 
     private String getProjectAccession(SubSnpNoHgvs subSnpNoHgvs) {
-        return subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs.getBatchName();
+        Optional<String> studyId = studyMappings.stream()
+                                                .filter(sm -> sm.getDbsnpBatchHandle()
+                                                                .equals(subSnpNoHgvs.getBatchHandle()))
+                                                .filter(sm -> sm.getDbsnpBatchName()
+                                                                .equals(subSnpNoHgvs.getBatchName()))
+                                                .map(StudyMapping::getEvaStudyId)
+                                                .findFirst();
+
+        return studyId.orElse(subSnpNoHgvs.getBatchHandle() + "_" + subSnpNoHgvs.getBatchName());
     }
 
     private LocalDateTime getCreatedDate(SubSnpNoHgvs subSnpNoHgvs) {

@@ -31,6 +31,7 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.StudyMapping;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -69,7 +70,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     public static void setUpClass() throws Exception {
         fastaSequenceReader = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
-        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader);
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader,
+                                                                    Collections.emptyList());
     }
 
     @AfterClass
@@ -201,6 +203,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader,
+                                                                    studyMappings);
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertEquals(evaStudyId, variants.get(0).getProjectAccession());
     }
