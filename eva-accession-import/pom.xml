@@ -43,7 +43,6 @@
         <dependency>
             <groupId>com.lordofthejars</groupId>
             <artifactId>nosqlunit-mongodb</artifactId>
-            <version>1.0.0-rc.5</version>
             <scope>test</scope>
         </dependency>
 

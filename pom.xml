@@ -61,6 +61,12 @@
                 <artifactId>postgresql</artifactId>
                 <version>42.2.5</version>
             </dependency>
+            <dependency>
+                <groupId>com.lordofthejars</groupId>
+                <artifactId>nosqlunit-mongodb</artifactId>
+                <version>1.0.0-rc.5</version>
+                <scope>test</scope>
+            </dependency>
 
             <dependency>
                 <groupId>io.springfox</groupId>
