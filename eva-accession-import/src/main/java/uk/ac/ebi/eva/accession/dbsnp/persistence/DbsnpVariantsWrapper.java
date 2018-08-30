@@ -21,6 +21,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,6 +32,8 @@ import java.util.List;
  * - Zero or one clustered variant (RS)
  *
  * - Zero or more operations, depending on whether deprecations, declustering and/or merges need to applied
+ *
+ * TODO Consider replacing setters with 'add' methods
  */
 public class DbsnpVariantsWrapper {
 

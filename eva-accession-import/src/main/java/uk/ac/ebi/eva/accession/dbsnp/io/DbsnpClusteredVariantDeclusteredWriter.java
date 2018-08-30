@@ -33,7 +33,8 @@ import java.util.List;
  */
 public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
 
-    static final String DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME = "dbsnpClusteredVariantEntityDeclustered";
+    static final String DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME =
+            "dbsnpClusteredVariantEntityDeclustered";
 
     private MongoTemplate mongoTemplate;
 

@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
+
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import com.mongodb.BulkWriteResult;
@@ -21,36 +24,35 @@ import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.List;
 
-public class DbsnpClusteredVariantWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
+public class DbsnpClusteredVariantOperationWriter implements ItemWriter<DbsnpClusteredVariantOperationEntity> {
 
     private MongoTemplate mongoTemplate;
 
     private ImportCounts importCounts;
 
-    public DbsnpClusteredVariantWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
+    public DbsnpClusteredVariantOperationWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
         this.mongoTemplate = mongoTemplate;
         this.importCounts = importCounts;
     }
 
     @Override
-    public void write(List<? extends DbsnpClusteredVariantEntity> importedClusteredVariants) {
+    public void write(List<? extends DbsnpClusteredVariantOperationEntity> importedClusteredVariantsOperations)
+            throws Exception {
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  DbsnpClusteredVariantEntity.class);
-            bulkOperations.insert(importedClusteredVariants);
+                                                                  DbsnpClusteredVariantOperationEntity.class);
+            bulkOperations.insert(importedClusteredVariantsOperations);
             bulkOperations.execute();
-            importCounts.addClusteredVariantsWritten(importedClusteredVariants.size());
+            importCounts.addOperationsWritten(importedClusteredVariantsOperations.size());
         } catch (BulkOperationException e) {
             BulkWriteResult bulkWriteResult = e.getResult();
-            importCounts.addClusteredVariantsWritten(bulkWriteResult.getInsertedCount());
+            importCounts.addOperationsWritten(bulkWriteResult.getInsertedCount());
             throw e;
         }
     }
-
 }
