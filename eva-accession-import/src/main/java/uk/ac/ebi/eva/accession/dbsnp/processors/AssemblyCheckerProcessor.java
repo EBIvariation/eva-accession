@@ -54,12 +54,17 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
                     "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report");
         }
 
-        long end = calculateReferenceAlleleEndPosition(subSnpNoHgvs.getReferenceInForwardStrand(), start);
+        String referenceAllele = subSnpNoHgvs.getReferenceInForwardStrand();
+        if (referenceAllele.isEmpty()) {
+            return subSnpNoHgvs;
+        }
+
+        long end = calculateReferenceAlleleEndPosition(referenceAllele, start);
         String sequence;
         boolean matches = false;
         try {
             sequence = getSequenceUsingSynonyms(contigSynonyms, start, end);
-            matches = sequence.equals(subSnpNoHgvs.getReferenceInForwardStrand());
+            matches = sequence.equals(referenceAllele);
         } catch (IllegalArgumentException ex) {
             logger.warn(ex.getLocalizedMessage());
         } finally {
