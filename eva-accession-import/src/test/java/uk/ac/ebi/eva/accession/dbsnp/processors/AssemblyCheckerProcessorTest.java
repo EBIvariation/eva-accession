@@ -22,6 +22,7 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMappingTest;
+import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
@@ -73,19 +74,23 @@ public class AssemblyCheckerProcessorTest {
 
         FastaSequenceReader fastaSequenceReaderSeqName = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
-        processorSeqName = new AssemblyCheckerProcessor(contigMapping, fastaSequenceReaderSeqName);
+        processorSeqName = new AssemblyCheckerProcessor(
+                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderSeqName));
 
         FastaSequenceReader fastaSequenceReaderGenBank = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/fasta.genbank.fa"));
-        processorGenBank = new AssemblyCheckerProcessor(contigMapping, fastaSequenceReaderGenBank);
+        processorGenBank = new AssemblyCheckerProcessor(
+                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderGenBank));
 
         FastaSequenceReader fastaSequenceReaderRefSeq = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/fasta.refseq.fa"));
-        processorRefSeq = new AssemblyCheckerProcessor(contigMapping, fastaSequenceReaderRefSeq);
+        processorRefSeq = new AssemblyCheckerProcessor(
+                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderRefSeq));
 
         FastaSequenceReader fastaSequenceReaderUcsc = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/fasta.ucsc.fa"));
-        processorUcsc = new AssemblyCheckerProcessor(contigMapping, fastaSequenceReaderUcsc);
+        processorUcsc = new AssemblyCheckerProcessor(
+                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderUcsc));
     }
 
     @AfterClass

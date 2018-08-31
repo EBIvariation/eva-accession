@@ -22,6 +22,8 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
@@ -68,19 +70,21 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     private static SubSnpNoHgvsToDbsnpVariantsWrapperProcessor processor;
 
-    private static FastaSequenceReader fastaSequenceReader;
+    private static FastaSynonymSequenceReader fastaSynonymSequenceReader;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        fastaSequenceReader = new FastaSequenceReader(
+        FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
-        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader,
+        ContigMapping contigMapping = new ContigMapping(Collections.emptyList());
+        fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaSequenceReader);
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSynonymSequenceReader,
                                                                     Collections.emptyList());
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        fastaSequenceReader.close();
+        fastaSynonymSequenceReader.close();
     }
 
     @Test
@@ -207,7 +211,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
-        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader,
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSynonymSequenceReader,
                                                                     projectAccessionMappings);
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
         assertEquals(evaStudyId, variants.get(0).getProjectAccession());

@@ -20,9 +20,9 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
@@ -48,7 +48,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
     private List<ProjectAccessionMapping> projectAccessionMappings;
 
     public SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(String assemblyAccession,
-                                                       FastaSequenceReader fastaSequenceReader,
+                                                       FastaSynonymSequenceReader fastaSequenceReader,
                                                        List<ProjectAccessionMapping> projectAccessionMappings) {
         this.assemblyAccession = assemblyAccession;
         this.renormalizationProcessor = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);

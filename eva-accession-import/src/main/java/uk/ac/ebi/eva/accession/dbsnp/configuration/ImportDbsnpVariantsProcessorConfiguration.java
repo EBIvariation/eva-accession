@@ -26,6 +26,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
@@ -77,9 +78,14 @@ public class ImportDbsnpVariantsProcessorConfiguration {
     }
 
     @Bean
-    AssemblyCheckerProcessor assemblyCheckerProcessor(ContigMapping contigMapping,
-                                                      FastaSequenceReader fastaSequenceReader) {
-        return new AssemblyCheckerProcessor(contigMapping, fastaSequenceReader);
+    AssemblyCheckerProcessor assemblyCheckerProcessor(FastaSynonymSequenceReader fastaSynonymSequenceReader) {
+        return new AssemblyCheckerProcessor(fastaSynonymSequenceReader);
+    }
+
+    @Bean
+    FastaSynonymSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping,
+                                                          FastaSequenceReader fastaSequenceReader) {
+        return new FastaSynonymSequenceReader(contigMapping, fastaSequenceReader);
     }
 
     @Bean
@@ -90,10 +96,10 @@ public class ImportDbsnpVariantsProcessorConfiguration {
 
     @Bean
     SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor(
-            InputParameters parameters, FastaSequenceReader fastaSequenceReader,
+            InputParameters parameters, FastaSynonymSequenceReader fastaSynonymSequenceReader,
             List<ProjectAccessionMapping> projectAccessionMappings) {
-        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(), fastaSequenceReader,
-                                                               projectAccessionMappings);
+        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(),
+                                                               fastaSynonymSequenceReader, projectAccessionMappings);
     }
 
     @Bean

@@ -21,6 +21,9 @@ import org.junit.Test;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -48,20 +51,24 @@ public class SubmittedVariantRenormalizationProcessorTest {
 
     private static final String HASH = "hash";
 
-    private static FastaSequenceReader fastaSequenceReader;
+    private static final String CONTIG = "22";
+
+    private static FastaSynonymSequenceReader fastaSynonymSequenceReader;
 
     private static SubmittedVariantRenormalizationProcessor renormalizer;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        fastaSequenceReader = new FastaSequenceReader(
+        FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
-        renormalizer = new SubmittedVariantRenormalizationProcessor(fastaSequenceReader);
+        ContigMapping contigMapping = new ContigMapping(Collections.singletonList(new ContigSynonyms(CONTIG, "", "", "")));
+        fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaSequenceReader);
+        renormalizer = new SubmittedVariantRenormalizationProcessor(fastaSynonymSequenceReader);
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        fastaSequenceReader.close();
+        fastaSynonymSequenceReader.close();
     }
 
     @Test
@@ -89,7 +96,7 @@ public class SubmittedVariantRenormalizationProcessorTest {
                                        String expectedAlternateAfterRenormalization,
                                        boolean hashShouldHaveBeenRecalculated) {
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(SS_ID, HASH, ASSEMBLY, TAXONOMY, PROJECT,
-                                                                              "22", position, reference, alternate,
+                                                                              CONTIG, position, reference, alternate,
                                                                               RS_ID, DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                               DEFAULT_ASSEMBLY_MATCH,
                                                                               DEFAULT_ALLELES_MATCH,

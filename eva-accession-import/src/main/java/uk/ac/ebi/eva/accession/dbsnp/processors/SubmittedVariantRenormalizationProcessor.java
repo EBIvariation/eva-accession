@@ -22,9 +22,9 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 
 import java.util.List;
 import java.util.function.Function;
@@ -35,11 +35,11 @@ public class SubmittedVariantRenormalizationProcessor implements
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantRenormalizationProcessor.class);
 
-    private FastaSequenceReader fastaSequenceReader;
+    private FastaSynonymSequenceReader fastaSequenceReader;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public SubmittedVariantRenormalizationProcessor(FastaSequenceReader fastaSequenceReader) {
+    public SubmittedVariantRenormalizationProcessor(FastaSynonymSequenceReader fastaSequenceReader) {
         this.fastaSequenceReader = fastaSequenceReader;
         hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }

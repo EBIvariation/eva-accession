@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.dbsnp.contig;
 import uk.ac.ebi.eva.accession.dbsnp.io.AssemblyReportReader;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +49,14 @@ public class ContigMapping {
         refSeqToSynonyms = new HashMap<>();
         ucscToSynonyms = new HashMap<>();
         populateMaps(assemblyReportReader);
+    }
+
+    public ContigMapping(List<ContigSynonyms> contigSynonyms) {
+        sequenceNameToSynonyms = new HashMap<>();
+        genBankToSynonyms = new HashMap<>();
+        refSeqToSynonyms = new HashMap<>();
+        ucscToSynonyms = new HashMap<>();
+        contigSynonyms.forEach(this::fillContigConventionMaps);
     }
 
     private void populateMaps(AssemblyReportReader assemblyReportReader) throws Exception {
