@@ -46,6 +46,12 @@ public class ContigMappingTest {
     @Test
     public void matchWhenVcfHasPrefixes() {
         assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CH1).getGenBank());
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CH1).getSequenceName());
+    }
+
+    @Test
+    public void removePrefixOnlyAtTheBeginning() {
+        assertEquals("otherprefix_chr45", contigMapping.getContigSynonyms("genbank_example_2").getSequenceName());
     }
 
     @Test
