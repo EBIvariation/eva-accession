@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
@@ -28,6 +29,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmittedVariant, Long>
         implements ISubmittedVariant {
 
+    @Indexed(background = true)
     @Field("seq")
     private String referenceSequenceAccession;
 
@@ -47,6 +49,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     @Field("alt")
     private String alternateAllele;
 
+    @Indexed(background = true)
     @Field("rs")
     private Long clusteredVariantAccession;
 
