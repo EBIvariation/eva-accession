@@ -25,6 +25,7 @@ import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,11 +60,10 @@ public class SubmittedVariantRenormalizationProcessorTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(
-                Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
+        Path fastaPath = Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
         ContigMapping contigMapping = new ContigMapping(Collections.singletonList(new ContigSynonyms(CONTIG,
                                                                                                      "", "", "", "")));
-        fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaSequenceReader);
+        fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         renormalizer = new SubmittedVariantRenormalizationProcessor(fastaSynonymSequenceReader);
     }
 

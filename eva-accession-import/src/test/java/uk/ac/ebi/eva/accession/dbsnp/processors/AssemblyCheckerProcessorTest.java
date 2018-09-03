@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertFalse;
@@ -72,25 +73,17 @@ public class AssemblyCheckerProcessorTest {
         String fileString = ContigMappingTest.class.getResource("/input-files/assembly-report/AssemblyReport.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
-        FastaSequenceReader fastaSequenceReaderSeqName = new FastaSequenceReader(
-                Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
-        processorSeqName = new AssemblyCheckerProcessor(
-                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderSeqName));
+        Path seqNamePath = Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
+        processorSeqName = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, seqNamePath));
 
-        FastaSequenceReader fastaSequenceReaderGenBank = new FastaSequenceReader(
-                Paths.get("src/test/resources/input-files/fasta/fasta.genbank.fa"));
-        processorGenBank = new AssemblyCheckerProcessor(
-                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderGenBank));
+        Path genbankPath = Paths.get("src/test/resources/input-files/fasta/fasta.genbank.fa");
+        processorGenBank = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, genbankPath));
 
-        FastaSequenceReader fastaSequenceReaderRefSeq = new FastaSequenceReader(
-                Paths.get("src/test/resources/input-files/fasta/fasta.refseq.fa"));
-        processorRefSeq = new AssemblyCheckerProcessor(
-                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderRefSeq));
+        Path refSeqPath = Paths.get("src/test/resources/input-files/fasta/fasta.refseq.fa");
+        processorRefSeq = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, refSeqPath));
 
-        FastaSequenceReader fastaSequenceReaderUcsc = new FastaSequenceReader(
-                Paths.get("src/test/resources/input-files/fasta/fasta.ucsc.fa"));
-        processorUcsc = new AssemblyCheckerProcessor(
-                new FastaSynonymSequenceReader(contigMapping, fastaSequenceReaderUcsc));
+        Path ucscPath = Paths.get("src/test/resources/input-files/fasta/fasta.ucsc.fa");
+        processorUcsc = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, ucscPath));
     }
 
     @AfterClass

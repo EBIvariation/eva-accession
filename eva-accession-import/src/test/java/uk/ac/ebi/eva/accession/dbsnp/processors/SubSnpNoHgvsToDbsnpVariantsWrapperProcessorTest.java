@@ -30,6 +30,7 @@ import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.ProjectAccessionMapping;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -74,10 +75,9 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(
-                Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
+        Path fastaPath = Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
         ContigMapping contigMapping = new ContigMapping(Collections.emptyList());
-        fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaSequenceReader);
+        fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSynonymSequenceReader,
                                                                     Collections.emptyList());
     }

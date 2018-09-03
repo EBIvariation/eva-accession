@@ -19,15 +19,16 @@ import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
 
-public class FastaSynonymSequenceReader {
+import java.io.IOException;
+import java.nio.file.Path;
+
+public class FastaSynonymSequenceReader extends FastaSequenceReader {
 
     private ContigMapping contigMapping;
 
-    private FastaSequenceReader fastaReader;
-
-    public FastaSynonymSequenceReader(ContigMapping contigMapping, FastaSequenceReader fastaReader) {
+    public FastaSynonymSequenceReader(ContigMapping contigMapping, Path fastaPath) throws IOException {
+        super(fastaPath);
         this.contigMapping = contigMapping;
-        this.fastaReader = fastaReader;
     }
 
     public String getSequence(String contig, long start, long end) {
@@ -63,10 +64,6 @@ public class FastaSynonymSequenceReader {
         throw new IllegalArgumentException("Contig " + contigSynonyms.toString() + " not found in the FASTA file");
     }
 
-    public boolean doesContigExist(String contig) {
-        return this.fastaReader.doesContigExist(contig);
-    }
-
     /**
      * Tries to retrieve a sequence from a FASTA file. If the sequence can't be found using that name, it could be that
      * the FASTA uses a different nomenclature; in that case a synonym could be used.
@@ -82,7 +79,7 @@ public class FastaSynonymSequenceReader {
      */
     private String getSequenceIgnoringMissingContig(String contig, long start, long end) {
         try {
-            return fastaReader.getSequence(contig, start, end);
+            return super.getSequence(contig, start, end);
         } catch (IllegalArgumentException sequenceUnavailable) {
         /*
          The same exception type could be caused because the contig was not found, or the requested coordinates
@@ -90,7 +87,7 @@ public class FastaSynonymSequenceReader {
          request for position 1 of the sequence.
          */
             try {
-                fastaReader.getSequence(contig, 1, 1);
+                super.getSequence(contig, 1, 1);
             } catch (IllegalArgumentException contigMissing) {
                 return null;
             }
@@ -98,9 +95,5 @@ public class FastaSynonymSequenceReader {
             // The exception is only thrown when the sequence name was found but the coordinates are not valid.
             throw sequenceUnavailable;
         }
-    }
-
-    public void close() throws Exception {
-        fastaReader.close();
     }
 }

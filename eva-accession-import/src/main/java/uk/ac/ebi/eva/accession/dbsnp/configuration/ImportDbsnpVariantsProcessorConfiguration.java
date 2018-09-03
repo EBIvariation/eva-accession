@@ -83,15 +83,10 @@ public class ImportDbsnpVariantsProcessorConfiguration {
     }
 
     @Bean
-    FastaSynonymSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping,
-                                                          FastaSequenceReader fastaSequenceReader) {
-        return new FastaSynonymSequenceReader(contigMapping, fastaSequenceReader);
-    }
-
-    @Bean
-    FastaSequenceReader fastaSequenceReader(InputParameters parameters) throws IOException {
+    FastaSynonymSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping, InputParameters parameters)
+            throws IOException {
         Path referenceFastaFile = Paths.get(parameters.getFasta());
-        return new FastaSequenceReader(referenceFastaFile);
+        return new FastaSynonymSequenceReader(contigMapping, referenceFastaFile);
     }
 
     @Bean
