@@ -33,7 +33,6 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import java.util.List;
 
 @RestController
-@CrossOrigin
 @RequestMapping(value = "/v1/submitted-variants")
 @Api(tags = {"Submitted variants"})
 public class SubmittedVariantsRestController {

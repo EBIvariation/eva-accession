@@ -33,7 +33,6 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import java.util.List;
 
 @RestController
-@CrossOrigin
 @RequestMapping(value = "/v1/clustered-variants")
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
