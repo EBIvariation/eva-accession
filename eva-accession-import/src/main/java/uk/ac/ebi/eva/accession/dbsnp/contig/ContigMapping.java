@@ -89,12 +89,13 @@ public class ContigMapping {
      */
     private void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
         contigSynonyms.setSequenceName(removePrefix(contigSynonyms.getSequenceName()));
-        contigSynonyms.setUcsc(removePrefix(contigSynonyms.getUcsc()));
         if (contigSynonyms.getAssignedMolecule().equals(NOT_AVAILABLE)) {
             contigSynonyms.setAssignedMolecule(null);
         }
         if (contigSynonyms.getUcsc().equals(NOT_AVAILABLE)) {
             contigSynonyms.setUcsc(null);
+        } else {
+            contigSynonyms.setUcsc(removePrefix(contigSynonyms.getUcsc()));
         }
 
         sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
