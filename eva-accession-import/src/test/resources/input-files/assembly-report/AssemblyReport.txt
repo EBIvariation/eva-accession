@@ -42,7 +42,7 @@
 #
 # Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
 chrom1	assembled-molecule	1	Chromosome	CM000994.2	=	NC_000067.6	C57BL/6J	195471971	chr1
-2	assembled-molecule	2	Chromosome	CM000995.2	=	NC_000068.7	C57BL/6J	182113224	chr2
+2	assembled-molecule	unique_assigned_molecule_2	Chromosome	CM000995.2	=	NC_000068.7	C57BL/6J	182113224	chr2
 3	assembled-molecule	3	Chromosome	CM000996.2	=	NC_000069.6	C57BL/6J	160039680	chr3
 4	assembled-molecule	4	Chromosome	CM000997.2	=	NC_000070.6	C57BL/6J	156508116	chr4
 5	assembled-molecule	5	Chromosome	CM000998.2	=	NC_000071.6	C57BL/6J	151834684	chr5

@@ -20,8 +20,10 @@ package uk.ac.ebi.eva.accession.dbsnp.contig;
 import uk.ac.ebi.eva.accession.dbsnp.io.AssemblyReportReader;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +33,7 @@ public class ContigMapping {
 
     private Map<String, ContigSynonyms> assignedMoleculeToSynonyms = new HashMap<>();
 
-    private boolean assignedMoleculeHasDuplicates = false;
+    private Set<String> assignedMoleculeDuplicates = new HashSet<>();
 
     private Map<String, ContigSynonyms> genBankToSynonyms = new HashMap<>();
 
@@ -55,17 +57,24 @@ public class ContigMapping {
 
     public ContigMapping(List<ContigSynonyms> contigSynonyms) {
         contigSynonyms.forEach(this::fillContigConventionMaps);
-        if (assignedMoleculeHasDuplicates) {
+        if (!assignedMoleculeDuplicates.isEmpty()) {
             removeAssignedMolecule();
         }
     }
 
     private void removeAssignedMolecule() {
-        assignedMoleculeToSynonyms.clear();
-        sequenceNameToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
-        ucscToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
-        genBankToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
-        refSeqToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
+        assignedMoleculeDuplicates.forEach(assignedMoleculeToSynonyms::remove);
+
+        sequenceNameToSynonyms.forEach(this::removeAssignedMoleculeIfDuplicated);
+        ucscToSynonyms.forEach(this::removeAssignedMoleculeIfDuplicated);
+        genBankToSynonyms.forEach(this::removeAssignedMoleculeIfDuplicated);
+        refSeqToSynonyms.forEach(this::removeAssignedMoleculeIfDuplicated);
+    }
+
+    private void removeAssignedMoleculeIfDuplicated(String key, ContigSynonyms contigSynonym) {
+        if (assignedMoleculeDuplicates.contains(contigSynonym.getAssignedMolecule())) {
+            contigSynonym.setAssignedMolecule(null);
+        }
     }
 
     private void populateMaps(AssemblyReportReader assemblyReportReader) throws Exception {
@@ -73,7 +82,7 @@ public class ContigMapping {
         while ((contigSynonyms = assemblyReportReader.read()) != null) {
             fillContigConventionMaps(contigSynonyms);
         }
-        if (assignedMoleculeHasDuplicates) {
+        if (!assignedMoleculeDuplicates.isEmpty()) {
             removeAssignedMolecule();
         }
     }
@@ -106,11 +115,11 @@ public class ContigMapping {
             ucscToSynonyms.put(contigSynonyms.getUcsc(), contigSynonyms);
         }
 
-        if (!assignedMoleculeHasDuplicates && contigSynonyms.getAssignedMolecule() != null) {
+        if (contigSynonyms.getAssignedMolecule() != null) {
             ContigSynonyms previousValue = assignedMoleculeToSynonyms.putIfAbsent(contigSynonyms.getAssignedMolecule(),
                                                                                   contigSynonyms);
             if (previousValue != null) {
-                assignedMoleculeHasDuplicates = true;
+                assignedMoleculeDuplicates.add(contigSynonyms.getAssignedMolecule());
             }
         }
     }
@@ -139,8 +148,7 @@ public class ContigMapping {
         if ((contigSynonyms = ucscToSynonyms.get(contigNoPrefix)) != null) {
             return contigSynonyms;
         }
-        if (!assignedMoleculeHasDuplicates
-                && (contigSynonyms = assignedMoleculeToSynonyms.get(contigNoPrefix)) != null) {
+        if ((contigSynonyms = assignedMoleculeToSynonyms.get(contigNoPrefix)) != null) {
             return contigSynonyms;
         }
         return null;

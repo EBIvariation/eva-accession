@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class ContigMappingTest {
@@ -27,11 +28,15 @@ public class ContigMappingTest {
 
     private static final String SEQNAME_CONTIG = "1";
 
+    private static final String SEQNAME_CONTIG_2 = "2";
+
     private static final String SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE = "DCARv2_Chr1";
 
     private static final String SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE_2 = "DCARv2_B1";
 
     private static final String ASSIGNED_MOLECULE_CONTIG = "1";
+
+    private static final String ASSIGNED_MOLECULE_CONTIG_2 = "unique_assigned_molecule_2";
 
     private static final String ASSIGNED_MOLECULE_EXAMPLE = "assigned_molecule_example_1";
 
@@ -83,8 +88,19 @@ public class ContigMappingTest {
     }
 
     @Test
+    public void getSynonymFromAssignedMoleculeIfThereAreDuplicatesOnlyInOtherKeys() {
+        assertNotNull(contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG_2).getAssignedMolecule());
+    }
+
+    @Test
     public void getAssignedMoleculeReturnsNullIfThereAreDuplicates() {
         assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG).getAssignedMolecule());
+    }
+
+    @Test
+    public void getAssignedMoleculeIfThereAreDuplicatesOnlyInOtherKeys() {
+        assertEquals(ASSIGNED_MOLECULE_CONTIG_2,
+                     contigMapping.getContigSynonyms(SEQNAME_CONTIG_2).getAssignedMolecule());
     }
 
     @Test
