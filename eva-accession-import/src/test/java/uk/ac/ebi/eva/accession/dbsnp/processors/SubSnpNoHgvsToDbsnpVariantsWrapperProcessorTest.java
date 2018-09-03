@@ -26,9 +26,12 @@ import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.ProjectAccessionMapping;
 
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -67,7 +70,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     public static void setUpClass() throws Exception {
         fastaSequenceReader = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
-        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader);
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader,
+                                                                    Collections.emptyList());
     }
 
     @AfterClass
@@ -183,6 +187,26 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                 .append("_").append(alternate)
                 .toString();
         return new SHA1HashingFunction().apply(summary);
+    }
+
+    @Test
+    public void mapEvaStudyId() throws Exception {
+        List<ProjectAccessionMapping> projectAccessionMappings = new ArrayList<>();
+        String handle = "HANDLE_TO_BE_REPLACED";
+        String batchName = "BATCH_NAME_TO_BE_REPLACED";
+        String evaStudyId = "EVA_STUDY_ID";
+        projectAccessionMappings.add(new ProjectAccessionMapping(evaStudyId, handle, batchName, TAXONOMY));
+
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "A/C", ASSEMBLY, handle,
+                                                     batchName, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
+                                                     Orientation.FORWARD, Orientation.FORWARD, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        processor = new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(ASSEMBLY_ACCESSION, fastaSequenceReader,
+                                                                    projectAccessionMappings);
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+        assertEquals(evaStudyId, variants.get(0).getProjectAccession());
     }
 
     @Test

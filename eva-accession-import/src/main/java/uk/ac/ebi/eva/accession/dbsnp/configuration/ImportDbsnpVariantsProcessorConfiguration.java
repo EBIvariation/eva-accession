@@ -22,12 +22,14 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.persistence.ProjectAccessionMapping;
 import uk.ac.ebi.eva.accession.dbsnp.processors.AssemblyCheckerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.processors.SubSnpNoHgvsToDbsnpVariantsWrapperProcessor;
@@ -37,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_PROCESSOR;
 
@@ -87,8 +90,15 @@ public class ImportDbsnpVariantsProcessorConfiguration {
 
     @Bean
     SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor(
-            InputParameters parameters, FastaSequenceReader fastaSequenceReader) {
-        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(), fastaSequenceReader);
+            InputParameters parameters, FastaSequenceReader fastaSequenceReader,
+            List<ProjectAccessionMapping> projectAccessionMappings) {
+        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(), fastaSequenceReader,
+                                                               projectAccessionMappings);
+    }
+
+    @Bean
+    List<ProjectAccessionMapping> projectAccessionMappings(MongoTemplate mongoTemplate) {
+        return mongoTemplate.findAll(ProjectAccessionMapping.class);
     }
 
     @Bean
