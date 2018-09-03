@@ -83,3 +83,4 @@ MMCHR7_RANDOM_CTG1	unlocalized-scaffold	7	Chromosome	GL456219.1	=	NT_166307.1	C5
 MMCHRX_RANDOM_CTG2	unlocalized-scaffold	X	Chromosome	GL456233.1	=	NT_165789.2	C57BL/6J	336933	chrX_GL456233_random
 22	assembled-molecule	22	Chromosome	genbank_example_1	=	refseq_example_1	C57BL/6J	91744698	ucsc_example_1
 otherprefix_chr45	assembled-molecule	45	Chromosome	genbank_example_2	=	refseq_example_2	C57BL/6J	91744698	ucsc_example_2
+sequence_name_example_3	assembled-molecule	assigned_molecule_example_3	Chromosome	genbank_example_3	=	refseq_example_3	C57BL/6J	91744698	ucsc_example_3

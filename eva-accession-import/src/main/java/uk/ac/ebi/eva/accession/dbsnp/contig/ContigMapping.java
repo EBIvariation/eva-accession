@@ -27,36 +27,45 @@ import java.util.regex.Pattern;
 
 public class ContigMapping {
 
-    private Map<String, ContigSynonyms> sequenceNameToSynonyms;
+    private Map<String, ContigSynonyms> sequenceNameToSynonyms = new HashMap<>();
 
-    private Map<String, ContigSynonyms> genBankToSynonyms;
+    private Map<String, ContigSynonyms> assignedMoleculeToSynonyms = new HashMap<>();
 
-    private Map<String, ContigSynonyms> refSeqToSynonyms;
+    private boolean assignedMoleculeHasDuplicates = false;
 
-    private Map<String, ContigSynonyms> ucscToSynonyms;
+    private Map<String, ContigSynonyms> genBankToSynonyms = new HashMap<>();
+
+    private Map<String, ContigSynonyms> refSeqToSynonyms = new HashMap<>();
+
+    private Map<String, ContigSynonyms> ucscToSynonyms = new HashMap<>();
 
     private static final String CHROMOSOME_PATTERN = "(chromosome|chrom|chr|ch)(.+)";
 
     private static final Pattern PATTERN = Pattern.compile(CHROMOSOME_PATTERN, Pattern.CASE_INSENSITIVE);
+
+    private static final String NOT_AVAILABLE = "na";
 
     public ContigMapping(String assemblyReportUrl) throws Exception {
         this(new AssemblyReportReader(assemblyReportUrl));
     }
 
     public ContigMapping(AssemblyReportReader assemblyReportReader) throws Exception {
-        sequenceNameToSynonyms = new HashMap<>();
-        genBankToSynonyms = new HashMap<>();
-        refSeqToSynonyms = new HashMap<>();
-        ucscToSynonyms = new HashMap<>();
         populateMaps(assemblyReportReader);
     }
 
     public ContigMapping(List<ContigSynonyms> contigSynonyms) {
-        sequenceNameToSynonyms = new HashMap<>();
-        genBankToSynonyms = new HashMap<>();
-        refSeqToSynonyms = new HashMap<>();
-        ucscToSynonyms = new HashMap<>();
         contigSynonyms.forEach(this::fillContigConventionMaps);
+        if (assignedMoleculeHasDuplicates) {
+            removeAssignedMolecule();
+        }
+    }
+
+    private void removeAssignedMolecule() {
+        assignedMoleculeToSynonyms.clear();
+        sequenceNameToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
+        ucscToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
+        genBankToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
+        refSeqToSynonyms.forEach((key, contigSynonym) -> contigSynonym.setAssignedMolecule(null));
     }
 
     private void populateMaps(AssemblyReportReader assemblyReportReader) throws Exception {
@@ -64,15 +73,45 @@ public class ContigMapping {
         while ((contigSynonyms = assemblyReportReader.read()) != null) {
             fillContigConventionMaps(contigSynonyms);
         }
+        if (assignedMoleculeHasDuplicates) {
+            removeAssignedMolecule();
+        }
     }
 
+    /**
+     * Adds an entry to every map, where the key is a name, and the value is the row where it appears.
+     *
+     * Take into account:
+     * - sequenceName and UCSC columns may have prefixes that we have to remove.
+     * - UCSC and assignedMolecule columns may appear as "na" (not available).
+     * - assignedMolecule values may not be unique across rows. If that's the case, don't include assignedMolecule in
+     * the maps.
+     */
     private void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
         contigSynonyms.setSequenceName(removePrefix(contigSynonyms.getSequenceName()));
         contigSynonyms.setUcsc(removePrefix(contigSynonyms.getUcsc()));
+        if (contigSynonyms.getAssignedMolecule().equals(NOT_AVAILABLE)) {
+            contigSynonyms.setAssignedMolecule(null);
+        }
+        if (contigSynonyms.getUcsc().equals(NOT_AVAILABLE)) {
+            contigSynonyms.setUcsc(null);
+        }
+
         sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
         genBankToSynonyms.put(contigSynonyms.getGenBank(), contigSynonyms);
         refSeqToSynonyms.put(contigSynonyms.getRefSeq(), contigSynonyms);
-        ucscToSynonyms.put(contigSynonyms.getUcsc(), contigSynonyms);
+
+        if (contigSynonyms.getUcsc() != null) {
+            ucscToSynonyms.put(contigSynonyms.getUcsc(), contigSynonyms);
+        }
+
+        if (!assignedMoleculeHasDuplicates && contigSynonyms.getAssignedMolecule() != null) {
+            ContigSynonyms previousValue = assignedMoleculeToSynonyms.putIfAbsent(contigSynonyms.getAssignedMolecule(),
+                                                                                  contigSynonyms);
+            if (previousValue != null) {
+                assignedMoleculeHasDuplicates = true;
+            }
+        }
     }
 
     private String removePrefix(String contig) {
@@ -97,6 +136,10 @@ public class ContigMapping {
             return contigSynonyms;
         }
         if ((contigSynonyms = ucscToSynonyms.get(contigNoPrefix)) != null) {
+            return contigSynonyms;
+        }
+        if (!assignedMoleculeHasDuplicates
+                && (contigSynonyms = assignedMoleculeToSynonyms.get(contigNoPrefix)) != null) {
             return contigSynonyms;
         }
         return null;

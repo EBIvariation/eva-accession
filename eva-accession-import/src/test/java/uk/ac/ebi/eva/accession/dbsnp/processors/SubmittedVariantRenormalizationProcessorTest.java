@@ -61,7 +61,8 @@ public class SubmittedVariantRenormalizationProcessorTest {
     public static void setUpClass() throws Exception {
         FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(
                 Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa"));
-        ContigMapping contigMapping = new ContigMapping(Collections.singletonList(new ContigSynonyms(CONTIG, "", "", "")));
+        ContigMapping contigMapping = new ContigMapping(Collections.singletonList(new ContigSynonyms(CONTIG,
+                                                                                                     "", "", "", "")));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaSequenceReader);
         renormalizer = new SubmittedVariantRenormalizationProcessor(fastaSynonymSequenceReader);
     }
