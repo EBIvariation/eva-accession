@@ -55,6 +55,11 @@ public class FastaSynonymSequenceReader {
         if ((sequence = getSequenceIgnoringMissingContig(contigSynonyms.getUcsc(), start, end)) != null) {
             return sequence;
         }
+        String assignedMolecule = contigSynonyms.getAssignedMolecule();
+        if (assignedMolecule != null
+                && (sequence = getSequenceIgnoringMissingContig(assignedMolecule, start, end)) != null) {
+            return sequence;
+        }
         throw new IllegalArgumentException("Contig " + contigSynonyms.toString() + " not found in the FASTA file");
     }
 
@@ -78,7 +83,7 @@ public class FastaSynonymSequenceReader {
     private String getSequenceIgnoringMissingContig(String contig, long start, long end) {
         try {
             return fastaReader.getSequence(contig, start, end);
-        } catch (IllegalArgumentException e1) {
+        } catch (IllegalArgumentException sequenceUnavailable) {
         /*
          The same exception type could be caused because the contig was not found, or the requested coordinates
          were greater than the last position in the contig. In order to differentiate between them, we make another
@@ -86,12 +91,12 @@ public class FastaSynonymSequenceReader {
          */
             try {
                 fastaReader.getSequence(contig, 1, 1);
-            } catch (IllegalArgumentException e2) {
+            } catch (IllegalArgumentException contigMissing) {
                 return null;
             }
 
             // The exception is only thrown when the sequence name was found but the coordinates are not valid.
-            throw e1;
+            throw sequenceUnavailable;
         }
     }
 
