@@ -23,6 +23,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
@@ -58,4 +61,13 @@ public class ApplicationConfiguration {
         return new BasicRestController<>(service, SubmittedVariant::new);
     }
 
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurerAdapter() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**");
+            }
+        };
+    }
 }
