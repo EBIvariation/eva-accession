@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 
 public class SubSnpNoHgvs {
 
-    public static final String STR_SEQUENCE_REGEX_GROUP = "sequence";
-
     private Long ssId;
 
     private Long rsId;
@@ -44,6 +42,8 @@ public class SubSnpNoHgvs {
     private long contigStart;
 
     private final DbsnpVariantAlleles dbSnpVariantAlleles;
+
+    private final boolean anyOrientationUnknown;
 
     private DbsnpVariantType dbsnpVariantType;
 
@@ -86,6 +86,8 @@ public class SubSnpNoHgvs {
         this.ssCreateTime = ssCreateTime;
         this.rsCreateTime = rsCreateTime;
         this.taxonomyId = taxonomyId;
+        this.anyOrientationUnknown = (subsnpOrientation.getValue() * snpOrientation.getValue()
+                * contigOrientation.getValue()) == 0;
         Orientation allelesOrientation = Orientation.getOrientation(
                 composeOrientationAssumingForwardIfUnknown(subsnpOrientation, snpOrientation, contigOrientation));
         this.dbSnpVariantAlleles = new DbsnpVariantAlleles(reference, alleles, contigOrientation, allelesOrientation,
@@ -246,6 +248,10 @@ public class SubSnpNoHgvs {
         this.assemblyMatch = assemblyMatch;
     }
 
+    public boolean isAnyOrientationUnknown() {
+        return anyOrientationUnknown;
+    }
+
     public String getReferenceInForwardStrand() {
         return dbSnpVariantAlleles.getReferenceInForwardStrand();
     }
@@ -274,5 +280,6 @@ public class SubSnpNoHgvs {
             return new Region(getContigName(), getContigStart());
         }
     }
+
 
 }

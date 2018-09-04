@@ -96,7 +96,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                                     variantRegion.getStart(), subSnpNoHgvs.getReferenceInForwardStrand(), alternate,
                                     subSnpNoHgvs.getRsId(),
                                     subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists(),
-                                    subSnpNoHgvs.isAssemblyMatch(), subSnpNoHgvs.doAllelesMatch(),
+                                    subSnpNoHgvs.isAssemblyMatch() ,
+                                    subSnpNoHgvs.doAllelesMatch() && !subSnpNoHgvs.isAnyOrientationUnknown(),
                                     subSnpNoHgvs.isSubsnpValidated());
     }
 
