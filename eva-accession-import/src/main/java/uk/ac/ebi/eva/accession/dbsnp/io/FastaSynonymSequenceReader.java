@@ -39,7 +39,17 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
                     "Contig '" + contig + "' not found in the assembly report");
         }
 
-        return getSequenceUsingSynonyms(contigSynonyms, start, end);
+        if (contigSynonyms.isGenBankAndRefSeqIdentical()) {
+            return getSequenceUsingSynonyms(contigSynonyms, start, end);
+        } else {
+            String sequence = getSequenceIgnoringMissingContig(contig, start, end);
+            if (sequence == null) {
+                throw new IllegalArgumentException("Contig " + contig + " not found in the FASTA file");
+            } else {
+                return sequence;
+            }
+
+        }
     }
 
     private String getSequenceUsingSynonyms(ContigSynonyms contigSynonyms, long start, long end) {
@@ -56,9 +66,7 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
         if ((sequence = getSequenceIgnoringMissingContig(contigSynonyms.getUcsc(), start, end)) != null) {
             return sequence;
         }
-        String assignedMolecule = contigSynonyms.getAssignedMolecule();
-        if (assignedMolecule != null
-                && (sequence = getSequenceIgnoringMissingContig(assignedMolecule, start, end)) != null) {
+        if ((sequence = getSequenceIgnoringMissingContig(contigSynonyms.getAssignedMolecule(), start, end)) != null) {
             return sequence;
         }
         throw new IllegalArgumentException("Contig " + contigSynonyms.toString() + " not found in the FASTA file");
@@ -78,22 +86,26 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
      * @throws IllegalArgumentException if the sequence name can be found in the FASTA but the coordinates are too large
      */
     private String getSequenceIgnoringMissingContig(String contig, long start, long end) {
-        try {
-            return super.getSequence(contig, start, end);
-        } catch (IllegalArgumentException sequenceUnavailable) {
+        if (contig != null) {
+            try {
+                return super.getSequence(contig, start, end);
+            } catch (IllegalArgumentException sequenceUnavailable) {
         /*
          The same exception type could be caused because the contig was not found, or the requested coordinates
          were greater than the last position in the contig. In order to differentiate between them, we make another
          request for position 1 of the sequence.
          */
-            try {
-                super.getSequence(contig, 1, 1);
-            } catch (IllegalArgumentException contigMissing) {
-                return null;
-            }
+                try {
+                    super.getSequence(contig, 1, 1);
+                } catch (IllegalArgumentException contigMissing) {
+                    return null;
+                }
 
-            // The exception is only thrown when the sequence name was found but the coordinates are not valid.
-            throw sequenceUnavailable;
+                // The exception is only thrown when the sequence name was found but the coordinates are not valid.
+                throw sequenceUnavailable;
+            }
+        } else {
+            return null;
         }
     }
 }

@@ -80,14 +80,12 @@ public class AssemblyReportReader implements ItemReader<ContigSynonyms> {
 
     private ContigSynonyms getContigSynonyms(String line) {
         String[] columns = line.split("\t", -1);
-        if (columns[RELATIONSHIP_COLUMN].equals(IDENTICAL_SEQUENCE)) {
-            ContigSynonyms contigSynonyms = new ContigSynonyms(columns[SEQNAME_COLUMN],
-                                                               columns[ASSIGNED_MOLECULE_COLUMN],
-                                                               columns[GENBANK_COLUMN],
-                                                               columns[REFSEQ_COLUMN],
-                                                               columns[UCSC_COLUMN]);
-            return contigSynonyms;
-        }
-        return null;
+        ContigSynonyms contigSynonyms = new ContigSynonyms(columns[SEQNAME_COLUMN],
+                                                           columns[ASSIGNED_MOLECULE_COLUMN],
+                                                           columns[GENBANK_COLUMN],
+                                                           columns[REFSEQ_COLUMN],
+                                                           columns[UCSC_COLUMN],
+                                                           columns[RELATIONSHIP_COLUMN].equals(IDENTICAL_SEQUENCE));
+        return contigSynonyms;
     }
 }

@@ -29,12 +29,16 @@ public class ContigSynonyms {
 
     private String ucsc;
 
-    public ContigSynonyms(String sequenceName, String assignedMolecule, String genBank, String refSeq, String ucsc) {
+    private boolean genBankAndRefSeqIdentical;
+
+    public ContigSynonyms(String sequenceName, String assignedMolecule, String genBank, String refSeq, String ucsc,
+                          boolean genBankAndRefSeqIdentical) {
         this.sequenceName = sequenceName;
         this.assignedMolecule = assignedMolecule;
         this.genBank = genBank;
         this.refSeq = refSeq;
         this.ucsc = ucsc;
+        this.genBankAndRefSeqIdentical = genBankAndRefSeqIdentical;
     }
 
     public String getSequenceName() {
@@ -77,6 +81,14 @@ public class ContigSynonyms {
         this.ucsc = ucsc;
     }
 
+    public boolean isGenBankAndRefSeqIdentical() {
+        return genBankAndRefSeqIdentical;
+    }
+
+    public void setGenBankAndRefSeqIdentical(boolean genBankAndRefSeqIdentical) {
+        this.genBankAndRefSeqIdentical = genBankAndRefSeqIdentical;
+    }
+
     @Override
     public String toString() {
         return "ContigSynonyms{" +
@@ -85,6 +97,7 @@ public class ContigSynonyms {
                 ", genBank='" + genBank + '\'' +
                 ", refSeq='" + refSeq + '\'' +
                 ", ucsc='" + ucsc + '\'' +
+                ", genBankAndRefSeqIdentical=" + genBankAndRefSeqIdentical +
                 '}';
     }
 }

@@ -101,6 +101,12 @@ public class ContigMapping {
         if (contigSynonyms.getAssignedMolecule().equals(NOT_AVAILABLE)) {
             contigSynonyms.setAssignedMolecule(null);
         }
+        if (contigSynonyms.getGenBank().equals(NOT_AVAILABLE)) {
+            contigSynonyms.setGenBank(null);
+        }
+        if (contigSynonyms.getRefSeq().equals(NOT_AVAILABLE)) {
+            contigSynonyms.setRefSeq(null);
+        }
         if (contigSynonyms.getUcsc().equals(NOT_AVAILABLE)) {
             contigSynonyms.setUcsc(null);
         } else {

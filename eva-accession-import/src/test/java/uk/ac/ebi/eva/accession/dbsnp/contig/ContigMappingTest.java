@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -79,7 +80,8 @@ public class ContigMappingTest {
 
     @Test
     public void noSynonyms() {
-        assertNull(contigMapping.getContigSynonyms(CONTIG_WITHOUT_SYNONYM));
+        assertNotNull(contigMapping.getContigSynonyms(CONTIG_WITHOUT_SYNONYM));
+        assertFalse(contigMapping.getContigSynonyms(CONTIG_WITHOUT_SYNONYM).isGenBankAndRefSeqIdentical());
     }
 
     @Test

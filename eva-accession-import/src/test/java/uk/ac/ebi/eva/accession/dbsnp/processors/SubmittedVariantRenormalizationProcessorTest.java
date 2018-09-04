@@ -19,7 +19,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
@@ -62,7 +61,8 @@ public class SubmittedVariantRenormalizationProcessorTest {
     public static void setUpClass() throws Exception {
         Path fastaPath = Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
         ContigMapping contigMapping = new ContigMapping(Collections.singletonList(new ContigSynonyms(CONTIG,
-                                                                                                     "", "", "", "")));
+                                                                                                     "", "", "", "",
+                                                                                                     true)));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         renormalizer = new SubmittedVariantRenormalizationProcessor(fastaSynonymSequenceReader);
     }
