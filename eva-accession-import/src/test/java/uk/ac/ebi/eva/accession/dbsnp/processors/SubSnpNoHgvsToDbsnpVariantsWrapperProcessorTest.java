@@ -302,6 +302,22 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     }
 
     @Test
+    public void transformDeletionUnknonwOrientation() throws Exception {
+        String reference = "A";
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(820982442L, 794525917L, reference, "T/-", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.UNKNOWN, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+
+        assertEquals(reference, variants.get(0).getReferenceAllele());
+        assertEquals("", variants.get(0).getAlternateAllele());
+
+    }
+
+    @Test
     public void transformInsertion() throws Exception {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1052228949L, 794529293L, "-", "-/T", ASSEMBLY, BATCH_HANDLE,
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
