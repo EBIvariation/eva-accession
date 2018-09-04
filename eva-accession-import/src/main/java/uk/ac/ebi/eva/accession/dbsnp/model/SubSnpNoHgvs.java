@@ -87,10 +87,20 @@ public class SubSnpNoHgvs {
         this.rsCreateTime = rsCreateTime;
         this.taxonomyId = taxonomyId;
         Orientation allelesOrientation = Orientation.getOrientation(
-                subsnpOrientation.getValue() * snpOrientation.getValue() * contigOrientation.getValue());
+                composeOrientationAssumingForwardIfUnknown(subsnpOrientation, snpOrientation, contigOrientation));
         this.dbSnpVariantAlleles = new DbsnpVariantAlleles(reference, alleles, contigOrientation, allelesOrientation,
                                                            this.dbsnpVariantType);
     }
+
+    private int composeOrientationAssumingForwardIfUnknown(Orientation subsnpOrientation, Orientation snpOrientation,
+                                                           Orientation contigOrientation) {
+        int orientation = 1;
+        orientation *= subsnpOrientation == Orientation.REVERSE ? -1 : 1;
+        orientation *= snpOrientation == Orientation.REVERSE ? -1 : 1;
+        orientation *= contigOrientation == Orientation.REVERSE ? -1 : 1;
+        return orientation;
+    }
+
 
     public Long getSsId() {
         return ssId;
