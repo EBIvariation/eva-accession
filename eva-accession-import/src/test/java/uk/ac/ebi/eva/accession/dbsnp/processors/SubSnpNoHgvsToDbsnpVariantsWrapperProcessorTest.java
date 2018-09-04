@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -312,9 +313,10 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
+        assertEquals(1, variants.size());
         assertEquals(reference, variants.get(0).getReferenceAllele());
         assertEquals("", variants.get(0).getAlternateAllele());
-
+        assertFalse(variants.get(0).isAllelesMatch());
     }
 
     @Test
