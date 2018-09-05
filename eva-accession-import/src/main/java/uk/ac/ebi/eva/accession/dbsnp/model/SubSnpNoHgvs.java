@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 
 public class SubSnpNoHgvs {
 
-    public static final String STR_SEQUENCE_REGEX_GROUP = "sequence";
-
     private Long ssId;
 
     private Long rsId;
@@ -44,6 +42,8 @@ public class SubSnpNoHgvs {
     private long contigStart;
 
     private final DbsnpVariantAlleles dbSnpVariantAlleles;
+
+    private final boolean anyOrientationUnknown;
 
     private DbsnpVariantType dbsnpVariantType;
 
@@ -86,10 +86,24 @@ public class SubSnpNoHgvs {
         this.ssCreateTime = ssCreateTime;
         this.rsCreateTime = rsCreateTime;
         this.taxonomyId = taxonomyId;
-        Orientation allelesOrientation = Orientation.getOrientation(
-                subsnpOrientation.getValue() * snpOrientation.getValue() * contigOrientation.getValue());
+        this.anyOrientationUnknown = (subsnpOrientation.getValue() * snpOrientation.getValue()
+                * contigOrientation.getValue()) == 0;
+        Orientation allelesOrientation = composeOrientation(subsnpOrientation, snpOrientation, contigOrientation);
         this.dbSnpVariantAlleles = new DbsnpVariantAlleles(reference, alleles, contigOrientation, allelesOrientation,
                                                            this.dbsnpVariantType);
+    }
+
+    /**
+     * Composes the 3 orientations. If any of those is UNKNOWN orientation, take that particular one as if it were
+     * FORWARD, and then compose it with the others.
+     */
+    private Orientation composeOrientation(Orientation subsnpOrientation, Orientation snpOrientation,
+                                           Orientation contigOrientation) {
+        int orientation = 1;
+        orientation *= subsnpOrientation == Orientation.REVERSE ? -1 : 1;
+        orientation *= snpOrientation == Orientation.REVERSE ? -1 : 1;
+        orientation *= contigOrientation == Orientation.REVERSE ? -1 : 1;
+        return Orientation.getOrientation(orientation);
     }
 
     public Long getSsId() {
@@ -236,6 +250,10 @@ public class SubSnpNoHgvs {
         this.assemblyMatch = assemblyMatch;
     }
 
+    public boolean isAnyOrientationUnknown() {
+        return anyOrientationUnknown;
+    }
+
     public String getReferenceInForwardStrand() {
         return dbSnpVariantAlleles.getReferenceInForwardStrand();
     }
@@ -264,5 +282,6 @@ public class SubSnpNoHgvs {
             return new Region(getContigName(), getContigStart());
         }
     }
+
 
 }

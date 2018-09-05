@@ -35,8 +35,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
@@ -51,6 +53,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     private static final String BATCH_NAME = "NAME";
 
     private static final String CHROMOSOME = "10";
+
+    private static final String CHROMOSOME_2 = "22";
 
     private static final long CHROMOSOME_START = 1000000L;
 
@@ -299,6 +303,24 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), "G", "C");
+    }
+
+    @Test
+    public void transformDeletionUnknownOrientationSetsAlleleMismatch() throws Exception {
+        String reference = "A";
+        long position = 7L;
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(820982442L, 794525917L, reference, "T/-", ASSEMBLY, BATCH_HANDLE,
+                                                     BATCH_NAME, CHROMOSOME_2, position, CONTIG_NAME,
+                                                     CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
+                                                     Orientation.REVERSE, Orientation.UNKNOWN, false, false, false,
+                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+
+        List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
+
+        assertEquals(1, variants.size());
+        boolean allelesMatch = false;
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME_2, position, reference, "", false,
+                               allelesMatch, 1);
     }
 
     @Test
