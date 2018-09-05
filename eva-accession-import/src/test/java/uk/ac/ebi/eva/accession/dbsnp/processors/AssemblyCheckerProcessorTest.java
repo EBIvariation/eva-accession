@@ -19,7 +19,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMappingTest;
 import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
@@ -27,10 +26,12 @@ import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -60,6 +61,8 @@ public class AssemblyCheckerProcessorTest {
 
     private static final Long RS_ID = 56789L;
 
+    private static final String SOFT_MASKED_FASTA_CONTIG = "NW_006738765.1";
+
     private AssemblyCheckerProcessor processorSeqName;
 
     private AssemblyCheckerProcessor processorGenBank;
@@ -68,22 +71,24 @@ public class AssemblyCheckerProcessorTest {
 
     private AssemblyCheckerProcessor processorUcsc;
 
+    private AssemblyCheckerProcessor processorSoftMasked;
+
     @Before
     public void setUp() throws Exception {
         String fileString = ContigMappingTest.class.getResource("/input-files/assembly-report/AssemblyReport.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
-        Path seqNamePath = Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
-        processorSeqName = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, seqNamePath));
+        this.processorSeqName = getAssemblyCheckerProcessor(contigMapping, "Gallus_gallus-5.0.test.fa");
+        this.processorGenBank = getAssemblyCheckerProcessor(contigMapping, "fasta.genbank.fa");
+        this.processorRefSeq = getAssemblyCheckerProcessor(contigMapping, "fasta.refseq.fa");
+        this.processorUcsc = getAssemblyCheckerProcessor(contigMapping, "fasta.ucsc.fa");
+        this.processorSoftMasked = getAssemblyCheckerProcessor(contigMapping, "fastaWithSoftMasking.fa");
+    }
 
-        Path genbankPath = Paths.get("src/test/resources/input-files/fasta/fasta.genbank.fa");
-        processorGenBank = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, genbankPath));
-
-        Path refSeqPath = Paths.get("src/test/resources/input-files/fasta/fasta.refseq.fa");
-        processorRefSeq = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, refSeqPath));
-
-        Path ucscPath = Paths.get("src/test/resources/input-files/fasta/fasta.ucsc.fa");
-        processorUcsc = new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, ucscPath));
+    private AssemblyCheckerProcessor getAssemblyCheckerProcessor(ContigMapping contigMapping, String fastaFile)
+            throws IOException {
+        Path softMaskedPath = Paths.get("src/test/resources/input-files/fasta/" + fastaFile);
+        return new AssemblyCheckerProcessor(new FastaSynonymSequenceReader(contigMapping, softMaskedPath));
     }
 
     @AfterClass
@@ -184,4 +189,10 @@ public class AssemblyCheckerProcessorTest {
         assertFalse(processorSeqName.process(input).isAssemblyMatch());
     }
 
+    @Test
+    public void softMaskingShouldNotMatter() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = newSubSnpNoHgvs(SOFT_MASKED_FASTA_CONTIG, 1, SOFT_MASKED_FASTA_CONTIG, 1, "G",
+                                                    DbsnpVariantType.SNV);
+        assertTrue(processorSoftMasked.process(subSnpNoHgvs).isAssemblyMatch());
+    }
 }

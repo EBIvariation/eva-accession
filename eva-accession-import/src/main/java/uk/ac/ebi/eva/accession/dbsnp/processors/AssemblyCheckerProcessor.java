@@ -52,7 +52,7 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
         boolean matches = false;
         try {
             long end = calculateReferenceAlleleEndPosition(referenceAllele, start);
-            String sequence = fastaReader.getSequence(contig, start, end);
+            String sequence = fastaReader.getSequenceToUpperCase(contig, start, end);
             matches = sequence.equals(referenceAllele);
         } catch (IllegalArgumentException ex) {
             logger.warn(ex.getLocalizedMessage());

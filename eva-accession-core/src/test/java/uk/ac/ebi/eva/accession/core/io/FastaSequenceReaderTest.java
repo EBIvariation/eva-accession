@@ -34,6 +34,8 @@ import static org.junit.Assert.assertEquals;
 
 public class FastaSequenceReaderTest {
 
+    private static final String MIXED_CASE_FASTA_CONTIG = "NW_006738765.1";
+
     private FastaSequenceReader reader;
 
     @Rule
@@ -106,16 +108,20 @@ public class FastaSequenceReaderTest {
     @Test
     public void fastaWithNoIndex() throws Exception {
         String fastaFilename = "fastaWithNoDictionary.fa";
+        FastaSequenceReader fastaSequenceReader = getFastaSequenceReader(fastaFilename);
+
+        // this sequence is split between three lines in the FASTA file
+        assertEquals("CAGCCGCAGTCCGGACAGCGCATGCGCCAGCCGCGAGACCGCACAGCGCATGCGCCAGCGCGAGTGACAGCG",
+                     fastaSequenceReader.getSequence("22", 174, 245));
+    }
+
+    private FastaSequenceReader getFastaSequenceReader(String fastaFilename) throws IOException, URISyntaxException {
         File temporaryFolderRoot = temporaryFolder.getRoot();
         Path fasta = Files.copy(
                 Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
                 temporaryFolderRoot.toPath().resolve(fastaFilename));
 
-        FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(fasta);
-
-        // this sequence is split between three lines in the FASTA file
-        assertEquals("CAGCCGCAGTCCGGACAGCGCATGCGCCAGCCGCGAGACCGCACAGCGCATGCGCCAGCGCGAGTGACAGCG",
-                     fastaSequenceReader.getSequence("22", 174, 245));
+        return new FastaSequenceReader(fasta);
     }
 
     /**
@@ -128,12 +134,7 @@ public class FastaSequenceReaderTest {
     @Ignore
     public void htsDoesNotSupportCompressedFastas() throws URISyntaxException, IOException {
         String fastaFilename = "compressed.fa.gz";
-        File temporaryFolderRoot = temporaryFolder.getRoot();
-        Path fasta = Files.copy(
-                Paths.get(FastaSequenceReaderTest.class.getResource("/input-files/fasta/" + fastaFilename).toURI()),
-                temporaryFolderRoot.toPath().resolve(fastaFilename));
-
-        FastaSequenceReader fastaSequenceReader = new FastaSequenceReader(fasta);
+        FastaSequenceReader fastaSequenceReader = getFastaSequenceReader(fastaFilename);
 
         assertEquals("\0\0\0\0", fastaSequenceReader.getSequence("22", 174, 177));
     }
@@ -152,5 +153,13 @@ public class FastaSequenceReaderTest {
 
         thrown.expect(IllegalArgumentException.class);
         new FastaSequenceReader(fasta);
+    }
+
+    @Test
+    public void shouldConvertToUpper() throws IOException, URISyntaxException {
+        FastaSequenceReader fastaSequenceReader = getFastaSequenceReader("fastaWithSoftMasking.fa");
+
+        assertEquals("g", fastaSequenceReader.getSequence(MIXED_CASE_FASTA_CONTIG, 1, 1));
+        assertEquals("G", fastaSequenceReader.getSequenceToUpperCase(MIXED_CASE_FASTA_CONTIG, 1, 1));
     }
 }
