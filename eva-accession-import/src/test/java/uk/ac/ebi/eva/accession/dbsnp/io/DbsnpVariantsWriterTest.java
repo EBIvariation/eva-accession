@@ -140,7 +140,7 @@ public class DbsnpVariantsWriterTest {
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
         assertSubmittedVariantsStored(1, submittedVariantEntity);
         assertClusteredVariantStored(1, wrapper);
-        assertClusterVariantDeclusteredStored(0);
+        assertClusteredVariantDeclusteredStored(0);
     }
 
     private SubmittedVariant defaultSubmittedVariant() {
@@ -231,7 +231,7 @@ public class DbsnpVariantsWriterTest {
         assertSubmittedVariantDeclusteredStored(wrapper);
         assertClusteredVariantStored(0);
         assertDeclusteringHistoryStored(wrapper);
-        assertClusterVariantDeclusteredStored(1, wrapper);
+        assertClusteredVariantDeclusteredStored(1, wrapper);
     }
 
     private DbsnpSubmittedVariantOperationEntity createOperation(SubmittedVariant submittedVariant1) {
@@ -269,7 +269,7 @@ public class DbsnpVariantsWriterTest {
         assertEquals(1, importCounts.getOperationsWritten());
     }
 
-    private void assertClusterVariantDeclusteredStored(int expectedVariants, DbsnpVariantsWrapper... wrappers) {
+    private void assertClusteredVariantDeclusteredStored(int expectedVariants, DbsnpVariantsWrapper... wrappers) {
         List<DbsnpClusteredVariantEntity> rsDeclusteredEntities = mongoTemplate.find
                 (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
         assertEquals(expectedVariants, rsDeclusteredEntities.size());
@@ -318,7 +318,7 @@ public class DbsnpVariantsWriterTest {
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
         assertClusteredVariantStored(1, wrapper1);
-        assertClusterVariantDeclusteredStored(1, wrapper1);
+        assertClusteredVariantDeclusteredStored(1, wrapper1);
     }
 
     @Test
@@ -334,7 +334,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity1));
 
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
-                SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariantEntity1), submittedVariantEntity1, 1);
+                SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant1), submittedVariant1, 1);
         DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
 
         DbsnpSubmittedVariantOperationEntity operationEntity1 = createOperation(submittedVariant1);
@@ -343,7 +343,7 @@ public class DbsnpVariantsWriterTest {
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
         assertClusteredVariantStored(0);
-        assertClusterVariantDeclusteredStored(1, wrapper1);
+        assertClusteredVariantDeclusteredStored(1, wrapper1);
     }
 
     @Test
@@ -369,7 +369,7 @@ public class DbsnpVariantsWriterTest {
 
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper1));
         assertClusteredVariantStored(1, wrapper1);
-        assertClusterVariantDeclusteredStored(1, wrapper1);
+        assertClusteredVariantDeclusteredStored(1, wrapper1);
     }
 
     @Test
@@ -394,7 +394,7 @@ public class DbsnpVariantsWriterTest {
 
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper1));
         assertClusteredVariantStored(0);
-        assertClusterVariantDeclusteredStored(1, wrapper1);
+        assertClusteredVariantDeclusteredStored(1, wrapper1);
     }
 
     @Test
