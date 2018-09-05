@@ -157,15 +157,25 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private List<DbsnpClusteredVariantOperationEntity> writeClusteredVariants(
             List<? extends DbsnpVariantsWrapper> wrappers) {
-        List<DbsnpClusteredVariantEntity> clusteredVariants = wrappers.stream()
-                                                                      .map(DbsnpVariantsWrapper::getClusteredVariant)
-                                                                      .collect(Collectors.toList());
+        List<DbsnpClusteredVariantEntity> clusteredVariants = getNonDeclusteredClusteredVariants(wrappers);
         try {
-            dbsnpClusteredVariantWriter.write(clusteredVariants);
+            if (!clusteredVariants.isEmpty()) {
+                dbsnpClusteredVariantWriter.write(clusteredVariants);
+            }
             return Collections.emptyList();
         } catch (BulkOperationException exception) {
             return clusteredOperationBuilder.buildMergeOperationsFromException(clusteredVariants, exception);
         }
+    }
+
+    private List<DbsnpClusteredVariantEntity> getNonDeclusteredClusteredVariants(
+            List<? extends DbsnpVariantsWrapper> wrappers) {
+        return wrappers.stream()
+                       .filter(w -> w.getSubmittedVariants()
+                                     .stream()
+                                     .anyMatch(v -> v.getClusteredVariantAccession() != null))
+                       .map(DbsnpVariantsWrapper::getClusteredVariant)
+                       .collect(Collectors.toList());
     }
 
     private void writeClusteredVariantsDeclustered(List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered) {
