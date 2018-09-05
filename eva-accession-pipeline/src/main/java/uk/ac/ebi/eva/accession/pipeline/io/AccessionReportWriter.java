@@ -159,12 +159,12 @@ public class AccessionReportWriter {
             // VCF 4.2 section 1.4.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
             // event occurs at position 1 on the contig in which case it must include the base after the event"
             newStart = normalizedVariant.getStart() + 1;
-            contextBase = fastaSequenceReader.getSequenceToUpperCase(normalizedVariant.getContig(), newStart, newStart);
+            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
             newReference = normalizedVariant.getReferenceAllele() + contextBase;
             newAlternate = normalizedVariant.getAlternateAllele() + contextBase;
         } else {
             newStart = normalizedVariant.getStart() - 1;
-            contextBase = fastaSequenceReader.getSequenceToUpperCase(normalizedVariant.getContig(), newStart, newStart);
+            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
             newReference = contextBase + normalizedVariant.getReferenceAllele();
             newAlternate = contextBase + normalizedVariant.getAlternateAllele();
         }

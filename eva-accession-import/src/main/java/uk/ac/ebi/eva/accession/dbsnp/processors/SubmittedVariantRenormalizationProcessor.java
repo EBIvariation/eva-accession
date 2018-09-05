@@ -97,7 +97,7 @@ public class SubmittedVariantRenormalizationProcessor implements
 
     private char getContextBaseInAssembly(ISubmittedVariant variant) {
         long contextPosition = variant.getStart() - 1;
-        String sequence = fastaSequenceReader.getSequenceToUpperCase(variant.getContig(), contextPosition, contextPosition);
+        String sequence = fastaSequenceReader.getSequence(variant.getContig(), contextPosition, contextPosition);
         if (sequence == null || sequence.length() != 1) {
             throw new RuntimeException(
                     "Reference sequence could not be retrieved correctly for chromosome=\"" + variant.getContig()

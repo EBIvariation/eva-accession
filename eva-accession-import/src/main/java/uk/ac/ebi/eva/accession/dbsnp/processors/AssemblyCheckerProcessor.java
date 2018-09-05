@@ -53,7 +53,7 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
         try {
             long end = calculateReferenceAlleleEndPosition(referenceAllele, start);
             String sequence = fastaReader.getSequenceToUpperCase(contig, start, end);
-            matches = sequence.equals(referenceAllele);
+            matches = sequence.equals(referenceAllele.toUpperCase());
         } catch (IllegalArgumentException ex) {
             logger.warn(ex.getLocalizedMessage());
         } finally {
