@@ -300,8 +300,7 @@ public class DbsnpVariantsWriterTest {
     public void repeatedClusteredVariantsPartiallyDeclustered() throws Exception {
         boolean allelesMatch = false;
         SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
-                                                                  "reference", "alternate",
-                                                                  null,
+                                                                  "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = new DbsnpSubmittedVariantEntity(
@@ -325,8 +324,7 @@ public class DbsnpVariantsWriterTest {
     public void repeatedClusteredVariantsCompletelyDeclustered() throws Exception {
         boolean allelesMatch = false;
         SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
-                                                                  "reference", "alternate",
-                                                                  null,
+                                                                  "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = new DbsnpSubmittedVariantEntity(
@@ -350,8 +348,7 @@ public class DbsnpVariantsWriterTest {
     public void multiallelicClusteredVariantsPartiallyDeclustered() throws Exception {
         boolean allelesMatch = false;
         SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
-                                                                  "reference", "alternate",
-                                                                  null,
+                                                                  "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = new DbsnpSubmittedVariantEntity(
@@ -361,23 +358,22 @@ public class DbsnpVariantsWriterTest {
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
                 SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2, 1);
 
-        DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity1,
-                                                                         submittedVariantEntity2));
+        DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Arrays.asList(submittedVariantEntity1,
+                                                                        submittedVariantEntity2));
 
-        DbsnpSubmittedVariantOperationEntity operationEntity1 = createOperation(submittedVariant1);
-        wrapper1.setOperations(Collections.singletonList(operationEntity1));
+        DbsnpSubmittedVariantOperationEntity operationEntity = createOperation(submittedVariant1);
+        wrapper.setOperations(Collections.singletonList(operationEntity));
 
-        dbsnpVariantsWriter.write(Collections.singletonList(wrapper1));
-        assertClusteredVariantStored(1, wrapper1);
-        assertClusteredVariantDeclusteredStored(1, wrapper1);
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
+        assertClusteredVariantStored(1, wrapper);
+        assertClusteredVariantDeclusteredStored(1, wrapper);
     }
 
     @Test
     public void multiallelicClusteredVariantsCompletelyDeclustered() throws Exception {
         boolean allelesMatch = false;
         SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
-                                                                  "reference", "alternate",
-                                                                  null,
+                                                                  "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = new DbsnpSubmittedVariantEntity(
