@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -107,17 +108,7 @@ public class SubmittedVariantsRestControllerTest {
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(2, getVariantsResponse.getBody().size());
         assertDefaultFlags(getVariantsResponse.getBody());
-    }
-
-    @Test
-    public void testGetVariantsController() {
-        List<Long> identifiers = generatedAccessions.stream().map(acc -> acc.getAccession()).collect(Collectors.toList());
-
-        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
-                controller.get(identifiers);
-
-        assertEquals(2, getVariantsResponse.size());
-        assertDefaultFlags(getVariantsResponse);
+        assertCreatedDateNotNull(getVariantsResponse.getBody());
     }
 
     private void assertDefaultFlags(
@@ -129,5 +120,26 @@ public class SubmittedVariantsRestControllerTest {
             assertEquals(ISubmittedVariant.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
             assertEquals(ISubmittedVariant.DEFAULT_VALIDATED, variant.isValidated());
         }
+    }
+
+    private void assertCreatedDateNotNull(
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
+        for (AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> dto : body) {
+            SubmittedVariant variant = dto.getData();
+            assertNotNull(variant.getCreatedDate());
+        }
+    }
+
+    @Test
+    public void testGetVariantsController() {
+        List<Long> identifiers = generatedAccessions.stream()
+                                                    .map(acc -> acc.getAccession())
+                                                    .collect(Collectors.toList());
+
+        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
+                controller.get(identifiers);
+
+        assertEquals(2, getVariantsResponse.size());
+        assertDefaultFlags(getVariantsResponse);
     }
 }

@@ -72,6 +72,7 @@ public class SubmittedVariant implements ISubmittedVariant {
              variant.getContig(), variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(),
              variant.getClusteredVariantAccession(), variant.isSupportedByEvidence(), variant.isAssemblyMatch(),
              variant.isAllelesMatch(), variant.isValidated());
+        this.createdDate = variant.getCreatedDate();
     }
 
     /**

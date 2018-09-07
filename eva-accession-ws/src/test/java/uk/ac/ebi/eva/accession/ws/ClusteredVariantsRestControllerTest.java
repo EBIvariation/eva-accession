@@ -62,6 +62,7 @@ import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -233,6 +234,12 @@ public class ClusteredVariantsRestControllerTest {
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
                                                        expectedVariants,
                                                        ClusteredVariant::new);
+        assertClusteredVariantCreatedDateNotNull(getVariantsResponse);
+    }
+
+    private void assertClusteredVariantCreatedDateNotNull(
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> body) {
+        body.forEach(accessionResponseDTO -> assertNotNull(accessionResponseDTO.getData().getCreatedDate()));
     }
 
     @Test
@@ -263,9 +270,15 @@ public class ClusteredVariantsRestControllerTest {
         List<AccessionedDocument<ISubmittedVariant, Long>> expectedVariants =
                 Arrays.asList(submittedVariantEntity1, submittedVariantEntity2, evaSubmittedVariantEntity3,
                               evaSubmittedVariantEntity4);
-            assertVariantsAreContainedInControllerResponse(getSubmittedVariantsReponse,
-                                                           expectedVariants,
-                                                           SubmittedVariant::new);
+        assertVariantsAreContainedInControllerResponse(getSubmittedVariantsReponse,
+                                                       expectedVariants,
+                                                       SubmittedVariant::new);
+        assertSubmittedVariantCreatedDateNotNull(getSubmittedVariantsReponse);
+    }
+
+    private void assertSubmittedVariantCreatedDateNotNull(
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
+        body.forEach(accessionResponseDTO -> assertNotNull(accessionResponseDTO.getData().getCreatedDate()));
     }
 
     @Test

@@ -44,6 +44,7 @@ public class ClusteredVariant implements IClusteredVariant {
     public ClusteredVariant(IClusteredVariant variant) {
         this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getContig(), variant.getStart(),
              variant.getType(), variant.isValidated());
+        this.createdDate = variant.getCreatedDate();
     }
 
     public ClusteredVariant(String assemblyAccession, int taxonomyAccession, String contig, long start,
