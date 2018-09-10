@@ -41,6 +41,6 @@ public class ImportDbsnpVariantsReaderConfiguration {
             throws Exception {
         logger.info("Injecting SubSnpNoHgvsReader with parameters: {}, {}", parameters, dbsnpDataSource);
         DataSource dataSource = dbsnpDataSource.getDatasource();
-        return new SubSnpNoHgvsReader(parameters.getAssemblyName(), dataSource, parameters.getPageSize());
+        return new SubSnpNoHgvsReader(parameters.getAssemblyName(), parameters.getBuildNumber(), dataSource, parameters.getPageSize());
     }
 }
