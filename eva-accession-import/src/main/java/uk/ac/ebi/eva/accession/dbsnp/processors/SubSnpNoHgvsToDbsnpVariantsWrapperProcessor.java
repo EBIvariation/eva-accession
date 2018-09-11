@@ -98,7 +98,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                                     subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists(),
                                     subSnpNoHgvs.isAssemblyMatch() ,
                                     subSnpNoHgvs.doAllelesMatch() && !subSnpNoHgvs.isAnyOrientationUnknown(),
-                                    subSnpNoHgvs.isSubsnpValidated());
+                                    subSnpNoHgvs.isSubsnpValidated(), null);
     }
 
     private String getProjectAccession(SubSnpNoHgvs subSnpNoHgvs) {

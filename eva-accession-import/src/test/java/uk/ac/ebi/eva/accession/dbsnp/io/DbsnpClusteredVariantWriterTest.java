@@ -103,11 +103,11 @@ public class DbsnpClusteredVariantWriterTest {
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
 
         // variants and entity objects
-        clusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV, true);
+        clusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV, true, null);
         ClusteredVariant duplicateClusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV,
-                                                                           false);
-        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_2, CONTIG, START, SNV, true);
-        clusteredVariant3 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, INDEL, true);
+                                                                           false, null);
+        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_2, CONTIG, START, SNV, true, null);
+        clusteredVariant3 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, INDEL, true, null);
         variantEntity1 = buildClusteredVariantEntity(ACCESSION_1, clusteredVariant1);
         duplicateVariantEntity1 = buildClusteredVariantEntity(ACCESSION_1, duplicateClusteredVariant1);
         variantEntity2 = buildClusteredVariantEntity(ACCESSION_2, clusteredVariant2);

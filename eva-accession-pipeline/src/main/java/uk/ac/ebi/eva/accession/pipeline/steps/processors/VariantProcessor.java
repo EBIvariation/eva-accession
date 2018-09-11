@@ -59,6 +59,6 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
                                     SUPPORTED_BY_EVIDENCE,
                                     MATCHES_ASSEMBLY,
                                     ALLELES_MATCH,
-                                    VALIDATED);
+                                    VALIDATED, null);
     }
 }

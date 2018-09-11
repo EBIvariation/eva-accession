@@ -51,7 +51,8 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
     @Test
     public void summaryFunctionMustBeIdempotent() {
         IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         assertEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant1));
     }
@@ -59,10 +60,12 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
     @Test
     public void differentSummaryWhenAssemblyDiffers() {
         IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         IClusteredVariant clusteredVariant2 =
-                new ClusteredVariant("anotherAssembly", TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant("anotherAssembly", TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
@@ -70,11 +73,13 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
     @Test
     public void differentSummaryWhenTaxonomyDiffers() {
         IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         int taxonomyAccession2 = 2;
         IClusteredVariant clusteredVariant2 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
@@ -82,11 +87,12 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
     @Test
     public void differentSummaryWhenContigDiffers() {
         IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         IClusteredVariant clusteredVariant2 =
                 new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, "anotherContig", START,
-                                     VARIANT_TYPE, VALIDATED);
+                                     VARIANT_TYPE, VALIDATED, null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
@@ -94,10 +100,11 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
     @Test
     public void differentSummaryWhenStartDiffers() {
         IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         IClusteredVariant clusteredVariant2 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, 2, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, 2, VARIANT_TYPE, VALIDATED, null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
@@ -105,10 +112,12 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
     @Test
     public void differentSummaryWhenTypeDiffers() {
         IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         IClusteredVariant clusteredVariant2 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VariantType.MNV, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VariantType.MNV, VALIDATED,
+                                     null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
@@ -116,10 +125,11 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
     @Test
     public void sameSummaryWhenValidatedDiffers() {
         IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
 
         IClusteredVariant clusteredVariant2 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, false);
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, false, null);
 
         assertEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }

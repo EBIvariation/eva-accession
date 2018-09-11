@@ -64,25 +64,24 @@ public class SubmittedVariant implements ISubmittedVariant {
                             Long clusteredVariantAccession) {
         this(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start, referenceAllele, alternateAllele,
              clusteredVariantAccession, DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, DEFAULT_ALLELES_MATCH,
-             DEFAULT_VALIDATED);
+             DEFAULT_VALIDATED, null);
     }
 
     public SubmittedVariant(ISubmittedVariant variant) {
         this(variant.getReferenceSequenceAccession(), variant.getTaxonomyAccession(), variant.getProjectAccession(),
              variant.getContig(), variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(),
              variant.getClusteredVariantAccession(), variant.isSupportedByEvidence(), variant.isAssemblyMatch(),
-             variant.isAllelesMatch(), variant.isValidated());
-        this.createdDate = variant.getCreatedDate();
+             variant.isAllelesMatch(), variant.isValidated(), variant.getCreatedDate());
     }
 
     /**
      * This is the constructor that has to be used to instantiate objects that will be written in the accessioning
      * database.
      */
-    public SubmittedVariant(String referenceSequenceAccession, int taxonomyAccession, String projectAccession, String contig,
-                            long start, String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
-                            Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
-                            Boolean validated) {
+    public SubmittedVariant(String referenceSequenceAccession, int taxonomyAccession, String projectAccession,
+                            String contig, long start, String referenceAllele, String alternateAllele,
+                            Long clusteredVariantAccession, Boolean supportedByEvidence, Boolean assemblyMatch,
+                            Boolean allelesMatch, Boolean validated, LocalDateTime createdDate) {
         if(Objects.isNull(referenceSequenceAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
@@ -111,7 +110,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.assemblyMatch = assemblyMatch;
         this.allelesMatch = allelesMatch;
         this.validated = validated;
-        this.createdDate = null;
+        this.createdDate = createdDate;
     }
 
     @Override

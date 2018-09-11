@@ -47,7 +47,7 @@ public class SubmittedVariantEntityTest {
     public void getModelWithFlagsTrue() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true, null);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());
@@ -57,7 +57,7 @@ public class SubmittedVariantEntityTest {
     public void getModelWithFlagsFalse() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false, null);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());

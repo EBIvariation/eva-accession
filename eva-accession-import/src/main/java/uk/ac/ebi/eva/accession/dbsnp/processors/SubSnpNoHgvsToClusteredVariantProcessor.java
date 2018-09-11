@@ -71,7 +71,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
                                                         variantRegion.getChromosome(),
                                                         variantRegion.getStart(),
                                                         variantType,
-                                                        subSnpNoHgvs.isSnpValidated());
+                                                        subSnpNoHgvs.isSnpValidated(), null);
 
         String hash = hashingFunction.apply(variant);
 

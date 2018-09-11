@@ -129,9 +129,11 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setupDbSnpClusteredVariants() {
-        ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 1101, "CHROM1", 1234, VariantType.SNV, false);
-        ClusteredVariant variant2 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 1234, VariantType.MNV, true);
-        ClusteredVariant variant3 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 4567, VariantType.SNV, false);
+        ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 1101, "CHROM1", 1234, VariantType.SNV, false,
+                                                         null);
+        ClusteredVariant variant2 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 1234, VariantType.MNV, true, null);
+        ClusteredVariant variant3 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 4567, VariantType.SNV, false,
+                                                         null);
 
         DbsnpClusteredVariantSummaryFunction function = new DbsnpClusteredVariantSummaryFunction();
         clusteredVariantEntity1 = new DbsnpClusteredVariantEntity(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
@@ -157,7 +159,7 @@ public class ClusteredVariantsRestControllerTest {
                                                                   !ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                   !ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH,
                                                                   !ISubmittedVariant.DEFAULT_ALLELES_MATCH,
-                                                                  !ISubmittedVariant.DEFAULT_VALIDATED);
+                                                                  !ISubmittedVariant.DEFAULT_VALIDATED, null);
 
         DbsnpSubmittedVariantSummaryFunction submittedVariantSummaryFunction =
                 new DbsnpSubmittedVariantSummaryFunction();
@@ -182,7 +184,7 @@ public class ClusteredVariantsRestControllerTest {
                                                                   !ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                   !ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH,
                                                                   !ISubmittedVariant.DEFAULT_ALLELES_MATCH,
-                                                                  !ISubmittedVariant.DEFAULT_VALIDATED);
+                                                                  !ISubmittedVariant.DEFAULT_VALIDATED, null);
 
         SubmittedVariantSummaryFunction submittedVariantSummaryFunction = new SubmittedVariantSummaryFunction();
         evaSubmittedVariantEntity3 =

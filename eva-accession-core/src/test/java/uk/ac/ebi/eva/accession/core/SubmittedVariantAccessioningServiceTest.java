@@ -136,21 +136,21 @@ public class SubmittedVariantAccessioningServiceTest {
         submittedVariant = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319, "C", "T",
                                                 CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                 DEFAULT_ASSEMBLY_MATCH, true,
-                                                DEFAULT_VALIDATED);
+                                                DEFAULT_VALIDATED, null);
 
         newSubmittedVariant = new SubmittedVariant("assembly", 1111, "project", "contig_2", 100, "ref", "alt",
                                                    CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                    DEFAULT_ASSEMBLY_MATCH, true,
-                                                   DEFAULT_VALIDATED);
+                                                   DEFAULT_VALIDATED, null);
 
         dbsnpSubmittedVariant = new SubmittedVariant("GCA_000009999.3", 9999, PROJECT_DBSNP, "21", 20849999, "", "GG",
                                                      CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                      DEFAULT_ASSEMBLY_MATCH, true,
-                                                     DEFAULT_VALIDATED);
+                                                     DEFAULT_VALIDATED, null);
 
         submittedVariantModified = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319,
                                                         "C", "TCTC", CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
-                                                        DEFAULT_ASSEMBLY_MATCH, true, DEFAULT_VALIDATED);
+                                                        DEFAULT_ASSEMBLY_MATCH, true, DEFAULT_VALIDATED, null);
     }
 
     @Autowired
@@ -162,7 +162,7 @@ public class SubmittedVariantAccessioningServiceTest {
         List<SubmittedVariant> variants = Arrays.asList(
                 new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", CLUSTERED_VARIANT,
                                      DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, ALLELES_MATCH,
-                                     DEFAULT_VALIDATED),
+                                     DEFAULT_VALIDATED, null),
                 newSubmittedVariant);
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
@@ -177,7 +177,7 @@ public class SubmittedVariantAccessioningServiceTest {
         List<SubmittedVariant> originalVariants = Arrays.asList(
                 new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", 10L,
                                      DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH, ALLELES_MATCH,
-                                     DEFAULT_VALIDATED),
+                                     DEFAULT_VALIDATED, null),
                 newSubmittedVariant);
         List<SubmittedVariant> requestedVariants = Arrays.asList(
                 new SubmittedVariant("assembly", 1111, "project", "contig_1", 100, "ref", "alt", null),
@@ -382,7 +382,7 @@ public class SubmittedVariantAccessioningServiceTest {
                                                                  NOT_DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                  DEFAULT_ASSEMBLY_MATCH,
                                                                  DEFAULT_ALLELES_MATCH,
-                                                                 DEFAULT_VALIDATED);
+                                                                 DEFAULT_VALIDATED, null);
 
         service.getOrCreate(Collections.singletonList(submittedVariant));
 
@@ -404,13 +404,13 @@ public class SubmittedVariantAccessioningServiceTest {
                                                                               "21", 20849999, "A", "G", 2200000002L,
                                                                               DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                               DEFAULT_ASSEMBLY_MATCH,
-                                                                              true, DEFAULT_VALIDATED);
+                                                                              true, DEFAULT_VALIDATED, null);
 
         SubmittedVariant multiallelicSubmittedVariant2 = new SubmittedVariant("GCA_000009999.3", 9999, "DBSNP555",
                                                                               "21", 20849999, "A", "C", 2200000003L,
                                                                               DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                               DEFAULT_ASSEMBLY_MATCH,
-                                                                              true, DEFAULT_VALIDATED);
+                                                                              true, DEFAULT_VALIDATED, null);
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(
                 Arrays.asList(multiallelicSubmittedVariant1, multiallelicSubmittedVariant2));

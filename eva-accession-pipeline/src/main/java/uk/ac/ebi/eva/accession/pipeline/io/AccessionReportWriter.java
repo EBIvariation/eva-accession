@@ -183,7 +183,7 @@ public class AccessionReportWriter {
                                         normalizedVariant.isSupportedByEvidence(),
                                         normalizedVariant.isAssemblyMatch(),
                                         normalizedVariant.isAllelesMatch(),
-                                        normalizedVariant.isValidated());
+                                        normalizedVariant.isValidated(), null);
         }
     }
 

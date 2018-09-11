@@ -87,7 +87,7 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
 
     private DbsnpClusteredVariantEntity newDbsnpClusteredVariantEntity(int start, Long accession) {
         ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY, "contig", start, VARIANT_TYPE,
-                                                                 VALIDATED);
+                                                                 VALIDATED, null);
         return new DbsnpClusteredVariantEntity(accession, hashingFunction.apply(clusteredVariant), clusteredVariant);
     }
 

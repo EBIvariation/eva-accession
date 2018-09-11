@@ -153,7 +153,7 @@ public class SubmittedVariantDeclusterProcessorTest {
                                                                          CLUSTERED_VARIANT_ACCESSION,
                                                                          DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                          DEFAULT_ASSEMBLY_MATCH, allelesMatch,
-                                                                         DEFAULT_VALIDATED);
+                                                                         DEFAULT_VALIDATED, null);
                 DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
                         SUBMITTED_VARIANT_ACCESSION, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant,
                         1);
@@ -167,7 +167,7 @@ public class SubmittedVariantDeclusterProcessorTest {
                                                     DbsnpVariantType dbsnpVariantType,
                                                     VariantType clusteredVariantType) {
         ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY, "contig", START,
-                                                                 clusteredVariantType, DEFAULT_VALIDATED);
+                                                                 clusteredVariantType, DEFAULT_VALIDATED, null);
         DbsnpClusteredVariantEntity clusteredVariantEntity = new DbsnpClusteredVariantEntity(
                 SUBMITTED_VARIANT_ACCESSION, hashingFunctionClustered.apply(clusteredVariant), clusteredVariant);
 

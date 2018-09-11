@@ -92,7 +92,7 @@ public class DbsnpSubmittedVariantWriterTest {
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
                                                                  "reference", "alternate",
                                                                  CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(EXPECTED_ACCESSION,
                                                                               hashingFunction.apply(submittedVariant),
                                                                               submittedVariant, 1);
@@ -113,11 +113,11 @@ public class DbsnpSubmittedVariantWriterTest {
         SubmittedVariant firstSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
                                                                       START_1, "reference", "alternate",
                                                                       CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                      MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                      MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         SubmittedVariant secondSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig",
                                                                        START_1, "reference", "alternate",
                                                                        CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                       MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                       MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         DbsnpSubmittedVariantEntity firstVariant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant, 1);
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
@@ -141,7 +141,7 @@ public class DbsnpSubmittedVariantWriterTest {
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
                                                                  START_1, "reference", "alternate",
                                                                  CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant, 1);
 
