@@ -80,7 +80,7 @@ public class SubmittedVariantRenormalizationProcessor implements
             boolean oneAlleleIsEmpty = variant.getReferenceAllele().isEmpty() ^ variant.getAlternateAllele().isEmpty();
             return isIndel && oneAlleleIsEmpty && areContextAndLastNucleotideEqual(variant);
         } catch (Exception e) {
-            logger.warn(e.getMessage(), e);
+            logger.warn(e.getMessage());
             // if something went wrong with the fasta, we can not say it's ambiguous
             return false;
         }
