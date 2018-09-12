@@ -54,9 +54,9 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
 
     private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsReader.class);
 
-    public SubSnpNoHgvsReader(String assembly, DataSource dataSource, int pageSize) throws Exception {
+    public SubSnpNoHgvsReader(String assembly, Long buildNumber, DataSource dataSource, int pageSize) throws Exception {
         setDataSource(dataSource);
-        setSql(buildSql(assembly));
+        setSql(buildSql(assembly, buildNumber));
         setRowMapper(new SubSnpNoHgvsRowMapper(assembly));
         setFetchSize(pageSize);
     }
@@ -71,8 +71,8 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
         super.openCursor(connection);
     }
 
-    private String buildSql(String assembly) {
-        String tableName = "dbsnp_variant_load_nohgvslink_" + hash(assembly);
+    private String buildSql(String assembly, Long buildNumber) {
+        String tableName = getTableName(assembly, buildNumber);
         logger.debug("querying table {} for assembly {}", tableName, assembly);
         String sql =
                 "SELECT " +
@@ -101,6 +101,14 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
                         " ORDER BY " + LOAD_ORDER_COLUMN;
 
         return sql;
+    }
+
+    private String getTableName(String assembly, Long buildNumber) {
+        if (buildNumber == null) {
+            return "dbsnp_variant_load_nohgvslink_" + hash(assembly);
+        } else {
+            return "dbsnp_nohgvs_" + hash(assembly) + "_b" + buildNumber;
+        }
     }
 
     private String hash(String string) {

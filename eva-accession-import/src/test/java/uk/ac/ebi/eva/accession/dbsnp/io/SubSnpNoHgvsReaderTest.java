@@ -45,7 +45,9 @@ public class SubSnpNoHgvsReaderTest {
 
     private SubSnpNoHgvsReader reader;
 
-    private static final String CHICKEN_ASSEMBY = "Gallus_gallus-5.0";
+    private static final String CHICKEN_ASSEMBLY_5 = "Gallus_gallus-5.0";
+
+    private static final String CHICKEN_ASSEMBLY_4 = "Gallus_gallus-4.0";
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -62,9 +64,16 @@ public class SubSnpNoHgvsReaderTest {
 
     @Test
     public void readChickenVariants() throws Exception {
-        reader = buildReader(CHICKEN_ASSEMBY, PAGE_SIZE);
+        reader = buildReader(CHICKEN_ASSEMBLY_5, PAGE_SIZE);
         List<SubSnpNoHgvs> variants = readAll(reader);
         assertEquals(7, variants.size());
+    }
+
+    @Test
+    public void readTurkeyPreviousBuildVariants() throws Exception {
+        reader = buildReader(CHICKEN_ASSEMBLY_4, 145L, PAGE_SIZE);
+        List<SubSnpNoHgvs> variants = readAll(reader);
+        assertEquals(3, variants.size());
     }
 
     @Test
@@ -74,7 +83,11 @@ public class SubSnpNoHgvsReaderTest {
     }
 
     private SubSnpNoHgvsReader buildReader(String assembly, int pageSize) throws Exception {
-        SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(assembly, dbsnpDataSource.getDatasource(), pageSize);
+        return buildReader(assembly, null, pageSize);
+    }
+
+    private SubSnpNoHgvsReader buildReader(String assembly, Long buildNumber, int pageSize) throws Exception {
+        SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(assembly, buildNumber, dbsnpDataSource.getDatasource(), pageSize);
         fieldsReader.afterPropertiesSet();
         ExecutionContext executionContext = new ExecutionContext();
         fieldsReader.open(executionContext);
