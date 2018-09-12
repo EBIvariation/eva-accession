@@ -35,6 +35,8 @@ public class ContigMappingTest {
 
     private static final String SEQNAME_WITHOUT_SYNONYM = "CHR_without_synonym";
 
+    private static final String SEQNAME_NON_ASSEMBLED = "MMCHR1_RANDOM_CTG1";
+
     private static final String ASSIGNED_MOLECULE_CONTIG = "1";
 
     private static final String ASSIGNED_MOLECULE_CONTIG_2 = "unique_assigned_molecule_2";
@@ -105,8 +107,8 @@ public class ContigMappingTest {
     }
 
     @Test
-    public void getAssignedMoleculeReturnsNullIfThereAreDuplicates() {
-        assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG).getAssignedMolecule());
+    public void getAssignedMoleculeReturnsNullForNonAssembledMolecules() {
+        assertNull(contigMapping.getContigSynonyms(SEQNAME_NON_ASSEMBLED).getAssignedMolecule());
     }
 
     @Test
@@ -163,41 +165,28 @@ public class ContigMappingTest {
 
     @Test
     public void getAssignedMoleculeFromSeqName() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
-        assertEquals(ASSIGNED_MOLECULE_CONTIG,
-                     contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE).getAssignedMolecule());
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getAssignedMolecule());
     }
 
     @Test
     public void getAssignedMoleculeFromAssignedMolecule() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
         assertEquals(ASSIGNED_MOLECULE_CONTIG,
                      contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG).getAssignedMolecule());
     }
 
     @Test
     public void getAssignedMoleculeFromGenBank() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
-        assertEquals(ASSIGNED_MOLECULE_CONTIG,
-                     contigMapping.getContigSynonyms(GENBANK_CONTIG_UNIQUE_ASSIGNED_MOLECULE).getAssignedMolecule());
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(GENBANK_CONTIG).getAssignedMolecule());
     }
 
     @Test
     public void getAssignedMoleculeFromRefSeq() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
-        assertEquals(ASSIGNED_MOLECULE_CONTIG,
-                     contigMapping.getContigSynonyms(REFSEQ_CONTIG_UNIQUE_ASSIGNED_MOLECULE).getAssignedMolecule());
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(REFSEQ_CONTIG).getAssignedMolecule());
     }
 
     @Test
     public void getAssignedMoleculeFromUcsc() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
-        assertEquals(ASSIGNED_MOLECULE_EXAMPLE, contigMapping.getContigSynonyms(UCSC_EXAMPLE).getAssignedMolecule());
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getAssignedMolecule());
     }
 
     // get GENBANK

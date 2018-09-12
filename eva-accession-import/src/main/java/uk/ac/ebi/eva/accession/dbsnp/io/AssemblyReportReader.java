@@ -38,6 +38,8 @@ public class AssemblyReportReader implements ItemReader<ContigSynonyms> {
 
     private static final int SEQNAME_COLUMN = 0;
 
+    private static final int SEQUENCE_ROLE_COLUMN = 1;
+
     private static final int ASSIGNED_MOLECULE_COLUMN = 2;
 
     private static final int GENBANK_COLUMN = 4;
@@ -83,6 +85,7 @@ public class AssemblyReportReader implements ItemReader<ContigSynonyms> {
     private ContigSynonyms getContigSynonyms(String line) {
         String[] columns = line.split("\t", -1);
         return new ContigSynonyms(columns[SEQNAME_COLUMN],
+                                  columns[SEQUENCE_ROLE_COLUMN],
                                   columns[ASSIGNED_MOLECULE_COLUMN],
                                   columns[GENBANK_COLUMN],
                                   columns[REFSEQ_COLUMN],
