@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.PassThroughLineMapper;
 import org.springframework.core.io.UrlResource;
@@ -68,24 +69,24 @@ public class AssemblyReportReader implements ItemReader<ContigSynonyms> {
 
     @Override
     public ContigSynonyms read() throws Exception {
-        String line;
-        ContigSynonyms contigSynonyms;
-        while ((line = reader.read()) != null) {
-            if ((contigSynonyms = getContigSynonyms(line)) != null) {
-                return contigSynonyms;
-            }
+        String line = reader.read();
+        if (line == null) {
+            return null;
         }
-        return null;
+        try {
+            return getContigSynonyms(line);
+        } catch (ArrayIndexOutOfBoundsException exception) {
+            throw new ParseException("Error parsing line in Assembly report: '" + line + "'", exception);
+        }
     }
 
     private ContigSynonyms getContigSynonyms(String line) {
         String[] columns = line.split("\t", -1);
-        ContigSynonyms contigSynonyms = new ContigSynonyms(columns[SEQNAME_COLUMN],
-                                                           columns[ASSIGNED_MOLECULE_COLUMN],
-                                                           columns[GENBANK_COLUMN],
-                                                           columns[REFSEQ_COLUMN],
-                                                           columns[UCSC_COLUMN],
-                                                           columns[RELATIONSHIP_COLUMN].equals(IDENTICAL_SEQUENCE));
-        return contigSynonyms;
+        return new ContigSynonyms(columns[SEQNAME_COLUMN],
+                                  columns[ASSIGNED_MOLECULE_COLUMN],
+                                  columns[GENBANK_COLUMN],
+                                  columns[REFSEQ_COLUMN],
+                                  columns[UCSC_COLUMN],
+                                  columns[RELATIONSHIP_COLUMN].equals(IDENTICAL_SEQUENCE));
     }
 }

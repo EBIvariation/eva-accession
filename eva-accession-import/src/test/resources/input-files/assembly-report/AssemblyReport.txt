@@ -63,7 +63,7 @@ chrom1	assembled-molecule	1	Chromosome	CM000994.2	=	NC_000067.6	C57BL/6J	1954719
 X	assembled-molecule	X	Chromosome	CM001013.2	=	NC_000086.7	C57BL/6J	171031299	chrX
 Y	assembled-molecule	Y	Chromosome	CM001014.2	=	NC_000087.7	C57BL/6J	91744698	chrY
 MMCHR1_RANDOM_CTG1	unlocalized-scaffold	1	Chromosome	GL456210.1	=	NT_166280.1	C57BL/6J	169725	chr1_GL456210_random
-MMCHR1_RANDOM_CTG2	unlocalized-scaffold	1	Chromosome	GL_without_synonym	<>	NT_without_synonym	C57BL/6J	241735	chr1_GL456211_random
+CHR_without_synonym	unlocalized-scaffold	1	Chromosome	GL_without_synonym	<>	NT_without_synonym	C57BL/6J	241735	UCSC_without_synonym
 MMCHR1_RANDOM_CTG2	unlocalized-scaffold	1	Chromosome	GL456211.1	=	NT_166281.1	C57BL/6J	241735	chr1_GL456211_random
 MMCHR1_RANDOM_CTG3	unlocalized-scaffold	1	Chromosome	GL456212.1	=	NT_166282.1	C57BL/6J	153618	chr1_GL456212_random
 MMCHR1_RANDOM_CTG4	unlocalized-scaffold	1	Chromosome	GL456213.1	=	NT_166283.1	C57BL/6J	39340	chr1_GL456213_random

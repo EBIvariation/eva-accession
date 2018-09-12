@@ -25,15 +25,15 @@ import static org.junit.Assert.assertNull;
 
 public class ContigMappingTest {
 
-    private static final String SEQNAME_CH1 = "ch1";
-
-    private static final String SEQNAME_CONTIG = "1";
+    private static final String SEQNAME_CONTIG = "chrom1";
 
     private static final String SEQNAME_CONTIG_2 = "2";
 
     private static final String SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE = "DCARv2_Chr1";
 
     private static final String SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE_2 = "DCARv2_B1";
+
+    private static final String SEQNAME_WITHOUT_SYNONYM = "CHR_without_synonym";
 
     private static final String ASSIGNED_MOLECULE_CONTIG = "1";
 
@@ -45,15 +45,19 @@ public class ContigMappingTest {
 
     private static final String GENBANK_CONTIG_UNIQUE_ASSIGNED_MOLECULE = "CM004278.1";
 
+    private static final String GENBANK_WITHOUT_SYNONYM = "GL_without_synonym";
+
     private static final String REFSEQ_CONTIG = "NC_000067.6";
 
     private static final String REFSEQ_CONTIG_UNIQUE_ASSIGNED_MOLECULE = "NC_030381.1";
 
-    private static final String UCSC_CONTIG = "1";
+    private static final String REFSEQ_WITHOUT_SYNONYM = "NT_without_synonym";
+
+    private static final String UCSC_CONTIG = "chr1";
 
     private static final String UCSC_EXAMPLE = "ucsc_example_1";
 
-    private static final String CONTIG_WITHOUT_SYNONYM = "NT_without_synonym";
+    private static final String UCSC_WITHOUT_SYNONYM = "UCSC_without_synonym";
 
     private static final String ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE = "/input-files/assembly-report/AssemblyReportUniqueAssignedMolecule.txt";
 
@@ -69,8 +73,8 @@ public class ContigMappingTest {
 
     @Test
     public void matchWhenVcfHasPrefixes() {
-        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CH1).getGenBank());
-        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CH1).getSequenceName());
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getGenBank());
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getSequenceName());
     }
 
     @Test
@@ -80,8 +84,14 @@ public class ContigMappingTest {
 
     @Test
     public void noSynonyms() {
-        assertNotNull(contigMapping.getContigSynonyms(CONTIG_WITHOUT_SYNONYM));
-        assertFalse(contigMapping.getContigSynonyms(CONTIG_WITHOUT_SYNONYM).isGenBankAndRefSeqIdentical());
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(REFSEQ_WITHOUT_SYNONYM);
+        assertNotNull(contigSynonyms);
+        assertFalse(contigSynonyms.isIdenticalGenBankAndRefSeq());
+        assertEquals(SEQNAME_WITHOUT_SYNONYM, contigSynonyms.getSequenceName());
+        assertNull(contigSynonyms.getAssignedMolecule());
+        assertEquals(GENBANK_WITHOUT_SYNONYM, contigSynonyms.getGenBank());
+        assertEquals(REFSEQ_WITHOUT_SYNONYM, contigSynonyms.getRefSeq());
+        assertEquals(UCSC_WITHOUT_SYNONYM, contigSynonyms.getUcsc());
     }
 
     @Test

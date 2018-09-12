@@ -43,7 +43,7 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
                     "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report");
         }
 
-        if (contigSynonyms.isGenBankAndRefSeqIdentical()) {
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
             if (subSnpNoHgvs.getChromosome() != null) {
                 subSnpNoHgvs.setChromosome(contigSynonyms.getSequenceName());
             }

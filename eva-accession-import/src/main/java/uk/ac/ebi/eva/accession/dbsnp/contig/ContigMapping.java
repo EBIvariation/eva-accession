@@ -24,8 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ContigMapping {
 
@@ -40,10 +38,6 @@ public class ContigMapping {
     private Map<String, ContigSynonyms> refSeqToSynonyms = new HashMap<>();
 
     private Map<String, ContigSynonyms> ucscToSynonyms = new HashMap<>();
-
-    private static final String CHROMOSOME_PATTERN = "(chromosome|chrom|chr|ch)(.+)";
-
-    private static final Pattern PATTERN = Pattern.compile(CHROMOSOME_PATTERN, Pattern.CASE_INSENSITIVE);
 
     private static final String NOT_AVAILABLE = "na";
 
@@ -117,7 +111,7 @@ public class ContigMapping {
     }
 
     private void normalizeNames(ContigSynonyms contigSynonyms) {
-        contigSynonyms.setSequenceName(removePrefix(contigSynonyms.getSequenceName()));
+        contigSynonyms.setSequenceName(contigSynonyms.getSequenceName());
         if (contigSynonyms.getAssignedMolecule().equals(NOT_AVAILABLE)) {
             contigSynonyms.setAssignedMolecule(null);
         }
@@ -130,35 +124,25 @@ public class ContigMapping {
         if (contigSynonyms.getUcsc().equals(NOT_AVAILABLE)) {
             contigSynonyms.setUcsc(null);
         } else {
-            contigSynonyms.setUcsc(removePrefix(contigSynonyms.getUcsc()));
+            contigSynonyms.setUcsc(contigSynonyms.getUcsc());
         }
-    }
-
-    private String removePrefix(String contig) {
-        Matcher matcher = PATTERN.matcher(contig);
-        String contigNoPrefix = contig;
-        if (matcher.matches()) {
-            contigNoPrefix = matcher.group(2);
-        }
-        return contigNoPrefix;
     }
 
     public ContigSynonyms getContigSynonyms(String contig) {
-        String contigNoPrefix = removePrefix(contig);
         ContigSynonyms contigSynonyms;
-        if ((contigSynonyms = sequenceNameToSynonyms.get(contigNoPrefix)) != null) {
+        if ((contigSynonyms = sequenceNameToSynonyms.get(contig)) != null) {
             return contigSynonyms;
         }
-        if ((contigSynonyms = genBankToSynonyms.get(contigNoPrefix)) != null) {
+        if ((contigSynonyms = genBankToSynonyms.get(contig)) != null) {
             return contigSynonyms;
         }
-        if ((contigSynonyms = refSeqToSynonyms.get(contigNoPrefix)) != null) {
+        if ((contigSynonyms = refSeqToSynonyms.get(contig)) != null) {
             return contigSynonyms;
         }
-        if ((contigSynonyms = ucscToSynonyms.get(contigNoPrefix)) != null) {
+        if ((contigSynonyms = ucscToSynonyms.get(contig)) != null) {
             return contigSynonyms;
         }
-        if ((contigSynonyms = assignedMoleculeToSynonyms.get(contigNoPrefix)) != null) {
+        if ((contigSynonyms = assignedMoleculeToSynonyms.get(contig)) != null) {
             return contigSynonyms;
         }
         return null;

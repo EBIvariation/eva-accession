@@ -31,6 +31,7 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
         this.contigMapping = contigMapping;
     }
 
+    @Override
     public String getSequence(String contig, long start, long end) {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
 
@@ -39,7 +40,7 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
                     "Contig '" + contig + "' not found in the assembly report");
         }
 
-        if (contigSynonyms.isGenBankAndRefSeqIdentical()) {
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
             return getSequenceUsingSynonyms(contigSynonyms, start, end);
         } else {
             String sequence = getSequenceIgnoringMissingContig(contig, start, end);
@@ -90,11 +91,11 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
             try {
                 return super.getSequence(contig, start, end);
             } catch (IllegalArgumentException sequenceUnavailable) {
-        /*
-         The same exception type could be caused because the contig was not found, or the requested coordinates
-         were greater than the last position in the contig. In order to differentiate between them, we make another
-         request for position 1 of the sequence.
-         */
+                /*
+                The same exception type could be caused because the contig was not found, or the requested coordinates
+                were greater than the last position in the contig. In order to differentiate between them, we make
+                another request for position 1 of the sequence.
+                */
                 try {
                     super.getSequence(contig, 1, 1);
                 } catch (IllegalArgumentException contigMissing) {

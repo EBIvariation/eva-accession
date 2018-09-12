@@ -36,6 +36,7 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         String referenceAllele = subSnpNoHgvs.getReferenceInForwardStrand();
         if (referenceAllele.isEmpty()) {
+            subSnpNoHgvs.setAssemblyMatch(true);
             return subSnpNoHgvs;
         }
 
