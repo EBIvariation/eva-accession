@@ -46,9 +46,9 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
         if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
             if (subSnpNoHgvs.getChromosome() != null) {
-                subSnpNoHgvs.setChromosome(contigSynonyms.getSequenceName());
+                subSnpNoHgvs.setChromosome(contigSynonyms.getGenBank());
             }
-            subSnpNoHgvs.setContigName(contigSynonyms.getSequenceName());
+            subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
         }
         return subSnpNoHgvs;
     }
