@@ -23,13 +23,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/v1/clustered-variants")
@@ -38,9 +45,16 @@ public class ClusteredVariantsRestController {
 
     private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
 
+    private DbsnpSubmittedVariantAccessioningRepository submittedVariantsRepository;
+
+    private DbsnpSubmittedVariantSummaryFunction submittedVariantHashFunction;
+
     public ClusteredVariantsRestController(
-            BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController) {
+            BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
+            DbsnpSubmittedVariantAccessioningRepository submittedVariantsRepository) {
         this.basicRestController = basicRestController;
+        this.submittedVariantsRepository = submittedVariantsRepository;
+        submittedVariantHashFunction = new DbsnpSubmittedVariantSummaryFunction();
     }
 
     @ApiOperation(value = "Find clustered variants by identifier")
@@ -48,6 +62,31 @@ public class ClusteredVariantsRestController {
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
             @PathVariable List<Long> identifiers) {
         return basicRestController.get(identifiers);
+    }
+
+    @ApiOperation(value = "Find submitted variants by clustered variant identifier")
+    @GetMapping(value = "/{identifiers}/submitted", produces = "application/json")
+    public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
+            @PathVariable List<Long> identifiers) {
+        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = submittedVariantsRepository
+                .findByClusteredVariantAccessionIn(identifiers);
+
+        // return retrieved SubmittedVariant objects encapsulated in AccessionResponseDTO objects
+        return submittedVariantEntities.stream().map(this::submittedVariantToAccessionWrapper).map(
+                this::acessionWrapperToResponseDTO).collect(Collectors.toList());
+    }
+
+    private AccessionWrapper<ISubmittedVariant, String, Long> submittedVariantToAccessionWrapper(
+            DbsnpSubmittedVariantEntity submittedVariant) {
+        return new AccessionWrapper<>(submittedVariant.getAccession(),
+                                      submittedVariantHashFunction.apply(submittedVariant),
+                                      submittedVariant.getModel(),
+                                      submittedVariant.getVersion());
+    }
+
+    private AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> acessionWrapperToResponseDTO(
+            AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper) {
+        return new AccessionResponseDTO<>(accessionWrapper, SubmittedVariant::new);
     }
 }
 
