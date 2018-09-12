@@ -31,7 +31,9 @@ public class SwaggerConfiguration {
                 .license("Apache 2.0")
                 .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0")
                 .title("EVA variant identifiers API")
-                .description("API to retrieve information about SubSNP (ss) and RefSNP (rs) variant identifiers")
+                .description(
+                        "API to retrieve information about submitted variant identifiers (usually called SubSNP or " +
+                                "ss) and clustered variant identifiers (usually called RefSNP or rs).")
                 .version("0.1")
                 .build();
     }

@@ -19,6 +19,9 @@ package uk.ac.ebi.eva.accession.ws.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,10 +55,13 @@ public class ClusteredVariantsRestController {
         this.submittedVariantsService = submittedVariantsService;
     }
 
-    @ApiOperation(value = "Find clustered variants by identifier")
+    @ApiOperation(value = "Find clustered variants by identifier", notes = "This endpoint returns an accessioned " +
+            "submitted variant. See (TODO link to wiki) for an explanation of each field.")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
-            @PathVariable List<Long> identifiers) {
+            @PathVariable
+            @ApiParam(value = "List of numerical identifiers, e.g.: 3000000000,3000000002", required = true)
+                    List<Long> identifiers) {
         return basicRestController.get(identifiers);
     }
 
