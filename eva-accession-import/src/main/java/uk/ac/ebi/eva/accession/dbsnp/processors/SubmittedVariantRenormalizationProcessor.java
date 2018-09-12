@@ -146,7 +146,8 @@ public class SubmittedVariantRenormalizationProcessor implements
                                                                         variant.isSupportedByEvidence(),
                                                                         variant.isAssemblyMatch(),
                                                                         variant.isAllelesMatch(),
-                                                                        variant.isValidated(), null);
+                                                                        variant.isValidated(),
+                                                                        variant.getCreatedDate());
         return new DbsnpSubmittedVariantEntity(variant.getAccession(), hashingFunction.apply(normalizedVariantModel),
                                                normalizedVariantModel, variant.getVersion());
 
