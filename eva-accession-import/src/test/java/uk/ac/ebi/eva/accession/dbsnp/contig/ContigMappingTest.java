@@ -27,11 +27,9 @@ public class ContigMappingTest {
 
     private static final String SEQNAME_CONTIG = "chrom1";
 
-    private static final String SEQNAME_CONTIG_2 = "2";
+    private static final String SEQNAME_CONTIG_UNAVAILABLE_ASSIGNED_MOLECULE = "MMCHR5_RANDOM_CTG5";
 
-    private static final String SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE = "DCARv2_Chr1";
-
-    private static final String SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE_2 = "DCARv2_B1";
+    private static final String SEQNAME_CONTIG_UNAVAILABLE_UCSC = "MMCHR5_RANDOM_CTG3";
 
     private static final String SEQNAME_WITHOUT_SYNONYM = "CHR_without_synonym";
 
@@ -39,29 +37,19 @@ public class ContigMappingTest {
 
     private static final String ASSIGNED_MOLECULE_CONTIG = "1";
 
-    private static final String ASSIGNED_MOLECULE_CONTIG_2 = "unique_assigned_molecule_2";
-
-    private static final String ASSIGNED_MOLECULE_EXAMPLE = "assigned_molecule_example_1";
-
     private static final String GENBANK_CONTIG = "CM000994.2";
-
-    private static final String GENBANK_CONTIG_UNIQUE_ASSIGNED_MOLECULE = "CM004278.1";
 
     private static final String GENBANK_WITHOUT_SYNONYM = "GL_without_synonym";
 
     private static final String REFSEQ_CONTIG = "NC_000067.6";
 
-    private static final String REFSEQ_CONTIG_UNIQUE_ASSIGNED_MOLECULE = "NC_030381.1";
-
     private static final String REFSEQ_WITHOUT_SYNONYM = "NT_without_synonym";
 
     private static final String UCSC_CONTIG = "chr1";
 
-    private static final String UCSC_EXAMPLE = "ucsc_example_1";
-
     private static final String UCSC_WITHOUT_SYNONYM = "UCSC_without_synonym";
 
-    private static final String ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE = "/input-files/assembly-report/AssemblyReportUniqueAssignedMolecule.txt";
+    private static final String ASSEMBLED_MOLECULE_ROLE = "assembled-molecule";
 
     private ContigMapping contigMapping;
 
@@ -97,13 +85,11 @@ public class ContigMappingTest {
     }
 
     @Test
-    public void noSynonymsOfAssignedMoleculeIfThereAreDuplicates() {
-        assertNull(contigMapping.getContigSynonyms(ContigMappingTest.ASSIGNED_MOLECULE_EXAMPLE));
-    }
-
-    @Test
-    public void getSynonymFromAssignedMoleculeIfThereAreDuplicatesOnlyInOtherKeys() {
-        assertNotNull(contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG_2).getAssignedMolecule());
+    public void getSynonymsOfDuplicatedAssignedMolecule() {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG);
+        assertNotNull(contigSynonyms);
+        assertEquals(ASSEMBLED_MOLECULE_ROLE, contigSynonyms.getSequenceRole());
+        assertNotNull(contigSynonyms.getAssignedMolecule());
     }
 
     @Test
@@ -112,23 +98,13 @@ public class ContigMappingTest {
     }
 
     @Test
-    public void getAssignedMoleculeIfThereAreDuplicatesOnlyInOtherKeys() {
-        assertEquals(ASSIGNED_MOLECULE_CONTIG_2,
-                     contigMapping.getContigSynonyms(SEQNAME_CONTIG_2).getAssignedMolecule());
-    }
-
-    @Test
     public void getAssignedMoleculeReturnsNullIfNotAvailable() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
-        assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE_2).getAssignedMolecule());
+        assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNAVAILABLE_ASSIGNED_MOLECULE).getAssignedMolecule());
     }
 
     @Test
     public void getUcscReturnsNullIfNotAvailable() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
-        assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE).getUcsc());
+        assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNAVAILABLE_UCSC).getUcsc());
     }
 
     // get SEQNAME
@@ -140,10 +116,7 @@ public class ContigMappingTest {
 
     @Test
     public void getSeqNameFromAssignedMolecule() throws Exception {
-        String fileString = ContigMappingTest.class.getResource(ASSEMBLY_REPORT_WITH_ASSIGNED_MOLECULE).toString();
-        contigMapping = new ContigMapping(fileString);
-        assertEquals(SEQNAME_CONTIG_UNIQUE_ASSIGNED_MOLECULE,
-                     contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG).getSequenceName());
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG).getSequenceName());
     }
 
     @Test
