@@ -24,7 +24,7 @@ public class DbsnpSubmittedVariantEntity extends SubmittedVariantEntity {
     }
 
     public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
-        super(accession, hashedMessage, model, version);
+        super(accession, hashedMessage, model, model.getCreatedDate(), version);
     }
 
     public DbsnpSubmittedVariantEntity(Long accession, String hashedMessage, String referenceSequenceAccession,

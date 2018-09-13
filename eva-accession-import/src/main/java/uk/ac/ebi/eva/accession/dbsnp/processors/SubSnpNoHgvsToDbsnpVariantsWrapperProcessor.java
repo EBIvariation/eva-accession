@@ -83,9 +83,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                                            List<DbsnpSubmittedVariantEntity> submittedVariants) {
         String hash = hashingFunction.apply(submittedVariant);
         DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(),
-                                                                                             hash, submittedVariant,
-                                                                                             1);
-        submittedVariantEntity.setCreatedDate(submittedVariant.getCreatedDate());
+                                                                                             hash, submittedVariant, 1);
         submittedVariants.add(submittedVariantEntity);
     }
 

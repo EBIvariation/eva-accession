@@ -25,6 +25,8 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
+import java.time.LocalDateTime;
+
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVariant, Long> implements ISubmittedVariant {
 
@@ -72,6 +74,19 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
              model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
              model.isAssemblyMatch(), model.isAllelesMatch(), model.isValidated(), version);
+    }
+
+    /**
+     * This constructor should only be used for creating {@link DbsnpSubmittedVariantEntity}. This is because when
+     * importing variants from dbsnp we must include the creation date provided by dbsnp
+     */
+    public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model,
+                                  LocalDateTime createdDate, int version) {
+        this(accession, hashedMessage, model.getReferenceSequenceAccession(), model.getTaxonomyAccession(),
+             model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
+             model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
+             model.isAssemblyMatch(), model.isAllelesMatch(), model.isValidated(), version);
+        this.setCreatedDate(createdDate);
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, String referenceSequenceAccession,

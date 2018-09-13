@@ -48,6 +48,10 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -77,9 +81,9 @@ public class SubmittedVariantsRestControllerTest {
 
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                CLUSTERED_VARIANT);
+                                                         CLUSTERED_VARIANT);
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                CLUSTERED_VARIANT);
+                                                         CLUSTERED_VARIANT);
         generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
     }
 
@@ -115,10 +119,10 @@ public class SubmittedVariantsRestControllerTest {
             List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
         for (AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> dto : body) {
             SubmittedVariant variant = dto.getData();
-            assertEquals(ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
-            assertEquals(ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH, variant.isAssemblyMatch());
-            assertEquals(ISubmittedVariant.DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
-            assertEquals(ISubmittedVariant.DEFAULT_VALIDATED, variant.isValidated());
+            assertEquals(DEFAULT_SUPPORTED_BY_EVIDENCE, variant.isSupportedByEvidence());
+            assertEquals(DEFAULT_ASSEMBLY_MATCH, variant.isAssemblyMatch());
+            assertEquals(DEFAULT_ALLELES_MATCH, variant.isAllelesMatch());
+            assertEquals(DEFAULT_VALIDATED, variant.isValidated());
         }
     }
 
@@ -140,6 +144,7 @@ public class SubmittedVariantsRestControllerTest {
                 controller.get(identifiers);
 
         assertEquals(2, getVariantsResponse.size());
+        assertCreatedDateNotNull(getVariantsResponse);
         assertDefaultFlags(getVariantsResponse);
     }
 }

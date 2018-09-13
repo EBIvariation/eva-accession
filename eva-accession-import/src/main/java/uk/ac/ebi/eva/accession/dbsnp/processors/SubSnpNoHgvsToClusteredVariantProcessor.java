@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.commons.core.models.Region;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Function;
 
@@ -71,15 +72,13 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
                                                         variantRegion.getChromosome(),
                                                         variantRegion.getStart(),
                                                         variantType,
-                                                        subSnpNoHgvs.isSnpValidated(), null);
+                                                        subSnpNoHgvs.isSnpValidated(),
+                                                        getCreatedDate(subSnpNoHgvs));
 
         String hash = hashingFunction.apply(variant);
 
-        DbsnpClusteredVariantEntity variantEntity = new DbsnpClusteredVariantEntity(subSnpNoHgvs.getRsId(),
-                                                                                    hash,
+        DbsnpClusteredVariantEntity variantEntity = new DbsnpClusteredVariantEntity(subSnpNoHgvs.getRsId(), hash,
                                                                                     variant);
-
-        variantEntity.setCreatedDate(subSnpNoHgvs.getRsCreateTime().toLocalDateTime());
         return variantEntity;
     }
 
@@ -120,6 +119,17 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
             }
         }
         return VariantType.INDEL;
+    }
+
+    private LocalDateTime getCreatedDate(SubSnpNoHgvs subSnpNoHgvs) {
+        LocalDateTime createdDate;
+        if ((createdDate = subSnpNoHgvs.getRsCreateTime().toLocalDateTime()) != null) {
+            return createdDate;
+        } else if ((createdDate = subSnpNoHgvs.getSsCreateTime().toLocalDateTime()) != null) {
+            return createdDate;
+        } else {
+            return LocalDateTime.now();
+        }
     }
 
 }
