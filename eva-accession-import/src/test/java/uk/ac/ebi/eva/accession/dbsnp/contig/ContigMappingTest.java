@@ -19,21 +19,37 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class ContigMappingTest {
 
-    private static final String SEQNAME_CH1 = "ch1";
+    private static final String SEQNAME_CONTIG = "chrom1";
+
+    private static final String SEQNAME_CONTIG_UNAVAILABLE_ASSIGNED_MOLECULE = "MMCHR5_RANDOM_CTG5";
+
+    private static final String SEQNAME_CONTIG_UNAVAILABLE_UCSC = "MMCHR5_RANDOM_CTG3";
+
+    private static final String SEQNAME_WITHOUT_SYNONYM = "CHR_without_synonym";
+
+    private static final String SEQNAME_NON_ASSEMBLED = "MMCHR1_RANDOM_CTG1";
+
+    private static final String ASSIGNED_MOLECULE_CONTIG = "1";
 
     private static final String GENBANK_CONTIG = "CM000994.2";
 
+    private static final String GENBANK_WITHOUT_SYNONYM = "GL_without_synonym";
+
     private static final String REFSEQ_CONTIG = "NC_000067.6";
 
-    private static final String SEQNAME_CONTIG = "1";
+    private static final String REFSEQ_WITHOUT_SYNONYM = "NT_without_synonym";
 
-    private static final String UCSC_CONTIG = "1";
+    private static final String UCSC_CONTIG = "chr1";
 
-    private static final String CONTIG_WITHOUT_SYNONYM = "NT_without_synonym";
+    private static final String UCSC_WITHOUT_SYNONYM = "UCSC_without_synonym";
+
+    private static final String ASSEMBLED_MOLECULE_ROLE = "assembled-molecule";
 
     private ContigMapping contigMapping;
 
@@ -43,21 +59,64 @@ public class ContigMappingTest {
         contigMapping = new ContigMapping(fileString);
     }
 
+    // tests for special cases
+
     @Test
     public void matchWhenVcfHasPrefixes() {
-        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CH1).getGenBank());
+        assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getGenBank());
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getSequenceName());
     }
 
     @Test
-    public void noSynonym() throws Exception {
-        assertNull(contigMapping.getContigSynonyms(CONTIG_WITHOUT_SYNONYM));
+    public void removePrefixOnlyAtTheBeginning() {
+        assertEquals("otherprefix_chr45", contigMapping.getContigSynonyms("genbank_example_2").getSequenceName());
     }
 
-    //SEQNAME
+    @Test
+    public void noSynonyms() {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(REFSEQ_WITHOUT_SYNONYM);
+        assertNotNull(contigSynonyms);
+        assertFalse(contigSynonyms.isIdenticalGenBankAndRefSeq());
+        assertEquals(SEQNAME_WITHOUT_SYNONYM, contigSynonyms.getSequenceName());
+        assertNull(contigSynonyms.getAssignedMolecule());
+        assertEquals(GENBANK_WITHOUT_SYNONYM, contigSynonyms.getGenBank());
+        assertEquals(REFSEQ_WITHOUT_SYNONYM, contigSynonyms.getRefSeq());
+        assertEquals(UCSC_WITHOUT_SYNONYM, contigSynonyms.getUcsc());
+    }
+
+    @Test
+    public void getSynonymsOfDuplicatedAssignedMolecule() {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG);
+        assertNotNull(contigSynonyms);
+        assertEquals(ASSEMBLED_MOLECULE_ROLE, contigSynonyms.getSequenceRole());
+        assertNotNull(contigSynonyms.getAssignedMolecule());
+    }
+
+    @Test
+    public void getAssignedMoleculeReturnsNullForNonAssembledMolecules() {
+        assertNull(contigMapping.getContigSynonyms(SEQNAME_NON_ASSEMBLED).getAssignedMolecule());
+    }
+
+    @Test
+    public void getAssignedMoleculeReturnsNullIfNotAvailable() throws Exception {
+        assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNAVAILABLE_ASSIGNED_MOLECULE).getAssignedMolecule());
+    }
+
+    @Test
+    public void getUcscReturnsNullIfNotAvailable() throws Exception {
+        assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNAVAILABLE_UCSC).getUcsc());
+    }
+
+    // get SEQNAME
 
     @Test
     public void getSeqNameFromSeqName() {
         assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getSequenceName());
+    }
+
+    @Test
+    public void getSeqNameFromAssignedMolecule() throws Exception {
+        assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG).getSequenceName());
     }
 
     @Test
@@ -75,7 +134,35 @@ public class ContigMappingTest {
         assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getSequenceName());
     }
 
-    //GENBANK
+    // get ASSIGNED_MOLECULE
+
+    @Test
+    public void getAssignedMoleculeFromSeqName() throws Exception {
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getAssignedMolecule());
+    }
+
+    @Test
+    public void getAssignedMoleculeFromAssignedMolecule() throws Exception {
+        assertEquals(ASSIGNED_MOLECULE_CONTIG,
+                     contigMapping.getContigSynonyms(ASSIGNED_MOLECULE_CONTIG).getAssignedMolecule());
+    }
+
+    @Test
+    public void getAssignedMoleculeFromGenBank() throws Exception {
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(GENBANK_CONTIG).getAssignedMolecule());
+    }
+
+    @Test
+    public void getAssignedMoleculeFromRefSeq() throws Exception {
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(REFSEQ_CONTIG).getAssignedMolecule());
+    }
+
+    @Test
+    public void getAssignedMoleculeFromUcsc() throws Exception {
+        assertEquals(ASSIGNED_MOLECULE_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getAssignedMolecule());
+    }
+
+    // get GENBANK
 
     @Test
     public void getGenBankFromSeqName() {
@@ -97,7 +184,7 @@ public class ContigMappingTest {
         assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getGenBank());
     }
 
-    //REFSEQ
+    // get REFSEQ
 
     @Test
     public void getRefSeqFromSeqName() {
@@ -119,7 +206,7 @@ public class ContigMappingTest {
         assertEquals(REFSEQ_CONTIG, contigMapping.getContigSynonyms(UCSC_CONTIG).getRefSeq());
     }
 
-    //UCSC
+    // get UCSC
 
     @Test
     public void getUcscFromSeqName() {

@@ -21,17 +21,27 @@ public class ContigSynonyms {
 
     private String sequenceName;
 
+    private String sequenceRole;
+
+    private String assignedMolecule;
+
     private String genBank;
 
     private String refSeq;
 
     private String ucsc;
 
-    public ContigSynonyms(String sequenceName, String genBank, String refSeq, String ucsc) {
+    private boolean identicalGenBankAndRefSeq;
+
+    public ContigSynonyms(String sequenceName, String sequenceRole, String assignedMolecule, String genBank,
+                          String refSeq, String ucsc, boolean identicalGenBankAndRefSeq) {
         this.sequenceName = sequenceName;
+        this.sequenceRole = sequenceRole;
+        this.assignedMolecule = assignedMolecule;
         this.genBank = genBank;
         this.refSeq = refSeq;
         this.ucsc = ucsc;
+        this.identicalGenBankAndRefSeq = identicalGenBankAndRefSeq;
     }
 
     public String getSequenceName() {
@@ -40,6 +50,22 @@ public class ContigSynonyms {
 
     public void setSequenceName(String sequenceName) {
         this.sequenceName = sequenceName;
+    }
+
+    public String getSequenceRole() {
+        return sequenceRole;
+    }
+
+    public void setSequenceRole(String sequenceRole) {
+        this.sequenceRole = sequenceRole;
+    }
+
+    public String getAssignedMolecule() {
+        return assignedMolecule;
+    }
+
+    public void setAssignedMolecule(String assignedMolecule) {
+        this.assignedMolecule = assignedMolecule;
     }
 
     public String getGenBank() {
@@ -66,13 +92,24 @@ public class ContigSynonyms {
         this.ucsc = ucsc;
     }
 
+    public boolean isIdenticalGenBankAndRefSeq() {
+        return identicalGenBankAndRefSeq;
+    }
+
+    public void setIdenticalGenBankAndRefSeq(boolean identicalGenBankAndRefSeq) {
+        this.identicalGenBankAndRefSeq = identicalGenBankAndRefSeq;
+    }
+
     @Override
     public String toString() {
         return "ContigSynonyms{" +
                 "sequenceName='" + sequenceName + '\'' +
+                ", assignedMolecule='" + assignedMolecule + '\'' +
+                ", sequenceRole='" + sequenceRole + '\'' +
                 ", genBank='" + genBank + '\'' +
                 ", refSeq='" + refSeq + '\'' +
                 ", ucsc='" + ucsc + '\'' +
+                ", identicalGenBankAndRefSeq=" + identicalGenBankAndRefSeq +
                 '}';
     }
 }

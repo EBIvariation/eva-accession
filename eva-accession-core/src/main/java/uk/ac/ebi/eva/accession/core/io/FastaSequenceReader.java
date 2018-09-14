@@ -99,8 +99,8 @@ public class FastaSequenceReader {
      * Get the sequence delimited by the given coordinates from a FASTA file
      *
      * @param contig Sequence contig or chromosome
-     * @param start  Sequence start coordinate in the contig
-     * @param end    Sequence end coordinate in the contig
+     * @param start  Sequence start coordinate in the contig. inclusive, 1-based.
+     * @param end    Sequence end coordinate in the contig. inclusive, 1-based
      * @return Sequence read from the FASTA file
      * @throws IllegalArgumentException If the coordinates are not correct
      */
@@ -108,6 +108,23 @@ public class FastaSequenceReader {
         checkArguments(contig, start, end);
 
         return fastaSequenceFile.getSubsequenceAt(contig, start, end).getBaseString();
+    }
+
+    /**
+     * Get the sequence delimited by the given coordinates from a FASTA file, converting lowercase letters into
+     * uppercase.
+     *
+     * Lowercase bases mean soft-masking, which is used to highlight regions with repetitions, but it doesn't affect
+     * which base appears in a given position.
+     *
+     * @param contig Sequence contig or chromosome
+     * @param start  Sequence start coordinate in the contig. inclusive, 1-based.
+     * @param end    Sequence end coordinate in the contig. inclusive, 1-based
+     * @return Sequence read from the FASTA file, converted to uppercase.
+     * @throws IllegalArgumentException If the coordinates are not correct
+     */
+    public String getSequenceToUpperCase(String contig, long start, long end) throws IllegalArgumentException {
+        return getSequence(contig, start, end).toUpperCase();
     }
 
     private void checkArguments(String contig, long start, long end) throws IllegalArgumentException {

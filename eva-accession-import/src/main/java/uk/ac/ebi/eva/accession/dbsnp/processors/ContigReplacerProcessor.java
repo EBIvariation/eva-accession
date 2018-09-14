@@ -40,13 +40,16 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
         if (contigSynonyms == null) {
             throw new IllegalArgumentException(
-                    "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report");
+                    "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report (chromosome '" +
+                            subSnpNoHgvs.getChromosome() + "')");
         }
 
-        if (subSnpNoHgvs.getChromosome() != null) {
-            subSnpNoHgvs.setChromosome(contigSynonyms.getSequenceName());
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
+            if (subSnpNoHgvs.getChromosome() != null) {
+                subSnpNoHgvs.setChromosome(contigSynonyms.getSequenceName());
+            }
+            subSnpNoHgvs.setContigName(contigSynonyms.getSequenceName());
         }
-        subSnpNoHgvs.setContigName(contigSynonyms.getSequenceName());
         return subSnpNoHgvs;
     }
 }

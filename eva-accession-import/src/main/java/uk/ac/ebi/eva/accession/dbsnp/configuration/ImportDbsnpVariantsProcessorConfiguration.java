@@ -24,8 +24,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
@@ -77,23 +77,23 @@ public class ImportDbsnpVariantsProcessorConfiguration {
     }
 
     @Bean
-    AssemblyCheckerProcessor assemblyCheckerProcessor(ContigMapping contigMapping,
-                                                      FastaSequenceReader fastaSequenceReader) {
-        return new AssemblyCheckerProcessor(contigMapping, fastaSequenceReader);
+    AssemblyCheckerProcessor assemblyCheckerProcessor(FastaSynonymSequenceReader fastaSynonymSequenceReader) {
+        return new AssemblyCheckerProcessor(fastaSynonymSequenceReader);
     }
 
     @Bean
-    FastaSequenceReader fastaSequenceReader(InputParameters parameters) throws IOException {
+    FastaSynonymSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping, InputParameters parameters)
+            throws IOException {
         Path referenceFastaFile = Paths.get(parameters.getFasta());
-        return new FastaSequenceReader(referenceFastaFile);
+        return new FastaSynonymSequenceReader(contigMapping, referenceFastaFile);
     }
 
     @Bean
     SubSnpNoHgvsToDbsnpVariantsWrapperProcessor subSnpNoHgvsToDbsnpVariantsWrapperProcessor(
-            InputParameters parameters, FastaSequenceReader fastaSequenceReader,
+            InputParameters parameters, FastaSynonymSequenceReader fastaSynonymSequenceReader,
             List<ProjectAccessionMapping> projectAccessionMappings) {
-        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(), fastaSequenceReader,
-                                                               projectAccessionMappings);
+        return new SubSnpNoHgvsToDbsnpVariantsWrapperProcessor(parameters.getAssemblyAccession(),
+                                                               fastaSynonymSequenceReader, projectAccessionMappings);
     }
 
     @Bean
