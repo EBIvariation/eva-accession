@@ -31,9 +31,7 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,16 +43,13 @@ public class ClusteredVariantsRestController {
 
     private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
 
-    private DbsnpSubmittedVariantAccessioningRepository submittedVariantsRepository;
-
-    private DbsnpSubmittedVariantSummaryFunction submittedVariantHashFunction;
+    private SubmittedVariantAccessioningService submittedVariantsService;
 
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
-            DbsnpSubmittedVariantAccessioningRepository submittedVariantsRepository) {
+            SubmittedVariantAccessioningService submittedVariantsService) {
         this.basicRestController = basicRestController;
-        this.submittedVariantsRepository = submittedVariantsRepository;
-        submittedVariantHashFunction = new DbsnpSubmittedVariantSummaryFunction();
+        this.submittedVariantsService = submittedVariantsService;
     }
 
     @ApiOperation(value = "Find clustered variants by identifier")
@@ -68,25 +63,11 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifiers}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
             @PathVariable List<Long> identifiers) {
-        List<DbsnpSubmittedVariantEntity> submittedVariantEntities = submittedVariantsRepository
-                .findByClusteredVariantAccessionIn(identifiers);
-
-        // return retrieved SubmittedVariant objects encapsulated in AccessionResponseDTO objects
-        return submittedVariantEntities.stream().map(this::submittedVariantToAccessionWrapper).map(
-                this::acessionWrapperToResponseDTO).collect(Collectors.toList());
-    }
-
-    private AccessionWrapper<ISubmittedVariant, String, Long> submittedVariantToAccessionWrapper(
-            DbsnpSubmittedVariantEntity submittedVariant) {
-        return new AccessionWrapper<>(submittedVariant.getAccession(),
-                                      submittedVariantHashFunction.apply(submittedVariant),
-                                      submittedVariant.getModel(),
-                                      submittedVariant.getVersion());
-    }
-
-    private AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> acessionWrapperToResponseDTO(
-            AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper) {
-        return new AccessionResponseDTO<>(accessionWrapper, SubmittedVariant::new);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = submittedVariantsService
+                .getByClusteredVariantAccessionIn(identifiers);
+        return submittedVariants.stream()
+                                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                                .collect(Collectors.toList());
     }
 }
 
