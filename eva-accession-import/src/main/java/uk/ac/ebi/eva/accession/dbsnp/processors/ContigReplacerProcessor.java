@@ -32,10 +32,42 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
     @Override
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         ContigSynonyms contigSynonyms;
-        if (subSnpNoHgvs.getChromosome() != null) {
-           contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
+        contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
+        ContigSynonyms chromosomeSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
+        if (chromosomeSynonyms != null && contigSynonyms != null && !contigSynonyms.equals(chromosomeSynonyms)) {
+            throw new IllegalStateException(
+                    "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome
+                            () + "' do not appear in the same line in the assembly report!");
+        }
+        if (contigSynonyms == null) {
+            // try to use chromosome
+            if (chromosomeSynonyms == null) {
+                throw new IllegalStateException("Contig '" + subSnpNoHgvs.getContigName() + "' nor chromosome '"
+                                                        + subSnpNoHgvs.getChromosome() + "' were found in the " +
+                                                        "assembly report! Is the assembly correct? assembly accession ")
+            }
         } else {
-            contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
+            // use genbank if identical
+            if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
+                if (subSnpNoHgvs.getChromosome() != null) {
+                    subSnpNoHgvs.setChromosome(null);
+                    subSnpNoHgvs.setChromosomeStart(null);
+                }
+                subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
+            }
+        }
+
+        return subSnpNoHgvs;
+
+
+
+        if (subSnpNoHgvs.getChromosome() != null) {
+            ContigSynonyms chromosomeSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
+            if (contigSynonyms.equals(chromosomeSynonyms)) {
+                throw new IllegalStateException(
+                        "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome
+                                () + "' do not appear in the same line in the assembly report!");
+            }
         }
 
         if (contigSynonyms == null) {

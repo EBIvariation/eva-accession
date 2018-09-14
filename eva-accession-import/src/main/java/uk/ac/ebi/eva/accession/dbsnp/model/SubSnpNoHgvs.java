@@ -276,11 +276,7 @@ public class SubSnpNoHgvs {
     }
 
     public Region getVariantRegion() {
-        if (getChromosome() != null) {
-            return new Region(getChromosome(), getChromosomeStart());
-        } else {
-            return new Region(getContigName(), getContigStart());
-        }
+        return new Region(getContigName(), getContigStart());
     }
 
 
