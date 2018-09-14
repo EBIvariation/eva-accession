@@ -130,8 +130,7 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         DbsnpSubmittedVariantEntity submittedVariant = submittedVariants.stream().filter(
                 ss -> ss.getAccession().equals(9999999L)).findFirst().get();
         SubmittedVariant expectedVariant = new SubmittedVariant("GCF_000002315.4", 9031, "HANDLE_BATCH", "chr22", 2,
-                                                                "GC",
-                                                                "", 6666666L, false, true, true, false);
+                                                                "GC", "", 6666666L, false, true, true, false);
         assertEquals(expectedVariant, submittedVariant.getModel());
         // the hash should have been recalculated with the new model
         Function<ISubmittedVariant, String> hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(

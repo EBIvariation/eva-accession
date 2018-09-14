@@ -86,17 +86,17 @@ public class ContigMapping {
     }
 
     private void normalizeNames(ContigSynonyms contigSynonyms) {
-        if (contigSynonyms.getAssignedMolecule().equals(NOT_AVAILABLE)
+        if (NOT_AVAILABLE.equals(contigSynonyms.getAssignedMolecule())
                 || !ASSEMBLED_MOLECULE.equals(contigSynonyms.getSequenceRole())) {
             contigSynonyms.setAssignedMolecule(null);
         }
-        if (contigSynonyms.getGenBank().equals(NOT_AVAILABLE)) {
+        if (NOT_AVAILABLE.equals(contigSynonyms.getGenBank())) {
             contigSynonyms.setGenBank(null);
         }
-        if (contigSynonyms.getRefSeq().equals(NOT_AVAILABLE)) {
+        if (NOT_AVAILABLE.equals(contigSynonyms.getRefSeq())) {
             contigSynonyms.setRefSeq(null);
         }
-        if (contigSynonyms.getUcsc().equals(NOT_AVAILABLE)) {
+        if (NOT_AVAILABLE.equals(contigSynonyms.getUcsc())) {
             contigSynonyms.setUcsc(null);
         }
     }
