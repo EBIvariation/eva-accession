@@ -132,6 +132,17 @@ public class ContigReplacerProcessorTest {
         assertEquals(GENBANK_WITHOUT_SYNONYM, genbankProcessor.process(input).getContigName());
     }
 
+    @Test
+    public void ifConvertingFromChromosomeThenChangePositionAsWell() throws Exception {
+        long start1 = 100;
+        long start2 = 200;
+        SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, REFERENCE_ALLELE, ALTERNATE_ALLELE, ASSEMBLY, "", "",
+                                              CHROMOSOME, start1, MISSING_CONTIG, start2, DbsnpVariantType.SNV,
+                                              Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, true, true,
+                                              true, true, null, null, TAXONOMY);
+        assertEquals(start1, processor.process(input).getContigStart());
+    }
+
     // test regular cases
 
     @Test

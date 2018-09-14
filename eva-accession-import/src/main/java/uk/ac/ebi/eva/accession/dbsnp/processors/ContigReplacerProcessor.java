@@ -46,10 +46,10 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
         }
 
         if (isPresentInAssemblyReport(contigSynonyms)) {
-            convertToGenbankIfIdentical(subSnpNoHgvs, contigSynonyms);
+            replaceFromContigToGenbank(subSnpNoHgvs, contigSynonyms);
         } else {
             if (isPresentInAssemblyReport(chromosomeSynonyms)) {
-                convertToGenbankIfIdentical(subSnpNoHgvs, chromosomeSynonyms);
+                replaceFromChromosomeToGenbank(subSnpNoHgvs, chromosomeSynonyms);
             } else {
                 throw new IllegalStateException(
                         "Neither contig '" + subSnpNoHgvs.getContigName() + "' nor chromosome '"
@@ -66,12 +66,22 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
         return synonyms != null;
     }
 
-    private void convertToGenbankIfIdentical(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
+    private void replaceFromContigToGenbank(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
         if (contigSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
             subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
         } else {
             // genbank is not identical to refseq and the assembly is not genbank, so
-            // must keep the original refseq
+            // we must keep the original refseq
+        }
+    }
+
+    private void replaceFromChromosomeToGenbank(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms chromosomeSynonyms) {
+        if (chromosomeSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
+            subSnpNoHgvs.setContigName(chromosomeSynonyms.getGenBank());
+            subSnpNoHgvs.setContigStart(subSnpNoHgvs.getChromosomeStart());
+        } else {
+            // genbank is not identical to refseq and the assembly is not genbank, so
+            // we must keep the original refseq, even if the refseq was not found in the assembly report
         }
     }
 
