@@ -25,63 +25,59 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
     private ContigMapping contigMapping;
 
-    public ContigReplacerProcessor(ContigMapping contigMapping) {
+    private String assemblyAccession;
+
+    public ContigReplacerProcessor(ContigMapping contigMapping, String assemblyAccession) {
         this.contigMapping = contigMapping;
+        this.assemblyAccession = assemblyAccession;
     }
 
     @Override
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
-        ContigSynonyms contigSynonyms;
-        contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
         ContigSynonyms chromosomeSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
-        if (chromosomeSynonyms != null && contigSynonyms != null && !contigSynonyms.equals(chromosomeSynonyms)) {
+
+        if (isPresentInAssemblyReport(chromosomeSynonyms)
+                && isPresentInAssemblyReport(contigSynonyms)
+                && !contigSynonyms.equals(chromosomeSynonyms)) {
             throw new IllegalStateException(
-                    "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome
-                            () + "' do not appear in the same line in the assembly report!");
+                    "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome()
+                            + "' do not appear in the same line in the assembly report!");
         }
-        if (contigSynonyms == null) {
-            // try to use chromosome
-            if (chromosomeSynonyms == null) {
-                throw new IllegalStateException("Contig '" + subSnpNoHgvs.getContigName() + "' nor chromosome '"
-                                                        + subSnpNoHgvs.getChromosome() + "' were found in the " +
-                                                        "assembly report! Is the assembly correct? assembly accession ")
-            }
+
+        if (isPresentInAssemblyReport(contigSynonyms)) {
+            convertToGenbankIfIdentical(subSnpNoHgvs, contigSynonyms);
         } else {
-            // use genbank if identical
-            if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
-                if (subSnpNoHgvs.getChromosome() != null) {
-                    subSnpNoHgvs.setChromosome(null);
-                    subSnpNoHgvs.setChromosomeStart(null);
-                }
-                subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
-            }
-        }
-
-        return subSnpNoHgvs;
-
-
-
-        if (subSnpNoHgvs.getChromosome() != null) {
-            ContigSynonyms chromosomeSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
-            if (contigSynonyms.equals(chromosomeSynonyms)) {
+            if (isPresentInAssemblyReport(chromosomeSynonyms)) {
+                convertToGenbankIfIdentical(subSnpNoHgvs, chromosomeSynonyms);
+            } else {
                 throw new IllegalStateException(
-                        "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome
-                                () + "' do not appear in the same line in the assembly report!");
+                        "Neither contig '" + subSnpNoHgvs.getContigName() + "' nor chromosome '"
+                                + subSnpNoHgvs.getChromosome()
+                                + "' were found in the assembly report! Is the assembly accession '"
+                                + assemblyAccession + "' correct?");
             }
         }
 
-        if (contigSynonyms == null) {
-            throw new IllegalArgumentException(
-                    "Contig '" + subSnpNoHgvs.getContigName() + "' not found in the assembly report (chromosome '" +
-                            subSnpNoHgvs.getChromosome() + "')");
-        }
-
-        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
-            if (subSnpNoHgvs.getChromosome() != null) {
-                subSnpNoHgvs.setChromosome(contigSynonyms.getGenBank());
-            }
-            subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
-        }
         return subSnpNoHgvs;
     }
+
+    private boolean isPresentInAssemblyReport(ContigSynonyms synonyms) {
+        return synonyms != null;
+    }
+
+    private void convertToGenbankIfIdentical(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
+            subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
+        } else {
+            // genbank is not identical to refseq and the assembly is not genbank, so
+            // must keep the original refseq
+        }
+    }
+
+    private boolean isGenbank(String assemblyAccession) {
+        return assemblyAccession.startsWith("GCA_");
+    }
+
+
 }

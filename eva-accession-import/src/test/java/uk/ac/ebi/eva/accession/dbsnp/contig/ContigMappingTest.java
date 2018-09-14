@@ -68,11 +68,6 @@ public class ContigMappingTest {
     }
 
     @Test
-    public void removePrefixOnlyAtTheBeginning() {
-        assertEquals("otherprefix_chr45", contigMapping.getContigSynonyms("genbank_example_2").getSequenceName());
-    }
-
-    @Test
     public void noSynonyms() {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(REFSEQ_WITHOUT_SYNONYM);
         assertNotNull(contigSynonyms);

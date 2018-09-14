@@ -67,8 +67,8 @@ public class ImportDbsnpVariantsProcessorConfiguration {
     }
 
     @Bean
-    ContigReplacerProcessor contigReplacerProcessor(ContigMapping contigMapping) {
-        return new ContigReplacerProcessor(contigMapping);
+    ContigReplacerProcessor contigReplacerProcessor(ContigMapping contigMapping, InputParameters parameters) {
+        return new ContigReplacerProcessor(contigMapping, parameters.getAssemblyAccession());
     }
 
     @Bean
