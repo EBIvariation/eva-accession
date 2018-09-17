@@ -17,44 +17,34 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
-import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
-import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class SubmittedVariantAccessioningService implements AccessioningService<ISubmittedVariant, String, Long> {
 
-    private BasicMonotonicAccessioningService<ISubmittedVariant, String> accessioningService;
+    private SubmittedVariantMonotonicAccessioningService accessioningService;
 
-    private BasicMonotonicAccessioningService<ISubmittedVariant, String> accessioningServiceDbsnp;
+    private DbsnpSubmittedVariantMonotonicAccessioningService accessioningServiceDbsnp;
 
     private Long accessioningMonotonicInitSs;
 
-    public SubmittedVariantAccessioningService(MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
-                                               DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpAccessionGenerator,
-                                               MonotonicDatabaseService dbService,
-                                               MonotonicDatabaseService dbServiceDbsnp,
+    public SubmittedVariantAccessioningService(SubmittedVariantMonotonicAccessioningService accessioningService,
+                                               DbsnpSubmittedVariantMonotonicAccessioningService accessioningServiceDbsnp,
                                                Long accessioningMonotonicInitSs) {
-        this.accessioningService = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
-                (accessionGenerator, dbService, new SubmittedVariantSummaryFunction(), new SHA1HashingFunction());
-        this.accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
-                (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
-                 new SHA1HashingFunction());
+        this.accessioningService = accessioningService;
+        this.accessioningServiceDbsnp = accessioningServiceDbsnp;
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
     }
 
@@ -108,6 +98,12 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         } else {
             return accessioningServiceDbsnp.getByAccessionAndVersion(accession, version);
         }
+    }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
+            List<Long> clusteredVariantAccessions) {
+        return joinLists(accessioningService.getByClusteredVariantAccessions(clusteredVariantAccessions),
+                         accessioningServiceDbsnp.getByClusteredVariantAccessions(clusteredVariantAccessions));
     }
 
     @Override

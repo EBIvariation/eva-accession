@@ -21,12 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
@@ -43,7 +43,11 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -86,10 +90,18 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Bean
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
-        return new SubmittedVariantAccessioningService(submittedVariantAccessionGenerator(),
-                                                       dbsnpSubmittedVariantAccessionGenerator(),
-                                                       submittedVariantAccessioningDatabaseService(),
-                                                       dbsnpSubmittedVariantAccessioningDatabaseService(),
+        SubmittedVariantMonotonicAccessioningService submittedVariantMonotonicAccessioningService =
+                new SubmittedVariantMonotonicAccessioningService(submittedVariantAccessionGenerator(),
+                                                                 submittedVariantAccessioningDatabaseService(),
+                                                                 new SubmittedVariantSummaryFunction(),
+                                                                 new SHA1HashingFunction());
+        DbsnpSubmittedVariantMonotonicAccessioningService dbsnpSubmittedVariantMonotonicAccessioningService =
+                new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator(),
+                                                                      dbsnpSubmittedVariantAccessioningDatabaseService(),
+                                                                      new DbsnpSubmittedVariantSummaryFunction(),
+                                                                      new SHA1HashingFunction());
+        return new SubmittedVariantAccessioningService(submittedVariantMonotonicAccessioningService,
+                                                       dbsnpSubmittedVariantMonotonicAccessioningService,
                                                        accessioningMonotonicInitSs());
     }
 
