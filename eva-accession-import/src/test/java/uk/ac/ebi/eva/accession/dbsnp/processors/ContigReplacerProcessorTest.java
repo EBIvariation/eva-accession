@@ -46,6 +46,8 @@ public class ContigReplacerProcessorTest {
 
     private static final String SEQNAME_1 = "22";
 
+    private static final String SEQNAME_2 = "chrom1";
+
     private static final String GENBANK_CONTIG = "CM000994.2";
 
     private static final String GENBANK_1 = "genbank_example_1";
@@ -70,7 +72,7 @@ public class ContigReplacerProcessorTest {
 
     private static final String GENBANK_ASSEMBLY_ACCESSION = "GCA_000001635.8";
 
-    private ContigReplacerProcessor processor;
+    private ContigReplacerProcessor refseqProcessor;
 
     private ContigReplacerProcessor genbankProcessor;
 
@@ -82,7 +84,7 @@ public class ContigReplacerProcessorTest {
         String fileString = ContigMappingTest.class.getResource("/input-files/assembly-report/AssemblyReport.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
-        processor = new ContigReplacerProcessor(contigMapping, REFSEQ_ASSEMBLY_ACCESSION);
+        refseqProcessor = new ContigReplacerProcessor(contigMapping, REFSEQ_ASSEMBLY_ACCESSION);
         genbankProcessor = new ContigReplacerProcessor(contigMapping, GENBANK_ASSEMBLY_ACCESSION);
     }
 
@@ -92,12 +94,19 @@ public class ContigReplacerProcessorTest {
     public void shouldThrowIfContigAndChromosomeAreMissingInAssemblyReport() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(MISSING_CHROMOSOME, MISSING_CONTIG);
         thrown.expect(IllegalStateException.class);
-        processor.process(input);
+        refseqProcessor.process(input);
     }
 
-    private SubSnpNoHgvs newMockSubSnpNoHgvs(String missingChromosome, String missingContig) {
+    @Test
+    public void shouldThrowIfContigAndChromosomeAreFoundInDifferentLinesInAssemblyReport() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_2, GENBANK_1);
+        thrown.expect(IllegalStateException.class);
+        refseqProcessor.process(input);
+    }
+
+    private SubSnpNoHgvs newMockSubSnpNoHgvs(String chromosome, String contig) {
         return new SubSnpNoHgvs(SS_ID, RS_ID, REFERENCE_ALLELE, ALTERNATE_ALLELE, ASSEMBLY, "", "",
-                                missingChromosome, START, missingContig, START, DbsnpVariantType.SNV,
+                                chromosome, START, contig, START, DbsnpVariantType.SNV,
                                 Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, true, true,
                                 true, true, null, null, TAXONOMY);
     }
@@ -105,25 +114,25 @@ public class ContigReplacerProcessorTest {
     @Test
     public void convertChromosomeIfContigIsMissingInAssemblyReport() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(CHROMOSOME, MISSING_CONTIG);
-        assertEquals(GENBANK_CONTIG, processor.process(input).getContigName());
+        assertEquals(GENBANK_CONTIG, refseqProcessor.process(input).getContigName());
     }
 
     @Test
     public void convertContigIfChromosomeIsMissingInAssemblyReport() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(MISSING_CHROMOSOME, REFSEQ_1);
-        assertEquals(GENBANK_1, processor.process(input).getContigName());
+        assertEquals(GENBANK_1, refseqProcessor.process(input).getContigName());
     }
 
     @Test
     public void doNotConvertToGenbankIfGenbankAndRefseqAreNotIdentical() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_WITHOUT_SYNONYM, REFSEQ_WITHOUT_SYNONYM);
-        assertEquals(REFSEQ_WITHOUT_SYNONYM, processor.process(input).getContigName());
+        assertEquals(REFSEQ_WITHOUT_SYNONYM, refseqProcessor.process(input).getContigName());
     }
 
     @Test
     public void doNotConvertChromosomeToGenbankIfGenbankAndRefseqAreNotIdentical() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_WITHOUT_SYNONYM, MISSING_CONTIG);
-        assertEquals(MISSING_CONTIG, processor.process(input).getContigName());
+        assertEquals(MISSING_CONTIG, refseqProcessor.process(input).getContigName());
     }
 
     @Test
@@ -134,13 +143,18 @@ public class ContigReplacerProcessorTest {
 
     @Test
     public void ifConvertingFromChromosomeThenChangePositionAsWell() throws Exception {
-        long start1 = 100;
-        long start2 = 200;
-        SubSnpNoHgvs input = new SubSnpNoHgvs(SS_ID, RS_ID, REFERENCE_ALLELE, ALTERNATE_ALLELE, ASSEMBLY, "", "",
-                                              CHROMOSOME, start1, MISSING_CONTIG, start2, DbsnpVariantType.SNV,
-                                              Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, true, true,
-                                              true, true, null, null, TAXONOMY);
-        assertEquals(start1, processor.process(input).getContigStart());
+        long chromosomeStart = 100;
+        long contigStart = 200;
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(CHROMOSOME, chromosomeStart, MISSING_CONTIG, contigStart);
+        assertEquals(GENBANK_CONTIG, refseqProcessor.process(input).getContigName());
+        assertEquals(chromosomeStart, refseqProcessor.process(input).getContigStart());
+    }
+
+    private SubSnpNoHgvs newMockSubSnpNoHgvs(String chromosome, long chromosomeStart, String contig, long contigStart) {
+        return new SubSnpNoHgvs(SS_ID, RS_ID, REFERENCE_ALLELE, ALTERNATE_ALLELE, ASSEMBLY, "", "",
+                                chromosome, chromosomeStart, contig, contigStart, DbsnpVariantType.SNV,
+                                Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, true, true,
+                                true, true, null, null, TAXONOMY);
     }
 
     // test regular cases
@@ -148,24 +162,42 @@ public class ContigReplacerProcessorTest {
     @Test
     public void convertVariantFromSeqNameToGenBank() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_1, SEQNAME_1);
-        assertEquals(GENBANK_1, processor.process(input).getContigName());
+        assertEquals(GENBANK_1, refseqProcessor.process(input).getContigName());
     }
 
     @Test
     public void convertVariantFromGenBankToGenBank() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(GENBANK_1, GENBANK_1);
-        assertEquals(GENBANK_1, processor.process(input).getContigName());
+        assertEquals(GENBANK_1, refseqProcessor.process(input).getContigName());
     }
 
     @Test
     public void convertVariantFromRefSeqToGenBank() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(REFSEQ_1, REFSEQ_1);
-        assertEquals(GENBANK_1, processor.process(input).getContigName());
+        assertEquals(GENBANK_1, refseqProcessor.process(input).getContigName());
     }
 
     @Test
     public void convertVariantFromUcscToGenBank() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(UCSC_1, UCSC_1);
-        assertEquals(GENBANK_1, processor.process(input).getContigName());
+        assertEquals(GENBANK_1, refseqProcessor.process(input).getContigName());
+    }
+
+    @Test
+    public void prioritiseRefseqCoordinatesOverChromosome() throws Exception {
+        long chromosomeStart = 100;
+        long contigStart = 200;
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_1, chromosomeStart, REFSEQ_1, contigStart);
+        assertEquals(GENBANK_1, refseqProcessor.process(input).getContigName());
+        assertEquals(contigStart, refseqProcessor.process(input).getContigStart());
+    }
+
+    @Test
+    public void prioritiseGenbankCoordinatesOverChromosome() throws Exception {
+        long chromosomeStart = 100;
+        long contigStart = 200;
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_1, chromosomeStart, GENBANK_1, contigStart);
+        assertEquals(GENBANK_1, refseqProcessor.process(input).getContigName());
+        assertEquals(contigStart, refseqProcessor.process(input).getContigStart());
     }
 }

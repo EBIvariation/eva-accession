@@ -164,7 +164,7 @@ public class SubSnpNoHgvs {
 
     public String getContigName() {
         if (contigName == null) {
-            throw new IllegalStateException("Contig name should not be null at any moment");
+            throw new IllegalStateException("Contig name must not be null at any moment");
         }
         return contigName;
     }
