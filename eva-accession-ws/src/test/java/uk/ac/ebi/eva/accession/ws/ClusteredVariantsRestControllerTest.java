@@ -236,6 +236,39 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
+    public void testGetSubmittedVariantsRestApi() {
+        String identifiers = StreamUtils.createStreamFromIterator(generatedAccessions.iterator())
+                                        .map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
+        String getVariantsUrl = URL + identifiers + "/submitted";
+
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                          new ParameterizedTypeReference<
+                                                  List<
+                                                          AccessionResponseDTO<
+                                                                  SubmittedVariant,
+                                                                  ISubmittedVariant,
+                                                                  String,
+                                                                  Long>>>() {
+                                          });
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> wsResponseBody =
+                getVariantsResponse.getBody();
+        checkSubmittedVariantsOutput(wsResponseBody);
+    }
+
+    private void checkSubmittedVariantsOutput(
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariantsReponse) {
+        List<AccessionedDocument<ISubmittedVariant, Long>> expectedVariants =
+                Arrays.asList(submittedVariantEntity1, submittedVariantEntity2, evaSubmittedVariantEntity3,
+                              evaSubmittedVariantEntity4);
+            assertVariantsAreContainedInControllerResponse(getSubmittedVariantsReponse,
+                                                           expectedVariants,
+                                                           SubmittedVariant::new);
+    }
+
+    @Test
     public void testGetVariantsController() {
         List<Long> identifiers = StreamUtils.createStreamFromIterator(generatedAccessions.iterator())
                 .map(acc -> acc.getAccession()).collect(Collectors.toList());
