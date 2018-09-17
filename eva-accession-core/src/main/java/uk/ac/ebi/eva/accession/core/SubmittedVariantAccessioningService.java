@@ -25,16 +25,9 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,16 +40,11 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     private Long accessioningMonotonicInitSs;
 
-    public SubmittedVariantAccessioningService(MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
-                                               DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpAccessionGenerator,
-                                               SubmittedVariantAccessioningDatabaseService dbService,
-                                               DbsnpSubmittedVariantAccessioningDatabaseService dbServiceDbsnp,
+    public SubmittedVariantAccessioningService(SubmittedVariantMonotonicAccessioningService accessioningService,
+                                               DbsnpSubmittedVariantMonotonicAccessioningService accessioningServiceDbsnp,
                                                Long accessioningMonotonicInitSs) {
-        this.accessioningService = new SubmittedVariantMonotonicAccessioningService
-                (accessionGenerator, dbService, new SubmittedVariantSummaryFunction(), new SHA1HashingFunction());
-        this.accessioningServiceDbsnp = new DbsnpSubmittedVariantMonotonicAccessioningService
-                (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
-                 new SHA1HashingFunction());
+        this.accessioningService = accessioningService;
+        this.accessioningServiceDbsnp = accessioningServiceDbsnp;
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
     }
 
