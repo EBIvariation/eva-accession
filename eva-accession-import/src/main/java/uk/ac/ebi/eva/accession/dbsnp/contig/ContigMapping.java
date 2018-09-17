@@ -29,15 +29,15 @@ public class ContigMapping {
 
     private static final String NOT_AVAILABLE = "na";
 
-    private Map<String, ContigSynonyms> sequenceNameToSynonyms = new HashMap<>();
+    Map<String, ContigSynonyms> sequenceNameToSynonyms = new HashMap<>();
 
-    private Map<String, ContigSynonyms> assignedMoleculeToSynonyms = new HashMap<>();
+    Map<String, ContigSynonyms> assignedMoleculeToSynonyms = new HashMap<>();
 
-    private Map<String, ContigSynonyms> genBankToSynonyms = new HashMap<>();
+    Map<String, ContigSynonyms> genBankToSynonyms = new HashMap<>();
 
-    private Map<String, ContigSynonyms> refSeqToSynonyms = new HashMap<>();
+    Map<String, ContigSynonyms> refSeqToSynonyms = new HashMap<>();
 
-    private Map<String, ContigSynonyms> ucscToSynonyms = new HashMap<>();
+    Map<String, ContigSynonyms> ucscToSynonyms = new HashMap<>();
 
     public ContigMapping(String assemblyReportUrl) throws Exception {
         this(new AssemblyReportReader(assemblyReportUrl));

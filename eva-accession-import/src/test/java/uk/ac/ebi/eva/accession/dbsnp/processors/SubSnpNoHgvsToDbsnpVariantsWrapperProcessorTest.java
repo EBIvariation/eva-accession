@@ -157,7 +157,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpSubmittedVariantEntity dbsnpSubmittedVariant,
                                         String expectedReference, String expectedAlternate) {
-        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, CHROMOSOME, CHROMOSOME_START,
+        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, CONTIG_NAME, CONTIG_START,
                                     expectedReference, expectedAlternate, false, true, 1);
     }
 
@@ -323,7 +323,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         assertEquals(1, variants.size());
         boolean allelesMatch = false;
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME_2, position, reference, "", false,
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, reference, "", false,
                                allelesMatch, 1);
     }
 
@@ -405,19 +405,19 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                                      CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "G", "A", true, true, 1);
 
         // variant with genotypes but no frequencies
         subSnpNoHgvs.setFrequencyExists(false);
         subSnpNoHgvs.setGenotypeExists(true);
         variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "G", "A", true, true, 1);
 
         // variant with frequencies but no genotypes
         subSnpNoHgvs.setFrequencyExists(true);
         subSnpNoHgvs.setGenotypeExists(false);
         variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "G", "A", true, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "G", "A", true, true, 1);
     }
 
     @Test
@@ -430,8 +430,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "A", "C", false, true, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "A", "G", false, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "A", "C", false, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "A", "G", false, true, 1);
     }
 
     @Test
@@ -457,8 +457,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "AC", "TC", false, true, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "AC", "TA", false, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "AC", "TC", false, true, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "AC", "TA", false, true, 1);
     }
 
     @Test
@@ -509,11 +509,11 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
                                                      false, CREATED_DATE, CREATED_DATE, TAXONOMY);
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "TTTT", false, false,
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "TTTT", false, false,
                                1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "TTTTT", false, false,
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "T", "TTTTT", false, false,
                                1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "T", "TTTTTTT", false,
+        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CONTIG_NAME, CONTIG_START, "T", "TTTTTTT", false,
                                false, 1);
 
         subSnpNoHgvs = new SubSnpNoHgvs(244316767L, 315216130L, "TA", "(TA)14(CA)2TA/-", ASSEMBLY, BATCH_HANDLE,
@@ -522,9 +522,9 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                         Orientation.REVERSE, false, false, false, false, CREATED_DATE, CREATED_DATE,
                                         TAXONOMY);
         variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "TA",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "TA",
                                "TATATATATATATATATATATATATATACACATA", false, false, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "TA", "", false, false, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "TA", "", false, false, 1);
 
         subSnpNoHgvs = new SubSnpNoHgvs(702701141L, 718200201L, "A", "(A)2(TA)8/(A)2(TA)6/(A)2(TA)7/(A)4(TA)9",
                                         ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
@@ -532,13 +532,13 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                         Orientation.FORWARD, Orientation.FORWARD, false, false, false, false,
                                         CREATED_DATE, CREATED_DATE, TAXONOMY);
         variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "A", "AATATATATATATATATA",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "A", "AATATATATATATATATA",
                                false, false, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "A", "AATATATATATATA",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "A", "AATATATATATATA",
                                false, false, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CHROMOSOME, CHROMOSOME_START, "A", "AATATATATATATATA",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(2), CONTIG_NAME, CONTIG_START, "A", "AATATATATATATATA",
                                false, false, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(3), CHROMOSOME, CHROMOSOME_START, "A",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(3), CONTIG_NAME, CONTIG_START, "A",
                                "AAAATATATATATATATATATA", false, false, 1);
     }
 
@@ -550,9 +550,9 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
                                                      false, false, false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "AT", "ATATATATATATAT",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "AT", "ATATATATATATAT",
                                false, false, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "AT",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "AT",
                                "ATATATATATATATATATATATATATATATATATATAT", false, false, 1);
     }
 
@@ -566,7 +566,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                                      false, false, false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "C", "AGAGTTCAAGTTGCCCTA",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "C", "AGAGTTCAAGTTGCCCTA",
                                false, true, 1);
 
         // there are STR variants where the alleles string is enclosed with square brackets
@@ -577,9 +577,9 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                         TAXONOMY);
 
         variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "ACACACACAC",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "ACACACACAC",
                                "ACACACACACACACACACACAC", false, false, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "ACACACACAC",
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "ACACACACAC",
                                "ACACACACACACACACACACACACACAC", false, false, 1);
     }
 
@@ -606,8 +606,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         List<DbsnpSubmittedVariantEntity> variants = processor.process(subSnpNoHgvs).getSubmittedVariants();
 
-        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CHROMOSOME, CHROMOSOME_START, "T", "A", false, false, 1);
-        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CHROMOSOME, CHROMOSOME_START, "T", "C", false, false, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "A", false, false, 1);
+        assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "T", "C", false, false, 1);
     }
 
 }

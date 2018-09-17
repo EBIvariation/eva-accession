@@ -53,6 +53,12 @@ public class ContigMappingTest {
 
     private ContigMapping contigMapping;
 
+    private static final int TOTAL_ROWS = 24;
+
+    private static final int NON_ASSEMBLED_MOLECULE_ROWS = 11;
+
+    private static final int MISSING_UCSC_ROWS = 1;
+
     @Before
     public void setUp() throws Exception {
         String fileString = ContigMappingTest.class.getResource("/input-files/assembly-report/AssemblyReport.txt").toString();
@@ -65,11 +71,6 @@ public class ContigMappingTest {
     public void matchWhenVcfHasPrefixes() {
         assertEquals(GENBANK_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getGenBank());
         assertEquals(SEQNAME_CONTIG, contigMapping.getContigSynonyms(SEQNAME_CONTIG).getSequenceName());
-    }
-
-    @Test
-    public void removePrefixOnlyAtTheBeginning() {
-        assertEquals("otherprefix_chr45", contigMapping.getContigSynonyms("genbank_example_2").getSequenceName());
     }
 
     @Test
@@ -105,6 +106,15 @@ public class ContigMappingTest {
     @Test
     public void getUcscReturnsNullIfNotAvailable() throws Exception {
         assertNull(contigMapping.getContigSynonyms(SEQNAME_CONTIG_UNAVAILABLE_UCSC).getUcsc());
+    }
+
+    @Test
+    public void checkAllEntriesWereLoaded() {
+        assertEquals(TOTAL_ROWS, contigMapping.sequenceNameToSynonyms.size());
+        assertEquals(TOTAL_ROWS - NON_ASSEMBLED_MOLECULE_ROWS, contigMapping.assignedMoleculeToSynonyms.size());
+        assertEquals(TOTAL_ROWS, contigMapping.genBankToSynonyms.size());
+        assertEquals(TOTAL_ROWS, contigMapping.refSeqToSynonyms.size());
+        assertEquals(TOTAL_ROWS - MISSING_UCSC_ROWS, contigMapping.ucscToSynonyms.size());
     }
 
     // get SEQNAME

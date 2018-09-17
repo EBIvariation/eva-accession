@@ -40,15 +40,8 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
             return subSnpNoHgvs;
         }
 
-        String contig;
-        long start;
-        if (subSnpNoHgvs.getChromosome() != null) {
-            contig = subSnpNoHgvs.getChromosome();
-            start = subSnpNoHgvs.getChromosomeStart();
-        } else {
-            contig = subSnpNoHgvs.getContigName();
-            start = subSnpNoHgvs.getContigStart();
-        }
+        String contig = subSnpNoHgvs.getVariantRegion().getChromosome();
+        long start = subSnpNoHgvs.getVariantRegion().getStart();
 
         boolean matches = false;
         try {

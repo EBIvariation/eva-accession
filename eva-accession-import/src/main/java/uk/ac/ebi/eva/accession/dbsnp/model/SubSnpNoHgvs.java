@@ -163,6 +163,9 @@ public class SubSnpNoHgvs {
     }
 
     public String getContigName() {
+        if (contigName == null) {
+            throw new IllegalStateException("Contig name must not be null at any moment");
+        }
         return contigName;
     }
 
@@ -276,11 +279,7 @@ public class SubSnpNoHgvs {
     }
 
     public Region getVariantRegion() {
-        if (getChromosome() != null) {
-            return new Region(getChromosome(), getChromosomeStart());
-        } else {
-            return new Region(getContigName(), getContigStart());
-        }
+        return new Region(getContigName(), getContigStart());
     }
 
 

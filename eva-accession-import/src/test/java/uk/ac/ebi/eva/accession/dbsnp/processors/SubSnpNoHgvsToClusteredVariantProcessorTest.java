@@ -80,8 +80,8 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpClusteredVariantEntity dbsnpSubmittedVariant,
                                         VariantType expectedType) {
-        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, expectedType, false, CHROMOSOME,
-                                    CHROMOSOME_START);
+        this.assertProcessedVariant(subSnpNoHgvs, dbsnpSubmittedVariant, expectedType, false, CONTIG_NAME,
+                                    CONTIG_START);
     }
 
     private void assertProcessedVariant(SubSnpNoHgvs subSnpNoHgvs, DbsnpClusteredVariantEntity dbsnpClusteredVariant,
