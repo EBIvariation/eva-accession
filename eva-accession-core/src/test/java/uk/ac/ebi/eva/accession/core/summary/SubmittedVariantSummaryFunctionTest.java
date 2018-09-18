@@ -23,6 +23,9 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
+import java.time.LocalDateTime;
+import java.time.Month;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -246,6 +249,21 @@ public class SubmittedVariantSummaryFunctionTest {
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START, REF_A,
                                      ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
                                      false, null);
+
+        assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
+    }
+
+    @Test
+    public void sameSummaryWhenCreationDateDiffers() {
+        ISubmittedVariant submittedVariant1 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY,
+                                     ALLELES_MATCH, VALIDATED, LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0));
+
+        ISubmittedVariant submittedVariant2 =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START, REF_A,
+                                     ALT_T, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                     VALIDATED, LocalDateTime.of(2016, Month.AUGUST, 20, 5, 0));
 
         assertEquals(summaryFunction.apply(submittedVariant1), summaryFunction.apply(submittedVariant2));
     }

@@ -51,6 +51,8 @@ import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction
 import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -416,5 +418,18 @@ public class SubmittedVariantAccessioningServiceTest {
                 Arrays.asList(multiallelicSubmittedVariant1, multiallelicSubmittedVariant2));
         assertEquals(2, accessions.size());
         assertEquals(1, accessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet()).size());
+    }
+
+    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @Test
+    public void createdDateIsReturnedInAccessionedVariant() throws AccessionCouldNotBeGeneratedException {
+        LocalDateTime createdDate = LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0);
+
+        submittedVariant.setCreatedDate(createdDate);
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions =
+                service.getOrCreate(Collections.singletonList(submittedVariant));
+
+        assertEquals(createdDate, generatedAccessions.get(0).getData().getCreatedDate());
     }
 }

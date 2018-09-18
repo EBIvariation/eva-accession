@@ -53,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -129,6 +130,8 @@ public class AccessionWriterTest {
         assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
 
         assertEquals(variant, accessions.iterator().next().getData());
+        // the creation date is added by the writer
+        assertNotNull(accessions.iterator().next().getData().getCreatedDate());
     }
 
     @Test

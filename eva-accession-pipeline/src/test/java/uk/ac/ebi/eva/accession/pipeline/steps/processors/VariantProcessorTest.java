@@ -25,6 +25,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class VariantProcessorTest {
 
@@ -67,6 +68,7 @@ public class VariantProcessorTest {
                                                           ALTERNATE_ALLELE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                           MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         assertEquals(expected, processed);
+        assertNull(processed.getCreatedDate());
     }
 
     @Test(expected = IllegalArgumentException.class)

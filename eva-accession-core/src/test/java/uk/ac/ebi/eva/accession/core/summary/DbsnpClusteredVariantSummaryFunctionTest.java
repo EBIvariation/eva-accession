@@ -24,6 +24,9 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.time.LocalDateTime;
+import java.time.Month;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -130,6 +133,19 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
 
         IClusteredVariant clusteredVariant2 =
                 new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, false, null);
+
+        assertEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
+    }
+
+    @Test
+    public void sameSummaryWhenCreationDateDiffers() {
+        IClusteredVariant clusteredVariant1 =
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0));
+
+        IClusteredVariant clusteredVariant2 =
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     LocalDateTime.of(2016, Month.AUGUST, 20, 5, 0));
 
         assertEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
