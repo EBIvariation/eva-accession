@@ -36,6 +36,8 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -67,6 +69,8 @@ public class DbsnpSubmittedVariantWriterTest {
 
     private static final Boolean VALIDATED = false;
 
+    private static final LocalDateTime CREATED_DATE = LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0);
+
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
     @Autowired
@@ -90,9 +94,9 @@ public class DbsnpSubmittedVariantWriterTest {
     @Test
     public void saveSingleAccession() throws Exception {
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
-                                                                 "reference", "alternate",
-                                                                 CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                 "reference", "alternate", CLUSTERED_VARIANT,
+                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                                 VALIDATED, CREATED_DATE);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(EXPECTED_ACCESSION,
                                                                               hashingFunction.apply(submittedVariant),
                                                                               submittedVariant, 1);
@@ -106,6 +110,7 @@ public class DbsnpSubmittedVariantWriterTest {
         assertEquals(1, importCounts.getSubmittedVariantsWritten());
 
         assertEquals(submittedVariant, accessions.get(0).getModel());
+        assertEquals(CREATED_DATE, accessions.get(0).getModel().getCreatedDate());
     }
 
     @Test
@@ -113,11 +118,11 @@ public class DbsnpSubmittedVariantWriterTest {
         SubmittedVariant firstSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
                                                                       START_1, "reference", "alternate",
                                                                       CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                      MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                      MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         SubmittedVariant secondSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig",
                                                                        START_1, "reference", "alternate",
                                                                        CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                       MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                       MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         DbsnpSubmittedVariantEntity firstVariant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant, 1);
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
@@ -141,7 +146,7 @@ public class DbsnpSubmittedVariantWriterTest {
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
                                                                  START_1, "reference", "alternate",
                                                                  CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                                 MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant, 1);
 

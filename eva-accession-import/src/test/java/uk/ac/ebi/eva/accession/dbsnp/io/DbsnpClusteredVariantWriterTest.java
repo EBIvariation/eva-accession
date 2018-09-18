@@ -36,6 +36,8 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -68,6 +70,8 @@ public class DbsnpClusteredVariantWriterTest {
     private static final String ASSEMBLY = "assembly";
 
     private static final String CONTIG = "contig";
+
+    private static final LocalDateTime CREATED_DATE = LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -103,11 +107,11 @@ public class DbsnpClusteredVariantWriterTest {
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
 
         // variants and entity objects
-        clusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV, true);
+        clusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV, true, CREATED_DATE);
         ClusteredVariant duplicateClusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV,
-                                                                           false);
-        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_2, CONTIG, START, SNV, true);
-        clusteredVariant3 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, INDEL, true);
+                                                                           false, null);
+        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_2, CONTIG, START, SNV, true, null);
+        clusteredVariant3 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, INDEL, true, null);
         variantEntity1 = buildClusteredVariantEntity(ACCESSION_1, clusteredVariant1);
         duplicateVariantEntity1 = buildClusteredVariantEntity(ACCESSION_1, duplicateClusteredVariant1);
         variantEntity2 = buildClusteredVariantEntity(ACCESSION_2, clusteredVariant2);
@@ -132,6 +136,7 @@ public class DbsnpClusteredVariantWriterTest {
         assertEquals(ACCESSION_1, storedVariants.get(0).getAccession());
         assertEquals(clusteredVariant1, storedVariants.get(0).getModel());
         assertEquals(1, importCounts.getClusteredVariantsWritten());
+        assertEquals(CREATED_DATE, storedVariants.get(0).getModel().getCreatedDate());
     }
 
     @Test(expected = BulkOperationException.class)

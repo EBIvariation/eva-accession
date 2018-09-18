@@ -19,6 +19,9 @@ import org.junit.Test;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
+import java.time.LocalDateTime;
+import java.time.Month;
+
 import static org.junit.Assert.assertEquals;
 
 public class SubmittedVariantEntityTest {
@@ -47,7 +50,7 @@ public class SubmittedVariantEntityTest {
     public void getModelWithFlagsTrue() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, true, true, true, true, null);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());
@@ -57,7 +60,7 @@ public class SubmittedVariantEntityTest {
     public void getModelWithFlagsFalse() {
         SubmittedVariant variant =
                 new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
-                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false);
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false, null);
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(variant, entity.getModel());
@@ -82,5 +85,17 @@ public class SubmittedVariantEntityTest {
         new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
                                    PROJECT_ACCESSION, CONTIG, START, REF_A, ALT_T, CLUSTERED_VARIANT, null, null, null,
                                    null, 1);
+    }
+
+    @Test
+    public void creationDateIsReturnedInTheModel() {
+
+        LocalDateTime createdDate = LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0);
+        SubmittedVariant variant =
+                new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, PROJECT_ACCESSION, CONTIG, START,
+                                     REF_A, ALT_T, CLUSTERED_VARIANT, false, false, false, false, createdDate);
+
+        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
+        assertEquals(createdDate, entity.getModel().getCreatedDate());
     }
 }

@@ -83,9 +83,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                                            List<DbsnpSubmittedVariantEntity> submittedVariants) {
         String hash = hashingFunction.apply(submittedVariant);
         DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(subSnpNoHgvs.getSsId(),
-                                                                                             hash, submittedVariant,
-                                                                                             1);
-        submittedVariantEntity.setCreatedDate(getCreatedDate(subSnpNoHgvs));
+                                                                                             hash, submittedVariant, 1);
         submittedVariants.add(submittedVariantEntity);
     }
 
@@ -98,7 +96,8 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessor implements ItemProcesso
                                     subSnpNoHgvs.isFrequencyExists() || subSnpNoHgvs.isGenotypeExists(),
                                     subSnpNoHgvs.isAssemblyMatch() ,
                                     subSnpNoHgvs.doAllelesMatch() && !subSnpNoHgvs.isAnyOrientationUnknown(),
-                                    subSnpNoHgvs.isSubsnpValidated());
+                                    subSnpNoHgvs.isSubsnpValidated(),
+                                    getCreatedDate(subSnpNoHgvs));
     }
 
     private String getProjectAccession(SubSnpNoHgvs subSnpNoHgvs) {

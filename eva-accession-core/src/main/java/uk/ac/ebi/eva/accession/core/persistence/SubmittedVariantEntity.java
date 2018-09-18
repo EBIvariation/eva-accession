@@ -72,6 +72,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
              model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
              model.isAssemblyMatch(), model.isAllelesMatch(), model.isValidated(), version);
+        this.setCreatedDate(model.getCreatedDate());
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, String referenceSequenceAccession,

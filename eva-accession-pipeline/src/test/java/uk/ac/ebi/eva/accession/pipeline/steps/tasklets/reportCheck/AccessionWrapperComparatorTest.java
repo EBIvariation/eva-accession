@@ -71,7 +71,7 @@ public class AccessionWrapperComparatorTest {
         return new AccessionWrapper<>(null,
                                       null,
                                       new SubmittedVariant("", 0, "", contig, position, "", "", null, null, null, null,
-                                                           null));
+                                                           null, null));
     }
 
     @Test
@@ -141,7 +141,7 @@ public class AccessionWrapperComparatorTest {
     }
 
     private SubmittedVariant buildMockVariant(String contig) {
-        return new SubmittedVariant("", 0, "", contig, 0, "", "", null, null, null, null, null);
+        return new SubmittedVariant("", 0, "", contig, 0, "", "", null, null, null, null, null, null);
     }
 
     @Test

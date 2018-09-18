@@ -34,6 +34,8 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +59,8 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
     private static final VariantType VARIANT_TYPE = VariantType.SNV;
 
     private static final Boolean VALIDATED = false;
+
+    private static final LocalDateTime CREATED_DATE = LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0);
 
     private DbsnpClusteredVariantDeclusteredWriter writer;
 
@@ -83,11 +87,12 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
 
         assertEquals(1, rsEntities.size());
         assertEquals(variant, rsEntities.get(0));
+        assertEquals(CREATED_DATE, rsEntities.get(0).getCreatedDate());
     }
 
     private DbsnpClusteredVariantEntity newDbsnpClusteredVariantEntity(int start, Long accession) {
         ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY, "contig", start, VARIANT_TYPE,
-                                                                 VALIDATED);
+                                                                 VALIDATED, CREATED_DATE);
         return new DbsnpClusteredVariantEntity(accession, hashingFunction.apply(clusteredVariant), clusteredVariant);
     }
 

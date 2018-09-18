@@ -52,7 +52,9 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
 
     private static final int TAXONOMY = 9999;
 
-    private static final Timestamp CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
+    private static final Timestamp SS_CREATED_DATE = Timestamp.valueOf("2000-05-10 13:10:40.0");
+    
+    private static final Timestamp RS_CREATED_DATE = Timestamp.valueOf("2001-01-05 12:30:50.0");
 
     private SubSnpNoHgvsToClusteredVariantProcessor processor;
 
@@ -71,7 +73,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -98,6 +100,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         assertEquals(1, dbsnpClusteredVariant.getVersion());
         assertEquals(getExpectedHash(chromosome, chromosomeStart, expectedType),
                      dbsnpClusteredVariant.getHashedMessage());
+        assertEquals(RS_CREATED_DATE.toLocalDateTime(), dbsnpClusteredVariant.getCreatedDate());
     }
 
     public String getExpectedHash(String contig, long start, VariantType type) {
@@ -117,7 +120,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -130,7 +133,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -143,7 +146,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
                                                      Orientation.REVERSE, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -156,7 +159,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
                                                      Orientation.FORWARD, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -169,7 +172,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
                                                      Orientation.FORWARD, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -182,7 +185,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -195,7 +198,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.REVERSE,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -208,7 +211,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -221,7 +224,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -234,7 +237,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.MNV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -247,7 +250,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -260,7 +263,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.DIV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -273,7 +276,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.FORWARD, false, false, false,
-                                                     true, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     true, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -286,7 +289,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -299,7 +302,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.MNV, Orientation.FORWARD,
                                                      Orientation.REVERSE, Orientation.REVERSE, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -312,7 +315,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.MNV, Orientation.FORWARD,
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -325,8 +328,8 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "C", "/A/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
                                                      CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
                                                      DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                                     Orientation.FORWARD, false, false, false, false, CREATED_DATE,
-                                                     CREATED_DATE, TAXONOMY);
+                                                     Orientation.FORWARD, false, false, false, false, SS_CREATED_DATE,
+                                                     RS_CREATED_DATE, TAXONOMY);
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.SNV);
 
@@ -334,7 +337,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "A", "/T/C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
                                         CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.SNV,
                                         Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, false, false,
-                                        false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                        false, false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
         variant = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.SNV);
     }
@@ -345,8 +348,8 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "C", "A/C/", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
                                                      CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
                                                      DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
-                                                     Orientation.FORWARD, false, false, false, false, CREATED_DATE,
-                                                     CREATED_DATE, TAXONOMY);
+                                                     Orientation.FORWARD, false, false, false, false, SS_CREATED_DATE,
+                                                     RS_CREATED_DATE, TAXONOMY);
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.SNV);
 
@@ -354,7 +357,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
         subSnpNoHgvs = new SubSnpNoHgvs(1L, 2L, "A", "T/C/", ASSEMBLY, BATCH_HANDLE, BATCH_NAME, CHROMOSOME,
                                         CHROMOSOME_START, CONTIG_NAME, CONTIG_START, DbsnpVariantType.SNV,
                                         Orientation.REVERSE, Orientation.FORWARD, Orientation.FORWARD, false, false,
-                                        false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                        false, false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
         variant = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.SNV);
     }
@@ -365,7 +368,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.MICROSATELLITE, Orientation.FORWARD,
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
         assertProcessedVariant(subSnpNoHgvs, variant, VariantType.TANDEM_REPEAT);
@@ -377,7 +380,8 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, null, null, CONTIG_NAME, CONTIG_START,
                                                      DbsnpVariantType.MNV,
                                                      Orientation.FORWARD, Orientation.REVERSE, Orientation.FORWARD,
-                                                     false, false, false, false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, false, false, false, SS_CREATED_DATE, RS_CREATED_DATE,
+                                                     TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 
@@ -390,7 +394,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
                                                      BATCH_NAME, CHROMOSOME, CHROMOSOME_START, CONTIG_NAME,
                                                      CONTIG_START, DbsnpVariantType.SNV, Orientation.FORWARD,
                                                      Orientation.FORWARD, Orientation.FORWARD, false, false, false,
-                                                     false, CREATED_DATE, CREATED_DATE, TAXONOMY);
+                                                     false, SS_CREATED_DATE, RS_CREATED_DATE, TAXONOMY);
 
         DbsnpClusteredVariantEntity variant = processor.process(subSnpNoHgvs);
 

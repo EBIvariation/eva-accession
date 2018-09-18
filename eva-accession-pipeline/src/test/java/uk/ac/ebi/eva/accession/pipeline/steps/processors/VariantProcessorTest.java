@@ -25,6 +25,7 @@ import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class VariantProcessorTest {
 
@@ -65,8 +66,9 @@ public class VariantProcessorTest {
         ISubmittedVariant processed = processor.process(variant);
         ISubmittedVariant expected = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE,
                                                           ALTERNATE_ALLELE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                          MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                          MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         assertEquals(expected, processed);
+        assertNull(processed.getCreatedDate());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -74,7 +76,7 @@ public class VariantProcessorTest {
         SubmittedVariant submittedVariant = new SubmittedVariant(null, TAXONOMY, PROJECT, CONTIG, START,
                                                                  REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
                                                                  SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED);
+                                                                 VALIDATED, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -82,7 +84,7 @@ public class VariantProcessorTest {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, null, CONTIG, START,
                                                                  REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
                                                                  SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED);
+                                                                 VALIDATED, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -90,7 +92,7 @@ public class VariantProcessorTest {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, null, START,
                                                                  REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT,
                                                                  SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED);
+                                                                 VALIDATED, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -98,7 +100,7 @@ public class VariantProcessorTest {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, null,
                                                                  ALTERNATE_ALLELE, CLUSTERED_VARIANT,
                                                                  SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED);
+                                                                 VALIDATED, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -106,6 +108,6 @@ public class VariantProcessorTest {
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START,
                                                                  REFERENCE_ALLELE, null, CLUSTERED_VARIANT,
                                                                  SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                                 VALIDATED);
+                                                                 VALIDATED, null);
     }
 }

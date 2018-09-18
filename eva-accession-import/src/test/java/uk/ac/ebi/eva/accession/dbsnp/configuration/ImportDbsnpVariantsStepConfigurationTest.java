@@ -41,6 +41,7 @@ import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -107,6 +108,8 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         checkFlagInClusteredVariants(storedClusteredVariants, DbsnpClusteredVariantEntity::isValidated,
                                      Arrays.asList(13823349L, 7777777L));
         checkRenormalizedVariant(storedSubmittedVariants, storedClusteredVariants);
+        checkClusteredVariantsCreationDate(storedClusteredVariants);
+        checkSubmittedVariantsCreationDate(storedSubmittedVariants);
     }
 
     private void checkFlagInSubmittedVariants(List<DbsnpSubmittedVariantEntity> unfilteredVariants,
@@ -132,7 +135,7 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         DbsnpSubmittedVariantEntity submittedVariant = submittedVariants.stream().filter(
                 ss -> ss.getAccession().equals(9999999L)).findFirst().get();
         SubmittedVariant expectedVariant = new SubmittedVariant("GCF_000002315.4", 9031, "HANDLE_BATCH", CONTIG, 2,
-                                                                "GC", "", 6666666L, false, true, true, false);
+                                                                "GC", "", 6666666L, false, true, true, false, null);
         assertEquals(expectedVariant, submittedVariant.getModel());
         // the hash should have been recalculated with the new model
         Function<ISubmittedVariant, String> hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(
@@ -145,4 +148,19 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         assertEquals(3, clusteredVariant.getStart());
     }
 
+    private void checkClusteredVariantsCreationDate(List<DbsnpClusteredVariantEntity> storedClusteredVariants) {
+        assertTrue(storedClusteredVariants.stream().noneMatch(variant -> variant.getCreatedDate() == null));
+        DbsnpClusteredVariantEntity clusteredVariant = storedClusteredVariants.stream().
+                filter(variant -> variant.getAccession().equals(13823349L)).findFirst().get();
+         // rs13823349 creation date is 2004-07-02 16:03:00.000
+        assertEquals(LocalDateTime.of(2004, 7, 2, 16, 3), clusteredVariant.getCreatedDate());
+    }
+
+    private void checkSubmittedVariantsCreationDate(List<DbsnpSubmittedVariantEntity> storedSubmittedVariants) {
+        assertTrue(storedSubmittedVariants.stream().noneMatch(variant -> variant.getCreatedDate() == null));
+        DbsnpSubmittedVariantEntity submittedVariant = storedSubmittedVariants.stream().
+                filter(variant -> variant.getAccession().equals(27587141L)).findFirst().get();
+        // ss27587141 creation date is 2004-06-25 02:52:00.000
+        assertEquals(LocalDateTime.of(2004, 6, 25, 2, 52), submittedVariant.getCreatedDate());
+    }
 }

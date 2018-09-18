@@ -26,6 +26,8 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.time.LocalDateTime;
+
 @Document
 public class DbsnpClusteredVariantEntity extends AccessionedDocument<IClusteredVariant, Long> implements
         IClusteredVariant {
@@ -54,13 +56,14 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<IClusteredV
 
     public DbsnpClusteredVariantEntity(Long accession, String hashedMessage, IClusteredVariant model, int version) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getContig(),
-             model.getStart(), model.getType(), model.isValidated(), version);
+             model.getStart(), model.getType(), model.isValidated(), model.getCreatedDate(), version);
     }
 
     public DbsnpClusteredVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
                                        int taxonomyAccession, String contig, long start, VariantType type,
-                                       Boolean validated, int version) {
+                                       Boolean validated, LocalDateTime createdDate, int version) {
         super(hashedMessage, accession, version);
+        this.setCreatedDate(createdDate);
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.contig = contig;

@@ -100,7 +100,7 @@ public class AccessionReportWriterTest {
     public void writeSnpWithAccession() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
                                                         ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
@@ -136,7 +136,7 @@ public class AccessionReportWriterTest {
                                                String denormalizedAlternate) throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, reference,
                                                         alternate, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
                                                                                                     variant);
@@ -161,7 +161,7 @@ public class AccessionReportWriterTest {
     public void resumeWriting() throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
                                                         ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED);
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);

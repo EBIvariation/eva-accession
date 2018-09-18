@@ -43,11 +43,11 @@ public class ClusteredVariant implements IClusteredVariant {
 
     public ClusteredVariant(IClusteredVariant variant) {
         this(variant.getAssemblyAccession(), variant.getTaxonomyAccession(), variant.getContig(), variant.getStart(),
-             variant.getType(), variant.isValidated());
+             variant.getType(), variant.isValidated(), variant.getCreatedDate());
     }
 
     public ClusteredVariant(String assemblyAccession, int taxonomyAccession, String contig, long start,
-                            VariantType type, Boolean validated) {
+                            VariantType type, Boolean validated, LocalDateTime createdDate) {
         if (Objects.isNull(assemblyAccession)) {
             throw new IllegalArgumentException("Assembly accession is required");
         }
@@ -64,7 +64,7 @@ public class ClusteredVariant implements IClusteredVariant {
         this.start = start;
         this.type = type;
         this.validated = validated;
-        this.createdDate = null;
+        this.createdDate = createdDate;
     }
 
     @Override
