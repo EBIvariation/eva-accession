@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -211,9 +212,15 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         List<OPERATION_ENTITY> buildMergeOperationsFromException(List<ENTITY> variants,
                                                                  BulkOperationException exception) {
             List<OPERATION_ENTITY> operations = new ArrayList<>();
+            checkForNulls(variants);
             extractUniqueHashes(exception)
                     .forEach(hash -> {
                         ENTITY mergedInto = variantRepository.findOne(hash);
+                        if (mergedInto == null) {
+                            throw new IllegalStateException(
+                                    "A duplicate key exception was raised with hash " + hash + ", but no document " +
+                                            "with that hash was found.");
+                        }
                         List<OPERATION_ENTITY> merges = buildMergeOperations(variants,
                                                                              hash,
                                                                              mergedInto);
@@ -236,6 +243,14 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                                                     exception);
                                 } else {
                                     String hash = matcher.group(DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME);
+                                    if (hash == null) {
+                                        throw new IllegalStateException(
+                                                "A duplicate key exception was caught, but the message couldn't be " +
+                                                        "parsed correctly. The group in the regex " +
+                                                        DUPLICATE_KEY_ERROR_MESSAGE_REGEX + " failed to match part of" +
+                                                        " the input",
+                                                exception);
+                                    }
                                     return hash;
                                 }
                             })
@@ -247,15 +262,30 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             return errorCategory.equals(ErrorCategory.DUPLICATE_KEY);
         }
 
-        private List<OPERATION_ENTITY> buildMergeOperations(List<ENTITY> variants, String hash,
-                                                            ENTITY mergedInto) {
-            return removeDuplicatesWithSameHashAndAccession(variants.stream())
+        private List<OPERATION_ENTITY> buildMergeOperations(List<ENTITY> variants, String hash, ENTITY mergedInto) {
+            Collection<ENTITY> entities = removeDuplicatesWithSameHashAndAccession(variants.stream());
+            checkForNulls(entities);
+            return entities
                     .stream()
                     .filter(v -> v.getHashedMessage().equals(hash)
                             && !v.getAccession().equals(mergedInto.getAccession())
                             && !isAlreadyMerged(v.getAccession()))
                     .map(origin -> mergeOperationFactory.apply(origin, mergedInto))
                     .collect(Collectors.toList());
+        }
+
+        private void checkForNulls(Collection<ENTITY> entities) {
+            int nullCount = 0;
+            for (ENTITY entity : entities) {
+                if (entity == null) {
+                    nullCount++;
+                }
+            }
+            if (nullCount > 0) {
+                throw new IllegalStateException(
+                        "Could not complete writing merge operations, as " + nullCount + " variants were actually " +
+                                "null");
+            }
         }
 
         private <T extends AccessionedDocument> Collection<T> removeDuplicatesWithSameHashAndAccession(
