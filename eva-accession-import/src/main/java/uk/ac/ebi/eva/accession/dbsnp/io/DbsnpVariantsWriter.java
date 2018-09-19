@@ -217,9 +217,15 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                     .forEach(hash -> {
                         ENTITY mergedInto = variantRepository.findOne(hash);
                         if (mergedInto == null) {
+                            String printedVariants = variants
+                                    .stream()
+                                    .filter(v -> v.getHashedMessage().equals(hash))
+                                    .map(v -> v.getClass().toString() + v.getModel().toString())
+                                    .collect(Collectors.toList())
+                                    .toString();
                             throw new IllegalStateException(
                                     "A duplicate key exception was raised with hash " + hash + ", but no document " +
-                                            "with that hash was found.");
+                                            "with that hash was found. These variants have that hash: " + printedVariants);
                         }
                         List<OPERATION_ENTITY> merges = buildMergeOperations(variants,
                                                                              hash,
