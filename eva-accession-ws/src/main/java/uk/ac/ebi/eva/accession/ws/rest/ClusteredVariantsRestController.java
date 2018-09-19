@@ -56,7 +56,9 @@ public class ClusteredVariantsRestController {
     }
 
     @ApiOperation(value = "Find clustered variants by identifier", notes = "This endpoint returns an accessioned " +
-            "submitted variant. See (TODO link to wiki) for an explanation of each field.")
+            "clustered variant. See " +
+            "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs " +
+            "for an explanation of each field.")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
             @PathVariable

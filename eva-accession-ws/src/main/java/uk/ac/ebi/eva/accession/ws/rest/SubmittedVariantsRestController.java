@@ -45,7 +45,9 @@ public class SubmittedVariantsRestController {
     }
 
     @ApiOperation(value = "Find submitted variants by identifier", notes = "This endpoint returns an accessioned " +
-            "submitted variant. See (TODO link to wiki) for an explanation of each field.")
+            "submitted variant. See " +
+            "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss " +
+            "for an explanation of each field.")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> get(
             @PathVariable
