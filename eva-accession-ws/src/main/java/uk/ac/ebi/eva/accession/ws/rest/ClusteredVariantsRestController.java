@@ -55,27 +55,37 @@ public class ClusteredVariantsRestController {
         this.submittedVariantsService = submittedVariantsService;
     }
 
-    @ApiOperation(value = "Find clustered variants by identifier", notes = "This endpoint returns an accessioned " +
-            "clustered variant. See " +
+    @ApiOperation(value = "Find clustered variants (RS) by identifier", notes = "This endpoint returns an accessioned" +
+            " clustered variant (RS). See " +
             "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs " +
             "for an explanation of each field.")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
             @PathVariable
-            @ApiParam(value = "List of numerical identifiers, e.g.: 3000000000,3000000002", required = true)
+            @ApiParam(value = "List of numerical identifiers of clustered variants, e.g.: 3000000000,3000000002",
+                    required = true)
                     List<Long> identifiers) {
         return basicRestController.get(identifiers);
     }
 
-    @ApiOperation(value = "Find submitted variants by clustered variant identifier")
+    @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "This endpoint"
+            + " takes clustered variant identifiers (RS) and returns all accessioned submitted variants (SS) linked "
+            + "to the former. See "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss "
+            + "for an explanation of each field.")
     @GetMapping(value = "/{identifiers}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
-            @PathVariable List<Long> identifiers) {
+            @PathVariable
+            @ApiParam(value = "List of numerical identifiers of clustered variants, e.g.: 869808637", required = true)
+                    List<Long> identifiers) {
+
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = submittedVariantsService
-                .getByClusteredVariantAccessionIn(identifiers);
-        return submittedVariants.stream()
-                                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                                .collect(Collectors.toList());
+                .getByClusteredVariantAccessionIn(
+                identifiers);
+        return submittedVariants
+                .stream()
+                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                .collect(Collectors.toList());
     }
 }
 

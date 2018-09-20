@@ -33,7 +33,7 @@ public class SwaggerConfiguration {
                 .title("EVA variant identifiers API")
                 .description(
                         "API to retrieve information about submitted variant identifiers (usually called SubSNP or " +
-                                "ss) and clustered variant identifiers (usually called RefSNP or rs).")
+                                "SS) and clustered variant identifiers (usually called RefSNP or RS).")
                 .version("0.1")
                 .build();
     }
