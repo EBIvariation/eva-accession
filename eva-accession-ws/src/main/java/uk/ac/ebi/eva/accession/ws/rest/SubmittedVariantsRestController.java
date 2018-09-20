@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.ws.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,10 +44,14 @@ public class SubmittedVariantsRestController {
         this.basicRestController = basicRestController;
     }
 
-    @ApiOperation(value = "Find submitted variants by identifier")
+    @ApiOperation(value = "Find submitted variants (SS) by identifier", notes = "This endpoint returns the submitted "
+            + "variants (SS) represented by the given identifiers. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> get(
-            @PathVariable List<Long> identifiers) {
+            @PathVariable @ApiParam(value = "List of numerical identifiers of submitted variants, e.g.: 5000000000,"
+                    + "5000000002", required = true) List<Long> identifiers) {
+
         return basicRestController.get(identifiers);
     }
 }

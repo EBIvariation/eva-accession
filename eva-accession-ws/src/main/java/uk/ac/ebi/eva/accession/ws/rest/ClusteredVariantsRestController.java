@@ -19,6 +19,9 @@ package uk.ac.ebi.eva.accession.ws.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,22 +55,32 @@ public class ClusteredVariantsRestController {
         this.submittedVariantsService = submittedVariantsService;
     }
 
-    @ApiOperation(value = "Find clustered variants by identifier")
+    @ApiOperation(value = "Find clustered variants (RS) by identifier", notes = "This endpoint returns the clustered "
+            + "variants (RS) represented by the given identifiers. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
     @GetMapping(value = "/{identifiers}", produces = "application/json")
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
-            @PathVariable List<Long> identifiers) {
+            @PathVariable @ApiParam(value = "List of numerical identifiers of clustered variants, e.g.: 3000000000,"
+                    + "3000000002", required = true) List<Long> identifiers) {
+
         return basicRestController.get(identifiers);
     }
 
-    @ApiOperation(value = "Find submitted variants by clustered variant identifier")
+    @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a list "
+            + "of clustered variant identifiers (RS), this endpoint returns all the submitted variants (SS) linked to"
+            + " the former. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
     @GetMapping(value = "/{identifiers}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
-            @PathVariable List<Long> identifiers) {
+            @PathVariable @ApiParam(value = "List of numerical identifiers of clustered variants, e.g.: 869808637",
+                    required = true) List<Long> identifiers) {
+
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = submittedVariantsService
                 .getByClusteredVariantAccessionIn(identifiers);
-        return submittedVariants.stream()
-                                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                                .collect(Collectors.toList());
+        return submittedVariants
+                .stream()
+                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                .collect(Collectors.toList());
     }
 }
 
