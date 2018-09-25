@@ -46,7 +46,6 @@ import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 @Configuration
@@ -98,7 +97,7 @@ public class SubmittedVariantAccessioningConfiguration {
         DbsnpSubmittedVariantMonotonicAccessioningService dbsnpSubmittedVariantMonotonicAccessioningService =
                 new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator(),
                                                                       dbsnpSubmittedVariantAccessioningDatabaseService(),
-                                                                      new DbsnpSubmittedVariantSummaryFunction(),
+                                                                      new SubmittedVariantSummaryFunction(),
                                                                       new SHA1HashingFunction());
         return new SubmittedVariantAccessioningService(submittedVariantMonotonicAccessioningService,
                                                        dbsnpSubmittedVariantMonotonicAccessioningService,

@@ -188,7 +188,6 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
     public String getExpectedHash(String contig, long start, String reference, String alternate) {
         String summary = new StringBuilder()
                 .append(ASSEMBLY_ACCESSION)
-                .append("_").append(TAXONOMY)
                 .append("_").append(PROJECT_ACCESSION)
                 .append("_").append(contig)
                 .append("_").append(start)

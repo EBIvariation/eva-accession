@@ -20,7 +20,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
@@ -40,7 +40,7 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
     private String assemblyAccession;
 
     public SubSnpNoHgvsToClusteredVariantProcessor(String assemblyAccession) {
-        this.hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        this.hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.assemblyAccession = assemblyAccession;
     }
 

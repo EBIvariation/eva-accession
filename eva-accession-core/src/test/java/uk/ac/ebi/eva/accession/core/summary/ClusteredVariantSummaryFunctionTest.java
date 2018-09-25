@@ -30,7 +30,7 @@ import java.time.Month;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class DbsnpClusteredVariantSummaryFunctionTest {
+public class ClusteredVariantSummaryFunctionTest {
 
     private static final String ASSEMBLY_ACCESSION = "assembly";
 
@@ -44,11 +44,11 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
 
     private static final Boolean VALIDATED = null;
 
-    private DbsnpClusteredVariantSummaryFunction summaryFunction;
+    private ClusteredVariantSummaryFunction summaryFunction;
 
     @Before
     public void setUp() {
-        summaryFunction = new DbsnpClusteredVariantSummaryFunction();
+        summaryFunction = new ClusteredVariantSummaryFunction();
     }
 
     @Test

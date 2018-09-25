@@ -47,8 +47,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessionin
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -135,7 +134,7 @@ public class ClusteredVariantsRestControllerTest {
         ClusteredVariant variant3 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 4567, VariantType.SNV, false,
                                                          null);
 
-        DbsnpClusteredVariantSummaryFunction function = new DbsnpClusteredVariantSummaryFunction();
+        ClusteredVariantSummaryFunction function = new ClusteredVariantSummaryFunction();
         clusteredVariantEntity1 = new DbsnpClusteredVariantEntity(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                                                                               function.apply(variant1), variant1);
         clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
@@ -154,15 +153,14 @@ public class ClusteredVariantsRestControllerTest {
         // one variant has default flags, the other have no default values
         SubmittedVariant submittedVariant1 = new SubmittedVariant("ASMACC01", 1101, "PROJECT1", "CHROM1", 1234, "REF",
                                                                   "ALT", DBSNP_CLUSTERED_VARIANT_ACCESSION_1);
-        SubmittedVariant submittedVariant2 = new SubmittedVariant("ASMACC01", 1102, "PROJECT1", "CHROM1", 1234, "REF",
+        SubmittedVariant submittedVariant2 = new SubmittedVariant("ASMACC01", 1102, "PROJECT1", "CHROM1", 2345, "REF",
                                                                   "ALT", DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
                                                                   !ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                                   !ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH,
                                                                   !ISubmittedVariant.DEFAULT_ALLELES_MATCH,
                                                                   !ISubmittedVariant.DEFAULT_VALIDATED, null);
 
-        DbsnpSubmittedVariantSummaryFunction submittedVariantSummaryFunction =
-                new DbsnpSubmittedVariantSummaryFunction();
+        SubmittedVariantSummaryFunction submittedVariantSummaryFunction = new SubmittedVariantSummaryFunction();
         submittedVariantEntity1 =
                 new DbsnpSubmittedVariantEntity(DBSNP_SUBMITTED_VARIANT_ACCESSION_1,
                                                 submittedVariantSummaryFunction.apply(submittedVariant1),

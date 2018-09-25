@@ -26,8 +26,8 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -73,8 +73,8 @@ public class SubmittedVariantDeclusterProcessorTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         processor = new SubmittedVariantDeclusterProcessor();
-        hashingFunctionSubmitted = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
-        hashingFunctionClustered = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        hashingFunctionSubmitted = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        hashingFunctionClustered = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @Test

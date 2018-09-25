@@ -33,7 +33,7 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
 import java.time.LocalDateTime;
@@ -103,7 +103,7 @@ public class DbsnpClusteredVariantWriterTest {
     public void setUp() {
         importCounts = new ImportCounts();
         dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
-        hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
 
         // variants and entity objects
