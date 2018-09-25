@@ -27,7 +27,6 @@ public class ClusteredVariantSummaryFunction implements Function<IClusteredVaria
     public String apply(IClusteredVariant model) {
         return new StringBuilder()
                 .append(model.getAssemblyAccession())
-                .append("_").append(model.getTaxonomyAccession())
                 .append("_").append(model.getContig())
                 .append("_").append(model.getStart())
                 .append("_").append(model.getType())

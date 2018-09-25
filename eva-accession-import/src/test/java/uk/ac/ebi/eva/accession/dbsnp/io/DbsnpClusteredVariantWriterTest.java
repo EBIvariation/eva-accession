@@ -57,8 +57,6 @@ public class DbsnpClusteredVariantWriterTest {
 
     private static final int TAXONOMY_1 = 3880;
 
-    private static final int TAXONOMY_2 = 3882;
-
     private static final Long ACCESSION_1 = 10000000001L;
 
     private static final Long ACCESSION_2 = 10000000002L;
@@ -110,7 +108,7 @@ public class DbsnpClusteredVariantWriterTest {
         clusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV, true, CREATED_DATE);
         ClusteredVariant duplicateClusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV,
                                                                            false, null);
-        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_2, CONTIG, START, SNV, true, null);
+        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START+1, SNV, true, null);
         clusteredVariant3 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, INDEL, true, null);
         variantEntity1 = buildClusteredVariantEntity(ACCESSION_1, clusteredVariant1);
         duplicateVariantEntity1 = buildClusteredVariantEntity(ACCESSION_1, duplicateClusteredVariant1);

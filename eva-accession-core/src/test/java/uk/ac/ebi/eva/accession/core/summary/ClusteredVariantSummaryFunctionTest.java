@@ -74,20 +74,6 @@ public class ClusteredVariantSummaryFunctionTest {
     }
 
     @Test
-    public void differentSummaryWhenTaxonomyDiffers() {
-        IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
-                                     null);
-
-        int taxonomyAccession2 = 2;
-        IClusteredVariant clusteredVariant2 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, CONTIG, START, VARIANT_TYPE, VALIDATED,
-                                     null);
-
-        assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
-    }
-
-    @Test
     public void differentSummaryWhenContigDiffers() {
         IClusteredVariant clusteredVariant1 =
                 new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
@@ -123,6 +109,20 @@ public class ClusteredVariantSummaryFunctionTest {
                                      null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
+    }
+
+    @Test
+    public void sameSummaryWhenTaxonomyDiffers() {
+        IClusteredVariant clusteredVariant1 =
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
+
+        int taxonomyAccession2 = 2;
+        IClusteredVariant clusteredVariant2 =
+                new ClusteredVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
+
+        assertEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
 
     @Test

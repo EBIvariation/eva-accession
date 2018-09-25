@@ -106,7 +106,6 @@ public class SubSnpNoHgvsToClusteredVariantProcessorTest {
     public String getExpectedHash(String contig, long start, VariantType type) {
         String summary = new StringBuilder()
                 .append(ASSEMBLY_ACCESSION)
-                .append("_").append(TAXONOMY)
                 .append("_").append(contig)
                 .append("_").append(start)
                 .append("_").append(type)
