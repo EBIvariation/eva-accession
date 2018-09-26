@@ -33,7 +33,7 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
 import java.time.LocalDateTime;
@@ -87,7 +87,7 @@ public class DbsnpSubmittedVariantWriterTest {
     public void setUp() throws Exception {
         importCounts = new ImportCounts();
         dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
-        hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
     }
 
@@ -114,31 +114,26 @@ public class DbsnpSubmittedVariantWriterTest {
     }
 
     @Test
-    public void saveDifferentTaxonomies() throws Exception {
-        SubmittedVariant firstSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
+    public void failsOnDifferentTaxonomies() throws Exception {
+        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig",
                                                                       START_1, "reference", "alternate",
                                                                       CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                                       MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-        SubmittedVariant secondSubmittedVariant = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig",
+        SubmittedVariant submittedVariant2 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig",
                                                                        START_1, "reference", "alternate",
                                                                        CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         DbsnpSubmittedVariantEntity firstVariant = new DbsnpSubmittedVariantEntity(
-                EXPECTED_ACCESSION, hashingFunction.apply(firstSubmittedVariant), firstSubmittedVariant, 1);
+                EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant1), submittedVariant1, 1);
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
-                EXPECTED_ACCESSION_2, hashingFunction.apply(secondSubmittedVariant), secondSubmittedVariant, 1);
+                EXPECTED_ACCESSION_2, hashingFunction.apply(submittedVariant2), submittedVariant2, 1);
 
-        dbsnpSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant));
-
-        List<DbsnpSubmittedVariantEntity> accessions = mongoTemplate.find(new Query(),
-                                                                          DbsnpSubmittedVariantEntity.class);
-        assertEquals(2, accessions.size());
-        assertEquals(EXPECTED_ACCESSION, (long) accessions.get(0).getAccession());
-        assertEquals(EXPECTED_ACCESSION_2, (long) accessions.get(1).getAccession());
-        assertEquals(2, importCounts.getSubmittedVariantsWritten());
-
-        assertEquals(firstSubmittedVariant, accessions.get(0).getModel());
-        assertEquals(secondSubmittedVariant, accessions.get(1).getModel());
+        thrown.expect(BulkOperationException.class);
+        try {
+            dbsnpSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant));
+        } finally {
+            assertEquals(1, importCounts.getSubmittedVariantsWritten());
+        }
     }
 
     @Test

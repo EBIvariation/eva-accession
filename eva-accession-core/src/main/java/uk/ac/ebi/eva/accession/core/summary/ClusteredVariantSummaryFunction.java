@@ -21,13 +21,12 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 
 import java.util.function.Function;
 
-public class DbsnpClusteredVariantSummaryFunction implements Function<IClusteredVariant, String> {
+public class ClusteredVariantSummaryFunction implements Function<IClusteredVariant, String> {
 
     @Override
     public String apply(IClusteredVariant model) {
         return new StringBuilder()
                 .append(model.getAssemblyAccession())
-                .append("_").append(model.getTaxonomyAccession())
                 .append("_").append(model.getContig())
                 .append("_").append(model.getStart())
                 .append("_").append(model.getType())

@@ -22,7 +22,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Mono
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 /**
  * Service entry point for accessioning and querying clustered variants.
@@ -33,7 +33,7 @@ public class ClusteredVariantAccessioningService extends BasicMonotonicAccession
 
     public ClusteredVariantAccessioningService(DbsnpMonotonicAccessionGenerator<IClusteredVariant> generator,
                                                MonotonicDatabaseService dbServiceDbsnp) {
-        super(generator, dbServiceDbsnp, new DbsnpClusteredVariantSummaryFunction(), new SHA1HashingFunction());
+        super(generator, dbServiceDbsnp, new ClusteredVariantSummaryFunction(), new SHA1HashingFunction());
     }
 
     @Override

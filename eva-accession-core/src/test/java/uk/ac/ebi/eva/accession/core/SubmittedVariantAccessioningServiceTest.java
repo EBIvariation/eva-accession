@@ -47,7 +47,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 
@@ -366,11 +366,11 @@ public class SubmittedVariantAccessioningServiceTest {
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test(expected = UnsupportedOperationException.class)
-    public void exceptionWhenCreateAccessionForDbsnpVariant() throws
-            AccessionCouldNotBeGeneratedException {
-        BasicMonotonicAccessioningService accessioningServiceDbsnp = new BasicMonotonicAccessioningService<ISubmittedVariant, String>
-                (dbsnpAccessionGenerator, dbServiceDbsnp, new DbsnpSubmittedVariantSummaryFunction(),
-                 new SHA1HashingFunction());
+    public void exceptionWhenCreateAccessionForDbsnpVariant() throws AccessionCouldNotBeGeneratedException {
+        BasicMonotonicAccessioningService accessioningServiceDbsnp =
+                new BasicMonotonicAccessioningService<ISubmittedVariant, String>(
+                        dbsnpAccessionGenerator, dbServiceDbsnp, new SubmittedVariantSummaryFunction(),
+                        new SHA1HashingFunction());
 
         accessioningServiceDbsnp.getOrCreate(Collections.singletonList(submittedVariant));
     }

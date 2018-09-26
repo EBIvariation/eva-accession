@@ -1,7 +1,7 @@
 {
   "dbsnpSubmittedVariantEntity": [
     {
-      "_id" : "610EEAC8314DDB24F1BD1225F65AE4DFEB9F84BE",
+      "_id" : "E29AAC5B32BA8C861EA0B064939F54ABEE6BF66A",
       "seq" : "GCA_000009999.3",
       "tax" : 9999,
       "study" : "DBSNP999",
@@ -14,7 +14,7 @@
       "version" : 1
     },
     {
-      "_id" : "9587ADB2417604F9EC19414587331151AA30BCBF",
+      "_id" : "9367D055604F1488A3082CD20D775D461101666B",
       "seq" : "GCA_000009999.3",
       "tax" : 9999,
       "study" : "DBSNP111",
@@ -27,7 +27,7 @@
       "version" : 1
     },
     {
-      "_id" : "BDC7EDCBDE97DFA804F6A7D51567177C8C66FF34",
+      "_id" : "DB5378D395F1CE27C7E178C07100AB8DD39D4B84",
       "seq" : "GCA_000009999.3",
       "tax" : 9999,
       "study" : "DBSNP555",
@@ -40,7 +40,7 @@
       "version" : 1
     },
     {
-      "_id" : "27AE8650CEAB6999004517537600870DF53CB28D",
+      "_id" : "F09622EA0944E739043AF127254C6A9474CF2A70",
       "seq" : "GCA_000009999.3",
       "tax" : 9999,
       "study" : "DBSNP555",

@@ -33,7 +33,7 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 
 import java.time.LocalDateTime;
@@ -56,8 +56,6 @@ import static uk.ac.ebi.eva.commons.core.models.VariantType.SNV;
 public class DbsnpClusteredVariantWriterTest {
 
     private static final int TAXONOMY_1 = 3880;
-
-    private static final int TAXONOMY_2 = 3882;
 
     private static final Long ACCESSION_1 = 10000000001L;
 
@@ -103,14 +101,14 @@ public class DbsnpClusteredVariantWriterTest {
     public void setUp() {
         importCounts = new ImportCounts();
         dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
-        hashingFunction = new DbsnpClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
 
         // variants and entity objects
         clusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV, true, CREATED_DATE);
         ClusteredVariant duplicateClusteredVariant1 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, SNV,
                                                                            false, null);
-        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_2, CONTIG, START, SNV, true, null);
+        clusteredVariant2 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START+1, SNV, true, null);
         clusteredVariant3 = new ClusteredVariant(ASSEMBLY, TAXONOMY_1, CONTIG, START, INDEL, true, null);
         variantEntity1 = buildClusteredVariantEntity(ACCESSION_1, clusteredVariant1);
         duplicateVariantEntity1 = buildClusteredVariantEntity(ACCESSION_1, duplicateClusteredVariant1);

@@ -30,7 +30,7 @@ import java.time.Month;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class DbsnpClusteredVariantSummaryFunctionTest {
+public class ClusteredVariantSummaryFunctionTest {
 
     private static final String ASSEMBLY_ACCESSION = "assembly";
 
@@ -44,11 +44,11 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
 
     private static final Boolean VALIDATED = null;
 
-    private DbsnpClusteredVariantSummaryFunction summaryFunction;
+    private ClusteredVariantSummaryFunction summaryFunction;
 
     @Before
     public void setUp() {
-        summaryFunction = new DbsnpClusteredVariantSummaryFunction();
+        summaryFunction = new ClusteredVariantSummaryFunction();
     }
 
     @Test
@@ -68,20 +68,6 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
 
         IClusteredVariant clusteredVariant2 =
                 new ClusteredVariant("anotherAssembly", TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
-                                     null);
-
-        assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
-    }
-
-    @Test
-    public void differentSummaryWhenTaxonomyDiffers() {
-        IClusteredVariant clusteredVariant1 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
-                                     null);
-
-        int taxonomyAccession2 = 2;
-        IClusteredVariant clusteredVariant2 =
-                new ClusteredVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, CONTIG, START, VARIANT_TYPE, VALIDATED,
                                      null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
@@ -123,6 +109,20 @@ public class DbsnpClusteredVariantSummaryFunctionTest {
                                      null);
 
         assertNotEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
+    }
+
+    @Test
+    public void sameSummaryWhenTaxonomyDiffers() {
+        IClusteredVariant clusteredVariant1 =
+                new ClusteredVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
+
+        int taxonomyAccession2 = 2;
+        IClusteredVariant clusteredVariant2 =
+                new ClusteredVariant(ASSEMBLY_ACCESSION, taxonomyAccession2, CONTIG, START, VARIANT_TYPE, VALIDATED,
+                                     null);
+
+        assertEquals(summaryFunction.apply(clusteredVariant1), summaryFunction.apply(clusteredVariant2));
     }
 
     @Test

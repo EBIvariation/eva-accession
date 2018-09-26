@@ -35,7 +35,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.DbsnpSubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
@@ -138,7 +138,7 @@ public class ImportDbsnpVariantsStepConfigurationTest {
                                                                 "GC", "", 6666666L, false, true, true, false, null);
         assertEquals(expectedVariant, submittedVariant.getModel());
         // the hash should have been recalculated with the new model
-        Function<ISubmittedVariant, String> hashingFunction = new DbsnpSubmittedVariantSummaryFunction().andThen(
+        Function<ISubmittedVariant, String> hashingFunction = new SubmittedVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
         assertEquals(hashingFunction.apply(expectedVariant), submittedVariant.getHashedMessage());
 
