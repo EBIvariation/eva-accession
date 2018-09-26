@@ -217,15 +217,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                     .forEach(hash -> {
                         ENTITY mergedInto = variantRepository.findOne(hash);
                         if (mergedInto == null) {
-                            String printedVariants = variants
-                                    .stream()
-                                    .filter(v -> v.getHashedMessage().equals(hash))
-                                    .map(v -> v.getClass().toString() + v.getModel().toString())
-                                    .collect(Collectors.toList())
-                                    .toString();
-                            throw new IllegalStateException(
-                                    "A duplicate key exception was raised with hash " + hash + ", but no document " +
-                                            "with that hash was found. These variants have that hash: " + printedVariants);
+                            throwMongoConsistencyException(variants, hash);
                         }
                         List<OPERATION_ENTITY> merges = buildMergeOperations(variants,
                                                                              hash,
@@ -234,6 +226,20 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                         operations.addAll(merges);
                     });
             return operations;
+        }
+
+        private void throwMongoConsistencyException(List<ENTITY> variants, String hash) {
+            String printedVariants = variants
+                    .stream()
+                    .filter(v -> v.getHashedMessage().equals(hash))
+                    .map(v -> v.getClass().toString() + v.getModel().toString())
+                    .collect(Collectors.toList())
+                    .toString();
+            throw new IllegalStateException(
+                    "A duplicate key exception was raised with hash " + hash + ", but no document " +
+                            "with that hash was found. Make sure you are using ReadPreference=primaryPreferred and "
+                            + "WriteConcern=Majority. These variants have that hash: " +
+                            printedVariants);
         }
 
         private Stream<String> extractUniqueHashes(BulkOperationException exception) {
