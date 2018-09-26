@@ -19,6 +19,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
@@ -58,7 +59,7 @@ public class MongoConfiguration {
             mongoClientOptionsBuilder = new MongoClientOptions.Builder();
         }
         mongoClientOptions = mongoClientOptionsBuilder.readPreference(ReadPreference.valueOf(readPreference))
-                                                      .readConcern(ReadConcern.MAJORITY)
+                                                      .writeConcern(WriteConcern.MAJORITY)
                                                       .build();
         return properties.createMongoClient(mongoClientOptions, environment);
     }
