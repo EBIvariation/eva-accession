@@ -17,7 +17,9 @@ package uk.ac.ebi.eva.accession.core.configuration;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
@@ -56,7 +58,9 @@ public class MongoConfiguration {
         } else {
             mongoClientOptionsBuilder = new MongoClientOptions.Builder();
         }
-        mongoClientOptions = mongoClientOptionsBuilder.readPreference(ReadPreference.valueOf(readPreference)).build();
+        mongoClientOptions = mongoClientOptionsBuilder.readPreference(ReadPreference.valueOf(readPreference))
+                                                      .writeConcern(WriteConcern.MAJORITY)
+                                                      .build();
         return properties.createMongoClient(mongoClientOptions, environment);
     }
 

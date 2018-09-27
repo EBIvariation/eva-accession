@@ -151,4 +151,16 @@ public class DbsnpClusteredVariantEntity extends AccessionedDocument<IClusteredV
         result = 31 * result + (validated != null ? validated.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "DbsnpClusteredVariantEntity{"
+                + "assemblyAccession='" + assemblyAccession + '\''
+                + ", taxonomyAccession=" + taxonomyAccession
+                + ", contig='" + contig + '\''
+                + ", start=" + start
+                + ", type=" + type
+                + ", validated=" + validated
+                + '}';
+    }
 }
