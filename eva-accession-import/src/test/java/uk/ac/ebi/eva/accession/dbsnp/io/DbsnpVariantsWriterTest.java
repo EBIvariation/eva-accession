@@ -657,16 +657,17 @@ public class DbsnpVariantsWriterTest {
                     assertEquals(EventType.MERGED, operation.getEventType());
                     List<DbsnpClusteredVariantInactiveEntity> inactiveObjects = operation.getInactiveObjects();
                     assertEquals(1, inactiveObjects.size());
-                    assertNotEquals(clusteredVariantEntity.getAccession(), inactiveObjects.get(0).getAccession());
+                    DbsnpClusteredVariantInactiveEntity inactiveEntity = inactiveObjects.get(0);
+                    assertNotEquals(clusteredVariantEntity.getAccession(), inactiveEntity.getAccession());
 
                     assertEquals(clusteredVariantEntity.getAssemblyAccession(),
-                                 inactiveObjects.get(0).getAssemblyAccession());
-                    assertEquals(clusteredVariantEntity.getContig(), inactiveObjects.get(0).getContig());
-                    assertEquals(clusteredVariantEntity.getStart(), inactiveObjects.get(0).getStart());
+                                 inactiveEntity.getAssemblyAccession());
+                    assertEquals(clusteredVariantEntity.getContig(), inactiveEntity.getContig());
+                    assertEquals(clusteredVariantEntity.getStart(), inactiveEntity.getStart());
                     assertEquals(clusteredVariantEntity.getTaxonomyAccession(),
-                                 inactiveObjects.get(0).getTaxonomyAccession());
-                    assertEquals(clusteredVariantEntity.getType(), inactiveObjects.get(0).getType());
-                    assertEquals(clusteredVariantEntity.isValidated(), inactiveObjects.get(0).isValidated());
+                                 inactiveEntity.getTaxonomyAccession());
+                    assertEquals(clusteredVariantEntity.getType(), inactiveEntity.getType());
+                    assertEquals(clusteredVariantEntity.isValidated(), inactiveEntity.isValidated());
                 });
     }
 }
