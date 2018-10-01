@@ -18,8 +18,7 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.services.BasicSpringDataRepositoryDatabaseService;
+import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
@@ -27,8 +26,7 @@ import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService
 import java.util.Collection;
 
 public class DbsnpClusteredVariantAccessioningDatabaseService
-        extends BasicSpringDataRepositoryDatabaseService<IClusteredVariant, Long, DbsnpClusteredVariantEntity>
-        implements MonotonicDatabaseService<IClusteredVariant, String> {
+        extends BasicSpringDataRepositoryMonotonicDatabaseService<IClusteredVariant, DbsnpClusteredVariantEntity> {
 
     public DbsnpClusteredVariantAccessioningDatabaseService(DbsnpClusteredVariantAccessioningRepository repository,
                                                             DbsnpClusteredVariantInactiveService inactiveService) {
