@@ -49,6 +49,12 @@ public class DbsnpClusteredVariantInactiveEntity extends InactiveSubDocument<ICl
 
     public DbsnpClusteredVariantInactiveEntity(DbsnpClusteredVariantEntity dbsnpClusteredVariantEntity) {
         super(dbsnpClusteredVariantEntity);
+        this.assemblyAccession = dbsnpClusteredVariantEntity.getAssemblyAccession();
+        this.taxonomyAccession = dbsnpClusteredVariantEntity.getTaxonomyAccession();
+        this.contig = dbsnpClusteredVariantEntity.getContig();
+        this.start = dbsnpClusteredVariantEntity.getStart();
+        this.type = dbsnpClusteredVariantEntity.getType();
+        this.validated = dbsnpClusteredVariantEntity.isValidated();
     }
 
     @Override
