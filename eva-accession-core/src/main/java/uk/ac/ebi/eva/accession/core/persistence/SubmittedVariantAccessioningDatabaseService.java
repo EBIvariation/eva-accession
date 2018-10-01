@@ -18,14 +18,12 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class SubmittedVariantAccessioningDatabaseService
@@ -42,11 +40,6 @@ public class SubmittedVariantAccessioningDatabaseService
                                                              accessionWrapper.getVersion()),
               inactiveAccessionService);
         this.repository = repository;
-    }
-
-    @Override
-    public long[] getAccessionsInRanges(Collection<MonotonicRange> ranges) {
-        return new long[0];
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> findByClusteredVariantAccessionIn(
