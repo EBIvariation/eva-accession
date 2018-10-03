@@ -81,7 +81,9 @@ public class DbsnpVariantsWriterTest {
 
     private static final long EXPECTED_ACCESSION = 10000000000L;
 
-    private static final int START = 100;
+    private static final int START_1 = 100;
+
+    private static final int START_2 = 200;
 
     private static final Long CLUSTERED_VARIANT_ACCESSION_1 = 12L;
 
@@ -149,14 +151,14 @@ public class DbsnpVariantsWriterTest {
     }
 
     private SubmittedVariant defaultSubmittedVariant() {
-        return new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+        return new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
                                     "reference", "alternate", CLUSTERED_VARIANT_ACCESSION_1,
                                     DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                     DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED, null);
     }
 
     private DbsnpVariantsWrapper buildSimpleWrapper(List<DbsnpSubmittedVariantEntity> submittedVariantEntities) {
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START,
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
                                                                  VARIANT_TYPE, DEFAULT_VALIDATED, null);
         DbsnpClusteredVariantEntity clusteredVariantEntity = new DbsnpClusteredVariantEntity(
                 EXPECTED_ACCESSION, hashingFunctionClustered.apply(clusteredVariant), clusteredVariant);
@@ -192,7 +194,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void writeComplexVariant() throws Exception {
         SubmittedVariant submittedVariant1 = defaultSubmittedVariant();
-        SubmittedVariant submittedVariant2 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+        SubmittedVariant submittedVariant2 = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
                                                                   "reference", "alternate_2",
                                                                   CLUSTERED_VARIANT_ACCESSION_1,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
@@ -217,7 +219,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void declusterVariantWithMismatchingAlleles() throws Exception {
         boolean allelesMatch = false;
-        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
+        SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START_1,
                                                                  "reference", "alternate",
                                                                  EXPECTED_ACCESSION,
                                                                  DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
@@ -299,7 +301,7 @@ public class DbsnpVariantsWriterTest {
 
     @Test
     public void repeatedClusteredVariants() throws Exception {
-        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
+        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START_1,
                                                                   "reference", "alternate",
                                                                   CLUSTERED_VARIANT_ACCESSION_1);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = new DbsnpSubmittedVariantEntity(
@@ -318,7 +320,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void repeatedClusteredVariantsPartiallyDeclustered() throws Exception {
         boolean allelesMatch = false;
-        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
+        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START_1,
                                                                   "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED, null);
@@ -342,7 +344,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void repeatedClusteredVariantsCompletelyDeclustered() throws Exception {
         boolean allelesMatch = false;
-        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
+        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START_1,
                                                                   "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED, null);
@@ -366,7 +368,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void multiallelicClusteredVariantsPartiallyDeclustered() throws Exception {
         boolean allelesMatch = false;
-        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
+        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START_1,
                                                                   "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED, null);
@@ -391,7 +393,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void multiallelicClusteredVariantsCompletelyDeclustered() throws Exception {
         boolean allelesMatch = false;
-        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START,
+        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START_1,
                                                                   "reference", "alternate", null,
                                                                   DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                   allelesMatch, DEFAULT_VALIDATED, null);
@@ -562,7 +564,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void mergeDuplicateClusteredVariantsInTheSameChunk() throws Exception {
         SubmittedVariant submittedVariant = defaultSubmittedVariant();
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START, VARIANT_TYPE,
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1, VARIANT_TYPE,
                                                                  DEFAULT_VALIDATED, null);
 
         DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
@@ -576,10 +578,10 @@ public class DbsnpVariantsWriterTest {
 
 
         SubmittedVariant submittedVariant2 = defaultSubmittedVariant();
-        submittedVariant2.setTaxonomyAccession(TAXONOMY_2);
+        submittedVariant2.setStart(START_2);
         submittedVariant2.setClusteredVariantAccession(CLUSTERED_VARIANT_ACCESSION_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
-                SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2, 1);
+                SUBMITTED_VARIANT_ACCESSION_2, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2, 1);
         DbsnpClusteredVariantEntity clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(
                 CLUSTERED_VARIANT_ACCESSION_2, hashingFunctionClustered.apply(clusteredVariant), clusteredVariant);
 
@@ -591,16 +593,29 @@ public class DbsnpVariantsWriterTest {
         dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2, wrapper));
 
         assertClusteredVariantStored(1, wrapper);
-        assertSubmittedVariantsStored(2, submittedVariantEntity, submittedVariantEntity2);
-        assertSubmittedVariantsLinkToActiveClusteredVariants(wrapper.getClusteredVariant().getAccession(),
-                                                             wrapper.getSubmittedVariants().get(0),
-                                                             wrapper2.getSubmittedVariants().get(0));
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity2 = changeRS(submittedVariantEntity2,
+                                                                               clusteredVariantEntity.getAccession());
+        assertSubmittedVariantsStored(2, submittedVariantEntity, expectedSubmittedVariantEntity2);
+        assertSubmittedVariantsHasActiveClusteredVariantsAccession(wrapper.getClusteredVariant().getAccession(),
+                                                                   wrapper.getSubmittedVariants().get(0),
+                                                                   expectedSubmittedVariantEntity2);
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
         assertClusteredVariantMergeOperationStored(1, clusteredVariantEntity);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
 
-    private void assertSubmittedVariantsLinkToActiveClusteredVariants(
+    private DbsnpSubmittedVariantEntity changeRS(DbsnpSubmittedVariantEntity submittedVariant, Long mergedInto) {
+        // Need to create a new one because DbsnpSubmittedVariantEntity has no setters
+        SubmittedVariant variant = new SubmittedVariant(submittedVariant);
+        variant.setClusteredVariantAccession(mergedInto);
+
+        Long accession = submittedVariant.getAccession();
+        String hash = submittedVariant.getHashedMessage();
+        int version = submittedVariant.getVersion();
+        return new DbsnpSubmittedVariantEntity(accession, hash, variant, version);
+    }
+
+    private void assertSubmittedVariantsHasActiveClusteredVariantsAccession(
             Long accession,
             DbsnpSubmittedVariantEntity... dbsnpSubmittedVariantEntities) {
         for (DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity : dbsnpSubmittedVariantEntities) {
@@ -611,7 +626,7 @@ public class DbsnpVariantsWriterTest {
     @Test
     public void mergeDuplicateClusteredVariants() throws Exception {
         SubmittedVariant submittedVariant = defaultSubmittedVariant();
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START, VARIANT_TYPE,
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1, VARIANT_TYPE,
                                                                  DEFAULT_VALIDATED, null);
 
         DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
@@ -625,7 +640,7 @@ public class DbsnpVariantsWriterTest {
 
 
         SubmittedVariant submittedVariant2 = defaultSubmittedVariant();
-        submittedVariant2.setTaxonomyAccession(TAXONOMY_2);
+        submittedVariant2.setStart(START_2);
         submittedVariant2.setClusteredVariantAccession(CLUSTERED_VARIANT_ACCESSION_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
                 SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2, 1);
@@ -641,10 +656,12 @@ public class DbsnpVariantsWriterTest {
         dbsnpVariantsWriter.write(Arrays.asList(wrapper2));
 
         assertClusteredVariantStored(1, wrapper);
-        assertSubmittedVariantsStored(2, submittedVariantEntity);
-        assertSubmittedVariantsLinkToActiveClusteredVariants(wrapper.getClusteredVariant().getAccession(),
-                                                             wrapper.getSubmittedVariants().get(0),
-                                                             wrapper2.getSubmittedVariants().get(0));
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity2 = changeRS(submittedVariantEntity2,
+                                                                               clusteredVariantEntity.getAccession());
+        assertSubmittedVariantsStored(2, submittedVariantEntity, expectedSubmittedVariantEntity2);
+        assertSubmittedVariantsHasActiveClusteredVariantsAccession(wrapper.getClusteredVariant().getAccession(),
+                                                                   wrapper.getSubmittedVariants().get(0),
+                                                                   expectedSubmittedVariantEntity2);
         assertClusteredVariantMergeOperationStored(1, clusteredVariantEntity);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
@@ -654,7 +671,7 @@ public class DbsnpVariantsWriterTest {
         SubmittedVariant submittedVariant = defaultSubmittedVariant();
         DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
                 SUBMITTED_VARIANT_ACCESSION_1, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
-        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START, VARIANT_TYPE,
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1, VARIANT_TYPE,
                                                                  DEFAULT_VALIDATED, null);
 
         DbsnpClusteredVariantEntity clusteredVariantEntity = new DbsnpClusteredVariantEntity(
@@ -680,10 +697,10 @@ public class DbsnpVariantsWriterTest {
 
         assertClusteredVariantStored(1, wrapper);
         assertSubmittedVariantsStored(1, submittedVariantEntity);
-        assertSubmittedVariantsLinkToActiveClusteredVariants(wrapper.getClusteredVariant().getAccession(),
-                                                             wrapper.getSubmittedVariants().get(0),
-                                                             wrapper2.getSubmittedVariants().get(0),
-                                                             wrapper3.getSubmittedVariants().get(0));
+        assertSubmittedVariantsHasActiveClusteredVariantsAccession(wrapper.getClusteredVariant().getAccession(),
+                                                                   wrapper.getSubmittedVariants().get(0),
+                                                                   wrapper2.getSubmittedVariants().get(0),
+                                                                   wrapper3.getSubmittedVariants().get(0));
         assertClusteredVariantMergeOperationStored(2, clusteredVariantEntity);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
