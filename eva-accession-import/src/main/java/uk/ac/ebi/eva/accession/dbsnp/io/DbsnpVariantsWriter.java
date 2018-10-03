@@ -180,32 +180,48 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             List<? extends DbsnpVariantsWrapper> wrappers,
             List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations) {
 
-        Map<Long, List<DbsnpClusteredVariantOperationEntity>> accessionToOperationsMap = new HashMap<>();
-        for (DbsnpClusteredVariantOperationEntity mergeClusteredOperation : mergeClusteredOperations) {
-            List<DbsnpClusteredVariantOperationEntity> operations = accessionToOperationsMap.computeIfAbsent(
-                    mergeClusteredOperation.getAccession(), accession -> new ArrayList<>());
-            operations.add(mergeClusteredOperation);
-        }
-
-
-        // for wrapper
-        //      for subVar in wrapper
-        //          if subVar.rs is contained in mergesList:
-        //              subVar.rs = mergesList.get(w.subVar.rs).getMergedInto
+        Map<Long, Long> replacements = getAccessionReplacements(mergeClusteredOperations);
 
         for (DbsnpVariantsWrapper wrapper : wrappers) {
             List<DbsnpSubmittedVariantEntity> submittedVariants = new ArrayList<>();
             for (DbsnpSubmittedVariantEntity submittedVariant : wrapper.getSubmittedVariants()) {
-                List<DbsnpClusteredVariantOperationEntity> accessionOperations = accessionToOperationsMap
-                        .get(wrapper.getClusteredVariant().getAccession());
-                if (accessionOperations != null) {
-                    submittedVariants.add(changeRS(submittedVariant, accessionOperations.get(0).getMergedInto()));
+                Long mergedInto = replacements.get(wrapper.getClusteredVariant().getAccession());
+                if (mergedInto != null) {
+                    submittedVariants.add(changeRS(submittedVariant, mergedInto));
                 } else {
                     submittedVariants.add(submittedVariant);
                 }
             }
             wrapper.setSubmittedVariants(submittedVariants);
         }
+    }
+
+    private Map<Long, Long> getAccessionReplacements(
+            List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations) {
+        Map<Long, List<DbsnpClusteredVariantOperationEntity>> accessionToOperationsMap = new HashMap<>();
+        for (DbsnpClusteredVariantOperationEntity mergeClusteredOperation : mergeClusteredOperations) {
+            accessionToOperationsMap
+                    .computeIfAbsent(mergeClusteredOperation.getAccession(), accession -> new ArrayList<>())
+                    .add(mergeClusteredOperation);
+        }
+
+        Map<Long, Long> oldToNewAccessions = new HashMap<>();
+        accessionToOperationsMap.forEach((accession, accessionOperations) -> {
+            List<Long> mergedIntoList = accessionOperations
+                    .stream()
+                    .map(EventDocument::getMergedInto)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            if (mergedIntoList.size() > 1) {
+                throw new IllegalStateException(
+                        "Clustered Variant rs" + accession + " was merged into several other clustered Variants: "
+                                + mergedIntoList);
+            }
+
+            oldToNewAccessions.put(accession, mergedIntoList.get(0));
+        });
+        return oldToNewAccessions;
     }
 
     private DbsnpSubmittedVariantEntity changeRS(DbsnpSubmittedVariantEntity submittedVariant, Long mergedInto) {
