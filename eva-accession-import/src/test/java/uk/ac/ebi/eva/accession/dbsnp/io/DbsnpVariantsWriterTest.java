@@ -48,8 +48,10 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -216,17 +218,22 @@ public class DbsnpVariantsWriterTest {
     public void declusterVariantWithMismatchingAlleles() throws Exception {
         boolean allelesMatch = false;
         SubmittedVariant submittedVariant = new SubmittedVariant("assembly", TAXONOMY_1, "project", "contig", START,
-                                                                 "reference", "alternate", null,
+                                                                 "reference", "alternate",
+                                                                 EXPECTED_ACCESSION,
                                                                  DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
                                                                  allelesMatch, DEFAULT_VALIDATED, null);
         DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity1 =
                 new DbsnpSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
                                                 hashingFunctionSubmitted.apply(submittedVariant),
                                                 submittedVariant, 1);
+        ArrayList<DbsnpSubmittedVariantOperationEntity> operations = new ArrayList<>();
+        dbsnpSubmittedVariantEntity1 = new SubmittedVariantDeclusterProcessor().decluster(dbsnpSubmittedVariantEntity1,
+                                                                                          operations,
+                                                                                          new ArrayList<>());
 
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(dbsnpSubmittedVariantEntity1));
 
-        DbsnpSubmittedVariantOperationEntity operationEntity = createOperation(submittedVariant);
+        DbsnpSubmittedVariantOperationEntity operationEntity = operations.get(0);
         wrapper.setOperations(Collections.singletonList(operationEntity));
 
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));

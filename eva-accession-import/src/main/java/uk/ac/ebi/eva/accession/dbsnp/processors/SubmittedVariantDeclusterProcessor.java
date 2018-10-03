@@ -95,7 +95,7 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         }
     }
 
-    private DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity,
+    public DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity,
                                                   List<DbsnpSubmittedVariantOperationEntity> operations,
                                                   List<String> reasons) {
         //Register submitted variant decluster operation
