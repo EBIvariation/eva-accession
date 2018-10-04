@@ -180,32 +180,29 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             List<? extends DbsnpVariantsWrapper> wrappers,
             List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations) {
 
-        Map<Long, Long> replacements = getAccessionReplacements(mergeClusteredOperations);
+        Map<String, Long> replacements = getAccessionReplacements(mergeClusteredOperations);
 
         for (DbsnpVariantsWrapper wrapper : wrappers) {
-            List<DbsnpSubmittedVariantEntity> submittedVariants = new ArrayList<>();
-            for (DbsnpSubmittedVariantEntity submittedVariant : wrapper.getSubmittedVariants()) {
-                Long mergedInto = replacements.get(wrapper.getClusteredVariant().getAccession());
-                if (mergedInto != null) {
-                    submittedVariants.add(changeRS(submittedVariant, mergedInto));
-                } else {
-                    submittedVariants.add(submittedVariant);
-                }
-            }
-            wrapper.setSubmittedVariants(submittedVariants);
+            updateClusteredVariantAccessionsInSubmittedVariants(wrapper, replacements);
         }
     }
 
-    private Map<Long, Long> getAccessionReplacements(
+    /**
+     * @return a mapping of where a clustered variant was merged: map from hash+accession to which accession it was
+     * merged into.
+     */
+    private Map<String, Long> getAccessionReplacements(
             List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations) {
-        Map<Long, List<DbsnpClusteredVariantOperationEntity>> accessionToOperationsMap = new HashMap<>();
+        Map<String, List<DbsnpClusteredVariantOperationEntity>> accessionToOperationsMap = new HashMap<>();
         for (DbsnpClusteredVariantOperationEntity mergeClusteredOperation : mergeClusteredOperations) {
+            String hash = mergeClusteredOperation.getInactiveObjects().get(0).getHashedMessage();
+            Long accession = mergeClusteredOperation.getAccession();
             accessionToOperationsMap
-                    .computeIfAbsent(mergeClusteredOperation.getAccession(), accession -> new ArrayList<>())
+                    .computeIfAbsent(buildKeyFromHashAndAccession(hash, accession), k -> new ArrayList<>())
                     .add(mergeClusteredOperation);
         }
 
-        Map<Long, Long> oldToNewAccessions = new HashMap<>();
+        Map<String, Long> oldToNewAccessions = new HashMap<>();
         accessionToOperationsMap.forEach((accession, accessionOperations) -> {
             List<Long> mergedIntoList = accessionOperations
                     .stream()
@@ -215,13 +212,33 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
             if (mergedIntoList.size() > 1) {
                 throw new IllegalStateException(
-                        "Clustered Variant rs" + accession + " was merged into several other clustered Variants: "
-                                + mergedIntoList);
+                        "Clustered Variant rs" + accession + " was merged into several other clustered Variants with "
+                                + "the same hash. 'mergedInto' rs: " + mergedIntoList);
             }
 
             oldToNewAccessions.put(accession, mergedIntoList.get(0));
         });
         return oldToNewAccessions;
+    }
+
+    private String buildKeyFromHashAndAccession(String hash, Long accession) {
+        return hash + "_" + accession;
+    }
+
+    private void updateClusteredVariantAccessionsInSubmittedVariants(DbsnpVariantsWrapper wrapper,
+                                                                     Map<String, Long> replacements) {
+        List<DbsnpSubmittedVariantEntity> submittedVariants = new ArrayList<>();
+        for (DbsnpSubmittedVariantEntity submittedVariant : wrapper.getSubmittedVariants()) {
+            Long mergedInto = replacements.get(
+                    buildKeyFromHashAndAccession(wrapper.getClusteredVariant().getHashedMessage(),
+                                                 wrapper.getClusteredVariant().getAccession()));
+            if (mergedInto != null) {
+                submittedVariants.add(changeRS(submittedVariant, mergedInto));
+            } else {
+                submittedVariants.add(submittedVariant);
+            }
+        }
+        wrapper.setSubmittedVariants(submittedVariants);
     }
 
     private DbsnpSubmittedVariantEntity changeRS(DbsnpSubmittedVariantEntity submittedVariant, Long mergedInto) {
