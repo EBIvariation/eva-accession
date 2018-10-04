@@ -139,7 +139,13 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             dbsnpClusteredVariantOperationWriter.write(mergeClusteredOperations);
         }
 
-        updateClusteredVariantAccessionsInSubmittedVariants(wrappers, mergeClusteredOperations);
+        List<DbsnpSubmittedVariantOperationEntity> updatedClusteredVariantOperation =
+                updateClusteredVariantAccessionsInSubmittedVariants(
+                wrappers, mergeClusteredOperations);
+        if (!updatedClusteredVariantOperation.isEmpty()) {
+            dbsnpSubmittedVariantOperationWriter.write(updatedClusteredVariantOperation);
+        }
+
         List<DbsnpSubmittedVariantOperationEntity> mergeSubmittedOperations = writeSubmittedVariants(wrappers);
         if (!mergeSubmittedOperations.isEmpty()) {
             dbsnpSubmittedVariantOperationWriter.write(mergeSubmittedOperations);
@@ -176,15 +182,17 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                        .collect(Collectors.toList());
     }
 
-    private void updateClusteredVariantAccessionsInSubmittedVariants(
+    private List<DbsnpSubmittedVariantOperationEntity> updateClusteredVariantAccessionsInSubmittedVariants(
             List<? extends DbsnpVariantsWrapper> wrappers,
             List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations) {
 
         Map<String, Long> replacements = getAccessionReplacements(mergeClusteredOperations);
+        List<DbsnpSubmittedVariantOperationEntity> operations = new ArrayList<>();
 
         for (DbsnpVariantsWrapper wrapper : wrappers) {
-            updateClusteredVariantAccessionsInSubmittedVariants(wrapper, replacements);
+            updateClusteredVariantAccessionsInSubmittedVariants(wrapper, replacements, operations);
         }
+        return operations;
     }
 
     /**
@@ -226,7 +234,8 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     }
 
     private void updateClusteredVariantAccessionsInSubmittedVariants(DbsnpVariantsWrapper wrapper,
-                                                                     Map<String, Long> replacements) {
+                                                                     Map<String, Long> replacements,
+                                                                     List<DbsnpSubmittedVariantOperationEntity> operations) {
         List<DbsnpSubmittedVariantEntity> submittedVariants = new ArrayList<>();
         for (DbsnpSubmittedVariantEntity submittedVariant : wrapper.getSubmittedVariants()) {
             Long mergedInto = replacements.get(
@@ -234,6 +243,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                                  wrapper.getClusteredVariant().getAccession()));
             if (mergedInto != null) {
                 submittedVariants.add(changeRS(submittedVariant, mergedInto));
+                operations.add(buildOperation(submittedVariant));
             } else {
                 submittedVariants.add(submittedVariant);
             }
@@ -250,6 +260,17 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         String hash = submittedVariant.getHashedMessage();
         int version = submittedVariant.getVersion();
         return new DbsnpSubmittedVariantEntity(accession, hash, variant, version);
+    }
+
+    private DbsnpSubmittedVariantOperationEntity buildOperation(DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity) {
+        DbsnpSubmittedVariantInactiveEntity inactiveEntity =
+                new DbsnpSubmittedVariantInactiveEntity(dbsnpSubmittedVariantEntity);
+
+        String reason = "Original RS was merged.";
+        Long accession = dbsnpSubmittedVariantEntity.getAccession();
+        DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
+        operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
+        return operation;
     }
 
     private List<DbsnpSubmittedVariantOperationEntity> writeSubmittedVariants(
