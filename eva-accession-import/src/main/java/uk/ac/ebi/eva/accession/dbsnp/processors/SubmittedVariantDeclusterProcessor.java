@@ -82,8 +82,7 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         return !reasons.isEmpty();
     }
 
-    private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant,
-                               ISubmittedVariant submittedVariant,
+    private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant, ISubmittedVariant submittedVariant,
                                DbsnpVariantType dbsnpVariantType) {
         try {
             return VariantClassifier.getVariantClassification(submittedVariant.getReferenceAllele(),
@@ -108,12 +107,13 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
         operations.add(operation);
 
-        //Decluster submitted variant. Need to create a new one because DbsnpSubmittedVariantEntity has no setters
-        SubmittedVariant variant = new SubmittedVariant(nonDeclusteredVariantEntity);
-        variant.setClusteredVariantAccession(null);
-        String hash = hashingFunction.apply(variant);
-        int version = nonDeclusteredVariantEntity.getVersion();
+        DbsnpSubmittedVariantEntity declusteredVariantEntity =
+                new DbsnpSubmittedVariantEntity(nonDeclusteredVariantEntity.getAccession(),
+                                                nonDeclusteredVariantEntity.getHashedMessage(),
+                                                nonDeclusteredVariantEntity.getModel(),
+                                                nonDeclusteredVariantEntity.getVersion());
 
-        return new DbsnpSubmittedVariantEntity(accession, hash, variant, version);
+        declusteredVariantEntity.setClusteredVariantAccession(null);
+        return declusteredVariantEntity;
     }
 }

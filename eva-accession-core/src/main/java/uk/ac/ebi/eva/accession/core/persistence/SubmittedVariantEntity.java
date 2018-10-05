@@ -90,31 +90,10 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         this.alternateAllele = alternateAllele;
         this.clusteredVariantAccession = clusteredVariantAccession;
 
-        if (supportedByEvidence == null) {
-            throw new IllegalArgumentException(
-                    "supportedByEvidence should not be null, as null is used for default values");
-        } else {
-            this.supportedByEvidence = supportedByEvidence == DEFAULT_SUPPORTED_BY_EVIDENCE ? null :
-                    supportedByEvidence;
-        }
-
-        if (assemblyMatch == null) {
-            throw new IllegalArgumentException("assemblyMatch should not be null, as null is used for default values");
-        } else {
-            this.assemblyMatch = assemblyMatch == DEFAULT_ASSEMBLY_MATCH ? null : assemblyMatch;
-        }
-
-        if (allelesMatch == null) {
-            throw new IllegalArgumentException("allelesMatch should not be null, as null is used for default values");
-        } else {
-            this.allelesMatch = allelesMatch == DEFAULT_ALLELES_MATCH ? null : allelesMatch;
-        }
-
-        if (validated == null) {
-            throw new IllegalArgumentException("validated should not be null, as null is used for default values");
-        } else {
-            this.validated = validated == DEFAULT_VALIDATED ? null : validated;
-        }
+        setSupportedByEvidence(supportedByEvidence);
+        setAssemblyMatch(assemblyMatch);
+        setAllelesMatch(allelesMatch);
+        setValidated(validated);
     }
 
     public ISubmittedVariant getModel() {
@@ -132,9 +111,17 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         return referenceSequenceAccession;
     }
 
+    public void setReferenceSequenceAccession(String referenceSequenceAccession) {
+        this.referenceSequenceAccession = referenceSequenceAccession;
+    }
+
     @Override
     public int getTaxonomyAccession() {
         return taxonomyAccession;
+    }
+
+    public void setTaxonomyAccession(int taxonomyAccession) {
+        this.taxonomyAccession = taxonomyAccession;
     }
 
     @Override
@@ -142,9 +129,17 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         return projectAccession;
     }
 
+    public void setProjectAccession(String projectAccession) {
+        this.projectAccession = projectAccession;
+    }
+
     @Override
     public String getContig() {
         return contig;
+    }
+
+    public void setContig(String contig) {
+        this.contig = contig;
     }
 
     @Override
@@ -152,9 +147,17 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         return start;
     }
 
+    public void setStart(long start) {
+        this.start = start;
+    }
+
     @Override
     public String getReferenceAllele() {
         return referenceAllele;
+    }
+
+    public void setReferenceAllele(String referenceAllele) {
+        this.referenceAllele = referenceAllele;
     }
 
     @Override
@@ -162,9 +165,17 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         return alternateAllele;
     }
 
+    public void setAlternateAllele(String alternateAllele) {
+        this.alternateAllele = alternateAllele;
+    }
+
     @Override
     public Long getClusteredVariantAccession() {
         return clusteredVariantAccession;
+    }
+
+    public void setClusteredVariantAccession(Long clusteredVariantAccession) {
+        this.clusteredVariantAccession = clusteredVariantAccession;
     }
 
     @Override
@@ -172,9 +183,27 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         return supportedByEvidence == null ? DEFAULT_SUPPORTED_BY_EVIDENCE : supportedByEvidence;
     }
 
+    private void setSupportedByEvidence(Boolean supportedByEvidence) {
+        if (supportedByEvidence == null) {
+            throw new IllegalArgumentException(
+                    "supportedByEvidence should not be null, as null is used for default values");
+        } else {
+            this.supportedByEvidence = supportedByEvidence == DEFAULT_SUPPORTED_BY_EVIDENCE ? null :
+                    supportedByEvidence;
+        }
+    }
+
     @Override
     public Boolean isAssemblyMatch() {
         return assemblyMatch == null ? DEFAULT_ASSEMBLY_MATCH : assemblyMatch;
+    }
+
+    public void setAssemblyMatch(Boolean assemblyMatch) {
+        if (assemblyMatch == null) {
+            throw new IllegalArgumentException("assemblyMatch should not be null, as null is used for default values");
+        } else {
+            this.assemblyMatch = assemblyMatch == DEFAULT_ASSEMBLY_MATCH ? null : assemblyMatch;
+        }
     }
 
     @Override
@@ -182,9 +211,25 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         return allelesMatch == null ? DEFAULT_ALLELES_MATCH : allelesMatch;
     }
 
+    public void setAllelesMatch(Boolean allelesMatch) {
+        if (allelesMatch == null) {
+            throw new IllegalArgumentException("allelesMatch should not be null, as null is used for default values");
+        } else {
+            this.allelesMatch = allelesMatch == DEFAULT_ALLELES_MATCH ? null : allelesMatch;
+        }
+    }
+
     @Override
     public Boolean isValidated() {
         return validated == null ? DEFAULT_VALIDATED : validated;
+    }
+
+    public void setValidated(Boolean validated) {
+        if (validated == null) {
+            throw new IllegalArgumentException("validated should not be null, as null is used for default values");
+        } else {
+            this.validated = validated == DEFAULT_VALIDATED ? null : validated;
+        }
     }
 
     @Override
