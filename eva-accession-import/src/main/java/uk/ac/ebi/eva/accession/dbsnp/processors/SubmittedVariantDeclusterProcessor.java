@@ -58,10 +58,9 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         List<DbsnpSubmittedVariantOperationEntity> operations = new ArrayList<>();
 
         for (DbsnpSubmittedVariantEntity submittedVariantEntity: dbsnpVariantsWrapper.getSubmittedVariants()) {
-            SubmittedVariant submittedVariant = new SubmittedVariant(submittedVariantEntity);
             List<String> reasons = new ArrayList<>();
-            if (variantNeedsDecluster(dbsnpVariantsWrapper, submittedVariant, reasons)) {
-                submittedVariantEntity = decluster(submittedVariantEntity, submittedVariant, operations, reasons);
+            if (variantNeedsDecluster(dbsnpVariantsWrapper, submittedVariantEntity, reasons)) {
+                submittedVariantEntity = decluster(submittedVariantEntity, operations, reasons);
             }
             submittedVariants.add(submittedVariantEntity);
         }
@@ -70,7 +69,7 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         return dbsnpVariantsWrapper;
     }
 
-    private boolean variantNeedsDecluster(DbsnpVariantsWrapper wrapper, SubmittedVariant submittedVariant,
+    private boolean variantNeedsDecluster(DbsnpVariantsWrapper wrapper, ISubmittedVariant submittedVariant,
                                           List<String> reasons) {
         if (!submittedVariant.isAllelesMatch()) {
             reasons.add(DECLUSTERED_ALLELES_MISMATCH);
@@ -83,7 +82,7 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         return !reasons.isEmpty();
     }
 
-    private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant, SubmittedVariant submittedVariant,
+    private boolean isSameType(DbsnpClusteredVariantEntity clusteredVariant, ISubmittedVariant submittedVariant,
                                DbsnpVariantType dbsnpVariantType) {
         try {
             return VariantClassifier.getVariantClassification(submittedVariant.getReferenceAllele(),
@@ -95,8 +94,7 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         }
     }
 
-    private DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity,
-                                                  SubmittedVariant variant,
+    public DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity,
                                                   List<DbsnpSubmittedVariantOperationEntity> operations,
                                                   List<String> reasons) {
         //Register submitted variant decluster operation
@@ -106,15 +104,16 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
 
         String reason = DECLUSTERED + String.join(" ", reasons);
         Long accession = nonDeclusteredVariantEntity.getAccession();
-        operation.fill(EventType.UPDATED, accession, null, reason.toString(),
-                       Collections.singletonList(inactiveEntity));
+        operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
         operations.add(operation);
 
-        //Decluster submitted variant
-        variant.setClusteredVariantAccession(null);
-        String hash = hashingFunction.apply(variant);
-        int version = nonDeclusteredVariantEntity.getVersion();
+        DbsnpSubmittedVariantEntity declusteredVariantEntity =
+                new DbsnpSubmittedVariantEntity(nonDeclusteredVariantEntity.getAccession(),
+                                                nonDeclusteredVariantEntity.getHashedMessage(),
+                                                nonDeclusteredVariantEntity.getModel(),
+                                                nonDeclusteredVariantEntity.getVersion());
 
-        return new DbsnpSubmittedVariantEntity(accession, hash, variant, version);
+        declusteredVariantEntity.setClusteredVariantAccession(null);
+        return declusteredVariantEntity;
     }
 }
