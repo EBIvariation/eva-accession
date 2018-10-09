@@ -7,7 +7,7 @@
     <parent>
         <artifactId>eva-accession</artifactId>
         <groupId>uk.ac.ebi.eva</groupId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.2.0</version>
     </parent>
 
     <artifactId>eva-accession-pipeline</artifactId>
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
         </dependency>
 
         <dependency>
