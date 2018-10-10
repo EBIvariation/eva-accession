@@ -122,11 +122,10 @@ public class SubSnpNoHgvsToClusteredVariantProcessor
     }
 
     private LocalDateTime getCreatedDate(SubSnpNoHgvs subSnpNoHgvs) {
-        LocalDateTime createdDate;
-        if ((createdDate = subSnpNoHgvs.getRsCreateTime().toLocalDateTime()) != null) {
-            return createdDate;
-        } else if ((createdDate = subSnpNoHgvs.getSsCreateTime().toLocalDateTime()) != null) {
-            return createdDate;
+        if (subSnpNoHgvs.getRsCreateTime() != null) {
+            return subSnpNoHgvs.getRsCreateTime().toLocalDateTime();
+        } else if (subSnpNoHgvs.getSsCreateTime() != null) {
+            return subSnpNoHgvs.getSsCreateTime().toLocalDateTime();
         } else {
             return LocalDateTime.now();
         }

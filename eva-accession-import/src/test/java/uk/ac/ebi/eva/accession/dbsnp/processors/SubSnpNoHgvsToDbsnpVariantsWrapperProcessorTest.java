@@ -37,10 +37,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
@@ -610,6 +608,50 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
 
         assertProcessedVariant(subSnpNoHgvs, variants.get(0), CONTIG_NAME, CONTIG_START, "T", "A", false, false, 1);
         assertProcessedVariant(subSnpNoHgvs, variants.get(1), CONTIG_NAME, CONTIG_START, "T", "C", false, false, 1);
+    }
+
+    @Test
+    public void processSubSnpNullDate() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
+                                                     DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, false, false, false, false, null,
+                                                     RS_CREATED_DATE, TAXONOMY);
+
+        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
+        assertEquals(RS_CREATED_DATE.toLocalDateTime(), dbsnpVariantsWrapper.getClusteredVariant().getCreatedDate());
+        dbsnpVariantsWrapper.getSubmittedVariants().stream().forEach(
+                ss -> assertEquals(RS_CREATED_DATE.toLocalDateTime(), ss.getCreatedDate()));
+    }
+
+    @Test
+    public void processRefSnpNullDate() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
+                                                     DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, false, false, false, false, SS_CREATED_DATE,
+                                                     null, TAXONOMY);
+
+        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
+        assertNotNull(dbsnpVariantsWrapper.getClusteredVariant().getCreatedDate());
+        dbsnpVariantsWrapper.getSubmittedVariants().stream().forEach(
+                ss -> assertEquals(SS_CREATED_DATE.toLocalDateTime(), ss.getCreatedDate()));
+    }
+
+    @Test
+    public void processSubSnpAndRefSnpNullDate() throws Exception {
+        SubSnpNoHgvs subSnpNoHgvs = new SubSnpNoHgvs(25928972L, 14718243L, "A", "C", ASSEMBLY, BATCH_HANDLE, BATCH_NAME,
+                                                     CHROMOSOME, CHROMOSOME_START, CONTIG_NAME, CONTIG_START,
+                                                     DbsnpVariantType.SNV, Orientation.FORWARD, Orientation.FORWARD,
+                                                     Orientation.FORWARD, false, false, false, false, null, null,
+                                                     TAXONOMY);
+
+        DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
+        assertNotNull(dbsnpVariantsWrapper.getClusteredVariant().getCreatedDate());
+        dbsnpVariantsWrapper.getSubmittedVariants().stream().forEach(ss -> assertNotNull(ss.getCreatedDate()));
+        dbsnpVariantsWrapper.getSubmittedVariants().stream().forEach(
+                ss -> assertEquals(ss.getCreatedDate().toLocalDate(),
+                                   dbsnpVariantsWrapper.getClusteredVariant().getCreatedDate().toLocalDate()));
     }
 
 }
