@@ -75,6 +75,9 @@ public class VariantToVariantContextConverter implements ItemProcessor<IVariant,
     }
 
     private String[] getAllelesArray(IVariant variant) {
+        if (variant.getAlternate().contains(",")) {
+            throw new IllegalArgumentException("This converter does not allow multiallelic variants");
+        }
         return new String[]{variant.getReference(), variant.getAlternate()};
     }
 
