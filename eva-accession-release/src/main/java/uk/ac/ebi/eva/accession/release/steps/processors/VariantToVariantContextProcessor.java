@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.io;
+package uk.ac.ebi.eva.accession.release.steps.processors;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
@@ -29,11 +29,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class VariantToVariantContextConverter implements ItemProcessor<IVariant, VariantContext> {
+public class VariantToVariantContextProcessor implements ItemProcessor<IVariant, VariantContext> {
 
     private final VariantContextBuilder variantContextBuilder;
 
-    public VariantToVariantContextConverter() {
+    public VariantToVariantContextProcessor() {
         this.variantContextBuilder = new VariantContextBuilder();
     }
 

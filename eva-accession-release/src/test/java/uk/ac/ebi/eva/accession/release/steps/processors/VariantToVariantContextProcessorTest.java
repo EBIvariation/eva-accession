@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.io;
+package uk.ac.ebi.eva.accession.release.steps.processors;
 
 import htsjdk.variant.variantcontext.Allele;
 import htsjdk.variant.variantcontext.VariantContext;
@@ -28,11 +28,10 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.Collections;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class VariantToVariantContextConverterTest {
+public class VariantToVariantContextProcessorTest {
 
     private static final String FILE_ID = "fileId";
 
@@ -61,19 +60,19 @@ public class VariantToVariantContextConverterTest {
     public void singleStudySNV() throws Exception {
         Variant variant = buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
         checkVariantContext(variantContext, CHR_1, 1000, 1000, ID, "C", "A");
     }
 
-    public Variant buildVariant(String chr1, int start, String reference, String alternate, String sequenceOntology,
+    private Variant buildVariant(String chr1, int start, String reference, String alternate, String sequenceOntology,
                                 String... studies) {
         Variant variant = new Variant(chr1, start, start + alternate.length(), reference, alternate);
         variant.setMainId(ID);
         for (String study : studies) {
             VariantSourceEntry sourceEntry = new VariantSourceEntry(study, FILE_ID);
             sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
-            sourceEntry.addAttribute("SID", study);
+            sourceEntry.addAttribute(STUDY_ID_KEY, study);
             variant.addSourceEntry(sourceEntry);
         }
         return variant;
@@ -83,7 +82,7 @@ public class VariantToVariantContextConverterTest {
     public void singleStudySingleNucleotideInsertion() throws Exception {
         Variant variant = buildVariant(CHR_1, 1100, "T", "TG", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1100, 1100, ID, "T", "TG");
@@ -93,7 +92,7 @@ public class VariantToVariantContextConverterTest {
     public void singleStudySeveralNucleotidesInsertion() throws Exception {
         Variant variant = buildVariant(CHR_1, 1100, "T", "TGA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1100, 1100, ID, "T", "TGA");
@@ -103,7 +102,7 @@ public class VariantToVariantContextConverterTest {
     public void singleStudySingleNucleotideDeletion() throws Exception {
         Variant variant = buildVariant(CHR_1, 1100, "TA", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1100, 1101, ID, "TA", "T");
@@ -113,7 +112,7 @@ public class VariantToVariantContextConverterTest {
     public void singleStudySeveralNucleotidesDeletion() throws Exception {
         Variant variant = buildVariant(CHR_1, 1100, "TAG", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1100, 1102, ID, "TAG", "T");
@@ -123,7 +122,7 @@ public class VariantToVariantContextConverterTest {
     public void singleStudyMultiAllelicVariant() throws Exception {
         Variant variant = buildVariant(CHR_1, 1100, "C", "A,T", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
 
         expectedException.expect(IllegalArgumentException.class);
         variantConverter.process(variant);
@@ -132,7 +131,7 @@ public class VariantToVariantContextConverterTest {
     public void singleNucleotideInsertionInPosition1() throws Exception {
         Variant variant = buildVariant(CHR_1, 1, "A", "TA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1, 1, ID, "A", "TA");
@@ -142,7 +141,7 @@ public class VariantToVariantContextConverterTest {
     public void singleNucleotideDeletionInPosition1() throws Exception {
         Variant variant = buildVariant(CHR_1, 1, "AT", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1, 2, ID, "AT", "T");
@@ -153,7 +152,7 @@ public class VariantToVariantContextConverterTest {
     public void severalNucleotidesInsertionInPosition1() throws Exception {
         Variant variant = buildVariant(CHR_1, 1, "A", "GGTA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1, 1, ID, "A", "GGTA");
@@ -163,7 +162,7 @@ public class VariantToVariantContextConverterTest {
     public void severalNucleotidesDeletionInPosition1() throws Exception {
         Variant variant = buildVariant(CHR_1, 1, "ATTG", "G", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
 
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         checkVariantContext(variantContext, CHR_1, 1, 4, ID, "ATTG", "G");
@@ -174,7 +173,7 @@ public class VariantToVariantContextConverterTest {
         Variant variant = buildVariant(CHR_1, 1000, "T", "G", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2);
 
         // process variant
-        VariantToVariantContextConverter variantConverter = new VariantToVariantContextConverter();
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
         // check processed variant
