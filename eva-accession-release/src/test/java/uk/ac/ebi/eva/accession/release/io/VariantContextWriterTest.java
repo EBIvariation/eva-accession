@@ -45,13 +45,15 @@ public class VariantContextWriterTest {
 
     private static final String STUDY_1 = "study_1";
 
+    private static final String REFERENCE_ASSEMBLY = "GCA_00000XXX.X";
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void basicWrite() throws Exception {
         File output = temporaryFolder.newFile("test.vcf");
-        VariantContextWriter writer = new VariantContextWriter(output);
+        VariantContextWriter writer = new VariantContextWriter(output, REFERENCE_ASSEMBLY);
         Variant variant = buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
         VariantContext variantContext = new VariantToVariantContextProcessor().process(variant);
         writer.open(null);

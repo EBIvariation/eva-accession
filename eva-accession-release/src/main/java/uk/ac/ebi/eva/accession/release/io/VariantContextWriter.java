@@ -36,10 +36,13 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private File output;
 
+    private String referenceAssembly;
+
     private htsjdk.variant.variantcontext.writer.VariantContextWriter writer;
 
-    public VariantContextWriter(File output) {
+    public VariantContextWriter(File output, String referenceAssembly) {
         this.output = output;
+        this.referenceAssembly = referenceAssembly;
     }
 
     @Override
@@ -48,10 +51,11 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         writer = builder.setOutputFile(output).unsetOption(Options.INDEX_ON_THE_FLY).build();
 
         Set<VCFHeaderLine> metaData = new HashSet<>();
+        metaData.add(new VCFHeaderLine("reference", referenceAssembly));
         metaData.add(new VCFInfoHeaderLine("VC", 1, VCFHeaderLineType.String, "Variant class"));
         metaData.add(new VCFInfoHeaderLine("SID", VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
                                            "Identifiers of studies that report a variant"));
-        writer.setHeader(new VCFHeader(metaData));
+        writer.writeHeader(new VCFHeader(metaData));
     }
 
     @Override
