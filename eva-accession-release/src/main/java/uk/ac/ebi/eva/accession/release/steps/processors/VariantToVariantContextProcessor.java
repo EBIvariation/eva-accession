@@ -38,7 +38,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
     }
 
     @Override
-    public VariantContext process(IVariant variant) throws Exception {
+    public VariantContext process(IVariant variant) {
         if (variant.getReference().isEmpty() || variant.getAlternate().isEmpty()) {
             throw new IllegalArgumentException(
                     "VCF specification and HTSJDK forbid empty alleles. Illegal variant: " + variant);
