@@ -62,7 +62,8 @@ public class VariantToVariantContextProcessorTest {
 
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
-        checkVariantContext(variantContext, CHR_1, 1000, 1000, ID, "C", "A");
+
+        assertVariantContext(variantContext, CHR_1, 1000, 1000, ID, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     private Variant buildVariant(String chr1, int start, String reference, String alternate, String sequenceOntology,
@@ -85,7 +86,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1100, 1100, ID, "T", "TG");
+        assertVariantContext(variantContext, CHR_1, 1100, 1100, ID, "T", "TG", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     @Test
@@ -95,7 +96,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1100, 1100, ID, "T", "TGA");
+        assertVariantContext(variantContext, CHR_1, 1100, 1100, ID, "T", "TGA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     @Test
@@ -105,7 +106,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1100, 1101, ID, "TA", "T");
+        assertVariantContext(variantContext, CHR_1, 1100, 1101, ID, "TA", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     @Test
@@ -115,7 +116,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1100, 1102, ID, "TAG", "T");
+        assertVariantContext(variantContext, CHR_1, 1100, 1102, ID, "TAG", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     @Test
@@ -127,6 +128,7 @@ public class VariantToVariantContextProcessorTest {
         expectedException.expect(IllegalArgumentException.class);
         variantConverter.process(variant);
     }
+
     @Test
     public void singleNucleotideInsertionInPosition1() throws Exception {
         Variant variant = buildVariant(CHR_1, 1, "A", "TA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
@@ -134,7 +136,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1, 1, ID, "A", "TA");
+        assertVariantContext(variantContext, CHR_1, 1, 1, ID, "A", "TA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     @Test
@@ -144,7 +146,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1, 2, ID, "AT", "T");
+        assertVariantContext(variantContext, CHR_1, 1, 2, ID, "AT", "T", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
 
@@ -155,7 +157,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1, 1, ID, "A", "GGTA");
+        assertVariantContext(variantContext, CHR_1, 1, 1, ID, "A", "GGTA", INSERTION_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     @Test
@@ -165,7 +167,7 @@ public class VariantToVariantContextProcessorTest {
         VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
         VariantContext variantContext = variantConverter.process(variant);
 
-        checkVariantContext(variantContext, CHR_1, 1, 4, ID, "ATTG", "G");
+        assertVariantContext(variantContext, CHR_1, 1, 4, ID, "ATTG", "G", DELETION_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
     @Test
@@ -177,23 +179,29 @@ public class VariantToVariantContextProcessorTest {
         VariantContext variantContext = variantConverter.process(variant);
 
         // check processed variant
-        checkVariantContext(variantContext, CHR_1, 1000, 1000, ID, "T", "G");
-        assertTrue(variantContext.getCommonInfo().hasAttribute(VARIANT_CLASS_KEY));
-        assertTrue(variantContext.getCommonInfo().hasAttribute(STUDY_ID_KEY));
-        String[] studies = ((String) variantContext.getCommonInfo().getAttribute(STUDY_ID_KEY)).split(",");
-        assertEquals(Sets.newLinkedHashSet(STUDY_1, STUDY_2), Sets.newLinkedHashSet(studies));
+        assertVariantContext(variantContext, CHR_1, 1000, 1000, ID, "T", "G", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2);
     }
 
-    private void checkVariantContext(VariantContext variantContext, String chromosome, int start, int end, String id,
-                                     String ref, String alt) {
-        assertEquals(chromosome, variantContext.getContig());
-        assertEquals(start, variantContext.getStart());
-        assertEquals(end, variantContext.getEnd());
-        assertEquals(Allele.create(ref, true), variantContext.getReference());
-        assertEquals(Collections.singletonList(Allele.create(alt, false)), variantContext.getAlternateAlleles());
-        assertEquals(id, variantContext.getID());
+    private void assertVariantContext(VariantContext variantContext, String expectedChromosome, int expectedStart,
+                                      int expectedEnd, String expectedId, String expectedReference,
+                                      String expectedAlternate, String expectedSequenceOntology,
+                                      String... expectedStudies) {
+        assertEquals(expectedChromosome, variantContext.getContig());
+        assertEquals(expectedStart, variantContext.getStart());
+        assertEquals(expectedEnd, variantContext.getEnd());
+        assertEquals(Allele.create(expectedReference, true), variantContext.getReference());
+        assertEquals(Collections.singletonList(Allele.create(expectedAlternate, false)),
+                     variantContext.getAlternateAlleles());
+        assertEquals(expectedId, variantContext.getID());
         assertTrue(variantContext.getFilters().isEmpty());
         assertEquals(2, variantContext.getCommonInfo().getAttributes().size());
+
+        assertEquals(expectedSequenceOntology, variantContext.getCommonInfo().getAttribute(VARIANT_CLASS_KEY));
+
+        assertTrue(variantContext.getCommonInfo().hasAttribute(STUDY_ID_KEY));
+        String[] studies = ((String) variantContext.getCommonInfo().getAttribute(STUDY_ID_KEY)).split(",");
+        assertEquals(Sets.newLinkedHashSet(expectedStudies), Sets.newLinkedHashSet(studies));
+
         assertEquals(0, variantContext.getSampleNames().size());
     }
 
