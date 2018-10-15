@@ -6,7 +6,7 @@
     <parent>
         <groupId>uk.ac.ebi.eva</groupId>
         <artifactId>eva-accession</artifactId>
-        <version>0.2.0</version>
+        <version>0.2.1</version>
     </parent>
 
     <artifactId>eva-accession-ws</artifactId>
@@ -16,7 +16,7 @@
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.1</version>
         </dependency>
 
         <dependency>
