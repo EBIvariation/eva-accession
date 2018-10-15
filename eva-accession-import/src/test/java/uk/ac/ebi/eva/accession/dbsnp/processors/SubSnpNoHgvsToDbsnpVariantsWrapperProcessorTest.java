@@ -633,7 +633,7 @@ public class SubSnpNoHgvsToDbsnpVariantsWrapperProcessorTest {
                                                      null, TAXONOMY);
 
         DbsnpVariantsWrapper dbsnpVariantsWrapper = processor.process(subSnpNoHgvs);
-        assertNotNull(dbsnpVariantsWrapper.getClusteredVariant().getCreatedDate());
+        assertEquals(SS_CREATED_DATE.toLocalDateTime(), dbsnpVariantsWrapper.getClusteredVariant().getCreatedDate());
         dbsnpVariantsWrapper.getSubmittedVariants().stream().forEach(
                 ss -> assertEquals(SS_CREATED_DATE.toLocalDateTime(), ss.getCreatedDate()));
     }
