@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.core.io;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -161,5 +162,22 @@ public class FastaSequenceReaderTest {
 
         assertEquals("g", fastaSequenceReader.getSequence(MIXED_CASE_FASTA_CONTIG, 1, 1));
         assertEquals("G", fastaSequenceReader.getSequenceToUpperCase(MIXED_CASE_FASTA_CONTIG, 1, 1));
+    }
+
+    @Test
+    public void getContextNucleotide() {
+        ImmutablePair expected = new ImmutablePair<String, Long>("T", 1L);
+        assertEquals(expected, reader.getContextNucleotide("22", 1, "", "A"));
+        assertEquals(expected, reader.getContextNucleotide("22", 1, "", "CA"));
+        assertEquals(expected, reader.getContextNucleotide("22", 2, "", "A"));
+        assertEquals(expected, reader.getContextNucleotide("22", 2, "G", ""));
+        assertEquals(expected, reader.getContextNucleotide("22", 2, "", "CA"));
+        assertEquals(expected, reader.getContextNucleotide("22", 2, "GC", ""));
+
+        expected = new ImmutablePair<String, Long>("G", 1L);
+        assertEquals(expected, reader.getContextNucleotide("22", 1, "T", ""));
+
+        expected = new ImmutablePair<String, Long>("C", 1L);
+        assertEquals(expected, reader.getContextNucleotide("22", 1, "TG", ""));
     }
 }

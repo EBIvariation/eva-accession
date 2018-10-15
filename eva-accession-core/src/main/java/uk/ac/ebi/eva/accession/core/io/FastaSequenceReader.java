@@ -21,6 +21,7 @@ import htsjdk.samtools.reference.FastaSequenceIndexCreator;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,6 +147,28 @@ public class FastaSequenceReader {
 
     public boolean doesContigExist(String contig) {
         return sequenceDictionary.getSequence(contig) != null;
+    }
+
+    public ImmutablePair<String, Long> getContextNucleotide(String contig, long start, String reference,
+                                                            String alternate) {
+        long newStart = start;
+        String contextBase = "";
+        // VCF 4.2 section 1.4.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
+        // event occurs at position 1 on the contig in which case it must include the base after the event"
+        if (start == 1) {
+            if (reference.isEmpty()) {
+                contextBase = getSequence(contig, newStart, newStart);
+            }
+            if (alternate.isEmpty()) {
+                contextBase = getSequence(contig, newStart + reference.length(), newStart + reference.length());
+            }
+        }
+        else {
+            newStart -= 1;
+            contextBase = getSequence(contig, newStart, newStart);
+        }
+
+        return new ImmutablePair<>(contextBase, newStart);
     }
 
     /**

@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
@@ -155,18 +156,22 @@ public class AccessionReportWriter {
         String newReference;
         String newAlternate;
         String contextBase;
-        if (normalizedVariant.getStart() == 1) {
-            // VCF 4.2 section 1.4.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
-            // event occurs at position 1 on the contig in which case it must include the base after the event"
-            newStart = normalizedVariant.getStart() + 1;
-            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
-            newReference = normalizedVariant.getReferenceAllele() + contextBase;
-            newAlternate = normalizedVariant.getAlternateAllele() + contextBase;
-        } else {
-            newStart = normalizedVariant.getStart() - 1;
-            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
-            newReference = contextBase + normalizedVariant.getReferenceAllele();
-            newAlternate = contextBase + normalizedVariant.getAlternateAllele();
+
+        String oldReference = normalizedVariant.getReferenceAllele();
+        String oldAlternate = normalizedVariant.getAlternateAllele();
+        long oldStart = normalizedVariant.getStart();
+        ImmutablePair<String, Long> contextNucleotideInfo =
+                fastaSequenceReader.getContextNucleotide(normalizedVariant.getContig(), oldStart, oldReference,
+                                                         oldAlternate);
+        contextBase = contextNucleotideInfo.getLeft();
+        newStart = contextNucleotideInfo.getRight();
+        if (oldStart == 1) {
+            newReference = oldReference + contextBase;
+            newAlternate = oldAlternate + contextBase;
+        }
+        else {
+            newReference = contextBase + oldReference;
+            newAlternate = contextBase + oldAlternate;
         }
 
         if (contextBase.isEmpty()) {
