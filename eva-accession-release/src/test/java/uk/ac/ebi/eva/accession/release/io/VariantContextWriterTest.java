@@ -75,17 +75,17 @@ public class VariantContextWriterTest {
 
     @Test
     public void basicWrite() throws Exception {
-        File output = temporaryFolder.newFile("test.vcf");
+        File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
-    private Variant buildVariant(String chr1, int start, String reference, String alternate, String sequenceOntology,
-                                 String... studies) {
+    private Variant buildVariant(String chr1, int start, String reference, String alternate,
+                                 String sequenceOntologyTerm, String... studies) {
         Variant variant = new Variant(chr1, start, start + alternate.length(), reference, alternate);
         variant.setMainId(ID);
         for (String study : studies) {
             VariantSourceEntry sourceEntry = new VariantSourceEntry(study, FILE_ID);
-            sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
+            sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntologyTerm);
             sourceEntry.addAttribute(STUDY_ID_KEY, study);
             variant.addSourceEntry(sourceEntry);
         }
@@ -108,7 +108,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkReference() throws Exception {
-        File output = temporaryFolder.newFile("test.vcf");
+        File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> referenceLines = grepFile(output, "reference");
@@ -131,7 +131,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkMetadataSection() throws Exception {
-        File output = temporaryFolder.newFile("test.vcf");
+        File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> metadataLines = grepFile(output, "##");
@@ -142,7 +142,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkAccession() throws Exception {
-        File output = temporaryFolder.newFile("test.vcf");
+        File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFile(output, ID);
@@ -151,7 +151,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkStudies() throws Exception {
-        File output = temporaryFolder.newFile("test.vcf");
+        File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2));
 
         List<String> metadataLines = grepFile(output, STUDY_1);
@@ -176,7 +176,7 @@ public class VariantContextWriterTest {
     }
 
     private void checkSequenceOntology(String sequenceOntology, String reference, String alternate) throws Exception {
-        File output = temporaryFolder.newFile("test.vcf");
+        File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
 
         List<String> metadataLines = grepFile(output, VARIANT_CLASS_KEY + "=");

@@ -66,17 +66,40 @@ public class VariantToVariantContextProcessorTest {
         assertVariantContext(variantContext, CHR_1, 1000, 1000, ID, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
     }
 
-    private Variant buildVariant(String chr1, int start, String reference, String alternate, String sequenceOntology,
-                                String... studies) {
+    private Variant buildVariant(String chr1, int start, String reference, String alternate,
+                                 String sequenceOntologyTerm, String... studies) {
         Variant variant = new Variant(chr1, start, start + alternate.length(), reference, alternate);
         variant.setMainId(ID);
         for (String study : studies) {
             VariantSourceEntry sourceEntry = new VariantSourceEntry(study, FILE_ID);
-            sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
+            sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntologyTerm);
             sourceEntry.addAttribute(STUDY_ID_KEY, study);
             variant.addSourceEntry(sourceEntry);
         }
         return variant;
+    }
+
+    private void assertVariantContext(VariantContext variantContext, String expectedChromosome, int expectedStart,
+                                      int expectedEnd, String expectedId, String expectedReference,
+                                      String expectedAlternate, String expectedSequenceOntology,
+                                      String... expectedStudies) {
+        assertEquals(expectedChromosome, variantContext.getContig());
+        assertEquals(expectedStart, variantContext.getStart());
+        assertEquals(expectedEnd, variantContext.getEnd());
+        assertEquals(Allele.create(expectedReference, true), variantContext.getReference());
+        assertEquals(Collections.singletonList(Allele.create(expectedAlternate, false)),
+                     variantContext.getAlternateAlleles());
+        assertEquals(expectedId, variantContext.getID());
+        assertTrue(variantContext.getFilters().isEmpty());
+        assertEquals(2, variantContext.getCommonInfo().getAttributes().size());
+
+        assertEquals(expectedSequenceOntology, variantContext.getCommonInfo().getAttribute(VARIANT_CLASS_KEY));
+
+        assertTrue(variantContext.getCommonInfo().hasAttribute(STUDY_ID_KEY));
+        String[] studies = ((String) variantContext.getCommonInfo().getAttribute(STUDY_ID_KEY)).split(",");
+        assertEquals(Sets.newLinkedHashSet(expectedStudies), Sets.newLinkedHashSet(studies));
+
+        assertEquals(0, variantContext.getSampleNames().size());
     }
 
     @Test
@@ -180,29 +203,6 @@ public class VariantToVariantContextProcessorTest {
 
         // check processed variant
         assertVariantContext(variantContext, CHR_1, 1000, 1000, ID, "T", "G", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2);
-    }
-
-    private void assertVariantContext(VariantContext variantContext, String expectedChromosome, int expectedStart,
-                                      int expectedEnd, String expectedId, String expectedReference,
-                                      String expectedAlternate, String expectedSequenceOntology,
-                                      String... expectedStudies) {
-        assertEquals(expectedChromosome, variantContext.getContig());
-        assertEquals(expectedStart, variantContext.getStart());
-        assertEquals(expectedEnd, variantContext.getEnd());
-        assertEquals(Allele.create(expectedReference, true), variantContext.getReference());
-        assertEquals(Collections.singletonList(Allele.create(expectedAlternate, false)),
-                     variantContext.getAlternateAlleles());
-        assertEquals(expectedId, variantContext.getID());
-        assertTrue(variantContext.getFilters().isEmpty());
-        assertEquals(2, variantContext.getCommonInfo().getAttributes().size());
-
-        assertEquals(expectedSequenceOntology, variantContext.getCommonInfo().getAttribute(VARIANT_CLASS_KEY));
-
-        assertTrue(variantContext.getCommonInfo().hasAttribute(STUDY_ID_KEY));
-        String[] studies = ((String) variantContext.getCommonInfo().getAttribute(STUDY_ID_KEY)).split(",");
-        assertEquals(Sets.newLinkedHashSet(expectedStudies), Sets.newLinkedHashSet(studies));
-
-        assertEquals(0, variantContext.getSampleNames().size());
     }
 
 }

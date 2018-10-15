@@ -29,6 +29,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Converts an IVariant to a VariantContext.
+ *
+ * The latter can be serialized using HTSJDK. This processor requires any to-be-serialized property to be set in the
+ * IVariant already, such as the alleles.
+ */
 public class VariantToVariantContextProcessor implements ItemProcessor<IVariant, VariantContext> {
 
     private final VariantContextBuilder variantContextBuilder;

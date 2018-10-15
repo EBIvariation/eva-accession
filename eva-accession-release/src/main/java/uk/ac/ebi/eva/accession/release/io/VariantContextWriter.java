@@ -48,11 +48,16 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         VariantContextWriterBuilder builder = new VariantContextWriterBuilder();
-        writer = builder.setOutputFile(output).unsetOption(Options.INDEX_ON_THE_FLY).build();
+        writer = builder
+                .setOutputFile(output)
+                .setOutputFileType(VariantContextWriterBuilder.OutputType.VCF)
+                .unsetOption(Options.INDEX_ON_THE_FLY)
+                .build();
 
         Set<VCFHeaderLine> metaData = new HashSet<>();
         metaData.add(new VCFHeaderLine("reference", referenceAssembly));
-        metaData.add(new VCFInfoHeaderLine("VC", 1, VCFHeaderLineType.String, "Variant class"));
+        metaData.add(new VCFInfoHeaderLine("VC", 1, VCFHeaderLineType.String,
+                                           "Variant class according to the Sequence Ontology"));
         metaData.add(new VCFInfoHeaderLine("SID", VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
                                            "Identifiers of studies that report a variant"));
         writer.writeHeader(new VCFHeader(metaData));
