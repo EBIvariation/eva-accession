@@ -852,4 +852,68 @@ public class DbsnpVariantsWriterTest {
         assertClusteredVariantMergeOperationStored(2, clusteredVariantEntity2);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
+
+    /**
+     * The test data is not real, but this exact thing happened with rs638662487.
+     *
+     * rs638662487 should be declustered from ss1387800177 because one orientation is unknown. This is tracked writing
+     * the RS in dbsnpClusteredVariantEntityDeclustered instead of dbsnpClusteredVariantEntity.
+     *
+     * However, another equivalent RS (rs268262202) was already declustered, and as this case is a collision of same
+     * hash but different accession, it should be written in the clustered operations collection as a merge.
+     */
+    @Test
+    public void declusterRs638662487() throws Exception {
+        Long clusteredVariantAccession1 = 268262202L;
+        Long clusteredVariantAccession2 = 638662487L;
+        Long submittedVariantAccession1 = 528860089L;
+        Long submittedVariantAccession2 = 1387800177L;
+
+        SubmittedVariant submittedVariant = defaultSubmittedVariant();
+        submittedVariant.setClusteredVariantAccession(clusteredVariantAccession1);
+        DbsnpSubmittedVariantEntity submittedVariantEntity = new DbsnpSubmittedVariantEntity(
+                submittedVariantAccession1, hashingFunctionSubmitted.apply(submittedVariant), submittedVariant, 1);
+        ClusteredVariant clusteredVariant = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                 VARIANT_TYPE, DEFAULT_VALIDATED, null);
+
+        DbsnpClusteredVariantEntity clusteredVariantEntity = new DbsnpClusteredVariantEntity(
+                clusteredVariantAccession1, hashingFunctionClustered.apply(clusteredVariant), clusteredVariant);
+        DbsnpVariantsWrapper wrapper = new DbsnpVariantsWrapper();
+        wrapper.setClusteredVariant(clusteredVariantEntity);
+
+        ArrayList<DbsnpSubmittedVariantOperationEntity> operations = new ArrayList<>();
+        DbsnpSubmittedVariantEntity declusteredSubmittedVariant =
+                new SubmittedVariantDeclusterProcessor().decluster(submittedVariantEntity, operations,
+                                                                   new ArrayList<>());
+
+        wrapper.setSubmittedVariants(Collections.singletonList(declusteredSubmittedVariant));
+        wrapper.setOperations(operations);
+
+
+        SubmittedVariant submittedVariant2 = defaultSubmittedVariant();
+        submittedVariant2.setProjectAccession(PROJECT_2);
+        submittedVariant2.setClusteredVariantAccession(clusteredVariantAccession2);
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = new DbsnpSubmittedVariantEntity(
+                submittedVariantAccession2, hashingFunctionSubmitted.apply(submittedVariant2), submittedVariant2, 1);
+        ClusteredVariant clusteredVariant2 = new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1,
+                                                                 VARIANT_TYPE, DEFAULT_VALIDATED, null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(
+                clusteredVariantAccession2, hashingFunctionClustered.apply(clusteredVariant2), clusteredVariant2);
+        DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
+        wrapper2.setClusteredVariant(clusteredVariantEntity2);
+
+        operations.clear();
+        DbsnpSubmittedVariantEntity declusteredSubmittedVariant2 =
+                new SubmittedVariantDeclusterProcessor().decluster(submittedVariantEntity2, operations,
+                                                                   new ArrayList<>());
+        wrapper2.setSubmittedVariants(Collections.singletonList(declusteredSubmittedVariant2));
+        wrapper2.setOperations(operations);
+
+
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2));
+
+        assertSubmittedVariantsStored(2, declusteredSubmittedVariant, declusteredSubmittedVariant2);
+        assertEquals(1, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
+        assertClusteredVariantMergeOperationStored(1, clusteredVariantEntity2);
+    }
 }
