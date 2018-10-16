@@ -29,7 +29,6 @@
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-import</artifactId>
-            <version>0.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.github.samtools</groupId>

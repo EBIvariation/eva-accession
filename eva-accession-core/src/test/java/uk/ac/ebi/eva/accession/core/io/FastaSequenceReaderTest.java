@@ -165,19 +165,19 @@ public class FastaSequenceReaderTest {
     }
 
     @Test
-    public void getContextNucleotide() {
+    public void getContextNucleotideAndNewStart() {
         ImmutablePair expected = new ImmutablePair<String, Long>("T", 1L);
-        assertEquals(expected, reader.getContextNucleotide("22", 1, "", "A"));
-        assertEquals(expected, reader.getContextNucleotide("22", 1, "", "CA"));
-        assertEquals(expected, reader.getContextNucleotide("22", 2, "", "A"));
-        assertEquals(expected, reader.getContextNucleotide("22", 2, "G", ""));
-        assertEquals(expected, reader.getContextNucleotide("22", 2, "", "CA"));
-        assertEquals(expected, reader.getContextNucleotide("22", 2, "GC", ""));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "", "A"));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "", "CA"));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "", "A"));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "G", ""));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "", "CA"));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "GC", ""));
 
         expected = new ImmutablePair<String, Long>("G", 1L);
-        assertEquals(expected, reader.getContextNucleotide("22", 1, "T", ""));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "T", ""));
 
         expected = new ImmutablePair<String, Long>("C", 1L);
-        assertEquals(expected, reader.getContextNucleotide("22", 1, "TG", ""));
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "TG", ""));
     }
 }

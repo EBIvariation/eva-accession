@@ -42,20 +42,19 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVarian
         String oldAlternate = variant.getAlternate();
 
         if (fastaSequenceReader.doesContigExist(contig)) {
-            return addContextNucleotide(variant, contig, oldStart, oldReference, oldAlternate);
-        }
-        else {
+            return getVariantWithContextNucleotide(variant, contig, oldStart, oldReference, oldAlternate);
+        } else {
             throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the fasta file ");
         }
     }
 
-    private IVariant addContextNucleotide(IVariant variant, String contig, long oldStart, String oldReference,
-                                          String oldAlternate) {
+    private IVariant getVariantWithContextNucleotide(IVariant variant, String contig, long oldStart,
+                                                     String oldReference, String oldAlternate) {
         String newReference;
         String newAlternate;
         if (oldReference.isEmpty() || oldAlternate.isEmpty()) {
             ImmutablePair<String, Long> contextNucleotideInfo =
-                    fastaSequenceReader.getContextNucleotide(contig, oldStart, oldReference,
+                    fastaSequenceReader.getContextNucleotideAndNewStart(contig, oldStart, oldReference,
                                                              oldAlternate);
             String contextBase = contextNucleotideInfo.getLeft();
             long newStart = contextNucleotideInfo.getRight();

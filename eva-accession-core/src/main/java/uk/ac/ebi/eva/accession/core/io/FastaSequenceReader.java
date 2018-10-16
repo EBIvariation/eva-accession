@@ -149,7 +149,7 @@ public class FastaSequenceReader {
         return sequenceDictionary.getSequence(contig) != null;
     }
 
-    public ImmutablePair<String, Long> getContextNucleotide(String contig, long start, String reference,
+    public ImmutablePair<String, Long> getContextNucleotideAndNewStart(String contig, long start, String reference,
                                                             String alternate) {
         long newStart = start;
         String contextBase = "";
@@ -162,8 +162,7 @@ public class FastaSequenceReader {
             if (alternate.isEmpty()) {
                 contextBase = getSequence(contig, newStart + reference.length(), newStart + reference.length());
             }
-        }
-        else {
+        } else {
             newStart -= 1;
             contextBase = getSequence(contig, newStart, newStart);
         }

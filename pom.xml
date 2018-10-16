@@ -31,6 +31,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-accession-import</artifactId>
+                <version>0.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
                 <artifactId>accession-commons-mongodb</artifactId>
                 <version>0.5.2</version>
