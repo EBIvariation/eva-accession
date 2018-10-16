@@ -23,7 +23,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.List;
 

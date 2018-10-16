@@ -27,9 +27,8 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocu
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
@@ -46,15 +45,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
@@ -74,6 +74,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     private MergeOperationBuilder<DbsnpClusteredVariantEntity, DbsnpClusteredVariantOperationEntity>
             clusteredOperationBuilder;
 
+    private MergeOperationBuilder<DbsnpClusteredVariantEntity, DbsnpClusteredVariantOperationEntity>
+            declusteredOperationBuilder;
+
     public DbsnpVariantsWriter(MongoTemplate mongoTemplate,
                                DbsnpSubmittedVariantOperationRepository submittedOperationRepository,
                                DbsnpSubmittedVariantAccessioningRepository submittedVariantRepository,
@@ -85,13 +88,19 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
                                                                                              importCounts);
         this.dbsnpClusteredVariantOperationWriter= new DbsnpClusteredVariantOperationWriter(mongoTemplate,
-                                                                                             importCounts);
+                                                                                            importCounts);
         this.dbsnpClusteredVariantDeclusteredWriter = new DbsnpClusteredVariantDeclusteredWriter(mongoTemplate);
 
         this.submittedOperationBuilder = new MergeOperationBuilder<>(
                 submittedOperationRepository, submittedVariantRepository, this::buildSubmittedMergeOperation);
         this.clusteredOperationBuilder = new MergeOperationBuilder<>(
                 clusteredOperationRepository, clusteredVariantRepository, this::buildClusteredMergeOperation);
+        this.declusteredOperationBuilder = new MergeOperationBuilder<>(
+                clusteredOperationRepository,
+                id -> mongoTemplate.findById(id,
+                                             DbsnpClusteredVariantEntity.class,
+                                             DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME),
+                this::buildClusteredMergeOperation);
     }
 
     private DbsnpSubmittedVariantOperationEntity buildSubmittedMergeOperation(DbsnpSubmittedVariantEntity origin,
@@ -120,57 +129,48 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     @Override
     public void write(List<? extends DbsnpVariantsWrapper> wrappers) throws Exception {
-        Set<DbsnpClusteredVariantEntity> clusteredVariantsDeclusteredSet = new HashSet<>();
+        List<DbsnpClusteredVariantEntity> declusteredClusteredVariants = new ArrayList<>();
         List<DbsnpSubmittedVariantOperationEntity> declusterOperations = new ArrayList<>();
 
         for (DbsnpVariantsWrapper dbsnpVariantsWrapper : wrappers) {
             List<DbsnpSubmittedVariantOperationEntity> otherOperations = dbsnpVariantsWrapper.getOperations();
             if (otherOperations != null && !otherOperations.isEmpty()) {
                 declusterOperations.addAll(otherOperations);
-                clusteredVariantsDeclusteredSet.add(dbsnpVariantsWrapper.getClusteredVariant());
+                declusteredClusteredVariants.add(dbsnpVariantsWrapper.getClusteredVariant());
             }
         }
 
         List<DbsnpClusteredVariantOperationEntity> clusteredVariantsMergeOperations =
-                writeClusteredVariantsAndOperations(wrappers, clusteredVariantsDeclusteredSet);
+                writeClusteredVariantsAndOperations(wrappers, declusteredClusteredVariants);
 
         writeSubmittedVariantsAndOperations(wrappers, declusterOperations, clusteredVariantsMergeOperations);
     }
 
     private List<DbsnpClusteredVariantOperationEntity> writeClusteredVariantsAndOperations(
             List<? extends DbsnpVariantsWrapper> wrappers,
-            Set<DbsnpClusteredVariantEntity> clusteredVariantsDeclusteredSet) throws Exception {
-        List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered = new ArrayList<>(
-                clusteredVariantsDeclusteredSet);
-        if (!clusteredVariantsDeclustered.isEmpty()) {
-            dbsnpClusteredVariantDeclusteredWriter.write(clusteredVariantsDeclustered);
-        }
+            List<DbsnpClusteredVariantEntity> declusteredClusteredVariants) throws Exception {
+        List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations = new ArrayList<>();
 
-        List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations = writeClusteredVariants(wrappers);
+        mergeClusteredOperations.addAll(writeDeclusteredClusteredVariants(declusteredClusteredVariants));
+        mergeClusteredOperations.addAll(writeClusteredVariants(wrappers));
+
         if (!mergeClusteredOperations.isEmpty()) {
             dbsnpClusteredVariantOperationWriter.write(mergeClusteredOperations);
         }
         return mergeClusteredOperations;
     }
 
-    private void writeSubmittedVariantsAndOperations(List<? extends DbsnpVariantsWrapper> wrappers,
-                                                     List<DbsnpSubmittedVariantOperationEntity> declusterOperations,
-                                                     List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations)
-            throws Exception {
-        List<DbsnpSubmittedVariantOperationEntity> updatedClusteredVariantOperation =
-                updateClusteredVariantAccessionsInSubmittedVariants(wrappers, mergeClusteredOperations);
-
-        if (!updatedClusteredVariantOperation.isEmpty()) {
-            dbsnpSubmittedVariantOperationWriter.write(updatedClusteredVariantOperation);
-        }
-
-        if (!declusterOperations.isEmpty()) {
-            dbsnpSubmittedVariantOperationWriter.write(declusterOperations);
-        }
-
-        List<DbsnpSubmittedVariantOperationEntity> mergeSubmittedOperations = writeSubmittedVariants(wrappers);
-        if (!mergeSubmittedOperations.isEmpty()) {
-            dbsnpSubmittedVariantOperationWriter.write(mergeSubmittedOperations);
+    private List<DbsnpClusteredVariantOperationEntity> writeDeclusteredClusteredVariants(
+            List<DbsnpClusteredVariantEntity> declusteredClusteredVariants) {
+        List<DbsnpClusteredVariantEntity> clusteredVariantsDeclustered = new ArrayList<>(declusteredClusteredVariants);
+        try {
+            if (!clusteredVariantsDeclustered.isEmpty()) {
+                dbsnpClusteredVariantDeclusteredWriter.write(clusteredVariantsDeclustered);
+            }
+            return Collections.emptyList();
+        } catch (BulkOperationException exception) {
+            return declusteredOperationBuilder.buildMergeOperationsFromException(clusteredVariantsDeclustered,
+                                                                                 exception);
         }
     }
 
@@ -195,6 +195,27 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                      .anyMatch(v -> v.getClusteredVariantAccession() != null))
                        .map(DbsnpVariantsWrapper::getClusteredVariant)
                        .collect(Collectors.toList());
+    }
+
+    private void writeSubmittedVariantsAndOperations(List<? extends DbsnpVariantsWrapper> wrappers,
+                                                     List<DbsnpSubmittedVariantOperationEntity> declusterOperations,
+                                                     List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations)
+            throws Exception {
+        List<DbsnpSubmittedVariantOperationEntity> updatedClusteredVariantOperation =
+                updateClusteredVariantAccessionsInSubmittedVariants(wrappers, mergeClusteredOperations);
+
+        if (!updatedClusteredVariantOperation.isEmpty()) {
+            dbsnpSubmittedVariantOperationWriter.write(updatedClusteredVariantOperation);
+        }
+
+        if (!declusterOperations.isEmpty()) {
+            dbsnpSubmittedVariantOperationWriter.write(declusterOperations);
+        }
+
+        List<DbsnpSubmittedVariantOperationEntity> mergeSubmittedOperations = writeSubmittedVariants(wrappers);
+        if (!mergeSubmittedOperations.isEmpty()) {
+            dbsnpSubmittedVariantOperationWriter.write(mergeSubmittedOperations);
+        }
     }
 
     private List<DbsnpSubmittedVariantOperationEntity> updateClusteredVariantAccessionsInSubmittedVariants(
@@ -298,13 +319,21 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
         IAccessionedObjectRepository<ENTITY, Long> variantRepository;
 
+        Function<String, ENTITY> findOneVariantEntityById;
+
         BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory;
 
         MergeOperationBuilder(IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository,
                               IAccessionedObjectRepository<ENTITY, Long> variantRepository,
                               BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory) {
+            this(operationRepository, variantRepository::findOne, mergeOperationFactory);
+        }
+
+        MergeOperationBuilder(IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository,
+                              Function<String, ENTITY> findOneVariantEntityById,
+                              BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory) {
             this.operationRepository = operationRepository;
-            this.variantRepository = variantRepository;
+            this.findOneVariantEntityById = findOneVariantEntityById;
             this.mergeOperationFactory = mergeOperationFactory;
         }
 
@@ -314,7 +343,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
             checkForNulls(variants);
             extractUniqueHashes(exception)
                     .forEach(hash -> {
-                        ENTITY mergedInto = variantRepository.findOne(hash);
+                        ENTITY mergedInto = findOneVariantEntityById.apply(hash);
                         if (mergedInto == null) {
                             throwMongoConsistencyException(variants, hash);
                         }

@@ -15,11 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
-import com.mongodb.BulkWriteError;
-import com.mongodb.BulkWriteResult;
-import com.mongodb.ErrorCategory;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -44,25 +40,13 @@ public class DbsnpClusteredVariantDeclusteredWriter implements ItemWriter<DbsnpC
 
     @Override
     public void write(List<? extends DbsnpClusteredVariantEntity> importedClusteredVariants) {
-        try {
-            BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  DbsnpClusteredVariantEntity.class,
-                                                                  DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
-            bulkOperations.insert(importedClusteredVariants);
-            bulkOperations.execute();
-        } catch (BulkOperationException e) {
-            BulkWriteResult bulkWriteResult = e.getResult();
-            // Duplicate key errors don't need to be thrown because it is expected that a single clustered variant will
-            // be linked to more than one SS, effectively generating a duplication. Any other errors should be thrown.
-            if (e.getErrors().stream().anyMatch(this::isNotDuplicateKeyError)) {
-                throw e;
-            }
-        }
-    }
+        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                              DbsnpClusteredVariantEntity.class,
+                                                              DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
+        bulkOperations.insert(importedClusteredVariants);
 
-    private boolean isNotDuplicateKeyError(BulkWriteError error) {
-        ErrorCategory errorCategory = ErrorCategory.fromErrorCode(error.getCode());
-        return !errorCategory.equals(ErrorCategory.DUPLICATE_KEY);
-    }
+        // Let exceptions be raised. Ignore duplicate key exceptions in user code only if the accession is the same.
+        bulkOperations.execute();
 
+    }
 }
