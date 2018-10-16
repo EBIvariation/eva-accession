@@ -36,23 +36,33 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVarian
 
     @Override
     public IVariant process(final IVariant variant) throws Exception {
-        String newReference;
-        String newAlternate;
-
         long oldStart = variant.getStart();
+        String contig = variant.getChromosome();
         String oldReference = variant.getReference();
         String oldAlternate = variant.getAlternate();
+
+        if (fastaSequenceReader.doesContigExist(contig)) {
+            return addContextNucleotide(variant, contig, oldStart, oldReference, oldAlternate);
+        }
+        else {
+            throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the fasta file ");
+        }
+    }
+
+    private IVariant addContextNucleotide(IVariant variant, String contig, long oldStart, String oldReference,
+                                          String oldAlternate) {
+        String newReference;
+        String newAlternate;
         if (oldReference.isEmpty() || oldAlternate.isEmpty()) {
             ImmutablePair<String, Long> contextNucleotideInfo =
-                    fastaSequenceReader.getContextNucleotide(variant.getChromosome(), oldStart, oldReference,
+                    fastaSequenceReader.getContextNucleotide(contig, oldStart, oldReference,
                                                              oldAlternate);
             String contextBase = contextNucleotideInfo.getLeft();
             long newStart = contextNucleotideInfo.getRight();
             if (oldStart == 1) {
                 newReference = oldReference + contextBase;
-                newAlternate = oldAlternate + contextBase ;
-            }
-            else {
+                newAlternate = oldAlternate + contextBase;
+            } else {
                 newReference = contextBase + oldReference;
                 newAlternate = contextBase + oldAlternate;
             }
@@ -60,10 +70,9 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVarian
             if (contextBase.isEmpty()) {
                 throw new IllegalStateException("fastaSequenceReader should have returned a non-empty sequence");
             } else {
-                return new Variant(variant.getChromosome(), newStart, newEnd, newReference, newAlternate);
+                return new Variant(contig, newStart, newEnd, newReference, newAlternate);
             }
-        }
-        else {
+        } else {
             return variant;
         }
     }
