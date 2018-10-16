@@ -88,7 +88,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
                                                                                              importCounts);
         this.dbsnpClusteredVariantOperationWriter= new DbsnpClusteredVariantOperationWriter(mongoTemplate,
-                                                                                             importCounts);
+                                                                                            importCounts);
         this.dbsnpClusteredVariantDeclusteredWriter = new DbsnpClusteredVariantDeclusteredWriter(mongoTemplate);
 
         this.submittedOperationBuilder = new MergeOperationBuilder<>(
@@ -330,8 +330,8 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         }
 
         MergeOperationBuilder(IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository,
-                                     Function<String, ENTITY> findOneVariantEntityById,
-                                     BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory) {
+                              Function<String, ENTITY> findOneVariantEntityById,
+                              BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory) {
             this.operationRepository = operationRepository;
             this.findOneVariantEntityById = findOneVariantEntityById;
             this.mergeOperationFactory = mergeOperationFactory;

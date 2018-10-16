@@ -902,12 +902,12 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
         wrapper2.setClusteredVariant(clusteredVariantEntity2);
 
-        operations.clear();
+        ArrayList<DbsnpSubmittedVariantOperationEntity> operations2 = new ArrayList<>();
         DbsnpSubmittedVariantEntity declusteredSubmittedVariant2 =
-                new SubmittedVariantDeclusterProcessor().decluster(submittedVariantEntity2, operations,
+                new SubmittedVariantDeclusterProcessor().decluster(submittedVariantEntity2, operations2,
                                                                    new ArrayList<>());
         wrapper2.setSubmittedVariants(Collections.singletonList(declusteredSubmittedVariant2));
-        wrapper2.setOperations(operations);
+        wrapper2.setOperations(operations2);
 
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2));
