@@ -224,4 +224,31 @@ public class VariantContextWriterTest {
     public void checkMnvSequenceOntology() throws Exception {
         checkSequenceOntology(MNV_SEQUENCE_ONTOLOGY, "CA", "A");
     }
+
+    @Test
+    public void checkSeveralVariants() throws Exception {
+        File output = temporaryFolder.newFile();
+        int position1 = 1003;
+        int position2 = 1003;
+        int position3 = 1002;
+        String alternate1 = "A";
+        String alternate2 = "T";
+        String alternate3 = "G";
+
+        assertWriteVcf(output,
+                       buildVariant(CHR_1, position1, "C", alternate1, SNP_SEQUENCE_ONTOLOGY, STUDY_1),
+                       buildVariant(CHR_1, position2, "C", alternate2, SNP_SEQUENCE_ONTOLOGY, STUDY_1),
+                       buildVariant(CHR_1, position3, "C", alternate3, SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+
+        List<String> dataLines = grepFile(output, ID);
+        assertEquals(3, dataLines.size());
+        assertEquals(position1, Integer.parseInt(dataLines.get(0).split("\t")[1]));
+        assertEquals(alternate1, dataLines.get(0).split("\t")[4]);
+
+        assertEquals(position2, Integer.parseInt(dataLines.get(1).split("\t")[1]));
+        assertEquals(alternate2, dataLines.get(1).split("\t")[4]);
+
+        assertEquals(position3, Integer.parseInt(dataLines.get(2).split("\t")[1]));
+        assertEquals(alternate3, dataLines.get(2).split("\t")[4]);
+    }
 }
