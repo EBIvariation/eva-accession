@@ -161,7 +161,7 @@ public class AccessionReportWriter {
         String oldAlternate = normalizedVariant.getAlternateAllele();
         long oldStart = normalizedVariant.getStart();
         ImmutablePair<String, Long> contextNucleotideInfo =
-                fastaSequenceReader.getContextNucleotide(normalizedVariant.getContig(), oldStart, oldReference,
+                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart, oldReference,
                                                          oldAlternate);
         contextBase = contextNucleotideInfo.getLeft();
         newStart = contextNucleotideInfo.getRight();
