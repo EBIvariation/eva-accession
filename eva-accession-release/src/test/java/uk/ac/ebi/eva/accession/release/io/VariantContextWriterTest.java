@@ -207,22 +207,22 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkIndelSequenceOntology() throws Exception {
-        checkSequenceOntology(INDEL_SEQUENCE_ONTOLOGY, "CA", "A");
+        checkSequenceOntology(INDEL_SEQUENCE_ONTOLOGY, "CAT", "CG");
     }
 
     @Test
     public void checkTandemRepeatSequenceOntology() throws Exception {
-        checkSequenceOntology(TANDEM_REPEAT_SEQUENCE_ONTOLOGY, "CA", "A");
+        checkSequenceOntology(TANDEM_REPEAT_SEQUENCE_ONTOLOGY, "C", "CAGAG");
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void checkSequenceAlterationSequenceOntology() throws Exception {
-        checkSequenceOntology(SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, "CA", "A");
+        checkSequenceOntology(SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, "(ADL260)", "(LEI0062)");
     }
 
     @Test
     public void checkMnvSequenceOntology() throws Exception {
-        checkSequenceOntology(MNV_SEQUENCE_ONTOLOGY, "CA", "A");
+        checkSequenceOntology(MNV_SEQUENCE_ONTOLOGY, "CA", "GG");
     }
 
     @Test
@@ -250,5 +250,20 @@ public class VariantContextWriterTest {
 
         assertEquals(position3, Integer.parseInt(dataLines.get(2).split("\t")[1]));
         assertEquals(alternate3, dataLines.get(2).split("\t")[4]);
+    }
+
+    @Test
+    public void checkStandardNucleotides() throws Exception {
+        File output = temporaryFolder.newFile();
+        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "NACTG", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+
+        List<String> dataLines = grepFile(output, ID);
+        assertEquals(1, dataLines.size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void throwIfNonStandardNucleotides() throws Exception {
+        File output = temporaryFolder.newFile();
+        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "U", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 }
