@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.core.io;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -166,18 +166,28 @@ public class FastaSequenceReaderTest {
 
     @Test
     public void getContextNucleotideAndNewStart() {
-        ImmutablePair expected = new ImmutablePair<String, Long>("T", 1L);
+        ImmutableTriple expected = new ImmutableTriple<Long, String, String>(1L, "T", "AT");
         assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "", "A"));
-        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "", "CA"));
+
+        expected = new ImmutableTriple<Long, String, String>(1L, "T", "TA");
         assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "", "A"));
-        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "G", ""));
+
+        expected = new ImmutableTriple<Long, String, String>(1L, "T", "CAT");
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "", "CA"));
+
+        expected = new ImmutableTriple<Long, String, String>(1L, "T", "TCA");
         assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "", "CA"));
+
+        expected = new ImmutableTriple<Long, String, String>(1L, "TG", "T");
+        assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "G", ""));
+
+        expected = new ImmutableTriple<Long, String, String>(1L, "TGC", "T");
         assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 2, "GC", ""));
 
-        expected = new ImmutablePair<String, Long>("G", 1L);
+        expected = new ImmutableTriple<Long, String, String>(1L, "TG", "G");
         assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "T", ""));
 
-        expected = new ImmutablePair<String, Long>("C", 1L);
+        expected = new ImmutableTriple<Long, String, String>(1L, "TGC", "C");
         assertEquals(expected, reader.getContextNucleotideAndNewStart("22", 1, "TG", ""));
     }
 }

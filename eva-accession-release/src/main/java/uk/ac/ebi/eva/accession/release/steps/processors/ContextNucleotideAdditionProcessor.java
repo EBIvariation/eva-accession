@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.release.steps.processors;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
@@ -53,24 +53,15 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVarian
         String newReference;
         String newAlternate;
         if (oldReference.isEmpty() || oldAlternate.isEmpty()) {
-            ImmutablePair<String, Long> contextNucleotideInfo =
+            ImmutableTriple<Long, String, String> contextNucleotideInfo =
                     fastaSequenceReader.getContextNucleotideAndNewStart(contig, oldStart, oldReference,
-                                                             oldAlternate);
-            String contextBase = contextNucleotideInfo.getLeft();
-            long newStart = contextNucleotideInfo.getRight();
-            if (oldStart == 1) {
-                newReference = oldReference + contextBase;
-                newAlternate = oldAlternate + contextBase;
-            } else {
-                newReference = contextBase + oldReference;
-                newAlternate = contextBase + oldAlternate;
-            }
+                                                                        oldAlternate);
+
+            long newStart = contextNucleotideInfo.getLeft();
+            newReference = contextNucleotideInfo.getMiddle();
+            newAlternate = contextNucleotideInfo.getRight();
             long newEnd = newStart + max(newReference.length(), newAlternate.length()) - 1;
-            if (contextBase.isEmpty()) {
-                throw new IllegalStateException("fastaSequenceReader should have returned a non-empty sequence");
-            } else {
-                return new Variant(contig, newStart, newEnd, newReference, newAlternate);
-            }
+            return new Variant(contig, newStart, newEnd, newReference, newAlternate);
         } else {
             return variant;
         }

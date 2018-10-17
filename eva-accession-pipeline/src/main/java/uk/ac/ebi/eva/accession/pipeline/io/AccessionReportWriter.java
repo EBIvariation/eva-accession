@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
@@ -152,45 +152,27 @@ public class AccessionReportWriter {
     }
 
     private ISubmittedVariant createVariantWithContextBase(ISubmittedVariant normalizedVariant) {
-        long newStart;
-        String newReference;
-        String newAlternate;
-        String contextBase;
-
         String oldReference = normalizedVariant.getReferenceAllele();
         String oldAlternate = normalizedVariant.getAlternateAllele();
         long oldStart = normalizedVariant.getStart();
-        ImmutablePair<String, Long> contextNucleotideInfo =
-                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart, oldReference,
-                                                         oldAlternate);
-        contextBase = contextNucleotideInfo.getLeft();
-        newStart = contextNucleotideInfo.getRight();
-        if (oldStart == 1) {
-            newReference = oldReference + contextBase;
-            newAlternate = oldAlternate + contextBase;
-        }
-        else {
-            newReference = contextBase + oldReference;
-            newAlternate = contextBase + oldAlternate;
-        }
+        ImmutableTriple<Long, String, String> contextNucleotideInfo =
+                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
+                                                                    oldReference, oldAlternate);
 
-        if (contextBase.isEmpty()) {
-            throw new IllegalStateException("fastaSequenceReader should have returned a non-empty sequence");
-        } else {
-            return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
-                                        normalizedVariant.getTaxonomyAccession(),
-                                        normalizedVariant.getProjectAccession(),
-                                        normalizedVariant.getContig(),
-                                        newStart,
-                                        newReference,
-                                        newAlternate,
-                                        normalizedVariant.getClusteredVariantAccession(),
-                                        normalizedVariant.isSupportedByEvidence(),
-                                        normalizedVariant.isAssemblyMatch(),
-                                        normalizedVariant.isAllelesMatch(),
-                                        normalizedVariant.isValidated(),
-                                        normalizedVariant.getCreatedDate());
-        }
+        return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
+                                    normalizedVariant.getTaxonomyAccession(),
+                                    normalizedVariant.getProjectAccession(),
+                                    normalizedVariant.getContig(),
+                                    contextNucleotideInfo.getLeft(),
+                                    contextNucleotideInfo.getMiddle(),
+                                    contextNucleotideInfo.getRight(),
+                                    normalizedVariant.getClusteredVariantAccession(),
+                                    normalizedVariant.isSupportedByEvidence(),
+                                    normalizedVariant.isAssemblyMatch(),
+                                    normalizedVariant.isAllelesMatch(),
+                                    normalizedVariant.isValidated(),
+                                    normalizedVariant.getCreatedDate());
+
     }
 
     protected String variantToVcfLine(Long id, ISubmittedVariant variant) {
