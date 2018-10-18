@@ -26,7 +26,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static java.lang.Math.max;
 
-public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVariant, IVariant> {
+public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant, IVariant> {
 
     private FastaSynonymSequenceReader fastaSequenceReader;
 
@@ -35,7 +35,7 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVarian
     }
 
     @Override
-    public IVariant process(final IVariant variant) throws Exception {
+    public IVariant process(Variant variant) throws Exception {
         long oldStart = variant.getStart();
         String contig = variant.getChromosome();
         String oldReference = variant.getReference();
@@ -48,7 +48,7 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVarian
         }
     }
 
-    private IVariant getVariantWithContextNucleotide(IVariant variant, String contig, long oldStart,
+    private IVariant getVariantWithContextNucleotide(Variant variant, String contig, long oldStart,
                                                      String oldReference, String oldAlternate) {
         String newReference;
         String newAlternate;
@@ -61,7 +61,8 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<IVarian
             newReference = contextNucleotideInfo.getMiddle();
             newAlternate = contextNucleotideInfo.getRight();
             long newEnd = newStart + max(newReference.length(), newAlternate.length()) - 1;
-            return new Variant(contig, newStart, newEnd, newReference, newAlternate);
+            variant.renormalizeVariant(newStart, newEnd, newReference, newAlternate);
+            return variant;
         } else {
             return variant;
         }
