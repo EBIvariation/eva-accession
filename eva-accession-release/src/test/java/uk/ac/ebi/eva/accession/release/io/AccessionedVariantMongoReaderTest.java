@@ -16,6 +16,9 @@
 package uk.ac.ebi.eva.accession.release.io;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +30,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
+import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 
 import java.util.List;
 
@@ -36,8 +41,9 @@ import static org.junit.Assert.assertNotEquals;
 @TestPropertySource("classpath:accession-release-test.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"})
-@ContextConfiguration(classes = {MongoConfiguration.class})
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/test-ss.json"})
+@ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class AccessionedVariantMongoReaderTest {
 
     @Autowired
@@ -46,6 +52,10 @@ public class AccessionedVariantMongoReaderTest {
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Rule
+    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
+            MongoDbConfigurationBuilder.mongoDb().databaseName("test-db2").build());
 
     @Test
     public void loadTestData() {
