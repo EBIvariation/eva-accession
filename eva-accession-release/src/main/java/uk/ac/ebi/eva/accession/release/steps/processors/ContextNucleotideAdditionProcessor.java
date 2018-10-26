@@ -51,9 +51,9 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
         String oldReference = variant.getReference();
         String oldAlternate = variant.getAlternate();
 
-        String newReference;
-        String newAlternate;
         if (oldReference.isEmpty() || oldAlternate.isEmpty()) {
+            String newReference;
+            String newAlternate;
             ImmutableTriple<Long, String, String> contextNucleotideInfo =
                     fastaSequenceReader.getContextNucleotideAndNewStart(contig, oldStart, oldReference,
                                                                         oldAlternate);

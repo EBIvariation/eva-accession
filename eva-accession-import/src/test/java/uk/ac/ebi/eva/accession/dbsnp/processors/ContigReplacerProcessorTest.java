@@ -81,7 +81,7 @@ public class ContigReplacerProcessorTest {
     @Before
     public void setUp() throws Exception {
         String fileString = ContigReplacerProcessorTest.class.getResource(
-                "/input-files/assembly-report/AssemblyReport.txt").toString();
+                "/input-files/assembly-report/GCA_000001635.8_Mus_musculus-grcm38.p6_assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
         refseqProcessor = new ContigReplacerProcessor(contigMapping, REFSEQ_ASSEMBLY_ACCESSION);

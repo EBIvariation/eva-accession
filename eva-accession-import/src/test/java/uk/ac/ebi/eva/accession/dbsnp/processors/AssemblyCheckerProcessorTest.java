@@ -75,7 +75,7 @@ public class AssemblyCheckerProcessorTest {
     @Before
     public void setUp() throws Exception {
         String fileString = AssemblyCheckerProcessorTest.class.getResource(
-                "/input-files/assembly-report/AssemblyReport.txt").toString();
+                "/input-files/assembly-report/GCA_000001635.8_Mus_musculus-grcm38.p6_assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
         this.processorSeqName = getAssemblyCheckerProcessor(contigMapping, "Gallus_gallus-5.0.test.fa");
