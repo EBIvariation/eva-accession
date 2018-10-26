@@ -10,8 +10,8 @@ import java.util.regex.Pattern;
 /**
  * Filters variants with invalid alleles.
  *
- * VCF format only accepts reference and alternate alleles formed by A, C, G, R or N letters in upper or lower case.
- * If one of the alleles has a different character, this processor will return NULL so tha variant can be ignored.
+ * VCF format only accepts reference and alternate alleles formed by A, C, G, T or N letters in upper or lower case.
+ * If one of the alleles has a different character, this processor will return null so that variant can be ignored.
  */
 public class ExcludeInvalidVariantsProcessor implements ItemProcessor<IVariant, IVariant> {
 
@@ -20,7 +20,7 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<IVariant, 
     private static final Pattern ALLELES_PATTERN = Pattern.compile(ALLELES_REGEX);
 
     static final String REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY =
-            "Reference and alternate alleles cannot be empty.";
+            "Neither the reference nor the alternate allele should be empty.";
 
     @Override
     public IVariant process(IVariant variant) throws Exception {
