@@ -17,8 +17,8 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {

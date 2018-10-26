@@ -161,8 +161,7 @@ public class FastaSequenceReader {
         if (oldStart == 1) {
             if (oldReference.isEmpty()) {
                 contextBase = getSequence(contig, newStart, newStart);
-            }
-            else if (oldAlternate.isEmpty()) {
+            } else if (oldAlternate.isEmpty()) {
                 contextBase = getSequence(contig, newStart + oldReference.length(), newStart + oldReference.length());
             }
             newReference = oldReference + contextBase;

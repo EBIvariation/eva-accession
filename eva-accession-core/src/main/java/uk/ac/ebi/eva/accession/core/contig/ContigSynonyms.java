@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.dbsnp.contig;
+package uk.ac.ebi.eva.accession.core.contig;
 
 public class ContigSynonyms {
 

@@ -21,9 +21,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -43,9 +43,8 @@ public class ContextNucleotideAdditionProcessorTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         Path fastaPath = Paths.get("src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
-        ContigMapping contigMapping = new ContigMapping(Collections.singletonList(new ContigSynonyms(CONTIG,
-                                                                                                     "", "", "", "", "",
-                                                                                                     true)));
+        ContigMapping contigMapping = new ContigMapping(Collections.singletonList(
+                new ContigSynonyms(CONTIG, "", "", "", "", "", true)));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor (fastaSynonymSequenceReader);
     }
@@ -56,7 +55,7 @@ public class ContextNucleotideAdditionProcessorTest {
     }
 
     @Test
-    public void testNonINDELs() throws Exception {
+    public void testNonEmptyAlleles() throws Exception {
         Variant variant = new Variant(CONTIG, 1, 1, "T", "C");
         IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());

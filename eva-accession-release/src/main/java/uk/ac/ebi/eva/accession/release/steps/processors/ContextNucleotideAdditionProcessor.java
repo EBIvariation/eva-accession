@@ -20,7 +20,7 @@ package uk.ac.ebi.eva.accession.release.steps.processors;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.springframework.batch.item.ItemProcessor;
 
-import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -36,20 +36,21 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
 
     @Override
     public IVariant process(Variant variant) throws Exception {
+        String contig = variant.getChromosome();
+
+        if (fastaSequenceReader.doesContigExist(contig)) {
+            return getVariantWithContextNucleotide(variant);
+        } else {
+            throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
+        }
+    }
+
+    private IVariant getVariantWithContextNucleotide(Variant variant) {
         long oldStart = variant.getStart();
         String contig = variant.getChromosome();
         String oldReference = variant.getReference();
         String oldAlternate = variant.getAlternate();
 
-        if (fastaSequenceReader.doesContigExist(contig)) {
-            return getVariantWithContextNucleotide(variant, contig, oldStart, oldReference, oldAlternate);
-        } else {
-            throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the fasta file ");
-        }
-    }
-
-    private IVariant getVariantWithContextNucleotide(Variant variant, String contig, long oldStart,
-                                                     String oldReference, String oldAlternate) {
         String newReference;
         String newAlternate;
         if (oldReference.isEmpty() || oldAlternate.isEmpty()) {
@@ -61,10 +62,8 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
             newReference = contextNucleotideInfo.getMiddle();
             newAlternate = contextNucleotideInfo.getRight();
             long newEnd = newStart + max(newReference.length(), newAlternate.length()) - 1;
-            variant.renormalizeVariant(newStart, newEnd, newReference, newAlternate);
-            return variant;
-        } else {
-            return variant;
+            variant.renormalize(newStart, newEnd, newReference, newAlternate);
         }
+        return variant;
     }
 }

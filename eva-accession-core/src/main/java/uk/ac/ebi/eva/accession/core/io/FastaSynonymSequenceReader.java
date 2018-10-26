@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.io;
+package uk.ac.ebi.eva.accession.core.io;
 
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 
 import java.io.IOException;
 import java.nio.file.Path;

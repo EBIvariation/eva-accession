@@ -15,9 +15,9 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.dbsnp.contig;
+package uk.ac.ebi.eva.accession.core.contig;
 
-import uk.ac.ebi.eva.accession.dbsnp.io.AssemblyReportReader;
+import uk.ac.ebi.eva.accession.core.io.AssemblyReportReader;
 
 import java.util.HashMap;
 import java.util.List;

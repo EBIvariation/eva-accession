@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.dbsnp.io;
+package uk.ac.ebi.eva.accession.core.io;
 
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
@@ -24,7 +24,7 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.PassThroughLineMapper;
 import org.springframework.core.io.UrlResource;
 
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 
 import java.net.MalformedURLException;
 
