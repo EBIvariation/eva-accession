@@ -31,6 +31,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>uk.ac.ebi.eva</groupId>
+                <artifactId>eva-accession-core</artifactId>
+                <version>0.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
                 <artifactId>accession-commons-mongodb</artifactId>
                 <version>0.5.2</version>
@@ -43,12 +48,12 @@
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>variation-commons-core</artifactId>
-                <version>0.6</version>
+                <version>0.7-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>variation-commons-batch</artifactId>
-                <version>0.6</version>
+                <version>0.7-SNAPSHOT</version>
             </dependency>
 
             <dependency>

@@ -20,8 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMappingTest;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
@@ -81,7 +80,8 @@ public class ContigReplacerProcessorTest {
 
     @Before
     public void setUp() throws Exception {
-        String fileString = ContigMappingTest.class.getResource("/input-files/assembly-report/AssemblyReport.txt").toString();
+        String fileString = ContigReplacerProcessorTest.class.getResource(
+                "/input-files/assembly-report/GCA_000001635.8_Mus_musculus-grcm38.p6_assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
         refseqProcessor = new ContigReplacerProcessor(contigMapping, REFSEQ_ASSEMBLY_ACCESSION);

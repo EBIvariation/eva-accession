@@ -19,9 +19,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMappingTest;
-import uk.ac.ebi.eva.accession.dbsnp.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
@@ -75,7 +74,8 @@ public class AssemblyCheckerProcessorTest {
 
     @Before
     public void setUp() throws Exception {
-        String fileString = ContigMappingTest.class.getResource("/input-files/assembly-report/AssemblyReport.txt").toString();
+        String fileString = AssemblyCheckerProcessorTest.class.getResource(
+                "/input-files/assembly-report/GCA_000001635.8_Mus_musculus-grcm38.p6_assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
         this.processorSeqName = getAssemblyCheckerProcessor(contigMapping, "Gallus_gallus-5.0.test.fa");

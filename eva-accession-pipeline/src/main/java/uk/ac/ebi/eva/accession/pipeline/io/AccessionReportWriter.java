@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
@@ -151,41 +152,27 @@ public class AccessionReportWriter {
     }
 
     private ISubmittedVariant createVariantWithContextBase(ISubmittedVariant normalizedVariant) {
-        long newStart;
-        String newReference;
-        String newAlternate;
-        String contextBase;
-        if (normalizedVariant.getStart() == 1) {
-            // VCF 4.2 section 1.4.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
-            // event occurs at position 1 on the contig in which case it must include the base after the event"
-            newStart = normalizedVariant.getStart() + 1;
-            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
-            newReference = normalizedVariant.getReferenceAllele() + contextBase;
-            newAlternate = normalizedVariant.getAlternateAllele() + contextBase;
-        } else {
-            newStart = normalizedVariant.getStart() - 1;
-            contextBase = fastaSequenceReader.getSequence(normalizedVariant.getContig(), newStart, newStart);
-            newReference = contextBase + normalizedVariant.getReferenceAllele();
-            newAlternate = contextBase + normalizedVariant.getAlternateAllele();
-        }
+        String oldReference = normalizedVariant.getReferenceAllele();
+        String oldAlternate = normalizedVariant.getAlternateAllele();
+        long oldStart = normalizedVariant.getStart();
+        ImmutableTriple<Long, String, String> contextNucleotideInfo =
+                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
+                                                                    oldReference, oldAlternate);
 
-        if (contextBase.isEmpty()) {
-            throw new IllegalStateException("fastaSequenceReader should have returned a non-empty sequence");
-        } else {
-            return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
-                                        normalizedVariant.getTaxonomyAccession(),
-                                        normalizedVariant.getProjectAccession(),
-                                        normalizedVariant.getContig(),
-                                        newStart,
-                                        newReference,
-                                        newAlternate,
-                                        normalizedVariant.getClusteredVariantAccession(),
-                                        normalizedVariant.isSupportedByEvidence(),
-                                        normalizedVariant.isAssemblyMatch(),
-                                        normalizedVariant.isAllelesMatch(),
-                                        normalizedVariant.isValidated(),
-                                        normalizedVariant.getCreatedDate());
-        }
+        return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
+                                    normalizedVariant.getTaxonomyAccession(),
+                                    normalizedVariant.getProjectAccession(),
+                                    normalizedVariant.getContig(),
+                                    contextNucleotideInfo.getLeft(),
+                                    contextNucleotideInfo.getMiddle(),
+                                    contextNucleotideInfo.getRight(),
+                                    normalizedVariant.getClusteredVariantAccession(),
+                                    normalizedVariant.isSupportedByEvidence(),
+                                    normalizedVariant.isAssemblyMatch(),
+                                    normalizedVariant.isAllelesMatch(),
+                                    normalizedVariant.isValidated(),
+                                    normalizedVariant.getCreatedDate());
+
     }
 
     protected String variantToVcfLine(Long id, ISubmittedVariant variant) {

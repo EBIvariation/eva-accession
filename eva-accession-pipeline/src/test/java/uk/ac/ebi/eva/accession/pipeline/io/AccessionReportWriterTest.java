@@ -132,6 +132,25 @@ public class AccessionReportWriterTest {
         writeIndelWithAccessionHelper("", ALTERNATE, CONTEXT_BASE, CONTEXT_BASE + ALTERNATE);
     }
 
+    @Test
+    public void writeInsertionWithAccessionFirstPositionStart() throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, 1, "",
+                                                        "A", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+
+        assertEquals(
+                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
+                getFirstVariantLine(output));
+    }
+
     private void writeIndelWithAccessionHelper(String reference, String alternate, String denormalizedReference,
                                                String denormalizedAlternate) throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, reference,
@@ -155,6 +174,25 @@ public class AccessionReportWriterTest {
     @Test
     public void writeDeletionWithAccession() throws IOException {
         writeIndelWithAccessionHelper(REFERENCE, "", CONTEXT_BASE + REFERENCE, CONTEXT_BASE);
+    }
+
+    @Test
+    public void writeDeletionWithAccessionFirstPositionStart() throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, 1, "G",
+                                                        "", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+
+        assertEquals(
+                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
+                getFirstVariantLine(output));
     }
 
     @Test

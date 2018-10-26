@@ -21,6 +21,7 @@ import htsjdk.samtools.reference.FastaSequenceIndexCreator;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.reference.ReferenceSequenceFile;
 import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
+import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,6 +147,37 @@ public class FastaSequenceReader {
 
     public boolean doesContigExist(String contig) {
         return sequenceDictionary.getSequence(contig) != null;
+    }
+
+    public ImmutableTriple getContextNucleotideAndNewStart(String contig, long oldStart, String oldReference,
+                                                           String oldAlternate) {
+        String newReference;
+        String newAlternate;
+
+        long newStart = oldStart;
+        String contextBase = "";
+        // VCF 4.2 section 1.4.1.4. REF: "the REF and ALT Strings must include the base before the event unless the
+        // event occurs at position 1 on the contig in which case it must include the base after the event"
+        if (oldStart == 1) {
+            if (oldReference.isEmpty()) {
+                contextBase = getSequence(contig, newStart, newStart);
+            } else if (oldAlternate.isEmpty()) {
+                contextBase = getSequence(contig, newStart + oldReference.length(), newStart + oldReference.length());
+            }
+            newReference = oldReference + contextBase;
+            newAlternate = oldAlternate + contextBase;
+        } else {
+            newStart -= 1;
+            contextBase = getSequence(contig, newStart, newStart);
+            newReference = contextBase + oldReference;
+            newAlternate = contextBase + oldAlternate;
+        }
+
+        if (contextBase.isEmpty()) {
+            throw new IllegalStateException("fastaSequenceReader should have returned a non-empty sequence");
+        }
+
+        return new ImmutableTriple<>(newStart, newReference, newAlternate);
     }
 
     /**
