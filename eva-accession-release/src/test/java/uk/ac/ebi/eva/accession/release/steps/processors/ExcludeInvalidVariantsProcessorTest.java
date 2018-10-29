@@ -135,7 +135,6 @@ public class ExcludeInvalidVariantsProcessorTest {
         IVariant variant = newVariant(EMPTY_ALLELE, VALID_ALLELE);
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
-        assertNull(processor.process(variant));
     }
 
     @Test
@@ -143,6 +142,5 @@ public class ExcludeInvalidVariantsProcessorTest {
         IVariant variant = newVariant(VALID_ALLELE, EMPTY_ALLELE);
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
-        assertNull(processor.process(variant));
     }
 }
