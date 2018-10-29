@@ -98,6 +98,7 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
                         "," + RS_CREATE_TIME_COLUMN +
                         "," + TAXONOMY_ID_COLUMN +
                         " FROM " + tableName +
+                        " WHERE rs_id in (136611820, 42568024, 42568025)" +
                         " ORDER BY " + LOAD_ORDER_COLUMN;
 
         return sql;
