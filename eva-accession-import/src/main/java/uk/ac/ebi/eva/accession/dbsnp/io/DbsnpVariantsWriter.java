@@ -271,7 +271,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         for (DbsnpSubmittedVariantEntity submittedVariant : wrapper.getSubmittedVariants()) {
             Long mergedInto = replacements.get(Pair.of(wrapper.getClusteredVariant().getHashedMessage(),
                                                        wrapper.getClusteredVariant().getAccession()));
-            if (mergedInto != null) {
+            if (mergedInto != null && submittedVariant.getClusteredVariantAccession() != null) {
                 operations.add(buildOperation(submittedVariant, mergedInto));
                 submittedVariant.setClusteredVariantAccession(mergedInto);
             }
