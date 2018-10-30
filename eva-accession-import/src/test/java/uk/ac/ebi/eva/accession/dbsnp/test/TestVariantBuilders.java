@@ -91,6 +91,14 @@ public class TestVariantBuilders {
         return submittedVariant;
     }
 
+    public static SubmittedVariant buildSubmittedVariant(Long clusteredVariantAccession, String project, long start) {
+        SubmittedVariant submittedVariant = defaultSubmittedVariant();
+        submittedVariant.setClusteredVariantAccession(clusteredVariantAccession);
+        submittedVariant.setProjectAccession(project);
+        submittedVariant.setStart(start);
+        return submittedVariant;
+    }
+
     public static ClusteredVariant defaultClusteredVariant() {
         return new ClusteredVariant("assembly", TAXONOMY_1, "contig", START_1, VARIANT_TYPE, DEFAULT_VALIDATED, null);
     }
