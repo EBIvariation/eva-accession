@@ -288,6 +288,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
         Long accession = originalSubmittedVariant.getAccession();
         DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
+
+        // Note the next null in accessionIdDestiny. We are not merging the submitted variant into
+        // clusteredVariantMergedInto. We are updating the submitted variant, changing its rs field
         operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
         return operation;
     }
