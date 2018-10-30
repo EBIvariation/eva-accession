@@ -17,6 +17,22 @@
       )
     },
     {
+      "_id": "267171186884F74FFCFAF6EDFD7A80379DF2F6E0",
+      "seq": "GCF_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(92701040),
+      "ref": "G",
+      "alt": "T",
+      "rs": NumberLong(869808637),
+      "accession": NumberLong(1991577882),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
       "_id": "40F6E23B8F90B05D4E89B93126AB08ADEB366C14",
       "seq": "GCF_000409795.2",
       "tax": 60711,

@@ -32,17 +32,18 @@ import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.List;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:accession-release-test.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json",
-        "/test-data/test-ss.json"})
+        "/test-data/dbsnpSubmittedVariantEntity.json"})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class AccessionedVariantMongoReaderTest {
 
@@ -55,7 +56,7 @@ public class AccessionedVariantMongoReaderTest {
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName("test-db2").build());
+            MongoDbConfigurationBuilder.mongoDb().databaseName("test-db").build());
 
     @Test
     public void loadTestData() {
@@ -63,5 +64,12 @@ public class AccessionedVariantMongoReaderTest {
                 mongoTemplate.findAll(SubmittedVariantEntity.class, "dbsnpSubmittedVariantEntity");
 
         assertNotEquals(0, submittedVariants.size());
+    }
+
+    @Test
+    public void readerTest() throws Exception {
+        AccessionedVariantMongoReader reader = new AccessionedVariantMongoReader(mongoTemplate);
+        Variant variant = reader.read();
+        assertNotNull(variant);
     }
 }
