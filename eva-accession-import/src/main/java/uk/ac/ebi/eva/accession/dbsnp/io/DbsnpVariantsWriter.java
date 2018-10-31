@@ -412,7 +412,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                     .stream()
                     .filter(v -> v.getHashedMessage().equals(hash)
                             && !v.getAccession().equals(mergedInto.getAccession())
-                            && !isAlreadyMerged(v.getAccession()))
+                            && !isAlreadyMergedInto(v, mergedInto))
                     .map(origin -> mergeOperationFactory.apply(origin, mergedInto))
                     .collect(Collectors.toList());
         }
@@ -439,9 +439,13 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                       .values();
         }
 
-        private boolean isAlreadyMerged(Long accession) {
-            List<OPERATION_ENTITY> merges = operationRepository.findAllByAccession(accession);
-            return merges.stream().anyMatch(operation -> operation.getEventType().equals(EventType.MERGED));
+        private boolean isAlreadyMergedInto(ENTITY original, ENTITY mergedInto) {
+            List<OPERATION_ENTITY> merges = operationRepository.findAllByAccession(original.getAccession());
+            return merges.stream().anyMatch(
+                    operation ->
+                            operation.getEventType().equals(EventType.MERGED)
+                                    && mergedInto.getAccession().equals(operation.getMergedInto())
+                                    && original.getHashedMessage().equals(operation.getInactiveObjects().get(0).getHashedMessage()));
         }
     }
 }
