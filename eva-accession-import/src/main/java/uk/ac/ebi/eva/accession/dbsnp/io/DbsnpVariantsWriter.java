@@ -17,6 +17,8 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import com.mongodb.BulkWriteError;
 import com.mongodb.ErrorCategory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -58,6 +60,10 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredW
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
+    private static final Logger logger = LoggerFactory.getLogger(DbsnpVariantsWriter.class);
+
+    private final MongoTemplate mongoTemplate;
+
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
@@ -83,6 +89,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                DbsnpClusteredVariantOperationRepository clusteredOperationRepository,
                                DbsnpClusteredVariantAccessioningRepository clusteredVariantRepository,
                                ImportCounts importCounts) {
+        this.mongoTemplate = mongoTemplate;
         this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
         this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
@@ -255,14 +262,39 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                     .collect(Collectors.toList());
 
             if (mergedIntoList.size() > 1) {
-                throw new IllegalStateException(
-                        "Clustered variant rs" + hashAndAccession.getSecond() + " was merged into several other "
-                                + "clustered variants with the same hash: " + mergedIntoList);
-            }
+                DbsnpClusteredVariantEntity activeClusteredVariant = mongoTemplate.findById(
+                        hashAndAccession.getFirst(), DbsnpClusteredVariantEntity.class);
 
-            originalToNewAccessions.put(hashAndAccession, mergedIntoList.get(0));
+                if (activeClusteredVariant == null || !mergedIntoList.contains(activeClusteredVariant.getAccession())) {
+                    throwSeveralInactiveMergesException(hashAndAccession, mergedIntoList, activeClusteredVariant);
+                } else {
+                    originalToNewAccessions.put(hashAndAccession, activeClusteredVariant.getAccession());
+                    logger.debug("Clustered variant rs{} was merged into several other clustered variants with the "
+                                         + "same hash: {}. The accession rs{} was chosen as "
+                                         + "replacement because it's active, i.e. present in the collection for {}",
+                            hashAndAccession.getSecond(), mergedIntoList, activeClusteredVariant.getAccession(),
+                                 DbsnpClusteredVariantEntity.class.getSimpleName());
+                }
+            } else {
+                originalToNewAccessions.put(hashAndAccession, mergedIntoList.get(0));
+            }
         });
         return originalToNewAccessions;
+    }
+
+    private void throwSeveralInactiveMergesException(Pair<String, Long> hashAndAccession, List<Long> mergedIntoList,
+                                                     DbsnpClusteredVariantEntity activeClusteredVariant) {
+        String active;
+        if (activeClusteredVariant == null) {
+            active = ". There is no active variant with that hash.";
+        } else {
+            active = ". The active variant with that hash is rs" + activeClusteredVariant.getAccession();
+        }
+        throw new IllegalStateException(
+                "Clustered variant rs" + hashAndAccession.getSecond() + " was merged into several other "
+                        + "clustered variants with the same hash: " + mergedIntoList + " and none of them"
+                        + " is active, i.e. present in the collection for "
+                        + DbsnpClusteredVariantEntity.class.getSimpleName() + active);
     }
 
     private void updateClusteredVariantAccessionsInSubmittedVariants(DbsnpVariantsWrapper wrapper,
