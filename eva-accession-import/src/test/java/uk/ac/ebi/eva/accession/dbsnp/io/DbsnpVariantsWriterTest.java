@@ -743,7 +743,10 @@ public class DbsnpVariantsWriterTest {
                                                             DbsnpClusteredVariantEntity mergedInto) {
         List<DbsnpClusteredVariantOperationEntity> operationEntities = mongoTemplate.find(
                 new Query(), DbsnpClusteredVariantOperationEntity.class);
-        assertEquals(expectedTotalOperations, operationEntities.size());
+        if (expectedTotalOperations != operationEntities.size()) {
+            fail("Expected " + expectedTotalOperations + " clustered variants operations, there are "
+                         + operationEntities.size() + ".\nFull collection content: " + operationEntities);
+        }
 
         long matchingOperations = operationEntities
                 .stream()
@@ -1110,7 +1113,7 @@ public class DbsnpVariantsWriterTest {
         // merged into it. Then the declustered clusteredVariantEntity4 is merged into the previously declustered
         // clusteredVariantEntity1. Then, we have clusteredVariantEntity4 merged into 2 RS, and we choose the
         // non-declustered one as the only active one, so we merge clusteredVariantEntity1 into clusteredVariantEntity2
-        assertClusteredVariantMergeOperationStored(3, 2, clusteredVariantEntity2);  // the first non declustered RS,
+        assertClusteredVariantMergeOperationStored(3, 2, clusteredVariantEntity2);
         assertClusteredVariantMergeOperationStored(3, 1, clusteredVariantEntity);
 
         List<DbsnpClusteredVariantEntity> declustered = mongoTemplate.findAll(

@@ -26,4 +26,16 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 public class DbsnpClusteredVariantOperationEntity extends EventDocument<IClusteredVariant, Long,
         DbsnpClusteredVariantInactiveEntity> {
 
+    @Override
+    public String toString() {
+        return "DbsnpClusteredVariantOperationEntity{"
+                + "id='" + getId() + '\''
+                + ", eventType=" + getEventType()
+                + ", accession=" + getAccession()
+                + ", mergedInto=" + getMergedInto()
+                + ", reason='" + getReason() + '\''
+                + ", createdDate=" + getCreatedDate()
+                + ", inactiveObjects=" + getInactiveObjects()
+                + '}';
+    }
 }
