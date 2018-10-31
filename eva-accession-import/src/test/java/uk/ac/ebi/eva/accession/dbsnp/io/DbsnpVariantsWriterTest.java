@@ -65,21 +65,21 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MA
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.CLUSTERED_VARIANT_ACCESSION_1;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.CLUSTERED_VARIANT_ACCESSION_2;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.CLUSTERED_VARIANT_ACCESSION_3;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.PROJECT_2;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.START_1;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.START_2;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.TAXONOMY_1;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.TAXONOMY_2;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.buildClusteredVariant;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.buildClusteredVariantEntity;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.buildSimpleWrapper;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.buildSubmittedVariant;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.buildSubmittedVariantEntity;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.defaultClusteredVariant;
-import static uk.ac.ebi.eva.accession.dbsnp.test.TestVariantBuilders.defaultSubmittedVariant;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_1;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_2;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_3;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.PROJECT_2;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.START_1;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.START_2;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.TAXONOMY_1;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.TAXONOMY_2;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildClusteredVariant;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildClusteredVariantEntity;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildSimpleWrapper;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildSubmittedVariant;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildSubmittedVariantEntity;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.defaultClusteredVariant;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.defaultSubmittedVariant;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest

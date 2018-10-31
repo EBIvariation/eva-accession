@@ -36,12 +36,11 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MA
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
-public class TestVariantBuilders {
+public class VariantBuilders {
 
     public static final int TAXONOMY_1 = 3880;
 
     public static final int TAXONOMY_2 = 3882;
-
 
     public static final String PROJECT_1 = "project_1";
 
