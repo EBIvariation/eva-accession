@@ -54,6 +54,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
@@ -634,6 +635,8 @@ public class DbsnpVariantsWriterTest {
         for (DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity : dbsnpSubmittedVariantEntities) {
             assertEquals(accession, dbsnpSubmittedVariantEntity.getClusteredVariantAccession());
         }
+        assertThat(mongoTemplate.count(query(where("accession").is(accession)), DbsnpClusteredVariantEntity.class))
+                .isGreaterThanOrEqualTo(1);
     }
 
     private void assertSubmittedUpdateOperationsHaveClusteredVariantAccession(int totalExpectedCount, int expectedCount,
@@ -1093,12 +1096,28 @@ public class DbsnpVariantsWriterTest {
         DbsnpSubmittedVariantEntity submittedVariantEntity4 = wrapper4.getSubmittedVariants().get(0);
 
         assertClusteredVariantStored(1, wrapper1);
+        // the first non-declustered RS is clusteredVariantAccession2. The non-declustered clusteredVariantAccession3
+        // (for submittedVariantEntity3) is merged into it. Then the declustered clusteredVariantAccession3 (for
+        // submittedVariantEntity4) is merged into the previously declustered clusteredVariantAccession1. Then, we have
+        // clusteredVariantEntity4 merged into 2 RS: clusteredVariantEntity and clusteredVariantEntity2.
+        assertClusteredVariantMergeOperationStored(2, 1, clusteredVariantEntity2);
+        assertClusteredVariantMergeOperationStored(2, 1, clusteredVariantEntity);
+
+        List<DbsnpClusteredVariantEntity> declustered = mongoTemplate.findAll(
+                DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
+        assertEquals(1, declustered.size());
+        assertEquals(clusteredVariantAccession1, declustered.get(0).getAccession());
+
         DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity1 = changeRS(submittedVariantEntity, null);
-        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity2 = changeRS(submittedVariantEntity2,
-                                                                               clusteredVariantAccession2);
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity2 = submittedVariantEntity2;
         DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity3 = changeRS(submittedVariantEntity3, null);
+
+        // as explained above, clusteredVariantAccession3 (for submittedVariantEntity4) was merged into
+        // clusteredVariantAccession1 and clusteredVariantAccession2, but we update the rs field to the
+        // clusteredVariantAccession2 because it's the active one.
         DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity4 = changeRS(submittedVariantEntity4,
                                                                                clusteredVariantAccession2);
+
         assertSubmittedVariantsStored(4, expectedSubmittedVariantEntity1, expectedSubmittedVariantEntity2,
                                       expectedSubmittedVariantEntity3, expectedSubmittedVariantEntity4);
         assertSubmittedVariantsHaveActiveClusteredVariantsAccession(clusteredVariantAccession2,
@@ -1108,18 +1127,6 @@ public class DbsnpVariantsWriterTest {
         assertSubmittedOperationType(EventType.MERGED, 0L);
         assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 1, clusteredVariantAccession1);
         assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 2, clusteredVariantAccession3);
-
-        // the first non-declustered RS is clusteredVariantEntity2. The non-declustered clusteredVariantEntity4 is
-        // merged into it. Then the declustered clusteredVariantEntity4 is merged into the previously declustered
-        // clusteredVariantEntity1. Then, we have clusteredVariantEntity4 merged into 2 RS, and we choose the
-        // non-declustered one as the only active one, so we merge clusteredVariantEntity1 into clusteredVariantEntity2
-        assertClusteredVariantMergeOperationStored(3, 2, clusteredVariantEntity2);
-        assertClusteredVariantMergeOperationStored(3, 1, clusteredVariantEntity);
-
-        List<DbsnpClusteredVariantEntity> declustered = mongoTemplate.findAll(
-                DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
-        assertEquals(1, declustered.size());
-        assertEquals(clusteredVariantAccession1, declustered.get(0).getAccession());
     }
 
     private void assertSubmittedOperationType(EventType operationType, long expectedCount) {
