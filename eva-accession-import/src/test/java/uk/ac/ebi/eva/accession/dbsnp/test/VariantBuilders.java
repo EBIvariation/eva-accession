@@ -70,10 +70,10 @@ public class VariantBuilders {
                                     DEFAULT_ASSEMBLY_MATCH, DEFAULT_ALLELES_MATCH, DEFAULT_VALIDATED, null);
     }
 
-    public static SubmittedVariant buildSubmittedVariant(Long clusteredVariantAccession3) {
-        SubmittedVariant submittedVariant3 = defaultSubmittedVariant();
-        submittedVariant3.setClusteredVariantAccession(clusteredVariantAccession3);
-        return submittedVariant3;
+    public static SubmittedVariant buildSubmittedVariant(Long clusteredVariantAccession) {
+        SubmittedVariant submittedVariant = defaultSubmittedVariant();
+        submittedVariant.setClusteredVariantAccession(clusteredVariantAccession);
+        return submittedVariant;
     }
 
     public static SubmittedVariant buildSubmittedVariant(Long clusteredVariantAccession, String project) {

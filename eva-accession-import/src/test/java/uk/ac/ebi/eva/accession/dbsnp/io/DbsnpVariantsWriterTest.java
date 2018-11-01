@@ -334,7 +334,7 @@ public class DbsnpVariantsWriterTest {
         wrapper1.setOperations(Collections.singletonList(operationEntity1));
 
         SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, START_2);
-        DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
+        DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
                                                                                           submittedVariant3);
         ClusteredVariant clusteredVariant2 = defaultClusteredVariant();
         DbsnpClusteredVariantEntity clusteredVariantEntity2 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_2,
@@ -350,8 +350,49 @@ public class DbsnpVariantsWriterTest {
         assertClusteredVariantMergeOperationStored(1, 1, wrapper1.getClusteredVariant());
         assertEquals(CLUSTERED_VARIANT_ACCESSION_1, submittedVariantEntity3.getClusteredVariantAccession());
         assertSubmittedVariantsStored(2, submittedVariantEntity1, submittedVariantEntity3);
-        assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 1, CLUSTERED_VARIANT_ACCESSION_1);
-        assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 1, CLUSTERED_VARIANT_ACCESSION_2);
+        assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 1, CLUSTERED_VARIANT_ACCESSION_1);
+        assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 1, CLUSTERED_VARIANT_ACCESSION_2);
+        assertSubmittedVariantMergeOperationStored(3, 1, submittedVariantEntity2);
+    }
+
+    @Test
+    public void mergedClusteredVariantsDeclusteredAndNonDeclusteredSubmittedVariants() throws Exception {
+        boolean allelesMatch = false;
+        SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1);
+        submittedVariant1.setAllelesMatch(allelesMatch);
+        DbsnpSubmittedVariantEntity submittedVariantEntity1 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
+                                                                                          submittedVariant1);
+        DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity1));
+
+
+        SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2);
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
+                                                                                          submittedVariant2);
+        SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2, START_2);
+        DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
+                                                                                          submittedVariant3);
+        DbsnpSubmittedVariantOperationEntity operationEntity3 = createOperation(submittedVariant3);
+        submittedVariant3.setClusteredVariantAccession(null);
+        submittedVariantEntity3.setClusteredVariantAccession(null);
+
+        ClusteredVariant clusteredVariant2 = defaultClusteredVariant();
+        DbsnpClusteredVariantEntity clusteredVariantEntity2 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_2,
+                                                                                          clusteredVariant2);
+        DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
+        wrapper2.setSubmittedVariants(Arrays.asList(submittedVariantEntity2, submittedVariantEntity3));
+        wrapper2.setClusteredVariant(clusteredVariantEntity2);
+        wrapper2.setOperations(Collections.singletonList(operationEntity3));
+
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
+
+        assertClusteredVariantStored(1, wrapper1);
+        assertClusteredVariantDeclusteredStored(1, wrapper2);
+        assertClusteredVariantMergeOperationStored(1, 1, wrapper1.getClusteredVariant());
+        assertEquals(CLUSTERED_VARIANT_ACCESSION_1, submittedVariantEntity2.getClusteredVariantAccession());
+        assertSubmittedVariantsStored(3, submittedVariantEntity1, submittedVariantEntity2, submittedVariantEntity3);
+        assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 0, CLUSTERED_VARIANT_ACCESSION_1);
+        assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 2, CLUSTERED_VARIANT_ACCESSION_2);
+        assertSubmittedVariantMergeOperationStored(2, 0, submittedVariantEntity2);
     }
 
     @Test
