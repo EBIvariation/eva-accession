@@ -12,7 +12,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VA
 public class ListenersConfiguration {
 
     @Bean(EXCLUDE_VARIANTS_LISTENER)
-    public StepListenerSupport importDbsnpVariantsProgressListener() {
+    public StepListenerSupport excludeVariantsListener() {
         return new ExcludeVariantsListener();
     }
 }

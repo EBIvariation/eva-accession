@@ -10,7 +10,7 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 public class InputParametersConfiguration {
 
     @Bean
-    @ConfigurationProperties(prefix = "release")
+    @ConfigurationProperties(prefix = "parameters")
     public InputParameters inputParameters() {
         return new InputParameters();
     }

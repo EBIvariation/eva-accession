@@ -23,6 +23,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,6 +35,26 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
     private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
+
+    private static final String ACCESSION_FIELD = "accession";
+
+    private static final String REFERENCE_ASSEMBLY_FIELD = "asm";
+
+    private static final String STUDY_FIELD = "study";
+
+    private static final String CONTIG_FIELD = "contig";
+
+    private static final String START_FIELD = "start";
+
+    private static final String TYPE_FIELD = "type";
+
+    private static final String REFERENCE_ALLELE_FIELD = "ref";
+
+    private static final String ALTERNATE_ALLELE_FIELD = "alt";
+
+    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
+
+    private static final String SS_INFO_FIELD = "ssInfo";
 
     private String assemblyAccession;
 
@@ -61,9 +82,10 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
     }
 
     List<Bson> buildAggregation() {
-        Bson match = Aggregates.match(Filters.eq("asm", assemblyAccession));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, "accession", "rs", "ssInfo");
-        Bson sort = Aggregates.sort(orderBy(ascending("contig", "start")));
+        Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
+        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
+                                        CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
+        Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         return Arrays.asList(match, lookup, sort);
     }
 
@@ -73,23 +95,23 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
     }
 
     Variant getVariant(Document clusteredVariant) {
-        String contig = (String) clusteredVariant.get("contig");
-        long start = (long) clusteredVariant.get("start");
-        long rs = (long) clusteredVariant.get("accession");
+        String contig = clusteredVariant.getString(CONTIG_FIELD);
+        long start = clusteredVariant.getLong(START_FIELD);
+        long rs = clusteredVariant.getLong(ACCESSION_FIELD);
         String reference = "";
         String alternate = "";
         long end = 0L;
         List<VariantSourceEntry> sourceEntries = new ArrayList<>();
-        String type = (String) clusteredVariant.get("type");
+        String type = clusteredVariant.getString(TYPE_FIELD);
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
         sourceEntries.add(new VariantSourceEntry(sequenceOntology, sequenceOntology));
 
-        List<Document> submittedVariants = (List) clusteredVariant.get("ssInfo");
+        Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
         for (Document submitedVariant : submittedVariants) {
-            reference = (String) submitedVariant.get("ref");
-            alternate = (String) submitedVariant.get("alt");
+            reference = submitedVariant.getString(REFERENCE_ALLELE_FIELD);
+            alternate = submitedVariant.getString(ALTERNATE_ALLELE_FIELD);
             end = calculateEnd(reference, alternate, start);
-            String study = (String) submitedVariant.get("study");
+            String study = submitedVariant.getString(STUDY_FIELD);
             sourceEntries.add(new VariantSourceEntry(study, study));
         }
 
@@ -100,8 +122,8 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
     }
 
     private long calculateEnd(String reference, String alternate, long start) {
-        long length = Math.max(reference.length(), alternate.length()) - 1;
-        return start + length;
+        long length = Math.max(reference.length(), alternate.length());
+        return start + length - 1;
     }
 
     @Override
