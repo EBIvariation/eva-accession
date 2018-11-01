@@ -56,6 +56,10 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
 
     private static final String SS_INFO_FIELD = "ssInfo";
 
+    private static final String VARIANT_CLASS_KEY = "VC";
+
+    private static final String STUDY_ID_KEY = "SID";
+
     private String assemblyAccession;
 
     private MongoClient mongoClient;
@@ -104,7 +108,6 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
         List<VariantSourceEntry> sourceEntries = new ArrayList<>();
         String type = clusteredVariant.getString(TYPE_FIELD);
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
-        sourceEntries.add(new VariantSourceEntry(sequenceOntology, sequenceOntology));
 
         Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
         for (Document submitedVariant : submittedVariants) {
@@ -112,7 +115,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
             alternate = submitedVariant.getString(ALTERNATE_ALLELE_FIELD);
             end = calculateEnd(reference, alternate, start);
             String study = submitedVariant.getString(STUDY_FIELD);
-            sourceEntries.add(new VariantSourceEntry(study, study));
+            sourceEntries.add(buildVariantSourceEntry(study, sequenceOntology));
         }
 
         Variant variant = new Variant(contig, start, end, reference, alternate);
@@ -124,6 +127,13 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
     private long calculateEnd(String reference, String alternate, long start) {
         long length = Math.max(reference.length(), alternate.length());
         return start + length - 1;
+    }
+
+    private VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology) {
+        VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
+        sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
+        sourceEntry.addAttribute(STUDY_ID_KEY, study);
+        return sourceEntry;
     }
 
     @Override
