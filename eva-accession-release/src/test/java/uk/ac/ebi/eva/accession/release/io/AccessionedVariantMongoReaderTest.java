@@ -42,7 +42,9 @@ import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -55,11 +57,19 @@ import static org.junit.Assert.assertEquals;
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class AccessionedVariantMongoReaderTest {
 
-    private static final String ASSEMBLY_ACCESSION = "GCF_000409795.2";
+    private static final String ASSEMBLY_ACCESSION_1 = "GCF_000409795.2";
+
+    private static final String ASSEMBLY_ACCESSION_2 = "GCF_000001735.3";
 
     private static final String TEST_DB = "test-db";
 
     public static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
+
+    private static final String RS_1 = "869808637";
+
+    private static final String RS_2 = "869927931";
+
+    private static final String RS_3 = "347048227";
 
     private AccessionedVariantMongoReader reader;
 
@@ -79,7 +89,7 @@ public class AccessionedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_1, mongoClient, TEST_DB);
     }
 
     @Test
@@ -113,5 +123,32 @@ public class AccessionedVariantMongoReaderTest {
         }
         reader.close();
         assertEquals(2, variants.size());
+    }
+
+    @Test
+    public void linkedSubmittedVariants() throws Exception {
+        reader.open(executionContext);
+        Map<String, Variant> variants = new HashMap<>();
+        Variant variant;
+        while ((variant = reader.read()) != null) {
+            variants.put(variant.getMainId(), variant);
+        }
+        reader.close();
+        assertEquals(2, variants.size());
+        assertEquals(2, variants.get(RS_1).getSourceEntries().size());
+        assertEquals(1, variants.get(RS_2).getSourceEntries().size());
+    }
+
+    @Test
+    public void queryOtherAssembly() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_2, mongoClient, TEST_DB);
+        reader.open(executionContext);
+        Map<String, Variant> variants = new HashMap<>();
+        Variant variant;
+        while ((variant = reader.read()) != null) {
+            variants.put(variant.getMainId(), variant);
+        }
+        assertEquals(1, variants.size());
+        assertEquals(2, variants.get(RS_3).getSourceEntries().size());
     }
 }
