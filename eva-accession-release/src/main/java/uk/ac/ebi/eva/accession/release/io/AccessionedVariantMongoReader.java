@@ -1,7 +1,6 @@
 package uk.ac.ebi.eva.accession.release.io;
 
 import com.mongodb.MongoClient;
-import com.mongodb.ServerAddress;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -17,6 +16,8 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
+import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
@@ -30,29 +31,38 @@ import static com.mongodb.client.model.Sorts.orderBy;
 
 public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> {
 
+    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
+
+    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
+
+    private String assemblyAccession;
+
+    private MongoClient mongoClient;
+
+    private String database;
+
     private MongoCursor<Document> cursor;
 
-    public AccessionedVariantMongoReader(){
+    public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient,
+                                         String database) {
+        this.assemblyAccession = assemblyAccession;
+        this.mongoClient = mongoClient;
+        this.database = database;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
-        MongoDatabase db = mongoClient.getDatabase("test-db");
-
-        MongoCollection<Document> collection = db.getCollection("dbsnpClusteredVariantEntity");
+        MongoDatabase db = mongoClient.getDatabase(database);
+        MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
                                                                   .allowDiskUse(true)
                                                                   .useCursor(true);
         cursor = clusteredVariants.iterator();
     }
 
-    private List<Bson> buildAggregation() {
-//        Bson match = Aggregates.match(Filters.eq("asm", "GCF_000001215.2")); //fruitfly 5M rs
-//        Bson match = Aggregates.match(Filters.eq("asm", "GCF_000409795.2")); //green monkey 500K rs
-//        Bson match = Aggregates.match(Filters.eq("asm", "GCF_000309985.1")); //field mustard 164 rs
-        Bson match = Aggregates.match(Filters.eq("asm", "GCF_000409795.2"));
-        Bson lookup = Aggregates.lookup("dbsnpSubmittedVariantEntity", "accession", "rs", "ssInfo");
+    List<Bson> buildAggregation() {
+        Bson match = Aggregates.match(Filters.eq("asm", assemblyAccession));
+        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, "accession", "rs", "ssInfo");
         Bson sort = Aggregates.sort(orderBy(ascending("contig", "start")));
         return Arrays.asList(match, lookup, sort);
     }
@@ -62,14 +72,17 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
         return cursor.hasNext() ? getVariant(cursor.next()) : null;
     }
 
-    private Variant getVariant(Document clusteredVariant) {
+    Variant getVariant(Document clusteredVariant) {
         String contig = (String) clusteredVariant.get("contig");
         long start = (long) clusteredVariant.get("start");
         long rs = (long) clusteredVariant.get("accession");
         String reference = "";
         String alternate = "";
         long end = 0L;
-        List<VariantSourceEntry> studies = new ArrayList<>();
+        List<VariantSourceEntry> sourceEntries = new ArrayList<>();
+        String type = (String) clusteredVariant.get("type");
+        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
+        sourceEntries.add(new VariantSourceEntry(sequenceOntology, sequenceOntology));
 
         List<Document> submittedVariants = (List) clusteredVariant.get("ssInfo");
         for (Document submitedVariant : submittedVariants) {
@@ -77,20 +90,18 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
             alternate = (String) submitedVariant.get("alt");
             end = calculateEnd(reference, alternate, start);
             String study = (String) submitedVariant.get("study");
-            studies.add(new VariantSourceEntry(study, study));
-            //TODO: Add variant class
+            sourceEntries.add(new VariantSourceEntry(study, study));
         }
 
         Variant variant = new Variant(contig, start, end, reference, alternate);
         variant.setMainId(Objects.toString(rs));
-        variant.addSourceEntries(studies);
+        variant.addSourceEntries(sourceEntries);
         return variant;
     }
 
-    long calculateEnd(String reference, String alternate, long start) {
-        long referenceLength = reference.length() - 1;
-        long alternateLength = alternate.length() - 1;
-        return (referenceLength >= alternateLength) ? start + referenceLength : start + alternateLength;
+    private long calculateEnd(String reference, String alternate, long start) {
+        long length = Math.max(reference.length(), alternate.length()) - 1;
+        return start + length;
     }
 
     @Override
@@ -100,6 +111,5 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
 
     @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
-
     }
 }
