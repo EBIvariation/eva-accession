@@ -47,6 +47,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 
 @RunWith(SpringRunner.class)
@@ -60,6 +63,8 @@ public class AccessionedVariantMongoReaderTest {
     private static final String ASSEMBLY_ACCESSION_1 = "GCF_000409795.2";
 
     private static final String ASSEMBLY_ACCESSION_2 = "GCF_000001735.3";
+
+    private static final String ASSEMBLY_ACCESSION_3 = "GCF_000372685.1";
 
     private static final String TEST_DB = "test-db";
 
@@ -94,7 +99,6 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void readTestDataMongo() {
-        MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
         MongoDatabase db = mongoClient.getDatabase(TEST_DB);
         MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY);
 
@@ -150,5 +154,62 @@ public class AccessionedVariantMongoReaderTest {
         }
         assertEquals(1, variants.size());
         assertEquals(2, variants.get(RS_3).getSourceEntries().size());
+    }
+
+    @Test
+    public void variantClassAttribute() throws Exception {
+        reader.open(executionContext);
+        Map<String, Variant> variants = new HashMap<>();
+        Variant variant;
+        while ((variant = reader.read()) != null) {
+            variants.put(variant.getMainId(), variant);
+        }
+        reader.close();
+        assertEquals(2, variants.size());
+        String snpSequenceOntology = "SO:0001483";
+        assertTrue(variants
+                           .get(RS_1)
+                           .getSourceEntries()
+                           .stream()
+                           .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+        assertTrue(variants
+                           .get(RS_2)
+                           .getSourceEntries()
+                           .stream()
+                           .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+    }
+
+    @Test
+    public void studyIdAttribute() throws Exception {
+        reader.open(executionContext);
+        Map<String, Variant> variants = new HashMap<>();
+        Variant variant;
+        while ((variant = reader.read()) != null) {
+            variants.put(variant.getMainId(), variant);
+        }
+        reader.close();
+        assertEquals(2, variants.size());
+
+        String studyId;
+        studyId = "PRJEB7923";
+        assertEquals(studyId, variants.get(RS_1).getSourceEntry(studyId, studyId).getAttribute(STUDY_ID_KEY));
+        studyId = "PRJEB9999";
+        assertEquals(studyId, variants.get(RS_1).getSourceEntry(studyId, studyId).getAttribute(STUDY_ID_KEY));
+        studyId = "PRJEB7923";
+        assertEquals(studyId, variants.get(RS_2).getSourceEntry(studyId, studyId).getAttribute(STUDY_ID_KEY));
+    }
+
+    @Test
+    public void clusteredVariantWithoutSubmittedVariants() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, mongoClient, TEST_DB);
+        reader.open(executionContext);
+        List<Variant> variants = new ArrayList<>();
+        Variant variant;
+        while ((variant = reader.read()) != null) {
+            variants.add(variant);
+        }
+        reader.close();
+        assertEquals(1, variants.size());
+        assertEquals(0, variants.get(0).getSourceEntries().size());
     }
 }

@@ -56,9 +56,9 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
 
     private static final String SS_INFO_FIELD = "ssInfo";
 
-    private static final String VARIANT_CLASS_KEY = "VC";
+    static final String VARIANT_CLASS_KEY = "VC";
 
-    private static final String STUDY_ID_KEY = "SID";
+    static final String STUDY_ID_KEY = "SID";
 
     private String assemblyAccession;
 
@@ -104,7 +104,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
         long rs = clusteredVariant.getLong(ACCESSION_FIELD);
         String reference = "";
         String alternate = "";
-        long end = 0L;
+        long end = start;
         List<VariantSourceEntry> sourceEntries = new ArrayList<>();
         String type = clusteredVariant.getString(TYPE_FIELD);
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));

@@ -38,6 +38,17 @@
       "createdDate": ISODate(
       "2013-03-20T15:55:49.673Z"
       )
+    },
+    {
+      "_id" : "5C44B8E760D038D41CCAACCE4654B4B940604136",
+      "asm" : "GCF_000372685.1",
+      "tax" : 7994,
+      "contig" : "KB882311.1",
+      "start" : NumberLong(1232078),
+      "type" : "SNV",
+      "accession" : NumberLong(796064877),
+      "version" : 1,
+      "createdDate" : ISODate("2015-08-19T09:34:00Z")
     }
   ]
 }
