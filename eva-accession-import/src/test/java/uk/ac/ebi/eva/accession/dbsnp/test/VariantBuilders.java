@@ -52,6 +52,14 @@ public class VariantBuilders {
 
     public static final Long CLUSTERED_VARIANT_ACCESSION_3 = 14L;
 
+    public static final Long SUBMITTED_VARIANT_ACCESSION_1 = 15L;
+
+    public static final Long SUBMITTED_VARIANT_ACCESSION_2 = 16L;
+
+    public static final Long SUBMITTED_VARIANT_ACCESSION_3 = 17L;
+
+    public static final Long SUBMITTED_VARIANT_ACCESSION_4 = 18L;
+
     public static final int START_1 = 100;
 
     public static final int START_2 = 200;
