@@ -19,7 +19,6 @@ import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.MongoClient;
-import com.mongodb.ServerAddress;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -66,9 +65,11 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final String ASSEMBLY_ACCESSION_3 = "GCF_000372685.1";
 
+    private static final String ASSEMBLY_ACCESSION_4 = "GCF_000309985.1";
+
     private static final String TEST_DB = "test-db";
 
-    public static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
+    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
     private static final String RS_1 = "869808637";
 
@@ -119,6 +120,11 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void reader() throws Exception {
+        List<Variant> variants = readIntoList();
+        assertEquals(2, variants.size());
+    }
+
+    private List<Variant> readIntoList() throws Exception {
         reader.open(executionContext);
         List<Variant> variants = new ArrayList<>();
         Variant variant;
@@ -126,11 +132,18 @@ public class AccessionedVariantMongoReaderTest {
             variants.add(variant);
         }
         reader.close();
-        assertEquals(2, variants.size());
+        return variants;
     }
 
     @Test
     public void linkedSubmittedVariants() throws Exception {
+        Map<String, Variant> variants = readIntoMap();
+        assertEquals(2, variants.size());
+        assertEquals(2, variants.get(RS_1).getSourceEntries().size());
+        assertEquals(1, variants.get(RS_2).getSourceEntries().size());
+    }
+
+    private Map<String, Variant> readIntoMap() throws Exception {
         reader.open(executionContext);
         Map<String, Variant> variants = new HashMap<>();
         Variant variant;
@@ -138,9 +151,7 @@ public class AccessionedVariantMongoReaderTest {
             variants.put(variant.getMainId(), variant);
         }
         reader.close();
-        assertEquals(2, variants.size());
-        assertEquals(2, variants.get(RS_1).getSourceEntries().size());
-        assertEquals(1, variants.get(RS_2).getSourceEntries().size());
+        return variants;
     }
 
     @Test
@@ -157,14 +168,8 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     @Test
-    public void variantClassAttribute() throws Exception {
-        reader.open(executionContext);
-        Map<String, Variant> variants = new HashMap<>();
-        Variant variant;
-        while ((variant = reader.read()) != null) {
-            variants.put(variant.getMainId(), variant);
-        }
-        reader.close();
+    public void snpVariantClassAttribute() throws Exception {
+        Map<String, Variant> variants = readIntoMap();
         assertEquals(2, variants.size());
         String snpSequenceOntology = "SO:0001483";
         assertTrue(variants
@@ -180,14 +185,20 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     @Test
+    public void insertionVariantClassAttribute() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB);
+        List<Variant> variants = readIntoList();
+        assertEquals(1, variants.size());
+        String snpSequenceOntology = "SO:0000667";
+        assertTrue(variants.get(0)
+                           .getSourceEntries()
+                           .stream()
+                           .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+    }
+
+    @Test
     public void studyIdAttribute() throws Exception {
-        reader.open(executionContext);
-        Map<String, Variant> variants = new HashMap<>();
-        Variant variant;
-        while ((variant = reader.read()) != null) {
-            variants.put(variant.getMainId(), variant);
-        }
-        reader.close();
+        Map<String, Variant> variants = readIntoMap();
         assertEquals(2, variants.size());
 
         String studyId;
@@ -202,13 +213,7 @@ public class AccessionedVariantMongoReaderTest {
     @Test
     public void clusteredVariantWithoutSubmittedVariants() throws Exception {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, mongoClient, TEST_DB);
-        reader.open(executionContext);
-        List<Variant> variants = new ArrayList<>();
-        Variant variant;
-        while ((variant = reader.read()) != null) {
-            variants.add(variant);
-        }
-        reader.close();
+        List<Variant> variants = readIntoList();
         assertEquals(1, variants.size());
         assertEquals(0, variants.get(0).getSourceEntries().size());
     }

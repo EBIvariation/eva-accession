@@ -135,6 +135,22 @@
       "createdDate": ISODate(
       "2017-02-10T14:52:00Z"
       )
+    },
+    {
+      "_id" : "36DCF444101DEC1EBEF3D97F443BF9FA247C9B3A",
+      "seq" : "GCF_000309985.1",
+      "tax" : 3711,
+      "study" : "WENDELL_2012-VNTR",
+      "contig" : "CM001642.1",
+      "start" : NumberLong(7356604),
+      "ref" : "",
+      "alt" : "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC",
+      "rs" : NumberLong(268233057),
+      "evidence" : false,
+      "validated" : true,
+      "accession" : NumberLong(490570267),
+      "version" : 1,
+      "createdDate" : ISODate("2012-02-17T10:01:00Z")
     }
   ]
 }
