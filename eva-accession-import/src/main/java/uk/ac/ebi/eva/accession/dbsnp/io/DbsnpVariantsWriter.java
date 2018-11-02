@@ -284,17 +284,17 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private void throwSeveralInactiveMergesException(Pair<String, Long> hashAndAccession, List<Long> mergedIntoList,
                                                      DbsnpClusteredVariantEntity activeClusteredVariant) {
-        String active;
+        String activeVariantMessage;
         if (activeClusteredVariant == null) {
-            active = ". There is no active variant with that hash.";
+            activeVariantMessage = ". There is no active variant with that hash.";
         } else {
-            active = ". The active variant with that hash is rs" + activeClusteredVariant.getAccession();
+            activeVariantMessage = ". The active variant with that hash is rs" + activeClusteredVariant.getAccession();
         }
         throw new IllegalStateException(
                 "Clustered variant rs" + hashAndAccession.getSecond() + " was merged into several other "
                         + "clustered variants with the same hash: " + mergedIntoList + " and none of them"
                         + " is active, i.e. present in the collection for "
-                        + DbsnpClusteredVariantEntity.class.getSimpleName() + active);
+                        + DbsnpClusteredVariantEntity.class.getSimpleName() + activeVariantMessage);
     }
 
     private void updateClusteredVariantAccessionsInSubmittedVariants(DbsnpVariantsWrapper wrapper,
