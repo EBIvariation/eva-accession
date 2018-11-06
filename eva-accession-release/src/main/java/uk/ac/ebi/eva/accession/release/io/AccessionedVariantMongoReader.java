@@ -24,13 +24,15 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
 
-public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> {
+public class AccessionedVariantMongoReader implements ItemStreamReader<List<Variant>> {
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
@@ -94,34 +96,37 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<Variant> 
     }
 
     @Override
-    public Variant read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-        return cursor.hasNext() ? getVariant(cursor.next()) : null;
+    public List<Variant> read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+        return cursor.hasNext() ? getVariants(cursor.next()) : null;
     }
 
-    Variant getVariant(Document clusteredVariant) {
+    List<Variant> getVariants(Document clusteredVariant) {
         String contig = clusteredVariant.getString(CONTIG_FIELD);
         long start = clusteredVariant.getLong(START_FIELD);
         long rs = clusteredVariant.getLong(ACCESSION_FIELD);
-        String reference = "";
-        String alternate = "";
-        long end = start;
-        List<VariantSourceEntry> sourceEntries = new ArrayList<>();
         String type = clusteredVariant.getString(TYPE_FIELD);
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
 
+        Map<String, Variant> variants = new HashMap<>();
         Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
-        for (Document submitedVariant : submittedVariants) {
-            reference = submitedVariant.getString(REFERENCE_ALLELE_FIELD);
-            alternate = submitedVariant.getString(ALTERNATE_ALLELE_FIELD);
-            end = calculateEnd(reference, alternate, start);
-            String study = submitedVariant.getString(STUDY_FIELD);
-            sourceEntries.add(buildVariantSourceEntry(study, sequenceOntology));
-        }
+        for (Document submittedVariant : submittedVariants) {
+            String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
+            String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
+            long end = calculateEnd(reference, alternate, start);
+            String study = submittedVariant.getString(STUDY_FIELD);
+            VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology);
 
-        Variant variant = new Variant(contig, start, end, reference, alternate);
-        variant.setMainId(Objects.toString(rs));
-        variant.addSourceEntries(sourceEntries);
-        return variant;
+            String variantId = contig + "_" + start + "_" + reference + "_" + alternate;
+            if (variants.containsKey(variantId)) {
+                variants.get(variantId).addSourceEntry(sourceEntry);
+            } else {
+                Variant variant = new Variant(contig, start, end, reference, alternate);
+                variant.setMainId(Objects.toString(rs));
+                variant.addSourceEntry(sourceEntry);
+                variants.put(variantId, variant);
+            }
+        }
+        return new ArrayList<>(variants.values());
     }
 
     private long calculateEnd(String reference, String alternate, long start) {

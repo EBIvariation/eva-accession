@@ -44,6 +44,10 @@
             <artifactId>nosqlunit-mongodb</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>variation-commons-batch</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
