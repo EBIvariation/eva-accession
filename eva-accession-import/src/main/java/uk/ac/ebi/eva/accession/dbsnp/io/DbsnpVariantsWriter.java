@@ -312,8 +312,8 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private DbsnpSubmittedVariantOperationEntity buildOperation(DbsnpSubmittedVariantEntity originalSubmittedVariant,
                                                                 Long clusteredVariantMergedInto) {
-        DbsnpSubmittedVariantInactiveEntity inactiveEntity =
-                new DbsnpSubmittedVariantInactiveEntity(originalSubmittedVariant);
+        DbsnpSubmittedVariantInactiveEntity inactiveEntity = new DbsnpSubmittedVariantInactiveEntity(
+                originalSubmittedVariant);
 
         Long originalClusteredVariant = originalSubmittedVariant.getClusteredVariantAccession();
         String reason = "Original rs" + originalClusteredVariant + " was merged into rs" + clusteredVariantMergedInto + ".";
@@ -477,7 +477,8 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                     operation ->
                             operation.getEventType().equals(EventType.MERGED)
                                     && mergedInto.getAccession().equals(operation.getMergedInto())
-                                    && original.getHashedMessage().equals(operation.getInactiveObjects().get(0).getHashedMessage()));
+                                    && original.getHashedMessage().equals(
+                                            operation.getInactiveObjects().get(0).getHashedMessage()));
         }
     }
 }
