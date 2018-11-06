@@ -251,8 +251,8 @@ public class DbsnpVariantsWriterTest {
         assertions.assertClusteredVariantMergeOperationStored(1, 1, wrapper1.getClusteredVariant());
         assertEquals(CLUSTERED_VARIANT_ACCESSION_1, submittedVariantEntity3.getClusteredVariantAccession());
         assertions.assertSubmittedVariantsStored(2, submittedVariantEntity1, submittedVariantEntity3);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 1, CLUSTERED_VARIANT_ACCESSION_1);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 1, CLUSTERED_VARIANT_ACCESSION_2);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(3, 1, CLUSTERED_VARIANT_ACCESSION_1);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(3, 1, CLUSTERED_VARIANT_ACCESSION_2);
         assertions.assertSubmittedVariantMergeOperationStored(3, 1, submittedVariantEntity2);
     }
 
@@ -286,8 +286,8 @@ public class DbsnpVariantsWriterTest {
         assertions.assertClusteredVariantMergeOperationStored(1, 1, wrapper1.getClusteredVariant());
         assertEquals(CLUSTERED_VARIANT_ACCESSION_1, submittedVariantEntity2.getClusteredVariantAccession());
         assertions.assertSubmittedVariantsStored(3, submittedVariantEntity1, submittedVariantEntity2, submittedVariantEntity3);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 0, CLUSTERED_VARIANT_ACCESSION_1);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 2, CLUSTERED_VARIANT_ACCESSION_2);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 0, CLUSTERED_VARIANT_ACCESSION_1);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 2, CLUSTERED_VARIANT_ACCESSION_2);
         assertions.assertSubmittedVariantMergeOperationStored(2, 0, submittedVariantEntity2);
     }
 
@@ -512,7 +512,7 @@ public class DbsnpVariantsWriterTest {
         assertions.assertSubmittedVariantsHaveActiveClusteredVariantsAccession(wrapper.getClusteredVariant().getAccession(),
                                                                     wrapper.getSubmittedVariants().get(0),
                                                                     expectedSubmittedVariantEntity2);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(1, 1, clusteredVariantEntity2.getAccession());
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(1, 1, clusteredVariantEntity2.getAccession());
         assertions.assertClusteredVariantMergeOperationStored(1, 1, clusteredVariantEntity);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
@@ -566,7 +566,7 @@ public class DbsnpVariantsWriterTest {
         assertions.assertSubmittedVariantsHaveActiveClusteredVariantsAccession(wrapper.getClusteredVariant().getAccession(),
                                                                     wrapper.getSubmittedVariants().get(0),
                                                                     expectedSubmittedVariantEntity2);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(1, 1, clusteredVariantEntity2.getAccession());
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(1, 1, clusteredVariantEntity2.getAccession());
         assertions.assertClusteredVariantMergeOperationStored(1, 1, clusteredVariantEntity);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
@@ -612,8 +612,8 @@ public class DbsnpVariantsWriterTest {
                                                                     wrapper.getSubmittedVariants().get(0),
                                                                     wrapper2.getSubmittedVariants().get(0),
                                                                     wrapper3.getSubmittedVariants().get(0));
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 1, clusteredVariantEntity2.getAccession());
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 1, clusteredVariantEntity3.getAccession());
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 1, clusteredVariantEntity2.getAccession());
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 1, clusteredVariantEntity3.getAccession());
 
         assertions.assertClusteredVariantMergeOperationStored(2, 2, clusteredVariantEntity);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
@@ -701,7 +701,7 @@ public class DbsnpVariantsWriterTest {
                                                                     expectedSubmittedVariantEntity3);
         assertions.assertSubmittedVariantsHaveActiveClusteredVariantsAccession(wrapper2.getClusteredVariant().getAccession(),
                                                                     expectedSubmittedVariantEntity4);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 2, clusteredVariantAccession3);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 2, clusteredVariantAccession3);
         assertions.assertClusteredVariantMergeOperationStored(2, 1, clusteredVariantEntity);
         assertions.assertClusteredVariantMergeOperationStored(2, 1, clusteredVariantEntity2);
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
@@ -821,19 +821,22 @@ public class DbsnpVariantsWriterTest {
 
         // then
         assertions.assertClusteredVariantStored(1, wrapper);
+        assertions.assertClusteredVariantMergeOperationStored(2, 2, clusteredVariantEntity1);
+
         DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity2 = changeRS(submittedVariantEntity2,
                                                                                clusteredVariantEntity1.getAccession());
         DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity3 = changeRS(submittedVariantEntity3,
                                                                                clusteredVariantEntity1.getAccession());
         assertions.assertSubmittedVariantsStored(2, submittedVariantEntity1, expectedSubmittedVariantEntity3);
-        assertions.assertSubmittedVariantsHaveActiveClusteredVariantsAccession(wrapper.getClusteredVariant().getAccession(),
-                                                                    expectedSubmittedVariantEntity2,
-                                                                    expectedSubmittedVariantEntity3);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(5, 1, clusteredVariantAccession2);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(5, 2, clusteredVariantAccession3);
+        assertions.assertSubmittedVariantsHaveActiveClusteredVariantsAccession(clusteredVariantAccession1,
+                                                                               expectedSubmittedVariantEntity2,
+                                                                               expectedSubmittedVariantEntity3);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(5, 1,
+                                                                                        clusteredVariantAccession2);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(5, 2,
+                                                                                        clusteredVariantAccession3);
         assertions.assertSubmittedVariantMergeOperationStored(5, 1, submittedVariantEntity1);
         assertions.assertSubmittedVariantMergeOperationStored(5, 1, submittedVariantEntity3);
-        // could be 3 operations total? 2 copies for clusteredVariantEntity3
 
         assertEquals(0, mongoTemplate.count(new Query(), DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME));
     }
@@ -975,12 +978,14 @@ public class DbsnpVariantsWriterTest {
         assertions.assertSubmittedVariantsStored(4, expectedSubmittedVariantEntity1, expectedSubmittedVariantEntity2,
                                       expectedSubmittedVariantEntity3, expectedSubmittedVariantEntity4);
         assertions.assertSubmittedVariantsHaveActiveClusteredVariantsAccession(clusteredVariantAccession2,
-                                                                    expectedSubmittedVariantEntity2,
-                                                                    expectedSubmittedVariantEntity4);
+                                                                               expectedSubmittedVariantEntity2,
+                                                                               expectedSubmittedVariantEntity4);
         assertions.assertSubmittedOperationType(EventType.UPDATED, 3L);
         assertions.assertSubmittedOperationType(EventType.MERGED, 0L);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 1, clusteredVariantAccession1);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(3, 2, clusteredVariantAccession3);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(3, 1,
+                                                                                        clusteredVariantAccession1);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(3, 2,
+                                                                                        clusteredVariantAccession3);
     }
 
     /**
@@ -1106,6 +1111,7 @@ public class DbsnpVariantsWriterTest {
                                                                     expectedSubmittedVariantEntity4);
         assertions.assertSubmittedOperationType(EventType.UPDATED, 2L);
         assertions.assertSubmittedOperationType(EventType.MERGED, 0L);
-        assertions.assertSubmittedUpdateOperationsHaveClusteredVariantAccession(2, 2, clusteredVariantAccession3);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 2,
+                                                                                        clusteredVariantAccession3);
     }
 }

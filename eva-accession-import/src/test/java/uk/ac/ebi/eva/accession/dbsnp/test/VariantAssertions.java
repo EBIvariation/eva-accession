@@ -213,16 +213,16 @@ public class VariantAssertions {
         assertTrue(accessionCount >= 1);
     }
 
-    public void assertSubmittedUpdateOperationsHaveClusteredVariantAccession(int totalExpectedCount, int expectedCount,
-                                                                              Long expectedClusteredVariantAccession) {
+    public void assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(
+            int expectedTotalOperations, int expectedOperations, Long expectedClusteredVariantAccession) {
         int totalCount = mongoTemplate.find(new Query(), DbsnpSubmittedVariantOperationEntity.class).size();
-        assertEquals(totalExpectedCount, totalCount);
+        assertEquals(expectedTotalOperations, totalCount);
 
         List<DbsnpSubmittedVariantOperationEntity> submittedOperations = mongoTemplate.find(
                 query(where(INACTIVE_OBJECTS_RS_KEY).is(expectedClusteredVariantAccession)
                                                     .and(EVENT_TYPE_KEY).is(EventType.UPDATED)),
                 DbsnpSubmittedVariantOperationEntity.class);
-        assertEquals(expectedCount, submittedOperations.size());
+        assertEquals(expectedOperations, submittedOperations.size());
     }
 
     public void assertSubmittedOperationType(EventType operationType, long expectedCount) {
