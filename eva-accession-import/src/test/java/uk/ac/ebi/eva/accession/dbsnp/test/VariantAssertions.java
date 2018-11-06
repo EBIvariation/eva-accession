@@ -41,6 +41,14 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredW
 
 public class VariantAssertions {
 
+    private static final String MERGE_INTO_KEY = "mergeInto";
+
+    private static final String EVENT_TYPE_KEY = "eventType";
+
+    private static final String INACTIVE_OBJECTS_RS_KEY = "inactiveObjects.rs";
+
+    private static final String ACCESSION_KEY = "accession";
+
     private MongoTemplate mongoTemplate;
 
     private ImportCounts importCounts;
@@ -123,70 +131,76 @@ public class VariantAssertions {
 
     public void assertClusteredVariantMergeOperationStored(int expectedTotalOperations, int expectedMatchingOperations,
                                                             DbsnpClusteredVariantEntity mergedInto) {
-        List<DbsnpClusteredVariantOperationEntity> operationEntities = mongoTemplate.find(
-                new Query(), DbsnpClusteredVariantOperationEntity.class);
-        if (expectedTotalOperations != operationEntities.size()) {
-            fail("Expected " + expectedTotalOperations + " clustered variants operations, there are "
-                         + operationEntities.size() + ".\nFull collection content: " + operationEntities);
+        List<DbsnpClusteredVariantOperationEntity> totalOperationEntities = mongoTemplate.findAll(
+                DbsnpClusteredVariantOperationEntity.class);
+        if (expectedTotalOperations != totalOperationEntities.size()) {
+            fail("Expected " + expectedTotalOperations + " clustered variant operations, there are "
+                         + totalOperationEntities.size() + ".\nFull collection content: " + totalOperationEntities);
         }
 
-        long matchingOperations = operationEntities
-                .stream()
-                .filter(op -> op.getMergedInto().equals(mergedInto.getAccession()))
-                .map(operation -> {
-                    assertEquals(EventType.MERGED, operation.getEventType());
-                    List<DbsnpClusteredVariantInactiveEntity> inactiveObjects = operation.getInactiveObjects();
-                    assertEquals(1, inactiveObjects.size());
-                    DbsnpClusteredVariantInactiveEntity inactiveEntity = inactiveObjects.get(0);
-                    assertNotEquals(mergedInto.getAccession(), inactiveEntity.getAccession());
+        List<DbsnpClusteredVariantOperationEntity> operationEntities = mongoTemplate.find(
+                query(where(MERGE_INTO_KEY).is(mergedInto.getAccession())), DbsnpClusteredVariantOperationEntity.class);
+        if (expectedMatchingOperations != operationEntities.size()) {
+            fail("Expected " + expectedMatchingOperations + " clustered variant operations, there are "
+                         + operationEntities.size() + ".\nFull collection content: " + totalOperationEntities);
+        }
 
-                    assertEquals(mergedInto.getAssemblyAccession(), inactiveEntity.getAssemblyAccession());
-                    assertEquals(mergedInto.getContig(), inactiveEntity.getContig());
-                    assertEquals(mergedInto.getStart(), inactiveEntity.getStart());
-                    assertEquals(mergedInto.getTaxonomyAccession(), inactiveEntity.getTaxonomyAccession());
-                    assertEquals(mergedInto.getType(), inactiveEntity.getType());
-                    assertEquals(mergedInto.isValidated(), inactiveEntity.isValidated());
-                    return 1;
-                })
-                .count();
-        assertEquals(expectedMatchingOperations, matchingOperations);
+        operationEntities.forEach(operation -> {
+            assertEquals(EventType.MERGED, operation.getEventType());
+            List<DbsnpClusteredVariantInactiveEntity> inactiveObjects = operation.getInactiveObjects();
+            assertEquals(1, inactiveObjects.size());
+            DbsnpClusteredVariantInactiveEntity inactiveEntity = inactiveObjects.get(0);
+            assertNotEquals(mergedInto.getAccession(), inactiveEntity.getAccession());
+
+            assertEquals(mergedInto.getAssemblyAccession(), inactiveEntity.getAssemblyAccession());
+            assertEquals(mergedInto.getContig(), inactiveEntity.getContig());
+            assertEquals(mergedInto.getStart(), inactiveEntity.getStart());
+            assertEquals(mergedInto.getTaxonomyAccession(), inactiveEntity.getTaxonomyAccession());
+            assertEquals(mergedInto.getType(), inactiveEntity.getType());
+            assertEquals(mergedInto.isValidated(), inactiveEntity.isValidated());
+        });
     }
 
     public void assertSubmittedVariantMergeOperationStored(int expectedTotalOperations, int expectedMatchingOperations,
                                                             DbsnpSubmittedVariantEntity mergedInto) {
-        List<DbsnpSubmittedVariantOperationEntity> operationEntities = mongoTemplate.findAll(
+        List<DbsnpSubmittedVariantOperationEntity> totalOperationEntities = mongoTemplate.findAll(
                 DbsnpSubmittedVariantOperationEntity.class);
-        assertEquals(expectedTotalOperations, operationEntities.size());
+        if (expectedTotalOperations != totalOperationEntities.size()) {
+            fail("Expected " + expectedTotalOperations + " submitted variant operations, there are "
+                         + totalOperationEntities.size() + ".\nFull collection content: " + totalOperationEntities);
+        }
 
-        long matchingOperations = operationEntities
-                .stream()
-                .filter(op -> mergedInto.getAccession().equals(op.getMergedInto()))
-                .map(operation -> {
-                    assertEquals(EventType.MERGED, operation.getEventType());
-                    List<DbsnpSubmittedVariantInactiveEntity> inactiveObjects = operation.getInactiveObjects();
-                    assertEquals(1, inactiveObjects.size());
-                    DbsnpSubmittedVariantInactiveEntity inactiveEntity = inactiveObjects.get(0);
-                    assertNotEquals(mergedInto.getAccession(), inactiveEntity.getAccession());
+        List<DbsnpSubmittedVariantOperationEntity> operationEntities = mongoTemplate.find(
+                query(where(MERGE_INTO_KEY).is(mergedInto.getAccession()).and("eventType").is(EventType.MERGED)),
+                DbsnpSubmittedVariantOperationEntity.class);
+        if (expectedMatchingOperations != operationEntities.size()) {
+            fail("Expected " + expectedMatchingOperations + " submitted variant operations, there are "
+                         + operationEntities.size() + ".\nFull collection content: " + totalOperationEntities);
+        }
 
-                    assertEquals(mergedInto.getReferenceSequenceAccession(),
-                                 inactiveEntity.getReferenceSequenceAccession());
-                    assertEquals(mergedInto.getTaxonomyAccession(), inactiveEntity.getTaxonomyAccession());
-                    assertEquals(mergedInto.getProjectAccession(), inactiveEntity.getProjectAccession());
-                    assertEquals(mergedInto.getContig(), inactiveEntity.getContig());
-                    assertEquals(mergedInto.getStart(), inactiveEntity.getStart());
-                    assertEquals(mergedInto.getReferenceAllele(), inactiveEntity.getReferenceAllele());
-                    assertEquals(mergedInto.getAlternateAllele(), inactiveEntity.getAlternateAllele());
-                    assertEquals(mergedInto.getClusteredVariantAccession(),
-                                 inactiveEntity.getClusteredVariantAccession());
-                    assertEquals(mergedInto.isSupportedByEvidence(),
-                                 inactiveEntity.isSupportedByEvidence());
-                    assertEquals(mergedInto.isAssemblyMatch(), inactiveEntity.isAssemblyMatch());
-                    assertEquals(mergedInto.isAllelesMatch(), inactiveEntity.isAllelesMatch());
-                    assertEquals(mergedInto.isValidated(), inactiveEntity.isValidated());
-                    return 1;
-                })
-                .count();
-        assertEquals(expectedMatchingOperations, matchingOperations);
+        operationEntities.forEach(operation -> {
+            assertEquals(EventType.MERGED, operation.getEventType());
+            List<DbsnpSubmittedVariantInactiveEntity> inactiveObjects = operation.getInactiveObjects();
+            assertEquals(1, inactiveObjects.size());
+            DbsnpSubmittedVariantInactiveEntity inactiveEntity = inactiveObjects.get(0);
+            assertNotEquals(mergedInto.getAccession(), inactiveEntity.getAccession());
+
+            assertEquals(mergedInto.getReferenceSequenceAccession(),
+                         inactiveEntity.getReferenceSequenceAccession());
+            assertEquals(mergedInto.getTaxonomyAccession(), inactiveEntity.getTaxonomyAccession());
+            assertEquals(mergedInto.getProjectAccession(), inactiveEntity.getProjectAccession());
+            assertEquals(mergedInto.getContig(), inactiveEntity.getContig());
+            assertEquals(mergedInto.getStart(), inactiveEntity.getStart());
+            assertEquals(mergedInto.getReferenceAllele(), inactiveEntity.getReferenceAllele());
+            assertEquals(mergedInto.getAlternateAllele(), inactiveEntity.getAlternateAllele());
+            assertEquals(mergedInto.getClusteredVariantAccession(),
+                         inactiveEntity.getClusteredVariantAccession());
+            assertEquals(mergedInto.isSupportedByEvidence(),
+                         inactiveEntity.isSupportedByEvidence());
+            assertEquals(mergedInto.isAssemblyMatch(), inactiveEntity.isAssemblyMatch());
+            assertEquals(mergedInto.isAllelesMatch(), inactiveEntity.isAllelesMatch());
+            assertEquals(mergedInto.isValidated(), inactiveEntity.isValidated());
+        });
     }
 
     public void assertSubmittedVariantsHaveActiveClusteredVariantsAccession(
@@ -194,7 +208,7 @@ public class VariantAssertions {
         for (DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity : dbsnpSubmittedVariantEntities) {
             assertEquals(accession, dbsnpSubmittedVariantEntity.getClusteredVariantAccession());
         }
-        long accessionCount = mongoTemplate.count(query(where("accession").is(accession)),
+        long accessionCount = mongoTemplate.count(query(where(ACCESSION_KEY).is(accession)),
                                               DbsnpClusteredVariantEntity.class);
         assertTrue(accessionCount >= 1);
     }
@@ -205,15 +219,15 @@ public class VariantAssertions {
         assertEquals(totalExpectedCount, totalCount);
 
         List<DbsnpSubmittedVariantOperationEntity> submittedOperations = mongoTemplate.find(
-                query(where("inactiveObjects.rs").is(expectedClusteredVariantAccession)
-                                                 .and("eventType").is(EventType.UPDATED)),
+                query(where(INACTIVE_OBJECTS_RS_KEY).is(expectedClusteredVariantAccession)
+                                                    .and(EVENT_TYPE_KEY).is(EventType.UPDATED)),
                 DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(expectedCount, submittedOperations.size());
     }
 
     public void assertSubmittedOperationType(EventType operationType, long expectedCount) {
         List<DbsnpSubmittedVariantOperationEntity> submittedOperations = mongoTemplate.find(
-                query(where("eventType").is(operationType.toString())), DbsnpSubmittedVariantOperationEntity.class);
+                query(where(EVENT_TYPE_KEY).is(operationType.toString())), DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(expectedCount, submittedOperations.size());
     }
 
