@@ -30,7 +30,7 @@ import static org.junit.Assert.assertNull;
 public class ExcludeClusteredVariantsWithoutSubmittedVariantsProcessorTest {
 
     @Test
-    public void testVariantsWithoutSourceEntries() {
+    public void testClusteredVariantsWithoutSubmittedVariants() {
         ExcludeClusteredVariantsWithoutSubmittedVariantsProcessor processor =
                 new ExcludeClusteredVariantsWithoutSubmittedVariantsProcessor();
         Variant variant = new Variant("22", 1, 1, "T", "C");
@@ -39,7 +39,7 @@ public class ExcludeClusteredVariantsWithoutSubmittedVariantsProcessorTest {
     }
 
     @Test
-    public void testVariantsWithSourceEntries() {
+    public void testClusteredVariantsWithSubmittedVariants() {
         ExcludeClusteredVariantsWithoutSubmittedVariantsProcessor processor =
                 new ExcludeClusteredVariantsWithoutSubmittedVariantsProcessor();
         Variant variant = new Variant("22", 1, 1, "T", "C");
