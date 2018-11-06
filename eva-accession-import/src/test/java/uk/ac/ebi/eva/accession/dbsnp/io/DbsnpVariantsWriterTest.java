@@ -665,21 +665,8 @@ public class DbsnpVariantsWriterTest {
         assertions.assertClusteredVariantMergeOperationStored(1, 1, clusteredVariantEntity);
     }
 
-    /**
-     * Clustered variant rs136611820 was merged into several other clustered variants with the same hash: [42568024,
-     * 42568025]
-     * <p>
-     * This happened because rs136611820 had several locations. One matched the location of rs42568024 and other matched
-     * the location of rs42568025. This makes it harder to decide which RS should be the active one and what to do with
-     * the other RSs.
-     * <p>
-     * The desired result is that an RS can be merged several times into other RSs if they all have the same hash, but
-     * in the main collection only one of those will be present.
-     * <p>
-     * The real case is more complicated because it involves also declusterings
-     */
     @Test
-    public void simplifiedRs136611820() throws Exception {
+    public void mergeThreeClusteredVariantsAndTwoPairsOfSubmittedVariants() throws Exception {
         // given
         Long clusteredVariantAccession1 = 42568024L;
         Long clusteredVariantAccession2 = 42568025L;
@@ -754,18 +741,12 @@ public class DbsnpVariantsWriterTest {
     }
 
     /**
-     * Clustered variant rs136611820 was merged into several other clustered variants with the same hash: [42568024,
-     * 42568025]
-     * <p>
-     * This happened because rs136611820 had several locations. One matched the location of rs42568024 and other matched
-     * the location of rs42568025. This makes it harder to decide which RS should be the active one and what to do with
-     * the other RSs.
-     * <p>
-     * The desired result is that an RS can be merged several times into other RSs if they all have the same hash, but
-     * in the main collection only one of those will be present.
-     * <p>
-     * This test is similar to the previous one, but closer to the real case, because this one involves also the
-     * declusterings.
+     * This test checks that a clustered variant can be merged two times: one merge after making hash collision in the
+     * main clustered variant collection, and the other merge after making hash collision in the collection for
+     * declustered clustered variants.
+     *
+     * This scenario happened with rs136611820 (after storing rs42568024 and rs42568025). The actual data is more
+     * complex, but for the scope of this test, the rest of the complexity is irrelevant.
      */
     @Test
     public void rs136611820() throws Exception {
