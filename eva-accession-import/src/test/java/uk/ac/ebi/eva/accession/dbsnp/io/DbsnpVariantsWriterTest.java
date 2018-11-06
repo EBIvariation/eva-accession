@@ -61,6 +61,7 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredW
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_2;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_3;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.PROJECT_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.PROJECT_2;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.START_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.START_2;
@@ -70,6 +71,8 @@ import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.SUBMITTED_VARIA
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.SUBMITTED_VARIANT_ACCESSION_4;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.TAXONOMY_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.TAXONOMY_2;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.ALTERNATE_ALLELE_1;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.ALTERNATE_ALLELE_2;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildClusteredVariant;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildClusteredVariantEntity;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildSimpleWrapper;
@@ -224,8 +227,10 @@ public class DbsnpVariantsWriterTest {
 
     @Test
     public void mergedClusteredVariantsPartiallyDeclustered() throws Exception {
-        SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1);
-        SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1, START_2);
+        SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1, PROJECT_1,
+                                                                   ALTERNATE_ALLELE_1);
+        SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1, PROJECT_1,
+                                                                   ALTERNATE_ALLELE_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
                                                                                           submittedVariant1);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
@@ -234,7 +239,8 @@ public class DbsnpVariantsWriterTest {
                 Arrays.asList(submittedVariantEntity1, submittedVariantEntity2));
         wrapper1.setOperations(decluster(submittedVariantEntity1));
 
-        SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, START_2);
+        SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_1,
+                                                                   ALTERNATE_ALLELE_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
                                                                                           submittedVariant3);
         ClusteredVariant clusteredVariant2 = defaultClusteredVariant();
@@ -264,10 +270,12 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity1));
 
 
-        SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2);
+        SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2,
+                                                                   ALTERNATE_ALLELE_1);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
                                                                                           submittedVariant2);
-        SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2, START_2);
+        SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2,
+                                                                   ALTERNATE_ALLELE_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
                                                                                           submittedVariant3);
 
@@ -796,7 +804,8 @@ public class DbsnpVariantsWriterTest {
 
         ClusteredVariant clusteredVariant = defaultClusteredVariant();
 
-        SubmittedVariant submittedVariant = buildSubmittedVariant(clusteredVariantAccession1, START_2);
+        SubmittedVariant submittedVariant = buildSubmittedVariant(clusteredVariantAccession1, PROJECT_1,
+                                                                  ALTERNATE_ALLELE_1);
         DbsnpSubmittedVariantEntity submittedVariantEntity = buildSubmittedVariantEntity(submittedVariantAccession1,
                                                                                          submittedVariant);
         DbsnpClusteredVariantEntity clusteredVariantEntity = buildClusteredVariantEntity(clusteredVariantAccession1,
@@ -806,7 +815,8 @@ public class DbsnpVariantsWriterTest {
         wrapper1.setSubmittedVariants(Collections.singletonList(submittedVariantEntity));
         wrapper1.setOperations(decluster(submittedVariantEntity));
 
-        SubmittedVariant submittedVariant2 = buildSubmittedVariant(clusteredVariantAccession2);
+        SubmittedVariant submittedVariant2 = buildSubmittedVariant(clusteredVariantAccession2, PROJECT_1,
+                                                                   ALTERNATE_ALLELE_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(submittedVariantAccession2,
                                                                                           submittedVariant2);
         DbsnpClusteredVariantEntity clusteredVariantEntity2 = buildClusteredVariantEntity(clusteredVariantAccession2,
@@ -814,8 +824,10 @@ public class DbsnpVariantsWriterTest {
         wrapper2.setClusteredVariant(clusteredVariantEntity2);
         wrapper2.setSubmittedVariants(Collections.singletonList(submittedVariantEntity2));
 
-        SubmittedVariant submittedVariant3 = buildSubmittedVariant(clusteredVariantAccession3, PROJECT_2);
-        SubmittedVariant submittedVariant4 = buildSubmittedVariant(clusteredVariantAccession3, PROJECT_2, START_2);
+        SubmittedVariant submittedVariant3 = buildSubmittedVariant(clusteredVariantAccession3, PROJECT_2,
+                                                                   ALTERNATE_ALLELE_1);
+        SubmittedVariant submittedVariant4 = buildSubmittedVariant(clusteredVariantAccession3, PROJECT_2,
+                                                                   ALTERNATE_ALLELE_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(submittedVariantAccession3,
                                                                                           submittedVariant3);
         DbsnpSubmittedVariantEntity submittedVariantEntity4 = buildSubmittedVariantEntity(submittedVariantAccession4,

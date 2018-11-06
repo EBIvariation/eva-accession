@@ -64,6 +64,10 @@ public class VariantBuilders {
 
     public static final int START_2 = 200;
 
+    public static final String ALTERNATE_ALLELE_1 = "alternate_1";
+
+    public static final String ALTERNATE_ALLELE_2 = "alternate_2";
+
     public static final VariantType VARIANT_TYPE = VariantType.SNV;
 
     public static Function<ISubmittedVariant, String> hashingFunctionSubmitted =
@@ -103,6 +107,15 @@ public class VariantBuilders {
         submittedVariant.setClusteredVariantAccession(clusteredVariantAccession);
         submittedVariant.setProjectAccession(project);
         submittedVariant.setStart(start);
+        return submittedVariant;
+    }
+
+    public static SubmittedVariant buildSubmittedVariant(Long clusteredVariantAccession, String project,
+                                                         String alternateAllele) {
+        SubmittedVariant submittedVariant = defaultSubmittedVariant();
+        submittedVariant.setClusteredVariantAccession(clusteredVariantAccession);
+        submittedVariant.setProjectAccession(project);
+        submittedVariant.setAlternateAllele(alternateAllele);
         return submittedVariant;
     }
 
