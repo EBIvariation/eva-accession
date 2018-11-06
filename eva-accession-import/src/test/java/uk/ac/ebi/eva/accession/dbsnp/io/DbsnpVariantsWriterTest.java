@@ -47,7 +47,6 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.accession.dbsnp.processors.SubmittedVariantDeclusterProcessor;
 import uk.ac.ebi.eva.accession.dbsnp.test.VariantAssertions;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -169,7 +168,7 @@ public class DbsnpVariantsWriterTest {
                 SUBMITTED_VARIANT_ACCESSION_1, submittedVariant);
 
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(Collections.singletonList(dbsnpSubmittedVariantEntity1));
-        wrapper.setOperations(Collections.singletonList(decluster(dbsnpSubmittedVariantEntity1)));
+        wrapper.setOperations(decluster(dbsnpSubmittedVariantEntity1));
 
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
 
@@ -200,47 +199,32 @@ public class DbsnpVariantsWriterTest {
 
     @Test
     public void repeatedClusteredVariantsPartiallyDeclustered() throws Exception {
-        boolean allelesMatch = false;
-        SubmittedVariant submittedVariant1 = new SubmittedVariant("assembly", TAXONOMY_2, "project", "contig", START_1,
-                                                                  "reference", "alternate", null,
-                                                                  DEFAULT_SUPPORTED_BY_EVIDENCE, DEFAULT_ASSEMBLY_MATCH,
-                                                                  allelesMatch, DEFAULT_VALIDATED, null);
+        SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
                                                                                           submittedVariant1);
         DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity1));
 
-        SubmittedVariant submittedVariant2 = defaultSubmittedVariant();
+        SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1, PROJECT_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
                                                                                           submittedVariant2);
         DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
-
-        DbsnpSubmittedVariantOperationEntity operationEntity1 = decluster(submittedVariant1);
-        wrapper2.setOperations(Collections.singletonList(operationEntity1));
+        wrapper2.setOperations(decluster(submittedVariantEntity2));
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
         assertions.assertClusteredVariantStored(1, wrapper1);
         assertions.assertClusteredVariantDeclusteredStored(1, wrapper1);
     }
 
-    private DbsnpSubmittedVariantOperationEntity decluster(SubmittedVariant submittedVariant) {
-        DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity = buildSubmittedVariantEntity(
-                SUBMITTED_VARIANT_ACCESSION_1, submittedVariant);
-        DbsnpSubmittedVariantOperationEntity operationEntity = decluster(dbsnpSubmittedVariantEntity);
-        return operationEntity;
-    }
-
-    private DbsnpSubmittedVariantOperationEntity decluster(DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity) {
+    private List<DbsnpSubmittedVariantOperationEntity> decluster(DbsnpSubmittedVariantEntity dbsnpSubmittedVariantEntity) {
         DbsnpSubmittedVariantOperationEntity operation = new SubmittedVariantDeclusterProcessor().createOperation(
                 dbsnpSubmittedVariantEntity, Collections.singletonList("Declustered"));
         dbsnpSubmittedVariantEntity.setClusteredVariantAccession(null);
-        return operation;
+        return Collections.singletonList(operation);
     }
 
     @Test
     public void mergedClusteredVariantsPartiallyDeclustered() throws Exception {
-        boolean allelesMatch = false;
         SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1);
-        submittedVariant1.setAllelesMatch(allelesMatch);
         SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1, START_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
                                                                                           submittedVariant1);
@@ -248,7 +232,7 @@ public class DbsnpVariantsWriterTest {
                                                                                           submittedVariant2);
         DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(
                 Arrays.asList(submittedVariantEntity1, submittedVariantEntity2));
-        wrapper1.setOperations(Collections.singletonList(decluster(submittedVariant1)));
+        wrapper1.setOperations(decluster(submittedVariantEntity1));
 
         SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, START_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
@@ -274,12 +258,10 @@ public class DbsnpVariantsWriterTest {
 
     @Test
     public void mergedClusteredVariantsDeclusteredAndNonDeclusteredSubmittedVariants() throws Exception {
-        boolean allelesMatch = false;
         SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1);
-        submittedVariant1.setAllelesMatch(allelesMatch);
         DbsnpSubmittedVariantEntity submittedVariantEntity1 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
                                                                                           submittedVariant1);
-        DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(Arrays.asList(submittedVariantEntity1));
+        DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity1));
 
 
         SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2);
@@ -288,7 +270,6 @@ public class DbsnpVariantsWriterTest {
         SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, PROJECT_2, START_2);
         DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
                                                                                           submittedVariant3);
-        DbsnpSubmittedVariantOperationEntity operationEntity3 = decluster(submittedVariant3);
 
         ClusteredVariant clusteredVariant2 = defaultClusteredVariant();
         DbsnpClusteredVariantEntity clusteredVariantEntity2 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_2,
@@ -296,7 +277,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
         wrapper2.setSubmittedVariants(Arrays.asList(submittedVariantEntity2, submittedVariantEntity3));
         wrapper2.setClusteredVariant(clusteredVariantEntity2);
-        wrapper2.setOperations(Collections.singletonList(operationEntity3));
+        wrapper2.setOperations(decluster(submittedVariantEntity3));
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
 
@@ -325,9 +306,9 @@ public class DbsnpVariantsWriterTest {
                                                                                           submittedVariant1);
         DbsnpVariantsWrapper wrapper2 = buildSimpleWrapper(Collections.singletonList(submittedVariantEntity2));
 
-        DbsnpSubmittedVariantOperationEntity operationEntity1 = decluster(submittedVariant1);
-        wrapper1.setOperations(Collections.singletonList(operationEntity1));
-        wrapper2.setOperations(Collections.singletonList(operationEntity1));
+        List<DbsnpSubmittedVariantOperationEntity> operationEntity1 = decluster(submittedVariantEntity1);
+        wrapper1.setOperations(operationEntity1);
+        wrapper2.setOperations(operationEntity1);
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
         assertions.assertClusteredVariantStored(0);
@@ -351,7 +332,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper = buildSimpleWrapper(
                 Arrays.asList(submittedVariantEntity1, submittedVariantEntity2));
 
-        wrapper.setOperations(Collections.singletonList(decluster(submittedVariant1)));
+        wrapper.setOperations(decluster(submittedVariantEntity1));
 
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper));
 
@@ -375,8 +356,7 @@ public class DbsnpVariantsWriterTest {
         DbsnpVariantsWrapper wrapper1 = buildSimpleWrapper(
                 Arrays.asList(submittedVariantEntity1, submittedVariantEntity2));
 
-        DbsnpSubmittedVariantOperationEntity operationEntity1 = decluster(submittedVariant1);
-        wrapper1.setOperations(Collections.singletonList(operationEntity1));
+        wrapper1.setOperations(decluster(submittedVariantEntity1));
 
         dbsnpVariantsWriter.write(Collections.singletonList(wrapper1));
         assertions.assertClusteredVariantStored(0);
@@ -752,9 +732,8 @@ public class DbsnpVariantsWriterTest {
                                                                                          clusteredVariant);
         DbsnpVariantsWrapper wrapper = new DbsnpVariantsWrapper();
         wrapper.setClusteredVariant(clusteredVariantEntity);
-        wrapper.setOperations(Collections.singletonList(decluster(declusteredSubmittedVariantEntity1)));
+        wrapper.setOperations(decluster(declusteredSubmittedVariantEntity1));
         wrapper.setSubmittedVariants(Collections.singletonList(declusteredSubmittedVariantEntity1));
-
 
         SubmittedVariant submittedVariant2 = buildSubmittedVariant(clusteredVariantAccession2, PROJECT_2);
         DbsnpSubmittedVariantEntity declusteredSubmittedVariantEntity2 = buildSubmittedVariantEntity(
@@ -764,7 +743,7 @@ public class DbsnpVariantsWriterTest {
                                                                                           clusteredVariant2);
         DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
         wrapper2.setClusteredVariant(clusteredVariantEntity2);
-        wrapper2.setOperations(Collections.singletonList(decluster(declusteredSubmittedVariantEntity2)));
+        wrapper2.setOperations(decluster(declusteredSubmittedVariantEntity2));
         wrapper2.setSubmittedVariants(Collections.singletonList(declusteredSubmittedVariantEntity2));
 
         dbsnpVariantsWriter.write(Arrays.asList(wrapper, wrapper2));
@@ -929,7 +908,7 @@ public class DbsnpVariantsWriterTest {
 
         wrapper1.setClusteredVariant(clusteredVariantEntity);
         wrapper1.setSubmittedVariants(Collections.singletonList(submittedVariantEntity));
-        wrapper1.setOperations(Collections.singletonList(decluster(submittedVariantEntity)));
+        wrapper1.setOperations(decluster(submittedVariantEntity));
 
         SubmittedVariant submittedVariant2 = buildSubmittedVariant(clusteredVariantAccession2);
         DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(submittedVariantAccession2,
@@ -952,7 +931,7 @@ public class DbsnpVariantsWriterTest {
 
         wrapper3.setClusteredVariant(clusteredVariantEntity3);
         wrapper3.setSubmittedVariants(Collections.singletonList(submittedVariantEntity3));
-        wrapper3.setOperations(Collections.singletonList(decluster(submittedVariantEntity3)));
+        wrapper3.setOperations(decluster(submittedVariantEntity3));
 
         wrapper4.setClusteredVariant(clusteredVariantEntity4);
         wrapper4.setSubmittedVariants(Collections.singletonList(submittedVariantEntity4));
