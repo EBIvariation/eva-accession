@@ -123,9 +123,9 @@ public class AccessionedVariantMongoReaderTest {
         List<Variant> variants = new ArrayList<>();
         while (cursor.hasNext()) {
             Document clusteredVariant = cursor.next();
-            variants = reader.getVariants(clusteredVariant);
+            variants.addAll(reader.getVariants(clusteredVariant));
         }
-        assertEquals(2, variants.size());
+        assertEquals(3, variants.size());
      }
 
     @Test
@@ -170,8 +170,8 @@ public class AccessionedVariantMongoReaderTest {
     }
 
     private String getStringId(Variant variant) {
-        return variant.getChromosome() + "_" + variant.getStart() + "_" + variant.getReference() + "_"
-                + variant.getAlternate();
+        return (variant.getChromosome() + "_" + variant.getStart() + "_" + variant.getReference() + "_"
+                + variant.getAlternate()).toUpperCase();
     }
 
     @Test

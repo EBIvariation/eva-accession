@@ -116,7 +116,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
             String study = submittedVariant.getString(STUDY_FIELD);
             VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology);
 
-            String variantId = contig + "_" + start + "_" + reference + "_" + alternate;
+            String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
             if (variants.containsKey(variantId)) {
                 variants.get(variantId).addSourceEntry(sourceEntry);
             } else {
