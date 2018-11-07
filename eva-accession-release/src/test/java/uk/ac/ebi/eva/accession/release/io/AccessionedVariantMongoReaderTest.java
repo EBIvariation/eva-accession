@@ -213,11 +213,11 @@ public class AccessionedVariantMongoReaderTest {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB);
         List<Variant> variants = readIntoList();
         assertEquals(1, variants.size());
-        String snpSequenceOntology = "SO:0000667";
+        String insertionSequenceOntology = "SO:0000667";
         assertTrue(variants.get(0)
                            .getSourceEntries()
                            .stream()
-                           .allMatch(se -> snpSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+                           .allMatch(se -> insertionSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
     }
 
     @Test
