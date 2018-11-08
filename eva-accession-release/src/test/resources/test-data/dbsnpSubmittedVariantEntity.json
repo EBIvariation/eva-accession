@@ -1,0 +1,172 @@
+{
+  "dbsnpSubmittedVariantEntity": [
+    {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750F88D",
+      "seq": "GCF_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(92701040),
+      "ref": "G",
+      "alt": "A",
+      "rs": NumberLong(869808637),
+      "accession": NumberLong(1991577882),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
+      "_id": "D6E93A861A45942E591879572995BB50B9485AEE",
+      "seq": "GCF_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB9999",
+      "contig": "CM001954.1",
+      "start": NumberLong(92701040),
+      "ref": "G",
+      "alt": "T",
+      "rs": NumberLong(869808637),
+      "accession": NumberLong(1991577882),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
+      "_id": "58731F96EC160846B969D5D3EA88BCDF209D2D2D",
+      "seq": "GCF_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB1111",
+      "contig": "CM001954.1",
+      "start": NumberLong(92701040),
+      "ref": "G",
+      "alt": "T",
+      "rs": NumberLong(869808637),
+      "accession": NumberLong(1991577882),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
+      "_id": "40F6E23B8F90B05D4E89B93126AB08ADEB366C14",
+      "seq": "GCF_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001941.2",
+      "start": NumberLong(13247923),
+      "ref": "T",
+      "alt": "G",
+      "rs": NumberLong(869927931),
+      "accession": NumberLong(1991294603),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:31:00Z"
+      )
+    },
+    {
+      "_id": "A3CE9DB4B332C6CD29E6A3A25F4665995E62C5B1",
+      "seq": "GCF_000001735.3",
+      "tax": 3702,
+      "study": "EVA_ARABIDOPSIS_1001_EVA_ARABIDOPSIS_1001_A",
+      "contig": "CP002685.1",
+      "start": NumberLong(4758626),
+      "ref": "G",
+      "alt": "A",
+      "rs": NumberLong(347048227),
+      "accession": NumberLong(
+      "2687490505"
+      ),
+      "version": 1,
+      "createdDate": ISODate(
+      "2017-02-10T14:52:00Z"
+      )
+    },
+    {
+      "_id": "BE58C4DC4D02356FEFDFDE9E1DC335D1000BFA90",
+      "seq": "GCF_000001735.3",
+      "tax": 3702,
+      "study": "EVA_ARABIDOPSIS_1001_EVA_ARABIDOPSIS_1001_A",
+      "contig": "CP002685.1",
+      "start": NumberLong(4758626),
+      "ref": "G",
+      "alt": "T",
+      "rs": NumberLong(347048227),
+      "accession": NumberLong(
+      "2687490504"
+      ),
+      "version": 1,
+      "createdDate": ISODate(
+      "2017-02-10T14:52:00Z"
+      )
+    },
+    {
+      "_id": "5F7794CEDEAFEF55DC5D7ADFA76F424A0587A613",
+      "seq": "GCF_000001735.3",
+      "tax": 3702,
+      "study": "GRAMENE_ARABIDOPSIS_2010 PROJECT-1001 GENOMES",
+      "contig": "CP002685.1",
+      "start": NumberLong(4758626),
+      "ref": "G",
+      "alt": "T",
+      "rs": NumberLong(347048227),
+      "evidence": false,
+      "accession": NumberLong(492411912),
+      "version": 1,
+      "createdDate": ISODate(
+      "2012-03-08T18:51:00Z"
+      )
+    },
+    {
+      "_id": "9EFF976D1A0BFACA9305961962C39CFA330C720B",
+      "seq": "GCF_000001735.3",
+      "tax": 3702,
+      "study": "GRAMENE_ARABIDOPSIS_2010 PROJECT-1001 GENOMES",
+      "contig": "CP002685.1",
+      "start": NumberLong(4758626),
+      "ref": "G",
+      "alt": "A",
+      "rs": NumberLong(347048227),
+      "evidence": false,
+      "accession": NumberLong(492411912),
+      "version": 1,
+      "createdDate": ISODate(
+      "2012-03-08T18:51:00Z"
+      )
+    },
+    {
+      "_id": "A76F3107039B41C98B66A5D692D14525D4172DC4",
+      "seq": "GCF_000001735.3",
+      "tax": 3702,
+      "study": "EVA_ARABIDOPSIS_1001_EVA_ARABIDOPSIS_1001_A",
+      "contig": "CP002685.1",
+      "start": NumberLong(4758626),
+      "ref": "G",
+      "alt": "C",
+      "rs": NumberLong(347048227),
+      "accession": NumberLong(
+      "2687490506"
+      ),
+      "version": 1,
+      "createdDate": ISODate(
+      "2017-02-10T14:52:00Z"
+      )
+    },
+    {
+      "_id" : "36DCF444101DEC1EBEF3D97F443BF9FA247C9B3A",
+      "seq" : "GCF_000309985.1",
+      "tax" : 3711,
+      "study" : "WENDELL_2012-VNTR",
+      "contig" : "CM001642.1",
+      "start" : NumberLong(7356604),
+      "ref" : "",
+      "alt" : "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC",
+      "rs" : NumberLong(268233057),
+      "evidence" : false,
+      "validated" : true,
+      "accession" : NumberLong(490570267),
+      "version" : 1,
+      "createdDate" : ISODate("2012-02-17T10:01:00Z")
+    }
+  ]
+}
