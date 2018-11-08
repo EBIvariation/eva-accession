@@ -44,95 +44,95 @@ public class ExcludeInvalidVariantsProcessorTest {
 
     @Test
     public void referenceAlleleValid() throws Exception {
-        IVariant variant = newVariant(ALL_VALID_LETTERS_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(ALL_VALID_LETTERS_ALLELE, VALID_ALLELE);
         assertEquals(variant, processor.process(variant));
     }
 
-    private IVariant newVariant(String reference, String alternate) {
+    private Variant newVariant(String reference, String alternate) {
         return new Variant("contig", 1000, 1001, reference, alternate);
     }
 
     @Test
     public void alternateAlleleValid() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, ALL_VALID_LETTERS_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, ALL_VALID_LETTERS_ALLELE);
         assertEquals(variant, processor.process(variant));
     }
 
     @Test
     public void referenceAlleleLowerCaseValid() throws Exception {
-        IVariant variant = newVariant(ALL_VALID_LETTERS_LOWER_CASE_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(ALL_VALID_LETTERS_LOWER_CASE_ALLELE, VALID_ALLELE);
         assertEquals(variant, processor.process(variant));
     }
 
     @Test
     public void alternateAlleleLowerCaseValid() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, ALL_VALID_LETTERS_LOWER_CASE_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, ALL_VALID_LETTERS_LOWER_CASE_ALLELE);
         assertEquals(variant, processor.process(variant));
     }
 
     @Test
     public void referenceAlleleLowerAndUpperCaseValid() throws Exception {
-        IVariant variant = newVariant(ALL_VALID_LETTERS_LOWER_AND_UPPER_CASE_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(ALL_VALID_LETTERS_LOWER_AND_UPPER_CASE_ALLELE, VALID_ALLELE);
         assertEquals(variant, processor.process(variant));
     }
 
     @Test
     public void alternateAlleleLowerAndUpperCaseValid() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, ALL_VALID_LETTERS_LOWER_AND_UPPER_CASE_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, ALL_VALID_LETTERS_LOWER_AND_UPPER_CASE_ALLELE);
         assertEquals(variant, processor.process(variant));
     }
 
     @Test
     public void referenceAlleleInvalidLetters() throws Exception {
-        IVariant variant = newVariant(INVALID_LETTERS_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(INVALID_LETTERS_ALLELE, VALID_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void alternateAlleleInvalidLetters() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, INVALID_LETTERS_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, INVALID_LETTERS_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void referenceAlleleSpecialCharacters() throws Exception {
-        IVariant variant = newVariant(SPECIAL_CHARACTERS_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(SPECIAL_CHARACTERS_ALLELE, VALID_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void alternateAlleleSpecialCharacters() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, SPECIAL_CHARACTERS_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, SPECIAL_CHARACTERS_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void referenceAlleleNamed() throws Exception {
-        IVariant variant = newVariant(NAMED_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(NAMED_ALLELE, VALID_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void alternateAlleleNamed() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, NAMED_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, NAMED_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void referenceAlleleSpaces() throws Exception {
-        IVariant variant = newVariant(SPACES_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(SPACES_ALLELE, VALID_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void alternateAlleleSpaces() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, SPACES_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, SPACES_ALLELE);
         assertNull(processor.process(variant));
     }
 
     @Test
     public void referenceAlleleEmpty() throws Exception {
-        IVariant variant = newVariant(EMPTY_ALLELE, VALID_ALLELE);
+        Variant variant = newVariant(EMPTY_ALLELE, VALID_ALLELE);
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
         processor.process(variant);
@@ -140,7 +140,7 @@ public class ExcludeInvalidVariantsProcessorTest {
 
     @Test
     public void alternateAlleleEmpty() throws Exception {
-        IVariant variant = newVariant(VALID_ALLELE, EMPTY_ALLELE);
+        Variant variant = newVariant(VALID_ALLELE, EMPTY_ALLELE);
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
         processor.process(variant);

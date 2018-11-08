@@ -1,8 +1,11 @@
 package uk.ac.ebi.eva.accession.release.steps.processors;
 
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.context.annotation.Bean;
 
-import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,7 +16,7 @@ import java.util.regex.Pattern;
  * VCF format only accepts reference and alternate alleles formed by A, C, G, T or N letters in upper or lower case.
  * If one of the alleles has a different character, this processor will return null so that variant can be ignored.
  */
-public class ExcludeInvalidVariantsProcessor implements ItemProcessor<IVariant, IVariant> {
+public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, Variant> {
 
     private static final String ALLELES_REGEX = "^[acgtnACGTN]+$";
 
@@ -23,7 +26,7 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<IVariant, 
             "Neither the reference nor the alternate allele should be empty.";
 
     @Override
-    public IVariant process(IVariant variant) throws Exception {
+    public Variant process(Variant variant) throws Exception {
         if (variant.getReference().isEmpty() || variant.getAlternate().isEmpty()) {
             throw new IllegalArgumentException(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
         }
@@ -34,4 +37,5 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<IVariant, 
         }
         return null;
     }
+
 }
