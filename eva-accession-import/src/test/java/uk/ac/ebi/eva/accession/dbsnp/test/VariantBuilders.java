@@ -44,6 +44,8 @@ public class VariantBuilders {
 
     public static final String PROJECT_1 = "project_1";
 
+    public static final String PROJECT_3 = "project_3";
+
     public static final String PROJECT_2 = "project_2";
 
     public static final Long CLUSTERED_VARIANT_ACCESSION_1 = 12L;
@@ -52,17 +54,19 @@ public class VariantBuilders {
 
     public static final Long CLUSTERED_VARIANT_ACCESSION_3 = 14L;
 
-    public static final Long SUBMITTED_VARIANT_ACCESSION_1 = 15L;
+    public static final Long SUBMITTED_VARIANT_ACCESSION_1 = 25L;
 
-    public static final Long SUBMITTED_VARIANT_ACCESSION_2 = 16L;
+    public static final Long SUBMITTED_VARIANT_ACCESSION_2 = 26L;
 
-    public static final Long SUBMITTED_VARIANT_ACCESSION_3 = 17L;
+    public static final Long SUBMITTED_VARIANT_ACCESSION_3 = 27L;
 
-    public static final Long SUBMITTED_VARIANT_ACCESSION_4 = 18L;
+    public static final Long SUBMITTED_VARIANT_ACCESSION_4 = 28L;
 
     public static final int START_1 = 100;
 
     public static final int START_2 = 200;
+
+    public static final int START_3 = 300;
 
     public static final String ALTERNATE_ALLELE_1 = "alternate_1";
 

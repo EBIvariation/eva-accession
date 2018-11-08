@@ -63,8 +63,10 @@ import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIA
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_3;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.PROJECT_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.PROJECT_2;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.PROJECT_3;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.START_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.START_2;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.START_3;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.SUBMITTED_VARIANT_ACCESSION_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.SUBMITTED_VARIANT_ACCESSION_2;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.SUBMITTED_VARIANT_ACCESSION_3;
@@ -755,6 +757,9 @@ public class DbsnpVariantsWriterTest {
      *
      * This scenario happened with rs136611820 (after storing rs42568024 and rs42568025). The actual data is more
      * complex, but for the scope of this test, the rest of the complexity is irrelevant.
+     *
+     * Note that only the non-declustered submitted variants get the field clustered variant accession updated, and
+     * it's updated to the correct one (rs42568025).
      */
     @Test
     public void rs136611820() throws Exception {
@@ -1035,6 +1040,160 @@ public class DbsnpVariantsWriterTest {
         assertions.assertSubmittedOperationType(EventType.UPDATED, 2L);
         assertions.assertSubmittedOperationType(EventType.MERGED, 0L);
         assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 2,
+                                                                                        clusteredVariantAccession3);
+    }
+
+    /**
+     * This test shows how the current code allows a given RS to be merged into several other declustered RSs at the
+     * same time.
+     *
+     * This test is similar to the previous one, but having all clustered variants declustered, instead of all active.
+     *
+     * Note that there will be 2 clustered variant merge operations, as there are 2 hashes for rs193927678. Each
+     * operation is a merge into rs1095750933 and rs347458720. Moreover, there are no declustered operations
+     * (either for submitted or for clustered variants).
+     */
+    @Test
+    public void clusteredVariantMergedIntoSeveralDeclusteredClusteredVariants() throws Exception {
+        // given
+        DbsnpVariantsWrapper wrapper1 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper3 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper4 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper5 = new DbsnpVariantsWrapper();
+
+        setupclusteredVariantMergedIntoSeveralDeclusteredClusteredVariants(wrapper1, wrapper2, wrapper3, wrapper4,
+                                                                           wrapper5);
+
+        // when
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2, wrapper3, wrapper4, wrapper5));
+
+        // then
+        assertclusteredVariantMergedIntoSeveralDeclusteredClusteredVariants(wrapper1, wrapper2, wrapper3, wrapper4,
+                                                                            wrapper5);
+    }
+
+    @Test
+    public void clusteredVariantMergedIntoSeveralDeclusteredClusteredVariantsMultiChunk() throws Exception {
+        // given
+        DbsnpVariantsWrapper wrapper1 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper3 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper4 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper5 = new DbsnpVariantsWrapper();
+
+        setupclusteredVariantMergedIntoSeveralDeclusteredClusteredVariants(wrapper1, wrapper2, wrapper3, wrapper4,
+                                                                           wrapper5);
+
+        // when
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper3));
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper4));
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper5));
+
+        // then
+        assertclusteredVariantMergedIntoSeveralDeclusteredClusteredVariants(wrapper1, wrapper2, wrapper3, wrapper4,
+                                                                            wrapper5);
+    }
+
+    public void setupclusteredVariantMergedIntoSeveralDeclusteredClusteredVariants(DbsnpVariantsWrapper wrapper1,
+                                                                                   DbsnpVariantsWrapper wrapper2,
+                                                                                   DbsnpVariantsWrapper wrapper3,
+                                                                                   DbsnpVariantsWrapper wrapper4,
+                                                                                   DbsnpVariantsWrapper wrapper5) {
+        ClusteredVariant clusteredVariant1 = defaultClusteredVariant();
+
+        SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1);
+        DbsnpSubmittedVariantEntity submittedVariantEntity1 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
+                                                                                          submittedVariant1);
+        DbsnpClusteredVariantEntity clusteredVariantEntity1 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_1,
+                                                                                          clusteredVariant1);
+
+        wrapper1.setClusteredVariant(clusteredVariantEntity1);
+        wrapper1.setSubmittedVariants(Collections.singletonList(submittedVariantEntity1));
+        wrapper1.setOperations(decluster(submittedVariantEntity1));
+
+
+        ClusteredVariant clusteredVariant2 = buildClusteredVariant(START_2);
+        SubmittedVariant submittedVariant2 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_2, START_2);
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
+                                                                                          submittedVariant2);
+        DbsnpClusteredVariantEntity clusteredVariantEntity2 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_2,
+                                                                                          clusteredVariant2);
+        wrapper2.setClusteredVariant(clusteredVariantEntity2);
+        wrapper2.setSubmittedVariants(Collections.singletonList(submittedVariantEntity2));
+        wrapper2.setOperations(decluster(submittedVariantEntity2));
+
+
+        SubmittedVariant submittedVariant3 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_3, PROJECT_2);
+        SubmittedVariant submittedVariant4 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_3, PROJECT_2, START_2);
+        DbsnpSubmittedVariantEntity submittedVariantEntity3 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_3,
+                                                                                          submittedVariant3);
+        DbsnpSubmittedVariantEntity submittedVariantEntity4 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_3,
+                                                                                          submittedVariant4);
+        DbsnpClusteredVariantEntity clusteredVariantEntity3 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_3,
+                                                                                          clusteredVariant1);
+        DbsnpClusteredVariantEntity clusteredVariantEntity4 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_3,
+                                                                                          clusteredVariant2);
+
+        wrapper3.setClusteredVariant(clusteredVariantEntity3);
+        wrapper3.setSubmittedVariants(Collections.singletonList(submittedVariantEntity3));
+        wrapper3.setOperations(decluster(submittedVariantEntity3));
+
+        wrapper4.setClusteredVariant(clusteredVariantEntity4);
+        wrapper4.setSubmittedVariants(Collections.singletonList(submittedVariantEntity4));
+        wrapper4.setOperations(decluster(submittedVariantEntity4));
+
+        ClusteredVariant clusteredVariant5 = buildClusteredVariant(START_3);
+        SubmittedVariant submittedVariant5 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_3, PROJECT_3, START_2);
+        DbsnpSubmittedVariantEntity submittedVariantEntity5 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_4,
+                                                                                          submittedVariant5);
+        DbsnpClusteredVariantEntity clusteredVariantEntity5 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_3,
+                                                                                          clusteredVariant5);
+        wrapper5.setClusteredVariant(clusteredVariantEntity5);
+        wrapper5.setSubmittedVariants(Collections.singletonList(submittedVariantEntity5));
+        wrapper5.setOperations(decluster(submittedVariantEntity5));
+
+    }
+
+    public void assertclusteredVariantMergedIntoSeveralDeclusteredClusteredVariants(DbsnpVariantsWrapper wrapper1,
+                                                                                    DbsnpVariantsWrapper wrapper2,
+                                                                                    DbsnpVariantsWrapper wrapper3,
+                                                                                    DbsnpVariantsWrapper wrapper4,
+                                                                                    DbsnpVariantsWrapper wrapper5) {
+        Long clusteredVariantAccession1 = wrapper1.getClusteredVariant().getAccession();
+        Long clusteredVariantAccession2 = wrapper2.getClusteredVariant().getAccession();
+        Long clusteredVariantAccession3 = wrapper3.getClusteredVariant().getAccession();
+        DbsnpSubmittedVariantEntity submittedVariantEntity1 = wrapper1.getSubmittedVariants().get(0);
+        DbsnpClusteredVariantEntity clusteredVariantEntity1 = wrapper1.getClusteredVariant();
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = wrapper2.getSubmittedVariants().get(0);
+        DbsnpClusteredVariantEntity clusteredVariantEntity2 = wrapper2.getClusteredVariant();
+        DbsnpSubmittedVariantEntity submittedVariantEntity3 = wrapper3.getSubmittedVariants().get(0);
+        DbsnpSubmittedVariantEntity submittedVariantEntity4 = wrapper4.getSubmittedVariants().get(0);
+        DbsnpSubmittedVariantEntity submittedVariantEntity5 = wrapper5.getSubmittedVariants().get(0);
+
+        assertions.assertClusteredVariantStored(0);
+        assertions.assertClusteredVariantMergeOperationStored(2, 1, clusteredVariantEntity1);
+        assertions.assertClusteredVariantMergeOperationStored(2, 1, clusteredVariantEntity2);
+
+        assertions.assertClusteredVariantDeclusteredStored(3, wrapper1, wrapper2, wrapper3);
+
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity1 = changeRS(submittedVariantEntity1, null);
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity2 = changeRS(submittedVariantEntity2, null);
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity3 = changeRS(submittedVariantEntity3, null);
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity4 = changeRS(submittedVariantEntity4, null);
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity5 = changeRS(submittedVariantEntity5, null);
+
+        assertions.assertSubmittedVariantsStored(5, expectedSubmittedVariantEntity1, expectedSubmittedVariantEntity2,
+                                                 expectedSubmittedVariantEntity3, expectedSubmittedVariantEntity4,
+                                                 expectedSubmittedVariantEntity5);
+        assertions.assertSubmittedOperationType(EventType.UPDATED, 5L);
+        assertions.assertSubmittedOperationType(EventType.MERGED, 0L);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(5, 1,
+                                                                                        clusteredVariantAccession1);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(5, 1,
+                                                                                        clusteredVariantAccession2);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(5, 3,
                                                                                         clusteredVariantAccession3);
     }
 }
