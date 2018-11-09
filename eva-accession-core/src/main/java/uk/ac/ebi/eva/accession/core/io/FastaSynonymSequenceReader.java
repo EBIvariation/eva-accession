@@ -31,6 +31,22 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
     }
 
     @Override
+    public boolean doesContigExist(String contig) {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
+
+        if (contigSynonyms == null) {
+            throw new IllegalArgumentException(
+                    "Contig '" + contig + "' not found in the assembly report");
+        }
+
+        return super.doesContigExist(contigSynonyms.getSequenceName())
+                || super.doesContigExist(contigSynonyms.getGenBank())
+                || super.doesContigExist(contigSynonyms.getRefSeq())
+                || super.doesContigExist(contigSynonyms.getUcsc())
+                || super.doesContigExist(contigSynonyms.getAssignedMolecule());
+    }
+
+    @Override
     public String getSequence(String contig, long start, long end) {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
 
