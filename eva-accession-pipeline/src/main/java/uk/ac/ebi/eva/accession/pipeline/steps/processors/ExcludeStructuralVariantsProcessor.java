@@ -38,7 +38,7 @@ public class ExcludeStructuralVariantsProcessor implements ItemProcessor<IVarian
 
     private static String meta_contig_char = "(\\p{Alnum}|[\\p{Punct}&&[^:<>\\[\\]*=,]])";
 
-    private static String chromBasicRegEx = String.format("([[%s&&[^#]]][%s]*)", meta_contig_char, meta_contig_char);
+    private static String chromBasicRegEx = MessageFormat.format("([{0}&&[^#]][{0}]*)", meta_contig_char);
 
     private static String chromContigRegEx = String.format("(<%s>)", chromBasicRegEx);
 
