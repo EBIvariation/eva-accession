@@ -51,7 +51,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.S
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource("classpath:accession-release-test.properties")
+@TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
@@ -70,17 +70,17 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
-    private static final String RS_1 = "869808637";
+    private static final String RS_1 = "rs869808637";
 
-    private static final String RS_2 = "869927931";
+    private static final String RS_2 = "rs869927931";
 
-    private static final String RS_3 = "347048227";
+    private static final String RS_3 = "rs347048227";
 
-    private static final String RS_1_G_A = "CM001954.1_92701040_G_A";
+    private static final String RS_1_G_A = "CM001954.1_5_G_A";
 
-    private static final String RS_1_G_T = "CM001954.1_92701040_G_T";
+    private static final String RS_1_G_T = "CM001954.1_5_G_T";
 
-    private static final String RS_2_T_G = "CM001941.2_13247923_T_G";
+    private static final String RS_2_T_G = "CM001941.2_13_T_G";
 
     private static final String RS_3_G_A = "CP002685.1_4758626_G_A";
 

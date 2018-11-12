@@ -62,6 +62,8 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     static final String STUDY_ID_KEY = "SID";
 
+    private static final String RS_PREFIX = "rs";
+
     private String assemblyAccession;
 
     private MongoClient mongoClient;
@@ -121,7 +123,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
                 variants.get(variantId).addSourceEntry(sourceEntry);
             } else {
                 Variant variant = new Variant(contig, start, end, reference, alternate);
-                variant.setMainId(Objects.toString(rs));
+                variant.setMainId(buildId(rs));
                 variant.addSourceEntry(sourceEntry);
                 variants.put(variantId, variant);
             }
@@ -139,6 +141,10 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
         sourceEntry.addAttribute(STUDY_ID_KEY, study);
         return sourceEntry;
+    }
+
+    private String buildId(long rs) {
+        return RS_PREFIX + Objects.toString(rs);
     }
 
     @Override
