@@ -92,7 +92,7 @@ public class ExcludeStructuralVariantsProcessor implements ItemProcessor<IVarian
     public IVariant process(IVariant variant) {
         Matcher matcher = STRUCTURAL_VARIANT_PATTERN.matcher(variant.getAlternate());
         if(matcher.matches()) {
-            logger.info("Skipped processing variant " + variant.toString() + " because it was a structural variant.");
+            logger.info("Skipped processing structural variant " + variant.toString());
             return null;
         }
         return variant;
