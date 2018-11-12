@@ -102,7 +102,7 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
      * @throws IllegalArgumentException if the sequence name can be found in the FASTA but the coordinates are too large
      */
     private String getSequenceIgnoringMissingContig(String contig, long start, long end) {
-        if (contig != null) {
+        if (contig != null && sequenceDictionary.getSequence(contig) != null) {
             try {
                 return super.getSequence(contig, start, end);
             } catch (IllegalArgumentException sequenceUnavailable) {

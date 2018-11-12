@@ -44,7 +44,7 @@ public class FastaSequenceReader {
 
     private ReferenceSequenceFile fastaSequenceFile;
 
-    private SAMSequenceDictionary sequenceDictionary;
+    protected SAMSequenceDictionary sequenceDictionary;
 
     public FastaSequenceReader(Path fastaPath) throws IOException {
         checkFastaIsUncompressed(fastaPath);
