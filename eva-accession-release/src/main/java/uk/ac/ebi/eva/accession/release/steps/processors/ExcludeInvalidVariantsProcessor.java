@@ -1,10 +1,7 @@
 package uk.ac.ebi.eva.accession.release.steps.processors;
 
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.context.annotation.Bean;
 
-import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.regex.Matcher;

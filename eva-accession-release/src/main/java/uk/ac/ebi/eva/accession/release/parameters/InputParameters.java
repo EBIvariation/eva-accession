@@ -3,8 +3,6 @@ package uk.ac.ebi.eva.accession.release.parameters;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 
-import java.io.File;
-
 public class InputParameters {
 
     private String assemblyAccession;

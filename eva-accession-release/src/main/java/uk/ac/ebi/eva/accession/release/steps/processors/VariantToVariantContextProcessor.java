@@ -56,6 +56,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 .start(variant.getStart())
                 .stop(getVariantContextStop(variant))
                 .id(variant.getMainId())
+                .source(variant.getMainId())
                 .alleles(allelesArray)
                 .attributes(getUniqueAttributes(variant))
                 .unfiltered()
