@@ -9,6 +9,8 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
@@ -33,6 +35,8 @@ import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
 
 public class AccessionedVariantMongoReader implements ItemStreamReader<List<Variant>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
@@ -94,7 +98,9 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
-        return Arrays.asList(match, lookup, sort);
+        List<Bson> aggregation = Arrays.asList(match, lookup, sort);
+        logger.info("Issuing aggregation: {}", aggregation);
+        return aggregation;
     }
 
     @Override

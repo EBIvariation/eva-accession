@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CREATE_RELEASE_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -66,13 +67,13 @@ public class CreateReleaseStepConfigurationTest {
 
     @Test
     public void basicJobCompletion() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     @Test
     public void variantsWritten() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
@@ -80,7 +81,7 @@ public class CreateReleaseStepConfigurationTest {
 
     @Test
     public void metadataIsPresent() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         List<String> referenceLines = grepFile(new File(inputParameters.getOutputVcf()),
@@ -114,7 +115,7 @@ public class CreateReleaseStepConfigurationTest {
 
     @Test
     public void rsAccessionsWritten() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
@@ -124,7 +125,7 @@ public class CreateReleaseStepConfigurationTest {
 
     @Test
     public void infoWritten() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
