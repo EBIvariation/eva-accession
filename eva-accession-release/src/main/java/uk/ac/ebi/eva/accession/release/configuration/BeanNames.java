@@ -13,4 +13,6 @@ public class BeanNames {
     public static final String RELEASE_WRITER = "RELEASE_WRITER";
 
     public static final String EXCLUDE_VARIANTS_LISTENER = "EXCLUDE_VARIANTS_LISTENER";
+
+    public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 }

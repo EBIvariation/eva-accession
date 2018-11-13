@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.release.configuration;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
@@ -32,6 +33,8 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSIONED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CREATE_RELEASE_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
 
@@ -50,6 +53,14 @@ public class CreateReleaseStepConfiguration {
     @Qualifier(RELEASE_WRITER)
     private ItemStreamWriter<VariantContext> accessionWriter;
 
+    @Autowired
+    @Qualifier(PROGRESS_LISTENER)
+    private StepExecutionListener progressListener;
+
+    @Autowired
+    @Qualifier(EXCLUDE_VARIANTS_LISTENER)
+    private StepExecutionListener excludeVariantsListener;
+
     @Bean(CREATE_RELEASE_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
@@ -58,6 +69,8 @@ public class CreateReleaseStepConfiguration {
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)
+                .listener(excludeVariantsListener)
+                .listener(progressListener)
                 .build();
         return step;
     }
