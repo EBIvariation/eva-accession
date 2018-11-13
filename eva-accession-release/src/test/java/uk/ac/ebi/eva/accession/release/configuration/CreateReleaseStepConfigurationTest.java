@@ -65,22 +65,24 @@ public class CreateReleaseStepConfigurationTest {
 
     @Test
     public void basicJobCompletion() throws Exception {
+        assertStepExecutesAndCompletes();
+    }
+
+    private void assertStepExecutesAndCompletes() {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     @Test
     public void variantsWritten() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        assertStepExecutesAndCompletes();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
     @Test
     public void metadataIsPresent() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        assertStepExecutesAndCompletes();
 
         List<String> referenceLines = grepFile(new File(inputParameters.getOutputVcf()),
                                                "^##reference=" + inputParameters.getAssemblyAccession() + "$");
@@ -113,8 +115,7 @@ public class CreateReleaseStepConfigurationTest {
 
     @Test
     public void rsAccessionsWritten() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        assertStepExecutesAndCompletes();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         List<String> dataLinesWithRs = grepFile(new File(inputParameters.getOutputVcf()), "^.*\trs[0-9]+\t.*$");
@@ -123,8 +124,7 @@ public class CreateReleaseStepConfigurationTest {
 
     @Test
     public void infoWritten() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CREATE_RELEASE_STEP);
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        assertStepExecutesAndCompletes();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         String dataLinesDoNotStartWithHash = "^[^#]";
