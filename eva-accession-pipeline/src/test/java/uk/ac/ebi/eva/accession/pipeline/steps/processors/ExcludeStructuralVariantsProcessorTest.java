@@ -60,14 +60,14 @@ public class ExcludeStructuralVariantsProcessorTest {
         processor = new ExcludeStructuralVariantsProcessor();
     }
 
-    private IVariant newVariant(String alternate) {
-        return new Variant("contig", 1000, 1001, "A", alternate);
-    }
-
     @Test
     public void altWithSingleBaseAllele() {
         IVariant variant = newVariant(ALT_WITH_SINGLE_BASE);
         assertEquals(variant, processor.process(variant));
+    }
+
+    private IVariant newVariant(String alternate) {
+        return new Variant("contig", 1000, 1001, "A", alternate);
     }
 
     @Test
