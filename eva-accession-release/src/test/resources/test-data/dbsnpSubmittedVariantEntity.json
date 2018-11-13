@@ -153,20 +153,94 @@
       )
     },
     {
-      "_id" : "36DCF444101DEC1EBEF3D97F443BF9FA247C9B3A",
-      "seq" : "GCF_000309985.1",
-      "tax" : 3711,
-      "study" : "WENDELL_2012-VNTR",
-      "contig" : "CM001642.1",
-      "start" : NumberLong(7356604),
-      "ref" : "",
-      "alt" : "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC",
-      "rs" : NumberLong(268233057),
-      "evidence" : false,
-      "validated" : true,
-      "accession" : NumberLong(490570267),
-      "version" : 1,
-      "createdDate" : ISODate("2012-02-17T10:01:00Z")
+      "_id": "36DCF444101DEC1EBEF3D97F443BF9FA247C9B3A",
+      "seq": "GCF_000309985.1",
+      "tax": 3711,
+      "study": "WENDELL_2012-VNTR",
+      "contig": "CM001642.1",
+      "start": NumberLong(7356604),
+      "ref": "",
+      "alt": "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC",
+      "rs": NumberLong(268233057),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(490570267),
+      "version": 1,
+      "createdDate": ISODate(
+      "2012-02-17T10:01:00Z"
+      )
+    },
+    {
+      "_id": "6BE364BA8AE0C65A4112CF6B2CC2E87F965D123B",
+      "seq": "GCF_000003055.6",
+      "tax": 9913,
+      "study": "DLLJ_AB_CBG_IPN_N23.09DLLJ",
+      "contig": "GK000029.2",
+      "start": NumberLong(50030303),
+      "ref": "CCCCCCACCCCCCCCC",
+      "alt": "CCCCCCCCACCCC",
+      "rs": NumberLong(109798407),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(161151838),
+      "version": 1,
+      "createdDate": ISODate(
+      "2009-09-18T08:26:00Z"
+      )
+    },
+    {
+      "_id": "17202C69DA4BBA5EE25EA9021CA5DEE54AEBE615",
+      "seq": "GCF_000003055.6",
+      "tax": 9913,
+      "study": "DLLJ_AB_CBG_IPN_N23.09DLLJ",
+      "contig": "GK000029.2",
+      "start": NumberLong(50030303),
+      "ref": "CCCCCCACCCCCCCCC",
+      "alt": "CCCCCCCCCCCCACC",
+      "rs": NumberLong(109798407),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(161151838),
+      "version": 1,
+      "createdDate": ISODate(
+      "2009-09-18T08:26:00Z"
+      )
+    },
+    {
+      "_id": "4D0B7B6343E66D7B477F060492710FB6B0F7485C",
+      "seq": "GCF_000003055.6",
+      "tax": 9913,
+      "study": "DLLJ_AB_CBG_IPN_N23.09DLLJ",
+      "contig": "GK000029.2",
+      "start": NumberLong(50030303),
+      "ref": "CCCCCCACCCCCCCCC",
+      "alt": "CCCCCCCCCCCCCACCC",
+      "rs": NumberLong(109798407),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(161151838),
+      "version": 1,
+      "createdDate": ISODate(
+      "2009-09-18T08:26:00Z"
+      )
+    },
+    {
+      "_id": "1E1426BB15717F902B7F7EA6FD0776C8F6AC5A62",
+      "seq": "GCF_000003055.6",
+      "tax": 9913,
+      "study": "HMGU-IHG_BT.1_2",
+      "contig": "GK000010.2",
+      "start": NumberLong(101813055),
+      "ref": "T",
+      "alt": "AC",
+      "rs": NumberLong(109920405),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(141079924),
+      "version": 1,
+      "createdDate": ISODate(
+      "2009-05-22T11:57:00Z"
+      )
     }
   ]
 }

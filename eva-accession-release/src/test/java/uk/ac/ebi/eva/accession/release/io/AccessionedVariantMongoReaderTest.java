@@ -66,6 +66,8 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final String ASSEMBLY_ACCESSION_4 = "GCF_000309985.1";
 
+    private static final String ASSEMBLY_ACCESSION_5 = "GCF_000003055.6";
+
     private static final String TEST_DB = "test-db";
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
@@ -218,6 +220,23 @@ public class AccessionedVariantMongoReaderTest {
                            .getSourceEntries()
                            .stream()
                            .allMatch(se -> insertionSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+    }
+
+    @Test
+    public void otherVariantClasses() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
+        List<Variant> variants = readIntoList();
+        assertEquals(4, variants.size());
+        String indelSequenceOntology = "SO:1000032";
+        String tandemRepeatSequenceOntology = "SO:0000705";
+        assertEquals(3, variants.stream()
+                                .flatMap(v -> v.getSourceEntries().stream())
+                                .filter(se -> tandemRepeatSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
+                                .count());
+        assertEquals(1, variants.stream()
+                                .flatMap(v -> v.getSourceEntries().stream())
+                                .filter(se -> indelSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
+                                .count());
     }
 
     @Test
