@@ -39,11 +39,15 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
                     "Contig '" + contig + "' not found in the assembly report");
         }
 
-        return super.doesContigExist(contigSynonyms.getSequenceName())
-                || super.doesContigExist(contigSynonyms.getGenBank())
-                || super.doesContigExist(contigSynonyms.getRefSeq())
-                || super.doesContigExist(contigSynonyms.getUcsc())
-                || super.doesContigExist(contigSynonyms.getAssignedMolecule());
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq()){
+            return super.doesContigExist(contigSynonyms.getSequenceName())
+                    || super.doesContigExist(contigSynonyms.getGenBank())
+                    || super.doesContigExist(contigSynonyms.getRefSeq())
+                    || super.doesContigExist(contigSynonyms.getUcsc())
+                    || super.doesContigExist(contigSynonyms.getAssignedMolecule());
+        } else {
+            return super.doesContigExist(contig);
+        }
     }
 
     @Override
