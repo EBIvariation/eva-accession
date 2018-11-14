@@ -20,7 +20,7 @@ public class BeanNames {
 
     public static final String ACCESSION_RELEASE_JOB = "ACCESSION_RELEASE_JOB";
 
-    public static final String CREATE_RELEASE_STEP = "CREATE_RELEASE_STEP";
+    public static final String RELEASE_MAPPED_ACTIVE_VARIANTS_STEP = "RELEASE_MAPPED_ACTIVE_VARIANTS_STEP";
 
     public static final String ACCESSIONED_VARIANT_READER = "ACCESSIONED_VARIANT_READER";
 

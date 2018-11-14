@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSIONED_VARIANT_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CREATE_RELEASE_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
@@ -61,10 +61,10 @@ public class CreateReleaseStepConfiguration {
     @Qualifier(EXCLUDE_VARIANTS_LISTENER)
     private StepExecutionListener excludeVariantsListener;
 
-    @Bean(CREATE_RELEASE_STEP)
+    @Bean(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(CREATE_RELEASE_STEP)
+        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)
