@@ -51,7 +51,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.S
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource("classpath:accession-release-test.properties")
+@TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
@@ -66,21 +66,23 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final String ASSEMBLY_ACCESSION_4 = "GCF_000309985.1";
 
+    private static final String ASSEMBLY_ACCESSION_5 = "GCF_000003055.6";
+
     private static final String TEST_DB = "test-db";
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
-    private static final String RS_1 = "869808637";
+    private static final String RS_1 = "rs869808637";
 
-    private static final String RS_2 = "869927931";
+    private static final String RS_2 = "rs869927931";
 
-    private static final String RS_3 = "347048227";
+    private static final String RS_3 = "rs347048227";
 
-    private static final String RS_1_G_A = "CM001954.1_92701040_G_A";
+    private static final String RS_1_G_A = "CM001954.1_5_G_A";
 
-    private static final String RS_1_G_T = "CM001954.1_92701040_G_T";
+    private static final String RS_1_G_T = "CM001954.1_5_G_T";
 
-    private static final String RS_2_T_G = "CM001941.2_13247923_T_G";
+    private static final String RS_2_T_G = "CM001941.2_13_T_G";
 
     private static final String RS_3_G_A = "CP002685.1_4758626_G_A";
 
@@ -218,6 +220,23 @@ public class AccessionedVariantMongoReaderTest {
                            .getSourceEntries()
                            .stream()
                            .allMatch(se -> insertionSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY))));
+    }
+
+    @Test
+    public void otherVariantClasses() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
+        List<Variant> variants = readIntoList();
+        assertEquals(4, variants.size());
+        String indelSequenceOntology = "SO:1000032";
+        String tandemRepeatSequenceOntology = "SO:0000705";
+        assertEquals(3, variants.stream()
+                                .flatMap(v -> v.getSourceEntries().stream())
+                                .filter(se -> tandemRepeatSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
+                                .count());
+        assertEquals(1, variants.stream()
+                                .flatMap(v -> v.getSourceEntries().stream())
+                                .filter(se -> indelSequenceOntology.equals(se.getAttribute(VARIANT_CLASS_KEY)))
+                                .count());
     }
 
     @Test

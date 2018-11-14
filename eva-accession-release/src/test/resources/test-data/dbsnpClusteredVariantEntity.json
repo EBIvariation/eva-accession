@@ -5,7 +5,7 @@
       "asm": "GCF_000409795.2",
       "tax": 60711,
       "contig": "CM001954.1",
-      "start": NumberLong(92701040),
+      "start": NumberLong(5),
       "type": "SNV",
       "accession": NumberLong(869808637),
       "version": 1,
@@ -18,7 +18,7 @@
       "asm": "GCF_000409795.2",
       "tax": 60711,
       "contig": "CM001941.2",
-      "start": NumberLong(13247923),
+      "start": NumberLong(13),
       "type": "SNV",
       "accession": NumberLong(869927931),
       "version": 1,
@@ -40,27 +40,57 @@
       )
     },
     {
-      "_id" : "5C44B8E760D038D41CCAACCE4654B4B940604136",
-      "asm" : "GCF_000372685.1",
-      "tax" : 7994,
-      "contig" : "KB882311.1",
-      "start" : NumberLong(1232078),
-      "type" : "SNV",
-      "accession" : NumberLong(796064877),
-      "version" : 1,
-      "createdDate" : ISODate("2015-08-19T09:34:00Z")
+      "_id": "5C44B8E760D038D41CCAACCE4654B4B940604136",
+      "asm": "GCF_000372685.1",
+      "tax": 7994,
+      "contig": "KB882311.1",
+      "start": NumberLong(1232078),
+      "type": "SNV",
+      "accession": NumberLong(796064877),
+      "version": 1,
+      "createdDate": ISODate(
+      "2015-08-19T09:34:00Z"
+      )
     },
     {
-      "_id" : "F1E098016B20007A09C5773C5C4CA95E4A6B1AF1",
-      "asm" : "GCF_000309985.1",
-      "tax" : 3711,
-      "contig" : "CM001642.1",
-      "start" : NumberLong(7356605),
-      "type" : "INS",
-      "accession" : NumberLong(268233057),
-      "version" : 1,
-      "createdDate" : ISODate("2012-08-16T23:34:00Z")
+      "_id": "F1E098016B20007A09C5773C5C4CA95E4A6B1AF1",
+      "asm": "GCF_000309985.1",
+      "tax": 3711,
+      "contig": "CM001642.1",
+      "start": NumberLong(7356605),
+      "type": "INS",
+      "accession": NumberLong(268233057),
+      "version": 1,
+      "createdDate": ISODate(
+      "2012-08-16T23:34:00Z"
+      )
+    },
+    {
+      "_id": "DF1230B1F5138B6CEF66F0E116C70457F986D8CF",
+      "asm": "GCF_000003055.6",
+      "tax": 9913,
+      "contig": "GK000029.2",
+      "start": NumberLong(50030303),
+      "type": "TANDEM_REPEAT",
+      "accession": NumberLong(109798407),
+      "version": 1,
+      "createdDate": ISODate(
+      "2010-05-27T05:12:00Z"
+      )
+    },
+    {
+      "_id": "AB4ECF5E548D7530013B6CAE2A0BFDFAF9A1BF64",
+      "asm": "GCF_000003055.6",
+      "tax": 9913,
+      "contig": "GK000010.2",
+      "start": NumberLong(101813055),
+      "type": "INDEL",
+      "validated": true,
+      "accession": NumberLong(109920405),
+      "version": 1,
+      "createdDate": ISODate(
+      "2010-05-27T06:00:00Z"
+      )
     }
-
   ]
 }

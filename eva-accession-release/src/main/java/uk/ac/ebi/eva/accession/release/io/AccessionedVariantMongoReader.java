@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 EMBL - European Bioinformatics Institute
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.ac.ebi.eva.accession.release.io;
 
 import com.mongodb.MongoClient;
@@ -9,6 +25,8 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
@@ -33,6 +51,8 @@ import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
 
 public class AccessionedVariantMongoReader implements ItemStreamReader<List<Variant>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
@@ -61,6 +81,8 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
     static final String VARIANT_CLASS_KEY = "VC";
 
     static final String STUDY_ID_KEY = "SID";
+
+    private static final String RS_PREFIX = "rs";
 
     private String assemblyAccession;
 
@@ -92,7 +114,9 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
-        return Arrays.asList(match, lookup, sort);
+        List<Bson> aggregation = Arrays.asList(match, lookup, sort);
+        logger.info("Issuing aggregation: {}", aggregation);
+        return aggregation;
     }
 
     @Override
@@ -121,7 +145,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
                 variants.get(variantId).addSourceEntry(sourceEntry);
             } else {
                 Variant variant = new Variant(contig, start, end, reference, alternate);
-                variant.setMainId(Objects.toString(rs));
+                variant.setMainId(buildId(rs));
                 variant.addSourceEntry(sourceEntry);
                 variants.put(variantId, variant);
             }
@@ -139,6 +163,10 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
         sourceEntry.addAttribute(STUDY_ID_KEY, study);
         return sourceEntry;
+    }
+
+    private String buildId(long rs) {
+        return RS_PREFIX + Objects.toString(rs);
     }
 
     @Override

@@ -31,6 +31,26 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
     }
 
     @Override
+    public boolean doesContigExist(String contig) {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
+
+        if (contigSynonyms == null) {
+            throw new IllegalArgumentException(
+                    "Contig '" + contig + "' not found in the assembly report");
+        }
+
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq()){
+            return super.doesContigExist(contigSynonyms.getSequenceName())
+                    || super.doesContigExist(contigSynonyms.getGenBank())
+                    || super.doesContigExist(contigSynonyms.getRefSeq())
+                    || super.doesContigExist(contigSynonyms.getUcsc())
+                    || super.doesContigExist(contigSynonyms.getAssignedMolecule());
+        } else {
+            return super.doesContigExist(contig);
+        }
+    }
+
+    @Override
     public String getSequence(String contig, long start, long end) {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
 
@@ -86,7 +106,7 @@ public class FastaSynonymSequenceReader extends FastaSequenceReader {
      * @throws IllegalArgumentException if the sequence name can be found in the FASTA but the coordinates are too large
      */
     private String getSequenceIgnoringMissingContig(String contig, long start, long end) {
-        if (contig != null) {
+        if (contig != null && sequenceDictionary.getSequence(contig) != null) {
             try {
                 return super.getSequence(contig, start, end);
             } catch (IllegalArgumentException sequenceUnavailable) {

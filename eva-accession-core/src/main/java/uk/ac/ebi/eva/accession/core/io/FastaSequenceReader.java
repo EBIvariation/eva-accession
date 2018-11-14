@@ -44,7 +44,7 @@ public class FastaSequenceReader {
 
     private ReferenceSequenceFile fastaSequenceFile;
 
-    private SAMSequenceDictionary sequenceDictionary;
+    protected SAMSequenceDictionary sequenceDictionary;
 
     public FastaSequenceReader(Path fastaPath) throws IOException {
         checkFastaIsUncompressed(fastaPath);
@@ -149,8 +149,9 @@ public class FastaSequenceReader {
         return sequenceDictionary.getSequence(contig) != null;
     }
 
-    public ImmutableTriple getContextNucleotideAndNewStart(String contig, long oldStart, String oldReference,
-                                                           String oldAlternate) {
+    public ImmutableTriple<Long, String, String> getContextNucleotideAndNewStart(String contig, long oldStart,
+                                                                                 String oldReference,
+                                                                                 String oldAlternate) {
         String newReference;
         String newAlternate;
 

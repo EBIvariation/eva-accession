@@ -150,6 +150,16 @@ public class VariantContextWriterTest {
     }
 
     @Test
+    public void checkColumns() throws Exception {
+        File output = temporaryFolder.newFile();
+        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+
+        List<String> dataLines = grepFile(output, ID);
+        assertEquals(1, dataLines.size());
+        assertEquals(8, dataLines.get(0).split("\t", -1).length);
+    }
+
+    @Test
     public void checkStudies() throws Exception {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2));
@@ -179,9 +189,9 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
 
-        List<String> metadataLines = grepFile(output, VARIANT_CLASS_KEY + "=");
-        assertEquals(1, metadataLines.size());
-        String[] infoPairs = metadataLines.get(0).split("\t")[7].split(";");
+        List<String> dataLines = grepFile(output, VARIANT_CLASS_KEY + "=");
+        assertEquals(1, dataLines.size());
+        String[] infoPairs = dataLines.get(0).split("\t")[7].split(";");
         boolean isVariantClassPresent = false;
         for (String infoPair : infoPairs) {
             String[] keyValue = infoPair.split("=");

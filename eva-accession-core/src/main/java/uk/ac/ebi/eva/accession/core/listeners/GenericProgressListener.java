@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.dbsnp.listeners;
+package uk.ac.ebi.eva.accession.core.listeners;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
