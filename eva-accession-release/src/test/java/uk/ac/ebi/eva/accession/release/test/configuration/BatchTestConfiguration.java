@@ -28,7 +28,7 @@ import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyCo
 import uk.ac.ebi.eva.accession.release.configuration.CreateReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ReleaseProcessor;
+import uk.ac.ebi.eva.accession.release.configuration.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.VariantContextWriterConfiguration;
 
 @EnableAutoConfiguration
@@ -38,7 +38,7 @@ import uk.ac.ebi.eva.accession.release.configuration.VariantContextWriterConfigu
         AccessionReleaseJobConfiguration.class,
         CreateReleaseStepConfiguration.class,
         AccessionedVariantMongoReaderConfiguration.class,
-        ReleaseProcessor.class,
+        ReleaseProcessorConfiguration.class,
         VariantContextWriterConfiguration.class,
         ListenersConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class

@@ -38,7 +38,7 @@ import java.util.Arrays;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 
 @Configuration
-public class ReleaseProcessor {
+public class ReleaseProcessorConfiguration {
 
     @Bean(RELEASE_PROCESSOR)
     public ItemProcessor<Variant, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader) {
