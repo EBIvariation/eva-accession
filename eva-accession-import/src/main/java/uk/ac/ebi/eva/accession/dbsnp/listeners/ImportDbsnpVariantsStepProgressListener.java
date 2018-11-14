@@ -22,6 +22,7 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.item.ExecutionContext;
 
+import uk.ac.ebi.eva.accession.core.listeners.GenericProgressListener;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
