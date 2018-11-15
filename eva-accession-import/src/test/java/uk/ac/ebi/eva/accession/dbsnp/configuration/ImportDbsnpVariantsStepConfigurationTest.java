@@ -59,9 +59,9 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 @TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 
-    private static final int EXPECTED_SUBMITTED_VARIANTS = 8;
+    private static final int EXPECTED_SUBMITTED_VARIANTS = 6;
 
-    private static final int EXPECTED_CLUSTERED_VARIANTS = 5;
+    private static final int EXPECTED_CLUSTERED_VARIANTS = 3;
 
     private static final String CONTIG = "CM000114.4";
 
@@ -98,13 +98,13 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         clusteredVariantRepository.findAll().forEach(storedClusteredVariants::add);
 
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAssemblyMatch,
-                                     Arrays.asList(26201546L, 1540359250L, 88888888L, 9999999L));
+                                     Arrays.asList(88888888L, 9999999L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isSupportedByEvidence,
-                                     Arrays.asList(26201546L, 25062583L, 25312601L, 27587141L, 88888888L));
+                                     Arrays.asList(25062583L, 25312601L, 27587141L, 88888888L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAllelesMatch,
-                                     Arrays.asList(26201546L, 1540359250L, 25062583L, 25312601L, 88888888L, 9999999L));
+                                     Arrays.asList(25062583L, 25312601L, 88888888L, 9999999L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isValidated,
-                                     Arrays.asList(26201546L, 25312601L, 27587141L, 88888888L));
+                                     Arrays.asList(25312601L, 27587141L, 88888888L));
         checkFlagInClusteredVariants(storedClusteredVariants, DbsnpClusteredVariantEntity::isValidated,
                                      Arrays.asList(13823349L, 7777777L));
         checkRenormalizedVariant(storedSubmittedVariants, storedClusteredVariants);

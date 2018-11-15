@@ -30,63 +30,38 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
     public ContigReplacerProcessor(ContigMapping contigMapping, String assemblyAccession) {
         this.contigMapping = contigMapping;
         this.assemblyAccession = assemblyAccession;
+        if (!isRefseq(assemblyAccession)) {
+            throw new IllegalArgumentException(
+                    "The parameter for the assembly accession '" + assemblyAccession
+                            + "' is a non-RefSeq assembly. The code in " + this.getClass().getSimpleName()
+                            + " assumes dbSNP uses Refseq assembly accessions for every species.");
+        }
+    }
+
+    private boolean isRefseq(String assemblyAccession) {
+        return assemblyAccession.startsWith("GCF_");
     }
 
     @Override
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
-        ContigSynonyms chromosomeSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
 
-        boolean chromosomePresentInAssemblyReport = chromosomeSynonyms != null;
-        boolean contigPresentInAssemblyReport = contigSynonyms != null;
+        checkContigIsPresentInAssemblyReport(subSnpNoHgvs, contigSynonyms);
 
-        if (!contigPresentInAssemblyReport && !chromosomePresentInAssemblyReport) {
-            throw new IllegalStateException(
-                    "Neither contig '" + subSnpNoHgvs.getContigName() + "' nor chromosome '"
-                            + subSnpNoHgvs.getChromosome()
-                            + "' were found in the assembly report! Is the assembly accession '"
-                            + assemblyAccession + "' correct?");
-        }
-
-        if (chromosomePresentInAssemblyReport
-                && contigPresentInAssemblyReport
-                && !contigSynonyms.equals(chromosomeSynonyms)) {
-            throw new IllegalStateException(
-                    "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome()
-                            + "' do not appear in the same line in the assembly report!");
-        }
-
-        if (contigPresentInAssemblyReport) {
-            replaceContigWithGenbankAccession(subSnpNoHgvs, contigSynonyms);
-        } else {
-            replaceChromosomeWithGenbankAccession(subSnpNoHgvs, chromosomeSynonyms);
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
+            subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
         }
 
         return subSnpNoHgvs;
     }
 
-    private void replaceContigWithGenbankAccession(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
-        if (contigSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
-            subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
-        } else {
-            // genbank is not identical to refseq and the assembly is not genbank, so
-            // we must keep the original refseq
+    private void checkContigIsPresentInAssemblyReport(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
+        boolean contigPresentInAssemblyReport = contigSynonyms != null;
+        if (!contigPresentInAssemblyReport) {
+            throw new IllegalStateException(
+                    "Contig '" + subSnpNoHgvs.getContigName() + "' was not found in the assembly report! Is the " +
+                            "assembly accession '" + assemblyAccession + "' correct?");
         }
     }
-
-    private void replaceChromosomeWithGenbankAccession(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms chromosomeSynonyms) {
-        if (chromosomeSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
-            subSnpNoHgvs.setContigName(chromosomeSynonyms.getGenBank());
-            subSnpNoHgvs.setContigStart(subSnpNoHgvs.getChromosomeStart());
-        } else {
-            // genbank is not identical to refseq and the assembly is not genbank, so
-            // we must keep the original refseq, even if the refseq was not found in the assembly report
-        }
-    }
-
-    private boolean isGenbank(String assemblyAccession) {
-        return assemblyAccession.startsWith("GCA_");
-    }
-
 
 }
