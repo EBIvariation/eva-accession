@@ -37,9 +37,13 @@ public class ContigMappingTest {
 
     private static final String ASSIGNED_MOLECULE_CONTIG = "1";
 
+    private static final String NON_UNIQUE_ASSIGNED_MOLECULE = "repeated_assembled_assigned_molecule_1";
+
     private static final String GENBANK_CONTIG = "CM000994.2";
 
     private static final String GENBANK_WITHOUT_SYNONYM = "GL_without_synonym";
+
+    private static final String NON_UNIQUE_ASSIGNED_MOLECULE_GENBANK = "repeated_assembled_genbank_2";
 
     private static final String REFSEQ_CONTIG = "NC_000067.6";
 
@@ -53,9 +57,9 @@ public class ContigMappingTest {
 
     private ContigMapping contigMapping;
 
-    private static final int TOTAL_ROWS = 24;
+    private static final int TOTAL_ROWS = 27;
 
-    private static final int NON_ASSEMBLED_MOLECULE_ROWS = 11;
+    private static final int NON_ASSEMBLED_MOLECULE_ROWS = 14;
 
     private static final int MISSING_UCSC_ROWS = 1;
 
@@ -91,6 +95,16 @@ public class ContigMappingTest {
         assertNotNull(contigSynonyms);
         assertEquals(ASSEMBLED_MOLECULE_ROLE, contigSynonyms.getSequenceRole());
         assertNotNull(contigSynonyms.getAssignedMolecule());
+    }
+
+    @Test
+    public void getSynonymsOfNonUniqueAssembledMoleculeAssignedMolecule() {
+        ContigSynonyms assignedMoleculeContigSynonyms = contigMapping.getContigSynonyms(NON_UNIQUE_ASSIGNED_MOLECULE);
+        assertNull(assignedMoleculeContigSynonyms);
+        ContigSynonyms genbankContigSynonyms = contigMapping.getContigSynonyms(NON_UNIQUE_ASSIGNED_MOLECULE_GENBANK);
+        assertNotNull(genbankContigSynonyms);
+        assertEquals(ASSEMBLED_MOLECULE_ROLE, genbankContigSynonyms.getSequenceRole());
+        assertNull(genbankContigSynonyms.getAssignedMolecule());
     }
 
     @Test

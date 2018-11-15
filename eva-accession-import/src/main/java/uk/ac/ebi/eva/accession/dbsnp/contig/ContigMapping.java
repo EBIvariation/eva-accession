@@ -20,8 +20,10 @@ package uk.ac.ebi.eva.accession.dbsnp.contig;
 import uk.ac.ebi.eva.accession.dbsnp.io.AssemblyReportReader;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ContigMapping {
 
@@ -38,6 +40,8 @@ public class ContigMapping {
     Map<String, ContigSynonyms> refSeqToSynonyms = new HashMap<>();
 
     Map<String, ContigSynonyms> ucscToSynonyms = new HashMap<>();
+
+    private Set<String> nonUniqueAssignedMolecules = new HashSet<>();
 
     public ContigMapping(String assemblyReportUrl) throws Exception {
         this(new AssemblyReportReader(assemblyReportUrl));
@@ -63,8 +67,8 @@ public class ContigMapping {
      *
      * Take into account:
      * - UCSC and assignedMolecule columns may appear as "na" (not available).
-     * - assignedMolecule values may not be unique across rows. Keep only those that have "assembled-molecule" in the
-     * Sequence-Role column.
+     * - assignedMolecule values may not be unique across rows. Keep only those that have "assembled-molecule" only
+     * once in the Sequence-Role column.
      */
     private void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
         normalizeNames(contigSynonyms);
@@ -86,10 +90,19 @@ public class ContigMapping {
     }
 
     private void normalizeNames(ContigSynonyms contigSynonyms) {
-        if (NOT_AVAILABLE.equals(contigSynonyms.getAssignedMolecule())
-                || !ASSEMBLED_MOLECULE.equals(contigSynonyms.getSequenceRole())) {
+        String assignedMolecule = contigSynonyms.getAssignedMolecule();
+        if (NOT_AVAILABLE.equals(assignedMolecule)
+                || !ASSEMBLED_MOLECULE.equals(contigSynonyms.getSequenceRole())
+                || nonUniqueAssignedMolecules.contains(assignedMolecule)) {
+            contigSynonyms.setAssignedMolecule(null);
+        } else if (assignedMoleculeToSynonyms.containsKey(assignedMolecule)) {
+            nonUniqueAssignedMolecules.add(assignedMolecule);
+            ContigSynonyms instancePresentInAllMaps = assignedMoleculeToSynonyms.get(assignedMolecule);
+            instancePresentInAllMaps.setAssignedMolecule(null);
+            assignedMoleculeToSynonyms.remove(assignedMolecule);
             contigSynonyms.setAssignedMolecule(null);
         }
+
         if (NOT_AVAILABLE.equals(contigSynonyms.getGenBank())) {
             contigSynonyms.setGenBank(null);
         }
