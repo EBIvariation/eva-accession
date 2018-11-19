@@ -32,6 +32,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
+
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private File output;
@@ -56,9 +59,9 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
         Set<VCFHeaderLine> metaData = new HashSet<>();
         metaData.add(new VCFHeaderLine("reference", referenceAssembly));
-        metaData.add(new VCFInfoHeaderLine("VC", 1, VCFHeaderLineType.String,
+        metaData.add(new VCFInfoHeaderLine(VARIANT_CLASS_KEY, 1, VCFHeaderLineType.String,
                                            "Variant class according to the Sequence Ontology"));
-        metaData.add(new VCFInfoHeaderLine("SID", VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
+        metaData.add(new VCFInfoHeaderLine(STUDY_ID_KEY, VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
                                            "Identifiers of studies that report a variant"));
         writer.writeHeader(new VCFHeader(metaData));
     }
