@@ -82,6 +82,14 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     static final String STUDY_ID_KEY = "SID";
 
+    static final String VALIDATED_KEY = "V";
+
+    static final String ASSEMBLY_MATCH_KEY = "ASM_M";
+
+    static final String ALLELES_MATCH_KEY = "AL_M";
+
+    static final String SUPPORTED_BY_EVIDENCE_KEY = "E";
+
     private static final String RS_PREFIX = "rs";
 
     private String assemblyAccession;

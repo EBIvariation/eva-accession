@@ -46,8 +46,13 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 @RunWith(SpringRunner.class)
@@ -258,5 +263,34 @@ public class AccessionedVariantMongoReaderTest {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, mongoClient, TEST_DB);
         List<Variant> variants = readIntoList();
         assertEquals(0, variants.size());
+    }
+
+    @Test
+    public void includeValidatedFlag() throws Exception {
+        assertFlagEqualsInAllVariants(VALIDATED_KEY, "true");
+    }
+
+    private void assertFlagEqualsInAllVariants(String allelesMatchKey, String value) throws Exception {
+        List<Variant> variants = readIntoList();
+        assertNotEquals(0, variants.size());
+        assertTrue(variants.stream()
+                           .flatMap(v -> v.getSourceEntries().stream())
+                           .map(se -> se.getAttribute(allelesMatchKey))
+                           .allMatch(value::equals));
+    }
+
+    @Test
+    public void includeAssemblyMatchFlag() throws Exception {
+        assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, "true");
+    }
+
+    @Test
+    public void includeAllelesMatchFlag() throws Exception {
+        assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, "true");
+    }
+
+    @Test
+    public void includeEvidenceFlag() throws Exception {
+        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, "true");
     }
 }
