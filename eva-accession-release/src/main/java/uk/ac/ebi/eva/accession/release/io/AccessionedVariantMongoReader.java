@@ -49,6 +49,10 @@ import java.util.Objects;
 
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
+import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
 public class AccessionedVariantMongoReader implements ItemStreamReader<List<Variant>> {
 
@@ -78,11 +82,21 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     private static final String SS_INFO_FIELD = "ssInfo";
 
+    private static final String VALIDATED_FIELD = "validated";
+
+    private static final String ASSEMBLY_MATCH_FIELD = "asmMatch";
+
+    private static final String ALLELES_MATCH_FIELD = "allelesMatch";
+
+    private static final String SUPPORTED_BY_EVIDENCE_FIELD = "evidence";
+
     static final String VARIANT_CLASS_KEY = "VC";
 
     static final String STUDY_ID_KEY = "SID";
 
     static final String VALIDATED_KEY = "V";
+
+    static final String SUBMITTED_VARIANT_VALIDATED_KEY = "SS_V";
 
     static final String ASSEMBLY_MATCH_KEY = "ASM_M";
 
@@ -138,6 +152,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         long rs = clusteredVariant.getLong(ACCESSION_FIELD);
         String type = clusteredVariant.getString(TYPE_FIELD);
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
+        boolean validated = clusteredVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
 
         Map<String, Variant> variants = new HashMap<>();
         Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
@@ -146,7 +161,13 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
             String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
             long end = calculateEnd(reference, alternate, start);
             String study = submittedVariant.getString(STUDY_FIELD);
-            VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology);
+            boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
+            boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
+            boolean assemblyMatch = submittedVariant.getBoolean(ASSEMBLY_MATCH_FIELD, DEFAULT_ASSEMBLY_MATCH);
+            boolean evidence = submittedVariant.getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
+            VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
+                                                                     submittedVariantValidated, allelesMatch,
+                                                                     assemblyMatch, evidence);
 
             String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
             if (variants.containsKey(variantId)) {
@@ -166,10 +187,17 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         return start + length - 1;
     }
 
-    private VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology) {
+    private VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
+                                                       boolean submittedVariantValidated, boolean allelesMatch,
+                                                       boolean assemblyMatch, boolean evidence) {
         VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
         sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
         sourceEntry.addAttribute(STUDY_ID_KEY, study);
+        sourceEntry.addAttribute(VALIDATED_KEY, Boolean.toString(validated));
+        sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
+        sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
+        sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
+        sourceEntry.addAttribute(SUPPORTED_BY_EVIDENCE_KEY, Boolean.toString(evidence));
         return sourceEntry;
     }
 

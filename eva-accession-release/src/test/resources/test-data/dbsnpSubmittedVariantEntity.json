@@ -162,8 +162,8 @@
       "ref": "",
       "alt": "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC",
       "rs": NumberLong(268233057),
-      "evidence": false,
-      "validated": true,
+      "asmMatch": false,
+      "allelesMatch": false,
       "accession": NumberLong(490570267),
       "version": 1,
       "createdDate": ISODate(

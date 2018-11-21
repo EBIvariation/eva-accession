@@ -51,6 +51,7 @@ import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
@@ -82,6 +83,10 @@ public class AccessionedVariantMongoReaderTest {
     private static final String RS_2 = "rs869927931";
 
     private static final String RS_3 = "rs347048227";
+
+    private static final String RS_4 = "rs109798407";
+
+    private static final String RS_5 = "rs109920405";
 
     private static final String RS_1_G_A = "CM001954.1_5_G_A";
 
@@ -267,30 +272,70 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void includeValidatedFlag() throws Exception {
-        assertFlagEqualsInAllVariants(VALIDATED_KEY, "true");
+        assertFlagEqualsInAllVariants(VALIDATED_KEY, false);
+        assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, false);
     }
 
-    private void assertFlagEqualsInAllVariants(String allelesMatchKey, String value) throws Exception {
+    private void assertFlagEqualsInAllVariants(String key, boolean value) throws Exception {
         List<Variant> variants = readIntoList();
         assertNotEquals(0, variants.size());
         assertTrue(variants.stream()
                            .flatMap(v -> v.getSourceEntries().stream())
-                           .map(se -> se.getAttribute(allelesMatchKey))
-                           .allMatch(value::equals));
+                           .map(se -> se.getAttribute(key))
+                           .map(Boolean::new)
+                           .allMatch(v -> v.equals(value)));
     }
 
     @Test
     public void includeAssemblyMatchFlag() throws Exception {
-        assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, "true");
+        assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, true);
     }
 
     @Test
     public void includeAllelesMatchFlag() throws Exception {
-        assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, "true");
+        assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, true);
     }
 
     @Test
     public void includeEvidenceFlag() throws Exception {
-        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, "true");
+        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, true);
+    }
+
+    @Test
+    public void includeValidatedNonDefaultFlag() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
+        assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, true);
+        assertFlagEqualsInRS(VALIDATED_KEY, false, RS_4);
+        assertFlagEqualsInRS(VALIDATED_KEY, true, RS_5);
+    }
+
+    private void assertFlagEqualsInRS(String key, boolean value, String clusteredVariantAccession) throws Exception {
+        List<Variant> variants = readIntoList();
+        assertNotEquals(0, variants.size());
+        assertTrue(variants.stream()
+                           .filter(v -> v.getMainId().equals(clusteredVariantAccession))
+                           .flatMap(v -> v.getSourceEntries().stream())
+                           .map(se -> se.getAttribute(key))
+                           .map(Boolean::new)
+                           .allMatch(v -> v.equals(value)));
+    }
+
+
+    @Test
+    public void includeAssemblyMatchNonDefaultFlag() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB);
+        assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, false);
+    }
+
+    @Test
+    public void includeAllelesMatchNonDefaultFlag() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB);
+        assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, false);
+    }
+
+    @Test
+    public void includeEvidenceNonDefaultFlag() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
+        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
     }
 }
