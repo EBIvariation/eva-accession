@@ -17,6 +17,8 @@ package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import com.mongodb.BulkWriteError;
 import com.mongodb.ErrorCategory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -58,6 +60,10 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredW
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
+    private static final Logger logger = LoggerFactory.getLogger(DbsnpVariantsWriter.class);
+
+    private final MongoTemplate mongoTemplate;
+
     private DbsnpSubmittedVariantWriter dbsnpSubmittedVariantWriter;
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
@@ -83,6 +89,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                DbsnpClusteredVariantOperationRepository clusteredOperationRepository,
                                DbsnpClusteredVariantAccessioningRepository clusteredVariantRepository,
                                ImportCounts importCounts) {
+        this.mongoTemplate = mongoTemplate;
         this.dbsnpSubmittedVariantWriter = new DbsnpSubmittedVariantWriter(mongoTemplate, importCounts);
         this.dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
         this.dbsnpSubmittedVariantOperationWriter = new DbsnpSubmittedVariantOperationWriter(mongoTemplate,
@@ -255,14 +262,46 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                     .collect(Collectors.toList());
 
             if (mergedIntoList.size() > 1) {
-                throw new IllegalStateException(
-                        "Clustered variant rs" + hashAndAccession.getSecond() + " was merged into several other "
-                                + "clustered variants with the same hash: " + mergedIntoList);
-            }
+                DbsnpClusteredVariantEntity activeClusteredVariant = mongoTemplate.findById(
+                        hashAndAccession.getFirst(), DbsnpClusteredVariantEntity.class);
 
-            originalToNewAccessions.put(hashAndAccession, mergedIntoList.get(0));
+                if (activeClusteredVariant == null || !mergedIntoList.contains(activeClusteredVariant.getAccession())) {
+                    throwSeveralInactiveMergesException(hashAndAccession, mergedIntoList, activeClusteredVariant);
+                } else {
+                    originalToNewAccessions.put(hashAndAccession, activeClusteredVariant.getAccession());
+                    logger.debug("Clustered variant rs{} was merged into several other clustered variants with the "
+                                         + "same hash: {}. The accession rs{} was chosen as "
+                                         + "replacement because it's active, i.e. present in the collection for {}",
+                            hashAndAccession.getSecond(), mergedIntoList, activeClusteredVariant.getAccession(),
+                                 DbsnpClusteredVariantEntity.class.getSimpleName());
+                }
+            } else {
+                originalToNewAccessions.put(hashAndAccession, mergedIntoList.get(0));
+            }
         });
         return originalToNewAccessions;
+    }
+
+    private void throwSeveralInactiveMergesException(Pair<String, Long> hashAndAccession, List<Long> mergedIntoList,
+                                                     DbsnpClusteredVariantEntity activeClusteredVariant) {
+        String activeVariantMessage;
+        if (activeClusteredVariant == null) {
+            activeVariantMessage = "There is no active variant with that hash.";
+        } else {
+            activeVariantMessage =
+                    "However, there is an active variant with that hash and accession rs"
+                            + activeClusteredVariant.getAccession() + ".";
+
+        }
+        String accessionsMergedInto = mergedIntoList.stream()
+                                                    .map(accession -> "rs" + accession)
+                                                    .collect(Collectors.joining(", "));
+        throw new IllegalStateException(
+                "Clustered variant rs" + hashAndAccession.getSecond() + " was merged into several other "
+                        + "clustered variants (" + accessionsMergedInto + ") because all have the same hash ("
+                        + hashAndAccession.getFirst() + ") but none of those clustered variants is active, i.e. "
+                        + "present in the collection for " + DbsnpClusteredVariantEntity.class.getSimpleName()
+                        + ". " + activeVariantMessage);
     }
 
     private void updateClusteredVariantAccessionsInSubmittedVariants(DbsnpVariantsWrapper wrapper,
@@ -271,7 +310,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         for (DbsnpSubmittedVariantEntity submittedVariant : wrapper.getSubmittedVariants()) {
             Long mergedInto = replacements.get(Pair.of(wrapper.getClusteredVariant().getHashedMessage(),
                                                        wrapper.getClusteredVariant().getAccession()));
-            if (mergedInto != null) {
+            if (mergedInto != null && submittedVariant.getClusteredVariantAccession() != null) {
                 operations.add(buildOperation(submittedVariant, mergedInto));
                 submittedVariant.setClusteredVariantAccession(mergedInto);
             }
@@ -280,14 +319,17 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
 
     private DbsnpSubmittedVariantOperationEntity buildOperation(DbsnpSubmittedVariantEntity originalSubmittedVariant,
                                                                 Long clusteredVariantMergedInto) {
-        DbsnpSubmittedVariantInactiveEntity inactiveEntity =
-                new DbsnpSubmittedVariantInactiveEntity(originalSubmittedVariant);
+        DbsnpSubmittedVariantInactiveEntity inactiveEntity = new DbsnpSubmittedVariantInactiveEntity(
+                originalSubmittedVariant);
 
         Long originalClusteredVariant = originalSubmittedVariant.getClusteredVariantAccession();
         String reason = "Original rs" + originalClusteredVariant + " was merged into rs" + clusteredVariantMergedInto + ".";
 
         Long accession = originalSubmittedVariant.getAccession();
         DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
+
+        // Note the next null in accessionIdDestiny. We are not merging the submitted variant into
+        // clusteredVariantMergedInto. We are updating the submitted variant, changing its rs field
         operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
         return operation;
     }
@@ -409,7 +451,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                     .stream()
                     .filter(v -> v.getHashedMessage().equals(hash)
                             && !v.getAccession().equals(mergedInto.getAccession())
-                            && !isAlreadyMerged(v.getAccession()))
+                            && !isAlreadyMergedInto(v, mergedInto))
                     .map(origin -> mergeOperationFactory.apply(origin, mergedInto))
                     .collect(Collectors.toList());
         }
@@ -436,9 +478,14 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                       .values();
         }
 
-        private boolean isAlreadyMerged(Long accession) {
-            List<OPERATION_ENTITY> merges = operationRepository.findAllByAccession(accession);
-            return merges.stream().anyMatch(operation -> operation.getEventType().equals(EventType.MERGED));
+        private boolean isAlreadyMergedInto(ENTITY original, ENTITY mergedInto) {
+            List<OPERATION_ENTITY> merges = operationRepository.findAllByAccession(original.getAccession());
+            return merges.stream().anyMatch(
+                    operation ->
+                            operation.getEventType().equals(EventType.MERGED)
+                                    && mergedInto.getAccession().equals(operation.getMergedInto())
+                                    && original.getHashedMessage().equals(
+                                            operation.getInactiveObjects().get(0).getHashedMessage()));
         }
     }
 }
