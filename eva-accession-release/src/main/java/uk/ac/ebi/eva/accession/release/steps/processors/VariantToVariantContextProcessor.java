@@ -75,7 +75,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
     }
 
     private Map<String, String> getAttributes(IVariant variant) {
-        Map<String, List<String>> attributesList = getAttributesList(variant);
+        Map<String, List<String>> attributesList = getAttributeMap(variant);
 
         Map<String, String> attributes = new HashMap<>();
         for (Map.Entry<String, List<String>> attribute : attributesList.entrySet()) {
@@ -92,7 +92,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                     attributes.put(ASSEMBLY_MATCH_KEY, "");
                 }
             } else if (attribute.getKey().equals(SUPPORTED_BY_EVIDENCE_KEY)) {
-                if (attribute.getValue().stream().anyMatch(Boolean.toString(false)::equals)) {
+                if (attribute.getValue().stream().noneMatch(Boolean.toString(true)::equals)) {
                     attributes.put(SUPPORTED_BY_EVIDENCE_KEY, "");
                 }
             } else if (attribute.getKey().equals(VALIDATED_KEY)) {
@@ -111,7 +111,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
         return String.join(",", new HashSet<>(value));
     }
 
-    private Map<String, List<String>> getAttributesList(IVariant variant) {
+    private Map<String, List<String>> getAttributeMap(IVariant variant) {
         Map<String, List<String>> attributes = new HashMap<>();
         for (IVariantSourceEntry sourceEntry : variant.getSourceEntries()) {
             for (Map.Entry<String, String> infoEntry : sourceEntry.getAttributes().entrySet()) {

@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
@@ -299,7 +300,7 @@ public class VariantContextWriterTest {
     }
 
     @Test
-    public void checkDefaultFlags() throws Exception {
+    public void checkFlagsAreNotPresentWhenDefaultValues() throws Exception {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output,
                        buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, false, false, true, true, true,
@@ -339,6 +340,13 @@ public class VariantContextWriterTest {
     }
 
     @Test
+    public void checkHowShouldTabsBeWrittenInJavaRegex() {
+        assertTrue("\t".matches("\t")); // java string containing literal tab
+        assertTrue("\t".matches("\\t"));    // java string containing a backwards slash and a 't', interpreted as
+                                            // a tab by the regex classes, @see Pattern
+    }
+
+    @Test
     public void checkNonDefaultSubmittedVariantValidatedFlag() throws Exception {
         assertFlagIsPresent(SUBMITTED_VARIANT_VALIDATED_KEY + "=[0-9]");
     }
@@ -355,5 +363,45 @@ public class VariantContextWriterTest {
     @Test
     public void checkNonDefaultSupportedByEvidenceFlag() throws Exception {
         assertFlagIsPresent(SUPPORTED_BY_EVIDENCE_KEY);
+    }
+
+    @Test
+    public void checkSeveralSupportedByEvidenceFlags() throws Exception {
+        assertSeveralFlagValues(SUPPORTED_BY_EVIDENCE_KEY, true, false, 0);
+    }
+
+    private void assertSeveralFlagValues(String flagKey, boolean firstValue, boolean secondValue,
+                                         int expectedLinesWithTheFlag) throws Exception {
+        Variant variant = new Variant(CHR_1, 1000, 1000, "C", "G");
+        variant.setMainId(ID);
+
+        VariantSourceEntry sourceEntry1 = new VariantSourceEntry(STUDY_1, FILE_ID);
+        sourceEntry1.addAttribute(flagKey, Boolean.toString(firstValue));
+        variant.addSourceEntry(sourceEntry1);
+
+        VariantSourceEntry sourceEntry2 = new VariantSourceEntry(STUDY_2, FILE_ID);
+        sourceEntry2.addAttribute(flagKey, Boolean.toString(secondValue));
+        variant.addSourceEntry(sourceEntry2);
+        File output = temporaryFolder.newFile();
+
+        assertWriteVcf(output, variant);
+
+        String dataLinesRegex = "^[^#]";
+        String dataLinesWithValidatedRegex = dataLinesRegex + somewhereSurroundedByTabOrSemicolon(flagKey);
+        List<String> dataLines;
+        dataLines = grepFile(output, dataLinesWithValidatedRegex);
+        assertEquals(expectedLinesWithTheFlag, dataLines.size());
+    }
+    @Test
+    public void checkSeveralValidatedFlags() throws Exception {
+        assertSeveralFlagValues(VALIDATED_KEY, true, false, 1);
+    }
+    @Test
+    public void checkSeveralAllelesMatchFlags() throws Exception {
+        assertSeveralFlagValues(ALLELES_MATCH_KEY, true, false, 1);
+    }
+    @Test
+    public void checkSeveralAssemblyMatchFlags() throws Exception {
+        assertSeveralFlagValues(ASSEMBLY_MATCH_KEY, true, false, 1);
     }
 }
