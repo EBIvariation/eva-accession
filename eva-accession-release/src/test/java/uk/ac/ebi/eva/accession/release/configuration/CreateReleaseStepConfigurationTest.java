@@ -144,16 +144,15 @@ public class CreateReleaseStepConfigurationTest {
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         String dataLinesDoNotStartWithHash = "^[^#]";
-        String sevenColumns = "([^\t]+\t){7}";
         String variantClass = "VC=SO:[0-9]+";
         String studyId = "SID=[a-zA-Z0-9,]+";
-        String variantClassAndStudyId = variantClass + ";" + studyId;
-        String studyIdAndVariantClass = studyId + ";" + variantClass;
-        String variantClassAndStudyIdInAnyOrder = "(" + variantClassAndStudyId + "|" + studyIdAndVariantClass + ")";
-        List<String> dataLinesWithVariantClassAndStudyId = grepFile(new File(inputParameters.getOutputVcf()),
-                                                                    dataLinesDoNotStartWithHash + sevenColumns
-                                                                            + variantClassAndStudyIdInAnyOrder + "$");
+        File outputFile = new File(inputParameters.getOutputVcf());
 
-        assertEquals(3, dataLinesWithVariantClassAndStudyId.size());
+        List<String> dataLines;
+        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + variantClass + ".*");
+        assertEquals(EXPECTED_LINES, dataLines.size());
+        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + studyId + ".*");
+        assertEquals(EXPECTED_LINES, dataLines.size());
+
     }
 }
