@@ -32,7 +32,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
@@ -63,6 +68,28 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                                            "Variant class according to the Sequence Ontology"));
         metaData.add(new VCFInfoHeaderLine(STUDY_ID_KEY, VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
                                            "Identifiers of studies that report a variant"));
+
+        metaData.add(new VCFInfoHeaderLine(VALIDATED_KEY, 0, VCFHeaderLineType.Flag,
+                                           "If an RS was validated by any method according to dbSNP validation "
+                                           + "status, this flag will be present. If it was not validated by any "
+                                           + "method, this flag won't be present."));
+        metaData.add(new VCFInfoHeaderLine(ALLELES_MATCH_KEY, 0, VCFHeaderLineType.Flag,
+                                           "Alleles mismatch flag, present when some of the submitted variants has "
+                                           + "inconsistent allele information. See https://github"
+                                           + ".com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP"
+                                           + "#alleles-match"));
+
+        metaData.add(new VCFInfoHeaderLine(SUBMITTED_VARIANT_VALIDATED_KEY, VCFHeaderLineCount.UNBOUNDED,
+                                           VCFHeaderLineType.Integer,
+                                           "Number of submitted variants clustered in an RS that were validated by any"
+                                           + " method according to dbSNP validation status, the value of this field "
+                                           + "is 1, and 0 otherwise"));
+        metaData.add(new VCFInfoHeaderLine(ASSEMBLY_MATCH_KEY, 0, VCFHeaderLineType.Flag,
+                                           "Assembly mismatch flag, present when the reference allele doesn't match "
+                                           + "the reference sequence"));
+        metaData.add(new VCFInfoHeaderLine(SUPPORTED_BY_EVIDENCE_KEY, 0, VCFHeaderLineType.Flag,
+                                           "Lack of evidence. If this flag is present it means that no submitted "
+                                           + "variant included genotype or frequency information"));
         writer.writeHeader(new VCFHeader(metaData));
     }
 
