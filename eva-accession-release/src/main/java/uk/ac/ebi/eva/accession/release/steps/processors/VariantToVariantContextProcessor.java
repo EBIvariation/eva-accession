@@ -23,11 +23,19 @@ import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariantSourceEntry;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 /**
  * Converts an IVariant to a VariantContext.
@@ -58,27 +66,63 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 .id(variant.getMainId())
                 .source(variant.getMainId())
                 .alleles(allelesArray)
-                .attributes(getUniqueAttributes(variant))
+                .attributes(getAttributes(variant))
                 .unfiltered()
                 .make();
 
         return variantContext;
     }
 
-    private Map<String, String> getUniqueAttributes(IVariant variant) {
-        Map<String, Set<String>> attributes = new HashMap<>();
+    private Map<String, String> getAttributes(IVariant variant) {
+        Map<String, List<String>> attributesList = getSourceEntriesAttributes(variant);
+
+        Map<String, String> attributes = new HashMap<>();
+        for (Map.Entry<String, List<String>> attribute : attributesList.entrySet()) {
+            switch (attribute.getKey()) {
+                case VARIANT_CLASS_KEY:
+                case STUDY_ID_KEY:
+                    attributes.put(attribute.getKey(), toUniqueConcatenation(attribute.getValue()));
+                    break;
+                case ALLELES_MATCH_KEY:
+                case ASSEMBLY_MATCH_KEY:
+                    if (attribute.getValue().stream().anyMatch(Boolean.toString(false)::equals)) {
+                        attributes.put(attribute.getKey(), "");
+                    }
+                    break;
+                case SUPPORTED_BY_EVIDENCE_KEY:
+                    if (attribute.getValue().stream().noneMatch(Boolean.toString(true)::equals)) {
+                        attributes.put(SUPPORTED_BY_EVIDENCE_KEY, "");
+                    }
+                    break;
+                case CLUSTERED_VARIANT_VALIDATED_KEY:
+                    if (attribute.getValue().stream().anyMatch(Boolean.toString(true)::equals)) {
+                        attributes.put(CLUSTERED_VARIANT_VALIDATED_KEY, "");
+                    }
+                    break;
+                case SUBMITTED_VARIANT_VALIDATED_KEY:
+                    long count = attribute.getValue().stream().filter(Boolean.toString(true)::equals).count();
+                    attributes.put(SUBMITTED_VARIANT_VALIDATED_KEY, Long.toString(count));
+                    break;
+            }
+        }
+        return attributes;
+    }
+
+    private String toUniqueConcatenation(List<String> value) {
+        return String.join(",", new HashSet<>(value));
+    }
+
+    private Map<String, List<String>> getSourceEntriesAttributes(IVariant variant) {
+        Map<String, List<String>> attributes = new HashMap<>();
         for (IVariantSourceEntry sourceEntry : variant.getSourceEntries()) {
             for (Map.Entry<String, String> infoEntry : sourceEntry.getAttributes().entrySet()) {
                 if (!attributes.containsKey(infoEntry.getKey())) {
-                    attributes.put(infoEntry.getKey(), new HashSet<>());
+                    attributes.put(infoEntry.getKey(), new ArrayList<>());
                 }
                 attributes.get(infoEntry.getKey()).add(infoEntry.getValue());
             }
         }
-        return attributes
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> String.join(",", e.getValue())));
+        return attributes;
     }
 
     private String[] getAllelesArray(IVariant variant) {

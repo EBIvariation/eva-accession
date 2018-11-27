@@ -36,7 +36,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 
 public class VariantContextWriterTest {
 
@@ -79,14 +85,26 @@ public class VariantContextWriterTest {
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
-    private Variant buildVariant(String chr1, int start, String reference, String alternate,
+    private Variant buildVariant(String chr, int start, String reference, String alternate,
                                  String sequenceOntologyTerm, String... studies) {
-        Variant variant = new Variant(chr1, start, start + alternate.length(), reference, alternate);
+        return buildVariant(chr, start, reference, alternate, sequenceOntologyTerm, false, false, true, true, true,
+                            studies);
+    }
+
+    private Variant buildVariant(String chr, int start, String reference, String alternate,
+                                 String sequenceOntologyTerm, boolean validated, boolean submittedVariantValidated,
+                                 boolean allelesMatch, boolean assemblyMatch, boolean evidence, String... studies) {
+        Variant variant = new Variant(chr, start, start + alternate.length(), reference, alternate);
         variant.setMainId(ID);
         for (String study : studies) {
             VariantSourceEntry sourceEntry = new VariantSourceEntry(study, FILE_ID);
             sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntologyTerm);
             sourceEntry.addAttribute(STUDY_ID_KEY, study);
+            sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
+            sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
+            sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
+            sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
+            sourceEntry.addAttribute(SUPPORTED_BY_EVIDENCE_KEY, Boolean.toString(evidence));
             variant.addSourceEntry(sourceEntry);
         }
         return variant;
@@ -111,17 +129,17 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
-        List<String> referenceLines = grepFile(output, "reference");
+        List<String> referenceLines = grepFile(output, "^##reference.*");
         assertEquals(1, referenceLines.size());
         assertEquals("##reference=" + REFERENCE_ASSEMBLY, referenceLines.get(0));
     }
 
-    private List<String> grepFile(File file, String contains) throws IOException {
+    private List<String> grepFile(File file, String regex) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
         List<String> lines = new ArrayList<>();
         String line;
         while ((line = reader.readLine()) != null) {
-            if (line.contains(contains)) {
+            if (line.matches(regex)) {
                 lines.add(line);
             }
         }
@@ -134,9 +152,9 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
-        List<String> metadataLines = grepFile(output, "##");
-        assertEquals(4, metadataLines.size());
-        List<String> headerLines = grepFile(output, "#CHROM");
+        List<String> metadataLines = grepFile(output, "^##.*");
+        assertEquals(9, metadataLines.size());
+        List<String> headerLines = grepFile(output, "^#CHROM.*");
         assertEquals(1, headerLines.size());
     }
 
@@ -145,7 +163,7 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
-        List<String> dataLines = grepFile(output, ID);
+        List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
     }
 
@@ -154,7 +172,7 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
-        List<String> dataLines = grepFile(output, ID);
+        List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
         assertEquals(8, dataLines.get(0).split("\t", -1).length);
     }
@@ -164,7 +182,7 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2));
 
-        List<String> metadataLines = grepFile(output, STUDY_1);
+        List<String> metadataLines = grepFileContains(output, STUDY_1);
         assertEquals(1, metadataLines.size());
         String[] infoPairs = metadataLines.get(0).split("\t")[7].split(";");
         boolean isSidPresent = false;
@@ -180,6 +198,10 @@ public class VariantContextWriterTest {
         assertTrue(isSidPresent);
     }
 
+    private List<String> grepFileContains(File output, String contains) throws IOException {
+        return grepFile(output, ".*" + contains + ".*");
+    }
+
     @Test
     public void checkSnpSequenceOntology() throws Exception {
         checkSequenceOntology(SNP_SEQUENCE_ONTOLOGY, "C", "A");
@@ -189,7 +211,7 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
 
-        List<String> dataLines = grepFile(output, VARIANT_CLASS_KEY + "=");
+        List<String> dataLines = grepFile(output, somewhereSurroundedByTabOrSemicolon(VARIANT_CLASS_KEY + "=SO:[0-9]+"));
         assertEquals(1, dataLines.size());
         String[] infoPairs = dataLines.get(0).split("\t")[7].split(";");
         boolean isVariantClassPresent = false;
@@ -250,7 +272,7 @@ public class VariantContextWriterTest {
                        buildVariant(CHR_1, position2, "C", alternate2, SNP_SEQUENCE_ONTOLOGY, STUDY_1),
                        buildVariant(CHR_1, position3, "C", alternate3, SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
-        List<String> dataLines = grepFile(output, ID);
+        List<String> dataLines = grepFileContains(output, ID);
         assertEquals(3, dataLines.size());
         assertEquals(position1, Integer.parseInt(dataLines.get(0).split("\t")[1]));
         assertEquals(alternate1, dataLines.get(0).split("\t")[4]);
@@ -267,7 +289,7 @@ public class VariantContextWriterTest {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "NACTG", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
-        List<String> dataLines = grepFile(output, ID);
+        List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
     }
 
@@ -275,5 +297,111 @@ public class VariantContextWriterTest {
     public void throwIfNonStandardNucleotides() throws Exception {
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "U", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+    }
+
+    @Test
+    public void checkFlagsAreNotPresentWhenDefaultValues() throws Exception {
+        File output = temporaryFolder.newFile();
+        assertWriteVcf(output,
+                       buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, false, false, true, true, true,
+                                    STUDY_1));
+
+        String dataLinesRegex = "^[^#]";
+        String dataLinesWithFlagsRegex = dataLinesRegex + ".*(" + CLUSTERED_VARIANT_VALIDATED_KEY
+                                         + "|" + SUBMITTED_VARIANT_VALIDATED_KEY
+                                         + "|" + ALLELES_MATCH_KEY
+                                         + "|" + ASSEMBLY_MATCH_KEY
+                                         + "|" + SUPPORTED_BY_EVIDENCE_KEY + ")";
+        List<String> dataLines = grepFile(output, dataLinesWithFlagsRegex);
+
+        assertEquals(0, dataLines.size());
+    }
+
+    @Test
+    public void checkNonDefaultValidatedFlag() throws Exception {
+        assertFlagIsPresent(CLUSTERED_VARIANT_VALIDATED_KEY);
+    }
+
+    private void assertFlagIsPresent(String flagRegex) throws Exception {
+        File output = temporaryFolder.newFile();
+        assertWriteVcf(output,
+                       buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, true, true, false, false, false,
+                                    STUDY_1));
+
+        String dataLinesRegex = "^[^#]";
+        String dataLinesWithValidatedRegex = dataLinesRegex + somewhereSurroundedByTabOrSemicolon(flagRegex);
+        List<String> dataLines;
+        dataLines = grepFile(output, dataLinesWithValidatedRegex);
+        assertEquals(1, dataLines.size());
+    }
+
+    private String somewhereSurroundedByTabOrSemicolon(String regex) {
+        return ".*[\t;]" + regex + "([\t;].*|$)";
+    }
+
+    @Test
+    public void checkHowShouldTabsBeWrittenInJavaRegex() {
+        assertTrue("\t".matches("\t")); // java string containing literal tab
+        assertTrue("\t".matches("\\t"));    // java string containing a backwards slash and a 't', interpreted as
+                                            // a tab by the regex classes, @see Pattern
+    }
+
+    @Test
+    public void checkNonDefaultSubmittedVariantValidatedFlag() throws Exception {
+        assertFlagIsPresent(SUBMITTED_VARIANT_VALIDATED_KEY + "=[0-9]");
+    }
+    @Test
+    public void checkNonDefaultAllelesMatchFlag() throws Exception {
+        assertFlagIsPresent(ALLELES_MATCH_KEY);
+    }
+
+    @Test
+    public void checkNonDefaultAssemblyMatchFlag() throws Exception {
+        assertFlagIsPresent(ASSEMBLY_MATCH_KEY);
+    }
+
+    @Test
+    public void checkNonDefaultSupportedByEvidenceFlag() throws Exception {
+        assertFlagIsPresent(SUPPORTED_BY_EVIDENCE_KEY);
+    }
+
+    @Test
+    public void checkSeveralSupportedByEvidenceFlags() throws Exception {
+        assertSeveralFlagValues(SUPPORTED_BY_EVIDENCE_KEY, true, false, 0);
+    }
+
+    private void assertSeveralFlagValues(String flagKey, boolean firstValue, boolean secondValue,
+                                         int expectedLinesWithTheFlag) throws Exception {
+        Variant variant = new Variant(CHR_1, 1000, 1000, "C", "G");
+        variant.setMainId(ID);
+
+        VariantSourceEntry sourceEntry1 = new VariantSourceEntry(STUDY_1, FILE_ID);
+        sourceEntry1.addAttribute(flagKey, Boolean.toString(firstValue));
+        variant.addSourceEntry(sourceEntry1);
+
+        VariantSourceEntry sourceEntry2 = new VariantSourceEntry(STUDY_2, FILE_ID);
+        sourceEntry2.addAttribute(flagKey, Boolean.toString(secondValue));
+        variant.addSourceEntry(sourceEntry2);
+        File output = temporaryFolder.newFile();
+
+        assertWriteVcf(output, variant);
+
+        String dataLinesRegex = "^[^#]";
+        String dataLinesWithValidatedRegex = dataLinesRegex + somewhereSurroundedByTabOrSemicolon(flagKey);
+        List<String> dataLines;
+        dataLines = grepFile(output, dataLinesWithValidatedRegex);
+        assertEquals(expectedLinesWithTheFlag, dataLines.size());
+    }
+    @Test
+    public void checkSeveralValidatedFlags() throws Exception {
+        assertSeveralFlagValues(CLUSTERED_VARIANT_VALIDATED_KEY, true, false, 1);
+    }
+    @Test
+    public void checkSeveralAllelesMatchFlags() throws Exception {
+        assertSeveralFlagValues(ALLELES_MATCH_KEY, true, false, 1);
+    }
+    @Test
+    public void checkSeveralAssemblyMatchFlags() throws Exception {
+        assertSeveralFlagValues(ASSEMBLY_MATCH_KEY, true, false, 1);
     }
 }
