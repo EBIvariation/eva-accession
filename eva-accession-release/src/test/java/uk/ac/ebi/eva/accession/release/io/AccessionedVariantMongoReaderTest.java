@@ -53,7 +53,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.A
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 @RunWith(SpringRunner.class)
@@ -272,7 +272,7 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void includeValidatedFlag() throws Exception {
-        assertFlagEqualsInAllVariants(VALIDATED_KEY, false);
+        assertFlagEqualsInAllVariants(CLUSTERED_VARIANT_VALIDATED_KEY, false);
         assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, false);
     }
 
@@ -305,8 +305,8 @@ public class AccessionedVariantMongoReaderTest {
     public void includeValidatedNonDefaultFlag() throws Exception {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
         assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, true);
-        assertFlagEqualsInRS(VALIDATED_KEY, false, RS_4);
-        assertFlagEqualsInRS(VALIDATED_KEY, true, RS_5);
+        assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, false, RS_4);
+        assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, true, RS_5);
     }
 
     private void assertFlagEqualsInRS(String key, boolean value, String clusteredVariantAccession) throws Exception {

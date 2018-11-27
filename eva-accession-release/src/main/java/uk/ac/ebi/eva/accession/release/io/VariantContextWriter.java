@@ -37,7 +37,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.A
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
@@ -69,7 +69,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         metaData.add(new VCFInfoHeaderLine(STUDY_ID_KEY, VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
                                            "Identifiers of studies that report a variant"));
 
-        metaData.add(new VCFInfoHeaderLine(VALIDATED_KEY, 0, VCFHeaderLineType.Flag,
+        metaData.add(new VCFInfoHeaderLine(CLUSTERED_VARIANT_VALIDATED_KEY, 0, VCFHeaderLineType.Flag,
                                            "RS validated flag, present when the RS was validated by any method "
                                            + "as indicated by the dbSNP validation status"));
         metaData.add(new VCFInfoHeaderLine(SUBMITTED_VARIANT_VALIDATED_KEY, VCFHeaderLineCount.UNBOUNDED,
@@ -86,7 +86,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                                            "Assembly mismatch flag, present when the reference allele doesn't match "
                                            + "the reference sequence"));
         metaData.add(new VCFInfoHeaderLine(SUPPORTED_BY_EVIDENCE_KEY, 0, VCFHeaderLineType.Flag,
-                                           "Lack of evidence flag, present if no submitted variant included genotype "
+                                           "Lack of evidence flag, present if no submitted variant includes genotype "
                                            + "or frequency information"));
         writer.writeHeader(new VCFHeader(metaData));
     }

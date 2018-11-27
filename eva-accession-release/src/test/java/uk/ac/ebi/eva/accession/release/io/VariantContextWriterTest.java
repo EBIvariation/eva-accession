@@ -42,7 +42,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.A
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 
 public class VariantContextWriterTest {
 
@@ -100,7 +100,7 @@ public class VariantContextWriterTest {
             VariantSourceEntry sourceEntry = new VariantSourceEntry(study, FILE_ID);
             sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntologyTerm);
             sourceEntry.addAttribute(STUDY_ID_KEY, study);
-            sourceEntry.addAttribute(VALIDATED_KEY, Boolean.toString(validated));
+            sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
             sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
             sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
             sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
@@ -307,11 +307,11 @@ public class VariantContextWriterTest {
                                     STUDY_1));
 
         String dataLinesRegex = "^[^#]";
-        String dataLinesWithFlagsRegex = dataLinesRegex + ".*(" + VALIDATED_KEY
-                                    + "|" + SUBMITTED_VARIANT_VALIDATED_KEY
-                                    + "|" + ALLELES_MATCH_KEY
-                                    + "|" + ASSEMBLY_MATCH_KEY
-                                    + "|" + SUPPORTED_BY_EVIDENCE_KEY + ")";
+        String dataLinesWithFlagsRegex = dataLinesRegex + ".*(" + CLUSTERED_VARIANT_VALIDATED_KEY
+                                         + "|" + SUBMITTED_VARIANT_VALIDATED_KEY
+                                         + "|" + ALLELES_MATCH_KEY
+                                         + "|" + ASSEMBLY_MATCH_KEY
+                                         + "|" + SUPPORTED_BY_EVIDENCE_KEY + ")";
         List<String> dataLines = grepFile(output, dataLinesWithFlagsRegex);
 
         assertEquals(0, dataLines.size());
@@ -319,7 +319,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkNonDefaultValidatedFlag() throws Exception {
-        assertFlagIsPresent(VALIDATED_KEY);
+        assertFlagIsPresent(CLUSTERED_VARIANT_VALIDATED_KEY);
     }
 
     private void assertFlagIsPresent(String flagRegex) throws Exception {
@@ -394,7 +394,7 @@ public class VariantContextWriterTest {
     }
     @Test
     public void checkSeveralValidatedFlags() throws Exception {
-        assertSeveralFlagValues(VALIDATED_KEY, true, false, 1);
+        assertSeveralFlagValues(CLUSTERED_VARIANT_VALIDATED_KEY, true, false, 1);
     }
     @Test
     public void checkSeveralAllelesMatchFlags() throws Exception {

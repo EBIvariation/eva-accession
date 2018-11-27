@@ -94,7 +94,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     public static final String STUDY_ID_KEY = "SID";
 
-    public static final String VALIDATED_KEY = "RS_VALIDATED";
+    public static final String CLUSTERED_VARIANT_VALIDATED_KEY = "RS_VALIDATED";
 
     public static final String SUBMITTED_VARIANT_VALIDATED_KEY = "SS_VALIDATED";
 
@@ -193,7 +193,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
         sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
         sourceEntry.addAttribute(STUDY_ID_KEY, study);
-        sourceEntry.addAttribute(VALIDATED_KEY, Boolean.toString(validated));
+        sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
         sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
         sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
         sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
