@@ -47,6 +47,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -105,10 +107,11 @@ public class CreateReleaseStepConfigurationTest {
         assertEquals(1, referenceLines.size());
 
         List<String> metadataVariantClassLines = grepFile(new File(inputParameters.getOutputVcf()),
-                                                          "^##INFO=<ID=VC.*$");
+                                                          "^##INFO=<ID=" + VARIANT_CLASS_KEY + ".*$");
         assertEquals(1, metadataVariantClassLines.size());
 
-        List<String> metadataStudyIdLines = grepFile(new File(inputParameters.getOutputVcf()), "^##INFO=<ID=SID.*$");
+        List<String> metadataStudyIdLines = grepFile(new File(inputParameters.getOutputVcf()),
+                                                     "^##INFO=<ID=" + STUDY_ID_KEY + ".*$");
         assertEquals(1, metadataStudyIdLines.size());
 
         List<String> headerLines = grepFile(new File(inputParameters.getOutputVcf()),
@@ -144,8 +147,8 @@ public class CreateReleaseStepConfigurationTest {
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         String dataLinesDoNotStartWithHash = "^[^#]";
-        String variantClass = "VC=SO:[0-9]+";
-        String studyId = "SID=[a-zA-Z0-9,]+";
+        String variantClass = VARIANT_CLASS_KEY + "=SO:[0-9]+";
+        String studyId = STUDY_ID_KEY + "=[a-zA-Z0-9,]+";
         File outputFile = new File(inputParameters.getOutputVcf());
 
         List<String> dataLines;
