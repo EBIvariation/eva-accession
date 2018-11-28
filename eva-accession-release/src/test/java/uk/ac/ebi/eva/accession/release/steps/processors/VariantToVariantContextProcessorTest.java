@@ -103,6 +103,14 @@ public class VariantToVariantContextProcessorTest {
     }
 
     @Test
+    public void throwsIfAllelesAreEmpty() throws Exception {
+        Variant variant = buildVariant(CHR_1, 1100, "", "G", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
+        VariantToVariantContextProcessor variantConverter = new VariantToVariantContextProcessor();
+
+        expectedException.expect(IllegalArgumentException.class);
+        variantConverter.process(variant);
+    }
+    @Test
     public void singleStudySingleNucleotideInsertion() throws Exception {
         Variant variant = buildVariant(CHR_1, 1100, "T", "TG", SNP_SEQUENCE_ONTOLOGY, STUDY_1);
 

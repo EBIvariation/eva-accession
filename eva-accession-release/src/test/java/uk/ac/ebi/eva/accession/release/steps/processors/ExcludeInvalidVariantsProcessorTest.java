@@ -24,6 +24,7 @@ import org.junit.rules.ExpectedException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static uk.ac.ebi.eva.accession.release.steps.processors.ExcludeInvalidVariantsProcessor.REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY;
 
@@ -148,16 +149,12 @@ public class ExcludeInvalidVariantsProcessorTest {
     @Test
     public void referenceAlleleEmpty() throws Exception {
         Variant variant = newVariant(EMPTY_ALLELE, VALID_ALLELE);
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
-        processor.process(variant);
+        assertEquals(variant, processor.process(variant));
     }
 
     @Test
     public void alternateAlleleEmpty() throws Exception {
         Variant variant = newVariant(VALID_ALLELE, EMPTY_ALLELE);
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
-        processor.process(variant);
+        assertEquals(variant, processor.process(variant));
     }
 }
