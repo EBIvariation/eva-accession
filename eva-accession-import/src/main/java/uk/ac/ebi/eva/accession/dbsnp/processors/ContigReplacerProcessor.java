@@ -15,6 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.dbsnp.contig.ContigMapping;
@@ -22,6 +24,8 @@ import uk.ac.ebi.eva.accession.dbsnp.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContigReplacerProcessor.class);
 
     private ContigMapping contigMapping;
 
@@ -46,22 +50,24 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
 
-        checkContigIsPresentInAssemblyReport(subSnpNoHgvs, contigSynonyms);
-
-        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
-            subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
+        if (isContigPresentInAssemblyReport(subSnpNoHgvs, contigSynonyms)) {
+            if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
+                subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
+            }
         }
 
         return subSnpNoHgvs;
     }
 
-    private void checkContigIsPresentInAssemblyReport(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
+    private boolean isContigPresentInAssemblyReport(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
         boolean contigPresentInAssemblyReport = contigSynonyms != null;
         if (!contigPresentInAssemblyReport) {
-            throw new IllegalStateException(
-                    "Contig '" + subSnpNoHgvs.getContigName() + "' was not found in the assembly report! Is the " +
-                            "assembly accession '" + assemblyAccession + "' correct?");
+            logger.warn(
+                    "CONTIG NOT FOUND: Contig '" + subSnpNoHgvs.getContigName() +
+                            "' was not found in the assembly report! Is the " + "assembly accession '" +
+                            assemblyAccession + "' correct?");
         }
+        return contigPresentInAssemblyReport;
     }
 
 }
