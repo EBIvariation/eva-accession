@@ -88,10 +88,9 @@ public class ContigReplacerProcessorTest {
     // test special cases (combinations of "missing in assembly report")
 
     @Test
-    public void shouldThrowIfContigIsMissingInAssemblyReport() throws Exception {
+    public void ignoreContigMissingInAssemblyReport() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(MISSING_CONTIG);
-        thrown.expect(IllegalStateException.class);
-        refseqProcessor.process(input);
+        assertEquals(input, refseqProcessor.process(input));
     }
 
     private SubSnpNoHgvs newMockSubSnpNoHgvs(String contig) {
