@@ -20,7 +20,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
@@ -94,26 +93,33 @@ public class SubmittedVariantDeclusterProcessor implements ItemProcessor<DbsnpVa
         }
     }
 
-    public DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity nonDeclusteredVariantEntity,
-                                                  List<DbsnpSubmittedVariantOperationEntity> operations,
-                                                  List<String> reasons) {
-        //Register submitted variant decluster operation
-        DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
-        DbsnpSubmittedVariantInactiveEntity inactiveEntity =
-                new DbsnpSubmittedVariantInactiveEntity(nonDeclusteredVariantEntity);
-
-        String reason = DECLUSTERED + String.join(" ", reasons);
-        Long accession = nonDeclusteredVariantEntity.getAccession();
-        operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
+    public DbsnpSubmittedVariantEntity decluster(DbsnpSubmittedVariantEntity variantEntityToDecluster,
+                                                 List<DbsnpSubmittedVariantOperationEntity> operations,
+                                                 List<String> reasons) {
+        DbsnpSubmittedVariantOperationEntity operation = createOperation(variantEntityToDecluster, reasons);
         operations.add(operation);
 
         DbsnpSubmittedVariantEntity declusteredVariantEntity =
-                new DbsnpSubmittedVariantEntity(nonDeclusteredVariantEntity.getAccession(),
-                                                nonDeclusteredVariantEntity.getHashedMessage(),
-                                                nonDeclusteredVariantEntity.getModel(),
-                                                nonDeclusteredVariantEntity.getVersion());
+                new DbsnpSubmittedVariantEntity(variantEntityToDecluster.getAccession(),
+                                                variantEntityToDecluster.getHashedMessage(),
+                                                variantEntityToDecluster.getModel(),
+                                                variantEntityToDecluster.getVersion());
 
         declusteredVariantEntity.setClusteredVariantAccession(null);
         return declusteredVariantEntity;
     }
+
+    public DbsnpSubmittedVariantOperationEntity createOperation(DbsnpSubmittedVariantEntity variantEntityToDecluster,
+                                                                List<String> reasons) {
+        DbsnpSubmittedVariantOperationEntity operation = new DbsnpSubmittedVariantOperationEntity();
+
+        Long accession = variantEntityToDecluster.getAccession();
+        String reason = DECLUSTERED + String.join(" ", reasons);
+        DbsnpSubmittedVariantInactiveEntity inactiveEntity = new DbsnpSubmittedVariantInactiveEntity(
+                variantEntityToDecluster);
+
+        operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
+        return operation;
+    }
+
 }

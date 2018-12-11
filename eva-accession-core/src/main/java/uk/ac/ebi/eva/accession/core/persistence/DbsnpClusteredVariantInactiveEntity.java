@@ -117,4 +117,17 @@ public class DbsnpClusteredVariantInactiveEntity extends InactiveSubDocument<ICl
         result = 31 * result + (validated != null ? validated.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "DbsnpClusteredVariantInactiveEntity{"
+                + "hashedMessage='" + getHashedMessage() + '\''
+                + ", assemblyAccession='" + assemblyAccession + '\''
+                + ", taxonomyAccession=" + taxonomyAccession
+                + ", contig='" + contig + '\''
+                + ", start=" + start
+                + ", type=" + type
+                + ", validated=" + validated
+                + '}';
+    }
 }

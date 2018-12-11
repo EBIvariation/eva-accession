@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter
         .DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
 
@@ -115,7 +116,13 @@ public class DbsnpClusteredVariantDeclusteredWriterTest {
     public void writeMultipleDuplicateDeclusteredRss() {
         DbsnpClusteredVariantEntity variant = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
         DbsnpClusteredVariantEntity variantDuplicated = newDbsnpClusteredVariantEntity(START, EXPECTED_ACCESSION);
-        writer.write(Arrays.asList(variant, variantDuplicated));
+
+        try {
+            writer.write(Arrays.asList(variant, variantDuplicated));
+            fail("should have thrown an exception");
+        } catch (Exception e) {
+            // correct. continue with assertions.
+        }
 
         List<DbsnpClusteredVariantEntity> rsEntities = mongoTemplate.find
                 (new Query(), DbsnpClusteredVariantEntity.class, DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
