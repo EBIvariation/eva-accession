@@ -40,10 +40,6 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, V
 
     @Override
     public Variant process(Variant variant) throws Exception {
-        if (variant.getReference().isEmpty() || variant.getAlternate().isEmpty()) {
-            throw new IllegalArgumentException(REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY);
-        }
-
         Matcher matcher = ALLELES_PATTERN.matcher(variant.getReference() + variant.getAlternate());
         if(matcher.matches()) {
             return variant;
