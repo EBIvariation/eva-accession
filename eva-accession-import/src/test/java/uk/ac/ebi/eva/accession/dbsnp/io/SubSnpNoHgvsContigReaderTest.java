@@ -39,6 +39,10 @@ public class SubSnpNoHgvsContigReaderTest {
 
     private static final String CHICKEN_ASSEMBLY_5 = "Gallus_gallus-5.0";
 
+    private static final String CHICKEN_ASSEMBLY_4 = "Gallus_gallus-4.0";
+
+    private static final long BUILD_NUMBER = 145L;
+
     private static final int PAGE_SIZE = 10;
 
     private SubSnpNoHgvsContigReader reader;
@@ -58,6 +62,13 @@ public class SubSnpNoHgvsContigReaderTest {
         reader = buildReader(CHICKEN_ASSEMBLY_5, PAGE_SIZE);
         List<String> variants = readAll(reader);
         assertEquals(6, variants.size());
+    }
+
+    @Test
+    public void readPreviousBuildChickenVariants() throws Exception {
+        reader = buildReader(CHICKEN_ASSEMBLY_4, BUILD_NUMBER, PAGE_SIZE);
+        List<String> variants = readAll(reader);
+        assertEquals(3, variants.size());
     }
 
     private SubSnpNoHgvsContigReader buildReader(String assembly, int pageSize) throws Exception {
