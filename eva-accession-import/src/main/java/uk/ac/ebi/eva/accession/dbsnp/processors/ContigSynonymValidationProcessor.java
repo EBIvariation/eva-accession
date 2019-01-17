@@ -18,6 +18,9 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+
+import static org.springframework.util.StringUtils.hasText;
 
 public class ContigSynonymValidationProcessor implements ItemProcessor<String, String> {
 
@@ -28,7 +31,13 @@ public class ContigSynonymValidationProcessor implements ItemProcessor<String, S
     }
 
     @Override
-    public String process(String item) throws Exception {
-        throw new UnsupportedOperationException("not implemented yet");
+    public String process(String contig) throws Exception {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
+        if (contigSynonyms == null
+            || !contigSynonyms.isIdenticalGenBankAndRefSeq()
+            || !hasText(contigSynonyms.getGenBank())) {
+            throw new IllegalArgumentException("The contig " + contig + " has no equivalent INDSC accession");
+        }
+        return contig;
     }
 }
