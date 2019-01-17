@@ -36,7 +36,7 @@ public class ContigSynonymValidationProcessor implements ItemProcessor<String, S
         if (contigSynonyms == null
             || !contigSynonyms.isIdenticalGenBankAndRefSeq()
             || !hasText(contigSynonyms.getGenBank())) {
-            throw new IllegalArgumentException("The contig " + contig + " has no equivalent INDSC accession");
+            throw new IllegalArgumentException("The contig '" + contig + "' has no equivalent INSDC accession");
         }
         return contig;
     }

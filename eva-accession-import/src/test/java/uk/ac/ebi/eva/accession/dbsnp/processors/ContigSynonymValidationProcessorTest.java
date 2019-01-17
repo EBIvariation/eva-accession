@@ -15,7 +15,10 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 
@@ -24,15 +27,41 @@ import java.util.List;
 
 public class ContigSynonymValidationProcessorTest {
 
+    private ContigSynonymValidationProcessor processor;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Before
+    public void setUp() throws Exception {
+        String fileString = ContigSynonymValidationProcessorTest.class.getResource(
+            "/input-files/assembly-report/GCA_000001635.8_Mus_musculus-grcm38.p6_assembly_report.txt").toString();
+        ContigMapping contigMapping = new ContigMapping(fileString);
+        processor = new ContigSynonymValidationProcessor(contigMapping);
+    }
+
     @Test
     public void allContigsHaveSynonyms() throws Exception {
-        String fileString = ContigSynonymValidationProcessorTest.class.getResource(
-                "/input-files/assembly-report/GCA_000001635.8_Mus_musculus-grcm38.p6_assembly_report.txt").toString();
-        ContigMapping contigMapping = new ContigMapping(fileString);
-        ContigSynonymValidationProcessor processor = new ContigSynonymValidationProcessor(contigMapping);
         List<String> contigsInDb = Arrays.asList("chrom1", "2", "NT_166280.1");
         for (String contig : contigsInDb) {
             processor.process(contig);
         }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void nonIdenticalSynonym() throws Exception {
+        processor.process("NT_without_synonym");
+    }
+
+    @Test
+    public void identicalAndNonIdenticalSynonyms() throws Exception {
+        processor.process("NT_166280.1");
+        thrown.expect(IllegalArgumentException.class);
+        processor.process("NT_without_synonym");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void contigMissingFromAssemblyReport() throws Exception {
+        processor.process("contig_not_present_in_assembly_report");
     }
 }
