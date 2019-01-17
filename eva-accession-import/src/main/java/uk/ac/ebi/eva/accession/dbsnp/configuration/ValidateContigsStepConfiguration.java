@@ -53,7 +53,7 @@ public class ValidateContigsStepConfiguration {
 
     @Bean(VALIDATE_CONTIGS_STEP)
     public Step validateContigsStep(StepBuilderFactory stepBuilderFactory,
-                                          SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+                                    SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         ItemWriter<String> noOperationWriter = ignoredContigs -> { };
 
         TaskletStep step = stepBuilderFactory.get(VALIDATE_CONTIGS_STEP)

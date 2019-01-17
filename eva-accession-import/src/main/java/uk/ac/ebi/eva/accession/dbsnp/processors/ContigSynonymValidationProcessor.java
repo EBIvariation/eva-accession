@@ -22,6 +22,9 @@ import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 
 import static org.springframework.util.StringUtils.hasText;
 
+/**
+ * This Spring Batch processor fails when the equivalent INSDC accession for a contig can't be found among a set of mappings.
+ */
 public class ContigSynonymValidationProcessor implements ItemProcessor<String, String> {
 
     private ContigMapping contigMapping;

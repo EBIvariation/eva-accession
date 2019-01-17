@@ -24,6 +24,9 @@ import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_NAME_COLUMN;
 
+/**
+ * This Spring Batch reader obtains the list of distinct contigs in a dbSNP database.
+ */
 public class SubSnpNoHgvsContigReader extends JdbcCursorItemReader<String> {
 
     private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsReader.class);
@@ -39,11 +42,8 @@ public class SubSnpNoHgvsContigReader extends JdbcCursorItemReader<String> {
     private String buildSql(String assembly, Long buildNumber) {
         String tableName = getTableName(assembly, buildNumber);
         logger.debug("querying table {} for assembly {}", tableName, assembly);
-        String sql =
-                "SELECT DISTINCT " +
-                        CONTIG_NAME_COLUMN +
-                        " FROM " + tableName +
-                        " ORDER BY " + CONTIG_NAME_COLUMN;
+        String sql = "SELECT DISTINCT " + CONTIG_NAME_COLUMN
+                     + " FROM " + tableName;
         return sql;
     }
 
