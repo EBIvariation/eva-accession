@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.listeners.GenericProgressListener;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportDbsnpVariantsStepProgressListener;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
@@ -33,6 +34,7 @@ import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.ASSEMBLY_CHECK_STEP_LISTENER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_PROGRESS_LISTENER;
 
 @Configuration
 public class ListenersConfiguration {
@@ -65,6 +67,12 @@ public class ListenersConfiguration {
     public StepListenerSupport<SubSnpNoHgvs, DbsnpVariantsWrapper> importDbsnpVariantsProgressListener(
             InputParameters parameters, ImportCounts importCounts) {
         return new ImportDbsnpVariantsStepProgressListener(parameters.getChunkSize(), importCounts);
+    }
+
+    @Bean(VALIDATE_CONTIGS_PROGRESS_LISTENER)
+    public StepListenerSupport<SubSnpNoHgvs, DbsnpVariantsWrapper> importDbsnpVariantsProgressListener(
+            InputParameters parameters) {
+        return new GenericProgressListener<>(parameters.getChunkSize());
     }
 
 }
