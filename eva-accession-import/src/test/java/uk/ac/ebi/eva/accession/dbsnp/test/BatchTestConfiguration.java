@@ -34,6 +34,9 @@ import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsStepConfig
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsWriterConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ValidateContigsProcessorConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ValidateContigsReaderConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ValidateContigsStepConfiguration;
 
 import javax.sql.DataSource;
 
@@ -45,6 +48,9 @@ import javax.sql.DataSource;
         ImportDbsnpVariantsReaderConfiguration.class,
         ImportDbsnpVariantsProcessorConfiguration.class,
         ImportDbsnpVariantsWriterConfiguration.class,
+        ValidateContigsStepConfiguration.class,
+        ValidateContigsReaderConfiguration.class,
+        ValidateContigsProcessorConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
         InputParametersConfiguration.class,
         ListenersConfiguration.class})

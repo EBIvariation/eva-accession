@@ -18,6 +18,12 @@ package uk.ac.ebi.eva.accession.dbsnp.configuration;
 
 public class BeanNames {
 
+    public static final String CONTIG_READER = "CONTIG_READER";
+
+    public static final String CONTIG_PROCESSOR = "CONTIG_PROCESSOR";
+
+    public static final String VALIDATE_CONTIGS_STEP = "VALIDATE_CONTIGS_STEP";
+
     public static final String DBSNP_VARIANT_READER = "DBSNP_VARIANT_READER";
 
     public static final String DBSNP_VARIANT_PROCESSOR = "DBSNP_VARIANT_PROCESSOR";
@@ -31,4 +37,6 @@ public class BeanNames {
     public static final String ASSEMBLY_CHECK_STEP_LISTENER = "ASSEMBLY_CHECK_STEP_LISTENER";
 
     public static final String IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER = "IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER";
+
+    public static final String VALIDATE_CONTIGS_PROGRESS_LISTENER = "VALIDATE_CONTIGS_PROGRESS_LISTENER";
 }

@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_JOB;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
 
 @Configuration
 @EnableBatchProcessing
@@ -37,11 +38,16 @@ public class ImportDbsnpVariantsJobConfiguration {
     @Qualifier(IMPORT_DBSNP_VARIANTS_STEP)
     private Step importDbsnpVariantsStep;
 
+    @Autowired
+    @Qualifier(VALIDATE_CONTIGS_STEP)
+    private Step validateContigsStep;
+
     @Bean(IMPORT_DBSNP_VARIANTS_JOB)
     public Job importDbsnpVariantsJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(IMPORT_DBSNP_VARIANTS_JOB)
                                 .incrementer(new RunIdIncrementer())
-                                .start(importDbsnpVariantsStep)
+                                .start(validateContigsStep)
+                                .next(importDbsnpVariantsStep)
                                 .build();
     }
 }
