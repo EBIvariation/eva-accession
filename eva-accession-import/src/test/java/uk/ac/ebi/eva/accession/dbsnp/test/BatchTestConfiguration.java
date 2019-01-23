@@ -27,11 +27,13 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.DeciderConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsJobConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsProcessorConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsReaderConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsStepConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsWriterConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportFlowConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ValidateContigsProcessorConfiguration;
@@ -53,7 +55,9 @@ import javax.sql.DataSource;
         ValidateContigsProcessorConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
         InputParametersConfiguration.class,
-        ListenersConfiguration.class})
+        ListenersConfiguration.class,
+        DeciderConfiguration.class,
+        ImportFlowConfiguration.class})
 public class BatchTestConfiguration {
 
     @Autowired

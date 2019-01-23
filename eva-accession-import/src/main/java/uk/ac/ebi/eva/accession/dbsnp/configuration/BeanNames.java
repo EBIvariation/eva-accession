@@ -39,4 +39,8 @@ public class BeanNames {
     public static final String IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER = "IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER";
 
     public static final String VALIDATE_CONTIGS_PROGRESS_LISTENER = "VALIDATE_CONTIGS_PROGRESS_LISTENER";
+
+    public static final String FORCE_IMPORT_DECIDER = "FORCE_IMPORT_DECIDER";
+
+    public static final String IMPORT_FLOW = "IMPORT_FLOW";
 }
