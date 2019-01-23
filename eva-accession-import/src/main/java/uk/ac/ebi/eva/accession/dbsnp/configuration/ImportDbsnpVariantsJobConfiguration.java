@@ -27,14 +27,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_JOB;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_FLOW;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER;
 
 @Configuration
 @EnableBatchProcessing
 public class ImportDbsnpVariantsJobConfiguration {
 
     @Autowired
-    @Qualifier(IMPORT_FLOW)
+    @Qualifier(IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER)
     private Flow importFlow;
 
     @Bean(IMPORT_DBSNP_VARIANTS_JOB)

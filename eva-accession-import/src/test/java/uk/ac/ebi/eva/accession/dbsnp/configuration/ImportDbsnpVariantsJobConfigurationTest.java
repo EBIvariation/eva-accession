@@ -50,4 +50,12 @@ public class ImportDbsnpVariantsJobConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
+
+    @Test
+    @DirtiesContext
+    public void executeJobFalseForceImport() throws Exception {
+        inputParameters.setForceImport("false");
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+        assertEquals(BatchStatus.FAILED, jobExecution.getStatus());
+    }
 }

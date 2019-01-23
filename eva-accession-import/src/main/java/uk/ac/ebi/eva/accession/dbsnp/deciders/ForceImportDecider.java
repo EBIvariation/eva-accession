@@ -35,7 +35,8 @@ public class ForceImportDecider implements JobExecutionDecider {
 
     @Override
     public FlowExecutionStatus decide(JobExecution jobExecution, StepExecution stepExecution) {
-        logger.info("Continue import when a contig not found in assembly report: {}", inputParameters.getForceImport());
+        logger.info("Continue importing if a contig is not found in assembly report: {}",
+                    inputParameters.getForceImport());
         String forceImport = inputParameters.getForceImport().toUpperCase();
         return new FlowExecutionStatus(forceImport);
     }

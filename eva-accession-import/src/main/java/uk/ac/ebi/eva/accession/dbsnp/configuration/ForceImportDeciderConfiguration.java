@@ -24,7 +24,7 @@ import uk.ac.ebi.eva.accession.dbsnp.deciders.ForceImportDecider;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.FORCE_IMPORT_DECIDER;
 
 @Configuration
-public class DeciderConfiguration {
+public class ForceImportDeciderConfiguration {
 
     @Bean(FORCE_IMPORT_DECIDER)
     public JobExecutionDecider decider() { return new ForceImportDecider(); }

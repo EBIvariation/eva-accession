@@ -42,5 +42,5 @@ public class BeanNames {
 
     public static final String FORCE_IMPORT_DECIDER = "FORCE_IMPORT_DECIDER";
 
-    public static final String IMPORT_FLOW = "IMPORT_FLOW";
+    public static final String IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER = "IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER";
 }
