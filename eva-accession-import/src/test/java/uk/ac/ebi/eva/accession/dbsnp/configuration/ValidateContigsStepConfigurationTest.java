@@ -37,7 +37,7 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CON
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
-@TestPropertySource("classpath:validate-contigs.properties")
+@TestPropertySource("classpath:application.properties")
 public class ValidateContigsStepConfigurationTest {
 
     private static final int EXPECTED_PROCESSED_CONTIGS_COUNT = 3;

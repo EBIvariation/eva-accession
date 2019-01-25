@@ -56,7 +56,7 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
-@TestPropertySource("classpath:application.properties")
+@TestPropertySource("classpath:validate-contigs.properties")
 public class ImportDbsnpVariantsStepConfigurationTest {
 
     private static final int EXPECTED_SUBMITTED_VARIANTS = 8;
