@@ -37,7 +37,7 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
-@TestPropertySource("classpath:validate-contigs.properties")
+@TestPropertySource("classpath:validate-contigs-fail.properties")
 public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
 
     @Autowired
