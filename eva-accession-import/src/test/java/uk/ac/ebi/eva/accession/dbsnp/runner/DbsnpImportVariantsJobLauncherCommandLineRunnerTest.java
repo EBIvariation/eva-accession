@@ -65,7 +65,7 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
 
     @Test
     @DirtiesContext
-    public void runJob() throws Exception {
+    public void runSuccessfulJob() throws Exception {
         inputParameters.setForceImport("true");
         runner.run();
         assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());

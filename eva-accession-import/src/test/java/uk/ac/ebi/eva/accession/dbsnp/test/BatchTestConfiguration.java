@@ -27,7 +27,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp.configuration.ForceImportDeciderConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsJobConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsProcessorConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsReaderConfiguration;
@@ -58,7 +57,6 @@ import javax.sql.DataSource;
         ChunkSizeCompletionPolicyConfiguration.class,
         InputParametersConfiguration.class,
         ListenersConfiguration.class,
-        ForceImportDeciderConfiguration.class,
         ImportFlowConfiguration.class,
         DbsnpImportVariantsJobLauncherCommandLineRunner.class})
 public class BatchTestConfiguration {

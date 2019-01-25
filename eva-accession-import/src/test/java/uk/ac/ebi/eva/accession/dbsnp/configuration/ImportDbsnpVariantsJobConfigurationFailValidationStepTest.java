@@ -34,7 +34,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
-@TestPropertySource("classpath:validate-contigs.properties")
+@TestPropertySource("classpath:application.properties")
 public class ImportDbsnpVariantsJobConfigurationFailValidationStepTest {
 
     @Autowired
@@ -56,6 +56,6 @@ public class ImportDbsnpVariantsJobConfigurationFailValidationStepTest {
     public void executeJobFalseForceImport() throws Exception {
         inputParameters.setForceImport("false");
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        assertEquals(BatchStatus.FAILED, jobExecution.getStatus());
     }
 }

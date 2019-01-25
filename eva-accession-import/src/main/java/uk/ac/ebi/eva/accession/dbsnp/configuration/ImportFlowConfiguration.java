@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.dbsnp.deciders.ForceImportDecider;
+
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.FORCE_IMPORT_DECIDER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER;
@@ -40,16 +42,17 @@ public class ImportFlowConfiguration {
     @Qualifier(VALIDATE_CONTIGS_STEP)
     private Step validateContigsStep;
 
-    @Autowired
-    @Qualifier(FORCE_IMPORT_DECIDER)
-    private JobExecutionDecider decider;
+    @Bean(FORCE_IMPORT_DECIDER)
+    public JobExecutionDecider decider() {
+        return new ForceImportDecider();
+    }
 
     @Bean(IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER)
     public Flow optionalFlow() {
         return new FlowBuilder<Flow>("OPTIONAL_FLOW")
-                .start(decider).on("TRUE")
+                .start(decider()).on("TRUE")
                 .to(importDbsnpVariantsStep)
-                .from(decider).on("FALSE")
+                .from(decider()).on("FALSE")
                 .to(validateContigsStep)
                 .next(importDbsnpVariantsStep)
                 .build();
