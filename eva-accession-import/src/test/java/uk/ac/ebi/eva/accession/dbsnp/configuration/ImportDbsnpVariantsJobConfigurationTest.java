@@ -59,7 +59,7 @@ public class ImportDbsnpVariantsJobConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Collections.singletonList(IMPORT_DBSNP_VARIANTS_STEP);
-        assertStepsExecuted(jobExecution, expectedSteps);
+        assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
@@ -70,11 +70,11 @@ public class ImportDbsnpVariantsJobConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Arrays.asList(VALIDATE_CONTIGS_STEP, IMPORT_DBSNP_VARIANTS_STEP);
-        assertStepsExecuted(jobExecution, expectedSteps);
+        assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
-    private void assertStepsExecuted(JobExecution jobExecution, List expectedSteps) {
+    private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
         Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
         List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
