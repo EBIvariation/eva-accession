@@ -25,8 +25,16 @@ def get_dataframe_for_genbank_equivalents(genbank_equivalents_file_path, assembl
 
 
 def get_refseq_accessions_without_equivalent_genbank_accessions(assembly_report_dataframe):
-    return set(assembly_report_dataframe[(assembly_report_dataframe["Relationship"] == "<>") |
-                                         (assembly_report_dataframe["GenBank-Accn"] == "na")]["RefSeq-Accn"]
+    return set(assembly_report_dataframe[((assembly_report_dataframe["Relationship"] == "<>") |
+                                         (assembly_report_dataframe["GenBank-Accn"] == "na")) &
+                                         (assembly_report_dataframe["RefSeq-Accn"] != "na")]["RefSeq-Accn"]
+               .values.tolist())
+
+
+def get_genbank_accessions_without_equivalent_refseq_accessions(assembly_report_dataframe):
+    return set(assembly_report_dataframe[((assembly_report_dataframe["Relationship"] == "<>") |
+                                         (assembly_report_dataframe["RefSeq-Accn"] == "na")) &
+                                         (assembly_report_dataframe["GenBank-Accn"] != "na")]["GenBank-Accn"]
                .values.tolist())
 
 
@@ -34,6 +42,7 @@ def get_absent_refseq_accessions(species_info, refseq_accessions_from_assembly_r
     pg_conn = data_ops.get_pg_conn_for_species(species_info)
     pg_cursor = pg_conn.cursor()
     contiginfo_tables = data_ops.get_contiginfo_table_list_for_schema(pg_cursor, species_info["database_name"])
+    # Can't filter by assembly accession because only some contiginfo tables have that field :(
     contiginfo_query = "select distinct * from ({0}) temp where contig_name not in ({1})".format(
         " union all ".join(["select contig_name, coalesce(contig_chr, contig_name) as chromosome, "
                             "group_term as assembly_unit, contig_length from dbsnp_{0}.{1}"
@@ -59,12 +68,14 @@ def insert_absent_genbank_accessions_in_assembly_report(species_db_info, assembl
                                                         genbank_equivalents_dataframe):
     absent_refseq_accessions = \
         get_absent_refseq_accessions(species_db_info, set(assembly_report_dataframe["RefSeq-Accn"]))
+    if len(absent_refseq_accessions) == 0:
+        print("INFO: No GenBank accessions are absent in the assembly report for " + species_db_info["database_name"])
     new_assembly_report_entry_index = len(assembly_report_dataframe)
     for refseq_accession, chromosome, assembly_unit, sequence_length in absent_refseq_accessions:
         equivalent_genbank_accession = \
             genbank_equivalents_dataframe[genbank_equivalents_dataframe["rs_acc"] == refseq_accession]["gb_acc"]
         if len(equivalent_genbank_accession) == 0:
-            print("WARN: Could not find equivalent GenBank accession for RefSeq accession:" + refseq_accession)
+            print("WARN: Could not find equivalent GenBank accession for RefSeq accession: " + refseq_accession)
         else:
             equivalent_genbank_accession = equivalent_genbank_accession.values[0]
             assembly_report_dataframe.loc[new_assembly_report_entry_index, "Sequence-Role"], \
@@ -92,7 +103,7 @@ def update_non_equivalent_genbank_accessions_in_assembly_report(assembly_report_
     refseq_accessions_with_non_equivalent_genbank_accessions = \
         get_refseq_accessions_without_equivalent_genbank_accessions(assembly_report_dataframe)
     if len(refseq_accessions_with_non_equivalent_genbank_accessions) == 0:
-        print("INFO: No entries were found in the assembly report with ")
+        print("INFO: No entries were found in the assembly report with non-equivalent GenBank accessions")
     for accession in refseq_accessions_with_non_equivalent_genbank_accessions:
         equivalent_genbank_accession = \
             genbank_equivalents_dataframe[genbank_equivalents_dataframe["rs_acc"] == accession]["gb_acc"]
@@ -103,6 +114,25 @@ def update_non_equivalent_genbank_accessions_in_assembly_report(assembly_report_
             assembly_report_dataframe.loc[assembly_report_dataframe["RefSeq-Accn"] == accession, "GenBank-Accn"], \
             assembly_report_dataframe.loc[assembly_report_dataframe["RefSeq-Accn"] == accession, "Relationship"] \
                 = equivalent_genbank_accession, "="
+    return assembly_report_dataframe
+
+
+def update_non_equivalent_refseq_accessions_in_assembly_report(assembly_report_dataframe,
+                                                               genbank_equivalents_dataframe):
+    genbank_accessions_with_non_equivalent_refseq_accessions = \
+        get_genbank_accessions_without_equivalent_refseq_accessions(assembly_report_dataframe)
+    if len(genbank_accessions_with_non_equivalent_refseq_accessions) == 0:
+        print("INFO: No entries were found in the assembly report with non-equivalent RefSeq accessions")
+    for accession in genbank_accessions_with_non_equivalent_refseq_accessions:
+        equivalent_refseq_accession = \
+            genbank_equivalents_dataframe[genbank_equivalents_dataframe["gb_acc"] == accession]["rs_acc"]
+        if len(equivalent_refseq_accession) == 0:
+            print("WARN: Could not find equivalent RefSeq accession for GenBank accession " + accession)
+        else:
+            equivalent_refseq_accession = equivalent_refseq_accession.values[0]
+            assembly_report_dataframe.loc[assembly_report_dataframe["GenBank-Accn"] == accession, "RefSeq-Accn"], \
+            assembly_report_dataframe.loc[assembly_report_dataframe["GenBank-Accn"] == accession, "Relationship"] \
+                = equivalent_refseq_accession, "="
     return assembly_report_dataframe
 
 
@@ -121,6 +151,9 @@ def main(metadb, metauser, metahost, species, assembly_accession, genbank_equiva
             # with the correct equivalents and inserting missing GenBank accessions
             assembly_report_dataframe = \
                 update_non_equivalent_genbank_accessions_in_assembly_report(assembly_report_dataframe,
+                                                                            genbank_equivalents_dataframe)
+            assembly_report_dataframe = \
+                update_non_equivalent_refseq_accessions_in_assembly_report(assembly_report_dataframe,
                                                                             genbank_equivalents_dataframe)
             assembly_report_dataframe = insert_absent_genbank_accessions_in_assembly_report(species_db_info,
                                                                                             assembly_report_dataframe,
