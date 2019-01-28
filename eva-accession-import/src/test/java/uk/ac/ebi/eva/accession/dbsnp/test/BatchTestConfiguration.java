@@ -32,11 +32,14 @@ import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsProcessorC
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsReaderConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsStepConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsWriterConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportFlowConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ValidateContigsProcessorConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ValidateContigsReaderConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ValidateContigsStepConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.runner.DbsnpImportVariantsJobLauncherCommandLineRunner;
+import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.sql.DataSource;
 
@@ -53,7 +56,9 @@ import javax.sql.DataSource;
         ValidateContigsProcessorConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
         InputParametersConfiguration.class,
-        ListenersConfiguration.class})
+        ListenersConfiguration.class,
+        ImportFlowConfiguration.class,
+        DbsnpImportVariantsJobLauncherCommandLineRunner.class})
 public class BatchTestConfiguration {
 
     @Autowired
@@ -71,6 +76,11 @@ public class BatchTestConfiguration {
     @Bean
     public JobLauncherTestUtils jobLauncherTestUtils() {
         return new JobLauncherTestUtils();
+    }
+
+    @Bean
+    public JobExecutionApplicationListener jobExecutionApplicationListener() {
+        return new JobExecutionApplicationListener();
     }
 
 }

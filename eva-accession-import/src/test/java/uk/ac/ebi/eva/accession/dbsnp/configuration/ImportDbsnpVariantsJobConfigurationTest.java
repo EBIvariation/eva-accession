@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
@@ -30,27 +31,52 @@ import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
-@TestPropertySource("classpath:validate-contigs-fail.properties")
-public class ValidateContigsStepConfigurationFailingTest {
-
-    @Autowired
-    private JobLauncherTestUtils jobLauncherTestUtils;
+@TestPropertySource("classpath:validate-contigs.properties")
+public class ImportDbsnpVariantsJobConfigurationTest {
 
     @Autowired
     private InputParameters inputParameters;
 
+    @Autowired
+    private JobLauncherTestUtils jobLauncherTestUtils;
+
     @Test
     @DirtiesContext
-    public void executeStep() throws IOException {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(VALIDATE_CONTIGS_STEP);
-        assertEquals(BatchStatus.FAILED, jobExecution.getStatus());
+    public void executeJobTrueForceImport() throws Exception {
+        inputParameters.setForceImport("true");
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+
+        List<String> expectedSteps = Collections.singletonList(IMPORT_DBSNP_VARIANTS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
+    @Test
+    @DirtiesContext
+    public void executeJobFalseForceImport() throws Exception {
+        inputParameters.setForceImport("false");
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+
+        List<String> expectedSteps = Arrays.asList(VALIDATE_CONTIGS_STEP, IMPORT_DBSNP_VARIANTS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+    }
+
+    private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
+        Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
+        List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
+        assertEquals(expectedSteps, steps);
+    }
 }

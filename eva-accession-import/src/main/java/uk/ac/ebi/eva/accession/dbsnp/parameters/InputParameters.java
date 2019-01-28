@@ -38,6 +38,8 @@ public class InputParameters {
 
     private int pageSize;
 
+    private String forceImport;
+
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("fasta", fasta)
@@ -121,5 +123,13 @@ public class InputParameters {
 
     public void setBuildNumber(Long buildNumber) {
         this.buildNumber = buildNumber;
+    }
+
+    public String getForceImport() {
+        return forceImport;
+    }
+
+    public void setForceImport(String forceImport) {
+        this.forceImport = forceImport;
     }
 }

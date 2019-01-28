@@ -17,9 +17,9 @@
 package uk.ac.ebi.eva.accession.dbsnp.configuration;
 
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,27 +27,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_JOB;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER;
 
 @Configuration
 @EnableBatchProcessing
 public class ImportDbsnpVariantsJobConfiguration {
 
     @Autowired
-    @Qualifier(IMPORT_DBSNP_VARIANTS_STEP)
-    private Step importDbsnpVariantsStep;
-
-    @Autowired
-    @Qualifier(VALIDATE_CONTIGS_STEP)
-    private Step validateContigsStep;
+    @Qualifier(IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER)
+    private Flow importFlow;
 
     @Bean(IMPORT_DBSNP_VARIANTS_JOB)
     public Job importDbsnpVariantsJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(IMPORT_DBSNP_VARIANTS_JOB)
                                 .incrementer(new RunIdIncrementer())
-                                .start(validateContigsStep)
-                                .next(importDbsnpVariantsStep)
+                                .start(importFlow)
+                                .end()
                                 .build();
     }
 }
