@@ -1,11 +1,12 @@
 from ftplib import FTP
 import argparse
+import re
 
 
 def get_assembly_report_url(assembly_accession):
-    if len(assembly_accession) != 15:
-        raise Exception('invalid assembly accession, it has to be in the form of GCF_XXXXXXXXX.X or GCA_XXXXXXXXX.X '
-                        'where X is a number')
+    if re.match("^GC[F|A]_\d+\.\d+$", assembly_accession) is not None:
+        raise Exception('ERROR: Invalid assembly accession: it has to be in the form of '
+                        'GCF_XXXXXXXXX.X or GCA_XXXXXXXXX.X where X is a number')
 
     ftp = FTP('ftp.ncbi.nlm.nih.gov')
     ftp.login()

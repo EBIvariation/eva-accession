@@ -96,3 +96,7 @@ class TestGenerateCustomAssemblyReport(unittest.TestCase):
                          self.assembly_report_dataframe[self.assembly_report_dataframe["GenBank-Accn"]
                                                         == "LNRQ01000010.1"]
                          ["RefSeq-Accn"].values.tolist()[0])
+
+
+if __name__ == '__main__':
+    unittest.main()

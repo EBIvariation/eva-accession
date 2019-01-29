@@ -1,3 +1,4 @@
 .cache/*
 test-config*.json
 *assembly_report*.txt
+*.pyc

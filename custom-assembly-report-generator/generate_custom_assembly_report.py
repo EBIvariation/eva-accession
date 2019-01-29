@@ -61,6 +61,7 @@ def download_assembly_report(assembly_accession):
     assembly_report_url = get_assembly_report_url(assembly_accession)
     assembly_report_path = os.getcwd() + os.path.sep + os.path.basename(assembly_report_url)
     urllib.urlretrieve(assembly_report_url, assembly_report_path)
+    urllib.urlcleanup()
     return assembly_report_path
 
 
