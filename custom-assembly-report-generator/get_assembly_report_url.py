@@ -4,7 +4,7 @@ import re
 
 
 def get_assembly_report_url(assembly_accession):
-    if re.match("^GC[F|A]_\d+\.\d+$", assembly_accession) is not None:
+    if re.match(r"^GC[F|A]_\d+\.\d+$", assembly_accession) is None:
         raise Exception('ERROR: Invalid assembly accession: it has to be in the form of '
                         'GCF_XXXXXXXXX.X or GCA_XXXXXXXXX.X where X is a number')
 
