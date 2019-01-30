@@ -54,7 +54,7 @@ public class ImportDbsnpVariantsJobConfigurationFailValidationStepTest {
     @Test
     @DirtiesContext
     public void executeJobTrueForceImport() throws Exception {
-        inputParameters.setForceImport("true");
+        inputParameters.setForceImport(true);
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Collections.singletonList(IMPORT_DBSNP_VARIANTS_STEP);
@@ -65,7 +65,7 @@ public class ImportDbsnpVariantsJobConfigurationFailValidationStepTest {
     @Test
     @DirtiesContext
     public void executeJobFalseForceImport() throws Exception {
-        inputParameters.setForceImport("false");
+        inputParameters.setForceImport(false);
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Collections.singletonList(VALIDATE_CONTIGS_STEP);

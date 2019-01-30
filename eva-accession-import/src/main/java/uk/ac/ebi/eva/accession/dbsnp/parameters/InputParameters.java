@@ -38,7 +38,7 @@ public class InputParameters {
 
     private int pageSize;
 
-    private String forceImport;
+    private boolean forceImport;
 
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
@@ -125,11 +125,11 @@ public class InputParameters {
         this.buildNumber = buildNumber;
     }
 
-    public String getForceImport() {
+    public boolean isForceImport() {
         return forceImport;
     }
 
-    public void setForceImport(String forceImport) {
+    public void setForceImport(boolean forceImport) {
         this.forceImport = forceImport;
     }
 }

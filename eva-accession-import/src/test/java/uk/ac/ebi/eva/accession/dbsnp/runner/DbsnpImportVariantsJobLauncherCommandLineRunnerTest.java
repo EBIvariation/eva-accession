@@ -66,7 +66,7 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void runSuccessfulJob() throws Exception {
-        inputParameters.setForceImport("true");
+        inputParameters.setForceImport(true);
         runner.run();
         assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
@@ -74,7 +74,7 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void runFailingJob() throws Exception {
-        inputParameters.setForceImport("false");
+        inputParameters.setForceImport(false);
         runner.run();
         assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
@@ -82,13 +82,13 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
     @Test
     @DirtiesContext
     public void resumeFailingJob() throws Exception {
-        inputParameters.setForceImport("false");
+        inputParameters.setForceImport(false);
         runner.run();
         long instanceIdAfterFailingJob = jobExplorer.getJobInstances(IMPORT_DBSNP_VARIANTS_JOB, 0, 1).get(0)
                                                     .getInstanceId();
         assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
 
-        inputParameters.setForceImport("true");
+        inputParameters.setForceImport(true);
         runner.run();
         long instanceIdAfterSuccessfulJob = jobExplorer.getJobInstances(IMPORT_DBSNP_VARIANTS_JOB, 0, 1).get(0)
                                                        .getInstanceId();
