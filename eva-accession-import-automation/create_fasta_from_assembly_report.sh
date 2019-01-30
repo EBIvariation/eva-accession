@@ -31,7 +31,7 @@ do
     fi
 
     # Check that an accession is present no more than once in the output FASTA file, otherwise it 
-    # means there are aliases in the assembly report
+    # means there are unexpected aliases in the assembly report, which need to be checked
     acc=`head -n 1 ${i} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
     matches=`grep -c "${acc}" ${output_folder}/${assembly_accession}.fa`
     if [ $matches -gt 1 ]
