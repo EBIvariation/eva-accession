@@ -2,7 +2,7 @@
 
 # Usage: create_fasta_from_assembly_report.sh </path/to/assembly_report.txt>
 
-if [ "$#" -lt 3 ]
+if [ "$#" -ne 3 ]
 then
     echo "Please provide the assembly accession, the path to the assembly report and the output folder."
     exit 1
@@ -22,7 +22,7 @@ do
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
-    lines=`wc -l ${i} | cut -f1 -d' '`
+    lines=`head -n 2 ${i} | wc -l`
     if [ $lines -ne 1 ]
     then
         cat ${i} >> ${output_folder}/${assembly_accession}.fa
