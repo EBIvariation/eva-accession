@@ -3,8 +3,8 @@ import data_ops
 import os
 import pandas
 import urllib
-import logging
 import sys
+from __init__ import *
 
 
 def get_header_line_index(assembly_report_path):
@@ -40,22 +40,24 @@ def get_genbank_accessions_without_equivalent_refseq_accessions(assembly_report_
                .values.tolist())
 
 
-def get_absent_refseq_accessions(species_info, refseq_accessions_from_assembly_report):
+def get_refseq_accessions_from_db(species_info):
     pg_conn = data_ops.get_pg_conn_for_species(species_info)
     pg_cursor = pg_conn.cursor()
     contiginfo_tables = data_ops.get_contiginfo_table_list_for_schema(pg_cursor, species_info["database_name"])
     # Can't filter by assembly accession because only some contiginfo tables have that field :(
-    contiginfo_query = "select distinct * from ({0}) temp where contig_name not in ({1})".format(
+    contiginfo_query = "select distinct * from ({0}) temp".format(
         " union all ".join(["select contig_name from dbsnp_{0}.{1}"
                            .format(species_info["database_name"], contiginfo_table_name)
-                            for contiginfo_table_name in contiginfo_tables]),
-        ','.join(["'{0}'".format(elem) for elem in refseq_accessions_from_assembly_report])
-    )
+                            for contiginfo_table_name in contiginfo_tables]))
     pg_cursor.execute(contiginfo_query)
     accessions = [x[0] for x in pg_cursor.fetchall()]
     pg_cursor.close()
     pg_conn.close()
-    return accessions
+    return set(accessions)
+
+
+def get_absent_refseq_accessions(refseq_accessions_from_db, refseq_accessions_from_assembly_report):
+    return refseq_accessions_from_db - refseq_accessions_from_assembly_report
 
 
 def download_assembly_report(assembly_accession):
@@ -66,12 +68,12 @@ def download_assembly_report(assembly_accession):
     return assembly_report_path
 
 
-def insert_absent_genbank_accessions_in_assembly_report(species_db_info, assembly_report_dataframe,
-                                                        genbank_equivalents_dataframe):
+def insert_absent_genbank_accessions_in_assembly_report(species, refseq_accessions_from_db,
+                                                        assembly_report_dataframe, genbank_equivalents_dataframe):
     absent_refseq_accessions = \
-        get_absent_refseq_accessions(species_db_info, set(assembly_report_dataframe["RefSeq-Accn"]))
+        get_absent_refseq_accessions(refseq_accessions_from_db, set(assembly_report_dataframe["RefSeq-Accn"]))
     if len(absent_refseq_accessions) == 0:
-        logger.info("No GenBank accessions are absent in the assembly report for " + species_db_info["database_name"])
+        logger.info("No GenBank accessions are absent in the assembly report for " + species)
 
     new_assembly_report_entry_index = len(assembly_report_dataframe)
     for refseq_accession in absent_refseq_accessions:
@@ -145,7 +147,9 @@ def update_assembly_report(assembly_report_dataframe, genbank_equivalents_datafr
                                                                                             genbank_equivalents_dataframe)
     assembly_report_dataframe = update_non_equivalent_refseq_accessions_in_assembly_report(assembly_report_dataframe,
                                                                                            genbank_equivalents_dataframe)
-    assembly_report_dataframe = insert_absent_genbank_accessions_in_assembly_report(species_db_info,
+    refseq_accessions_from_db = get_refseq_accessions_from_db(species_db_info)
+    assembly_report_dataframe = insert_absent_genbank_accessions_in_assembly_report(args.species,
+                                                                                    refseq_accessions_from_db,
                                                                                     assembly_report_dataframe,
                                                                                     genbank_equivalents_dataframe)
     return assembly_report_dataframe
@@ -173,15 +177,7 @@ def main(metadb, metauser, metahost, species, assembly_accession, genbank_equiva
         assembly_report_dataframe.to_csv(modified_assembly_report_filename, sep='\t', index=None)
 
 
-def init_logger():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(levelname)s %(message)s')
-    result_logger = logging.getLogger(__name__)
-    return result_logger
-
-
 if __name__ == "__main__":
-    logger = init_logger()
-
     parser = argparse.ArgumentParser(description='Generate custom assembly report for a given species and assembly',
                                      add_help=False)
     parser.add_argument("-d", "--metadb", help="Postgres metadata DB", required=True)
@@ -194,6 +190,7 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
+    args = {}
     try:
         args = parser.parse_args()
         main(args.metadb, args.metauser, args.metahost, args.species, args.assembly_accession,
