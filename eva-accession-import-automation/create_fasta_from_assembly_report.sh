@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: create_fasta_from_assembly_report.sh </path/to/assembly_report.txt>
+# Usage: create_fasta_from_assembly_report.sh <assembly accession> </path/to/assembly_report.txt> <output folder>
 
 if [ "$#" -ne 3 ]
 then
