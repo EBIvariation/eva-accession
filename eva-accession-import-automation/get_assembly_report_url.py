@@ -8,7 +8,7 @@ def get_assembly_report_url(assembly_accession):
         raise Exception('Invalid assembly accession: it has to be in the form of '
                         'GCF_XXXXXXXXX.X or GCA_XXXXXXXXX.X where X is a number')
 
-    ftp = FTP('ftp.ncbi.nlm.nih.gov')
+    ftp = FTP('ftp.ncbi.nlm.nih.gov', timeout=600)
     ftp.login()
 
     genome_folder = 'genomes/all/' + '/'.join([assembly_accession[0:3], assembly_accession[4:7],
