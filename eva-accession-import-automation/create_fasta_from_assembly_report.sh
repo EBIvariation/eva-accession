@@ -20,7 +20,7 @@ do
 
     # Download each GenBank accession in the assembly report from ENA into a separate file
     # Delete the accession prefix from the header line
-    wget -q -O - "https://www.ebi.ac.uk/ena/data/view/${genbank_contig}&display=fasta" | sed 's/ENA|.*|//g' > ${genbank_contig}
+    wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${genbank_contig}
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
