@@ -32,8 +32,8 @@ do
 
     # Check that an accession is present no more than once in the output FASTA file, otherwise it 
     # means there are unexpected aliases in the assembly report, which need to be checked
-    acc=`head -n 1 ${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
-    matches=`grep -c "${acc}" ${output_folder}/${assembly_accession}.fa`
+    accession=`head -n 1 ${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
+    matches=`grep -c "${accession}" ${output_folder}/${assembly_accession}.fa`
     if [ $matches -gt 1 ]
     then
         echo WARNING: Sequence ${genbank_contig} found more than once in the output FASTA file
