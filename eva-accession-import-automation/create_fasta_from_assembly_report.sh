@@ -12,6 +12,8 @@ assembly_accession=$1
 assembly_report=$2
 output_folder=$3
 
+exit_code=0
+
 for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
     echo ${genbank_contig}
@@ -37,6 +39,9 @@ do
     if [ $matches -gt 1 ]
     then
         echo WARNING: Sequence ${genbank_contig} found more than once in the output FASTA file
+        exit_code=1
     fi
 done
+
+exit $exit_code
 
