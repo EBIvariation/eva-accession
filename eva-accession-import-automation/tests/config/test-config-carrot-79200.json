@@ -1,0 +1,33 @@
+{
+  "species": "carrot_79200",
+  "assembly_accession": "GCF_001625215.1",
+  "genbank_equivalents_file": "tests/resources/genbank_refseq_accession_mappings.txt",
+  "assembly_report_path": "tests/resources/GCF_001625215.1_ASM162521v1_assembly_report.txt",
+  "refseq_accessions_from_db": [
+    "NC_030381.1",
+    "NC_030382.1",
+    "NC_030383.1",
+    "NC_030384.1",
+    "NC_030385.1",
+    "NC_030386.1",
+    "NC_030387.1",
+    "NC_030388.1",
+    "NC_030389.1",
+    "NW_016089425.1",
+    "NW_016089435.1",
+    "NW_016089445.1",
+    "NW_016089446.1",
+    "NW_016089447.1",
+    "NW_016090852.1",
+    "NW_016090853.1",
+    "NW_016090854.1",
+    "NW_016090855.1",
+    "NW_016090856.1",
+    "NW_016090857.1",
+    "NW_016090858.1",
+    "NW_016090859.1",
+    "NW_016090860.1",
+    "NC_008325.1",
+    "NC_017855.1"
+  ]
+}

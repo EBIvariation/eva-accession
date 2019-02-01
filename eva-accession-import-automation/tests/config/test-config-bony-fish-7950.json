@@ -1,0 +1,30 @@
+{
+  "species": "bony_fish_7950",
+  "assembly_accession": "GCF_000966335.1",
+  "genbank_equivalents_file": "tests/resources/genbank_refseq_accession_mappings.txt",
+  "assembly_report_path": "tests/resources/GCF_000966335.1_ASM96633v1_assembly_report.txt",
+  "refseq_accessions_from_db": [
+    "NW_012222511.1",
+    "NW_012222581.1",
+    "NW_012222605.1",
+    "NW_012223714.1",
+    "NW_012224281.1",
+    "NW_012218353.1",
+    "NW_012218501.1",
+    "NW_012224336.1",
+    "NW_012224344.1",
+    "NW_012224347.1",
+    "NW_012224350.1",
+    "NW_012224352.1",
+    "NW_012224353.1",
+    "NW_012224359.1",
+    "NW_012224363.1",
+    "NW_012224364.1",
+    "NW_012224366.1",
+    "NW_012224378.1",
+    "NW_012224379.1",
+    "NW_012224381.1",
+    "NW_012224383.1",
+    "NW_012224399.1"
+  ]
+}
