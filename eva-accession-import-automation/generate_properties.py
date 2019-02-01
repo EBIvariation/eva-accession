@@ -53,7 +53,11 @@ logging.level.uk.ac.ebi.eva.accession.dbsnp=DEBUG
 logging.level.uk.ac.ebi.eva.accession.dbsnp.listeners=INFO
 logging.level.org.springframework.jdbc.datasource=DEBUG
 """
-    species_db_info = filter(lambda db_info: db_info["database_name"] == parameters["species"],
+    species_info = data_ops.get_species_info(evapro_credentials["metadb"],
+                                             evapro_credentials["metauser"],
+                                             evapro_credentials["metahost"],
+                                             parameters["assembly_accession"])
+    species_db_info = filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
                              data_ops.get_species_pg_conn_info(evapro_credentials["metadb"],
                                                                evapro_credentials["metauser"],
                                                                evapro_credentials["metahost"])
@@ -69,12 +73,12 @@ logging.level.org.springframework.jdbc.datasource=DEBUG
             assembly_accession=parameters["assembly_accession"],
             assembly_name=parameters["assembly_name"],
             assembly_report=parameters["assembly_report"],
-            taxonomy=parameters["taxonomy"],
+            taxonomy=species_info["taxonomy"],
             fasta=parameters["fasta"],
             dbsnp_host=species_db_info["pg_host"],
             dbsnp_port=species_db_info["pg_port"],
             dbsnp_build=species_db_info["dbsnp_build"],
-            dbsnp_species=parameters["species"],
+            dbsnp_species=species_info["database_name"],
             optional_build_line="parameters.buildNumber={}".format(parameters["build"]) if parameters["latest_build"] else "",
             dbsnp_user=dbsnp_user,
             dbsnp_password=dbsnp_password,
@@ -115,9 +119,6 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--latest-build",
                         help="Flag that this build is the latest (relevant for dbsnp table name)",
                         action='store_true')
-    parser.add_argument("-s", "--species",
-                        help="Species for which the process has to be run, e.g. chicken_9031",
-                        required=True)
     parser.add_argument("-n", "--assembly-name",
                         help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0",
                         required=True)
@@ -126,8 +127,6 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument("-r", "--assembly-report",
                         help="File with GenBank equivalents for RefSeq accessions", required=True)
-    parser.add_argument("-t", "--taxonomy", help="Taxomomy of the species, e.g. 9031",
-                        required=True)
     parser.add_argument("-f", "--fasta", help="FASTA file with the reference sequence",
                         required=True)
 
@@ -155,8 +154,6 @@ if __name__ == "__main__":
         parameters = {"assembly_name": args.assembly_name,
                       "assembly_accession": args.assembly_accession,
                       "assembly_report": args.assembly_report,
-                      "taxonomy": args.taxonomy,
-                      "species": args.species,
                       "build": args.build,
                       "latest_build": args.latest_build,
                       "fasta": args.fasta}
