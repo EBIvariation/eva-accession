@@ -23,24 +23,31 @@ import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFHeaderLineCount;
 import htsjdk.variant.vcf.VCFHeaderLineType;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
+
+    private static final Logger logger = LoggerFactory.getLogger(VariantContextWriter.class);
 
     private File output;
 
@@ -63,6 +70,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                 .build();
 
         Set<VCFHeaderLine> metaData = new HashSet<>();
+        addContigs(metaData);
         metaData.add(new VCFHeaderLine("reference", referenceAssembly));
         metaData.add(new VCFInfoHeaderLine(VARIANT_CLASS_KEY, 1, VCFHeaderLineType.String,
                                            "Variant class according to the Sequence Ontology"));
@@ -105,6 +113,19 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     public void write(List<? extends VariantContext> variantContexts) throws Exception {
         for (VariantContext variantContext : variantContexts) {
             writer.add(variantContext);
+        }
+    }
+
+    private void addContigs(Set<VCFHeaderLine> metaData) {
+        try {
+            String path = output.getParent();
+            BufferedReader br = new BufferedReader(new FileReader(path + "/contigs_" + referenceAssembly + ".txt"));
+            String contig;
+            while ((contig = br.readLine()) != null) {
+                metaData.add(new VCFHeaderLine("contig", contig));
+            }
+        } catch (IOException e) {
+            logger.warn("Contigs file not found, VCF header will not have any contigs in the metadata section");
         }
     }
 }

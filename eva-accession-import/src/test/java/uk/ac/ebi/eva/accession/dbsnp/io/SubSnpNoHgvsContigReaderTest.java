@@ -24,7 +24,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.dbsnp.configuration.DbsnpDataSource;
+import uk.ac.ebi.eva.accession.core.io.SubSnpNoHgvsContigReader;
+import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
 import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
 import java.util.ArrayList;

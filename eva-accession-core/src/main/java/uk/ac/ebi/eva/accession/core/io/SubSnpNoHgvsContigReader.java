@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.io;
+package uk.ac.ebi.eva.accession.core.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,14 +22,14 @@ import org.springframework.util.DigestUtils;
 
 import javax.sql.DataSource;
 
-import static uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsRowMapper.CONTIG_NAME_COLUMN;
-
 /**
  * This Spring Batch reader obtains the list of distinct contigs in a dbSNP database.
  */
 public class SubSnpNoHgvsContigReader extends JdbcCursorItemReader<String> {
 
-    private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsReader.class);
+    static final String CONTIG_NAME_COLUMN = "contig_name";
+
+    private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsContigReader.class);
 
     public SubSnpNoHgvsContigReader(String assembly, Long buildNumber, DataSource dataSource,
                                     int pageSize) throws Exception {

@@ -31,4 +31,12 @@ public class BeanNames {
     public static final String EXCLUDE_VARIANTS_LISTENER = "EXCLUDE_VARIANTS_LISTENER";
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
+
+    public static final String CONTIG_STEP = "CONTIG_STEP";
+
+    public static final String CONTIG_PROCESSOR = "CONTIG_PROCESSOR";
+
+    public static final String CONTIG_READER = "CONTIG_READER";
+
+    public static final String CONTIG_WRITER = "CONTIG_WRITER";
 }

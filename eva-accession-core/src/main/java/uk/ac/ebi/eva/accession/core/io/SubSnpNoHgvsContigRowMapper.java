@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.test;
+package uk.ac.ebi.eva.accession.core.io;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.RowMapper;
 
-import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-@Configuration
-@EnableConfigurationProperties({DbsnpDataSource.class, DbsnpTestDataSource.class})
-public class TestConfiguration {
+public class SubSnpNoHgvsContigRowMapper implements RowMapper<String> {
 
+    @Override
+    public String mapRow(ResultSet resultSet, int i) throws SQLException {
+        return resultSet.getString(SubSnpNoHgvsContigReader.CONTIG_NAME_COLUMN);
+    }
 }
