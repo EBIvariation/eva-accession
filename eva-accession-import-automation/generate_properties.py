@@ -5,9 +5,56 @@ import data_ops
 from os.path import expanduser
 
 
-def main(parameters, evapro_credentials, job_tracker_credentials, mongo_credentials):
-    template = """
-spring.batch.job.names=IMPORT_DBSNP_VARIANTS_JOB
+def main(args):
+    complete_args = query_missing_parameters(args)
+    fill_and_write_template(complete_args)
+
+
+def query_missing_parameters(args):
+    species_info = data_ops.get_species_info(args.metadb,
+                                             args.metauser,
+                                             args.metahost,
+                                             args.assembly_accession)
+
+    species_db_info = \
+    filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
+           data_ops.get_species_pg_conn_info(args.metadb,
+                                             args.metauser,
+                                             args.metahost)
+           )[0]
+
+    dbsnp_user, dbsnp_password, unused_dbsnp_port = \
+        get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
+
+    jt_user, jt_password, jt_port = get_user_and_password_and_port_from_pgpass_for_host(
+        args.job_tracker_host)
+
+    complete_args = args
+
+    if args.assembly_name == None:
+        complete_args.assembly_name = data_ops.get_assembly_name(species_db_info, args.build)
+
+    if args.latest_build:
+        complete_args.optional_build_line = ""
+    else:
+        complete_args.optional_build_line = "parameters.buildNumber={}".format(args.build)
+
+    complete_args.taxonomy = species_info["taxonomy"]
+    complete_args.dbsnp_host = species_db_info["pg_host"]
+    complete_args.dbsnp_port = species_db_info["pg_port"]
+    complete_args.dbsnp_build = species_db_info["dbsnp_build"]
+    complete_args.database_name = species_info["database_name"]
+    complete_args.dbsnp_user = dbsnp_user
+    complete_args.dbsnp_password = dbsnp_password
+    complete_args.job_tracker_port = jt_port
+    complete_args.job_tracker_user = jt_user
+    complete_args.job_tracker_password = jt_password
+    return complete_args
+
+
+def fill_and_write_template(args):
+    template = \
+"""spring.batch.job.names=IMPORT_DBSNP_VARIANTS_JOB
 
 accessioning.instanceId=instance-import
 accessioning.variant.categoryId=ss
@@ -15,36 +62,36 @@ accessioning.monotonic.ss.nextBlockInterval=10000
 accessioning.monotonic.ss.blockStartValue=10000
 accessioning.monotonic.ss.blockSize=1000
 
-parameters.assemblyAccession={assembly_accession}
-parameters.assemblyName={assembly_name}
-parameters.assemblyReportUrl=file:{assembly_report}
-parameters.taxonomyAccession={taxonomy}
+parameters.assemblyAccession={args.assembly_accession}
+parameters.assemblyName={args.assembly_name}
+parameters.assemblyReportUrl=file:{args.assembly_report}
+parameters.taxonomyAccession={args.taxonomy}
 parameters.chunkSize=1000
 parameters.pageSize=100
 #parameters.forceRestart=true
 #parameters.forceImport=false
-parameters.fasta={fasta}
-{optional_build_line}
+parameters.fasta={args.fasta}
+{args.optional_build_line}
 
 dbsnp.datasource.driver-class-name=org.postgresql.Driver
-dbsnp.datasource.url=jdbc:postgresql://{dbsnp_host}:{dbsnp_port}/dbsnp_{dbsnp_build}?currentSchema=dbsnp_{dbsnp_species}
-dbsnp.datasource.username={dbsnp_user}
-dbsnp.datasource.password={dbsnp_password}
+dbsnp.datasource.url=jdbc:postgresql://{args.dbsnp_host}:{args.dbsnp_port}/dbsnp_{args.dbsnp_build}?currentSchema=dbsnp_{args.database_name}
+dbsnp.datasource.username={args.dbsnp_user}
+dbsnp.datasource.password={args.dbsnp_password}
 dbsnp.datasource.tomcat.max-active=3
 
 spring.datasource.driver-class-name=org.postgresql.Driver
-spring.datasource.url=jdbc:postgresql://{jt_host}:{jt_port}/{jt_db}
-spring.datasource.username={jt_user}
-spring.datasource.password={jt_password}
+spring.datasource.url=jdbc:postgresql://{args.job_tracker_host}:{args.job_tracker_port}/{args.job_tracker_db}
+spring.datasource.username={args.job_tracker_user}
+spring.datasource.password={args.job_tracker_password}
 spring.datasource.tomcat.max-active=3
 spring.jpa.generate-ddl=true
 
-spring.data.mongodb.host={mongo_host}
-spring.data.mongodb.port={mongo_port}
-spring.data.mongodb.database={mongo_db}
-spring.data.mongodb.username={mongo_user}
-spring.data.mongodb.password={mongo_password}
-spring.data.mongodb.authentication-database={mongo_auth_db}
+spring.data.mongodb.host={args.mongo_host}
+spring.data.mongodb.port={args.mongo_port}
+spring.data.mongodb.database={args.mongo_db}
+spring.data.mongodb.username={args.mongo_user}
+spring.data.mongodb.password={args.mongo_password}
+spring.data.mongodb.authentication-database={args.mongo_auth_db}
 mongodb.read-preference=primaryPreferred
 
 spring.main.web-environment=false
@@ -53,56 +100,9 @@ logging.level.uk.ac.ebi.eva.accession.dbsnp=DEBUG
 logging.level.uk.ac.ebi.eva.accession.dbsnp.listeners=INFO
 logging.level.org.springframework.jdbc.datasource=DEBUG
 """
-    species_info = data_ops.get_species_info(evapro_credentials["metadb"],
-                                             evapro_credentials["metauser"],
-                                             evapro_credentials["metahost"],
-                                             parameters["assembly_accession"])
-
-    species_db_info = filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
-                             data_ops.get_species_pg_conn_info(evapro_credentials["metadb"],
-                                                               evapro_credentials["metauser"],
-                                                               evapro_credentials["metahost"])
-                             )[0]
-
-    dbsnp_user, dbsnp_password, unused_dbsnp_port = \
-        get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
-
-    jt_user, jt_password, jt_port = get_user_and_password_and_port_from_pgpass_for_host(
-        job_tracker_credentials["job_tracker_host"])
-
-    properties_filename = "{}.properties".format(parameters["assembly_accession"])
-
-    assembly_name = parameters["assembly_name"] if parameters["assembly_name"] != None \
-        else data_ops.get_assembly_name(species_db_info, parameters["build"])
-
-    optional_build_line = "" if parameters["latest_build"] \
-        else "parameters.buildNumber={}".format(parameters["build"])
-
+    properties_filename = "{}.properties".format(args.assembly_accession)
     with open(properties_filename, "w") as properties_file:
-        properties_file.write(template.format(
-            assembly_accession=parameters["assembly_accession"],
-            assembly_name=assembly_name,
-            assembly_report=parameters["assembly_report"],
-            taxonomy=species_info["taxonomy"],
-            fasta=parameters["fasta"],
-            dbsnp_host=species_db_info["pg_host"],
-            dbsnp_port=species_db_info["pg_port"],
-            dbsnp_build=species_db_info["dbsnp_build"],
-            dbsnp_species=species_info["database_name"],
-            optional_build_line=optional_build_line,
-            dbsnp_user=dbsnp_user,
-            dbsnp_password=dbsnp_password,
-            jt_host=job_tracker_credentials["job_tracker_host"],
-            jt_port=jt_port,
-            jt_db=job_tracker_credentials["job_tracker_db"],
-            jt_user=jt_user,
-            jt_password=jt_password,
-            mongo_host=mongo_credentials["mongo_host"],
-            mongo_port=mongo_credentials["mongo_port"],
-            mongo_db=mongo_credentials["mongo_db"],
-            mongo_user=mongo_credentials["mongo_user"],
-            mongo_password=mongo_credentials["mongo_password"],
-            mongo_auth_db=mongo_credentials["mongo_auth_db"]))
+        properties_file.write(template.format(args=args))
 
 
 def get_user_and_password_and_port_from_pgpass_for_host(pg_host):
@@ -159,29 +159,7 @@ if __name__ == "__main__":
 
     try:
         args = parser.parse_args()
-
-        parameters = {"assembly_name": args.assembly_name,
-                      "assembly_accession": args.assembly_accession,
-                      "assembly_report": args.assembly_report,
-                      "build": args.build,
-                      "latest_build": args.latest_build,
-                      "fasta": args.fasta}
-
-        evapro_credentials = {"metadb": args.metadb,
-                              "metauser": args.metauser,
-                              "metahost": args.metahost}
-
-        job_tracker_credentials = {"job_tracker_db": args.job_tracker_db,
-                                   "job_tracker_host": args.job_tracker_host}
-
-        mongo_credentials = {"mongo_db": args.mongo_db,
-                             "mongo_auth_db": args.mongo_auth_db,
-                             "mongo_user": args.mongo_user,
-                             "mongo_password": args.mongo_password,
-                             "mongo_host": args.mongo_host,
-                             "mongo_port": args.mongo_port}
-
-        main(parameters, evapro_credentials, job_tracker_credentials, mongo_credentials)
+        main(args)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
