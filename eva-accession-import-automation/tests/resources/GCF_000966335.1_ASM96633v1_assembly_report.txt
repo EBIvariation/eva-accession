@@ -1,0 +1,51 @@
+# Assembly name:  ASM96633v1
+# Organism name:  Clupea harengus (Atlantic herring)
+# Taxid:          7950
+# BioSample:      SAMN03154066
+# BioProject:     PRJNA265919
+# Submitter:      BGI
+# Date:           2015-3-30
+# Assembly type:  haploid
+# Release type:   major
+# Assembly level: Scaffold
+# Genome representation: full
+# WGS project:    JZKK01
+# Assembly method: SOAPdenovo v. 2.04
+# Genome coverage: 127x
+# Sequencing technology: Illumina Hiseq 2000
+# RefSeq category: Representative Genome
+# GenBank assembly accession: GCA_000966335.1
+# RefSeq assembly accession: GCF_000966335.1
+# RefSeq assembly and GenBank assemblies identical: no
+#
+## Assembly-Units:
+## GenBank Unit Accession	RefSeq Unit Accession	Assembly-Unit name
+## GCA_000966345.1	GCF_000966345.1	Primary Assembly
+## 	GCF_000063895.1	non-nuclear
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+scaffold611	unplaced-scaffold	na	na	JZKK01000382.1	=	NW_012222511.1	Primary Assembly	1203	na
+scaffold624	unplaced-scaffold	na	na	JZKK01000433.1	=	NW_012222581.1	Primary Assembly	10982	na
+scaffold628	unplaced-scaffold	na	na	JZKK01000434.1	=	NW_012222605.1	Primary Assembly	2663	na
+scaffold852	unplaced-scaffold	na	na	JZKK01000899.1	=	NW_012223714.1	Primary Assembly	7753	na
+scaffold973	unplaced-scaffold	na	na	JZKK01001170.1	=	NW_012224281.1	Primary Assembly	1125	na
+scaffold1144	unplaced-scaffold	na	na	JZKK01001452.1	=	NW_012218353.1	Primary Assembly	1102	na
+scaffold1178	unplaced-scaffold	na	na	JZKK01001503.1	=	NW_012218501.1	Primary Assembly	1405	na
+scaffold986	unplaced-scaffold	na	na	KQ033834.1	=	NW_012224336.1	Primary Assembly	105810	na
+scaffold988	unplaced-scaffold	na	na	KQ033835.1	=	NW_012224344.1	Primary Assembly	59563	na
+scaffold9895	unplaced-scaffold	na	na	KQ033837.1	=	NW_012224350.1	Primary Assembly	11179	na
+scaffold99	unplaced-scaffold	na	na	KQ033839.1	=	NW_012224353.1	Primary Assembly	103951	na
+scaffold991	unplaced-scaffold	na	na	KQ033840.1	=	NW_012224359.1	Primary Assembly	727537	na
+scaffold992	unplaced-scaffold	na	na	KQ033841.1	=	NW_012224363.1	Primary Assembly	26133	na
+scaffold9920	unplaced-scaffold	na	na	KQ033842.1	=	NW_012224364.1	Primary Assembly	2655	na
+scaffold993	unplaced-scaffold	na	na	KQ033843.1	=	NW_012224366.1	Primary Assembly	90819	na
+scaffold9955	unplaced-scaffold	na	na	KQ033844.1	=	NW_012224378.1	Primary Assembly	4163	na
+scaffold9956	unplaced-scaffold	na	na	KQ033845.1	=	NW_012224379.1	Primary Assembly	1080	na
+scaffold996	unplaced-scaffold	na	na	KQ033846.1	=	NW_012224381.1	Primary Assembly	25114	na
+scaffold9997	unplaced-scaffold	na	na	KQ033851.1	=	NW_012224399.1	Primary Assembly	1510	na
+MT	assembled-molecule	MT	Mitochondrion	na	<>	NC_009577.1	non-nuclear	16701	na

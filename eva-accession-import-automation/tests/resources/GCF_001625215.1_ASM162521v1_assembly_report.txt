@@ -1,0 +1,59 @@
+# Assembly name:  ASM162521v1
+# Organism name:  Daucus carota subsp. sativus (carrot)
+# Infraspecific name:  cultivar=DH1
+# Taxid:          79200
+# BioSample:      SAMN03216637
+# BioProject:     PRJNA268187
+# Submitter:      USDA ARS
+# Date:           2016-5-6
+# Assembly type:  haploid
+# Release type:   major
+# Assembly level: Chromosome
+# Genome representation: full
+# WGS project:    LNRQ01
+# Assembly method: SOAPdenovo v. 2.04; GapCloser for SOAPdenovo v. 1.12; integration with linkage maps v. NOV-2013
+# Expected final version: yes
+# Reference guided assembly: de-novo
+# Genome coverage: 186.0x
+# Sequencing technology: Illumina HiSeq; Roche 454; Sanger
+# RefSeq category: Representative Genome
+# GenBank assembly accession: GCA_001625215.1
+# RefSeq assembly accession: GCF_001625215.1
+# RefSeq assembly and GenBank assemblies identical: no
+#
+## Assembly-Units:
+## GenBank Unit Accession	RefSeq Unit Accession	Assembly-Unit name
+## GCA_001625225.1	GCF_001625225.1	Primary Assembly
+## GCA_001625235.1	GCF_001663995.1	non-nuclear
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+DCARv2_Chr1	assembled-molecule	1	Chromosome	CM004278.1	=	NC_030381.1	Primary Assembly	51465339	na
+DCARv2_Chr2	assembled-molecule	2	Chromosome	CM004279.1	=	NC_030382.1	Primary Assembly	43913520	na
+DCARv2_Chr3	assembled-molecule	3	Chromosome	CM004280.1	=	NC_030383.1	Primary Assembly	50312079	na
+DCARv2_Chr4	assembled-molecule	4	Chromosome	CM004281.1	=	NC_030384.1	Primary Assembly	35924511	na
+DCARv2_Chr5	assembled-molecule	5	Chromosome	CM004282.1	=	NC_030385.1	Primary Assembly	41956025	na
+DCARv2_Chr6	assembled-molecule	6	Chromosome	CM004283.1	=	NC_030386.1	Primary Assembly	36610139	na
+DCARv2_Chr7	assembled-molecule	7	Chromosome	CM004284.1	=	NC_030387.1	Primary Assembly	36358036	na
+DCARv2_Chr8	assembled-molecule	8	Chromosome	CM004285.1	=	NC_030388.1	Primary Assembly	31745509	na
+DCARv2_Chr9	assembled-molecule	9	Chromosome	CM004286.1	=	NC_030389.1	Primary Assembly	33682890	na
+DCARv2_B1	unplaced-scaffold	na	na	LNRQ01000012.1	=	NW_016089425.1	Primary Assembly	601187	na
+DCARv2_B2	unplaced-scaffold	na	na	LNRQ01000013.1	=	NW_016089435.1	Primary Assembly	304932	na
+DCARv2_B3	unplaced-scaffold	na	na	LNRQ01000014.1	=	NW_016089445.1	Primary Assembly	842186	na
+DCARv2_B4	unplaced-scaffold	na	na	LNRQ01000015.1	=	NW_016089446.1	Primary Assembly	1350810	na
+DCARv2_B5	unplaced-scaffold	na	na	LNRQ01000016.1	=	NW_016089447.1	Primary Assembly	1988177	na
+DCARv2_C10748276	unplaced-scaffold	na	na	LNRQ01004819.1	=	NW_016090853.1	Primary Assembly	9568	na
+DCARv2_C10748340	unplaced-scaffold	na	na	LNRQ01004820.1	=	NW_016090854.1	Primary Assembly	9617	na
+DCARv2_C10748492	unplaced-scaffold	na	na	LNRQ01004821.1	=	NW_016090855.1	Primary Assembly	9755	na
+DCARv2_C10748812	unplaced-scaffold	na	na	LNRQ01004822.1	=	NW_016090856.1	Primary Assembly	10081	na
+DCARv2_C10749708	unplaced-scaffold	na	na	LNRQ01004824.1	=	NW_016090858.1	Primary Assembly	11120	na
+DCARv2_C10749840	unplaced-scaffold	na	na	LNRQ01004825.1	=	NW_016090859.1	Primary Assembly	11305	na
+DCARv2_C10750146	unplaced-scaffold	na	na	LNRQ01004826.1	=	NW_016090860.1	Primary Assembly	11879	na
+Pltd	assembled-molecule	Pltd	Chloroplast	na	<>	NC_008325.1	non-nuclear	155911	na
+MT	assembled-molecule	MT	Mitochondrion	na	<>	NC_017855.1	non-nuclear	281132	na
+DCARv2_PT	assembled-molecule	Pltd	Plastid	CM004358.1	<>	na	non-nuclear	155848	na
+DCARv2_MT	unlocalized-scaffold	MT	Mitochondrion	LNRQ01000010.1	<>	na	non-nuclear	244980	na
