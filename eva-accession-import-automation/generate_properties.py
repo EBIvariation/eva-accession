@@ -22,10 +22,9 @@ parameters.taxonomyAccession={taxonomy}
 parameters.chunkSize=1000
 parameters.pageSize=100
 #parameters.forceRestart=true
+#parameters.forceImport=false
 parameters.fasta={fasta}
 {optional_build_line}
-
-spring.batch.job.names=CREATE_SUBSNP_ACCESSION_JOB
 
 dbsnp.datasource.driver-class-name=org.postgresql.Driver
 dbsnp.datasource.url=jdbc:postgresql://{dbsnp_host}:{dbsnp_port}/dbsnp_{dbsnp_build}?currentSchema=dbsnp_{dbsnp_species}
@@ -39,7 +38,7 @@ spring.datasource.username={jt_user}
 spring.datasource.password={jt_password}
 spring.datasource.tomcat.max-active=3
 spring.jpa.generate-ddl=true
- 
+
 spring.data.mongodb.host={mongo_host}
 spring.data.mongodb.port={mongo_port}
 spring.data.mongodb.database={mongo_db}
@@ -96,7 +95,7 @@ def get_user_and_password_from_pgpass_for_host(pg_host):
     with open(expanduser("~/.pgpass")) as pgpass_file:
         for line in pgpass_file:
             if line.split(':', 1)[0] == pg_host:
-                fields = line.split(':')
+                fields = line.rstrip('\n').split(':')
                 return fields[3], fields[4]
 
 
@@ -130,9 +129,6 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--taxonomy", help="Taxomomy of the species, e.g. 9031",
                         required=True)
     parser.add_argument("-f", "--fasta", help="FASTA file with the reference sequence",
-                        required=True)
-    parser.add_argument("-i", "--instance",
-                        help="Accessioning instance id (don't use the same instance concurrently!)",
                         required=True)
 
     parser.add_argument("-d", "--metadb", help="Postgres metadata DB", required=True)
