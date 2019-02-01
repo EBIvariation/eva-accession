@@ -58,12 +58,12 @@ logging.level.org.springframework.jdbc.datasource=DEBUG
                                                                evapro_credentials["metauser"],
                                                                evapro_credentials["metahost"])
                              )[0]
-    pg_conn_for_species = data_ops.get_pg_conn_for_species(species_db_info)
-    dbsnp_user, dbsnp_password = get_user_and_password_from_pgpass_for_host(
-        species_db_info["pg_host"])
-    jt_user, jt_password = get_user_and_password_from_pgpass_for_host(
+    dbsnp_user, dbsnp_password, unused_dbsnp_port = \
+        get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
+    jt_user, jt_password, jt_port = get_user_and_password_and_port_from_pgpass_for_host(
         job_tracker_credentials["job_tracker_host"])
     properties_filename = "{}.properties".format(parameters["assembly_accession"])
+
     with open(properties_filename, "w") as properties_file:
         properties_file.write(template.format(
             assembly_accession=parameters["assembly_accession"],
@@ -79,7 +79,7 @@ logging.level.org.springframework.jdbc.datasource=DEBUG
             dbsnp_user=dbsnp_user,
             dbsnp_password=dbsnp_password,
             jt_host=job_tracker_credentials["job_tracker_host"],
-            jt_port=job_tracker_credentials["job_tracker_port"],
+            jt_port=jt_port,
             jt_db=job_tracker_credentials["job_tracker_db"],
             jt_user=jt_user,
             jt_password=jt_password,
@@ -91,12 +91,12 @@ logging.level.org.springframework.jdbc.datasource=DEBUG
             mongo_auth_db=mongo_credentials["mongo_auth_db"]))
 
 
-def get_user_and_password_from_pgpass_for_host(pg_host):
+def get_user_and_password_and_port_from_pgpass_for_host(pg_host):
     with open(expanduser("~/.pgpass")) as pgpass_file:
         for line in pgpass_file:
             if line.split(':', 1)[0] == pg_host:
                 fields = line.rstrip('\n').split(':')
-                return fields[3], fields[4]
+                return fields[3], fields[4], fields[1]
 
 
 def init_logger():
@@ -137,11 +137,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-D", "--job-tracker-db", help="Postgres DB for the job repository",
                         required=True)
-    parser.add_argument("-U", "--job-tracker-user",
-                        help="Postgres username for the job repository", required=True)
     parser.add_argument("-H", "--job-tracker-host", help="Postgres host for the job repository",
-                        required=True)
-    parser.add_argument("-P", "--job-tracker-port", help="Postgres port for the job repository",
                         required=True)
 
     parser.add_argument("--mongo-db", help="MongoDB accessioning database", required=True)
@@ -170,9 +166,7 @@ if __name__ == "__main__":
                               "metahost": args.metahost}
 
         job_tracker_credentials = {"job_tracker_db": args.job_tracker_db,
-                                   "job_tracker_user": args.job_tracker_user,
-                                   "job_tracker_host": args.job_tracker_host,
-                                   "job_tracker_port": args.job_tracker_port}
+                                   "job_tracker_host": args.job_tracker_host}
 
         mongo_credentials = {"mongo_db": args.mongo_db,
                              "mongo_auth_db": args.mongo_auth_db,
