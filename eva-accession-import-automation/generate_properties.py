@@ -57,21 +57,31 @@ logging.level.org.springframework.jdbc.datasource=DEBUG
                                              evapro_credentials["metauser"],
                                              evapro_credentials["metahost"],
                                              parameters["assembly_accession"])
+
     species_db_info = filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
                              data_ops.get_species_pg_conn_info(evapro_credentials["metadb"],
                                                                evapro_credentials["metauser"],
                                                                evapro_credentials["metahost"])
                              )[0]
+
     dbsnp_user, dbsnp_password, unused_dbsnp_port = \
         get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
+
     jt_user, jt_password, jt_port = get_user_and_password_and_port_from_pgpass_for_host(
         job_tracker_credentials["job_tracker_host"])
+
     properties_filename = "{}.properties".format(parameters["assembly_accession"])
+
+    assembly_name = parameters["assembly_name"] if parameters["assembly_name"] != None \
+        else data_ops.get_assembly_name(species_db_info, parameters["build"])
+
+    optional_build_line = "" if parameters["latest_build"] \
+        else "parameters.buildNumber={}".format(parameters["build"])
 
     with open(properties_filename, "w") as properties_file:
         properties_file.write(template.format(
             assembly_accession=parameters["assembly_accession"],
-            assembly_name=parameters["assembly_name"],
+            assembly_name=assembly_name,
             assembly_report=parameters["assembly_report"],
             taxonomy=species_info["taxonomy"],
             fasta=parameters["fasta"],
@@ -79,7 +89,7 @@ logging.level.org.springframework.jdbc.datasource=DEBUG
             dbsnp_port=species_db_info["pg_port"],
             dbsnp_build=species_db_info["dbsnp_build"],
             dbsnp_species=species_info["database_name"],
-            optional_build_line="parameters.buildNumber={}".format(parameters["build"]) if parameters["latest_build"] else "",
+            optional_build_line=optional_build_line,
             dbsnp_user=dbsnp_user,
             dbsnp_password=dbsnp_password,
             jt_host=job_tracker_credentials["job_tracker_host"],
@@ -120,8 +130,7 @@ if __name__ == "__main__":
                         help="Flag that this build is the latest (relevant for dbsnp table name)",
                         action='store_true')
     parser.add_argument("-n", "--assembly-name",
-                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0",
-                        required=True)
+                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0")
     parser.add_argument("-a", "--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002315.3",
                         required=True)

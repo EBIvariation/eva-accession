@@ -40,6 +40,7 @@ def get_species_pg_conn_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_h
     pg_conn.close()
     return species_set
 
+
 def get_species_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
                      assembly_accession):
     """
@@ -56,7 +57,8 @@ def get_species_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
     pg_cursor = pg_conn.cursor()
     pg_cursor.execute("select database_name, tax_id from dbsnp_ensembl_species.import_progress i "
                       " where genbank_assembly_accession = '{}'".format(assembly_accession))
-    species = [{"database_name": result[0], "taxonomy": result[1]} for result in pg_cursor.fetchall()]
+    species = [{"database_name": result[0], "taxonomy": result[1]}
+               for result in pg_cursor.fetchall()]
     pg_cursor.close()
     pg_conn.close()
     if len(species) == 0:
@@ -64,3 +66,21 @@ def get_species_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
     if len(species) > 1:
         raise Exception("More than one species with assembly {} in table import_progress".format(assembly_accession))
     return species[0]
+
+
+def get_assembly_name(species_db_info, build):
+    pg_conn = get_pg_conn_for_species(species_db_info)
+    pg_cursor = pg_conn.cursor()
+    contiginfo_tables = get_contiginfo_table_list_for_schema(pg_cursor, species_db_info["database_name"])
+
+    table_name = "dbsnp_{}.b{}_contiginfo".format(species_db_info["database_name"], build)
+    pg_cursor.execute("select distinct group_label from {}".format(table_name))
+    assembly_names = pg_cursor.fetchall()
+    pg_cursor.close()
+    pg_conn.close()
+    if len(assembly_names) == 0:
+        raise Exception("No assembly names found in table {}".format(table_name))
+    if len(assembly_names) > 1:
+        raise Exception("More than one assembly names found in table {}: {}"
+                        .format(table_name, [result[0] for result in assembly_names]))
+    return assembly_names[0][0]
