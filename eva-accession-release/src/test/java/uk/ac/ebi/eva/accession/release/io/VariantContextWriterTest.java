@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -148,11 +149,15 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkMetadataSection() throws Exception {
+        FileWriter fileWriter = new FileWriter(temporaryFolder.newFile("contigs_" + REFERENCE_ASSEMBLY + ".txt"));
+        fileWriter.write("CM0001.1");
+        fileWriter.close();
+
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> metadataLines = grepFile(output, "^##.*");
-        assertEquals(9, metadataLines.size());
+        assertEquals(10, metadataLines.size());
         List<String> headerLines = grepFile(output, "^#CHROM.*");
         assertEquals(1, headerLines.size());
     }

@@ -42,7 +42,7 @@ public class ContigWriter implements ItemStreamWriter<String> {
     @Override
     public void write(List<? extends String> contigs) throws Exception {
         for (String contig : contigs) {
-            printWriter.println("<ID=" + contig + ">");
+            printWriter.println(contig);
         }
     }
 }

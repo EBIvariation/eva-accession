@@ -15,7 +15,11 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.TestConfiguration;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,13 +36,20 @@ public class ContigStepConfigurationTest {
 
     @Test
     @DirtiesContext
-    public void executeStep() throws IOException {
+    public void assertStepExecutesAndCompletes() {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep("CONTIG_STEP");
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-
-//        assertEquals(1, jobExecution.getStepExecutions().size());
-//        assertEquals(EXPECTED_PROCESSED_CONTIGS_COUNT,
-//                     jobExecution.getStepExecutions().iterator().next().getWriteCount());
     }
 
+    @Test
+    public void contigsWritten() throws Exception {
+        assertStepExecutesAndCompletes();
+        Path folder = Paths.get(inputParameters.getOutputVcf()).getParent();
+        assertEquals(6, numberOfLines(folder + "/contigs_" + inputParameters.getAssemblyAccession() + ".txt"));
+    }
+
+    private long numberOfLines(String path) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(path));
+        return br.lines().count();
+    }
 }
