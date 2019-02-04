@@ -2035,7 +2035,3 @@ Scaffold2220	unplaced-scaffold	na	na	KE147933.1	=	NW_006737251.1	Primary Assembl
 Scaffold2228	unplaced-scaffold	na	na	KE147934.1	=	NW_006737252.1	Primary Assembly	88924	chrUn_KE147934v1
 Scaffold2229	unplaced-scaffold	na	na	KE147935.1	=	NW_006737253.1	Primary Assembly	334963	chrUn_KE147935v1
 MT	assembled-molecule	MT	Mitochondrion	na	<>	NC_008066.1	non-nuclear	16550	chrM
-chr1	assembled-molecule	1	Chromosome	CM000093.5	=	NT_455866	Primary Assembly	196202544	chr1
-chr2	assembled-molecule	2	Chromosome	CM000094.5	=	NT_455837	Primary Assembly	149560735	chr2
-chr3	assembled-molecule	3	Chromosome	CM000095.5	=	NT_464165.1	Primary Assembly	111302122	chr3
-chr4	assembled-molecule	4	Chromosome	CM000096.5	=	CTG1	Primary Assembly	196202545	chr4
