@@ -40,8 +40,8 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
-@TestPropertySource("classpath:application.properties")
-public class ContigStepConfigurationTest {
+@TestPropertySource("classpath:previous-build-test.properties")
+public class ContigStepPreviousBuildConfigurationTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -61,11 +61,12 @@ public class ContigStepConfigurationTest {
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
         Path folder = Paths.get(inputParameters.getOutputVcf()).getParent();
-        assertEquals(6, numberOfLines(folder + "/contigs_" + inputParameters.getAssemblyAccession() + ".txt"));
+        assertEquals(3, numberOfLines(folder + "/contigs_" + inputParameters.getAssemblyAccession() + ".txt"));
     }
 
     private long numberOfLines(String path) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
         return bufferedReader.lines().count();
     }
+
 }

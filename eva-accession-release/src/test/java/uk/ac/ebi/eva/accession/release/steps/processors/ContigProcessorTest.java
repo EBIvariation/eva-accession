@@ -35,7 +35,7 @@ public class ContigProcessorTest {
     @BeforeClass
     public static void setUp() throws Exception {
         String fileString = ContigProcessorTest.class.getResource(
-                "/input-files/assembly_report/GCF_000409795.2_Chlorocebus_sabeus_1.1_assembly_report.txt").toString();
+                "/input-files/assembly-report/GCF_000409795.2_Chlorocebus_sabeus_1.1_assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
         processor = new ContigProcessor(contigMapping);
     }
