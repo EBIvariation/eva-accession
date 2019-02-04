@@ -2034,4 +2034,4 @@ Scaffold921	unplaced-scaffold	na	na	KE147932.1	=	NW_006736268.1	Primary Assembly
 Scaffold2220	unplaced-scaffold	na	na	KE147933.1	=	NW_006737251.1	Primary Assembly	31676	chrUn_KE147933v1
 Scaffold2228	unplaced-scaffold	na	na	KE147934.1	=	NW_006737252.1	Primary Assembly	88924	chrUn_KE147934v1
 Scaffold2229	unplaced-scaffold	na	na	KE147935.1	=	NW_006737253.1	Primary Assembly	334963	chrUn_KE147935v1
-MT	assembled-molecule	MT	Mitochondrion	na	<>	NC_008066.1	non-nuclear	16550	chrM
+MT	assembled-molecule	MT	Mitochondrion	na	<>	NC_008066.1	non-nuclear	16550	chrM 

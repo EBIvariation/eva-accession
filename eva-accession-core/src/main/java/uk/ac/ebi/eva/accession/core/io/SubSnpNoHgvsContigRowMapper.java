@@ -20,10 +20,12 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static uk.ac.ebi.eva.accession.core.io.SubSnpNoHgvsContigReader.CONTIG_NAME_COLUMN;
+
 public class SubSnpNoHgvsContigRowMapper implements RowMapper<String> {
 
     @Override
     public String mapRow(ResultSet resultSet, int i) throws SQLException {
-        return resultSet.getString(SubSnpNoHgvsContigReader.CONTIG_NAME_COLUMN);
+        return resultSet.getString(CONTIG_NAME_COLUMN);
     }
 }
