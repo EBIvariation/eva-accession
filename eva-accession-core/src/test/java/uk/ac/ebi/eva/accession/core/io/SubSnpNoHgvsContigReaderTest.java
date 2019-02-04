@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.io;
+package uk.ac.ebi.eva.accession.core.io;
 
 import org.junit.After;
 import org.junit.Test;
@@ -24,9 +24,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.core.io.SubSnpNoHgvsContigReader;
 import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
-import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.TestConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +33,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
-@TestPropertySource({"classpath:application.properties"})
+@TestPropertySource({"classpath:contig-test.properties"})
 @ContextConfiguration(classes = {TestConfiguration.class})
 public class SubSnpNoHgvsContigReaderTest {
 

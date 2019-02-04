@@ -26,9 +26,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.core.test.configuration.TestConfiguration;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.release.test.configuration.TestConfiguration;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

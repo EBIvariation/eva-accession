@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.test.configuration.DbsnpTestDataSource;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionReleaseJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyConfiguration;
