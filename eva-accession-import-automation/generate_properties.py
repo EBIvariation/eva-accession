@@ -17,11 +17,11 @@ def query_missing_parameters(args):
                                              args.assembly_accession)
 
     species_db_info = \
-    filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
-           data_ops.get_species_pg_conn_info(args.metadb,
-                                             args.metauser,
-                                             args.metahost)
-           )[0]
+        filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
+               data_ops.get_species_pg_conn_info(args.metadb,
+                                                 args.metauser,
+                                                 args.metahost)
+               )[0]
 
     dbsnp_user, dbsnp_password, unused_dbsnp_port = \
         get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
@@ -125,12 +125,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Generate a properties file that can be used for eva-accession-import',
         add_help=False)
-    parser.add_argument("-b", "--build", help="dbSNP build number", required=True)
+    parser.add_argument("-b", "--build", help="dbSNP build number, e.g. 151", required=True)
     parser.add_argument("-l", "--latest-build",
                         help="Flag that this build is the latest (relevant for dbsnp table name)",
                         action='store_true')
     parser.add_argument("-n", "--assembly-name",
-                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0")
+                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0"
+                             ". (Can be ommited if there is only one assembly name in the build)")
     parser.add_argument("-a", "--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002315.3",
                         required=True)

@@ -50,7 +50,7 @@ def get_species_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
     :param pg_metadata_user: Metadata user name
     :param pg_metadata_host: Host where the metadata database resides
     :param assembly_accession: species to query, e.g. GCA_000001735.1
-    :return: List of dictionaries with species information for each species
+    :return: Dictionary with species information
     """
     pg_conn = psycopg2.connect("dbname='{0}' user='{1}' host='{2}'".
                                format(pg_metadata_dbname, pg_metadata_user, pg_metadata_host))
