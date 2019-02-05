@@ -57,7 +57,10 @@ import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
-@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantOperationEntity.json"})
+@UsingDataSet(locations = {
+        "/test-data/dbsnpClusteredVariantOperationEntity.json",
+        "/test-data/dbsnpSubmittedVariantEntity.json"
+})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class MergedVariantMongoReaderTest {
 
@@ -67,11 +70,13 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ASSEMBLY = "GCF_000409795.2";
 
-    private static final String ID_1 = "CM001954.1_5";
+    private static final String ID_1_A = "CM001954.1_5_G_A";
+
+    private static final String ID_1_T = "CM001954.1_5_G_T";
 
     private static final String ID_1_MERGED_INTO = "rs869808637";
 
-    private static final String ID_2 = "CM001941.2_13";
+    private static final String ID_2 = "CM001941.2_13_T_G";
 
     private static final String ID_2_MERGED_INTO = "rs869927931";
 
@@ -112,13 +117,13 @@ public class MergedVariantMongoReaderTest {
         while (iterator.hasNext()) {
             operations.addAll(reader.getVariants(iterator.next()));
         }
-        assertEquals(2, operations.size());
+        assertEquals(3, operations.size());
     }
 
     @Test
     public void basicRead() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(2, variants.size());
+        assertEquals(3, variants.size());
     }
 
     private Map<String, Variant> readIntoMap() throws Exception {
@@ -135,17 +140,22 @@ public class MergedVariantMongoReaderTest {
     }
 
     private String getStringId(Variant variant) {
-        return (variant.getChromosome() + "_" + variant.getStart()
-//                + "_" + variant.getReference() + "_" + variant.getAlternate()
-        ).toUpperCase();
+        return (variant.getChromosome() + "_" + variant.getStart() + "_" + variant.getReference() + "_"
+                + variant.getAlternate()).toUpperCase();
     }
 
     @Test
     public void checkMergedInto() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(2, variants.size());
+        assertEquals(3, variants.size());
 
-        assertTrue(variants.get(ID_1)
+
+        assertTrue(variants.get(ID_1_A)
+                           .getSourceEntries()
+                           .stream()
+                           .allMatch(e -> ID_1_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
+
+        assertTrue(variants.get(ID_1_T)
                            .getSourceEntries()
                            .stream()
                            .allMatch(e -> ID_1_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
@@ -154,5 +164,20 @@ public class MergedVariantMongoReaderTest {
                            .getSourceEntries()
                            .stream()
                            .allMatch(e -> ID_2_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
+    }
+
+    @Test
+    public void checkAlleles() throws Exception {
+        Map<String, Variant> variants = readIntoMap();
+        assertEquals(3, variants.size());
+
+        assertEquals("G", variants.get(ID_1_A).getReference());
+        assertEquals("A", variants.get(ID_1_A).getAlternate());
+
+        assertEquals("G", variants.get(ID_1_T).getReference());
+        assertEquals("T", variants.get(ID_1_T).getAlternate());
+
+        assertEquals("T", variants.get(ID_2).getReference());
+        assertEquals("G", variants.get(ID_2).getAlternate());
     }
 }
