@@ -53,7 +53,12 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.ALLELES_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED_INTO_KEY;
+import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
@@ -180,4 +185,36 @@ public class MergedVariantMongoReaderTest {
         assertEquals("T", variants.get(ID_2).getReference());
         assertEquals("G", variants.get(ID_2).getAlternate());
     }
+
+    @Test
+    public void includeValidatedFlag() throws Exception {
+        assertFlagEqualsInAllVariants(CLUSTERED_VARIANT_VALIDATED_KEY, false);
+        assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, false);
+    }
+
+    private void assertFlagEqualsInAllVariants(String key, boolean value) throws Exception {
+        Map<String, Variant> variants = readIntoMap();
+        assertNotEquals(0, variants.size());
+        assertTrue(variants.values().stream()
+                           .flatMap(v -> v.getSourceEntries().stream())
+                           .map(se -> se.getAttribute(key))
+                           .map(Boolean::new)
+                           .allMatch(v -> v.equals(value)));
+    }
+
+    @Test
+    public void includeAssemblyMatchFlag() throws Exception {
+        assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, true);
+    }
+
+    @Test
+    public void includeAllelesMatchFlag() throws Exception {
+        assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, true);
+    }
+
+    @Test
+    public void includeEvidenceFlag() throws Exception {
+        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, true);
+    }
+
 }
