@@ -17,9 +17,14 @@
 package uk.ac.ebi.eva.accession.release.io;
 
 import com.mongodb.MongoClient;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
@@ -42,6 +47,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -61,29 +67,37 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
 
     private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
+    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
+
 //    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
 
     private static final String ACCESSION_FIELD = "accession";
 
-    private static final String REFERENCE_ASSEMBLY_FIELD = "inactiveObjects.asm";
+    private static final String INACTIVE_OBJECTS = "inactiveObjects";
+
+    private static final String REFERENCE_ASSEMBLY_FIELD = INACTIVE_OBJECTS + ".asm";
 
 //    private static final String STUDY_FIELD = "study";
 
-    private static final String CONTIG_FIELD = "inactiveObjects.contig";
+    private static final String CONTIG_KEY = "contig";
 
-    private static final String START_FIELD = "inactiveObjects.start";
+    private static final String CONTIG_FIELD = INACTIVE_OBJECTS + "." + CONTIG_KEY;
 
-    private static final String TYPE_FIELD = "inactiveObjects.type";
+    private static final String START_KEY = "start";
+
+    private static final String START_FIELD = INACTIVE_OBJECTS + "." + START_KEY;
+
+    private static final String TYPE_KEY = "type";
 
 //    private static final String REFERENCE_ALLELE_FIELD = "ref";
 
 //    private static final String ALTERNATE_ALLELE_FIELD = "alt";
 
-//    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
+    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "mergeInto";
 
-//    private static final String SS_INFO_FIELD = "ssInfo";
+    private static final String SS_INFO_FIELD = "ssInfo";
 
-    private static final String VALIDATED_FIELD = "inactiveObjects.validated";
+    private static final String VALIDATED_FIELD = "validated";
 
 //    private static final String ASSEMBLY_MATCH_FIELD = "asmMatch";
 
@@ -117,63 +131,59 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
 
     private String database;
 
-    private CloseableIterator<DbsnpClusteredVariantOperationEntity> cursor;
+    private MongoCursor<Document> cursor;
 
     public MergedVariantMongoReader(String assemblyAccession,
-//                                    MongoClient mongoClient,
-                                    MongoTemplate mongoTemplate,
+                                    MongoClient mongoClient,
+//                                    MongoTemplate mongoTemplate,
                                     String database) {
         this.assemblyAccession = assemblyAccession;
-        this.mongoTemplate = mongoTemplate;
-//        this.mongoClient = mongoClient;
+//        this.mongoTemplate = mongoTemplate;
+        this.mongoClient = mongoClient;
         this.database = database;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        cursor = mongoTemplate.stream(
-            Query.query(Criteria.where(REFERENCE_ASSEMBLY_FIELD).is(assemblyAccession))
-                 .with(new Sort("inactiveObjects.contig", "inactiveObjects.start")),
-            DbsnpClusteredVariantOperationEntity.class);
-
-//        MongoDatabase db = mongoClient.getDatabase(database);
-//        MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
-//        AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
-//                                                                  .allowDiskUse(true)
-//                                                                  .useCursor(true);
+        MongoDatabase db = mongoClient.getDatabase(database);
+        MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
+        AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
+                                                                  .allowDiskUse(true)
+                                                                  .useCursor(true);
+        cursor = clusteredVariants.iterator();
     }
 
-//    List<Bson> buildAggregation() {
-//        Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
-//        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
-//                                        CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
-//        Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
-//        List<Bson> aggregation = Arrays.asList(match, lookup, sort);
-//        logger.info("Issuing aggregation: {}", aggregation);
-//        return aggregation;
-//    }
+    List<Bson> buildAggregation() {
+        Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
+        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, CLUSTERED_VARIANT_ACCESSION_FIELD,
+                                        ACCESSION_FIELD, SS_INFO_FIELD);
+        Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
+        List<Bson> aggregation = Arrays.asList(match, lookup, sort);
+        logger.info("Issuing aggregation: {}", aggregation);
+        return aggregation;
+    }
 
     @Override
     public List<Variant> read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
         return cursor.hasNext() ? getVariants(cursor.next()) : null;
     }
 
-    List<Variant> getVariants(DbsnpClusteredVariantOperationEntity mergedVariant) {
-        List<DbsnpClusteredVariantInactiveEntity> inactiveObjects = mergedVariant.getInactiveObjects();
+    List<Variant> getVariants(Document mergedVariant) {
+        Collection<Document> inactiveObjects = (Collection<Document>) mergedVariant.get(INACTIVE_OBJECTS);
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()
                                      + "' was designed assuming there's only one element in the field "
-                                     + "'inactiveObjects'. Found " + inactiveObjects.size() + " elements in _id="
-                                     + mergedVariant.getId());
+                                     + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size() + " elements in _id="
+                                     + mergedVariant.get(ACCESSION_FIELD));
         }
-        DbsnpClusteredVariantInactiveEntity inactiveEntity = inactiveObjects.get(0);
-        String contig = inactiveEntity.getContig();
-        long start = inactiveEntity.getStart();
-        long rs = mergedVariant.getAccession();
-        long mergedInto = mergedVariant.getMergedInto();
-        VariantType type = inactiveEntity.getType();
+        Document inactiveEntity = inactiveObjects.iterator().next();
+        String contig = inactiveEntity.getString(CONTIG_KEY);
+        long start = inactiveEntity.getLong(START_KEY);
+        long rs = mergedVariant.getLong(ACCESSION_FIELD);
+        long mergedInto = mergedVariant.getLong(CLUSTERED_VARIANT_ACCESSION_FIELD);
+        VariantType type = VariantType.valueOf(inactiveEntity.getString(TYPE_KEY));
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(type);
-        boolean validated = inactiveEntity.isValidated();
+        boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
 
         Map<String, Variant> variants = new HashMap<>();
 //        Collection<Document> submittedVariants = (Collection<Document>)mergedVariant.get(SS_INFO_FIELD);

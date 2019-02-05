@@ -22,6 +22,7 @@ import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.junit.Before;
@@ -95,37 +96,29 @@ public class MergedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        reader = new MergedVariantMongoReader(ASSEMBLY, mongoTemplate, TEST_DB);
+        reader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB);
     }
 
     @Test
     public void readMergedVariants() {
-        CloseableIterator<DbsnpClusteredVariantOperationEntity> operationsCursor = mongoTemplate.stream(
-            Query.query(Criteria.where("inactiveObjects.asm").is(ASSEMBLY))
-                 .with(new Sort("inactiveObjects.contig", "inactiveObjects.start")),
-            DbsnpClusteredVariantOperationEntity.class);
-        List<DbsnpClusteredVariantOperationEntity> operations = new ArrayList<>();
-        while (operationsCursor.hasNext()) {
-            operations.add(operationsCursor.next());
+        MongoDatabase db = mongoClient.getDatabase(TEST_DB);
+        MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
+
+        AggregateIterable<Document> result = collection.aggregate(reader.buildAggregation())
+                                                       .allowDiskUse(true)
+                                                       .useCursor(true);
+        MongoCursor<Document> iterator = result.iterator();
+        List<Variant> operations = new ArrayList<>();
+        while (iterator.hasNext()) {
+            operations.addAll(reader.getVariants(iterator.next()));
         }
         assertEquals(2, operations.size());
     }
 
     @Test
     public void basicRead() throws Exception {
-        List<Variant> variants = readIntoList();
+        Map<String, Variant> variants = readIntoMap();
         assertEquals(2, variants.size());
-    }
-
-    private List<Variant> readIntoList() throws Exception {
-        reader.open(executionContext);
-        List<Variant> allVariants = new ArrayList<>();
-        List<Variant> variants;
-        while ((variants = reader.read()) != null) {
-            allVariants.addAll(variants);
-        }
-        reader.close();
-        return allVariants;
     }
 
     private Map<String, Variant> readIntoMap() throws Exception {
