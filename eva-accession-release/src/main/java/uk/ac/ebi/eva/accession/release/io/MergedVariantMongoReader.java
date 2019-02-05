@@ -95,6 +95,8 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
 
 //    public static final String STUDY_ID_KEY = "SID";
 
+    public static final String MERGED_INTO_KEY = "A";   // Active TODO: any suggestions on a better name?
+
     public static final String CLUSTERED_VARIANT_VALIDATED_KEY = "RS_VALIDATED";
 
 //    public static final String SUBMITTED_VARIANT_VALIDATED_KEY = "SS_VALIDATED";
@@ -161,43 +163,46 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()
                                      + "' was designed assuming there's only one element in the field "
-                                     + "'inactiveObjects'");
-            throw new AssertionError(String.format(
-                    "The class '%s' was designed assuming there's only one element in the field 'inactiveObjects'",
-                    this.getClass().getSimpleName()));
+                                     + "'inactiveObjects'. Found " + inactiveObjects.size() + " elements in _id="
+                                     + mergedVariant.getId());
         }
-//        String contig = (String) inactiveObjects getString(CONTIG_FIELD);
-        long start = mergedVariant.getLong(START_FIELD);
-        long rs = mergedVariant.getLong(ACCESSION_FIELD);
-        String type = mergedVariant.getString(TYPE_FIELD);
-        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
-        boolean validated = mergedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
+        DbsnpClusteredVariantInactiveEntity inactiveEntity = inactiveObjects.get(0);
+        String contig = inactiveEntity.getContig();
+        long start = inactiveEntity.getStart();
+        long rs = mergedVariant.getAccession();
+        long mergedInto = mergedVariant.getMergedInto();
+        VariantType type = inactiveEntity.getType();
+        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(type);
+        boolean validated = inactiveEntity.isValidated();
 
         Map<String, Variant> variants = new HashMap<>();
-        Collection<Document> submittedVariants = (Collection<Document>)mergedVariant.get(SS_INFO_FIELD);
-        for (Document submittedVariant : submittedVariants) {
-            String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
-            String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
-            long end = calculateEnd(reference, alternate, start);
-            String study = submittedVariant.getString(STUDY_FIELD);
-            boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
-            boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
-            boolean assemblyMatch = submittedVariant.getBoolean(ASSEMBLY_MATCH_FIELD, DEFAULT_ASSEMBLY_MATCH);
-            boolean evidence = submittedVariant.getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
-            VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
-                                                                     submittedVariantValidated, allelesMatch,
-                                                                     assemblyMatch, evidence);
+//        Collection<Document> submittedVariants = (Collection<Document>)mergedVariant.get(SS_INFO_FIELD);
+        VariantSourceEntry sourceEntry = buildVariantSourceEntry("study", sequenceOntology, validated, mergedInto
+//                                                                 submittedVariantValidated, allelesMatch,
+//                                                                 assemblyMatch, evidence
+        );
+
+//        for (Document submittedVariant : submittedVariants) {
+            String reference = "ref";//submittedVariant.getString(REFERENCE_ALLELE_FIELD);
+            String alternate = "alt";//submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
+//            long end = calculateEnd(reference, alternate, start);
+//            String study = submittedVariant.getString(STUDY_FIELD);
+//            boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
+//            boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
+//            boolean assemblyMatch = submittedVariant.getBoolean(ASSEMBLY_MATCH_FIELD, DEFAULT_ASSEMBLY_MATCH);
+//            boolean evidence = submittedVariant.getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
 
             String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
             if (variants.containsKey(variantId)) {
                 variants.get(variantId).addSourceEntry(sourceEntry);
             } else {
-                Variant variant = new Variant(contig, start, end, reference, alternate);
+//                Variant variant = new Variant(contig, start, end, reference, alternate);
+                Variant variant = new Variant(contig, start, start, reference, alternate);
                 variant.setMainId(buildId(rs));
                 variant.addSourceEntry(sourceEntry);
                 variants.put(variantId, variant);
             }
-        }
+//        }
         return new ArrayList<>(variants.values());
     }
 
@@ -207,16 +212,20 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
     }
 
     private VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
-                                                       boolean submittedVariantValidated, boolean allelesMatch,
-                                                       boolean assemblyMatch, boolean evidence) {
+                                                       Long mergedInto
+//                                                       boolean submittedVariantValidated, boolean allelesMatch,
+//                                                       boolean assemblyMatch, boolean evidence
+    ) {
+
         VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
         sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
-        sourceEntry.addAttribute(STUDY_ID_KEY, study);
+//        sourceEntry.addAttribute(STUDY_ID_KEY, study);
         sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
-        sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
-        sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
-        sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
-        sourceEntry.addAttribute(SUPPORTED_BY_EVIDENCE_KEY, Boolean.toString(evidence));
+        sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
+//        sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
+//        sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
+//        sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
+//        sourceEntry.addAttribute(SUPPORTED_BY_EVIDENCE_KEY, Boolean.toString(evidence));
         return sourceEntry;
     }
 

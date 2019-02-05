@@ -84,7 +84,7 @@ public class MergedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        reader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB);
+        reader = new MergedVariantMongoReader(ASSEMBLY, mongoTemplate, TEST_DB);
     }
 
     @Test
