@@ -132,7 +132,7 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         cursor = mongoTemplate.stream(
-            Query.query(Criteria.where(REFERENCE_ASSEMBLY_FIELD).is("assembly"))
+            Query.query(Criteria.where(REFERENCE_ASSEMBLY_FIELD).is(assemblyAccession))
                  .with(new Sort("inactiveObjects.contig", "inactiveObjects.start")),
             DbsnpClusteredVariantOperationEntity.class);
 
@@ -222,6 +222,7 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
 //        sourceEntry.addAttribute(STUDY_ID_KEY, study);
         sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
         sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
+        sourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
 //        sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
 //        sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
 //        sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));

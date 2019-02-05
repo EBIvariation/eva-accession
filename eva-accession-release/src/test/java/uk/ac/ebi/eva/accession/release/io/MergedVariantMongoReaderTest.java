@@ -47,9 +47,12 @@ import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
+import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED_INTO_KEY;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
@@ -61,7 +64,15 @@ public class MergedVariantMongoReaderTest {
 
     private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
-    private static final String ASSEMBLY = "assembly";
+    private static final String ASSEMBLY = "GCF_000409795.2";
+
+    private static final String ID_1 = "CM001954.1_5";
+
+    private static final String ID_1_MERGED_INTO = "rs869808637";
+
+    private static final String ID_2 = "CM001941.2_13";
+
+    private static final String ID_2_MERGED_INTO = "rs869927931";
 
     @Autowired
     private MongoClient mongoClient;
@@ -90,7 +101,7 @@ public class MergedVariantMongoReaderTest {
     @Test
     public void readMergedVariants() {
         CloseableIterator<DbsnpClusteredVariantOperationEntity> operationsCursor = mongoTemplate.stream(
-            Query.query(Criteria.where("inactiveObjects.asm").is("assembly"))
+            Query.query(Criteria.where("inactiveObjects.asm").is(ASSEMBLY))
                  .with(new Sort("inactiveObjects.contig", "inactiveObjects.start")),
             DbsnpClusteredVariantOperationEntity.class);
         List<DbsnpClusteredVariantOperationEntity> operations = new ArrayList<>();
@@ -115,5 +126,40 @@ public class MergedVariantMongoReaderTest {
         }
         reader.close();
         return allVariants;
+    }
+
+    private Map<String, Variant> readIntoMap() throws Exception {
+        reader.open(executionContext);
+        Map<String, Variant> allVariants = new HashMap<>();
+        List<Variant> variants;
+        while ((variants = reader.read()) != null) {
+            for (Variant variant : variants) {
+                allVariants.put(getStringId(variant), variant);
+            }
+        }
+        reader.close();
+        return allVariants;
+    }
+
+    private String getStringId(Variant variant) {
+        return (variant.getChromosome() + "_" + variant.getStart()
+//                + "_" + variant.getReference() + "_" + variant.getAlternate()
+        ).toUpperCase();
+    }
+
+    @Test
+    public void checkMergedInto() throws Exception {
+        Map<String, Variant> variants = readIntoMap();
+        assertEquals(2, variants.size());
+
+        assertTrue(variants.get(ID_1)
+                           .getSourceEntries()
+                           .stream()
+                           .allMatch(e -> ID_1_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
+
+        assertTrue(variants.get(ID_2)
+                           .getSourceEntries()
+                           .stream()
+                           .allMatch(e -> ID_2_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
     }
 }
