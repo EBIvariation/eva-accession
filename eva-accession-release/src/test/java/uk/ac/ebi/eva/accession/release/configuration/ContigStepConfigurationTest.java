@@ -33,10 +33,9 @@ import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsPath;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
@@ -60,8 +59,8 @@ public class ContigStepConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        Path folder = Paths.get(inputParameters.getOutputVcf()).getParent();
-        assertEquals(6, numberOfLines(folder + "/contigs_" + inputParameters.getAssemblyAccession() + ".txt"));
+        assertEquals(6, numberOfLines(getContigsPath(inputParameters.getOutputVcf(),
+                                                     inputParameters.getAssemblyAccession())));
     }
 
     private long numberOfLines(String path) throws IOException {

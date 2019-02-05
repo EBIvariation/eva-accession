@@ -22,16 +22,16 @@ import uk.ac.ebi.eva.accession.release.io.ContigWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import java.io.File;
-import java.nio.file.Paths;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsPath;
 
 @Configuration
 public class ContigWriterConfiguration {
 
     @Bean(CONTIG_WRITER)
-    public ContigWriter variantContextWriter(InputParameters parameters) {
-        String path = Paths.get(parameters.getOutputVcf()).getParent().toString();
-        return new ContigWriter(new File(path + "/contigs_" + parameters.getAssemblyAccession() + ".txt"));
+    public ContigWriter variantContextWriter(InputParameters inputParameters) {
+        return new ContigWriter(new File(getContigsPath(inputParameters.getOutputVcf(),
+                                                        inputParameters.getAssemblyAccession())));
     }
 }

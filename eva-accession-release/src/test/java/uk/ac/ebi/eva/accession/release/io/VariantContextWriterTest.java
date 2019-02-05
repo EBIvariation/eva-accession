@@ -43,6 +43,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.A
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsPath;
 
 public class VariantContextWriterTest {
 
@@ -149,7 +150,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkMetadataSection() throws Exception {
-        FileWriter fileWriter = new FileWriter(temporaryFolder.newFile("contigs_" + REFERENCE_ASSEMBLY + ".txt"));
+        FileWriter fileWriter = new FileWriter(temporaryFolder.newFile(getContigsPath(REFERENCE_ASSEMBLY)));
         fileWriter.write("CM0001.1");
         fileWriter.close();
 

@@ -23,9 +23,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class ContigWriter implements ItemStreamWriter<String> {
+
+    private static final String FILE_EXTENSION = ".txt";
+
+    private static final String FILE_PREFIX = "/contigs_";
 
     private final File output;
 
@@ -59,5 +64,17 @@ public class ContigWriter implements ItemStreamWriter<String> {
         for (String contig : contigs) {
             printWriter.println(contig);
         }
+    }
+
+    public static String getContigsPath(String referenceAssembly) {
+        return FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
+    }
+
+    public static String getContigsPath(File output, String referenceAssembly) {
+        return output.getParent() + getContigsPath(referenceAssembly);
+    }
+
+    public static String getContigsPath(String output, String referenceAssembly) {
+        return Paths.get(output).getParent() + getContigsPath(referenceAssembly);
     }
 }
