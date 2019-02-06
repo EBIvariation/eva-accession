@@ -17,11 +17,12 @@ def query_missing_parameters(args):
                                              args.assembly_accession)
 
     species_db_info = \
-        filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
+        list(filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
                data_ops.get_species_pg_conn_info(args.metadb,
                                                  args.metauser,
                                                  args.metahost)
-               )[0]
+               ))[0]
+    species_db_info = species_db_info
 
     dbsnp_user, dbsnp_password, unused_dbsnp_port = \
         get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
