@@ -71,7 +71,6 @@ def get_species_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
 def get_assembly_name(species_db_info, build):
     pg_conn = get_pg_conn_for_species(species_db_info)
     pg_cursor = pg_conn.cursor()
-    contiginfo_tables = get_contiginfo_table_list_for_schema(pg_cursor, species_db_info["database_name"])
 
     table_name = "dbsnp_{}.b{}_contiginfo".format(species_db_info["database_name"], build)
     pg_cursor.execute("select distinct group_label from {}".format(table_name))
