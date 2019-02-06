@@ -31,6 +31,8 @@ public class InputParameters {
 
     private String outputVcf;
 
+    private String outputVcfMerged;
+
     private boolean forceRestart;
 
     private Long buildNumber;
@@ -47,6 +49,7 @@ public class InputParameters {
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addLong("buildNumber", buildNumber)
                 .addString("outputVcf", outputVcf)
+                .addString("outputVcfMerged", outputVcfMerged)
                 .addLong("pageSize", (long) pageSize, false)
                 .toJobParameters();
     }
@@ -89,6 +92,14 @@ public class InputParameters {
 
     public void setOutputVcf(String outputVcf) {
         this.outputVcf = outputVcf;
+    }
+
+    public String getOutputVcfMerged() {
+        return outputVcfMerged;
+    }
+
+    public void setOutputVcfMerged(String outputVcfMerged) {
+        this.outputVcfMerged = outputVcfMerged;
     }
 
     public boolean isForceRestart() {

@@ -51,6 +51,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpClusteredVariantoperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class AccessionReleaseJobConfigurationTest {
@@ -58,6 +59,8 @@ public class AccessionReleaseJobConfigurationTest {
     private static final String TEST_DB = "test-db";
 
     private static final long EXPECTED_LINES = 3;
+
+    private static final long EXPECTED_LINES_MERGED = 3;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -94,6 +97,9 @@ public class AccessionReleaseJobConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        long numVariantsInMergedRelease = FileUtils.countNonCommentLines(
+                new FileInputStream(inputParameters.getOutputVcfMerged()));
+        assertEquals(EXPECTED_LINES_MERGED, numVariantsInMergedRelease);
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
