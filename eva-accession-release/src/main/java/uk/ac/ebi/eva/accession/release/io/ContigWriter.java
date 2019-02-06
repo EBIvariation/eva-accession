@@ -66,15 +66,15 @@ public class ContigWriter implements ItemStreamWriter<String> {
         }
     }
 
-    public static String getContigsPath(String referenceAssembly) {
+    public static String getContigsFilePath(String referenceAssembly) {
         return FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
     }
 
-    public static String getContigsPath(File output, String referenceAssembly) {
-        return output.getParent() + getContigsPath(referenceAssembly);
+    public static String getContigsFilePath(File output, String referenceAssembly) {
+        return output.getParent() + getContigsFilePath(referenceAssembly);
     }
 
-    public static String getContigsPath(String output, String referenceAssembly) {
-        return Paths.get(output).getParent() + getContigsPath(referenceAssembly);
+    public static String getContigsFilePath(String output, String referenceAssembly) {
+        return Paths.get(output).getParent() + getContigsFilePath(referenceAssembly);
     }
 }

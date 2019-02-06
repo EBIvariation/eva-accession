@@ -43,7 +43,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.A
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsPath;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 public class VariantContextWriterTest {
 
@@ -150,8 +150,10 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkMetadataSection() throws Exception {
-        FileWriter fileWriter = new FileWriter(temporaryFolder.newFile(getContigsPath(REFERENCE_ASSEMBLY)));
-        fileWriter.write("CM0001.1");
+        FileWriter fileWriter = new FileWriter(
+                temporaryFolder.newFile(ContigWriter.getContigsFilePath(REFERENCE_ASSEMBLY)));
+        String contig = "CM0001.1";
+        fileWriter.write(contig);
         fileWriter.close();
 
         File output = temporaryFolder.newFile();
@@ -159,6 +161,8 @@ public class VariantContextWriterTest {
 
         List<String> metadataLines = grepFile(output, "^##.*");
         assertEquals(10, metadataLines.size());
+        List<String> contigLines = grepFile(output, ".*" + contig + ".*");
+        assertEquals(1, contigLines.size());
         List<String> headerLines = grepFile(output, "^#CHROM.*");
         assertEquals(1, headerLines.size());
     }

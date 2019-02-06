@@ -35,7 +35,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsPath;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
@@ -59,8 +59,8 @@ public class ContigStepPreviousBuildConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        assertEquals(3, numberOfLines(getContigsPath(inputParameters.getOutputVcf(),
-                                                     inputParameters.getAssemblyAccession())));
+        assertEquals(3, numberOfLines(getContigsFilePath(inputParameters.getOutputVcf(),
+                                                         inputParameters.getAssemblyAccession())));
     }
 
     private long numberOfLines(String path) throws IOException {

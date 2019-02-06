@@ -44,7 +44,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.S
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsPath;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
@@ -119,8 +119,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private void addContigs(Set<VCFHeaderLine> metaData) {
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(getContigsPath(output,
-                                                                                             referenceAssembly)));
+            BufferedReader bufferedReader = new BufferedReader(
+                    new FileReader(ContigWriter.getContigsFilePath(output, referenceAssembly)));
             String contig;
             while ((contig = bufferedReader.readLine()) != null) {
                 metaData.add(new VCFHeaderLine("contig", "<ID=" + contig + ">"));

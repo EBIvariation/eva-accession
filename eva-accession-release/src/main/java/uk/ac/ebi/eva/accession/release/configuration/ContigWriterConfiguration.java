@@ -24,14 +24,14 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import java.io.File;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsPath;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 @Configuration
 public class ContigWriterConfiguration {
 
     @Bean(CONTIG_WRITER)
     public ContigWriter variantContextWriter(InputParameters inputParameters) {
-        return new ContigWriter(new File(getContigsPath(inputParameters.getOutputVcf(),
-                                                        inputParameters.getAssemblyAccession())));
+        return new ContigWriter(new File(getContigsFilePath(inputParameters.getOutputVcf(),
+                                                            inputParameters.getAssemblyAccession())));
     }
 }
