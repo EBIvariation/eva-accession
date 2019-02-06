@@ -108,15 +108,15 @@ public class CreateMergedReleaseStepConfigurationTest {
         assertEquals(1, referenceLines.size());
 
         List<String> metadataVariantClassLines = grepFile(new File(inputParameters.getOutputVcfMerged()),
-                                                          "^##INFO=<ID=" + VARIANT_CLASS_KEY + ".*$");
+                                                          "^##INFO=<ID=" + VARIANT_CLASS_KEY + ",.*$");
         assertEquals(1, metadataVariantClassLines.size());
 
         List<String> metadataStudyIdLines = grepFile(new File(inputParameters.getOutputVcfMerged()),
-                                                     "^##INFO=<ID=" + STUDY_ID_KEY + ".*$");
+                                                     "^##INFO=<ID=" + STUDY_ID_KEY + ",.*$");
         assertEquals(1, metadataStudyIdLines.size());
 
         List<String> metadataMergedIntoLines = grepFile(new File(inputParameters.getOutputVcfMerged()),
-                                                        "^##INFO=<ID=" + MERGED_INTO_KEY + ".*$");
+                                                        "^##INFO=<ID=" + MERGED_INTO_KEY + ",.*$");
         assertEquals(1, metadataMergedIntoLines.size());
 
         List<String> headerLines = grepFile(new File(inputParameters.getOutputVcfMerged()),

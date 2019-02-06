@@ -76,6 +76,11 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                 .unsetOption(Options.INDEX_ON_THE_FLY)
                 .build();
 
+        Set<VCFHeaderLine> metaData = buildHeaderLines();
+        writer.writeHeader(new VCFHeader(metaData));
+    }
+
+    protected Set<VCFHeaderLine> buildHeaderLines() {
         Set<VCFHeaderLine> metaData = new HashSet<>();
         addContigs(metaData);
         metaData.add(new VCFHeaderLine("reference", referenceAssembly));
@@ -103,7 +108,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         metaData.add(new VCFInfoHeaderLine(SUPPORTED_BY_EVIDENCE_KEY, 0, VCFHeaderLineType.Flag,
                                            "Lack of evidence flag, present if no submitted variant includes genotype "
                                            + "or frequency information"));
-        writer.writeHeader(new VCFHeader(metaData));
+        return metaData;
     }
 
     @Override

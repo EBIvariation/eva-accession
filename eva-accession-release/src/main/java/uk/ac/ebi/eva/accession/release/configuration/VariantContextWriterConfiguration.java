@@ -20,6 +20,7 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
@@ -37,8 +38,9 @@ public class VariantContextWriterConfiguration {
     }
 
     @Bean(MERGED_RELEASE_WRITER)
-    public VariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
-        return new VariantContextWriter(new File(parameters.getOutputVcfMerged()), parameters.getAssemblyAccession());
+    public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
+        return new MergedVariantContextWriter(new File(parameters.getOutputVcfMerged()),
+                                              parameters.getAssemblyAccession());
     }
 
 }
