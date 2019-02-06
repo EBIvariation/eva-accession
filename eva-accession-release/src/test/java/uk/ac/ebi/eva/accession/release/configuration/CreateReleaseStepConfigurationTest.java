@@ -82,7 +82,7 @@ public class CreateReleaseStepConfigurationTest {
     }
 
     @Test
-    public void basicJobCompletion() throws Exception {
+    public void basicStepCompletion() throws Exception {
         assertStepExecutesAndCompletes();
     }
 

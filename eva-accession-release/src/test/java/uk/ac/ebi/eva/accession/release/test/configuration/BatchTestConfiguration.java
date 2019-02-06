@@ -26,13 +26,15 @@ import uk.ac.ebi.eva.accession.core.test.configuration.DbsnpTestDataSource;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionReleaseJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ContigToInsdcProcessorConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ListContigsStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ContigWriterConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ContigReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.ContigToInsdcProcessorConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.ContigWriterConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.CreateMergedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.CreateReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.ListContigsStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.MergedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.VariantContextWriterConfiguration;
 
@@ -42,7 +44,9 @@ import uk.ac.ebi.eva.accession.release.configuration.VariantContextWriterConfigu
         InputParametersConfiguration.class,
         AccessionReleaseJobConfiguration.class,
         CreateReleaseStepConfiguration.class,
+        CreateMergedReleaseStepConfiguration.class,
         AccessionedVariantMongoReaderConfiguration.class,
+        MergedVariantMongoReaderConfiguration.class,
         ReleaseProcessorConfiguration.class,
         VariantContextWriterConfiguration.class,
         ListenersConfiguration.class,

@@ -51,7 +51,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpClusteredVariantoperationEntity.json",
+        "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class AccessionReleaseJobConfigurationTest {

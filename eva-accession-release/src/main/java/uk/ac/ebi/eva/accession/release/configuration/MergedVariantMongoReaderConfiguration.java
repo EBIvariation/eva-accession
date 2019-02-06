@@ -50,7 +50,7 @@ public class MergedVariantMongoReaderConfiguration {
     @StepScope
     MergedVariantMongoReader mergedVariantMongoReader(InputParameters parameters, MongoClient mongoClient,
                                                       MongoProperties mongoProperties) {
-        logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
+        logger.info("Injecting MergedVariantMongoReader with parameters: {}", parameters);
         return new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
                                             mongoProperties.getDatabase());
     }

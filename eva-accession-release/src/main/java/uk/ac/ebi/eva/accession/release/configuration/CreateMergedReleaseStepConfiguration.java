@@ -32,11 +32,11 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
 
 @Configuration
 public class CreateMergedReleaseStepConfiguration {
@@ -50,7 +50,7 @@ public class CreateMergedReleaseStepConfiguration {
     private ItemProcessor<Variant, VariantContext> variantProcessor;
 
     @Autowired
-    @Qualifier(RELEASE_WRITER)
+    @Qualifier(MERGED_RELEASE_WRITER)
     private ItemStreamWriter<VariantContext> accessionWriter;
 
     @Autowired
@@ -62,7 +62,7 @@ public class CreateMergedReleaseStepConfiguration {
     private StepExecutionListener excludeVariantsListener;
 
     @Bean(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
-    public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
+    public Step createMergedReleaseStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
