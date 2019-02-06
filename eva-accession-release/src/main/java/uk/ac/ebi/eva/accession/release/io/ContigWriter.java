@@ -26,6 +26,9 @@ import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.List;
 
+/**
+ * Writes the list of contigs to a flat file
+ */
 public class ContigWriter implements ItemStreamWriter<String> {
 
     private static final String FILE_EXTENSION = ".txt";

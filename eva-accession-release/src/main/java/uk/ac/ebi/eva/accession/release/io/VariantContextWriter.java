@@ -46,6 +46,11 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.S
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
+/**
+ * Writes the VCF file for the release
+ *
+ * To include the contigs in the meta section it reads the file generated in the previous step (LIST_CONTIGS_STEP)
+ */
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(VariantContextWriter.class);

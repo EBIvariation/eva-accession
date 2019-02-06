@@ -40,7 +40,7 @@ import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
-public class ContigStepConfigurationTest {
+public class ListContigsStepConfigurationTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -51,7 +51,7 @@ public class ContigStepConfigurationTest {
     @Test
     @DirtiesContext
     public void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep("CONTIG_STEP");
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep("LIST_CONTIGS_STEP");
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 

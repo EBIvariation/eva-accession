@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package uk.ac.ebi.eva.accession.release.configuration;
 
 public class BeanNames {
@@ -32,9 +31,9 @@ public class BeanNames {
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
-    public static final String CONTIG_STEP = "CONTIG_STEP";
+    public static final String LIST_CONTIGS_STEP = "LIST_CONTIGS_STEP";
 
-    public static final String CONTIG_PROCESSOR = "CONTIG_PROCESSOR";
+    public static final String CONTIG_TO_INSDC_PROCESSOR = "CONTIG_TO_INSDC_PROCESSOR";
 
     public static final String CONTIG_READER = "CONTIG_READER";
 

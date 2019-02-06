@@ -38,7 +38,7 @@ public class ContigReaderConfiguration {
 
     @Bean(name = CONTIG_READER)
     @StepScope
-    SubSnpNoHgvsContigReader contigsReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
+    SubSnpNoHgvsContigReader contigReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
             throws Exception {
         logger.info("Injecting ContigsReaderConfiguration with parameters: {}, {}", parameters, dbsnpDataSource);
         DataSource dataSource = dbsnpDataSource.getDatasource();

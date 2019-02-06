@@ -20,16 +20,16 @@ import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.release.steps.processors.ContigProcessor;
+import uk.ac.ebi.eva.accession.release.steps.processors.ContigToInsdcProcessor;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_PROCESSOR;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_TO_INSDC_PROCESSOR;
 
 @Configuration
-public class ContigProcessorConfiguration {
+public class ContigToInsdcProcessorConfiguration {
 
-    @Bean(name = CONTIG_PROCESSOR)
-    public ContigProcessor contigProcessor(ContigMapping contigMapping) {
-        return new ContigProcessor(contigMapping);
+    @Bean(name = CONTIG_TO_INSDC_PROCESSOR)
+    public ContigToInsdcProcessor contigProcessor(ContigMapping contigMapping) {
+        return new ContigToInsdcProcessor(contigMapping);
     }
 
     @Bean

@@ -26,8 +26,8 @@ import uk.ac.ebi.eva.accession.core.test.configuration.DbsnpTestDataSource;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionReleaseJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ContigProcessorConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ContigStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.ContigToInsdcProcessorConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.ListContigsStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ContigWriterConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ContigReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.CreateReleaseStepConfiguration;
@@ -47,9 +47,9 @@ import uk.ac.ebi.eva.accession.release.configuration.VariantContextWriterConfigu
         VariantContextWriterConfiguration.class,
         ListenersConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
-        ContigStepConfiguration.class,
+        ListContigsStepConfiguration.class,
         ContigReaderConfiguration.class,
-        ContigProcessorConfiguration.class,
+        ContigToInsdcProcessorConfiguration.class,
         ContigWriterConfiguration.class
 })
 public class BatchTestConfiguration {

@@ -22,7 +22,7 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 
 import static org.junit.Assert.assertEquals;
 
-public class ContigProcessorTest {
+public class ContigToInsdcProcessorTest {
 
     private static final String GENBANK_CONTIG = "CM001941.2";
 
@@ -30,14 +30,14 @@ public class ContigProcessorTest {
 
     private static final String CONTIG_NO_SYNONYM = "CONTIG";
 
-    private static ContigProcessor processor;
+    private static ContigToInsdcProcessor processor;
 
     @BeforeClass
     public static void setUp() throws Exception {
-        String fileString = ContigProcessorTest.class.getResource(
+        String fileString = ContigToInsdcProcessorTest.class.getResource(
                 "/input-files/assembly-report/GCF_000409795.2_Chlorocebus_sabeus_1.1_assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
-        processor = new ContigProcessor(contigMapping);
+        processor = new ContigToInsdcProcessor(contigMapping);
     }
 
     @Test

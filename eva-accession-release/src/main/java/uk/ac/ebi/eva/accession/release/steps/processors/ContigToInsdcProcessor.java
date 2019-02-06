@@ -24,13 +24,17 @@ import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 
 import static org.springframework.util.StringUtils.hasText;
 
-public class ContigProcessor implements ItemProcessor<String, String> {
+/**
+ * Converts contigs to it's INSDC (GenBank) synonym when possible. If the synonym can't be determined it keeps the
+ * contig as is
+ */
+public class ContigToInsdcProcessor implements ItemProcessor<String, String> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ContigProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(ContigToInsdcProcessor.class);
 
     private ContigMapping contigMapping;
 
-    public ContigProcessor(ContigMapping contigMapping) {
+    public ContigToInsdcProcessor(ContigMapping contigMapping) {
         this.contigMapping = contigMapping;
     }
 

@@ -28,30 +28,34 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_PROCESSOR;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_TO_INSDC_PROCESSOR;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRITER;
 
+/**
+ * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in the CREATE_RELEASE_STEP to
+ * include the contigs in the meta section of the VCF
+ */
 @Configuration
 @EnableBatchProcessing
-public class ContigStepConfiguration {
+public class ListContigsStepConfiguration {
 
     @Autowired
     @Qualifier(CONTIG_READER)
     private JdbcCursorItemReader<String> contigReader;
 
     @Autowired
-    @Qualifier(CONTIG_PROCESSOR)
+    @Qualifier(CONTIG_TO_INSDC_PROCESSOR)
     private ItemProcessor<String, String> contigProcessor;
 
     @Autowired
     @Qualifier(CONTIG_WRITER)
     private ItemStreamWriter<String> contigWriter;
 
-    @Bean(CONTIG_STEP)
+    @Bean(LIST_CONTIGS_STEP)
     public Step contigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(CONTIG_STEP)
+        TaskletStep step = stepBuilderFactory.get(LIST_CONTIGS_STEP)
                 .<String, String>chunk(chunkSizeCompletionPolicy)
                 .reader(contigReader)
                 .processor(contigProcessor)

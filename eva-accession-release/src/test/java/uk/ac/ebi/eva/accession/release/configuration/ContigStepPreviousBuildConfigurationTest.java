@@ -51,7 +51,7 @@ public class ContigStepPreviousBuildConfigurationTest {
     @Test
     @DirtiesContext
     public void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep("CONTIG_STEP");
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep("LIST_CONTIGS_STEP");
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
