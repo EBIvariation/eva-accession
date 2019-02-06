@@ -21,7 +21,11 @@ public class BeanNames {
 
     public static final String RELEASE_MAPPED_ACTIVE_VARIANTS_STEP = "RELEASE_MAPPED_ACTIVE_VARIANTS_STEP";
 
+    public static final String RELEASE_MAPPED_MERGED_VARIANTS_STEP = "RELEASE_MAPPED_MERGED_VARIANTS_STEP";
+
     public static final String ACCESSIONED_VARIANT_READER = "ACCESSIONED_VARIANT_READER";
+
+    public static final String MERGED_VARIANT_READER = "MERGED_VARIANT_READER";
 
     public static final String RELEASE_PROCESSOR = "RELEASE_PROCESSOR";
 
