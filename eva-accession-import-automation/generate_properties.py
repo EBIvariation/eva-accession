@@ -101,7 +101,7 @@ logging.level.uk.ac.ebi.eva.accession.dbsnp=DEBUG
 logging.level.uk.ac.ebi.eva.accession.dbsnp.listeners=INFO
 logging.level.org.springframework.jdbc.datasource=DEBUG
 """
-    properties_filename = "{}_{}.properties".format(args.build, args.assembly_accession)
+    properties_filename = "{}_b{}.properties".format(args.assembly_accession, args.build)
     with open(properties_filename, "w") as properties_file:
         properties_file.write(template.format(args=args))
 
