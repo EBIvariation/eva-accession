@@ -89,7 +89,7 @@ spring.jpa.generate-ddl=true
 
 spring.data.mongodb.host={args.mongo_host}
 spring.data.mongodb.port={args.mongo_port}
-spring.data.mongodb.database={args.mongo_db}
+spring.data.mongodb.database={args.mongo_acc_db}
 spring.data.mongodb.username={args.mongo_user}
 spring.data.mongodb.password={args.mongo_password}
 spring.data.mongodb.authentication-database={args.mongo_auth_db}
@@ -101,7 +101,7 @@ logging.level.uk.ac.ebi.eva.accession.dbsnp=DEBUG
 logging.level.uk.ac.ebi.eva.accession.dbsnp.listeners=INFO
 logging.level.org.springframework.jdbc.datasource=DEBUG
 """
-    properties_filename = "{}.properties".format(args.assembly_accession)
+    properties_filename = "{}_{}.properties".format(args.build, args.assembly_accession)
     with open(properties_filename, "w") as properties_file:
         properties_file.write(template.format(args=args))
 
@@ -136,8 +136,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002315.3",
                         required=True)
-    parser.add_argument("-r", "--assembly-report",
-                        help="File with GenBank equivalents for RefSeq accessions", required=True)
+    parser.add_argument("-r", "--assembly-report", help="File with contig synonyms", required=True)
     parser.add_argument("-f", "--fasta", help="FASTA file with the reference sequence",
                         required=True)
 
@@ -150,8 +149,8 @@ if __name__ == "__main__":
     parser.add_argument("-H", "--job-tracker-host", help="Postgres host for the job repository",
                         required=True)
 
-    parser.add_argument("--mongo-db", help="MongoDB accessioning database", required=True)
-    parser.add_argument("--mongo-auth-db", help="MongoDB accessioning authentication database",
+    parser.add_argument("--mongo-acc-db", help="MongoDB accessioning database", required=True)
+    parser.add_argument("--mongo-auth-db", help="MongoDB authentication database for accessioning",
                         required=True)
     parser.add_argument("--mongo-user", help="MongoDB user", required=True)
     parser.add_argument("--mongo-password", help="MongoDB password", required=True)
