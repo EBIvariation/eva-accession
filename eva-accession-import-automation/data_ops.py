@@ -41,34 +41,6 @@ def get_species_pg_conn_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_h
     return species_set
 
 
-def get_species_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
-                     assembly_accession):
-    """
-    Get information about an assembly accession. This won't work for previous builds, because the
-    table 'import_progress' only contains information about the latest assembly in each species.
-
-    :param pg_metadata_dbname: Metadata database name
-    :param pg_metadata_user: Metadata user name
-    :param pg_metadata_host: Host where the metadata database resides
-    :param assembly_accession: species to query, e.g. GCA_000001735.1
-    :return: Dictionary with species information
-    """
-    pg_conn = psycopg2.connect("dbname='{0}' user='{1}' host='{2}'".
-                               format(pg_metadata_dbname, pg_metadata_user, pg_metadata_host))
-    pg_cursor = pg_conn.cursor()
-    pg_cursor.execute("select database_name, tax_id from dbsnp_ensembl_species.import_progress i "
-                      " where genbank_assembly_accession = '{}'".format(assembly_accession))
-    species = [{"database_name": result[0], "taxonomy": result[1]}
-               for result in pg_cursor.fetchall()]
-    pg_cursor.close()
-    pg_conn.close()
-    if len(species) == 0:
-        raise Exception("No species with assembly {} in table import_progress".format(assembly_accession))
-    if len(species) > 1:
-        raise Exception("More than one species with assembly {} in table import_progress".format(assembly_accession))
-    return species[0]
-
-
 def get_assembly_name(species_db_info, build):
     pg_conn = get_pg_conn_for_species(species_db_info)
     pg_cursor = pg_conn.cursor()
