@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
@@ -211,7 +210,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
     }
 
     protected String buildId(long rs) {
-        return RS_PREFIX + Objects.toString(rs);
+        return RS_PREFIX + rs;
     }
 
     @Override
