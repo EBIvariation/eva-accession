@@ -1,7 +1,7 @@
 # Pre-requisites
 * Install the **pandas** and **psycopg2** modules in your local python environment
     ```bash
-    pip install -r requirements
+    pip install -r requirements.txt
     ```
 # Usage
 ## Generate custom assembly report
@@ -13,7 +13,7 @@
     ```bash
     python generate_custom_assembly_report.py -d metadata_db_name -u metadata_db_user -h metadata_db_host -s bony_fish_7950 -a GCF_000966335.1 -g "/path/to/identical_genbank_refseq_4snp_assembly_report.txt"
     ```
-    ## Running tests
+* Running tests
     ```bash
     python -m test_generate_custom_assembly_report -v
     ```
