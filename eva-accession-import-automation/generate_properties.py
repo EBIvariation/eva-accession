@@ -11,18 +11,12 @@ def main(args):
 
 
 def query_missing_parameters(args):
-    species_info = data_ops.get_species_info(args.metadb,
-                                             args.metauser,
-                                             args.metahost,
-                                             args.assembly_accession)
-
     species_db_info = \
-        list(filter(lambda db_info: db_info["database_name"] == species_info["database_name"],
+        list(filter(lambda db_info: db_info["database_name"] == args.species,
                data_ops.get_species_pg_conn_info(args.metadb,
                                                  args.metauser,
                                                  args.metahost)
                ))[0]
-    species_db_info = species_db_info
 
     dbsnp_user, dbsnp_password, unused_dbsnp_port = \
         get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
@@ -40,11 +34,11 @@ def query_missing_parameters(args):
     else:
         complete_args.optional_build_line = "parameters.buildNumber={}".format(args.build)
 
-    complete_args.taxonomy = species_info["taxonomy"]
+    complete_args.taxonomy = args.species.split('_')[-1]
     complete_args.dbsnp_host = species_db_info["pg_host"]
     complete_args.dbsnp_port = species_db_info["pg_port"]
     complete_args.dbsnp_build = species_db_info["dbsnp_build"]
-    complete_args.database_name = species_info["database_name"]
+    complete_args.database_name = args.species
     complete_args.dbsnp_user = dbsnp_user
     complete_args.dbsnp_password = dbsnp_password
     complete_args.job_tracker_port = jt_port
@@ -133,6 +127,9 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--assembly-name",
                         help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0"
                              ". (Can be ommited if there is only one assembly name in the build)")
+    parser.add_argument("-s", "--species",
+                        help="Species for which the process has to be run, e.g. chicken_9031",
+                        required=True)
     parser.add_argument("-a", "--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002315.3",
                         required=True)

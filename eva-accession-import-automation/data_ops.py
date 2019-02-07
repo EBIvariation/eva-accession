@@ -44,7 +44,8 @@ def get_species_pg_conn_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_h
 def get_species_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
                      assembly_accession):
     """
-    Get information about an assembly accession
+    Get information about an assembly accession. This won't work for previous builds, because the
+    table 'import_progress' only contains information about the latest assembly in each species.
 
     :param pg_metadata_dbname: Metadata database name
     :param pg_metadata_user: Metadata user name
