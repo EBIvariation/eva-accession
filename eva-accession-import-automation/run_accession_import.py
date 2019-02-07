@@ -27,32 +27,40 @@ def get_commands_to_run(command_line_args):
     program_args["scientific_name"] = program_args["scientific_name"].lower()
     program_args["program_dir"] = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 
-    program_args["species_assembly_folder"] = os.path.sep.join(["{eva_root_dir}", "datasources", "reference_sequences",
-                                                                "{scientific_name}"]).format(**program_args)
+    program_args["species_assembly_folder"] = os.path.sep.join(["{eva_root_dir}", "datasources",
+                                                                "reference_sequences",
+                                                                "{scientific_name}",
+                                                                "{assembly_accession}"]).format(**program_args)
+    program_args["species_assembly_report_folder"] = os.path.sep.join(["{eva_root_dir}", "datasources",
+                                                                       "assembly_reports",
+                                                                       "{scientific_name}",
+                                                                       "{assembly_accession}"]).format(**program_args)
     program_args["species_accessioning_import_folder"] = os.path.sep.join(["{eva_root_dir}",
                                                                            "dbsnp-importer-accessioning",
                                                                            "{species}"]).format(**program_args)
 
-    program_args["assembly_report"] = os.path.sep.join(["{species_assembly_folder}",
+    program_args["assembly_report"] = os.path.sep.join(["{species_assembly_report_folder}",
                                                         "{assembly_accession}_custom.txt"]).format(**program_args)
     program_args["fasta_file_path"] = os.path.sep.join(["{species_assembly_folder}",
-                                                        "{assembly_accession}_custom.fa"]).format(**program_args)
+                                                        "{assembly_accession}.fa"]).format(**program_args)
 
-    create_species_assembly_folder_command = "mkdir -p {species_assembly_folder}".format(**program_args)
+    create_species_assembly_folders_command = "mkdir -p {species_assembly_folder} && " \
+                                              "mkdir -p {species_assembly_report_folder}".format(**program_args)
     create_species_accessioning_import_folder_command = "mkdir -p {species_accessioning_import_folder}" \
         .format(**program_args)
 
-    generate_custom_assembly_report_command = "cd {species_assembly_folder} && " \
+    generate_custom_assembly_report_command = "cd {species_assembly_report_folder} && " \
                                               "{python3_path} {program_dir}generate_custom_assembly_report.py " \
                                               "-d {metadb} -u {metauser} -h {metahost} " \
                                               "-s {species} -a {assembly_accession} " \
                                               "-g {genbank_equivalents_file}".format(**program_args)
 
-    create_fasta_file_command = "create_fasta_from_assembly_report.sh {assembly_accession} {assembly_report} " \
-                                "{species_assembly_folder}".format(**program_args)
+    create_fasta_file_command = "bash {program_dir}create_fasta_from_assembly_report.sh {assembly_accession} " \
+                                "{assembly_report} {species_assembly_folder}".format(**program_args)
 
     generate_import_job_properties_file_command = ("cd {species_accessioning_import_folder} && " +
                                                    "{python3_path} {program_dir}generate_properties.py " +
+                                                   "-s {species} " +
                                                    "-b {build} " + ("-l " if program_args["latest_build"] else " ") +
                                                    "-n {assembly_name} -a {assembly_accession} -r {assembly_report} " +
                                                    "-f {fasta_file_path} " +
@@ -61,21 +69,22 @@ def get_commands_to_run(command_line_args):
                                                    "--mongo-acc-db {mongo_acc_db} --mongo-auth-db {mongo_auth_db} " +
                                                    "--mongo-user {mongo_user} --mongo-password {mongo_password} " +
                                                    "--mongo-host {mongo_host} --mongo-port {mongo_port}")\
-                                                .format(**program_args)
+                                                   .format(**program_args)
 
     program_args["properties_file_path"] = os.path.sep.join(["{species_accessioning_import_folder}",
                                                              "{assembly_accession}_b{build}.properties"]
                                                             ).format(**program_args)
-    run_accession_import_command = "java -jar -Xmx5g {accession_import_jar} " \
+    run_accession_import_command = "cd {species_accessioning_import_folder} && " \
+                                   "java -jar -Xmx5g {accession_import_jar} " \
                                    "--spring.config.location={properties_file_path}".format(**program_args)
 
-    return [create_species_assembly_folder_command, create_species_accessioning_import_folder_command,
+    return [create_species_assembly_folders_command, create_species_accessioning_import_folder_command,
             generate_custom_assembly_report_command, create_fasta_file_command,
             generate_import_job_properties_file_command, run_accession_import_command]
 
 
 def main(command_line_args):
-    print(*get_commands_to_run(vars(command_line_args)), sep='\n')
+    map(run_command, get_commands_to_run(vars(command_line_args)))
 
 
 if __name__ == "__main__":
@@ -94,7 +103,6 @@ if __name__ == "__main__":
                              ". (Can be ommited if there is only one assembly name in the build)")
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private connection details, credentials etc.,")
-    parser.add_argument("-e", "--env", help="Environment where the process has to be run (dev or prod)", required=True)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
