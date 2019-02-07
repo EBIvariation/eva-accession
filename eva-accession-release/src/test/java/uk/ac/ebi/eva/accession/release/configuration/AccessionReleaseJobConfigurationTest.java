@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -85,7 +86,8 @@ public class AccessionReleaseJobConfigurationTest {
     public void basicJobCompletion() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
-        List<String> expectedSteps = Arrays.asList(LIST_CONTIGS_STEP, RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+        List<String> expectedSteps = Arrays.asList(LIST_CONTIGS_STEP, RELEASE_MAPPED_ACTIVE_VARIANTS_STEP,
+                                                   RELEASE_MAPPED_MERGED_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
