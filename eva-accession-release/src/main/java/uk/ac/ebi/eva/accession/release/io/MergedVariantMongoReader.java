@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.accession.release.io;
 import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
@@ -29,11 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
-import org.springframework.batch.item.ItemStreamReader;
-import org.springframework.batch.item.NonTransientResourceException;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
-import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
@@ -46,7 +40,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
@@ -55,21 +48,15 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MA
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
-public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>> {
+public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
 
     private static final Logger logger = LoggerFactory.getLogger(MergedVariantMongoReader.class);
 
     private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
-    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
-
-    private static final String ACCESSION_FIELD = "accession";
-
     private static final String INACTIVE_OBJECTS = "inactiveObjects";
 
     private static final String REFERENCE_ASSEMBLY_FIELD = INACTIVE_OBJECTS + ".asm";
-
-    private static final String STUDY_FIELD = "study";
 
     private static final String CONTIG_KEY = "contig";
 
@@ -81,56 +68,14 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
 
     private static final String TYPE_KEY = "type";
 
-    private static final String REFERENCE_ALLELE_FIELD = "ref";
-
-    private static final String ALTERNATE_ALLELE_FIELD = "alt";
-
-    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
-
     private static final String MERGE_INTO_FIELD = "mergeInto";
 
-    private static final String SS_INFO_FIELD = "ssInfo";
-
-    private static final String VALIDATED_FIELD = "validated";
-
-    private static final String ASSEMBLY_MATCH_FIELD = "asmMatch";
-
-    private static final String ALLELES_MATCH_FIELD = "allelesMatch";
-
-    private static final String SUPPORTED_BY_EVIDENCE_FIELD = "evidence";
-
-    public static final String VARIANT_CLASS_KEY = "VC";
-
-    public static final String STUDY_ID_KEY = "SID";
-
     public static final String MERGED_INTO_KEY = "A";   // Active TODO: any suggestions on a better name?
-
-    public static final String CLUSTERED_VARIANT_VALIDATED_KEY = "RS_VALIDATED";
-
-    public static final String SUBMITTED_VARIANT_VALIDATED_KEY = "SS_VALIDATED";
-
-    public static final String ASSEMBLY_MATCH_KEY = "ASMM";
-
-    public static final String ALLELES_MATCH_KEY = "ALMM";
-
-    public static final String SUPPORTED_BY_EVIDENCE_KEY = "LOE";
-
-    private static final String RS_PREFIX = "rs";
-
-    private String assemblyAccession;
-
-    private MongoClient mongoClient;
-
-    private String database;
-
-    private MongoCursor<Document> cursor;
 
     public MergedVariantMongoReader(String assemblyAccession,
                                     MongoClient mongoClient,
                                     String database) {
-        this.assemblyAccession = assemblyAccession;
-        this.mongoClient = mongoClient;
-        this.database = database;
+        super(assemblyAccession, mongoClient, database);
     }
 
     @Override
@@ -151,11 +96,6 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
         List<Bson> aggregation = Arrays.asList(match, lookup, sort);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
-    }
-
-    @Override
-    public List<Variant> read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-        return cursor.hasNext() ? getVariants(cursor.next()) : null;
     }
 
     List<Variant> getVariants(Document mergedVariant) {
@@ -181,7 +121,6 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
         for (Document submittedVariant : submittedVariants) {
             String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
             String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
-            long end = calculateEnd(reference, alternate, start);
             String study = submittedVariant.getString(STUDY_FIELD);
             boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
             boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
@@ -191,49 +130,19 @@ public class MergedVariantMongoReader implements ItemStreamReader<List<Variant>>
             VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, mergedInto, sequenceOntology, validated,
                                                                      submittedVariantValidated, allelesMatch,
                                                                      assemblyMatch, evidence);
-            String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
-            if (variants.containsKey(variantId)) {
-                variants.get(variantId).addSourceEntry(sourceEntry);
-            } else {
-                Variant variant = new Variant(contig, start, end, reference, alternate);
-                variant.setMainId(buildId(rs));
-                variant.addSourceEntry(sourceEntry);
-                variants.put(variantId, variant);
-            }
+
+            addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
         }
         return new ArrayList<>(variants.values());
     }
 
-    private long calculateEnd(String reference, String alternate, long start) {
-        long length = Math.max(reference.length(), alternate.length());
-        return start + length - 1;
-    }
-
-    private VariantSourceEntry buildVariantSourceEntry(String study, Long mergedInto, String sequenceOntology,
+    protected VariantSourceEntry buildVariantSourceEntry(String study, Long mergedInto, String sequenceOntology,
                                                        boolean validated, boolean submittedVariantValidated,
                                                        boolean allelesMatch, boolean assemblyMatch, boolean evidence) {
-        VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
-        sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
-        sourceEntry.addAttribute(STUDY_ID_KEY, study);
-        sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
-        sourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
-        sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
-        sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
-        sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
-        sourceEntry.addAttribute(SUPPORTED_BY_EVIDENCE_KEY, Boolean.toString(evidence));
-        return sourceEntry;
-    }
-
-    private String buildId(long rs) {
-        return RS_PREFIX + Objects.toString(rs);
-    }
-
-    @Override
-    public void close() throws ItemStreamException {
-        cursor.close();
-    }
-
-    @Override
-    public void update(ExecutionContext executionContext) throws ItemStreamException {
+        VariantSourceEntry variantSourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
+                                                                        submittedVariantValidated, allelesMatch,
+                                                                        assemblyMatch, evidence);
+        variantSourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
+        return variantSourceEntry;
     }
 }

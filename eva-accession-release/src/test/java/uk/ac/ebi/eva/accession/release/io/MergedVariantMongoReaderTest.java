@@ -154,7 +154,6 @@ public class MergedVariantMongoReaderTest {
         Map<String, Variant> variants = readIntoMap();
         assertEquals(3, variants.size());
 
-
         assertTrue(variants.get(ID_1_A)
                            .getSourceEntries()
                            .stream()

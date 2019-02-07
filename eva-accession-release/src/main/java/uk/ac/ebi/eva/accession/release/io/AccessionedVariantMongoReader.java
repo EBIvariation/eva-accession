@@ -60,13 +60,13 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
-    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
+    protected static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
 
-    private static final String ACCESSION_FIELD = "accession";
+    protected static final String ACCESSION_FIELD = "accession";
 
     private static final String REFERENCE_ASSEMBLY_FIELD = "asm";
 
-    private static final String STUDY_FIELD = "study";
+    protected static final String STUDY_FIELD = "study";
 
     private static final String CONTIG_FIELD = "contig";
 
@@ -74,21 +74,21 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     private static final String TYPE_FIELD = "type";
 
-    private static final String REFERENCE_ALLELE_FIELD = "ref";
+    protected static final String REFERENCE_ALLELE_FIELD = "ref";
 
-    private static final String ALTERNATE_ALLELE_FIELD = "alt";
+    protected static final String ALTERNATE_ALLELE_FIELD = "alt";
 
-    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
+    protected static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
 
-    private static final String SS_INFO_FIELD = "ssInfo";
+    protected static final String SS_INFO_FIELD = "ssInfo";
 
-    private static final String VALIDATED_FIELD = "validated";
+    protected static final String VALIDATED_FIELD = "validated";
 
-    private static final String ASSEMBLY_MATCH_FIELD = "asmMatch";
+    protected static final String ASSEMBLY_MATCH_FIELD = "asmMatch";
 
-    private static final String ALLELES_MATCH_FIELD = "allelesMatch";
+    protected static final String ALLELES_MATCH_FIELD = "allelesMatch";
 
-    private static final String SUPPORTED_BY_EVIDENCE_FIELD = "evidence";
+    protected static final String SUPPORTED_BY_EVIDENCE_FIELD = "evidence";
 
     public static final String VARIANT_CLASS_KEY = "VC";
 
@@ -106,13 +106,13 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     private static final String RS_PREFIX = "rs";
 
-    private String assemblyAccession;
+    protected String assemblyAccession;
 
-    private MongoClient mongoClient;
+    protected MongoClient mongoClient;
 
-    private String database;
+    protected String database;
 
-    private MongoCursor<Document> cursor;
+    protected MongoCursor<Document> cursor;
 
     public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient,
                                          String database) {
@@ -159,7 +159,6 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         for (Document submittedVariant : submittedVariants) {
             String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
             String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
-            long end = calculateEnd(reference, alternate, start);
             String study = submittedVariant.getString(STUDY_FIELD);
             boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
             boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
@@ -169,25 +168,31 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
                                                                      submittedVariantValidated, allelesMatch,
                                                                      assemblyMatch, evidence);
 
-            String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
-            if (variants.containsKey(variantId)) {
-                variants.get(variantId).addSourceEntry(sourceEntry);
-            } else {
-                Variant variant = new Variant(contig, start, end, reference, alternate);
-                variant.setMainId(buildId(rs));
-                variant.addSourceEntry(sourceEntry);
-                variants.put(variantId, variant);
-            }
+            addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
         }
         return new ArrayList<>(variants.values());
     }
 
-    private long calculateEnd(String reference, String alternate, long start) {
+    protected void addToVariants(Map<String, Variant> variants, String contig, long start, long rs, String reference,
+                               String alternate, VariantSourceEntry sourceEntry) {
+        String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
+        if (variants.containsKey(variantId)) {
+            variants.get(variantId).addSourceEntry(sourceEntry);
+        } else {
+            long end = calculateEnd(reference, alternate, start);
+            Variant variant = new Variant(contig, start, end, reference, alternate);
+            variant.setMainId(buildId(rs));
+            variant.addSourceEntry(sourceEntry);
+            variants.put(variantId, variant);
+        }
+    }
+
+    protected long calculateEnd(String reference, String alternate, long start) {
         long length = Math.max(reference.length(), alternate.length());
         return start + length - 1;
     }
 
-    private VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
+    protected VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
                                                        boolean submittedVariantValidated, boolean allelesMatch,
                                                        boolean assemblyMatch, boolean evidence) {
         VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
@@ -201,7 +206,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         return sourceEntry;
     }
 
-    private String buildId(long rs) {
+    protected String buildId(long rs) {
         return RS_PREFIX + Objects.toString(rs);
     }
 
