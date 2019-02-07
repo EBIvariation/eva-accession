@@ -17,9 +17,6 @@
 package uk.ac.ebi.eva.accession.release.io;
 
 import com.mongodb.MongoClient;
-import com.mongodb.client.AggregateIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
@@ -80,14 +77,10 @@ public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        MongoDatabase db = mongoClient.getDatabase(database);
-        MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
-        AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
-                                                                  .allowDiskUse(true)
-                                                                  .useCursor(true);
-        cursor = clusteredVariants.iterator();
+        executeAggregation(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
     }
 
+    @Override
     List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
         Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, MERGE_INTO_FIELD,

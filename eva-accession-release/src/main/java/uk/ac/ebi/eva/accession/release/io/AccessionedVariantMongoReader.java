@@ -123,8 +123,12 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
+        executeAggregation(DBSNP_CLUSTERED_VARIANT_ENTITY);
+    }
+
+    protected void executeAggregation(String collectionName) {
         MongoDatabase db = mongoClient.getDatabase(database);
-        MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY);
+        MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
                                                                   .allowDiskUse(true)
                                                                   .useCursor(true);
