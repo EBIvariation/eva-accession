@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 
 @Configuration
@@ -37,11 +38,16 @@ public class AccessionReleaseJobConfiguration {
     @Qualifier(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
     private Step createReleaseStep;
 
+    @Autowired
+    @Qualifier(LIST_CONTIGS_STEP)
+    private Step listContigsStep;
+
     @Bean(ACCESSION_RELEASE_JOB)
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(ACCESSION_RELEASE_JOB)
                                 .incrementer(new RunIdIncrementer())
-                                .start(createReleaseStep)
+                                .start(listContigsStep)
+                                .next(createReleaseStep)
                                 .build();
     }
 }

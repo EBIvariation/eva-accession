@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -36,13 +37,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 public class VariantContextWriterTest {
 
@@ -149,11 +150,19 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkMetadataSection() throws Exception {
+        FileWriter fileWriter = new FileWriter(
+                temporaryFolder.newFile(ContigWriter.getContigsFilePath(REFERENCE_ASSEMBLY)));
+        String contig = "CM0001.1";
+        fileWriter.write(contig);
+        fileWriter.close();
+
         File output = temporaryFolder.newFile();
         assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> metadataLines = grepFile(output, "^##.*");
-        assertEquals(9, metadataLines.size());
+        assertEquals(10, metadataLines.size());
+        List<String> contigLines = grepFile(output, "##contig=<ID=CM0001.1>");
+        assertEquals(1, contigLines.size());
         List<String> headerLines = grepFile(output, "^#CHROM.*");
         assertEquals(1, headerLines.size());
     }

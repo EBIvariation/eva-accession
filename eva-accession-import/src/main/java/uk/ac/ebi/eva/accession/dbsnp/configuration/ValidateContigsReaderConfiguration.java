@@ -22,7 +22,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsContigReader;
+import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
+import uk.ac.ebi.eva.accession.core.io.SubSnpNoHgvsContigReader;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 
 import javax.sql.DataSource;

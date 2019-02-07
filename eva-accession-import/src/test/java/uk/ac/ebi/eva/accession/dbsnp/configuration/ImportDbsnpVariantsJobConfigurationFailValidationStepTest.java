@@ -27,9 +27,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.core.test.configuration.TestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;

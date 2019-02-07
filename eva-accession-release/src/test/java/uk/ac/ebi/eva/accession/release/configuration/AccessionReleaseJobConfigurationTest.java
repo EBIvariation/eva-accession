@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package uk.ac.ebi.eva.accession.release.configuration;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
@@ -24,6 +23,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -38,8 +38,14 @@ import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.FileInputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -75,6 +81,10 @@ public class AccessionReleaseJobConfigurationTest {
     @Test
     public void basicJobCompletion() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+
+        List<String> expectedSteps = Arrays.asList(LIST_CONTIGS_STEP, RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
@@ -86,5 +96,10 @@ public class AccessionReleaseJobConfigurationTest {
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
+    private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
+        Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
+        List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
+        assertEquals(expectedSteps, steps);
+    }
 
 }

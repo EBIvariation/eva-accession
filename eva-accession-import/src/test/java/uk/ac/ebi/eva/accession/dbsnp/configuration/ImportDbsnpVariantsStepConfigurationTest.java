@@ -36,9 +36,9 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessionin
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.test.configuration.TestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp.test.TestConfiguration;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
