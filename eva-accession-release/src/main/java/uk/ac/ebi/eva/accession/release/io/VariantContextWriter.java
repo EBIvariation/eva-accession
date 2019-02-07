@@ -47,9 +47,10 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.V
 import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 /**
- * Writes the VCF file for the release
+ * Writes a VCF file for the release of RS IDs mapped against a reference assembly
  *
- * To include the contigs in the meta section it reads the file generated in the previous step (LIST_CONTIGS_STEP)
+ * To include the contigs in the meta section it reads the file generated in the previous step
+ * {@link uk.ac.ebi.eva.accession.release.configuration.ListContigsStepConfiguration}
  */
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 

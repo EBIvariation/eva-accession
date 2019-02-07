@@ -34,8 +34,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTI
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRITER;
 
 /**
- * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in the CREATE_RELEASE_STEP to
- * include the contigs in the meta section of the VCF
+ * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in
+ * {@link CreateReleaseStepConfiguration} to include the contigs in the meta section of the VCF
  */
 @Configuration
 @EnableBatchProcessing
