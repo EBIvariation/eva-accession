@@ -183,7 +183,9 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--metadb", help="Postgres metadata DB", required=True)
     parser.add_argument("-u", "--metauser", help="Postgres metadata DB username", required=True)
     parser.add_argument("-h", "--metahost", help="Postgres metadata DB host", required=True)
-    parser.add_argument("-s", "--species", help="Species for which the process has to be run", required=True)
+    parser.add_argument("-s", "--species",
+                        help="Species for which the process has to be run, e.g. chicken_9031",
+                        required=True)
     parser.add_argument("-a", "--assembly-accession", help="Assembly for which the process has to be run",
                         required=True)
     parser.add_argument("-g", "--genbank-equivalents-file", help="File with GenBank equivalents for RefSeq accessions",
