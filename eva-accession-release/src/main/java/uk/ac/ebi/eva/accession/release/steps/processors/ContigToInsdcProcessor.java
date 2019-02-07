@@ -25,7 +25,7 @@ import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import static org.springframework.util.StringUtils.hasText;
 
 /**
- * Converts contigs to it's INSDC (GenBank) synonym when possible. If the synonym can't be determined it keeps the
+ * Converts a contig name to its INSDC (GenBank) synonym when possible. If the synonym can't be determined it keeps the
  * contig as is
  */
 public class ContigToInsdcProcessor implements ItemProcessor<String, String> {
