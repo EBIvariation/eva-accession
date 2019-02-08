@@ -45,7 +45,7 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MA
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
-public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
+public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final Logger logger = LoggerFactory.getLogger(MergedVariantMongoReader.class);
 
@@ -55,23 +55,15 @@ public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
 
     private static final String REFERENCE_ASSEMBLY_FIELD = INACTIVE_OBJECTS + ".asm";
 
-    private static final String CONTIG_KEY = "contig";
+    private static final String CONTIG_FIELD = INACTIVE_OBJECTS + "." + VariantMongoAggregationReader.CONTIG_FIELD;
 
-    private static final String CONTIG_FIELD = INACTIVE_OBJECTS + "." + CONTIG_KEY;
-
-    private static final String START_KEY = "start";
-
-    private static final String START_FIELD = INACTIVE_OBJECTS + "." + START_KEY;
+    private static final String START_FIELD = INACTIVE_OBJECTS + "." + VariantMongoAggregationReader.START_FIELD;
 
     private static final String TYPE_KEY = "type";
 
     private static final String MERGE_INTO_FIELD = "mergeInto";
 
-    public static final String MERGED_INTO_KEY = "CURR";
-
-    public MergedVariantMongoReader(String assemblyAccession,
-                                    MongoClient mongoClient,
-                                    String database) {
+    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database) {
         super(assemblyAccession, mongoClient, database);
     }
 
@@ -96,12 +88,12 @@ public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()
                                      + "' was designed assuming there's only one element in the field "
-                                     + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size() + " elements in _id="
-                                     + mergedVariant.get(ACCESSION_FIELD));
+                                     + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
+                                     + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
         }
         Document inactiveEntity = inactiveObjects.iterator().next();
-        String contig = inactiveEntity.getString(CONTIG_KEY);
-        long start = inactiveEntity.getLong(START_KEY);
+        String contig = inactiveEntity.getString(VariantMongoAggregationReader.CONTIG_FIELD);
+        long start = inactiveEntity.getLong(VariantMongoAggregationReader.START_FIELD);
         long rs = mergedVariant.getLong(ACCESSION_FIELD);
         long mergedInto = mergedVariant.getLong(MERGE_INTO_FIELD);
         VariantType type = VariantType.valueOf(inactiveEntity.getString(TYPE_KEY));
@@ -127,15 +119,5 @@ public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
             addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
         }
         return new ArrayList<>(variants.values());
-    }
-
-    protected VariantSourceEntry buildVariantSourceEntry(String study, Long mergedInto, String sequenceOntology,
-                                                       boolean validated, boolean submittedVariantValidated,
-                                                       boolean allelesMatch, boolean assemblyMatch, boolean evidence) {
-        VariantSourceEntry variantSourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
-                                                                        submittedVariantValidated, allelesMatch,
-                                                                        assemblyMatch, evidence);
-        variantSourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
-        return variantSourceEntry;
     }
 }
