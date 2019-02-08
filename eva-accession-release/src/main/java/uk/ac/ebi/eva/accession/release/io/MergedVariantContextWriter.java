@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class MergedVariantContextWriter extends VariantContextWriter {
     protected Set<VCFHeaderLine> buildHeaderLines() {
         Set<VCFHeaderLine> vcfHeaderLines = super.buildHeaderLines();
         vcfHeaderLines.add(new VCFInfoHeaderLine(MERGED_INTO_KEY, 1, VCFHeaderLineType.String,
-                                                 "Active RS id to represent a given variant"));
+                                                 "RS ID that currently represents the variant"));
         return vcfHeaderLines;
     }
 

@@ -122,10 +122,10 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        executeAggregation(DBSNP_CLUSTERED_VARIANT_ENTITY);
+        aggregate(DBSNP_CLUSTERED_VARIANT_ENTITY);
     }
 
-    protected void executeAggregation(String collectionName) {
+    protected void aggregate(String collectionName) {
         MongoDatabase db = mongoClient.getDatabase(database);
         MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
@@ -190,7 +190,7 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         }
     }
 
-    protected long calculateEnd(String reference, String alternate, long start) {
+    private long calculateEnd(String reference, String alternate, long start) {
         long length = Math.max(reference.length(), alternate.length());
         return start + length - 1;
     }

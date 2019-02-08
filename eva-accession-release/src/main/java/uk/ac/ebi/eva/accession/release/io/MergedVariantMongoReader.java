@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
 
     private static final String MERGE_INTO_FIELD = "mergeInto";
 
-    public static final String MERGED_INTO_KEY = "A";   // Active TODO: any suggestions on a better name?
+    public static final String MERGED_INTO_KEY = "CURR";
 
     public MergedVariantMongoReader(String assemblyAccession,
                                     MongoClient mongoClient,
@@ -77,7 +77,7 @@ public class MergedVariantMongoReader extends AccessionedVariantMongoReader {
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        executeAggregation(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
+        aggregate(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
     }
 
     @Override

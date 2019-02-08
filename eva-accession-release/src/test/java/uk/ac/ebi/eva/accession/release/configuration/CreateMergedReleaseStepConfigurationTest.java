@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,8 @@ public class CreateMergedReleaseStepConfigurationTest {
     @Test
     public void variantsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcfMerged()));
+        long numVariantsInRelease = FileUtils
+                .countNonCommentLines(new FileInputStream(inputParameters.getOutputVcfMerged()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 

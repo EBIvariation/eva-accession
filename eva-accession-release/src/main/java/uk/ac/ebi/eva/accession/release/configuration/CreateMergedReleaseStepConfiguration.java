@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class CreateMergedReleaseStepConfiguration {
 
     @Bean(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
     public Step createMergedReleaseStep(StepBuilderFactory stepBuilderFactory,
-                                          SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+                                        SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
