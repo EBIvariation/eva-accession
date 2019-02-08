@@ -98,9 +98,8 @@ public class ContigReplacerProcessorTest {
     }
 
     @Test
-    public void shouldThrowIfContigAndChromosomeAreFoundInDifferentLinesInAssemblyReport() throws Exception {
+    public void shouldNotThrowIfContigAndChromosomeAreFoundInDifferentLinesInAssemblyReport() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_2, GENBANK_1);
-        thrown.expect(IllegalStateException.class);
         refseqProcessor.process(input);
     }
 

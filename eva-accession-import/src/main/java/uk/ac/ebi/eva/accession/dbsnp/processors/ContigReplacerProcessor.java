@@ -15,6 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.processors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
@@ -22,6 +24,8 @@ import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ContigReplacerProcessor.class);
 
     private ContigMapping contigMapping;
 
@@ -51,7 +55,7 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
         if (chromosomePresentInAssemblyReport
                 && contigPresentInAssemblyReport
                 && !contigSynonyms.equals(chromosomeSynonyms)) {
-            throw new IllegalStateException(
+            logger.warn(
                     "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome()
                             + "' do not appear in the same line in the assembly report!");
         }
