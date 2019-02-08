@@ -30,6 +30,7 @@ do
         cat ${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
     else
         echo FASTA sequence not available for ${genbank_contig}
+        exit_code=1
         continue
     fi
 
@@ -40,7 +41,7 @@ do
     if [ $matches -gt 1 ]
     then
         echo WARNING: Sequence ${genbank_contig} found more than once in the output FASTA file
-        exit_code=1
+        exit_code=2
     fi
 done
 
