@@ -1,17 +1,21 @@
 import os
 import argparse
-import sys
 import json
 import subprocess
+from argparse import RawTextHelpFormatter
 from __init__ import *
 
 
-def run_command(command):
-    with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True) as process:
+def run_command(command_description, command):
+    logger.info("Starting process: " + command_description)
+    with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=True) as process:
         for line in process.stdout:
             print(line, end='')
     if process.returncode != 0:
+        logger.error(command_description + " failed!")
         raise subprocess.CalledProcessError(process.returncode, process.args)
+    else:
+        logger.info(command_description + " completed successfully")
     return process.returncode
 
 
@@ -78,18 +82,35 @@ def get_commands_to_run(command_line_args):
                                    "java -jar -Xmx5g {accession_import_jar} " \
                                    "--spring.config.location={properties_file_path}".format(**program_args)
 
-    return [create_species_assembly_folders_command, create_species_accessioning_import_folder_command,
-            generate_custom_assembly_report_command, create_fasta_file_command,
-            generate_import_job_properties_file_command, run_accession_import_command]
+    ss_counts_validation_command = ("cd {validation_script_path} && " +
+                                    "bash ss_counts.sh {assembly_accession} {assembly_name} {species} {build} " +
+                                    os.path.sep.join(["{species_accessioning_import_folder}", "accessioning-qa",
+                                                      "{env}"]) +
+                                    " {env}").format(**program_args)
+    rs_counts_validation_command = ss_counts_validation_command.replace("ss_counts", "rs_counts")
+
+    return [
+        ("Create assembly FASTA and report folders", create_species_assembly_folders_command),
+        ("Create accessioning import folder", create_species_accessioning_import_folder_command),
+        ("Generate custom assembly report", generate_custom_assembly_report_command),
+        ("Create FASTA file", create_fasta_file_command),
+        ("Generate properties file for accessioning import", generate_import_job_properties_file_command),
+        ("Run accession import", run_accession_import_command),
+        ("Validate SS counts", ss_counts_validation_command),
+        ("Validate RS counts", rs_counts_validation_command)
+        ]
 
 
 def main(command_line_args):
-    map(run_command, get_commands_to_run(vars(command_line_args)))
+    for command_description, command in get_commands_to_run(vars(command_line_args))[command_line_args.step-1:]:
+        #print(command + os.linesep)
+        run_command(command_description, command)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Run the accession import process for a given species, assembly and build', add_help=False)
+        description='Run the accession import process for a given species, assembly and build', add_help=False,
+        formatter_class=RawTextHelpFormatter)
     parser.add_argument("-s", "--species", help="Species for which the process has to be run", required=True)
     parser.add_argument("--scientific-name", help="Scientific name for the species", required=True)
     parser.add_argument("-a", "--assembly-accession", help="Assembly for which the process has to be run",
@@ -103,11 +124,24 @@ if __name__ == "__main__":
                              ". (Can be ommited if there is only one assembly name in the build)")
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private connection details, credentials etc.,")
+    parser.add_argument("--step", help= os.linesep + "Run from a specific step number." + os.linesep +
+                                       "1. Create assembly FASTA and report folders" + os.linesep +
+                                       "2. Create accessioning import folder" + os.linesep +
+                                       "3. Generate custom assembly report" + os.linesep +
+                                       "4. Create FASTA file" + os.linesep +
+                                       "5. Generate properties file for accessioning import" + os.linesep +
+                                       "6. Run accession import" + os.linesep +
+                                       "7. Validate SS counts" + os.linesep +
+                                       "8. Validate RS counts",
+                        default=1, type=int)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
     try:
         args = parser.parse_args()
+        if args.step > 8:
+            logger.error("Use only the step numbers that appear in the help message!")
+            sys.exit(1)
         main(args)
     except Exception as ex:
         logger.exception(ex)
