@@ -25,11 +25,12 @@ do
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
     lines=`head -n 2 ${genbank_contig} | wc -l`
-    if [ $lines -ne 1 ]
+    if [ $lines -gt 1 ]
     then
         cat ${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
     else
         echo FASTA sequence not available for ${genbank_contig}
+        continue
     fi
 
     # Check that an accession is present no more than once in the output FASTA file, otherwise it 
