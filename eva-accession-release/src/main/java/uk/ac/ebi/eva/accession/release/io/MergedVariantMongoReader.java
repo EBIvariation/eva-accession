@@ -53,14 +53,6 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final String INACTIVE_OBJECTS = "inactiveObjects";
 
-    private static final String REFERENCE_ASSEMBLY_FIELD = INACTIVE_OBJECTS + ".asm";
-
-    private static final String CONTIG_FIELD = INACTIVE_OBJECTS + "." + VariantMongoAggregationReader.CONTIG_FIELD;
-
-    private static final String START_FIELD = INACTIVE_OBJECTS + "." + VariantMongoAggregationReader.START_FIELD;
-
-    private static final String TYPE_KEY = "type";
-
     private static final String MERGE_INTO_FIELD = "mergeInto";
 
     public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database) {
@@ -74,13 +66,17 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     @Override
     List<Bson> buildAggregation() {
-        Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
+        Bson match = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
         Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, MERGE_INTO_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
-        Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
+        Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         List<Bson> aggregation = Arrays.asList(match, lookup, sort);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
+    }
+
+    private String getInactiveField(String field) {
+        return INACTIVE_OBJECTS + "." + field;
     }
 
     List<Variant> getVariants(Document mergedVariant) {
@@ -96,7 +92,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         long start = inactiveEntity.getLong(VariantMongoAggregationReader.START_FIELD);
         long rs = mergedVariant.getLong(ACCESSION_FIELD);
         long mergedInto = mergedVariant.getLong(MERGE_INTO_FIELD);
-        VariantType type = VariantType.valueOf(inactiveEntity.getString(TYPE_KEY));
+        VariantType type = VariantType.valueOf(inactiveEntity.getString(TYPE_FIELD));
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(type);
         boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
 
