@@ -40,7 +40,7 @@ do
     matches=`grep -c "${accession}" ${output_folder}/${assembly_accession}.fa`
     if [ $matches -gt 1 ]
     then
-        echo WARNING: Sequence ${genbank_contig} found more than once in the output FASTA file
+        echo Sequence ${genbank_contig} found more than once in the output FASTA file
         exit_code=2
     fi
 done
