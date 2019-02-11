@@ -29,7 +29,7 @@ public class InputParameters {
 
     private String assemblyReportUrl;
 
-    private String outputVcf;
+    private String outputFolder;
 
     private boolean forceRestart;
 
@@ -46,7 +46,7 @@ public class InputParameters {
                 .addString("fasta", fasta)
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addLong("buildNumber", buildNumber)
-                .addString("outputVcf", outputVcf)
+                .addString("outputFolder", outputFolder)
                 .addLong("pageSize", (long) pageSize, false)
                 .toJobParameters();
     }
@@ -83,12 +83,12 @@ public class InputParameters {
         this.assemblyReportUrl = assemblyReportUrl;
     }
 
-    public String getOutputVcf() {
-        return outputVcf;
+    public String getOutputFolder() {
+        return outputFolder;
     }
 
-    public void setOutputVcf(String outputVcf) {
-        this.outputVcf = outputVcf;
+    public void setOutputFolder(String outputFolder) {
+        this.outputFolder = outputFolder;
     }
 
     public boolean isForceRestart() {

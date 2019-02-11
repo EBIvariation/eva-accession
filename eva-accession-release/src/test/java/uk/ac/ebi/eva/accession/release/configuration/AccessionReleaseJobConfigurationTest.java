@@ -31,6 +31,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
+import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
@@ -38,6 +40,7 @@ import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -46,11 +49,13 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class AccessionReleaseJobConfigurationTest {
@@ -58,6 +63,8 @@ public class AccessionReleaseJobConfigurationTest {
     private static final String TEST_DB = "test-db";
 
     private static final long EXPECTED_LINES = 3;
+
+    private static final long EXPECTED_LINES_MERGED = 3;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -82,7 +89,8 @@ public class AccessionReleaseJobConfigurationTest {
     public void basicJobCompletion() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
-        List<String> expectedSteps = Arrays.asList(LIST_CONTIGS_STEP, RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+        List<String> expectedSteps = Arrays.asList(LIST_CONTIGS_STEP, RELEASE_MAPPED_ACTIVE_VARIANTS_STEP,
+                                                   RELEASE_MAPPED_MERGED_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
@@ -92,8 +100,20 @@ public class AccessionReleaseJobConfigurationTest {
     public void variantsWritten() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(getRelease());
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        long numVariantsInMergedRelease = FileUtils.countNonCommentLines(getMergedRelease());
+        assertEquals(EXPECTED_LINES_MERGED, numVariantsInMergedRelease);
+    }
+
+    private FileInputStream getRelease() throws FileNotFoundException {
+        return new FileInputStream(VariantContextWriter.getOutput(inputParameters.getOutputFolder(),
+                                                                  inputParameters.getAssemblyAccession()));
+    }
+
+    private FileInputStream getMergedRelease() throws FileNotFoundException {
+        return new FileInputStream(MergedVariantContextWriter.getOutput(inputParameters.getOutputFolder(),
+                                                                        inputParameters.getAssemblyAccession()));
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

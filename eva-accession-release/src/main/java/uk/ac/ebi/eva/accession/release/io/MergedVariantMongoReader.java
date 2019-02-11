@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,41 +45,59 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MA
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 
-public class AccessionedVariantMongoReader extends VariantMongoAggregationReader {
+public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
-    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(MergedVariantMongoReader.class);
 
-    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
+    private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
-    public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database) {
+    private static final String INACTIVE_OBJECTS = "inactiveObjects";
+
+    private static final String MERGE_INTO_FIELD = "mergeInto";
+
+    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database) {
         super(assemblyAccession, mongoClient, database);
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        aggregate(DBSNP_CLUSTERED_VARIANT_ENTITY);
+        aggregate(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
     }
 
+    @Override
     List<Bson> buildAggregation() {
-        Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
+        Bson match = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
+        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, MERGE_INTO_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
-        Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
+        Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         List<Bson> aggregation = Arrays.asList(match, lookup, sort);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
 
-    List<Variant> getVariants(Document clusteredVariant) {
-        String contig = clusteredVariant.getString(CONTIG_FIELD);
-        long start = clusteredVariant.getLong(START_FIELD);
-        long rs = clusteredVariant.getLong(ACCESSION_FIELD);
-        String type = clusteredVariant.getString(TYPE_FIELD);
-        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
-        boolean validated = clusteredVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
+    private String getInactiveField(String field) {
+        return INACTIVE_OBJECTS + "." + field;
+    }
+
+    List<Variant> getVariants(Document mergedVariant) {
+        Collection<Document> inactiveObjects = (Collection<Document>) mergedVariant.get(INACTIVE_OBJECTS);
+        if (inactiveObjects.size() > 1) {
+            throw new AssertionError("The class '" + this.getClass().getSimpleName()
+                                     + "' was designed assuming there's only one element in the field "
+                                     + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
+                                     + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
+        }
+        Document inactiveEntity = inactiveObjects.iterator().next();
+        String contig = inactiveEntity.getString(VariantMongoAggregationReader.CONTIG_FIELD);
+        long start = inactiveEntity.getLong(VariantMongoAggregationReader.START_FIELD);
+        long rs = mergedVariant.getLong(ACCESSION_FIELD);
+        long mergedInto = mergedVariant.getLong(MERGE_INTO_FIELD);
+        VariantType type = VariantType.valueOf(inactiveEntity.getString(TYPE_FIELD));
+        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(type);
+        boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
 
         Map<String, Variant> variants = new HashMap<>();
-        Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
+        Collection<Document> submittedVariants = (Collection<Document>)mergedVariant.get(SS_INFO_FIELD);
 
         for (Document submittedVariant : submittedVariants) {
             String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
@@ -92,7 +110,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
 
             VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                      submittedVariantValidated, allelesMatch,
-                                                                     assemblyMatch, evidence);
+                                                                     assemblyMatch, evidence, mergedInto);
 
             addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
         }

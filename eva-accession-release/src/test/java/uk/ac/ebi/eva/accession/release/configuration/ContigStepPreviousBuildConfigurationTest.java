@@ -60,7 +60,7 @@ public class ContigStepPreviousBuildConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        assertEquals(3, numberOfLines(getContigsFilePath(inputParameters.getOutputVcf(),
+        assertEquals(3, numberOfLines(getContigsFilePath(inputParameters.getOutputFolder(),
                                                          inputParameters.getAssemblyAccession())));
     }
 

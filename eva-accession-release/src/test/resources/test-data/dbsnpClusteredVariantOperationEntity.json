@@ -1,0 +1,46 @@
+{
+  "dbsnpClusteredVariantOperationEntity": [
+    {
+      "_id" : ObjectId("5ba125831912036924cc2418"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(1099214387),
+      "mergeInto" : NumberLong(869808637),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm": "GCF_000409795.2",
+          "tax" : 60711,
+          "contig": "CM001954.1",
+          "start" : NumberLong(5),
+          "type": "SNV",
+          "validated": false,
+          "hashedMessage" : "E728D86DB22D7937E776B939DA1294DC7F854710",
+          "accession" : NumberLong(1099214387),
+          "version" : 1,
+          "createdDate" : ISODate("2017-06-21T10:11:40.907Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5ba125831912036924cc2419"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(1107370406),
+      "mergeInto" : NumberLong(869927931),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm": "GCF_000409795.2",
+          "tax" : 60711,
+          "contig": "CM001941.2",
+          "start" : NumberLong(13),
+          "type": "SNV",
+          "validated": false,
+          "hashedMessage" : "B47449C644E00C4E52BDBA1E21B335AF4F36C1E0",
+          "accession" : NumberLong(1107370406),
+          "version" : 1,
+          "createdDate" : ISODate("2017-06-21T10:11:40.907Z")
+        }
+      ]
+    }
+  ]
+}

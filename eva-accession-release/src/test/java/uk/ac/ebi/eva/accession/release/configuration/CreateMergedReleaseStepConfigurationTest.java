@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
-import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
@@ -49,17 +48,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED_INTO_KEY;
+import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.VARIANT_CLASS_KEY;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
-        "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
-public class CreateReleaseStepConfigurationTest {
+public class CreateMergedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
@@ -90,39 +90,43 @@ public class CreateReleaseStepConfigurationTest {
     }
 
     private void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_MERGED_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     @Test
     public void variantsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getMergedReleaseFile()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
-    private File getReleaseFile() throws FileNotFoundException {
-        return VariantContextWriter.getOutput(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession());
+    private File getMergedReleaseFile() throws FileNotFoundException {
+        return MergedVariantContextWriter.getOutput(inputParameters.getOutputFolder(),
+                                                    inputParameters.getAssemblyAccession());
     }
 
     @Test
     public void metadataIsPresent() throws Exception {
         assertStepExecutesAndCompletes();
 
-        List<String> referenceLines = grepFile(getReleaseFile(),
+        List<String> referenceLines = grepFile(getMergedReleaseFile(),
                                                "^##reference=" + inputParameters.getAssemblyAccession() + "$");
         assertEquals(1, referenceLines.size());
 
-        List<String> metadataVariantClassLines = grepFile(getReleaseFile(),
-                                                          "^##INFO=<ID=" + VARIANT_CLASS_KEY + ".*$");
+        List<String> metadataVariantClassLines = grepFile(getMergedReleaseFile(),
+                                                          "^##INFO=<ID=" + VARIANT_CLASS_KEY + ",.*$");
         assertEquals(1, metadataVariantClassLines.size());
 
-        List<String> metadataStudyIdLines = grepFile(getReleaseFile(),
-                                                     "^##INFO=<ID=" + STUDY_ID_KEY + ".*$");
+        List<String> metadataStudyIdLines = grepFile(getMergedReleaseFile(),
+                                                     "^##INFO=<ID=" + STUDY_ID_KEY + ",.*$");
         assertEquals(1, metadataStudyIdLines.size());
 
-        List<String> headerLines = grepFile(getReleaseFile(),
+        List<String> metadataMergedIntoLines = grepFile(getMergedReleaseFile(),
+                                                        "^##INFO=<ID=" + MERGED_INTO_KEY + ",.*$");
+        assertEquals(1, metadataMergedIntoLines.size());
+
+        List<String> headerLines = grepFile(getMergedReleaseFile(),
                                             "^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO$");
         assertEquals(1, headerLines.size());
     }
@@ -143,27 +147,31 @@ public class CreateReleaseStepConfigurationTest {
     @Test
     public void rsAccessionsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getMergedReleaseFile()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
-        List<String> dataLinesWithRs = grepFile(getReleaseFile(), "^.*\trs[0-9]+\t.*$");
+        String column = "[^\t]+\t";
+        List<String> dataLinesWithRs = grepFile(getMergedReleaseFile(),
+                                                "^" + column + column +"rs[0-9]+\t.*$");
         assertEquals(3, dataLinesWithRs.size());
     }
 
     @Test
     public void infoWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        File outputFile = getReleaseFile();
+        File outputFile = getMergedReleaseFile();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         String dataLinesDoNotStartWithHash = "^[^#]";
         String variantClass = VARIANT_CLASS_KEY + "=SO:[0-9]+";
         String studyId = STUDY_ID_KEY + "=[a-zA-Z0-9,]+";
+        String mergedInto = MERGED_INTO_KEY + "=rs[0-9]+";
 
         List<String> dataLines;
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + variantClass + ".*");
         assertEquals(EXPECTED_LINES, dataLines.size());
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + studyId + ".*");
         assertEquals(EXPECTED_LINES, dataLines.size());
-
+        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + mergedInto + ".*");
+        assertEquals(EXPECTED_LINES, dataLines.size());
     }
 }

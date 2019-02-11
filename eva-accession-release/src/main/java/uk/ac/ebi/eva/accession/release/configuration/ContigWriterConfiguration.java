@@ -31,7 +31,7 @@ public class ContigWriterConfiguration {
 
     @Bean(CONTIG_WRITER)
     public ContigWriter variantContextWriter(InputParameters inputParameters) {
-        return new ContigWriter(new File(getContigsFilePath(inputParameters.getOutputVcf(),
+        return new ContigWriter(new File(getContigsFilePath(inputParameters.getOutputFolder(),
                                                             inputParameters.getAssemblyAccession())));
     }
 }
