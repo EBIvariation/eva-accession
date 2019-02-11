@@ -82,8 +82,8 @@ public class VariantContextWriterTest {
 
     @Test
     public void basicWrite() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
     private Variant buildVariant(String chr, int start, String reference, String alternate,
@@ -111,8 +111,8 @@ public class VariantContextWriterTest {
         return variant;
     }
 
-    public void assertWriteVcf(File output, Variant... variants) throws Exception {
-        VariantContextWriter writer = new VariantContextWriter(output, REFERENCE_ASSEMBLY);
+    public File assertWriteVcf(File outputFolder, Variant... variants) throws Exception {
+        VariantContextWriter writer = new VariantContextWriter(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
         writer.open(null);
 
         VariantToVariantContextProcessor variantToVariantContextProcessor = new VariantToVariantContextProcessor();
@@ -122,13 +122,16 @@ public class VariantContextWriterTest {
 
         writer.close();
 
+        File output = writer.getOutput();
         assertTrue(output.exists());
+
+        return output;
     }
 
     @Test
     public void checkReference() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> referenceLines = grepFile(output, "^##reference.*");
         assertEquals(1, referenceLines.size());
@@ -150,14 +153,13 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkMetadataSection() throws Exception {
-        FileWriter fileWriter = new FileWriter(
-                temporaryFolder.newFile(ContigWriter.getContigsFilePath(REFERENCE_ASSEMBLY)));
+        File outputFolder = temporaryFolder.newFolder();
+        FileWriter fileWriter = new FileWriter(ContigWriter.getContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
         String contig = "CM0001.1";
         fileWriter.write(contig);
         fileWriter.close();
 
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> metadataLines = grepFile(output, "^##.*");
         assertEquals(10, metadataLines.size());
@@ -169,8 +171,8 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkAccession() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
@@ -178,8 +180,8 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkColumns() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
@@ -188,8 +190,8 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkStudies() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2));
 
         List<String> metadataLines = grepFileContains(output, STUDY_1);
         assertEquals(1, metadataLines.size());
@@ -217,8 +219,8 @@ public class VariantContextWriterTest {
     }
 
     private void checkSequenceOntology(String sequenceOntology, String reference, String alternate) throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
 
         List<String> dataLines = grepFile(output, somewhereSurroundedByTabOrSemicolon(VARIANT_CLASS_KEY + "=SO:[0-9]+"));
         assertEquals(1, dataLines.size());
@@ -268,7 +270,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkSeveralVariants() throws Exception {
-        File output = temporaryFolder.newFile();
+        File outputFolder = temporaryFolder.newFolder();
         int position1 = 1003;
         int position2 = 1003;
         int position3 = 1002;
@@ -276,7 +278,7 @@ public class VariantContextWriterTest {
         String alternate2 = "T";
         String alternate3 = "G";
 
-        assertWriteVcf(output,
+        File output = assertWriteVcf(outputFolder,
                        buildVariant(CHR_1, position1, "C", alternate1, SNP_SEQUENCE_ONTOLOGY, STUDY_1),
                        buildVariant(CHR_1, position2, "C", alternate2, SNP_SEQUENCE_ONTOLOGY, STUDY_1),
                        buildVariant(CHR_1, position3, "C", alternate3, SNP_SEQUENCE_ONTOLOGY, STUDY_1));
@@ -295,8 +297,8 @@ public class VariantContextWriterTest {
 
     @Test
     public void checkStandardNucleotides() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "NACTG", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "NACTG", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
@@ -304,14 +306,14 @@ public class VariantContextWriterTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void throwIfNonStandardNucleotides() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output, buildVariant(CHR_1, 1000, "C", "U", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "U", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
     @Test
     public void checkFlagsAreNotPresentWhenDefaultValues() throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output,
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder,
                        buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, false, false, true, true, true,
                                     STUDY_1));
 
@@ -332,8 +334,8 @@ public class VariantContextWriterTest {
     }
 
     private void assertFlagIsPresent(String flagRegex) throws Exception {
-        File output = temporaryFolder.newFile();
-        assertWriteVcf(output,
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder,
                        buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, true, true, false, false, false,
                                     STUDY_1));
 
@@ -391,9 +393,9 @@ public class VariantContextWriterTest {
         VariantSourceEntry sourceEntry2 = new VariantSourceEntry(STUDY_2, FILE_ID);
         sourceEntry2.addAttribute(flagKey, Boolean.toString(secondValue));
         variant.addSourceEntry(sourceEntry2);
-        File output = temporaryFolder.newFile();
+        File outputFolder = temporaryFolder.newFolder();
 
-        assertWriteVcf(output, variant);
+        File output = assertWriteVcf(outputFolder, variant);
 
         String dataLinesRegex = "^[^#]";
         String dataLinesWithValidatedRegex = dataLinesRegex + somewhereSurroundedByTabOrSemicolon(flagKey);

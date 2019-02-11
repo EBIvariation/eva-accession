@@ -59,7 +59,7 @@ public class ListContigsStepConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        assertEquals(6, numberOfLines(getContigsFilePath(inputParameters.getOutputVcf(),
+        assertEquals(6, numberOfLines(getContigsFilePath(inputParameters.getOutputFolder(),
                                                          inputParameters.getAssemblyAccession())));
     }
 

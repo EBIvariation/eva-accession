@@ -73,11 +73,11 @@ public class ContigWriter implements ItemStreamWriter<String> {
         return FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
     }
 
-    public static String getContigsFilePath(File output, String referenceAssembly) {
-        return output.getParent() + getContigsFilePath(referenceAssembly);
+    public static String getContigsFilePath(File outputFolder, String referenceAssembly) {
+        return outputFolder + getContigsFilePath(referenceAssembly);
     }
 
-    public static String getContigsFilePath(String output, String referenceAssembly) {
-        return Paths.get(output).getParent() + getContigsFilePath(referenceAssembly);
+    public static String getContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + getContigsFilePath(referenceAssembly);
     }
 }

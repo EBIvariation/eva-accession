@@ -33,6 +33,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +45,6 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.S
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 /**
  * Writes a VCF file for the release of RS IDs mapped against a reference assembly
@@ -56,15 +56,29 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(VariantContextWriter.class);
 
+    private static final String FILE_SUFFIX = "_current_ids.vcf";
+
     private File output;
 
     private String referenceAssembly;
 
     private htsjdk.variant.variantcontext.writer.VariantContextWriter writer;
 
-    public VariantContextWriter(File output, String referenceAssembly) {
-        this.output = output;
+    public VariantContextWriter(String outputFolder, String referenceAssembly) {
+        this.output = buildOutputFilename(outputFolder, referenceAssembly);
         this.referenceAssembly = referenceAssembly;
+    }
+
+    protected File buildOutputFilename(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX).toFile();
+    }
+
+    public File getOutput() {
+        return output;
+    }
+
+    public static File getOutput(String outputFolder, String referenceAssembly) {
+        return new VariantContextWriter(outputFolder, referenceAssembly).getOutput();
     }
 
     @Override
@@ -131,7 +145,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     private void addContigs(Set<VCFHeaderLine> metaData) {
         try {
             BufferedReader bufferedReader = new BufferedReader(
-                    new FileReader(ContigWriter.getContigsFilePath(output, referenceAssembly)));
+                    new FileReader(ContigWriter.getContigsFilePath(output.getParent(), referenceAssembly)));
             String contig;
             while ((contig = bufferedReader.readLine()) != null) {
                 metaData.add(new VCFHeaderLine("contig", "<ID=" + contig + ">"));

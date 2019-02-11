@@ -31,6 +31,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
+import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
@@ -38,6 +40,7 @@ import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -97,11 +100,20 @@ public class AccessionReleaseJobConfigurationTest {
     public void variantsWritten() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(getRelease());
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
-        long numVariantsInMergedRelease = FileUtils.countNonCommentLines(
-                new FileInputStream(inputParameters.getOutputVcfMerged()));
+        long numVariantsInMergedRelease = FileUtils.countNonCommentLines(getMergedRelease());
         assertEquals(EXPECTED_LINES_MERGED, numVariantsInMergedRelease);
+    }
+
+    private FileInputStream getRelease() throws FileNotFoundException {
+        return new FileInputStream(VariantContextWriter.getOutput(inputParameters.getOutputFolder(),
+                                                                  inputParameters.getAssemblyAccession()));
+    }
+
+    private FileInputStream getMergedRelease() throws FileNotFoundException {
+        return new FileInputStream(MergedVariantContextWriter.getOutput(inputParameters.getOutputFolder(),
+                                                                        inputParameters.getAssemblyAccession()));
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

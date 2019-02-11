@@ -31,6 +31,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
+import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
@@ -40,6 +42,7 @@ import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -94,28 +97,33 @@ public class CreateReleaseStepConfigurationTest {
     @Test
     public void variantsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
+    }
+
+    private File getReleaseFile() throws FileNotFoundException {
+        return VariantContextWriter.getOutput(inputParameters.getOutputFolder(),
+                                              inputParameters.getAssemblyAccession());
     }
 
     @Test
     public void metadataIsPresent() throws Exception {
         assertStepExecutesAndCompletes();
 
-        List<String> referenceLines = grepFile(new File(inputParameters.getOutputVcf()),
+        List<String> referenceLines = grepFile(getReleaseFile(),
                                                "^##reference=" + inputParameters.getAssemblyAccession() + "$");
         assertEquals(1, referenceLines.size());
 
-        List<String> metadataVariantClassLines = grepFile(new File(inputParameters.getOutputVcf()),
+        List<String> metadataVariantClassLines = grepFile(getReleaseFile(),
                                                           "^##INFO=<ID=" + VARIANT_CLASS_KEY + ".*$");
         assertEquals(1, metadataVariantClassLines.size());
 
-        List<String> metadataStudyIdLines = grepFile(new File(inputParameters.getOutputVcf()),
+        List<String> metadataStudyIdLines = grepFile(getReleaseFile(),
                                                      "^##INFO=<ID=" + STUDY_ID_KEY + ".*$");
         assertEquals(1, metadataStudyIdLines.size());
 
-        List<String> headerLines = grepFile(new File(inputParameters.getOutputVcf()),
-                                                     "^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO$");
+        List<String> headerLines = grepFile(getReleaseFile(),
+                                            "^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO$");
         assertEquals(1, headerLines.size());
     }
 
@@ -135,21 +143,21 @@ public class CreateReleaseStepConfigurationTest {
     @Test
     public void rsAccessionsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
-        List<String> dataLinesWithRs = grepFile(new File(inputParameters.getOutputVcf()), "^.*\trs[0-9]+\t.*$");
+        List<String> dataLinesWithRs = grepFile(getReleaseFile(), "^.*\trs[0-9]+\t.*$");
         assertEquals(3, dataLinesWithRs.size());
     }
 
     @Test
     public void infoWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
+        File outputFile = getReleaseFile();
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         String dataLinesDoNotStartWithHash = "^[^#]";
         String variantClass = VARIANT_CLASS_KEY + "=SO:[0-9]+";
         String studyId = STUDY_ID_KEY + "=[a-zA-Z0-9,]+";
-        File outputFile = new File(inputParameters.getOutputVcf());
 
         List<String> dataLines;
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + variantClass + ".*");

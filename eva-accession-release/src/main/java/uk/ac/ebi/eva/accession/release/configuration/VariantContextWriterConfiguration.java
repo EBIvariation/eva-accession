@@ -16,7 +16,6 @@
 
 package uk.ac.ebi.eva.accession.release.configuration;
 
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -34,13 +33,12 @@ public class VariantContextWriterConfiguration {
 
     @Bean(RELEASE_WRITER)
     public VariantContextWriter variantContextWriter(InputParameters parameters) {
-        return new VariantContextWriter(new File(parameters.getOutputVcf()), parameters.getAssemblyAccession());
+        return new VariantContextWriter(parameters.getOutputFolder(), parameters.getAssemblyAccession());
     }
 
     @Bean(MERGED_RELEASE_WRITER)
     public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
-        return new MergedVariantContextWriter(new File(parameters.getOutputVcfMerged()),
-                                              parameters.getAssemblyAccession());
+        return new MergedVariantContextWriter(parameters.getOutputFolder(), parameters.getAssemblyAccession());
     }
 
 }
