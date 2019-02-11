@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.release.io;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,12 +69,16 @@ public class DeprecatedVariantMongoReaderTest {
 
     private DeprecatedVariantMongoReader reader;
 
-    private ExecutionContext executionContext;
-
     @Before
-    public void setUp() throws Exception {
-        executionContext = new ExecutionContext();
+    public void setUp() {
+        ExecutionContext executionContext = new ExecutionContext();
         reader = new DeprecatedVariantMongoReader(ASSEMBLY, mongoTemplate);
+        reader.open(executionContext);
+    }
+
+    @After
+    public void tearDown() {
+        reader.close();
     }
 
     @Test
@@ -100,7 +105,6 @@ public class DeprecatedVariantMongoReaderTest {
     }
 
     private List<DbsnpClusteredVariantOperationEntity> readIntoList() throws Exception {
-        reader.open(executionContext);
         List<DbsnpClusteredVariantOperationEntity> variants = new ArrayList<>();
         DbsnpClusteredVariantOperationEntity variant;
 
@@ -108,7 +112,6 @@ public class DeprecatedVariantMongoReaderTest {
             variants.add(variant);
         }
 
-        reader.close();
         return variants;
     }
 

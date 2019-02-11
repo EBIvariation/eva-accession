@@ -31,9 +31,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
-import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
-import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
@@ -115,17 +112,17 @@ public class AccessionReleaseJobConfigurationTest {
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getCurrentReportPath(
+        return new FileInputStream(ReportPathResolver.getCurrentIdsReportPath(
                 inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession()).toFile());
     }
 
     private FileInputStream getMergedRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getMergedReportPath(
+        return new FileInputStream(ReportPathResolver.getMergedIdsReportPath(
                 inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession()).toFile());
     }
 
     private FileInputStream getDeprecatedRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getDeprecatedReportPath(
+        return new FileInputStream(ReportPathResolver.getDeprecatedIdsReportPath(
                 inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession()).toFile());
     }
 

@@ -31,7 +31,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
@@ -85,7 +84,7 @@ public class CreateReleaseStepConfigurationTest {
     }
 
     @Test
-    public void basicStepCompletion() throws Exception {
+    public void basicStepCompletion() {
         assertStepExecutesAndCompletes();
     }
 
@@ -101,9 +100,9 @@ public class CreateReleaseStepConfigurationTest {
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
-    private File getReleaseFile() throws FileNotFoundException {
-        return ReportPathResolver.getCurrentReportPath(inputParameters.getOutputFolder(),
-                                                       inputParameters.getAssemblyAccession()).toFile();
+    private File getReleaseFile() {
+        return ReportPathResolver.getCurrentIdsReportPath(inputParameters.getOutputFolder(),
+                                                          inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

@@ -31,7 +31,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
@@ -102,9 +101,9 @@ public class CreateMergedReleaseStepConfigurationTest {
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
-    private File getMergedReleaseFile() throws FileNotFoundException {
-        return ReportPathResolver.getMergedReportPath(inputParameters.getOutputFolder(),
-                                                      inputParameters.getAssemblyAccession()).toFile();
+    private File getMergedReleaseFile() {
+        return ReportPathResolver.getMergedIdsReportPath(inputParameters.getOutputFolder(),
+                                                         inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

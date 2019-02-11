@@ -31,7 +31,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
@@ -78,7 +77,7 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
     }
 
     @Test
-    public void basicStepCompletion() throws Exception {
+    public void basicStepCompletion() {
         assertStepExecutesAndCompletes();
     }
 
@@ -94,9 +93,9 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
-    private File getDeprecatedReleaseFile() throws FileNotFoundException {
-        return ReportPathResolver.getDeprecatedReportPath(inputParameters.getOutputFolder(),
-                                                          inputParameters.getAssemblyAccession()).toFile();
+    private File getDeprecatedReleaseFile() {
+        return ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                             inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

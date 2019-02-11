@@ -19,6 +19,7 @@ import org.springframework.batch.item.data.MongoItemReader;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 
 import java.util.HashMap;
@@ -33,7 +34,8 @@ public class DeprecatedVariantMongoReader extends MongoItemReader<DbsnpClustered
         setTemplate(mongoTemplate);
         setTargetType(DbsnpClusteredVariantOperationEntity.class);
 
-        setQuery(String.format("{ \"inactiveObjects.asm\" : \"%s\", eventType : \"DEPRECATED\" }", assemblyAccession));
+        setQuery(String.format("{ \"inactiveObjects.asm\" : \"%s\", eventType : \"%s\" }", assemblyAccession,
+                 EventType.DEPRECATED));
 
         Map<String, Sort.Direction> sort = new HashMap<>();
         sort.put("accession", Sort.Direction.ASC);

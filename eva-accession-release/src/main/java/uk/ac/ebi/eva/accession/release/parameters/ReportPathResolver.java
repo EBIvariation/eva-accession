@@ -24,17 +24,17 @@ import java.nio.file.Paths;
  */
 public class ReportPathResolver {
 
-    public static final Path getCurrentReportPath(String outputFolder, String referenceAssembly) {
+    public static final Path getCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
         final String FILE_SUFFIX = "_current_ids.vcf";
         return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }
 
-    public static final Path getMergedReportPath(String outputFolder, String referenceAssembly) {
+    public static final Path getMergedIdsReportPath(String outputFolder, String referenceAssembly) {
         final String FILE_SUFFIX = "_merged_ids.vcf";
         return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }
 
-    public static final Path getDeprecatedReportPath(String outputFolder, String referenceAssembly) {
+    public static final Path getDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
         final String FILE_SUFFIX = "_deprecated_ids.txt";
         return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }

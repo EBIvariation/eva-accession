@@ -24,7 +24,6 @@ import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 
-import java.io.File;
 import java.nio.file.Path;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_RELEASE_WRITER;
@@ -35,15 +34,15 @@ public class VariantContextWriterConfiguration {
 
     @Bean(RELEASE_WRITER)
     public VariantContextWriter variantContextWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getCurrentReportPath(parameters.getOutputFolder(),
-                                                                  parameters.getAssemblyAccession());
+        Path reportPath = ReportPathResolver.getCurrentIdsReportPath(parameters.getOutputFolder(),
+                                                                     parameters.getAssemblyAccession());
         return new VariantContextWriter(reportPath, parameters.getAssemblyAccession());
     }
 
     @Bean(MERGED_RELEASE_WRITER)
     public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getMergedReportPath(parameters.getOutputFolder(),
-                                                                 parameters.getAssemblyAccession());
+        Path reportPath = ReportPathResolver.getMergedIdsReportPath(parameters.getOutputFolder(),
+                                                                    parameters.getAssemblyAccession());
         return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession());
     }
 
