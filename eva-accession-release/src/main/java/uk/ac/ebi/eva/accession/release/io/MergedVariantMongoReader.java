@@ -108,9 +108,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
             boolean assemblyMatch = submittedVariant.getBoolean(ASSEMBLY_MATCH_FIELD, DEFAULT_ASSEMBLY_MATCH);
             boolean evidence = submittedVariant.getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
 
-            VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, mergedInto, sequenceOntology, validated,
+            VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                      submittedVariantValidated, allelesMatch,
-                                                                     assemblyMatch, evidence);
+                                                                     assemblyMatch, evidence, mergedInto);
 
             addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
         }

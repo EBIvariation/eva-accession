@@ -118,9 +118,9 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     abstract List<Variant> getVariants(Document clusteredVariant);
 
-    protected VariantSourceEntry buildVariantSourceEntry(String study, Long mergedInto, String sequenceOntology,
-                                                         boolean validated, boolean submittedVariantValidated,
-                                                         boolean allelesMatch, boolean assemblyMatch, boolean evidence) {
+    protected VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
+                                                         boolean submittedVariantValidated, boolean allelesMatch,
+                                                         boolean assemblyMatch, boolean evidence, Long mergedInto) {
         VariantSourceEntry variantSourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                         submittedVariantValidated, allelesMatch,
                                                                         assemblyMatch, evidence);
