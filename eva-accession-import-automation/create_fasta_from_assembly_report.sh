@@ -14,6 +14,9 @@ output_folder=$3
 
 exit_code=0
 
+# To ensure the FASTA file exists before running `grep -c`, otherwise it will always fail
+touch ${output_folder}/${assembly_accession}.fa
+
 for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
     echo ${genbank_contig}
@@ -25,13 +28,19 @@ do
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
     lines=`head -n 2 ${genbank_contig} | wc -l`
-    if [ $lines -gt 1 ]
+    if [ $lines -le 1 ]
     then
-        cat ${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
-    else
         echo FASTA sequence not available for ${genbank_contig}
         exit_code=1
         continue
+    else
+        # Write the sequence associated with an accession to a FASTA file only once
+        accession=`head -n 1 ${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
+        matches=`grep -c "${accession}" ${output_folder}/${assembly_accession}.fa`
+        if [ $matches -eq 0 ]
+        then
+            cat ${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
+        fi
     fi
 
     # Check that an accession is present no more than once in the output FASTA file, otherwise it 
@@ -43,6 +52,9 @@ do
         echo Sequence ${genbank_contig} found more than once in the output FASTA file
         exit_code=2
     fi
+    
+    # Delete temporary contig file
+    rm ${genbank_contig}
 done
 
 exit $exit_code
