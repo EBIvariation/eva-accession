@@ -8,11 +8,13 @@ from __init__ import *
 
 def run_command(command_description, command):
     logger.info("Starting process: " + command_description)
-    with subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1, universal_newlines=True, shell=True) as process:
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True,
+                          shell=True) as process:
         for line in process.stdout:
             print(line, end='')
+        errors = os.linesep.join(process.stderr.readlines())
     if process.returncode != 0:
-        logger.error(command_description + " failed!")
+        logger.error(command_description + " failed!" + os.linesep + errors)
         raise subprocess.CalledProcessError(process.returncode, process.args)
     else:
         logger.info(command_description + " completed successfully")
@@ -42,16 +44,18 @@ def get_commands_to_run(command_line_args):
     program_args["species_accessioning_import_folder"] = os.path.sep.join(["{eva_root_dir}",
                                                                            "dbsnp-importer-accessioning",
                                                                            "{species}"]).format(**program_args)
+    program_args["species_accessioning_import_qa_folder"] = os.path.sep.join(["{species_accessioning_import_folder}",
+                                                                              "accessioning-qa",
+                                                                              "{env}"]).format(**program_args)
 
     program_args["assembly_report"] = os.path.sep.join(["{species_assembly_report_folder}",
                                                         "{assembly_accession}_custom.txt"]).format(**program_args)
     program_args["fasta_file_path"] = os.path.sep.join(["{species_assembly_folder}",
                                                         "{assembly_accession}.fa"]).format(**program_args)
 
-    create_species_assembly_folders_command = "mkdir -p {species_assembly_folder} && " \
-                                              "mkdir -p {species_assembly_report_folder}".format(**program_args)
-    create_species_accessioning_import_folder_command = "mkdir -p {species_accessioning_import_folder}" \
-        .format(**program_args)
+    create_requisite_folders_command = "mkdir -p {species_assembly_folder} && " \
+                                       "mkdir -p {species_assembly_report_folder} && " \
+                                       "mkdir -p {species_accessioning_import_qa_folder}".format(**program_args)
 
     generate_custom_assembly_report_command = "cd {species_assembly_report_folder} && " \
                                               "{python3_path} {program_dir}generate_custom_assembly_report.py " \
@@ -70,6 +74,8 @@ def get_commands_to_run(command_line_args):
                                                    "-f {fasta_file_path} " +
                                                    "-d {metadb} -u {metauser} -h {metahost} " +
                                                    "-D {job_tracker_db} -H {job_tracker_host} " +
+                                                   "-P {job_tracker_port} -U {job_tracker_user} " +
+                                                   "--dbsnp-user {dbsnp_user} --dbsnp-port {dbsnp_port} " +
                                                    "--mongo-acc-db {mongo_acc_db} --mongo-auth-db {mongo_auth_db} " +
                                                    "--mongo-user {mongo_user} --mongo-password {mongo_password} " +
                                                    "--mongo-host {mongo_host} --mongo-port {mongo_port}")\
@@ -83,15 +89,14 @@ def get_commands_to_run(command_line_args):
                                    "--spring.config.location={properties_file_path}".format(**program_args)
 
     ss_counts_validation_command = ("cd {validation_script_path} && " +
-                                    "bash ss_counts.sh {assembly_accession} {assembly_name} {species} {build} " +
-                                    os.path.sep.join(["{species_accessioning_import_folder}", "accessioning-qa",
-                                                      "{env}"]) +
-                                    " {env}").format(**program_args)
+                                    "bash ss_counts.sh {assembly_accession} {assembly_name} " +
+                                    program_args["species"].split("_")[0] + " " +
+                                    program_args["species"].split("_")[1] +
+                                    " {build} {species_accessioning_import_qa_folder} {env}").format(**program_args)
     rs_counts_validation_command = ss_counts_validation_command.replace("ss_counts", "rs_counts")
 
     return [
-        ("Create assembly FASTA and report folders", create_species_assembly_folders_command),
-        ("Create accessioning import folder", create_species_accessioning_import_folder_command),
+        ("Create required folders", create_requisite_folders_command),
         ("Generate custom assembly report", generate_custom_assembly_report_command),
         ("Create FASTA file", create_fasta_file_command),
         ("Generate properties file for accessioning import", generate_import_job_properties_file_command),
@@ -124,15 +129,14 @@ if __name__ == "__main__":
                              ". (Can be ommited if there is only one assembly name in the build)")
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private connection details, credentials etc.,")
-    parser.add_argument("--step", help= os.linesep + "Run from a specific step number." + os.linesep +
-                                       "1. Create assembly FASTA and report folders" + os.linesep +
-                                       "2. Create accessioning import folder" + os.linesep +
-                                       "3. Generate custom assembly report" + os.linesep +
-                                       "4. Create FASTA file" + os.linesep +
-                                       "5. Generate properties file for accessioning import" + os.linesep +
-                                       "6. Run accession import" + os.linesep +
-                                       "7. Validate SS counts" + os.linesep +
-                                       "8. Validate RS counts",
+    parser.add_argument("--step", help=os.linesep + "Run from a specific step number." + os.linesep +
+                                        "1. Create required folders" + os.linesep +
+                                        "2. Generate custom assembly report" + os.linesep +
+                                        "3. Create FASTA file" + os.linesep +
+                                        "4. Generate properties file for accessioning import" + os.linesep +
+                                        "5. Run accession import" + os.linesep +
+                                        "6. Validate SS counts" + os.linesep +
+                                        "7. Validate RS counts",
                         default=1, type=int)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
