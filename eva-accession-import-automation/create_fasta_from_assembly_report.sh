@@ -23,39 +23,28 @@ do
 
     # Download each GenBank accession in the assembly report from ENA into a separate file
     # Delete the accession prefix from the header line
-    wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${genbank_contig}
+    wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
-    lines=`head -n 2 ${genbank_contig} | wc -l`
+    lines=`head -n 2 ${output_folder}/${genbank_contig} | wc -l`
     if [ $lines -le 1 ]
     then
         echo FASTA sequence not available for ${genbank_contig}
         exit_code=1
         continue
-    else
-        # Write the sequence associated with an accession to a FASTA file only once
-        accession=`head -n 1 ${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
-        matches=`grep -c "${accession}" ${output_folder}/${assembly_accession}.fa`
-        if [ $matches -eq 0 ]
-        then
-            cat ${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
-        fi
     fi
 
-    # Check that an accession is present no more than once in the output FASTA file, otherwise it 
-    # means there are unexpected aliases in the assembly report, which need to be checked
-    accession=`head -n 1 ${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
+    # Write the sequence associated with an accession to a FASTA file only once
+    accession=`head -n 1 ${output_folder}/${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
     matches=`grep -c "${accession}" ${output_folder}/${assembly_accession}.fa`
-    if [ $matches -gt 1 ]
+    if [ $matches -eq 0 ]
     then
-        echo Sequence ${genbank_contig} found more than once in the output FASTA file
-        exit_code=2
+        cat ${output_folder}/${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
     fi
-    
+
     # Delete temporary contig file
-    rm ${genbank_contig}
+    rm ${output_folder}/${genbank_contig}
 done
 
 exit $exit_code
-
