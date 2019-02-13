@@ -4,6 +4,36 @@
     pip install -r requirements.txt
     ```
 # Usage
+## Run the automation script
+* Example
+    ```bash
+    python3 run_accession_import.py -s chickpea_3827 --scientific-name cicer_arietinum -a GCA_000331145.1 -b 146 -l -n ASM33114v1 -p /path/to/private-dev-config.json
+    ```
+    * Private configuration file example
+    ```json
+    {
+      "env" : "dev",
+      "eva_root_dir" : "/dir/for/eva",
+      "metadb": "<metadb>",
+      "metauser": "<metauser>",
+      "metahost": "<metahost>",
+      "dbsnp_user" : "<dbsnp_user>",
+      "dbsnp_port" : 5432,
+      "job_tracker_db" : "<job_tracker_db>",  
+      "job_tracker_host" : "<job_tracker_host>",  
+      "job_tracker_port" : 5432,
+      "job_tracker_user" : "<job_tracker_user>",  
+      "mongo_acc_db" : "<mongo_acc_db>",
+      "mongo_auth_db" : "<mongo_auth_db>",
+      "mongo_user" : "<mongo_user>",
+      "mongo_password" : "<mongo_password>",
+      "mongo_host" : "<mongo_host>",
+      "mongo_port" : 27017,
+      "accession_import_jar" : "/path/to/eva-accession-import.jar",
+      "python3_path" : "/path/to/python3",
+      "validation_script_path": "/path/to/validation/scripts"
+    }
+    ```
 ## Generate custom assembly report
 * Get help
     ```bash 

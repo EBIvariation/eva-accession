@@ -108,7 +108,6 @@ def get_commands_to_run(command_line_args):
 
 def main(command_line_args):
     for command_description, command in get_commands_to_run(vars(command_line_args))[command_line_args.step-1:]:
-        #print(command + os.linesep)
         run_command(command_description, command)
 
 
@@ -117,9 +116,9 @@ if __name__ == "__main__":
         description='Run the accession import process for a given species, assembly and build', add_help=False,
         formatter_class=RawTextHelpFormatter)
     parser.add_argument("-s", "--species", help="Species for which the process has to be run", required=True)
-    parser.add_argument("--scientific-name", help="Scientific name for the species", required=True)
-    parser.add_argument("-a", "--assembly-accession", help="Assembly for which the process has to be run",
-                        required=True)
+    parser.add_argument("--scientific-name", help="Scientific name for the species (e.g. daucus_carota)", required=True)
+    parser.add_argument("-a", "--assembly-accession", help="Assembly for which the process has to be run - "
+                                                           "GCA preferred (e.g. GCA_000001215.2)", required=True)
     parser.add_argument("-b", "--build", help="dbSNP build number, e.g. 151", required=True)
     parser.add_argument("-l", "--latest-build",
                         help="Flag that this build is the latest (relevant for dbsnp table name)",
@@ -143,7 +142,7 @@ if __name__ == "__main__":
     args = {}
     try:
         args = parser.parse_args()
-        if args.step > 8:
+        if args.step > 7:
             logger.error("Use only the step numbers that appear in the help message!")
             sys.exit(1)
         main(args)
