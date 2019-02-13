@@ -57,4 +57,9 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
         return wrappedAccessions;
     }
 
+    private AccessionWrapper<ISubmittedVariant, String, Long> toModelWrapper(DbsnpSubmittedVariantEntity entity) {
+        return new AccessionWrapper<>(entity.getAccession(), entity.getHashedMessage(), entity.getModel(),
+                                      entity.getVersion());
+    }
+
 }

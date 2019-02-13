@@ -23,6 +23,7 @@ import com.mongodb.DBObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -40,12 +41,12 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
@@ -62,6 +63,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
@@ -132,6 +134,9 @@ public class SubmittedVariantAccessioningServiceTest {
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Rule
+    private ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() {
@@ -223,10 +228,13 @@ public class SubmittedVariantAccessioningServiceTest {
 
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
-    public void getByAccessionsFromBothRepositories() {
-        List<Long> accessions = Arrays.asList(ACCESSION, ACCESSION_DBSNP_1);
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = service.getByAccessions(accessions);
-        assertEquals(2, submittedVariants.size());
+    public void getByAccessionsFromBothRepositories()
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        AccessionWrapper<ISubmittedVariant, String, Long> submittedVariant = service.getByAccession(ACCESSION);
+        assertNotNull(submittedVariant);
+        AccessionWrapper<ISubmittedVariant, String, Long> submittedDbsnpVariant = service.getByAccession(
+                ACCESSION_DBSNP_1);
+        assertNotNull(submittedDbsnpVariant);
     }
 
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})
@@ -281,9 +289,9 @@ public class SubmittedVariantAccessioningServiceTest {
         assertVariantPatched(ACCESSION, submittedVariantModified);
     }
 
-    private void assertVariantPatched(long accession, ISubmittedVariant modifiedVariant) {
-        ISubmittedVariant variantFromDb = service.getByAccessions(Collections.singletonList(accession)).get(0)
-                                                 .getData();
+    private void assertVariantPatched(long accession, ISubmittedVariant modifiedVariant)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        ISubmittedVariant variantFromDb = service.getByAccession(accession).getData();
         assertEquals(modifiedVariant, variantFromDb);
     }
 
@@ -299,14 +307,13 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void deprecateSubmittedVariant() throws AccessionMergedException, AccessionDoesNotExistException,
             AccessionDeprecatedException {
-        assertFalse(service.getByAccessions(Collections.singletonList(ACCESSION_TO_DEPRECATE)).isEmpty());
+        assertNotNull(service.getByAccession(ACCESSION_TO_DEPRECATE));
         service.deprecate(ACCESSION_TO_DEPRECATE, DEPRECATE_REASON);
         assertVariantDeprecated(ACCESSION_TO_DEPRECATE, DEPRECATE_REASON);
     }
 
-    private void assertVariantDeprecated(long accession, String reason) {
-        assertTrue(service.getByAccessions(Collections.singletonList(accession)).isEmpty());
-
+    private void assertVariantDeprecated(long accession, String reason)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         IEvent<ISubmittedVariant, Long> lastOperation;
         if (accession >= accessioningMonotonicInitSs) {
             lastOperation = inactiveService.getLastEvent(accession);
@@ -317,13 +324,16 @@ public class SubmittedVariantAccessioningServiceTest {
         assertEquals(accession, lastOperation.getAccession().longValue());
         assertNull(lastOperation.getMergedInto());
         assertEquals(reason, lastOperation.getReason());
+
+        expectedException.expect(AccessionDeprecatedException.class);
+        service.getByAccession(accession);
     }
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
     public void deprecateDnsnpSubmittedVariant() throws AccessionMergedException, AccessionDoesNotExistException,
             AccessionDeprecatedException {
-        assertFalse(service.getByAccessions(Collections.singletonList(ACCESSION_DBSNP_1)).isEmpty());
+        assertNotNull(service.getByAccession(ACCESSION_DBSNP_1));
         service.deprecate(ACCESSION_DBSNP_1, DEPRECATE_REASON);
         assertVariantDeprecated(ACCESSION_DBSNP_1, DEPRECATE_REASON);
     }
@@ -332,16 +342,14 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void mergeSubmittedVariant() throws AccessionMergedException, AccessionDoesNotExistException,
             AccessionDeprecatedException {
-        assertFalse(service.getByAccessions(Collections.singletonList(ACCESSION_TO_MERGE_1)).isEmpty());
-        assertFalse(service.getByAccessions(Collections.singletonList(ACCESSION_TO_MERGE_2)).isEmpty());
+        assertNotNull(service.getByAccession(ACCESSION_TO_MERGE_1));
+        assertNotNull(service.getByAccession(ACCESSION_TO_MERGE_2));
         service.merge(ACCESSION_TO_MERGE_1, ACCESSION_TO_MERGE_2, MERGE_REASON);
         assertVariantMerged(ACCESSION_TO_MERGE_1, ACCESSION_TO_MERGE_2, MERGE_REASON);
     }
 
-    private void assertVariantMerged(long accessionOrigin, long accessionDestination, String reason) {
-        assertTrue(service.getByAccessions(Collections.singletonList(accessionOrigin)).isEmpty());
-        assertFalse(service.getByAccessions(Collections.singletonList(accessionDestination)).isEmpty());
-
+    private void assertVariantMerged(long accessionOrigin, long accessionDestination, String reason)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         IEvent<ISubmittedVariant, Long> lastOperation;
         if (accessionOrigin >= accessioningMonotonicInitSs) {
             lastOperation = inactiveService.getLastEvent(accessionOrigin);
@@ -352,14 +360,19 @@ public class SubmittedVariantAccessioningServiceTest {
         assertEquals(accessionOrigin, lastOperation.getAccession().longValue());
         assertEquals(accessionDestination, lastOperation.getMergedInto().longValue());
         assertEquals(MERGE_REASON, lastOperation.getReason());
+
+        assertNotNull(service.getByAccession(accessionDestination));
+
+        expectedException.expect(AccessionMergedException.class);
+        service.getByAccession(accessionOrigin);
     }
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
     public void mergeDbsnpSubmittedVariant() throws AccessionMergedException, AccessionDoesNotExistException,
             AccessionDeprecatedException {
-        assertFalse(service.getByAccessions(Collections.singletonList(ACCESSION_DBSNP_1)).isEmpty());
-        assertFalse(service.getByAccessions(Collections.singletonList(ACCESSION_DBSNP_2)).isEmpty());
+        assertNotNull(service.getByAccession(ACCESSION_DBSNP_1));
+        assertNotNull(service.getByAccession(ACCESSION_DBSNP_2));
         service.merge(ACCESSION_DBSNP_1, ACCESSION_DBSNP_2, MERGE_REASON);
         assertVariantMerged(ACCESSION_DBSNP_1, ACCESSION_DBSNP_2, MERGE_REASON);
     }
@@ -367,8 +380,8 @@ public class SubmittedVariantAccessioningServiceTest {
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test(expected = UnsupportedOperationException.class)
     public void exceptionWhenCreateAccessionForDbsnpVariant() throws AccessionCouldNotBeGeneratedException {
-        BasicMonotonicAccessioningService accessioningServiceDbsnp =
-                new BasicMonotonicAccessioningService<ISubmittedVariant, String>(
+        DbsnpSubmittedVariantMonotonicAccessioningService accessioningServiceDbsnp =
+                new DbsnpSubmittedVariantMonotonicAccessioningService(
                         dbsnpAccessionGenerator, dbServiceDbsnp, new SubmittedVariantSummaryFunction(),
                         new SHA1HashingFunction());
 

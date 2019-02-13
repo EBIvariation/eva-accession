@@ -16,10 +16,9 @@
 
 package uk.ac.ebi.eva.accession.core.persistence;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRangePriorityQueue;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
@@ -27,21 +26,15 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 import java.util.List;
 import java.util.Map;
 
-public class DbsnpMonotonicAccessionGenerator<T> extends MonotonicAccessionGenerator {
+public class DbsnpMonotonicAccessionGenerator<MODEL> extends MonotonicAccessionGenerator<MODEL> {
 
     public DbsnpMonotonicAccessionGenerator(String categoryId, String applicationInstanceId,
                                             ContiguousIdBlockService contiguousIdBlockService) {
-        super(categoryId, applicationInstanceId, contiguousIdBlockService);
+        super(categoryId, applicationInstanceId, contiguousIdBlockService, (long[])null);
     }
 
     @Override
-    public synchronized void recoverState(long[] committedElements) throws AccessionIsNotPendingException {
-        throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
-    }
-
-    @Override
-    public synchronized long[] generateAccessions(
-            int numAccessionsToGenerate) throws AccessionCouldNotBeGeneratedException {
+    public synchronized long[] generateAccessions(int numAccessionsToGenerate) {
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
@@ -66,7 +59,7 @@ public class DbsnpMonotonicAccessionGenerator<T> extends MonotonicAccessionGener
     }
 
     @Override
-    public List<AccessionWrapper> generateAccessions(Map messages) throws AccessionCouldNotBeGeneratedException {
+    public <HASH> List<AccessionWrapper<MODEL, HASH, Long>> generateAccessions(Map<HASH, MODEL> messages) {
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 }

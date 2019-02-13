@@ -17,9 +17,10 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
-import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
@@ -29,21 +30,11 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
  *
  * TODO Support EVA clustered variants, see {@link SubmittedVariantAccessioningService} for reference
  */
-public class ClusteredVariantAccessioningService extends BasicMonotonicAccessioningService<IClusteredVariant, String> {
+public class ClusteredVariantAccessioningService extends BasicAccessioningService<IClusteredVariant, String, Long> {
 
     public ClusteredVariantAccessioningService(DbsnpMonotonicAccessionGenerator<IClusteredVariant> generator,
-                                               MonotonicDatabaseService dbServiceDbsnp) {
+                                               DatabaseService<IClusteredVariant, String, Long> dbServiceDbsnp) {
         super(generator, dbServiceDbsnp, new ClusteredVariantSummaryFunction(), new SHA1HashingFunction());
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        /*
-        Overriding this method is necessary to avoid an UnsupportedOperationException from being thrown because new
-        dbSNP clustered variants can't be issued.
-        TODO This overriding method can be deleted once the issuing of new clustered variants is implemented.
-        In order to do so, the class must follow the same structure as {@link SubmittedVariantAccessioningService}.
-         */
     }
 
 }

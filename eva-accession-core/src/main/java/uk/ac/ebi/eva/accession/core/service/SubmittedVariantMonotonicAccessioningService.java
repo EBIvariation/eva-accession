@@ -15,9 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.core.service;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-import uk.ac.ebi.ampt2d.commons.accession.service.BasicMonotonicAccessioningService;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class SubmittedVariantMonotonicAccessioningService
-        extends BasicMonotonicAccessioningService<ISubmittedVariant, String> {
+        extends BasicAccessioningService<ISubmittedVariant, String, Long> {
 
     private final SubmittedVariantAccessioningDatabaseService dbService;
 
@@ -39,7 +39,7 @@ public class SubmittedVariantMonotonicAccessioningService
         this.dbService = dbService;
     }
 
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessions(
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
             List<Long> clusteredVariantAccessions) {
         return dbService.findByClusteredVariantAccessionIn(clusteredVariantAccessions);
     }

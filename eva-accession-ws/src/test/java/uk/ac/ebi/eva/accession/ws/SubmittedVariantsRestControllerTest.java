@@ -32,6 +32,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -94,25 +97,25 @@ public class SubmittedVariantsRestControllerTest {
 
     @Test
     public void testGetVariantsRestTemplate() {
-        String identifiers = generatedAccessions.stream().map(acc -> acc.getAccession().toString()).collect(
-                Collectors.joining(","));
-        String getVariantsUrl = URL + identifiers;
+        for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
+            String getVariantsUrl = URL + generatedAccession.getAccession();
 
-        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
-                getVariantsResponse =
-                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                          new ParameterizedTypeReference<
-                                                  List<
-                                                          AccessionResponseDTO<
-                                                                  SubmittedVariant,
-                                                                  ISubmittedVariant,
-                                                                  String,
-                                                                  Long>>>() {
-                                          });
-        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        assertEquals(2, getVariantsResponse.getBody().size());
-        assertDefaultFlags(getVariantsResponse.getBody());
-        assertCreatedDateNotNull(getVariantsResponse.getBody());
+            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                    getVariantsResponse =
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                              new ParameterizedTypeReference<
+                                                      List<
+                                                              AccessionResponseDTO<
+                                                                      SubmittedVariant,
+                                                                      ISubmittedVariant,
+                                                                      String,
+                                                                      Long>>>() {
+                                              });
+            assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+            assertEquals(2, getVariantsResponse.getBody().size());
+            assertDefaultFlags(getVariantsResponse.getBody());
+            assertCreatedDateNotNull(getVariantsResponse.getBody());
+        }
     }
 
     private void assertDefaultFlags(
@@ -135,16 +138,15 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetVariantsController() {
-        List<Long> identifiers = generatedAccessions.stream()
-                                                    .map(acc -> acc.getAccession())
-                                                    .collect(Collectors.toList());
+    public void testGetVariantsController()
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
+                    controller.get(generatedAccession.getAccession());
 
-        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
-                controller.get(identifiers);
-
-        assertEquals(2, getVariantsResponse.size());
-        assertCreatedDateNotNull(getVariantsResponse);
-        assertDefaultFlags(getVariantsResponse);
+            assertEquals(2, getVariantsResponse.size());
+            assertCreatedDateNotNull(getVariantsResponse);
+            assertDefaultFlags(getVariantsResponse);
+        }
     }
 }
