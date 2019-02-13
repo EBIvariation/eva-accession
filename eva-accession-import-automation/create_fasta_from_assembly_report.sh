@@ -48,4 +48,7 @@ do
     rm ${output_folder}/${genbank_contig}
 done
 
+echo `cat ${output_folder}/written_contigs.txt | wc -l` "contigs were written in the FASTA file"
+rm ${output_folder}/written_contigs.txt
+
 exit $exit_code
