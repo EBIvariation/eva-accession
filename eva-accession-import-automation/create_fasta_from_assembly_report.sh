@@ -14,36 +14,42 @@ output_folder=$3
 
 exit_code=0
 
+# To ensure the file exists before running `grep -c`, otherwise it will always fail
+touch ${output_folder}/${assembly_accession}.fa
+touch ${output_folder}/written_contigs.txt
+
 for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
     echo ${genbank_contig}
 
     # Download each GenBank accession in the assembly report from ENA into a separate file
     # Delete the accession prefix from the header line
-    wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${genbank_contig}
+    wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
-    lines=`head -n 2 ${genbank_contig} | wc -l`
-    if [ $lines -gt 1 ]
+    lines=`head -n 2 ${output_folder}/${genbank_contig} | wc -l`
+    if [ $lines -le 1 ]
     then
-        cat ${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
-    else
         echo FASTA sequence not available for ${genbank_contig}
         exit_code=1
-        continue
+    else
+        # Write the sequence associated with an accession to a FASTA file only once
+        # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
+        matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+        if [ $matches -eq 0 ]
+        then
+            cat ${output_folder}/${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
+            echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+        fi
     fi
 
-    # Check that an accession is present no more than once in the output FASTA file, otherwise it 
-    # means there are unexpected aliases in the assembly report, which need to be checked
-    accession=`head -n 1 ${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
-    matches=`grep -c "${accession}" ${output_folder}/${assembly_accession}.fa`
-    if [ $matches -gt 1 ]
-    then
-        echo Sequence ${genbank_contig} found more than once in the output FASTA file
-        exit_code=2
-    fi
+    # Delete temporary contig file
+    rm ${output_folder}/${genbank_contig}
 done
 
-exit $exit_code
+echo `grep -v "^#" ${assembly_accession}  | wc -l` "contigs were present in the assembly report"
+echo `cat ${output_folder}/written_contigs.txt | wc -l` "contigs were successfully retrieved and written in the FASTA file"
+rm ${output_folder}/written_contigs.txt
 
+exit $exit_code
