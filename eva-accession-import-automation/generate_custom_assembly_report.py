@@ -2,8 +2,8 @@ from get_assembly_report_url import *
 import data_ops
 import os
 import pandas
-import urllib
 import sys
+import urllib.request
 from __init__ import *
 
 
@@ -21,9 +21,11 @@ def get_dataframe_for_assembly_report(assembly_report_path):
                            dtype=str, sep='\t')
 
 
-def get_dataframe_for_genbank_equivalents(genbank_equivalents_file_path, assembly_accession):
-    iter_csv = pandas.read_csv(genbank_equivalents_file_path, dtype=str, sep='\t', iterator=True, chunksize=10000)
-    return pandas.concat([chunk[chunk['#rs_assembly'] == assembly_accession] for chunk in iter_csv])
+def get_dataframe_for_genbank_equivalents(genbank_equivalents_file_path):
+    result_dataframe = pandas.read_csv(genbank_equivalents_file_path, dtype=str, sep='\t')
+    result_dataframe = result_dataframe.set_index('rs_acc', drop=False)
+    result_dataframe = result_dataframe.sort_index()
+    return result_dataframe
 
 
 def get_refseq_accessions_without_equivalent_genbank_accessions(assembly_report_dataframe):
@@ -63,8 +65,8 @@ def get_absent_refseq_accessions(refseq_accessions_from_db, refseq_accessions_fr
 def download_assembly_report(assembly_accession):
     assembly_report_url = get_assembly_report_url(assembly_accession)
     assembly_report_path = os.getcwd() + os.path.sep + os.path.basename(assembly_report_url)
-    urllib.urlretrieve(assembly_report_url, assembly_report_path)
-    urllib.urlcleanup()
+    urllib.request.urlretrieve(assembly_report_url, assembly_report_path)
+    urllib.request.urlcleanup()
     return assembly_report_path
 
 
@@ -77,12 +79,9 @@ def insert_absent_genbank_accessions_in_assembly_report(species, refseq_accessio
 
     new_assembly_report_entry_index = len(assembly_report_dataframe)
     for refseq_accession in absent_refseq_accessions:
-        equivalent_genbank_accession = \
-            genbank_equivalents_dataframe[genbank_equivalents_dataframe["rs_acc"] == refseq_accession]["gb_acc"]
-        if len(equivalent_genbank_accession) == 0:
-            logger.warn("Could not find equivalent GenBank accession for RefSeq accession: " + refseq_accession)
-        else:
-            equivalent_genbank_accession = equivalent_genbank_accession.values[0]
+        try:
+            equivalent_genbank_accession = \
+                genbank_equivalents_dataframe.loc[refseq_accession]["gb_acc"]
             assembly_report_dataframe.loc[new_assembly_report_entry_index, "# Sequence-Name"] = refseq_accession
             assembly_report_dataframe.loc[new_assembly_report_entry_index, "Sequence-Role"] = "scaffold"
             assembly_report_dataframe.loc[new_assembly_report_entry_index, "Assigned-Molecule"] = "na"
@@ -94,7 +93,9 @@ def insert_absent_genbank_accessions_in_assembly_report(species, refseq_accessio
             assembly_report_dataframe.loc[new_assembly_report_entry_index, "Assembly-Unit"] = "na"
             assembly_report_dataframe.loc[new_assembly_report_entry_index, "Sequence-Length"] = "na"
             assembly_report_dataframe.loc[new_assembly_report_entry_index, "UCSC-style-name"] = "na"
-
+        except KeyError:
+            logger.warning("Could not find equivalent GenBank accession for RefSeq accession: " + refseq_accession)
+        finally:
             new_assembly_report_entry_index += 1
 
     return assembly_report_dataframe
@@ -108,15 +109,14 @@ def update_non_equivalent_genbank_accessions_in_assembly_report(assembly_report_
         logger.info("No entries were found in the assembly report with non-equivalent GenBank accessions")
 
     for accession in refseq_accessions_with_non_equivalent_genbank_accessions:
-        equivalent_genbank_accession = \
-            genbank_equivalents_dataframe[genbank_equivalents_dataframe["rs_acc"] == accession]["gb_acc"]
-        if len(equivalent_genbank_accession) == 0:
-            logger.warn("Could not find equivalent GenBank accession for RefSeq accession " + accession)
-        else:
-            equivalent_genbank_accession = equivalent_genbank_accession.values[0]
+        try:
+            equivalent_genbank_accession = \
+                genbank_equivalents_dataframe.loc[accession]["gb_acc"]
             assembly_report_dataframe.loc[assembly_report_dataframe["RefSeq-Accn"] == accession, "GenBank-Accn"] = \
                 equivalent_genbank_accession
             assembly_report_dataframe.loc[assembly_report_dataframe["RefSeq-Accn"] == accession, "Relationship"] = "="
+        except KeyError:
+            logger.warning("Could not find equivalent GenBank accession for RefSeq accession " + accession)
 
     return assembly_report_dataframe
 
@@ -132,7 +132,7 @@ def update_non_equivalent_refseq_accessions_in_assembly_report(assembly_report_d
         equivalent_refseq_accession = \
             genbank_equivalents_dataframe[genbank_equivalents_dataframe["gb_acc"] == accession]["rs_acc"]
         if len(equivalent_refseq_accession) == 0:
-            logger.warn("Could not find equivalent RefSeq accession for GenBank accession " + accession)
+            logger.warning("Could not find equivalent RefSeq accession for GenBank accession " + accession)
         else:
             equivalent_refseq_accession = equivalent_refseq_accession.values[0]
             assembly_report_dataframe.loc[assembly_report_dataframe["GenBank-Accn"] == accession, "RefSeq-Accn"] = \
@@ -156,15 +156,14 @@ def update_assembly_report(assembly_report_dataframe, genbank_equivalents_datafr
 
 
 def main(metadb, metauser, metahost, species, assembly_accession, genbank_equivalents_file):
-        species_db_info = filter(lambda db_info: db_info["database_name"] == species,
-                                 data_ops.get_species_pg_conn_info(metadb, metauser, metahost))[0]
+        species_db_info = next(filter(lambda db_info: db_info["database_name"] == species,
+                                      data_ops.get_species_pg_conn_info(metadb, metauser, metahost)))
         # Download assembly report
         assembly_report_path = download_assembly_report(assembly_accession)
 
         # Get dataframes by reading in the assembly report and the file with GenBank equivalents
         assembly_report_dataframe = get_dataframe_for_assembly_report(assembly_report_path)
-        genbank_equivalents_dataframe = get_dataframe_for_genbank_equivalents(genbank_equivalents_file,
-                                                                              assembly_accession)
+        genbank_equivalents_dataframe = get_dataframe_for_genbank_equivalents(genbank_equivalents_file)
 
         # Modify assembly report dataframe by updating N/A or non-equivalent GenBank accessions
         # with the correct equivalents and inserting missing GenBank accessions
@@ -172,8 +171,8 @@ def main(metadb, metauser, metahost, species, assembly_accession, genbank_equiva
                                                            species_db_info)
 
         # Write out the modified assembly report
-        modified_assembly_report_filename = os.path.splitext(assembly_report_path)[0] + "_custom" + \
-                                            os.path.splitext(assembly_report_path)[1]
+        modified_assembly_report_filename = os.path.dirname(assembly_report_path) + os.path.sep + \
+                                            assembly_accession + "_custom.txt"
         assembly_report_dataframe.to_csv(modified_assembly_report_filename, sep='\t', index=None)
 
 
@@ -198,7 +197,7 @@ if __name__ == "__main__":
         main(args.metadb, args.metauser, args.metahost, args.species, args.assembly_accession,
              args.genbank_equivalents_file)
     except Exception as ex:
-        logger.error(ex.message)
+        logger.exception(ex)
         sys.exit(1)
 
     sys.exit(0)
