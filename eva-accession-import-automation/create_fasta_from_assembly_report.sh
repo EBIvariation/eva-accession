@@ -48,7 +48,7 @@ do
     rm ${output_folder}/${genbank_contig}
 done
 
-echo `grep -v "^#" GCA_000001895.4_custom.txt  | wc -l` "contigs were present in the assembly report"
+echo `grep -v "^#" ${assembly_accession}  | wc -l` "contigs were present in the assembly report"
 echo `cat ${output_folder}/written_contigs.txt | wc -l` "contigs were successfully retrieved and written in the FASTA file"
 rm ${output_folder}/written_contigs.txt
 
