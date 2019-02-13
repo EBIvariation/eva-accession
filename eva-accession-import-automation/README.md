@@ -31,7 +31,8 @@
       "mongo_port" : 27017,
       "accession_import_jar" : "/path/to/eva-accession-import.jar",
       "python3_path" : "/path/to/python3",
-      "validation_script_path": "/path/to/validation/scripts"
+      "validation_script_path": "/path/to/validation/scripts",
+      "genbank_equivalents_file" : "/path/to/genbank_equivalents_file"
     }
     ```
 ## Generate custom assembly report
