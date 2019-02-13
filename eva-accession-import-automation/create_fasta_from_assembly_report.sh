@@ -14,8 +14,9 @@ output_folder=$3
 
 exit_code=0
 
-# To ensure the FASTA file exists before running `grep -c`, otherwise it will always fail
+# To ensure the file exists before running `grep -c`, otherwise it will always fail
 touch ${output_folder}/${assembly_accession}.fa
+touch ${output_folder}/written_contigs.txt
 
 for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
@@ -32,15 +33,15 @@ do
     then
         echo FASTA sequence not available for ${genbank_contig}
         exit_code=1
-        continue
-    fi
-
-    # Write the sequence associated with an accession to a FASTA file only once
-    accession=`head -n 1 ${output_folder}/${genbank_contig} | cut -f1 -d' ' | cut -f1 -d'.' | cut -f2 -d'>'`
-    matches=`grep -c "${accession}" ${output_folder}/${assembly_accession}.fa`
-    if [ $matches -eq 0 ]
-    then
-        cat ${output_folder}/${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
+    else
+        # Write the sequence associated with an accession to a FASTA file only once
+        # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
+        matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+        if [ $matches -eq 0 ]
+        then
+            cat ${output_folder}/${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
+            echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+        fi
     fi
 
     # Delete temporary contig file
