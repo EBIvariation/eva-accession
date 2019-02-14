@@ -112,7 +112,7 @@ public class SubmittedVariantsRestControllerTest {
                                                                       Long>>>() {
                                               });
             assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-            assertEquals(2, getVariantsResponse.getBody().size());
+            assertEquals(1, getVariantsResponse.getBody().size());
             assertDefaultFlags(getVariantsResponse.getBody());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
         }
@@ -144,7 +144,7 @@ public class SubmittedVariantsRestControllerTest {
             List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
                     controller.get(generatedAccession.getAccession());
 
-            assertEquals(2, getVariantsResponse.size());
+            assertEquals(1, getVariantsResponse.size());
             assertCreatedDateNotNull(getVariantsResponse);
             assertDefaultFlags(getVariantsResponse);
         }

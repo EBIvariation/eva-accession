@@ -88,7 +88,7 @@ public class ClusteredVariantAccessioningConfiguration {
                 properties.getClustered().getCategoryId(),
                 properties.getInstanceId(),
                 service,
-                dbsnpClusteredVariantAccessioningDatabaseService());
+                (long[])null);
     }
 
     @Bean
