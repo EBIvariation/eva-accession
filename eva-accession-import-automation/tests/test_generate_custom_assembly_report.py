@@ -12,8 +12,7 @@ class TestGenerateCustomAssemblyReport(unittest.TestCase):
         self.assembly_report_path = self.config["assembly_report_path"]
         self.assembly_report_dataframe, self.genbank_equivalents_dataframe = \
             get_dataframe_for_assembly_report(self.assembly_report_path), \
-            get_dataframe_for_genbank_equivalents(self.config["genbank_equivalents_file"],
-                                                  self.config["assembly_accession"])
+            get_dataframe_for_genbank_equivalents(self.config["genbank_equivalents_file"])
 
     def test_get_refseq_accessions_without_equivalent_genbank_accessions(self):
         self.setupTestConfig("tests/config/test-config-bony-fish-7950.json")
