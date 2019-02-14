@@ -24,6 +24,7 @@ def get_dataframe_for_assembly_report(assembly_report_path):
 def get_dataframe_for_genbank_equivalents(genbank_equivalents_file_path):
     result_dataframe = pandas.read_csv(genbank_equivalents_file_path, dtype=str, sep='\t')
     result_dataframe = result_dataframe.set_index('rs_acc', drop=False)
+    result_dataframe = result_dataframe[~result_dataframe.index.duplicated()]
     result_dataframe = result_dataframe.sort_index()
     return result_dataframe
 
