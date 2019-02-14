@@ -136,7 +136,7 @@ public class SubmittedVariantAccessioningServiceTest {
     private ApplicationContext applicationContext;
 
     @Rule
-    private ExpectedException expectedException = ExpectedException.none();
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() {
