@@ -246,7 +246,7 @@ public class ClusteredVariantsRestControllerTest {
             List<AccessionResponseDTO<DTO, MODEL, String, Long>> getVariantsResponse,
             List<AccessionedDocument<MODEL, Long>> expectedVariants,
             Function<MODEL, DTO> modelToDto) {
-        // check the accessiones returned by the service
+        // check the accessions returned by the service
         Set<Long> retrievedAccessions = getVariantsResponse.stream()
                                                            .map(AccessionResponseDTO::getAccession)
                                                            .collect(Collectors.toSet());
