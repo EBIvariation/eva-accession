@@ -35,9 +35,31 @@ for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
     echo ${genbank_contig}
 
-    # Download each GenBank accession in the assembly report from ENA into a separate file
-    # Delete the accession prefix from the header line
-    wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
+    # make $? return the error code of any failed command in the pipe, instead of the last one only
+    set -o pipefail
+    times_wget_failed=0
+    max_allowed_attempts=5
+    while [ $times_wget_failed -lt $max_allowed_attempts ]
+    do
+        # Download each GenBank accession in the assembly report from ENA into a separate file
+        # Delete the accession prefix from the header line
+        wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
+        whole_pipe_result=$?
+        if [ $whole_pipe_result -eq 0 ]
+        then
+            # it was correctly downloaded
+            break
+        fi
+        echo Download for ${genbank_contig} failed. Retrying...
+        times_wget_failed=$(($times_wget_failed + 1))
+    done
+
+    if [ $times_wget_failed -eq $max_allowed_attempts ]
+    then
+        echo Could not download ${genbank_contig}. FASTA file is left incomplete.
+        exit_code=1
+        break
+    fi
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
