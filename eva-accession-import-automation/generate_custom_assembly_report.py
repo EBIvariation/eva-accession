@@ -172,8 +172,8 @@ def main(metadb, metauser, metahost, species, assembly_accession, genbank_equiva
                                                            species_db_info)
 
         # Write out the modified assembly report
-        modified_assembly_report_filename = os.path.dirname(assembly_report_path) + os.path.sep + \
-                                            assembly_accession + "_custom.txt"
+        modified_assembly_report_filename = os.path.dirname(assembly_report_path) + os.path.sep + species + \
+                                            "_custom_assembly_report.txt"
         assembly_report_dataframe.to_csv(modified_assembly_report_filename, sep='\t', index=None)
 
 

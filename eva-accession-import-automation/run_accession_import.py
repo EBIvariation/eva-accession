@@ -4,6 +4,7 @@ import json
 import subprocess
 from argparse import RawTextHelpFormatter
 from __init__ import *
+import data_ops
 
 
 def run_command(command_description, command):
@@ -26,21 +27,26 @@ def get_args_from_private_config_file(private_config_file):
         return json.load(private_config_file_handle)
 
 
+def get_dbsnp_build(species, metadb, metauser, metahost):
+    return next(filter(lambda db_info: db_info["database_name"] == species,
+                       data_ops.get_species_pg_conn_info(metadb, metauser, metahost)))["dbsnp_build"]
+
+
 def get_commands_to_run(command_line_args):
     program_args = command_line_args.copy()
     program_args.update(get_args_from_private_config_file(command_line_args["private_config_file"]))
 
+    program_args["dbsnp_build"] = get_dbsnp_build(program_args["species"], program_args["metadb"],
+                                                  program_args["metauser"], program_args["metahost"])
     program_args["scientific_name"] = program_args["scientific_name"].lower()
     program_args["program_dir"] = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
 
     program_args["species_assembly_folder"] = os.path.sep.join(["{eva_root_dir}", "datasources",
                                                                 "reference_sequences",
-                                                                "{scientific_name}",
-                                                                "{assembly_accession}"]).format(**program_args)
+                                                                "{scientific_name}"]).format(**program_args)
     program_args["species_assembly_report_folder"] = os.path.sep.join(["{eva_root_dir}", "datasources",
                                                                        "assembly_reports",
-                                                                       "{scientific_name}",
-                                                                       "{assembly_accession}"]).format(**program_args)
+                                                                       "{scientific_name}"]).format(**program_args)
     program_args["species_accessioning_import_folder"] = os.path.sep.join(["{eva_root_dir}",
                                                                            "dbsnp-importer-accessioning",
                                                                            "{species}"]).format(**program_args)
@@ -49,9 +55,9 @@ def get_commands_to_run(command_line_args):
                                                                               "{env}"]).format(**program_args)
 
     program_args["assembly_report"] = os.path.sep.join(["{species_assembly_report_folder}",
-                                                        "{assembly_accession}_custom.txt"]).format(**program_args)
+                                                        "{species}_custom_assembly_report.txt"]).format(**program_args)
     program_args["fasta_file_path"] = os.path.sep.join(["{species_assembly_folder}",
-                                                        "{assembly_accession}.fa"]).format(**program_args)
+                                                        "{species}_custom.fa"]).format(**program_args)
 
     create_requisite_folders_command = "mkdir -p {species_assembly_folder} && " \
                                        "mkdir -p {species_assembly_report_folder} && " \
@@ -63,7 +69,7 @@ def get_commands_to_run(command_line_args):
                                               "-s {species} -a {assembly_accession} " \
                                               "-g {genbank_equivalents_file}".format(**program_args)
 
-    create_fasta_file_command = "bash {program_dir}create_fasta_from_assembly_report.sh {assembly_accession} " \
+    create_fasta_file_command = "bash {program_dir}create_fasta_from_assembly_report.sh {species} " \
                                 "{assembly_report} {species_assembly_folder}".format(**program_args)
 
     generate_import_job_properties_file_command = ("cd {species_accessioning_import_folder} && " +
@@ -92,7 +98,8 @@ def get_commands_to_run(command_line_args):
                                     "bash ss_counts.sh {assembly_accession} {assembly_name} " +
                                     program_args["species"].split("_")[0] + " " +
                                     program_args["species"].split("_")[1] +
-                                    " {build} {species_accessioning_import_qa_folder} {env}").format(**program_args)
+                                    " {dbsnp_build} {species_accessioning_import_qa_folder} {env}" +
+                                    (" " if program_args["latest_build"] else " {build}")).format(**program_args)
     rs_counts_validation_command = ss_counts_validation_command.replace("ss_counts", "rs_counts")
 
     return [
