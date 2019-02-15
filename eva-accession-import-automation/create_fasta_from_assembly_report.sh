@@ -54,13 +54,6 @@ do
         times_wget_failed=$(($times_wget_failed + 1))
     done
 
-    if [ $times_wget_failed -eq $max_allowed_attempts ]
-    then
-        echo Could not download ${genbank_contig}. FASTA file is left incomplete.
-        exit_code=1
-        break
-    fi
-
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
     lines=`head -n 2 ${output_folder}/${genbank_contig} | wc -l`
@@ -69,13 +62,20 @@ do
         echo FASTA sequence not available for ${genbank_contig}
         exit_code=1
     else
-        # Write the sequence associated with an accession to a FASTA file only once
-        # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
-        matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
-        if [ $matches -eq 0 ]
+        # if the file is not empty but wget returned an error stop the program!
+        if [ $times_wget_failed -eq $max_allowed_attempts ]
         then
-            cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
-            echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+            echo Could not download ${genbank_contig} completely. FASTA file is left incomplete.
+            exit_code=1
+        else
+            # Write the sequence associated with an accession to a FASTA file only once
+            # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
+            matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+            if [ $matches -eq 0 ]
+            then
+                cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
+                echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+            fi
         fi
     fi
 
