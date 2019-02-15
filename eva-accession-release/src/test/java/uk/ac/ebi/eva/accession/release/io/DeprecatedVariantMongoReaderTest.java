@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
@@ -83,6 +84,18 @@ public class DeprecatedVariantMongoReaderTest {
         for (DbsnpClusteredVariantOperationEntity variant : variants) {
             assertEquals(EventType.DEPRECATED, variant.getEventType());
             variant.getInactiveObjects().stream().forEach(o -> assertEquals(ASSEMBLY, o.getAssemblyAccession()));
+        }
+    }
+
+    @Test
+    public void itemsAreInAscendingOrder() throws Exception {
+        List<DbsnpClusteredVariantOperationEntity> variants = readIntoList();
+        Long accession, previousAccession = 0L;
+
+        for (DbsnpClusteredVariantOperationEntity variant : variants) {
+            accession = variant.getAccession();
+            assertTrue(accession > previousAccession);
+            previousAccession = accession;
         }
     }
 
