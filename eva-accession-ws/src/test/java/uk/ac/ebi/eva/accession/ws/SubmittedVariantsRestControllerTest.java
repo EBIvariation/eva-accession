@@ -47,7 +47,6 @@ import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -148,5 +147,46 @@ public class SubmittedVariantsRestControllerTest {
             assertCreatedDateNotNull(getVariantsResponse);
             assertDefaultFlags(getVariantsResponse);
         }
+    }
+
+    @Test
+    public void testGetMergedVariantsRestTemplate()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        Long CLUSTERED_VARIANT = null;
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
+                Arrays.asList(variant1, variant2));
+
+        Long outdatedAccession = accessions.get(0).getAccession();
+        Long currentAccession = accessions.get(1).getAccession();
+        service.merge(outdatedAccession,
+                      currentAccession,
+                      "let's pretend they are equivalent");
+
+        // when
+        String getVariantsUrl = URL + outdatedAccession;
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                          new ParameterizedTypeReference<
+                                                  List<
+                                                          AccessionResponseDTO<
+                                                                  SubmittedVariant,
+                                                                  ISubmittedVariant,
+                                                                  String,
+                                                                  Long>>>() {
+                                          });
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertEquals(currentAccession, getVariantsResponse.getBody().get(0).getAccession());
+        assertDefaultFlags(getVariantsResponse.getBody());
+        assertCreatedDateNotNull(getVariantsResponse.getBody());
     }
 }

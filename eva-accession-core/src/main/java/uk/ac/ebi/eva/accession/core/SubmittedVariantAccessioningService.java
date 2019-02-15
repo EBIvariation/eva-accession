@@ -152,12 +152,12 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     @Override
-    public void merge(Long accession, Long accession1, String reason)
+    public void merge(Long accessionOrigin, Long mergeInto, String reason)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        if (accession >= accessioningMonotonicInitSs && accession1 >= accessioningMonotonicInitSs) {
-            accessioningService.merge(accession, accession1, reason);
-        } else if (accession < accessioningMonotonicInitSs && accession1 < accessioningMonotonicInitSs) {
-            accessioningServiceDbsnp.merge(accession, accession1, reason);
+        if (accessionOrigin >= accessioningMonotonicInitSs && mergeInto >= accessioningMonotonicInitSs) {
+            accessioningService.merge(accessionOrigin, mergeInto, reason);
+        } else if (accessionOrigin < accessioningMonotonicInitSs && mergeInto < accessioningMonotonicInitSs) {
+            accessioningServiceDbsnp.merge(accessionOrigin, mergeInto, reason);
         } else {
             throw new UnsupportedOperationException("Can't merge a submitted variant with a dbSNP submitted variant");
         }
