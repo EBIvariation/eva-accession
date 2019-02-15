@@ -124,10 +124,10 @@ if __name__ == "__main__":
                         help="Flag that this build is the latest (relevant for dbsnp table name)",
                         action='store_true')
     parser.add_argument("-n", "--assembly-name",
-                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0"
-                             ". (Can be ommited if there is only one assembly name in the build)")
+                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0", required=True)
     parser.add_argument("-p", "--private-config-file",
-                        help="Path to the configuration file with private connection details, credentials etc.,")
+                        help="Path to the configuration file with private connection details, credentials etc.,",
+                        required=True)
     parser.add_argument("--step", help=os.linesep + "Run from a specific step number." + os.linesep +
                                         "1. Create required folders" + os.linesep +
                                         "2. Generate custom assembly report" + os.linesep +

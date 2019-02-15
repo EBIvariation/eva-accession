@@ -7,7 +7,7 @@
 ## Run the automation script
 * Example
     ```bash
-    python3 run_accession_import.py -s chickpea_3827 --scientific-name cicer_arietinum -a GCA_000331145.1 -b 146 -l -n ASM33114v1 -p /path/to/private-dev-config.json
+    python3 run_accession_import_jobs.py -s pig_9823 --scientific-name sus_scrofa -a Sscrofa11.1,GCA_000003025.6,150 Sscrofa11.2,GCA_000003025.7,152 Sscrofa11.3,GCA_000003025.8,152 -l 152 -p "/path/to/private-dev-config.json"
     ```
     * Private configuration file example
     ```json
