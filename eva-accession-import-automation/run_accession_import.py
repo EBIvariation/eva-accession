@@ -57,10 +57,12 @@ def get_commands_to_run(command_line_args):
 
     program_args["species_assembly_folder"] = os.path.sep.join(["{eva_root_dir}", "datasources",
                                                                 "reference_sequences",
-                                                                "{scientific_name}"]).format(**program_args)
+                                                                "{scientific_name}",
+                                                                "dbsnp_import"]).format(**program_args)
     program_args["species_assembly_report_folder"] = os.path.sep.join(["{eva_root_dir}", "datasources",
                                                                        "assembly_reports",
-                                                                       "{scientific_name}"]).format(**program_args)
+                                                                       "{scientific_name}",
+                                                                       "dbsnp_import"]).format(**program_args)
     program_args["species_accessioning_import_folder"] = os.path.sep.join(["{eva_root_dir}",
                                                                            "dbsnp-importer-accessioning",
                                                                            "{species}"]).format(**program_args)
