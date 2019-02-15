@@ -88,6 +88,10 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         return joinLists(accessioningService.get(variants), accessioningServiceDbsnp.get(variants));
     }
 
+    /**
+     * TODO: conceptually, for variants imported from dbSNP, a single accession could return several documents.
+     * For now, just comply with the accession-commons interface, but this should be changed in the future.
+     */
     @Override
     public AccessionWrapper<ISubmittedVariant, String, Long> getByAccession(Long accession)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
