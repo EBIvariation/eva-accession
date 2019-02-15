@@ -112,7 +112,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
     abstract List<Bson> buildAggregation();
 
     @Override
-    public List<Variant> read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public List<Variant> read() throws UnexpectedInputException, ParseException, NonTransientResourceException {
         return cursor.hasNext() ? getVariants(cursor.next()) : null;
     }
 
@@ -144,6 +144,16 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     private String buildId(long rs) {
         return RS_PREFIX + rs;
+    }
+
+    protected void addToVariants(Map<String, Variant> variants, String contig, long start, long rs, String reference,
+                                 String alternate) {
+        String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
+
+        long end = calculateEnd(reference, alternate, start);
+        Variant variant = new Variant(contig, start, end, reference, alternate);
+        variant.setMainId(buildId(rs));
+        variants.put(variantId, variant);
     }
 
     protected void addToVariants(Map<String, Variant> variants, String contig, long start, long rs, String reference,
