@@ -230,11 +230,11 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void getByAccessionsFromBothRepositories()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        AccessionWrapper<ISubmittedVariant, String, Long> submittedVariant = service.getByAccession(ACCESSION);
-        assertNotNull(submittedVariant);
-        AccessionWrapper<ISubmittedVariant, String, Long> submittedDbsnpVariant = service.getByAccession(
+        AccessionWrapper<ISubmittedVariant, String, Long> retrievedSubmittedVariant = service.getByAccession(ACCESSION);
+        assertEquals(submittedVariant, retrievedSubmittedVariant.getData());
+        AccessionWrapper<ISubmittedVariant, String, Long> retrievedSubmittedDbsnpVariant = service.getByAccession(
                 ACCESSION_DBSNP_1);
-        assertNotNull(submittedDbsnpVariant);
+        assertEquals(dbsnpSubmittedVariant, retrievedSubmittedDbsnpVariant.getData());
     }
 
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})

@@ -49,8 +49,8 @@ public class SubmittedVariantsRestController {
     }
 
     @ApiOperation(value = "Find submitted variants (SS) by identifier", notes = "This endpoint returns the submitted "
-            + "variants (SS) represented by the given identifiers. For a description of the response, see "
-            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
+            + "variants (SS) represented by a given identifier. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a submitted variant, e.g.: 5000000000",

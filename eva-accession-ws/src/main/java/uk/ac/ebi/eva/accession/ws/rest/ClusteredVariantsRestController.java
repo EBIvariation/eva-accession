@@ -64,20 +64,20 @@ public class ClusteredVariantsRestController {
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
-            @PathVariable @ApiParam(value = "List of numerical identifier of clustered variants, e.g.: 3000000000",
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                                     required = true) Long identifier)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
 
         return Collections.singletonList(basicRestController.get(identifier));
     }
 
-    @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a list "
-            + "of clustered variant identifier (RS), this endpoint returns all the submitted variants (SS) linked to"
+    @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a "
+            + "clustered variant identifier (RS), this endpoint returns all the submitted variants (SS) linked to"
             + " the former. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
     @GetMapping(value = "/{identifier}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
-            @PathVariable @ApiParam(value = "List of numerical identifier of clustered variants, e.g.: 869808637",
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
                     required = true) Long identifier) {
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = submittedVariantsService
