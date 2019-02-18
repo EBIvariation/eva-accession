@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.release.configuration;
 
-import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -27,11 +26,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.*;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 
 @Configuration
+@Import({DeprecatedVariantMongoReaderConfiguration.class,
+        VariantAccessionItemStreamWriterConfiguration.class,
+        ListenersConfiguration.class,})
 public class CreateDeprecatedReleaseStepConfiguration {
 
     @Autowired

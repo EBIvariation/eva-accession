@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Writes the accessions of historical variants to a flat file.
  */
-public class VariantAccessionItemStreamWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
+public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
 
     private static final String FILE_SUFFIX = "_deprecated_ids.txt";
 
@@ -40,7 +40,7 @@ public class VariantAccessionItemStreamWriter implements ItemStreamWriter<DbsnpC
 
     private PrintWriter printWriter;
 
-    public VariantAccessionItemStreamWriter(String outputFolder, String referenceAssembly) {
+    public DeprecatedVariantAccessionWriter(String outputFolder, String referenceAssembly) {
         output = buildOutputFilename(outputFolder, referenceAssembly);
     }
 
@@ -50,6 +50,10 @@ public class VariantAccessionItemStreamWriter implements ItemStreamWriter<DbsnpC
 
     public Path getOutputPath() {
         return output.toPath();
+    }
+
+    public static File getOutput(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX).toFile();
     }
 
     @Override

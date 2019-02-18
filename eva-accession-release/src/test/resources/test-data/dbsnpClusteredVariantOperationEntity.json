@@ -43,10 +43,29 @@
       ]
     },
     {
+      "_id" : ObjectId("5c36053f4a2c10d01c39d9c5"),
+      "eventType" : "DEPRECATED",
+      "accession" : NumberLong(1153596374),
+      "reason" : "All associated submitted variants have been declustered",
+      "inactiveObjects" : [
+        {
+          "asm": "GCF_000409795.2",
+          "tax" : 60711,
+          "contig" : "CM000346.1",
+          "start" : NumberLong(3337129),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "7A4304A9E9AE320D0E28FCC9E23EF1E605ACACAA",
+          "accession" : NumberLong(1153596374),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-20T08:25:00Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5c13d1b367686a3892422b18"),
       "eventType" : "DEPRECATED",
       "accession" : NumberLong(1101244729),
-      "mergeInto" : NumberLong(1100721093),
       "reason" : "All associated submitted variants have been declustered",
       "inactiveObjects" : [
         {
@@ -88,7 +107,6 @@
       "_id": ObjectId("5c13d1bc67686a3892422b74"),
       "eventType": "DEPRECATED",
       "accession": NumberLong(1106670930),
-      "mergeInto": NumberLong(1102782863),
       "reason": "All associated submitted variants have been declustered",
       "inactiveObjects": [
         {

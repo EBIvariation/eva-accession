@@ -29,8 +29,10 @@ import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyCo
 import uk.ac.ebi.eva.accession.release.configuration.ContigReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ContigToInsdcProcessorConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ContigWriterConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.CreateDeprecatedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.CreateMergedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.CreateReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.DeprecatedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ListContigsStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
@@ -43,18 +45,7 @@ import uk.ac.ebi.eva.accession.release.configuration.VariantContextWriterConfigu
         MongoConfiguration.class,
         InputParametersConfiguration.class,
         AccessionReleaseJobConfiguration.class,
-        CreateReleaseStepConfiguration.class,
-        CreateMergedReleaseStepConfiguration.class,
-        AccessionedVariantMongoReaderConfiguration.class,
-        MergedVariantMongoReaderConfiguration.class,
-        ReleaseProcessorConfiguration.class,
-        VariantContextWriterConfiguration.class,
-        ListenersConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class,
-        ListContigsStepConfiguration.class,
-        ContigReaderConfiguration.class,
-        ContigToInsdcProcessorConfiguration.class,
-        ContigWriterConfiguration.class
+        ChunkSizeCompletionPolicyConfiguration.class
 })
 public class BatchTestConfiguration {
 

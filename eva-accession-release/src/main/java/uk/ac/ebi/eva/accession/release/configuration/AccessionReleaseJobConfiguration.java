@@ -25,27 +25,33 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.*;
 
 @Configuration
 @EnableBatchProcessing
+@Import({ListContigsStepConfiguration.class,
+        CreateReleaseStepConfiguration.class,
+        CreateDeprecatedReleaseStepConfiguration.class,
+        CreateMergedReleaseStepConfiguration.class})
 public class AccessionReleaseJobConfiguration {
-
-    @Autowired
-    @Qualifier(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
-    private Step createReleaseStep;
 
     @Autowired
     @Qualifier(LIST_CONTIGS_STEP)
     private Step listContigsStep;
 
     @Autowired
+    @Qualifier(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
+    private Step createReleaseStep;
+
+    @Autowired
     @Qualifier(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
     private Step createMergedReleaseStep;
+
+    @Autowired
+    @Qualifier(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
+    private Step createDeprecatedReleaseStep;
 
     @Bean(ACCESSION_RELEASE_JOB)
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
@@ -54,6 +60,7 @@ public class AccessionReleaseJobConfiguration {
                                 .start(listContigsStep)
                                 .next(createReleaseStep)
                                 .next(createMergedReleaseStep)
+                                .next(createDeprecatedReleaseStep)
                                 .build();
     }
 }

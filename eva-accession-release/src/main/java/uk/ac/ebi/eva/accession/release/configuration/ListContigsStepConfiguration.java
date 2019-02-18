@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_TO_INSDC_PROCESSOR;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_READER;
@@ -39,6 +40,9 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRI
  */
 @Configuration
 @EnableBatchProcessing
+@Import({ContigReaderConfiguration.class,
+        ContigToInsdcProcessorConfiguration.class,
+        ContigWriterConfiguration.class})
 public class ListContigsStepConfiguration {
 
     @Autowired

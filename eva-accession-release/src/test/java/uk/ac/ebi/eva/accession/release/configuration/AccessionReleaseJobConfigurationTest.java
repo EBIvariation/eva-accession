@@ -32,6 +32,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
+import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
@@ -65,6 +67,8 @@ public class AccessionReleaseJobConfigurationTest {
     private static final long EXPECTED_LINES = 3;
 
     private static final long EXPECTED_LINES_MERGED = 3;
+
+    private static final long EXPECTED_LINES_DEPRECATED = 1;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -90,7 +94,8 @@ public class AccessionReleaseJobConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Arrays.asList(LIST_CONTIGS_STEP, RELEASE_MAPPED_ACTIVE_VARIANTS_STEP,
-                                                   RELEASE_MAPPED_MERGED_VARIANTS_STEP);
+                                                   RELEASE_MAPPED_MERGED_VARIANTS_STEP,
+                                                   RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
@@ -104,6 +109,8 @@ public class AccessionReleaseJobConfigurationTest {
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         long numVariantsInMergedRelease = FileUtils.countNonCommentLines(getMergedRelease());
         assertEquals(EXPECTED_LINES_MERGED, numVariantsInMergedRelease);
+        long numVariantsInDeprecatedRelease = FileUtils.countNonCommentLines(getDeprecatedRelease());
+        assertEquals(EXPECTED_LINES_DEPRECATED, numVariantsInDeprecatedRelease);
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
@@ -114,6 +121,11 @@ public class AccessionReleaseJobConfigurationTest {
     private FileInputStream getMergedRelease() throws FileNotFoundException {
         return new FileInputStream(MergedVariantContextWriter.getOutput(inputParameters.getOutputFolder(),
                                                                         inputParameters.getAssemblyAccession()));
+    }
+
+    private FileInputStream getDeprecatedRelease() throws FileNotFoundException {
+        return new FileInputStream(DeprecatedVariantAccessionWriter.getOutput(inputParameters.getOutputFolder(),
+                                                                              inputParameters.getAssemblyAccession()));
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

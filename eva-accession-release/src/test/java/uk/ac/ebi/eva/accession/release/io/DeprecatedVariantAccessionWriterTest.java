@@ -30,9 +30,9 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-public class VariantAccessionItemStreamWriterTest {
+public class DeprecatedVariantAccessionWriterTest {
 
-    private VariantAccessionItemStreamWriter variantAccessionItemStreamWriter;
+    private DeprecatedVariantAccessionWriter deprecatedVariantAccessionWriter;
 
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
@@ -40,7 +40,7 @@ public class VariantAccessionItemStreamWriterTest {
     @Before
     public void setUp() throws Exception {
         File output = temporaryFolderRule.newFolder();
-        variantAccessionItemStreamWriter = new VariantAccessionItemStreamWriter(output.getAbsolutePath(), "assembly");
+        deprecatedVariantAccessionWriter = new DeprecatedVariantAccessionWriter(output.getAbsolutePath(), "assembly");
     }
 
     @Test
@@ -52,11 +52,11 @@ public class VariantAccessionItemStreamWriterTest {
         DbsnpClusteredVariantOperationEntity variant3 = new DbsnpClusteredVariantOperationEntity();
         variant3.fill(EventType.DEPRECATED, 3L, null, "Reason", null);
 
-        variantAccessionItemStreamWriter.open(null);
-        variantAccessionItemStreamWriter.write(Arrays.asList(variant1, variant2, variant3));
-        variantAccessionItemStreamWriter.close();
+        deprecatedVariantAccessionWriter.open(null);
+        deprecatedVariantAccessionWriter.write(Arrays.asList(variant1, variant2, variant3));
+        deprecatedVariantAccessionWriter.close();
 
-        assertEquals(3, numberOfLines(variantAccessionItemStreamWriter.getOutputPath().toFile()));
+        assertEquals(3, numberOfLines(deprecatedVariantAccessionWriter.getOutputPath().toFile()));
     }
 
     private long numberOfLines(File file) throws IOException {

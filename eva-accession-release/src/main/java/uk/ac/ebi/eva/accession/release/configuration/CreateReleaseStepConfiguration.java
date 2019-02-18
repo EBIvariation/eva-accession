@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -39,6 +40,10 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PR
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
 
 @Configuration
+@Import({AccessionedVariantMongoReaderConfiguration.class,
+        ReleaseProcessorConfiguration.class,
+        VariantContextWriterConfiguration.class,
+        ListenersConfiguration.class,})
 public class CreateReleaseStepConfiguration {
 
     @Autowired

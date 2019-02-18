@@ -17,8 +17,8 @@ package uk.ac.ebi.eva.accession.release.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
-import uk.ac.ebi.eva.accession.release.io.VariantAccessionItemStreamWriter;
+
+import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
@@ -27,8 +27,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED
 public class VariantAccessionItemStreamWriterConfiguration {
 
     @Bean(DEPRECATED_RELEASE_WRITER)
-    public VariantAccessionItemStreamWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
-        return new VariantAccessionItemStreamWriter(parameters.getOutputFolder(), parameters.getAssemblyAccession());
+    public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
+        return new DeprecatedVariantAccessionWriter(parameters.getOutputFolder(), parameters.getAssemblyAccession());
     }
 
 }
