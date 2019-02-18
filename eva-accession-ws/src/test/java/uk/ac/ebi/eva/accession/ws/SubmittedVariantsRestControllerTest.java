@@ -22,10 +22,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.web.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +62,7 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
+@AutoConfigureAfter(HttpMessageConvertersAutoConfiguration.class)
 public class SubmittedVariantsRestControllerTest {
 
     private static final String URL = "/v1/submitted-variants/";
@@ -166,13 +170,23 @@ public class SubmittedVariantsRestControllerTest {
         Long currentAccession = accessions.get(1).getAccession();
         service.merge(outdatedAccession,
                       currentAccession,
-                      "let's pretend they are equivalent");
+                      "Just for testing the endpoint, let's pretend the variants are equivalent");
 
         // when
         String getVariantsUrl = URL + outdatedAccession;
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + currentAccession, redirectedUrl);
+
+        // and then
         ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                 getVariantsResponse =
-                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null,
                                           new ParameterizedTypeReference<
                                                   List<
                                                           AccessionResponseDTO<
@@ -182,8 +196,7 @@ public class SubmittedVariantsRestControllerTest {
                                                                   Long>>>() {
                                           });
 
-        // then
-        assertEquals(HttpStatus.MOVED_PERMANENTLY, getVariantsResponse.getStatusCode());
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(1, getVariantsResponse.getBody().size());
         assertEquals(currentAccession, getVariantsResponse.getBody().get(0).getAccession());
         assertDefaultFlags(getVariantsResponse.getBody());
