@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.release.io;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-import org.springframework.batch.item.file.FlatFileItemWriter;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 
@@ -26,11 +25,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Paths;
 import java.util.List;
 
 /**
- * Writes the identifiers of historical variants to a flat file.
+ * Writes the accessions of historical variants to a flat file.
  */
 public class VariantAccessionItemStreamWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
 
