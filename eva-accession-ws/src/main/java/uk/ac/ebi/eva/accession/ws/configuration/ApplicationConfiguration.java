@@ -22,18 +22,18 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
+import org.springframework.boot.autoconfigure.web.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.WebClientAutoConfiguration;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.http.client.AsyncClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -51,12 +51,12 @@ import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningCo
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.ws.response.NonRedirectingClientHttpRequestFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
 @EnableBasicRestControllerAdvice
 @Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
+@AutoConfigureAfter(HttpMessageConvertersAutoConfiguration.class)
 public class ApplicationConfiguration {
 
     @Bean
@@ -100,7 +100,7 @@ public class ApplicationConfiguration {
     }
 
     /**
-     * Implementation copied from {@link WebClientAutoConfiguration}, but with an extra call to the method
+     * Implementation reused from {@link WebClientAutoConfiguration}, but with an extra call to the method
      * {@link org.springframework.boot.web.client.RestTemplateBuilder#requestFactory} to provide our
      * {@link NonRedirectingClientHttpRequestFactory}.
      */
@@ -109,18 +109,13 @@ public class ApplicationConfiguration {
     public RestTemplateBuilder restTemplateBuilder(
             @Autowired ObjectProvider<HttpMessageConverters> messageConverters,
             @Autowired ObjectProvider<List<RestTemplateCustomizer>> restTemplateCustomizers) {
-        RestTemplateBuilder builder = new RestTemplateBuilder();
-        HttpMessageConverters converters = messageConverters.getIfUnique();
-        if (converters != null) {
-            builder = builder.messageConverters(converters.getConverters());
-        }
-        List<RestTemplateCustomizer> customizers = restTemplateCustomizers.getIfAvailable();
-        if (!CollectionUtils.isEmpty(customizers)) {
-            customizers = new ArrayList<>(customizers);
-            AnnotationAwareOrderComparator.sort(customizers);
-            builder = builder.customizers(customizers);
-        }
+        WebClientAutoConfiguration.RestTemplateConfiguration restTemplateConfiguration =
+                new WebClientAutoConfiguration.RestTemplateConfiguration(
+                        messageConverters, restTemplateCustomizers);
+        RestTemplateBuilder builder = restTemplateConfiguration.restTemplateBuilder();
+
         builder = builder.requestFactory(new NonRedirectingClientHttpRequestFactory());
+
         return builder;
     }
 }
