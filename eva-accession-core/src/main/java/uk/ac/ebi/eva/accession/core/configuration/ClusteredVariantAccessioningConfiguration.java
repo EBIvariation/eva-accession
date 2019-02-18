@@ -75,7 +75,7 @@ public class ClusteredVariantAccessioningConfiguration {
     }
 
     @Bean
-    public ClusteredVariantAccessioningService ClusteredVariantAccessioningService() {
+    public ClusteredVariantAccessioningService clusteredVariantAccessioningService() {
         return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
                                                        dbsnpClusteredVariantAccessioningDatabaseService());
     }
@@ -87,7 +87,8 @@ public class ClusteredVariantAccessioningConfiguration {
         return new MonotonicAccessionGenerator<>(
                 properties.getClustered().getCategoryId(),
                 properties.getInstanceId(),
-                service);
+                service,
+                (long[])null);
     }
 
     @Bean

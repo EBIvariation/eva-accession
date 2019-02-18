@@ -26,6 +26,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
@@ -36,6 +39,7 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,27 +60,28 @@ public class ClusteredVariantsRestController {
     }
 
     @ApiOperation(value = "Find clustered variants (RS) by identifier", notes = "This endpoint returns the clustered "
-            + "variants (RS) represented by the given identifiers. For a description of the response, see "
+            + "variants (RS) represented by the given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
-    @GetMapping(value = "/{identifiers}", produces = "application/json")
+    @GetMapping(value = "/{identifier}", produces = "application/json")
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
-            @PathVariable @ApiParam(value = "List of numerical identifiers of clustered variants, e.g.: 3000000000,"
-                    + "3000000002", required = true) List<Long> identifiers) {
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
+                                    required = true) Long identifier)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
 
-        return basicRestController.get(identifiers);
+        return Collections.singletonList(basicRestController.get(identifier));
     }
 
-    @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a list "
-            + "of clustered variant identifiers (RS), this endpoint returns all the submitted variants (SS) linked to"
+    @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a "
+            + "clustered variant identifier (RS), this endpoint returns all the submitted variants (SS) linked to"
             + " the former. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
-    @GetMapping(value = "/{identifiers}/submitted", produces = "application/json")
+    @GetMapping(value = "/{identifier}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
-            @PathVariable @ApiParam(value = "List of numerical identifiers of clustered variants, e.g.: 869808637",
-                    required = true) List<Long> identifiers) {
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
+                    required = true) Long identifier) {
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = submittedVariantsService
-                .getByClusteredVariantAccessionIn(identifiers);
+                .getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
         return submittedVariants
                 .stream()
                 .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))

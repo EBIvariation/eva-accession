@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
@@ -33,6 +35,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SubmittedVariantAccessioningService implements AccessioningService<ISubmittedVariant, String, Long> {
+
+    private static Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningService.class);
 
     private SubmittedVariantMonotonicAccessioningService accessioningService;
 
@@ -84,10 +88,18 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         return joinLists(accessioningService.get(variants), accessioningServiceDbsnp.get(variants));
     }
 
+    /**
+     * TODO: conceptually, for variants imported from dbSNP, a single accession could return several documents.
+     * For now, just comply with the accession-commons interface, but this should be changed in the future.
+     */
     @Override
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByAccessions(List<Long> accessions) {
-        return joinLists(accessioningService.getByAccessions(accessions),
-                         accessioningServiceDbsnp.getByAccessions(accessions));
+    public AccessionWrapper<ISubmittedVariant, String, Long> getByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        if (accession >= accessioningMonotonicInitSs) {
+            return accessioningService.getByAccession(accession);
+        } else {
+            return accessioningServiceDbsnp.getByAccession(accession);
+        }
     }
 
     @Override
@@ -102,8 +114,8 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
             List<Long> clusteredVariantAccessions) {
-        return joinLists(accessioningService.getByClusteredVariantAccessions(clusteredVariantAccessions),
-                         accessioningServiceDbsnp.getByClusteredVariantAccessions(clusteredVariantAccessions));
+        return joinLists(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
+                         accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions));
     }
 
     @Override
@@ -147,7 +159,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         } else if (accession < accessioningMonotonicInitSs && accession1 < accessioningMonotonicInitSs) {
             accessioningServiceDbsnp.merge(accession, accession1, reason);
         } else {
-            throw new UnsupportedOperationException("Can't merge a submitted variant with a dbsnp submitted variant");
+            throw new UnsupportedOperationException("Can't merge a submitted variant with a dbSNP submitted variant");
         }
     }
 }

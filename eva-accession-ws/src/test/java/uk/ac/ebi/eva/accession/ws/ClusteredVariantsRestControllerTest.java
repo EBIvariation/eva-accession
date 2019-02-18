@@ -26,12 +26,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.util.StreamUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -58,6 +60,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -206,35 +209,61 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetVariantsRestApi() {
-        String identifiers = StreamUtils.createStreamFromIterator(generatedAccessions.iterator())
-                .map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
-        String getVariantsUrl = URL + identifiers;
-
-        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
-                getVariantsResponse =
-                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                          new ParameterizedTypeReference<
-                                                  List<
-                                                          AccessionResponseDTO<
-                                                                  ClusteredVariant,
-                                                                  IClusteredVariant,
-                                                                  String,
-                                                                  Long>>>() {
-                                          });
-        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> wsResponseBody =
-                getVariantsResponse.getBody();
-        checkClusteredVariantsOutput(wsResponseBody);
+        for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
+            String getVariantsUrl = URL + generatedAccession.getAccession();
+            ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
+                    getVariantsResponse =
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                              new ParameterizedTypeReference<
+                                                      List<
+                                                              AccessionResponseDTO<
+                                                                      ClusteredVariant,
+                                                                      IClusteredVariant,
+                                                                      String,
+                                                                      Long>>>() {
+                                              });
+            assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> wsResponseBody =
+                    getVariantsResponse.getBody();
+            checkClusteredVariantsOutput(wsResponseBody, generatedAccession.getAccession());
+        }
     }
 
     private void checkClusteredVariantsOutput(
-            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse) {
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse,
+            Long accession) {
         List<AccessionedDocument<IClusteredVariant, Long>> expectedVariants =
-                Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity2, clusteredVariantEntity3);
+                Stream.of(clusteredVariantEntity1, clusteredVariantEntity2, clusteredVariantEntity3)
+                .filter(v -> v.getAccession().equals(accession))
+                .collect(Collectors.toList());
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
                                                        expectedVariants,
                                                        ClusteredVariant::new);
         assertClusteredVariantCreatedDateNotNull(getVariantsResponse);
+    }
+
+    private <DTO, MODEL> void assertVariantsAreContainedInControllerResponse(
+            List<AccessionResponseDTO<DTO, MODEL, String, Long>> getVariantsResponse,
+            List<AccessionedDocument<MODEL, Long>> expectedVariants,
+            Function<MODEL, DTO> modelToDto) {
+        // check the accessions returned by the service
+        Set<Long> retrievedAccessions = getVariantsResponse.stream()
+                                                           .map(AccessionResponseDTO::getAccession)
+                                                           .collect(Collectors.toSet());
+
+        assertTrue(expectedVariants.stream()
+                                   .map(AccessionedDocument::getAccession)
+                                   .allMatch(retrievedAccessions::contains));
+
+        // check the objects returned by the service
+        Set<DTO> variantsReturnedByController = getVariantsResponse.stream()
+                                                                   .map(AccessionResponseDTO::getData)
+                                                                   .collect(Collectors.toSet());
+
+        assertTrue(expectedVariants.stream()
+                                   .map(AccessionedDocument::getModel)
+                                   .map(modelToDto)
+                                   .allMatch(variantsReturnedByController::contains));
     }
 
     private void assertClusteredVariantCreatedDateNotNull(
@@ -244,32 +273,35 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetSubmittedVariantsRestApi() {
-        String identifiers = StreamUtils.createStreamFromIterator(generatedAccessions.iterator())
-                                        .map(acc -> acc.getAccession().toString()).collect(Collectors.joining(","));
-        String getVariantsUrl = URL + identifiers + "/submitted";
-
-        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
-                getVariantsResponse =
-                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                          new ParameterizedTypeReference<
-                                                  List<
-                                                          AccessionResponseDTO<
-                                                                  SubmittedVariant,
-                                                                  ISubmittedVariant,
-                                                                  String,
-                                                                  Long>>>() {
-                                          });
-        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> wsResponseBody =
-                getVariantsResponse.getBody();
-        checkSubmittedVariantsOutput(wsResponseBody);
+        for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
+            String getVariantsUrl = URL + generatedAccession.getAccession() + "/submitted";
+            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                    getVariantsResponse =
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                              new ParameterizedTypeReference<
+                                                      List<
+                                                              AccessionResponseDTO<
+                                                                      SubmittedVariant,
+                                                                      ISubmittedVariant,
+                                                                      String,
+                                                                      Long>>>() {
+                                              });
+            assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> wsResponseBody =
+                    getVariantsResponse.getBody();
+            checkSubmittedVariantsOutput(wsResponseBody, generatedAccession.getAccession());
+        }
     }
 
     private void checkSubmittedVariantsOutput(
-            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariantsReponse) {
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariantsReponse,
+            Long accession) {
         List<AccessionedDocument<ISubmittedVariant, Long>> expectedVariants =
-                Arrays.asList(submittedVariantEntity1, submittedVariantEntity2, evaSubmittedVariantEntity3,
-                              evaSubmittedVariantEntity4);
+                Stream.of(submittedVariantEntity1, submittedVariantEntity2, evaSubmittedVariantEntity3,
+                          evaSubmittedVariantEntity4)
+                      .filter(v -> v.getAccession().equals(accession))
+                      .collect(Collectors.toList());
+
         assertVariantsAreContainedInControllerResponse(getSubmittedVariantsReponse,
                                                        expectedVariants,
                                                        SubmittedVariant::new);
@@ -282,62 +314,35 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetVariantsController() {
-        List<Long> identifiers = StreamUtils.createStreamFromIterator(generatedAccessions.iterator())
-                .map(acc -> acc.getAccession()).collect(Collectors.toList());
-
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
-                controller.get(identifiers);
-
-        checkClusteredVariantsOutput(getVariantsResponse);
+    public void testGetVariantsController()
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+                    controller.get(generatedAccession.getAccession());
+            checkClusteredVariantsOutput(getVariantsResponse, generatedAccession.getAccession());
+        }
     }
 
     @Test
     public void testGetSubmittedVariantsByClusteredVariantIds() {
         getAndCheckSubmittedVariantsByClusteredVariantIds(
-                Collections.singletonList(DBSNP_CLUSTERED_VARIANT_ACCESSION_1),
+                DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                 Collections.singletonList(submittedVariantEntity1));
         getAndCheckSubmittedVariantsByClusteredVariantIds(
-                Collections.singletonList(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
+                DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
                 Arrays.asList(submittedVariantEntity2, evaSubmittedVariantEntity3));
         getAndCheckSubmittedVariantsByClusteredVariantIds(
-                Collections.singletonList(DBSNP_CLUSTERED_VARIANT_ACCESSION_3),
-                Arrays.asList(evaSubmittedVariantEntity4));
-        getAndCheckSubmittedVariantsByClusteredVariantIds(
-                Arrays.asList(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
-                              DBSNP_CLUSTERED_VARIANT_ACCESSION_3),
-                Arrays.asList(submittedVariantEntity1, submittedVariantEntity2, evaSubmittedVariantEntity3,
-                              evaSubmittedVariantEntity4));
+                DBSNP_CLUSTERED_VARIANT_ACCESSION_3,
+                Collections.singletonList(evaSubmittedVariantEntity4));
     }
 
-    private void getAndCheckSubmittedVariantsByClusteredVariantIds(List<Long> clusteredVariantIds,
+    private void getAndCheckSubmittedVariantsByClusteredVariantIds(Long clusteredVariantIds,
                                                                    List<AccessionedDocument<ISubmittedVariant, Long>>
-                                                                   expectedSubmittedVariants)
-    {
+                                                                           expectedSubmittedVariants) {
         List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
                 controller.getSubmittedVariants(clusteredVariantIds);
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
                                                        expectedSubmittedVariants,
                                                        SubmittedVariant::new);
-    }
-
-    private <DTO, MODEL> void assertVariantsAreContainedInControllerResponse(
-            List<AccessionResponseDTO<DTO, MODEL, String, Long>> getVariantsResponse,
-            List<AccessionedDocument<MODEL, Long>> expectedVariants,
-            Function<MODEL, DTO> modelToDto) {
-        // check the number of expected objects
-        assertEquals(expectedVariants.size(), getVariantsResponse.size());
-
-        // check the accessiones returned by the service
-        Set<Long> retrievedAccessions = getVariantsResponse.stream().map(AccessionResponseDTO::getAccession).collect(
-                Collectors.toSet());
-        assertTrue(expectedVariants.stream().allMatch(
-                expectedVariant -> retrievedAccessions.contains(expectedVariant.getAccession())));
-
-        // check the objects returned by the service
-        Set<DTO> variantsReturnedByController = getVariantsResponse.stream().map(
-                AccessionResponseDTO::getData).collect(Collectors.toSet());
-        assertTrue(expectedVariants.stream().map(AccessionedDocument::getModel).map(modelToDto).allMatch(
-                variantsReturnedByController::contains));
     }
 }

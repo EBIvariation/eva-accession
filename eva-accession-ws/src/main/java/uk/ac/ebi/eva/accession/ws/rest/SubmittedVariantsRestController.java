@@ -24,12 +24,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -45,14 +49,14 @@ public class SubmittedVariantsRestController {
     }
 
     @ApiOperation(value = "Find submitted variants (SS) by identifier", notes = "This endpoint returns the submitted "
-            + "variants (SS) represented by the given identifiers. For a description of the response, see "
-            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
-    @GetMapping(value = "/{identifiers}", produces = "application/json")
+            + "variants (SS) represented by a given identifier. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
+    @GetMapping(value = "/{identifier}", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> get(
-            @PathVariable @ApiParam(value = "List of numerical identifiers of submitted variants, e.g.: 5000000000,"
-                    + "5000000002", required = true) List<Long> identifiers) {
-
-        return basicRestController.get(identifiers);
+            @PathVariable @ApiParam(value = "Numerical identifier of a submitted variant, e.g.: 5000000000",
+                                    required = true) Long identifier)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return Collections.singletonList(basicRestController.get(identifier));
     }
 }
 

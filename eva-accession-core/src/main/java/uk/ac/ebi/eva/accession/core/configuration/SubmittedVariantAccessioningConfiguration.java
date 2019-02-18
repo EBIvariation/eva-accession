@@ -74,7 +74,7 @@ public class SubmittedVariantAccessioningConfiguration {
     private DbsnpSubmittedVariantInactiveService dbsnpInactiveService;
 
     @Autowired
-    private ContiguousIdBlockService service;
+    private ContiguousIdBlockService blockService;
 
     @Autowired
     private ApplicationProperties applicationProperties;
@@ -84,24 +84,28 @@ public class SubmittedVariantAccessioningConfiguration {
 
     @Bean
     public Long accessioningMonotonicInitSs() {
-        return service.getBlockParameters(categoryId).getBlockStartValue();
+        return blockService.getBlockParameters(categoryId).getBlockStartValue();
     }
 
     @Bean
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
-        SubmittedVariantMonotonicAccessioningService submittedVariantMonotonicAccessioningService =
-                new SubmittedVariantMonotonicAccessioningService(submittedVariantAccessionGenerator(),
-                                                                 submittedVariantAccessioningDatabaseService(),
-                                                                 new SubmittedVariantSummaryFunction(),
-                                                                 new SHA1HashingFunction());
-        DbsnpSubmittedVariantMonotonicAccessioningService dbsnpSubmittedVariantMonotonicAccessioningService =
-                new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator(),
-                                                                      dbsnpSubmittedVariantAccessioningDatabaseService(),
-                                                                      new SubmittedVariantSummaryFunction(),
-                                                                      new SHA1HashingFunction());
-        return new SubmittedVariantAccessioningService(submittedVariantMonotonicAccessioningService,
-                                                       dbsnpSubmittedVariantMonotonicAccessioningService,
+        return new SubmittedVariantAccessioningService(submittedVariantMonotonicAccessioningService(),
+                                                       dbsnpSubmittedVariantMonotonicAccessioningService(),
                                                        accessioningMonotonicInitSs());
+    }
+
+    private SubmittedVariantMonotonicAccessioningService submittedVariantMonotonicAccessioningService() {
+        return new SubmittedVariantMonotonicAccessioningService(submittedVariantAccessionGenerator(),
+                                                                submittedVariantAccessioningDatabaseService(),
+                                                                new SubmittedVariantSummaryFunction(),
+                                                                new SHA1HashingFunction());
+    }
+
+    private DbsnpSubmittedVariantMonotonicAccessioningService dbsnpSubmittedVariantMonotonicAccessioningService() {
+        return new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator(),
+                                                                     dbsnpSubmittedVariantAccessioningDatabaseService(),
+                                                                     new SubmittedVariantSummaryFunction(),
+                                                                     new SHA1HashingFunction());
     }
 
     @Bean
@@ -111,14 +115,16 @@ public class SubmittedVariantAccessioningConfiguration {
         return new MonotonicAccessionGenerator<>(
                 properties.getSubmitted().getCategoryId(),
                 properties.getInstanceId(),
-                service);
+                blockService,
+                submittedVariantAccessioningDatabaseService());
     }
 
     @Bean
     public DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
         return new DbsnpMonotonicAccessionGenerator<>(properties.getSubmitted().getCategoryId(),
-                                                      properties.getInstanceId(), service);
+                                                      properties.getInstanceId(),
+                                                      blockService);
     }
 
     @Bean

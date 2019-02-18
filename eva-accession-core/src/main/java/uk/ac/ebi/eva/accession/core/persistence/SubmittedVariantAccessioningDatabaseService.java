@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.accession.core.persistence;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
-
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
@@ -48,5 +47,10 @@ public class SubmittedVariantAccessioningDatabaseService
         repository.findByClusteredVariantAccessionIn(clusteredVariantIds).iterator().forEachRemaining(
                 entity -> wrappedAccessions.add(toModelWrapper(entity)));
         return wrappedAccessions;
+    }
+
+    private AccessionWrapper<ISubmittedVariant, String, Long> toModelWrapper(SubmittedVariantEntity entity) {
+        return new AccessionWrapper<>(entity.getAccession(), entity.getHashedMessage(), entity.getModel(),
+                                      entity.getVersion());
     }
 }
