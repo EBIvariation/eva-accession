@@ -49,6 +49,7 @@ public class ContigWriter implements ItemStreamWriter<String> {
             printWriter = new PrintWriter(new FileWriter(this.output));
         } catch (IOException e) {
             e.printStackTrace();
+            throw new ItemStreamException(e);
         }
     }
 
@@ -63,7 +64,7 @@ public class ContigWriter implements ItemStreamWriter<String> {
     }
 
     @Override
-    public void write(List<? extends String> contigs) throws Exception {
+    public void write(List<? extends String> contigs) {
         for (String contig : contigs) {
             printWriter.println(contig);
         }

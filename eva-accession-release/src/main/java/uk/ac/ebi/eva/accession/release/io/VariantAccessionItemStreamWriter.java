@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -32,12 +34,22 @@ import java.util.List;
  */
 public class VariantAccessionItemStreamWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
 
+    private static final String FILE_SUFFIX = "_deprecated_ids.txt";
+
     private final File output;
 
     private PrintWriter printWriter;
 
-    public VariantAccessionItemStreamWriter(File output) {
-        this.output = output;
+    public VariantAccessionItemStreamWriter(String outputFolder, String referenceAssembly) {
+        output = buildOutputFilename(outputFolder, referenceAssembly);
+    }
+
+    private File buildOutputFilename(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX).toFile();
+    }
+
+    public Path getOutputPath() {
+        return output.toPath();
     }
 
     @Override
@@ -46,6 +58,7 @@ public class VariantAccessionItemStreamWriter implements ItemStreamWriter<DbsnpC
             printWriter = new PrintWriter(new FileWriter(this.output));
         } catch (IOException e) {
             e.printStackTrace();
+            throw new ItemStreamException(e);
         }
     }
 

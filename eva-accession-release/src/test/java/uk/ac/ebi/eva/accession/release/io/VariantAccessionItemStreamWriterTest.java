@@ -32,8 +32,6 @@ import static org.junit.Assert.assertEquals;
 
 public class VariantAccessionItemStreamWriterTest {
 
-    private File output;
-
     private VariantAccessionItemStreamWriter variantAccessionItemStreamWriter;
 
     @Rule
@@ -41,8 +39,8 @@ public class VariantAccessionItemStreamWriterTest {
 
     @Before
     public void setUp() throws Exception {
-        output = temporaryFolderRule.newFile();
-        variantAccessionItemStreamWriter = new VariantAccessionItemStreamWriter(output);
+        File output = temporaryFolderRule.newFolder();
+        variantAccessionItemStreamWriter = new VariantAccessionItemStreamWriter(output.getAbsolutePath(), "assembly");
     }
 
     @Test
@@ -58,7 +56,7 @@ public class VariantAccessionItemStreamWriterTest {
         variantAccessionItemStreamWriter.write(Arrays.asList(variant1, variant2, variant3));
         variantAccessionItemStreamWriter.close();
 
-        assertEquals(3, numberOfLines(output));
+        assertEquals(3, numberOfLines(variantAccessionItemStreamWriter.getOutputPath().toFile()));
     }
 
     private long numberOfLines(File file) throws IOException {

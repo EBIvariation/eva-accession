@@ -27,13 +27,16 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
+
 @Configuration
 @Import({MongoConfiguration.class})
 public class DeprecatedVariantMongoReaderConfiguration {
 
-    @Bean
+    @Bean(DEPRECATED_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantMongoReader(InputParameters parameters, MongoTemplate mongoTemplate) {
+    public ItemStreamReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantMongoReader(
+            InputParameters parameters, MongoTemplate mongoTemplate) {
         return new DeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
     }
 
