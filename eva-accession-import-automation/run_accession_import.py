@@ -23,6 +23,7 @@ import data_ops
 
 def run_command(command_description, command):
     logger.info("Starting process: " + command_description)
+    logger.info("Running command: " + command)
     with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True,
                           shell=True) as process:
         for line in process.stdout:
