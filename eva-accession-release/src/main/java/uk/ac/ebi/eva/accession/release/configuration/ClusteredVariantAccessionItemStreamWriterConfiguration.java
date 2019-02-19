@@ -24,7 +24,7 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
 
 @Configuration
-public class VariantAccessionItemStreamWriterConfiguration {
+public class ClusteredVariantAccessionItemStreamWriterConfiguration {
 
     @Bean(DEPRECATED_RELEASE_WRITER)
     public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {

@@ -30,6 +30,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
@@ -56,7 +58,7 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 3;
+    private static final long EXPECTED_LINES = 1;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -87,84 +89,38 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
-//    @Test
-//    public void variantsWritten() throws Exception {
-//        assertStepExecutesAndCompletes();
-//        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getMergedReleaseFile()));
-//        assertEquals(EXPECTED_LINES, numVariantsInRelease);
-//    }
-//
-//    private File getMergedReleaseFile() throws FileNotFoundException {
-//        return MergedVariantContextWriter.getOutput(inputParameters.getOutputFolder(),
-//                                                    inputParameters.getAssemblyAccession());
-//    }
-//
-//    @Test
-//    public void metadataIsPresent() throws Exception {
-//        assertStepExecutesAndCompletes();
-//
-//        List<String> referenceLines = grepFile(getMergedReleaseFile(),
-//                                               "^##reference=" + inputParameters.getAssemblyAccession() + "$");
-//        assertEquals(1, referenceLines.size());
-//
-//        List<String> metadataVariantClassLines = grepFile(getMergedReleaseFile(),
-//                                                          "^##INFO=<ID=" + VARIANT_CLASS_KEY + ",.*$");
-//        assertEquals(1, metadataVariantClassLines.size());
-//
-//        List<String> metadataStudyIdLines = grepFile(getMergedReleaseFile(),
-//                                                     "^##INFO=<ID=" + STUDY_ID_KEY + ",.*$");
-//        assertEquals(1, metadataStudyIdLines.size());
-//
-//        List<String> metadataMergedIntoLines = grepFile(getMergedReleaseFile(),
-//                                                        "^##INFO=<ID=" + MERGED_INTO_KEY + ",.*$");
-//        assertEquals(1, metadataMergedIntoLines.size());
-//
-//        List<String> headerLines = grepFile(getMergedReleaseFile(),
-//                                            "^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO$");
-//        assertEquals(1, headerLines.size());
-//    }
-//
-//    private List<String> grepFile(File file, String regex) throws IOException {
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-//        List<String> lines = new ArrayList<>();
-//        String line;
-//        while ((line = reader.readLine()) != null) {
-//            if (line.matches(regex)) {
-//                lines.add(line);
-//            }
-//        }
-//        reader.close();
-//        return lines;
-//    }
-//
-//    @Test
-//    public void rsAccessionsWritten() throws Exception {
-//        assertStepExecutesAndCompletes();
-//        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getMergedReleaseFile()));
-//        assertEquals(EXPECTED_LINES, numVariantsInRelease);
-//        String column = "[^\t]+\t";
-//        List<String> dataLinesWithRs = grepFile(getMergedReleaseFile(),
-//                                                "^" + column + column +"rs[0-9]+\t.*$");
-//        assertEquals(3, dataLinesWithRs.size());
-//    }
-//
-//    @Test
-//    public void infoWritten() throws Exception {
-//        assertStepExecutesAndCompletes();
-//        File outputFile = getMergedReleaseFile();
-//        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
-//        assertEquals(EXPECTED_LINES, numVariantsInRelease);
-//        String dataLinesDoNotStartWithHash = "^[^#]";
-//        String variantClass = VARIANT_CLASS_KEY + "=SO:[0-9]+";
-//        String studyId = STUDY_ID_KEY + "=[a-zA-Z0-9,]+";
-//        String mergedInto = MERGED_INTO_KEY + "=rs[0-9]+";
-//
-//        List<String> dataLines;
-//        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + variantClass + ".*");
-//        assertEquals(EXPECTED_LINES, dataLines.size());
-//        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + studyId + ".*");
-//        assertEquals(EXPECTED_LINES, dataLines.size());
-//        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + mergedInto + ".*");
-//        assertEquals(EXPECTED_LINES, dataLines.size());
-//    }
+    @Test
+    public void variantsWritten() throws Exception {
+        assertStepExecutesAndCompletes();
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
+        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+    }
+
+    private File getDeprecatedReleaseFile() throws FileNotFoundException {
+        return DeprecatedVariantAccessionWriter.getOutput(inputParameters.getOutputFolder(),
+                                                          inputParameters.getAssemblyAccession());
+    }
+
+    @Test
+    public void accessionsWritten() throws Exception {
+        assertStepExecutesAndCompletes();
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
+        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        List<String> dataLinesWithRs = grepFile(getDeprecatedReleaseFile(), "^rs[0-9]+$");
+        assertEquals(1, dataLinesWithRs.size());
+    }
+
+    private List<String> grepFile(File file, String regex) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+        List<String> lines = new ArrayList<>();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.matches(regex)) {
+                lines.add(line);
+            }
+        }
+        reader.close();
+        return lines;
+    }
+
 }

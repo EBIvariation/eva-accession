@@ -69,7 +69,7 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpC
     @Override
     public void write(List<? extends DbsnpClusteredVariantOperationEntity> variants) throws Exception {
         for (DbsnpClusteredVariantOperationEntity variant : variants) {
-            printWriter.println(variant.getAccession());
+            printWriter.println("rs" + variant.getAccession());
         }
     }
 
