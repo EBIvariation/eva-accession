@@ -334,7 +334,8 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetSubmittedVariantsByClusteredVariantIds() {
+    public void testGetSubmittedVariantsByClusteredVariantIds()
+            throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         getAndCheckSubmittedVariantsByClusteredVariantIds(
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                 Collections.singletonList(submittedVariantEntity1));
@@ -348,7 +349,8 @@ public class ClusteredVariantsRestControllerTest {
 
     private void getAndCheckSubmittedVariantsByClusteredVariantIds(Long clusteredVariantIds,
                                                                    List<AccessionedDocument<ISubmittedVariant, Long>>
-                                                                           expectedSubmittedVariants) {
+                                                                           expectedSubmittedVariants)
+            throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
                 controller.getSubmittedVariants(clusteredVariantIds);
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
@@ -401,17 +403,9 @@ public class ClusteredVariantsRestControllerTest {
 
         // when
         String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1 + "/submitted";
-        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+        ResponseEntity<String>
                     getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                              new ParameterizedTypeReference<
-                                                      List<
-                                                              AccessionResponseDTO<
-                                                                      SubmittedVariant,
-                                                                      ISubmittedVariant,
-                                                                      String,
-                                                                      Long>>>() {
-                                              });
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, String.class);
         ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
                                                                          String.class);
 

@@ -22,6 +22,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.Example;
 import io.swagger.annotations.ExampleProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,6 +49,8 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/v1/clustered-variants")
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsRestController.class);
 
     private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
 
@@ -78,14 +82,17 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
-                    required = true) Long identifier) {
+                    required = true) Long identifier)
+            throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
+        // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
+        basicRestController.get(identifier);
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = submittedVariantsService
-                .getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
-        return submittedVariants
-                .stream()
-                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                .collect(Collectors.toList());
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
+                submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
+
+        return submittedVariants.stream()
+                                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                                .collect(Collectors.toList());
     }
 }
 
