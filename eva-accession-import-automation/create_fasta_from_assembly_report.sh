@@ -50,8 +50,14 @@ do
             # it was correctly downloaded
             break
         fi
-        echo Download for ${genbank_contig} failed. Retrying...
+
         times_wget_failed=$(($times_wget_failed + 1))
+
+        # log the error only once
+        if [ $times_wget_failed -eq 1 ]
+        then
+            echo Download for ${genbank_contig} failed. Retrying...
+        fi
     done
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
