@@ -1,21 +1,34 @@
 #!/bin/bash
+# Copyright 2019 EMBL - European Bioinformatics Institute
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# Usage: create_fasta_from_assembly_report.sh <assembly accession> </path/to/assembly_report.txt> <output folder>
+# Usage: create_fasta_from_assembly_report.sh <species> </path/to/assembly_report.txt> <output folder>
 
 if [ "$#" -ne 3 ]
 then
-    echo "Please provide the assembly accession, the path to the assembly report and the output folder."
+    echo "Please provide the species (eg., tomato_4081), the path to the assembly report and the output folder."
     exit 1
 fi
 
-assembly_accession=$1
+species=$1
 assembly_report=$2
 output_folder=$3
 
 exit_code=0
 
 # To ensure the file exists before running `grep -c`, otherwise it will always fail
-touch ${output_folder}/${assembly_accession}.fa
+touch ${output_folder}/${species}_custom.fa
 touch ${output_folder}/written_contigs.txt
 
 for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
@@ -39,7 +52,7 @@ do
         matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
         if [ $matches -eq 0 ]
         then
-            cat ${output_folder}/${genbank_contig} >> ${output_folder}/${assembly_accession}.fa
+            cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
             echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
         fi
     fi

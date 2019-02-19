@@ -1,7 +1,22 @@
+# Copyright 2019 EMBL - European Bioinformatics Institute
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 import sys
 import argparse
 import data_ops
+import pgpasslib
 from os.path import expanduser
 
 
@@ -18,15 +33,9 @@ def query_missing_parameters(args):
                                                  args.metahost)
                ))[0]
 
-    dbsnp_user, dbsnp_password, unused_dbsnp_port = \
-        get_user_and_password_and_port_from_pgpass_for_host(species_db_info["pg_host"])
-
-    jt_user, jt_password, jt_port = get_user_and_password_and_port_from_pgpass_for_host(
-        args.job_tracker_host)
-
     complete_args = args
 
-    if args.assembly_name == None:
+    if args.assembly_name is None:
         complete_args.assembly_name = data_ops.get_assembly_name(species_db_info, args.build)
 
     if args.latest_build:
@@ -39,11 +48,14 @@ def query_missing_parameters(args):
     complete_args.dbsnp_port = species_db_info["pg_port"]
     complete_args.dbsnp_build = species_db_info["dbsnp_build"]
     complete_args.database_name = args.species
-    complete_args.dbsnp_user = dbsnp_user
-    complete_args.dbsnp_password = dbsnp_password
-    complete_args.job_tracker_port = jt_port
-    complete_args.job_tracker_user = jt_user
-    complete_args.job_tracker_password = jt_password
+    complete_args.dbsnp_password = pgpasslib.getpass(host=complete_args.dbsnp_host,
+                                                     port=complete_args.dbsnp_port,
+                                                     dbname="*",
+                                                     user=complete_args.dbsnp_user)
+    complete_args.job_tracker_password = pgpasslib.getpass(host=complete_args.job_tracker_host,
+                                                           port=complete_args.job_tracker_port,
+                                                           dbname=complete_args.job_tracker_db,
+                                                           user=complete_args.job_tracker_user)
     return complete_args
 
 
@@ -100,14 +112,6 @@ logging.level.org.springframework.jdbc.datasource=DEBUG
         properties_file.write(template.format(args=args))
 
 
-def get_user_and_password_and_port_from_pgpass_for_host(pg_host):
-    with open(expanduser("~/.pgpass")) as pgpass_file:
-        for line in pgpass_file:
-            if line.split(':', 1)[0] == pg_host:
-                fields = line.rstrip('\n').split(':')
-                return fields[3], fields[4], fields[1]
-
-
 def init_logger():
     logging.basicConfig(level=logging.INFO, format='%(asctime)-15s %(levelname)s %(message)s')
     result_logger = logging.getLogger(__name__)
@@ -145,6 +149,15 @@ if __name__ == "__main__":
                         required=True)
     parser.add_argument("-H", "--job-tracker-host", help="Postgres host for the job repository",
                         required=True)
+    parser.add_argument("-P", "--job-tracker-port", help="Postgres port for the job repository",
+                        required=True, type=int, default=5432)
+    parser.add_argument("-U", "--job-tracker-user", help="Postgres user for the job repository",
+                        required=True)
+
+    parser.add_argument("--dbsnp-user", help="Postgres user for the dbSNP mirror",
+                        required=True)
+    parser.add_argument("--dbsnp-port", help="Postgres port for the dbSNP mirror",
+                        required=True, type=int)
 
     parser.add_argument("--mongo-acc-db", help="MongoDB accessioning database", required=True)
     parser.add_argument("--mongo-auth-db", help="MongoDB authentication database for accessioning",
