@@ -35,9 +35,30 @@ for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
     echo ${genbank_contig}
 
-    # Download each GenBank accession in the assembly report from ENA into a separate file
-    # Delete the accession prefix from the header line
-    wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
+    # make $? return the error code of any failed command in the pipe, instead of the last one only
+    set -o pipefail
+    times_wget_failed=0
+    max_allowed_attempts=5
+    while [ $times_wget_failed -lt $max_allowed_attempts ]
+    do
+        # Download each GenBank accession in the assembly report from ENA into a separate file
+        # Delete the accession prefix from the header line
+        wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
+        whole_pipe_result=$?
+        if [ $whole_pipe_result -eq 0 ]
+        then
+            # it was correctly downloaded
+            break
+        fi
+
+        times_wget_failed=$(($times_wget_failed + 1))
+
+        # log the error only once
+        if [ $times_wget_failed -eq 1 ]
+        then
+            echo Download for ${genbank_contig} failed. Retrying...
+        fi
+    done
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
@@ -47,13 +68,20 @@ do
         echo FASTA sequence not available for ${genbank_contig}
         exit_code=1
     else
-        # Write the sequence associated with an accession to a FASTA file only once
-        # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
-        matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
-        if [ $matches -eq 0 ]
+        # if the file is not empty but wget returned an error stop the program!
+        if [ $times_wget_failed -eq $max_allowed_attempts ]
         then
-            cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
-            echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+            echo Could not download ${genbank_contig} completely. FASTA file is left incomplete.
+            exit_code=1
+        else
+            # Write the sequence associated with an accession to a FASTA file only once
+            # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
+            matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+            if [ $matches -eq 0 ]
+            then
+                cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
+                echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+            fi
         fi
     fi
 
