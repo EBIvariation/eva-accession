@@ -26,11 +26,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
@@ -38,6 +40,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
@@ -56,6 +59,7 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -105,6 +109,9 @@ public class ClusteredVariantsRestControllerTest {
     private ClusteredVariantsRestController controller;
 
     @Autowired
+    private ClusteredVariantAccessioningService clusteredService;
+
+    @Autowired
     private TestRestTemplate testRestTemplate;
 
     private Iterable<DbsnpClusteredVariantEntity> generatedAccessions;
@@ -131,6 +138,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setupDbSnpClusteredVariants() {
+        dbsnpRepository.deleteAll();
         ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 1101, "CHROM1", 1234, VariantType.SNV, false,
                                                          null);
         ClusteredVariant variant2 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 1234, VariantType.MNV, true, null);
@@ -153,6 +161,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setupDbsnpSubmittedVariants() {
+        dbsnpSubmittedVariantRepository.deleteAll();
         // one variant has default flags, the other have no default values
         SubmittedVariant submittedVariant1 = new SubmittedVariant("ASMACC01", 1101, "PROJECT1", "CHROM1", 1234, "REF",
                                                                   "ALT", DBSNP_CLUSTERED_VARIANT_ACCESSION_1);
@@ -177,6 +186,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setupEvaSubmittedVariants() {
+        submittedVariantRepository.deleteAll();
         // one variant has no default flags, while the others have the default values
         SubmittedVariant submittedVariant3 = new SubmittedVariant("ASMACC01", 1102, "EVAPROJECT1", "CHROM1", 1234,
                                                                   "REF", "ALT", DBSNP_CLUSTERED_VARIANT_ACCESSION_2);
@@ -213,20 +223,20 @@ public class ClusteredVariantsRestControllerTest {
             String getVariantsUrl = URL + generatedAccession.getAccession();
             ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
                     getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                              new ParameterizedTypeReference<
-                                                      List<
-                                                              AccessionResponseDTO<
-                                                                      ClusteredVariant,
-                                                                      IClusteredVariant,
-                                                                      String,
-                                                                      Long>>>() {
-                                              });
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new ClusteredVariantType());
             assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> wsResponseBody =
                     getVariantsResponse.getBody();
             checkClusteredVariantsOutput(wsResponseBody, generatedAccession.getAccession());
         }
+    }
+
+    private static class ClusteredVariantType extends ParameterizedTypeReference<List<
+            AccessionResponseDTO<
+                    ClusteredVariant,
+                    IClusteredVariant,
+                    String,
+                    Long>>> {
     }
 
     private void checkClusteredVariantsOutput(
@@ -344,5 +354,84 @@ public class ClusteredVariantsRestControllerTest {
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
                                                        expectedSubmittedVariants,
                                                        SubmittedVariant::new);
+    }
+
+    @Test
+    public void testGetRedirectionForMergedVariants()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
+                               DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
+                               "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        // when
+        String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        // TODO the next checks don't work because there is a bug in BasicRestControllerAdvice creating the new URL
+        /*
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_2, redirectedUrl);
+
+        // and then
+        ResponseEntity<List< AccessionResponseDTO< ClusteredVariant, IClusteredVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2), getVariantsResponse.getBody().get(0).getAccession());
+        assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
+        */
+    }
+
+    @Test
+    public void testGetRedirectionForSubmittedByMergedClustered()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
+                               DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
+                               "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        // when
+        String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1 + "/submitted";
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                    getVariantsResponse =
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                              new ParameterizedTypeReference<
+                                                      List<
+                                                              AccessionResponseDTO<
+                                                                      SubmittedVariant,
+                                                                      ISubmittedVariant,
+                                                                      String,
+                                                                      Long>>>() {
+                                              });
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        // TODO the next checks don't work because there is a bug in BasicRestControllerAdvice creating the new URL
+        /*
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_2, redirectedUrl);
+
+        // and then
+        ResponseEntity<List< AccessionResponseDTO< ClusteredVariant, IClusteredVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2), getVariantsResponse.getBody().get(0).getAccession());
+        assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
+        */
     }
 }

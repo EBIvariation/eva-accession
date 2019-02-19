@@ -103,22 +103,26 @@ public class SubmittedVariantsRestControllerTest {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             String getVariantsUrl = URL + generatedAccession.getAccession();
 
-            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
-                    getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                              new ParameterizedTypeReference<
-                                                      List<
-                                                              AccessionResponseDTO<
-                                                                      SubmittedVariant,
-                                                                      ISubmittedVariant,
-                                                                      String,
-                                                                      Long>>>() {
-                                              });
+            ResponseEntity<List<
+                    AccessionResponseDTO<
+                            SubmittedVariant,
+                            ISubmittedVariant,
+                            String,
+                            Long>>> getVariantsResponse =
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new SubmittedVariantType());
             assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
             assertEquals(1, getVariantsResponse.getBody().size());
             assertDefaultFlags(getVariantsResponse.getBody());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
         }
+    }
+
+    private static class SubmittedVariantType extends ParameterizedTypeReference<List<
+            AccessionResponseDTO<
+                    SubmittedVariant,
+                    ISubmittedVariant,
+                    String,
+                    Long>>> {
     }
 
     private void assertDefaultFlags(
@@ -154,7 +158,7 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetMergedVariantsRestTemplate()
+    public void testGetRedirectionForMergedVariants()
             throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
                    AccessionDeprecatedException {
         // given
@@ -186,15 +190,7 @@ public class SubmittedVariantsRestControllerTest {
         // and then
         ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                 getVariantsResponse =
-                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null,
-                                          new ParameterizedTypeReference<
-                                                  List<
-                                                          AccessionResponseDTO<
-                                                                  SubmittedVariant,
-                                                                  ISubmittedVariant,
-                                                                  String,
-                                                                  Long>>>() {
-                                          });
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new SubmittedVariantType());
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(1, getVariantsResponse.getBody().size());
