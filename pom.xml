@@ -16,6 +16,7 @@
         <module>eva-accession-pipeline</module>
         <module>eva-accession-import</module>
         <module>eva-accession-release</module>
+        <module>eva-accession-deprecate</module>
     </modules>
 
     <properties>
@@ -95,7 +96,7 @@
     <dependencies>
         <dependency>
             <!--https://docs.spring.io/spring-boot/docs/1.5.3.RELEASE/reference/html/configuration-metadata.html#
-            configuration-metadata-annotation-processor-->
+            test-metadata-annotation-processor-->
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
