@@ -29,7 +29,8 @@ def assembly_info(assembly_info_arg):
 
 
 def get_bsub_mem(Xmx_value):
-    return eval(Xmx_value.lower().replace("g", "*1024").replace("m", "*1"))
+    # Add a GB to the bsub job
+    return eval(Xmx_value.lower().replace("g", "*1024").replace("m", "*1") + " + 1024")
 
 
 def get_import_job_command(build, assembly_name, assembly_accession, program_args):
