@@ -59,7 +59,6 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -90,7 +89,7 @@ public class ClusteredVariantsRestControllerTest {
 
     private static final Long EVA_SUBMITTED_VARIANT_ACCESSION_1 = 1001L;
 
-    private static final Long EVA_SUBMITTEDD_VARIANT_ACCESSION_2 = 1002L;
+    private static final Long EVA_SUBMITTED_VARIANT_ACCESSION_2 = 1002L;
 
     private static final int VERSION_1 = 1;
 
@@ -203,7 +202,7 @@ public class ClusteredVariantsRestControllerTest {
                                            submittedVariantSummaryFunction.apply(submittedVariant3),
                                            submittedVariant3, VERSION_1);
         evaSubmittedVariantEntity4 =
-                new SubmittedVariantEntity(EVA_SUBMITTEDD_VARIANT_ACCESSION_2,
+                new SubmittedVariantEntity(EVA_SUBMITTED_VARIANT_ACCESSION_2,
                                            submittedVariantSummaryFunction.apply(submittedVariant4),
                                            submittedVariant4, VERSION_2);
 
@@ -287,20 +286,20 @@ public class ClusteredVariantsRestControllerTest {
             String getVariantsUrl = URL + generatedAccession.getAccession() + "/submitted";
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                     getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                              new ParameterizedTypeReference<
-                                                      List<
-                                                              AccessionResponseDTO<
-                                                                      SubmittedVariant,
-                                                                      ISubmittedVariant,
-                                                                      String,
-                                                                      Long>>>() {
-                                              });
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new SubmittedVariantType());
             assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
             List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> wsResponseBody =
                     getVariantsResponse.getBody();
             checkSubmittedVariantsOutput(wsResponseBody, generatedAccession.getAccession());
         }
+    }
+
+    private static class SubmittedVariantType extends ParameterizedTypeReference<List<
+            AccessionResponseDTO<
+                    SubmittedVariant,
+                    ISubmittedVariant,
+                    String,
+                    Long>>> {
     }
 
     private void checkSubmittedVariantsOutput(
@@ -375,13 +374,11 @@ public class ClusteredVariantsRestControllerTest {
         // then
         assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
         String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
-        // TODO the next checks don't work because there is a bug in BasicRestControllerAdvice creating the new URL
-        /*
         String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
         assertEquals(URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_2, redirectedUrl);
 
         // and then
-        ResponseEntity<List< AccessionResponseDTO< ClusteredVariant, IClusteredVariant, String, Long>>>
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
                 getVariantsResponse =
                 testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new ClusteredVariantType());
 
@@ -389,7 +386,6 @@ public class ClusteredVariantsRestControllerTest {
         assertEquals(1, getVariantsResponse.getBody().size());
         assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2), getVariantsResponse.getBody().get(0).getAccession());
         assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
-        */
     }
 
     @Test
@@ -403,29 +399,28 @@ public class ClusteredVariantsRestControllerTest {
 
         // when
         String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1 + "/submitted";
-        ResponseEntity<String>
-                    getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, String.class);
         ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
                                                                          String.class);
 
         // then
         assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
         String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
-        // TODO the next checks don't work because there is a bug in BasicRestControllerAdvice creating the new URL
-        /*
         String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
-        assertEquals(URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_2, redirectedUrl);
+        assertEquals(URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_2 + "/submitted", redirectedUrl);
 
         // and then
-        ResponseEntity<List< AccessionResponseDTO< ClusteredVariant, IClusteredVariant, String, Long>>>
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                 getVariantsResponse =
-                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new ClusteredVariantType());
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new SubmittedVariantType());
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        assertEquals(1, getVariantsResponse.getBody().size());
-        assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2), getVariantsResponse.getBody().get(0).getAccession());
-        assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
-        */
+        assertEquals(2, getVariantsResponse.getBody().size());
+        for (AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> bodyEntry :
+                getVariantsResponse.getBody()) {
+            assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
+                         bodyEntry.getData().getClusteredVariantAccession());
+        }
+
+        assertSubmittedVariantCreatedDateNotNull(getVariantsResponse.getBody());
     }
 }
