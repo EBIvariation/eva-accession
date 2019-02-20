@@ -34,8 +34,6 @@ import java.util.List;
  */
 public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
 
-    private static final String FILE_SUFFIX = "_deprecated_ids.txt";
-
     private final File output;
 
     private PrintWriter printWriter;
