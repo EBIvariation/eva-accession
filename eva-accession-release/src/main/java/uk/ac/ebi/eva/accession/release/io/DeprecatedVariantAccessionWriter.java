@@ -61,7 +61,6 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpC
         try {
             printWriter = new PrintWriter(new FileWriter(this.output));
         } catch (IOException e) {
-            e.printStackTrace();
             throw new ItemStreamException(e);
         }
     }

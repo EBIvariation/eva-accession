@@ -48,7 +48,6 @@ public class ContigWriter implements ItemStreamWriter<String> {
         try {
             printWriter = new PrintWriter(new FileWriter(this.output));
         } catch (IOException e) {
-            e.printStackTrace();
             throw new ItemStreamException(e);
         }
     }
