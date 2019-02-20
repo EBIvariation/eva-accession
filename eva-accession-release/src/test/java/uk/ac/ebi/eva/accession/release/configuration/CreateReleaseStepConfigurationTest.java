@@ -31,9 +31,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
@@ -102,8 +102,8 @@ public class CreateReleaseStepConfigurationTest {
     }
 
     private File getReleaseFile() throws FileNotFoundException {
-        return VariantContextWriter.getOutput(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession());
+        return ReportPathResolver.getCurrentReportPath(inputParameters.getOutputFolder(),
+                                                       inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

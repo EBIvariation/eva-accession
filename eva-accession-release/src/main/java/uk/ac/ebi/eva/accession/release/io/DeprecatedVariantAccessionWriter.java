@@ -40,26 +40,18 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpC
 
     private PrintWriter printWriter;
 
-    public DeprecatedVariantAccessionWriter(String outputFolder, String referenceAssembly) {
-        output = buildOutputFilename(outputFolder, referenceAssembly);
+    public DeprecatedVariantAccessionWriter(Path outputPath) {
+        this.output = outputPath.toFile();
     }
 
-    private File buildOutputFilename(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX).toFile();
-    }
-
-    public Path getOutputPath() {
-        return output.toPath();
-    }
-
-    public static File getOutput(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX).toFile();
+    public File getOutput() {
+        return output;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         try {
-            printWriter = new PrintWriter(new FileWriter(this.output));
+            printWriter = new PrintWriter(new FileWriter(output));
         } catch (IOException e) {
             throw new ItemStreamException(e);
         }

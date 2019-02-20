@@ -39,8 +39,8 @@ public class DeprecatedVariantAccessionWriterTest {
 
     @Before
     public void setUp() throws Exception {
-        File output = temporaryFolderRule.newFolder();
-        deprecatedVariantAccessionWriter = new DeprecatedVariantAccessionWriter(output.getAbsolutePath(), "assembly");
+        File output = temporaryFolderRule.newFile();
+        deprecatedVariantAccessionWriter = new DeprecatedVariantAccessionWriter(output.toPath());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class DeprecatedVariantAccessionWriterTest {
         deprecatedVariantAccessionWriter.write(Arrays.asList(variant1, variant2, variant3));
         deprecatedVariantAccessionWriter.close();
 
-        assertEquals(3, numberOfLines(deprecatedVariantAccessionWriter.getOutputPath().toFile()));
+        assertEquals(3, numberOfLines(deprecatedVariantAccessionWriter.getOutput()));
     }
 
     private long numberOfLines(File file) throws IOException {

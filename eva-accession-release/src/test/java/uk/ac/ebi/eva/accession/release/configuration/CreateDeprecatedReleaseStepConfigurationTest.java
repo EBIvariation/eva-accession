@@ -32,8 +32,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
-import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
@@ -45,8 +45,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.*;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -97,8 +95,8 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
     }
 
     private File getDeprecatedReleaseFile() throws FileNotFoundException {
-        return DeprecatedVariantAccessionWriter.getOutput(inputParameters.getOutputFolder(),
-                                                          inputParameters.getAssemblyAccession());
+        return ReportPathResolver.getDeprecatedReportPath(inputParameters.getOutputFolder(),
+                                                          inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

@@ -20,6 +20,7 @@ import htsjdk.variant.vcf.VCFHeaderLineType;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 
@@ -27,19 +28,8 @@ import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED
 
 public class MergedVariantContextWriter extends VariantContextWriter {
 
-    private static final String FILE_SUFFIX = "_merged_ids.vcf";
-
-    public MergedVariantContextWriter(String outputFolder, String referenceAssembly) {
-        super(outputFolder, referenceAssembly);
-    }
-
-    @Override
-    protected File buildOutputFilename(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX).toFile();
-    }
-
-    public static File getOutput(String outputFolder, String referenceAssembly) {
-        return new MergedVariantContextWriter(outputFolder, referenceAssembly).getOutput();
+    public MergedVariantContextWriter(Path outputPath, String referenceAssembly) {
+        super(outputPath, referenceAssembly);
     }
 
     @Override

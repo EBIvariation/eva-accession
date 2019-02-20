@@ -20,6 +20,9 @@ import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
+
+import java.nio.file.Path;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
 
@@ -28,7 +31,9 @@ public class ClusteredVariantAccessionItemStreamWriterConfiguration {
 
     @Bean(DEPRECATED_RELEASE_WRITER)
     public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
-        return new DeprecatedVariantAccessionWriter(parameters.getOutputFolder(), parameters.getAssemblyAccession());
+        Path reportPath = ReportPathResolver.getDeprecatedReportPath(parameters.getOutputFolder(),
+                                                                     parameters.getAssemblyAccession());
+        return new DeprecatedVariantAccessionWriter(reportPath);
     }
 
 }
