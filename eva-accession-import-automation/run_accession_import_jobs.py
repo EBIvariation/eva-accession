@@ -28,12 +28,18 @@ def assembly_info(assembly_info_arg):
     return build[:3], assembly_name, assembly_accession.upper()
 
 
+def get_bsub_mem(Xmx_value):
+    return eval(Xmx_value.lower().replace("g", "*1024").replace("m", "*1"))
+
+
 def get_import_job_command(build, assembly_name, assembly_accession, program_args):
     program_args["program_dir"] = os.path.dirname(os.path.realpath(__file__)) + os.path.sep
-    return (" {python3_path} {program_dir}run_accession_import.py -s {species} --scientific-name {scientific_name} " +
+    program_args["bsub_mem"] = get_bsub_mem(program_args["Xmx"])
+    return (" -M {bsub_mem} -R \"rusage[mem={bsub_mem}]\" " +
+            "{python3_path} {program_dir}run_accession_import.py -s {species} --scientific-name {scientific_name} " +
             "-a {0} -b {1} -n {2} ".format(assembly_accession, build,
                                            assembly_name) +
-            "-p \"{private_config_file}\"").format(**program_args)
+            "-p \"{private_config_file}\" --Xmx {Xmx}").format(**program_args)
 
 
 def run_jobs(command_line_args):
@@ -98,6 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private connection details, credentials etc.,",
                         required=True)
+    parser.add_argument("--Xmx", help="Memory allocation for the import pipeline (optional)", default="3g")
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}

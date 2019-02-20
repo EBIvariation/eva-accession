@@ -108,7 +108,7 @@ def get_commands_to_run(command_line_args):
                                                              "{assembly_accession}_b{build}.properties"]
                                                             ).format(**program_args)
     run_accession_import_command = "cd {species_accessioning_import_folder} && " \
-                                   "java -jar -Xmx5g {accession_import_jar} " \
+                                   "java -jar -Xmx{Xmx} {accession_import_jar} " \
                                    "--spring.config.location={properties_file_path}".format(**program_args)
 
     ss_counts_validation_command = ("cd {validation_script_path} && " +
@@ -161,6 +161,7 @@ if __name__ == "__main__":
                                         "6. Validate SS counts" + os.linesep +
                                         "7. Validate RS counts",
                         default=1, type=int)
+    parser.add_argument("--Xmx", help="Memory allocation for the import pipeline (optional)", default="3g")
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
