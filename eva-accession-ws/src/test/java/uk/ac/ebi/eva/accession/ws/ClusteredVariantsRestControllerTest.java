@@ -58,8 +58,6 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepo
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantMonotonicAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
-import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
@@ -558,6 +556,25 @@ public class ClusteredVariantsRestControllerTest {
 
         // when
         String getVariantUrl = URL + outdatedAccession;
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> response =
+                testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        // then
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        assertEquals(clusteredVariantEntity1.getModel(), response.getBody().get(0).getData());
+        assertClusteredVariantCreatedDateNotNull(response.getBody());
+    }
+
+    @Test
+    public void testGetDeprecatedClusteredVariant()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated for testing");
+        String getVariantUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
+
+        // when
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> response =
                 testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new ClusteredVariantType());
 
