@@ -10,6 +10,17 @@
       "accession" : NumberLong(853567325),
       "version" : 1,
       "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "CA98EA5284F0BF46727CEF3373EE7144839172F5",
+      "asm" : "GCA_000331145.1",
+      "tax" : 3827,
+      "contig" : "CM001765.1",
+      "start" : NumberLong(35288581),
+      "type" : "SNV",
+      "accession" : NumberLong(853683894),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
     }
   ]
 }

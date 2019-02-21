@@ -19,6 +19,7 @@ import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.MongoClient;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,6 +40,7 @@ import uk.ac.ebi.eva.accession.deprecate.test.rule.FixSpringMongoDbRule;
 import java.util.ArrayList;
 import java.util.List;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
@@ -51,9 +53,9 @@ public class DeprecableClusteredVariantsReaderTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final String ID_1 = "CA98EA5284F0BF46727CEF3373EE7144839172F5";
+    private static final String ID_1 = "BCAB105FD3C0108A54354BB6B661C3146C874F4B";
 
-    private static final Long ACCESSION_1 = 853683894L;
+    private static final String ID_2 = "E353FC48E7563BB79DCE4D6A2046FCE07DB17AC8";
 
     private ExecutionContext executionContext;
 
@@ -77,25 +79,29 @@ public class DeprecableClusteredVariantsReaderTest {
     public void setUp() {
         executionContext = new ExecutionContext();
         reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate);
+        reader.open(executionContext);
+    }
+
+    @After
+    public void tearDown() {
+        reader.close();
+        mongoClient.dropDatabase(TEST_DB);
     }
 
     @Test
     public void ReadDeprecateClusteredVariants() {
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
-        assertEquals(1, variants.size());
-        assertEquals(ID_1, variants.get(0).getId());
-        assertEquals(ACCESSION_1, variants.get(0).getAccession());
+        assertEquals(2, variants.size());
+        assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_1)));
+        assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_2)));
     }
 
     private List<DbsnpClusteredVariantEntity> readIntoList() {
-        reader.open(executionContext);
         DbsnpClusteredVariantEntity variant;
         List<DbsnpClusteredVariantEntity> variants = new ArrayList<>();
         while ((variant = reader.read()) != null) {
             variants.add(variant);
         }
-
-        reader.close();
         return variants;
     }
 
