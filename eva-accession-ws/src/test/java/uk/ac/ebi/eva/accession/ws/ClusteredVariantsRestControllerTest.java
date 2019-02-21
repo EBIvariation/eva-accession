@@ -389,7 +389,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetRedirectionForSubmittedByMergedClustered()
+    public void testGetRedirectionForSubmittedVariantByMergedClusteredVariant()
             throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
                    AccessionDeprecatedException {
         // given

@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import uk.ac.ebi.ampt2d.commons.accession.rest.BasicRestControllerAdvice;
 
 /**
- * This class activates the exception handling in BasicRestControllerAdvice for our controllers:
- * ClusteredVariantsRestController and SubmittedVariantsRestController.
+ * This class activates the exception handling in {@link BasicRestControllerAdvice} for our controllers:
+ * {@link ClusteredVariantsRestController} and {@link SubmittedVariantsRestController}.
  */
 @RestControllerAdvice(assignableTypes = {ClusteredVariantsRestController.class, SubmittedVariantsRestController.class})
 public class EvaControllerAdvice extends BasicRestControllerAdvice {
