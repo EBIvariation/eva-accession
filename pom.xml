@@ -96,7 +96,7 @@
     <dependencies>
         <dependency>
             <!--https://docs.spring.io/spring-boot/docs/1.5.3.RELEASE/reference/html/configuration-metadata.html#
-            test-metadata-annotation-processor-->
+            configuration-metadata-annotation-processor-->
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>

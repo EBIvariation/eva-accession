@@ -47,7 +47,7 @@ import static org.junit.Assert.assertEquals;
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpClusteredVariantEntityDeclustered.json"})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
-public class ClusteredVariantsToDeprecateReaderTest {
+public class DeprecableClusteredVariantsReaderTest {
 
     private static final String TEST_DB = "test-db";
 
@@ -57,7 +57,7 @@ public class ClusteredVariantsToDeprecateReaderTest {
 
     private ExecutionContext executionContext;
 
-    private ClusteredVariantsToDeprecateReader reader;
+    private DeprecableClusteredVariantsReader reader;
 
     @Autowired
     private MongoClient mongoClient;
@@ -76,11 +76,11 @@ public class ClusteredVariantsToDeprecateReaderTest {
     @Before
     public void setUp() {
         executionContext = new ExecutionContext();
-        reader = new ClusteredVariantsToDeprecateReader(mongoClient, TEST_DB, mongoTemplate);
+        reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate);
     }
 
     @Test
-    public void ReadVariantsToDeprecate() {
+    public void ReadDeprecateClusteredVariants() {
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
         assertEquals(1, variants.size());
         assertEquals(ID_1, variants.get(0).getId());

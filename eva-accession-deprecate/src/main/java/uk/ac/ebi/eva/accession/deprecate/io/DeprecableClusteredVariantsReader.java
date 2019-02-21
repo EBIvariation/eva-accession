@@ -43,11 +43,11 @@ import java.util.List;
  * Read all ClusteredVariants in the dbsnpClusteredVariantEntityDeclustered collection that are not in the main
  * collection dbsnpClusteredVariantEntity
  *
- * ClusteredVariantsToDeprecateReader = dbsnpClusteredVariantEntityDeclustered - dbsnpClusteredVariantEntity
+ * DeprecableClusteredVariantsReader = dbsnpClusteredVariantEntityDeclustered - dbsnpClusteredVariantEntity
  */
-public class ClusteredVariantsToDeprecateReader implements ItemStreamReader<DbsnpClusteredVariantEntity> {
+public class DeprecableClusteredVariantsReader implements ItemStreamReader<DbsnpClusteredVariantEntity> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsToDeprecateReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeprecableClusteredVariantsReader.class);
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
@@ -67,7 +67,7 @@ public class ClusteredVariantsToDeprecateReader implements ItemStreamReader<Dbsn
     
     private MongoConverter converter;
 
-    public ClusteredVariantsToDeprecateReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
+    public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
         this.mongoClient = mongoClient;
         this.database = database;
         this.mongoTemplate = mongoTemplate;
@@ -94,11 +94,11 @@ public class ClusteredVariantsToDeprecateReader implements ItemStreamReader<Dbsn
 
     @Override
     public DbsnpClusteredVariantEntity read() {
-        return cursor.hasNext() ? getClusteredVariantToDeprecate(cursor.next()) : null;
+        return cursor.hasNext() ? getDbsnpClusteredVariantEntity(cursor.next()) : null;
     }
 
-    private DbsnpClusteredVariantEntity getClusteredVariantToDeprecate(Document declusteredVariant) {
-        return converter.read(DbsnpClusteredVariantEntity.class, new BasicDBObject(declusteredVariant));
+    private DbsnpClusteredVariantEntity getDbsnpClusteredVariantEntity(Document deprecableClusteredVariant) {
+        return converter.read(DbsnpClusteredVariantEntity.class, new BasicDBObject(deprecableClusteredVariant));
     }
 
     @Override
