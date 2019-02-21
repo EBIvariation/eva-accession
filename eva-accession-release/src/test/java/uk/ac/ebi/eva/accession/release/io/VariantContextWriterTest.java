@@ -21,6 +21,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.steps.processors.VariantToVariantContextProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
@@ -31,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +45,6 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.A
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 public class VariantContextWriterTest {
 
@@ -112,7 +113,8 @@ public class VariantContextWriterTest {
     }
 
     public File assertWriteVcf(File outputFolder, Variant... variants) throws Exception {
-        VariantContextWriter writer = new VariantContextWriter(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
+        Path reportPath = ReportPathResolver.getCurrentIdsReportPath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
+        VariantContextWriter writer = new VariantContextWriter(reportPath, REFERENCE_ASSEMBLY);
         writer.open(null);
 
         VariantToVariantContextProcessor variantToVariantContextProcessor = new VariantToVariantContextProcessor();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,31 +38,24 @@ import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
-import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
-        "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
-public class CreateReleaseStepConfigurationTest {
+public class CreateDeprecatedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 3;
+    private static final long EXPECTED_LINES = 2;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -89,41 +82,29 @@ public class CreateReleaseStepConfigurationTest {
     }
 
     private void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     @Test
     public void variantsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
-    private File getReleaseFile() {
-        return ReportPathResolver.getCurrentIdsReportPath(inputParameters.getOutputFolder(),
-                                                          inputParameters.getAssemblyAccession()).toFile();
+    private File getDeprecatedReleaseFile() {
+        return ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                             inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test
-    public void metadataIsPresent() throws Exception {
+    public void accessionsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-
-        List<String> referenceLines = grepFile(getReleaseFile(),
-                                               "^##reference=" + inputParameters.getAssemblyAccession() + "$");
-        assertEquals(1, referenceLines.size());
-
-        List<String> metadataVariantClassLines = grepFile(getReleaseFile(),
-                                                          "^##INFO=<ID=" + VARIANT_CLASS_KEY + ".*$");
-        assertEquals(1, metadataVariantClassLines.size());
-
-        List<String> metadataStudyIdLines = grepFile(getReleaseFile(),
-                                                     "^##INFO=<ID=" + STUDY_ID_KEY + ".*$");
-        assertEquals(1, metadataStudyIdLines.size());
-
-        List<String> headerLines = grepFile(getReleaseFile(),
-                                            "^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO$");
-        assertEquals(1, headerLines.size());
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
+        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        List<String> dataLinesWithRs = grepFile(getDeprecatedReleaseFile(), "^rs[0-9]+$");
+        assertEquals(EXPECTED_LINES, dataLinesWithRs.size());
     }
 
     private List<String> grepFile(File file, String regex) throws IOException {
@@ -139,30 +120,4 @@ public class CreateReleaseStepConfigurationTest {
         return lines;
     }
 
-    @Test
-    public void rsAccessionsWritten() throws Exception {
-        assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
-        List<String> dataLinesWithRs = grepFile(getReleaseFile(), "^.*\trs[0-9]+\t.*$");
-        assertEquals(3, dataLinesWithRs.size());
-    }
-
-    @Test
-    public void infoWritten() throws Exception {
-        assertStepExecutesAndCompletes();
-        File outputFile = getReleaseFile();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
-        String dataLinesDoNotStartWithHash = "^[^#]";
-        String variantClass = VARIANT_CLASS_KEY + "=SO:[0-9]+";
-        String studyId = STUDY_ID_KEY + "=[a-zA-Z0-9,]+";
-
-        List<String> dataLines;
-        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + variantClass + ".*");
-        assertEquals(EXPECTED_LINES, dataLines.size());
-        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + studyId + ".*");
-        assertEquals(EXPECTED_LINES, dataLines.size());
-
-    }
 }

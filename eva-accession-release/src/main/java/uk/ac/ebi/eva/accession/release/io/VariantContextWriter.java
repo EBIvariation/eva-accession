@@ -33,6 +33,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
@@ -56,29 +57,19 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(VariantContextWriter.class);
 
-    private static final String FILE_SUFFIX = "_current_ids.vcf";
-
     private File output;
 
     private String referenceAssembly;
 
     private htsjdk.variant.variantcontext.writer.VariantContextWriter writer;
 
-    public VariantContextWriter(String outputFolder, String referenceAssembly) {
-        this.output = buildOutputFilename(outputFolder, referenceAssembly);
+    public VariantContextWriter(Path outputPath, String referenceAssembly) {
+        this.output = outputPath.toFile();
         this.referenceAssembly = referenceAssembly;
-    }
-
-    protected File buildOutputFilename(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX).toFile();
     }
 
     public File getOutput() {
         return output;
-    }
-
-    public static File getOutput(String outputFolder, String referenceAssembly) {
-        return new VariantContextWriter(outputFolder, referenceAssembly).getOutput();
     }
 
     @Override
@@ -125,23 +116,6 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         return metaData;
     }
 
-    @Override
-    public void update(ExecutionContext executionContext) throws ItemStreamException {
-
-    }
-
-    @Override
-    public void close() throws ItemStreamException {
-        writer.close();
-    }
-
-    @Override
-    public void write(List<? extends VariantContext> variantContexts) throws Exception {
-        for (VariantContext variantContext : variantContexts) {
-            writer.add(variantContext);
-        }
-    }
-
     private void addContigs(Set<VCFHeaderLine> metaData) {
         try {
             BufferedReader bufferedReader = new BufferedReader(
@@ -154,4 +128,22 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
             logger.warn("Contigs file not found, VCF header will not have any contigs in the metadata section");
         }
     }
+
+    @Override
+    public void write(List<? extends VariantContext> variantContexts) throws Exception {
+        for (VariantContext variantContext : variantContexts) {
+            writer.add(variantContext);
+        }
+    }
+
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+
+    }
+
+    @Override
+    public void close() throws ItemStreamException {
+        writer.close();
+    }
+
 }

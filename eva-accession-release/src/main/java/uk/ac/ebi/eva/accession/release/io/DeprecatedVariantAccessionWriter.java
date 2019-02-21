@@ -19,36 +19,46 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
 /**
- * Writes the list of contigs to a flat file
+ * Writes the accessions of historical variants to a flat file.
  */
-public class ContigWriter implements ItemStreamWriter<String> {
-
-    private static final String FILE_EXTENSION = ".txt";
-
-    private static final String FILE_PREFIX = "/contigs_";
+public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
 
     private final File output;
 
     private PrintWriter printWriter;
 
-    public ContigWriter(File output) {
-        this.output = output;
+    public DeprecatedVariantAccessionWriter(Path outputPath) {
+        this.output = outputPath.toFile();
+    }
+
+    public File getOutput() {
+        return output;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         try {
-            printWriter = new PrintWriter(new FileWriter(this.output));
+            printWriter = new PrintWriter(new FileWriter(output));
         } catch (IOException e) {
             throw new ItemStreamException(e);
+        }
+    }
+
+    @Override
+    public void write(List<? extends DbsnpClusteredVariantOperationEntity> variants) throws Exception {
+        for (DbsnpClusteredVariantOperationEntity variant : variants) {
+            printWriter.println("rs" + variant.getAccession());
         }
     }
 
@@ -62,22 +72,4 @@ public class ContigWriter implements ItemStreamWriter<String> {
         printWriter.close();
     }
 
-    @Override
-    public void write(List<? extends String> contigs) {
-        for (String contig : contigs) {
-            printWriter.println(contig);
-        }
-    }
-
-    public static String getContigsFilePath(String referenceAssembly) {
-        return FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
-    }
-
-    public static String getContigsFilePath(File outputFolder, String referenceAssembly) {
-        return outputFolder + getContigsFilePath(referenceAssembly);
-    }
-
-    public static String getContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + getContigsFilePath(referenceAssembly);
-    }
 }

@@ -41,6 +41,107 @@
           "createdDate" : ISODate("2017-06-21T10:11:40.907Z")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("5c36053f4a2c10d01c39d9c5"),
+      "eventType" : "DEPRECATED",
+      "accession" : NumberLong(1153596374),
+      "reason" : "All associated submitted variants have been declustered",
+      "inactiveObjects" : [
+        {
+          "asm": "GCF_000409795.2",
+          "tax" : 60711,
+          "contig" : "CM000346.1",
+          "start" : NumberLong(3337129),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "7A4304A9E9AE320D0E28FCC9E23EF1E605ACACAA",
+          "accession" : NumberLong(1153596374),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-20T08:25:00Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c519550dcc3abf7ee9125af"),
+      "eventType" : "DEPRECATED",
+      "accession" : NumberLong(881171680),
+      "reason" : "All associated submitted variants have been declustered",
+      "inactiveObjects" : [
+        {
+          "asm": "GCF_000409795.2",
+          "tax" : 60711,
+          "contig" : "AE014298.5",
+          "start" : NumberLong(8421515),
+          "type" : "DEL",
+          "validated" : false,
+          "hashedMessage" : "09D07C524717B0BCA290A290317C381607E40E6E",
+          "accession" : NumberLong(881171680),
+          "version" : 1,
+          "createdDate" : ISODate("2016-10-26T12:53:36.007Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c13d1b367686a3892422b18"),
+      "eventType" : "DEPRECATED",
+      "accession" : NumberLong(1101244729),
+      "reason" : "All associated submitted variants have been declustered",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000001735.1",
+          "tax" : 3702,
+          "contig" : "CP002684.1",
+          "start" : NumberLong(11216875),
+          "type" : "DEL",
+          "validated" : false,
+          "hashedMessage" : "5F6296045C0AA5EAFD196E2541840DD7A9FC6313",
+          "accession" : NumberLong(1101244729),
+          "version" : 1,
+          "createdDate" : ISODate("2017-06-21T10:11:40.907Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c13d1b367686a3892422b15"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(1100486334),
+      "mergeInto" : NumberLong(1105995937),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000001735.1",
+          "tax" : 3702,
+          "contig" : "CP002687.1",
+          "start" : NumberLong(11434476),
+          "type" : "DEL",
+          "validated" : false,
+          "hashedMessage" : "0AE9F3867A0314CF703DC26A36AB0A8F85705FF9",
+          "accession" : NumberLong(1100486334),
+          "version" : 1,
+          "createdDate" : ISODate("2017-06-21T10:11:40.907Z")
+        }
+      ]
+    },
+    {
+      "_id": ObjectId("5c13d1bc67686a3892422b74"),
+      "eventType": "DEPRECATED",
+      "accession": NumberLong(1106670930),
+      "reason": "All associated submitted variants have been declustered",
+      "inactiveObjects": [
+        {
+          "asm": "GCA_000001735.1",
+          "tax": 3702,
+          "contig": "CP002688.1",
+          "start": NumberLong(7716685),
+          "type": "DEL",
+          "validated": false,
+          "hashedMessage": "B0D284A59B2BD4413916E3D9FD33A7EA72BFDD5A",
+          "accession": NumberLong(1106670930),
+          "version": 1,
+          "createdDate": ISODate("2017-06-21T10:11:40.907Z")
+        }
+      ]
     }
   ]
 }

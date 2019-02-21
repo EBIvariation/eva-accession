@@ -31,8 +31,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
@@ -101,9 +101,9 @@ public class CreateMergedReleaseStepConfigurationTest {
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 
-    private File getMergedReleaseFile() throws FileNotFoundException {
-        return MergedVariantContextWriter.getOutput(inputParameters.getOutputFolder(),
-                                                    inputParameters.getAssemblyAccession());
+    private File getMergedReleaseFile() {
+        return ReportPathResolver.getMergedIdsReportPath(inputParameters.getOutputFolder(),
+                                                         inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test
