@@ -24,14 +24,22 @@ import io.swagger.annotations.Example;
 import io.swagger.annotations.ExampleProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.services.InactiveAccessionService;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -40,9 +48,11 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
@@ -56,11 +66,16 @@ public class ClusteredVariantsRestController {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
+    // TODO use an inactive service that delegates in both EVA and dbSNP. only the dbSNP one exists at the moment.
+    private DbsnpClusteredVariantInactiveService inactiveService;
+
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
-            SubmittedVariantAccessioningService submittedVariantsService) {
+            SubmittedVariantAccessioningService submittedVariantsService,
+            DbsnpClusteredVariantInactiveService inactiveService) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
+        this.inactiveService = inactiveService;
     }
 
     /**
@@ -72,12 +87,39 @@ public class ClusteredVariantsRestController {
             + "variants (RS) represented by the given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
     @GetMapping(value = "/{identifier}", produces = "application/json")
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> get(
+    public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                                     required = true) Long identifier)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        try {
+            return ResponseEntity.ok(Collections.singletonList(basicRestController.get(identifier)));
+        } catch (AccessionDeprecatedException e) {
+            // not done with an exception handler because the only way to get the accession parameter would be parsing
+            // the exception message
+            return ResponseEntity.status(HttpStatus.GONE).body(getDeprecatedClusteredVariant(identifier));
+        }
+    }
 
-        return Collections.singletonList(basicRestController.get(identifier));
+    /**
+     * Retrieve the information in the collection for inactive objects.
+     *
+     * This method is necessary because the behaviour of BasicRestController is to return the HttpStatus.GONE with an
+     * error exception message in the body. We want instead to return the HttpStatus.GONE with the variant in the body
+     */
+    private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getDeprecatedClusteredVariant(
+            Long identifier) {
+        IAccessionedObject<IClusteredVariant, ?, Long> accessionedObjectWrongType = inactiveService
+                .getLastEvent(identifier).getInactiveObjects().get(0);
+
+        IAccessionedObject<IClusteredVariant, String, Long> accessionedObject =
+                (IAccessionedObject<IClusteredVariant, String, Long>) accessionedObjectWrongType;
+
+        return Collections.singletonList(
+                new AccessionResponseDTO<>(
+                        new AccessionWrapper<>(identifier,
+                                               accessionedObject.getHashedMessage(),
+                                               accessionedObject.getModel()),
+                        ClusteredVariant::new));
     }
 
     @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a "

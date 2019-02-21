@@ -346,9 +346,10 @@ public class ClusteredVariantsRestControllerTest {
     public void testGetVariantsController()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
-            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+            ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
+                    getVariantsResponse =
                     controller.get(generatedAccession.getAccession());
-            checkClusteredVariantsOutput(getVariantsResponse, generatedAccession.getAccession());
+            checkClusteredVariantsOutput(getVariantsResponse.getBody(), generatedAccession.getAccession());
         }
     }
 
