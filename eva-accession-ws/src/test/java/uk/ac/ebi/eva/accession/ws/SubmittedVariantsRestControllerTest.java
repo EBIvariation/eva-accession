@@ -95,6 +95,10 @@ public class SubmittedVariantsRestControllerTest {
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
+    private SubmittedVariant variant1;
+
+    private SubmittedVariant variant2;
+
     @Before
     public void setUp() throws AccessionCouldNotBeGeneratedException {
         repository.deleteAll();
@@ -104,9 +108,9 @@ public class SubmittedVariantsRestControllerTest {
         mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
 
         Long CLUSTERED_VARIANT = null;
-        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+        variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
                                                          CLUSTERED_VARIANT);
-        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+        variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
                                                          CLUSTERED_VARIANT);
         generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
     }
@@ -278,5 +282,25 @@ public class SubmittedVariantsRestControllerTest {
         assertEquals(currentAccession, getVariantsResponse.getBody().get(0).getAccession());
         assertDefaultFlags(getVariantsResponse.getBody());
         assertCreatedDateNotNull(getVariantsResponse.getBody());
+    }
+
+    @Test
+    public void testGetDeprecatedSubmittedVariant()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        Long accession = generatedAccessions.get(0).getAccession();
+        service.deprecate(accession, "deprecated for testing");
+        String getVariantUrl = URL + accession;
+
+        // when
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> response =
+                testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new SubmittedVariantType());
+
+        // then
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        assertEquals(variant1, response.getBody().get(0).getData());
+        assertCreatedDateNotNull(response.getBody());
     }
 }
