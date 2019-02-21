@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -61,6 +62,9 @@ public class ClusteredVariantsToDeprecateReaderTest {
     @Autowired
     private MongoClient mongoClient;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
@@ -72,7 +76,7 @@ public class ClusteredVariantsToDeprecateReaderTest {
     @Before
     public void setUp() {
         executionContext = new ExecutionContext();
-        reader = new ClusteredVariantsToDeprecateReader(mongoClient, TEST_DB);
+        reader = new ClusteredVariantsToDeprecateReader(mongoClient, TEST_DB, mongoTemplate);
     }
 
     @Test
@@ -90,6 +94,7 @@ public class ClusteredVariantsToDeprecateReaderTest {
         while ((variant = reader.read()) != null) {
             variants.add(variant);
         }
+
         reader.close();
         return variants;
     }

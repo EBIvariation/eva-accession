@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.deprecate.io;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
@@ -29,12 +30,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.convert.MongoConverter;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.commons.core.models.VariantType;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -55,23 +55,7 @@ public class ClusteredVariantsToDeprecateReader implements ItemStreamReader<Dbsn
 
     private static final String ACCESSION_FIELD = "accession";
 
-    private static final String RS_FIELD = "rs";
-
-    private static final String ID_FIELD = "_id";
-
-    private static final String REFERENCE_ASSEMBLY_FIELD = "asm";
-
-    private static final String TAXONOMY_FIELD = "tax";
-
-    private static final String CONTIG_FIELD = "contig";
-
-    private static final String START_FIELD = "start";
-
-    private static final String TYPE_FIELD = "type";
-
-    private static final String ACCESSION_KEY = "accession";
-
-    private static final String VERSION_KEY = "version";
+    private static final String ACTIVE = "active";
 
     private MongoClient mongoClient;
 
@@ -79,9 +63,14 @@ public class ClusteredVariantsToDeprecateReader implements ItemStreamReader<Dbsn
 
     private MongoCursor<Document> cursor;
 
-    public ClusteredVariantsToDeprecateReader(MongoClient mongoClient, String database) {
+    private MongoTemplate mongoTemplate;
+    
+    private MongoConverter converter;
+
+    public ClusteredVariantsToDeprecateReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
         this.mongoClient = mongoClient;
         this.database = database;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -92,11 +81,12 @@ public class ClusteredVariantsToDeprecateReader implements ItemStreamReader<Dbsn
                                                                     .allowDiskUse(true)
                                                                     .useCursor(true);
         cursor = declusteredVariants.iterator();
+        converter = mongoTemplate.getConverter();
     }
 
     private List<Bson> buildAggregation() {
-        Bson lookup = Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, ACCESSION_FIELD, ACCESSION_FIELD, RS_FIELD);
-        Bson match = Aggregates.match(Filters.eq(RS_FIELD, Collections.EMPTY_LIST));
+        Bson lookup = Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, ACCESSION_FIELD, ACCESSION_FIELD, ACTIVE);
+        Bson match = Aggregates.match(Filters.eq(ACTIVE, Collections.EMPTY_LIST));
         List<Bson> aggregation = Arrays.asList(lookup, match);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
@@ -108,19 +98,7 @@ public class ClusteredVariantsToDeprecateReader implements ItemStreamReader<Dbsn
     }
 
     private DbsnpClusteredVariantEntity getClusteredVariantToDeprecate(Document declusteredVariant) {
-        String id = declusteredVariant.getString(ID_FIELD);
-        String assembly = declusteredVariant.getString(REFERENCE_ASSEMBLY_FIELD);
-        int taxonomy = declusteredVariant.getInteger(TAXONOMY_FIELD);
-        String contig = declusteredVariant.getString(CONTIG_FIELD);
-        long start = declusteredVariant.getLong(START_FIELD);
-        String type = declusteredVariant.getString(TYPE_FIELD);
-        long accession = declusteredVariant.getLong(ACCESSION_KEY);
-        int version = declusteredVariant.getInteger(VERSION_KEY);
-        LocalDateTime createdDate = declusteredVariant.getDate("createdDate")
-                                                      .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-
-        return new DbsnpClusteredVariantEntity(accession, id, assembly, taxonomy, contig, start,
-                                               VariantType.valueOf(type), false, createdDate, version);
+        return converter.read(DbsnpClusteredVariantEntity.class, new BasicDBObject(declusteredVariant));
     }
 
     @Override
