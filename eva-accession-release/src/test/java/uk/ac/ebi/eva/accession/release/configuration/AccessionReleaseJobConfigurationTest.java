@@ -66,7 +66,7 @@ public class AccessionReleaseJobConfigurationTest {
 
     private static final long EXPECTED_LINES_MERGED = 3;
 
-    private static final long EXPECTED_LINES_DEPRECATED = 1;
+    private static final long EXPECTED_LINES_DEPRECATED = 2;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;

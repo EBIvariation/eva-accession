@@ -55,7 +55,7 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 1;
+    private static final long EXPECTED_LINES = 2;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -104,7 +104,7 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         List<String> dataLinesWithRs = grepFile(getDeprecatedReleaseFile(), "^rs[0-9]+$");
-        assertEquals(1, dataLinesWithRs.size());
+        assertEquals(EXPECTED_LINES, dataLinesWithRs.size());
     }
 
     private List<String> grepFile(File file, String regex) throws IOException {
