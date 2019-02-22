@@ -423,4 +423,6 @@ public class ClusteredVariantsRestControllerTest {
 
         assertSubmittedVariantCreatedDateNotNull(getVariantsResponse.getBody());
     }
+
+    // TODO test RS merged into 2 other RS, check it returns the active one
 }

@@ -28,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -45,7 +47,9 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
 
 import java.util.Arrays;
@@ -62,7 +66,6 @@ import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
-@AutoConfigureAfter(HttpMessageConvertersAutoConfiguration.class)
 public class SubmittedVariantsRestControllerTest {
 
     private static final String URL = "/v1/submitted-variants/";
@@ -74,10 +77,16 @@ public class SubmittedVariantsRestControllerTest {
     private SubmittedVariantAccessioningService service;
 
     @Autowired
+    private DbsnpSubmittedVariantInactiveService inactiveService;
+
+    @Autowired
     private SubmittedVariantsRestController controller;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
@@ -175,6 +184,63 @@ public class SubmittedVariantsRestControllerTest {
         service.merge(outdatedAccession,
                       currentAccession,
                       "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        // when
+        String getVariantsUrl = URL + outdatedAccession;
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + currentAccession, redirectedUrl);
+
+        // and then
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new SubmittedVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertEquals(currentAccession, getVariantsResponse.getBody().get(0).getAccession());
+        assertDefaultFlags(getVariantsResponse.getBody());
+        assertCreatedDateNotNull(getVariantsResponse.getBody());
+    }
+
+    /**
+     * If there is a variant with operations of several types (e.g. UPDATED and MERGED) the MERGED event should take
+     * priority and the endpoint should return a redirection, **even if the MERGED event is not the last one**.
+     *
+     * Example dbsnp variant: ss825691104. It was declustered from rs796064771 and merged into ss825691103 at the same
+     * time. The service (which is used for non-dbSNP variants) will allow only update-merge and not merge-update, so
+     * the last event will be correctly detected as the merge.
+     */
+    @Test
+    public void testGetRedirectionForMergedAndUpdatedVariants()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException, HashAlreadyExistsException {
+        // given
+        Long CLUSTERED_VARIANT = null;
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
+                Arrays.asList(variant1, variant2));
+
+        Long outdatedAccession = accessions.get(0).getAccession();
+        Long currentAccession = accessions.get(1).getAccession();
+
+        // aaaggh this is EVA service, it's creating variants outside of the dbsnp collections
+        service.merge(outdatedAccession,
+                      currentAccession,
+                      "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        SubmittedVariant updatedVariant = new SubmittedVariant(variant1);
+        updatedVariant.setContig("contig_2");
+
+        inactiveService.update(new DbsnpSubmittedVariantEntity(outdatedAccession, "hash", updatedVariant, 1),
+                               "update a merged variant");
 
         // when
         String getVariantsUrl = URL + outdatedAccession;
