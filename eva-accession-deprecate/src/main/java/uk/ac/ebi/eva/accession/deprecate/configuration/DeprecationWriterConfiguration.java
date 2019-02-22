@@ -24,11 +24,13 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.io.DeprecationWriter;
 
+import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATION_WRITER;
+
 @Configuration
 @Import({MongoConfiguration.class})
 public class DeprecationWriterConfiguration {
 
-    @Bean
+    @Bean(DEPRECATION_WRITER)
     @StepScope
     DeprecationWriter deprecationWriter(MongoTemplate mongoTemplate) {
         return new DeprecationWriter(mongoTemplate);

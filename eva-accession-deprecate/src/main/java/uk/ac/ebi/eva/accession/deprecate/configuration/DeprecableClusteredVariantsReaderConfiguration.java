@@ -26,11 +26,13 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.io.DeprecableClusteredVariantsReader;
 
+import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECABLE_CLUSTERED_VARIANTS_READER;
+
 @Configuration
 @Import({MongoConfiguration.class})
 public class DeprecableClusteredVariantsReaderConfiguration {
 
-    @Bean
+    @Bean(DEPRECABLE_CLUSTERED_VARIANTS_READER)
     @StepScope
     DeprecableClusteredVariantsReader deprecableClusteredVariantsReader(MongoClient mongoClient,
                                                                         MongoProperties mongoProperties,

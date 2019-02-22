@@ -16,12 +16,27 @@
 package uk.ac.ebi.eva.accession.deprecate.test.configuration;
 
 import org.springframework.batch.test.JobLauncherTestUtils;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecableClusteredVariantsReaderConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecateClusteredVariantsJobConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecateClusteredVariantsStepConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecationWriterConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.InputParametersConfiguration;
 
-@Import({MongoConfiguration.class})
+@EnableAutoConfiguration
+@Import({MongoConfiguration.class,
+        InputParametersConfiguration.class,
+        ChunkSizeCompletionPolicyConfiguration.class,
+        DeprecableClusteredVariantsReaderConfiguration.class,
+        DeprecationWriterConfiguration.class,
+        DeprecateClusteredVariantsStepConfiguration.class,
+        DeprecateClusteredVariantsJobConfiguration.class
+})
 public class BatchTestConfiguration {
 
     @Bean
