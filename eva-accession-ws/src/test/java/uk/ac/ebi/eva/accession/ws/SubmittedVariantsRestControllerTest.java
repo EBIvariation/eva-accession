@@ -47,9 +47,15 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
 
 import java.util.Arrays;
@@ -77,7 +83,10 @@ public class SubmittedVariantsRestControllerTest {
     private SubmittedVariantAccessioningService service;
 
     @Autowired
-    private DbsnpSubmittedVariantInactiveService inactiveService;
+    private DbsnpSubmittedVariantMonotonicAccessioningService dbsnpService;
+
+    @Autowired
+    private DbsnpSubmittedVariantInactiveService dbsnpInactiveService;
 
     @Autowired
     private SubmittedVariantsRestController controller;
@@ -93,6 +102,10 @@ public class SubmittedVariantsRestControllerTest {
     @Before
     public void setUp() throws AccessionCouldNotBeGeneratedException {
         repository.deleteAll();
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
 
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
@@ -105,6 +118,10 @@ public class SubmittedVariantsRestControllerTest {
     @After
     public void tearDown() {
         repository.deleteAll();
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
     }
 
     @Test
@@ -213,8 +230,7 @@ public class SubmittedVariantsRestControllerTest {
      * priority and the endpoint should return a redirection, **even if the MERGED event is not the last one**.
      *
      * Example dbsnp variant: ss825691104. It was declustered from rs796064771 and merged into ss825691103 at the same
-     * time. The service (which is used for non-dbSNP variants) will allow only update-merge and not merge-update, so
-     * the last event will be correctly detected as the merge.
+     * time.
      */
     @Test
     public void testGetRedirectionForMergedAndUpdatedVariants()
@@ -223,24 +239,27 @@ public class SubmittedVariantsRestControllerTest {
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
                                                          CLUSTERED_VARIANT);
+        Long outdatedAccession = 1L;
+        SubmittedVariantEntity submittedVariantEntity1 = new SubmittedVariantEntity(outdatedAccession, "hash-100",
+                                                                                    variant1, 1);
+        Long currentAccession = 2L;
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
                                                          CLUSTERED_VARIANT);
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
-                Arrays.asList(variant1, variant2));
+        SubmittedVariantEntity submittedVariantEntity2 = new SubmittedVariantEntity(currentAccession, "hash-200",
+                                                                                    variant2, 1);
 
-        Long outdatedAccession = accessions.get(0).getAccession();
-        Long currentAccession = accessions.get(1).getAccession();
+        mongoTemplate.insert(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2),
+                             DbsnpSubmittedVariantEntity.class);
 
-        // aaaggh this is EVA service, it's creating variants outside of the dbsnp collections
-        service.merge(outdatedAccession,
-                      currentAccession,
-                      "Just for testing the endpoint, let's pretend the variants are equivalent");
+        dbsnpService.merge(outdatedAccession,
+                           currentAccession,
+                           "Just for testing the endpoint, let's pretend the variants are equivalent");
 
         SubmittedVariant updatedVariant = new SubmittedVariant(variant1);
         updatedVariant.setContig("contig_2");
 
-        inactiveService.update(new DbsnpSubmittedVariantEntity(outdatedAccession, "hash", updatedVariant, 1),
-                               "update a merged variant");
+        dbsnpInactiveService.update(new DbsnpSubmittedVariantEntity(outdatedAccession, "hash-300", updatedVariant, 1),
+                                    "update a merged variant");
 
         // when
         String getVariantsUrl = URL + outdatedAccession;
