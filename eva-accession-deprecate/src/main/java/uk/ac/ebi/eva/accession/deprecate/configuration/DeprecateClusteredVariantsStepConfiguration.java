@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.deprecate.configuration;
 
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -31,6 +32,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECABLE_CLUSTERED_VARIANTS_READER;
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_CLUSTERED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATION_PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATION_WRITER;
 
 @Configuration
@@ -39,19 +41,24 @@ public class DeprecateClusteredVariantsStepConfiguration {
 
     @Autowired
     @Qualifier(DEPRECABLE_CLUSTERED_VARIANTS_READER)
-    private ItemStreamReader<DbsnpClusteredVariantEntity> reader;
+    private ItemStreamReader<DbsnpClusteredVariantEntity> deprecableClusteredVariantsReader;
 
     @Autowired
     @Qualifier(DEPRECATION_WRITER)
-    private ItemWriter<DbsnpClusteredVariantEntity> writer;
+    private ItemWriter<DbsnpClusteredVariantEntity> deprecationWriter;
+
+    @Autowired
+    @Qualifier(DEPRECATION_PROGRESS_LISTENER)
+    private StepExecutionListener progressListener;
 
     @Bean(DEPRECATE_CLUSTERED_VARIANTS_STEP)
     public Step deprecateClusteredVariantsStep(StepBuilderFactory stepBuilderFactory,
                                                SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(DEPRECATE_CLUSTERED_VARIANTS_STEP)
                 .<DbsnpClusteredVariantEntity, DbsnpClusteredVariantEntity>chunk(chunkSizeCompletionPolicy)
-                .reader(reader)
-                .writer(writer)
+                .reader(deprecableClusteredVariantsReader)
+                .writer(deprecationWriter)
+                .listener(progressListener)
                 .build();
         return step;
     }

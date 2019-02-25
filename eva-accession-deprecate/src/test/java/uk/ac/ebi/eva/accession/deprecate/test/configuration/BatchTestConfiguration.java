@@ -27,6 +27,7 @@ import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecateClusteredVariant
 import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecateClusteredVariantsStepConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecationWriterConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.ListenerConfiguration;
 
 @EnableAutoConfiguration
 @Import({MongoConfiguration.class,
@@ -35,7 +36,8 @@ import uk.ac.ebi.eva.accession.deprecate.configuration.InputParametersConfigurat
         DeprecableClusteredVariantsReaderConfiguration.class,
         DeprecationWriterConfiguration.class,
         DeprecateClusteredVariantsStepConfiguration.class,
-        DeprecateClusteredVariantsJobConfiguration.class
+        DeprecateClusteredVariantsJobConfiguration.class,
+        ListenerConfiguration.class
 })
 public class BatchTestConfiguration {
 
