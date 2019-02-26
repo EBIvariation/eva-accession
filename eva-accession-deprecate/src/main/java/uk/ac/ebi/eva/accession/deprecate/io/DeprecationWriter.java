@@ -62,8 +62,8 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
         bulkOperations.execute();
     }
 
-    private List<String> getIds(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVatiants) {
-        return deprecableClusteredVatiants.stream().flatMap(d -> Stream.of(d.getId())).collect(Collectors.toList());
+    private List<String> getIds(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
+        return deprecableClusteredVariants.stream().flatMap(d -> Stream.of(d.getId())).collect(Collectors.toList());
     }
 
     private void insertDeprecateOperation(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVatiants) {
