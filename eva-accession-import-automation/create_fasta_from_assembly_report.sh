@@ -30,6 +30,7 @@ exit_code=0
 # To ensure the file exists before running `grep -c`, otherwise it will always fail
 touch ${output_folder}/${species}_custom.fa
 touch ${output_folder}/written_contigs.txt
+touch ${output_folder}/downloaded_wgs.txt
 
 for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
@@ -39,14 +40,35 @@ do
     set -o pipefail
     times_wget_failed=0
     max_allowed_attempts=5
+	
+	# Check if the contig belong to a WGS sequence that was already downloaded
+	sequence_name=`echo "${genbank_contig}" | awk '{print substr ($0, 0, 7)}'`
+	already_downloaded=`grep -c $sequence_name ${output_folder}/downloaded_wgs.txt`
+	#already_downloaded=`grep -c "${genbank_contig}" ${output_folder}/${species}_custom.fa` 
+	if [ $already_downloaded -eq 1 ]
+	then
+        echo 'contig already downloaded'
+        echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+        continue
+	fi
+	
     while [ $times_wget_failed -lt $max_allowed_attempts ]
     do
         # Download each GenBank accession in the assembly report from ENA into a separate file
         # Delete the accession prefix from the header line
-        wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
+        wget -q -O - "https://wwwdev.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
         whole_pipe_result=$?
         if [ $whole_pipe_result -eq 0 ]
         then
+            is_compressed=$(file ${output_folder}/${genbank_contig} | grep -c 'gzip')
+            if [ $is_compressed -eq 1 ]
+            then
+                # Uncompress file
+                mv ${output_folder}/${genbank_contig} ${output_folder}/${genbank_contig}.gz
+                gunzip ${output_folder}/${genbank_contig}.gz
+                # Mark WGS sequence as downloaded
+                echo $sequence_name >> ${output_folder}/downloaded_wgs.txt
+            fi
             # it was correctly downloaded
             break
         fi
@@ -90,7 +112,9 @@ do
 done
 
 echo `grep -v "^#" ${assembly_report}  | wc -l` "contigs were present in the assembly report"
-echo `cat ${output_folder}/written_contigs.txt | wc -l` "contigs were successfully retrieved and written in the FASTA file"
+#echo `cat ${output_folder}/written_contigs.txt | wc -l` "contigs were successfully retrieved and written in the FASTA file"
+echo `grep -c '>' ${output_folder}/${species}_custom.fa` "contigs were successfully retrieved and written in the FASTA file"
 rm ${output_folder}/written_contigs.txt
+rm ${output_folder}/downloaded_wgs.txt
 
 exit $exit_code
