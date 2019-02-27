@@ -39,15 +39,15 @@ do
     set -o pipefail
     times_wget_failed=0
     max_allowed_attempts=5
-	
-	# Check if the contig belong to a WGS sequence that was already downloaded
-	already_downloaded=`grep -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
-	if [ $already_downloaded -eq 1 ]
-	then
+
+    # Check if the contig belong was already downloaded
+    already_downloaded=`grep -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+    if [ $already_downloaded -eq 1 ]
+    then
         echo 'contig already in the FASTA file'
         continue
-	fi
-	
+    fi
+
     while [ $times_wget_failed -lt $max_allowed_attempts ]
     do
         # Download each GenBank accession in the assembly report from ENA into a separate file
