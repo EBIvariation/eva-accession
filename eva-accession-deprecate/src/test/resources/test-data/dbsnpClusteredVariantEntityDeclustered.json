@@ -1,0 +1,48 @@
+{
+  "dbsnpClusteredVariantEntityDeclustered": [
+    {
+      "_id" : "42427DDB6AF40E0CD9DAA9B96991B9D06FAC46DC",
+      "asm" : "GCA_000331145.1",
+      "tax" : 3827,
+      "contig" : "CM001766.1",
+      "start" : NumberLong(10950885),
+      "type" : "SNV",
+      "accession" : NumberLong(853567325),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "CA98EA5284F0BF46727CEF3373EE7144839172F5",
+      "asm" : "GCA_000331145.1",
+      "tax" : 3827,
+      "contig" : "CM001765.1",
+      "start" : NumberLong(35288581),
+      "type" : "SNV",
+      "accession" : NumberLong(853683894),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "BCAB105FD3C0108A54354BB6B661C3146C874F4B",
+      "asm" : "GCA_000331145.1",
+      "tax" : 3827,
+      "contig" : "CM001767.1",
+      "start" : NumberLong(45273241),
+      "type" : "SNV",
+      "accession" : NumberLong(853357167),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "E353FC48E7563BB79DCE4D6A2046FCE07DB17AC8",
+      "asm" : "GCA_000331145.1",
+      "tax" : 3827,
+      "contig" : "CM001768.1",
+      "start" : NumberLong(31898089),
+      "type" : "SNV",
+      "accession" : NumberLong(853461378),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    }
+  ]
+}
