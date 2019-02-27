@@ -19,22 +19,36 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 @Configuration
 public class TestConfiguration {
 
     @Bean
-    public DbsnpSubmittedVariantMonotonicAccessioningService dbsnpService(
+    public DbsnpSubmittedVariantMonotonicAccessioningService dbsnpSubmittedService(
             DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator,
             DbsnpSubmittedVariantAccessioningDatabaseService dbsnpSubmittedVariantAccessioningDatabaseService) {
         return new DbsnpSubmittedVariantMonotonicAccessioningService(dbsnpSubmittedVariantAccessionGenerator,
                                                                      dbsnpSubmittedVariantAccessioningDatabaseService,
                                                                      new SubmittedVariantSummaryFunction(),
+                                                                     new SHA1HashingFunction());
+    }
+
+    @Bean
+    public DbsnpClusteredVariantMonotonicAccessioningService dbsnpClusteredService(
+            DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator,
+            DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService) {
+        return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator,
+                                                                     dbsnpClusteredVariantAccessioningDatabaseService,
+                                                                     new ClusteredVariantSummaryFunction(),
                                                                      new SHA1HashingFunction());
     }
 }
