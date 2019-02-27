@@ -59,18 +59,19 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
             removeDeprecableClusteredVariants(deprecableClusteredVariants);
         } catch (BulkOperationException e) {
             BulkWriteResult bulkWriteResult = e.getResult();
-            logger.error("Deprecation writer failed. written operations: {}, removed rs ids: {}",
-                        bulkWriteResult.getInsertedCount(), bulkWriteResult.getRemovedCount());
-            getAccessions(deprecableClusteredVariants).forEach(a -> logger.error("rs id: " + a));
+            logger.error("Deprecation writer failed. chunk size: {}, written operations: {}, removed rs ids: {}",
+                         deprecableClusteredVariants.size(), bulkWriteResult.getInsertedCount(),
+                         bulkWriteResult.getRemovedCount());
+            logger.error("RS IDs present in this failed chunk: [" + getAccessions(deprecableClusteredVariants) + "]");
             throw e;
         }
     }
 
-    private List<String> getAccessions(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
+    private String getAccessions(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
         return deprecableClusteredVariants.stream()
                                           .map(AccessionedDocument::getAccession)
                                           .map(Objects::toString)
-                                          .collect(Collectors.toList());
+                                          .collect(Collectors.joining(", "));
     }
 
     private void removeDeprecableClusteredVariants(
