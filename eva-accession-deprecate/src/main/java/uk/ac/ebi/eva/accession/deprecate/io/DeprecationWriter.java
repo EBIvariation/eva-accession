@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
@@ -30,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
 
@@ -47,8 +47,8 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
 
     @Override
     public void write(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) throws Exception {
-        removeDeprecableClusteredVariants(deprecableClusteredVariants);
         insertDeprecateOperation(deprecableClusteredVariants);
+        removeDeprecableClusteredVariants(deprecableClusteredVariants);
     }
 
     private void removeDeprecableClusteredVariants(
@@ -63,7 +63,7 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
     }
 
     private List<String> getIds(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
-        return deprecableClusteredVariants.stream().flatMap(d -> Stream.of(d.getId())).collect(Collectors.toList());
+        return deprecableClusteredVariants.stream().map(AccessionedDocument::getId).collect(Collectors.toList());
     }
 
     private void insertDeprecateOperation(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVatiants) {
