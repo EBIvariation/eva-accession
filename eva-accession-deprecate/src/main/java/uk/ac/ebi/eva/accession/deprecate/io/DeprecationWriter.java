@@ -15,7 +15,11 @@
  */
 package uk.ac.ebi.eva.accession.deprecate.io;
 
+import com.mongodb.BulkWriteResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -30,9 +34,12 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEn
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
+
+    private static final Logger logger = LoggerFactory.getLogger(DeprecationWriter.class);
 
     private static final String DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME =
             "dbsnpClusteredVariantEntityDeclustered";
@@ -47,8 +54,23 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
 
     @Override
     public void write(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) throws Exception {
-        insertDeprecateOperation(deprecableClusteredVariants);
-        removeDeprecableClusteredVariants(deprecableClusteredVariants);
+        try {
+            insertDeprecateOperation(deprecableClusteredVariants);
+            removeDeprecableClusteredVariants(deprecableClusteredVariants);
+        } catch (BulkOperationException e) {
+            BulkWriteResult bulkWriteResult = e.getResult();
+            logger.error("Deprecation writer failed. written operations: {}, removed rs ids: {}",
+                        bulkWriteResult.getInsertedCount(), bulkWriteResult.getRemovedCount());
+            getAccessions(deprecableClusteredVariants).forEach(a -> logger.error("rs id: " + a));
+            throw e;
+        }
+    }
+
+    private List<String> getAccessions(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
+        return deprecableClusteredVariants.stream()
+                                          .map(AccessionedDocument::getAccession)
+                                          .map(Objects::toString)
+                                          .collect(Collectors.toList());
     }
 
     private void removeDeprecableClusteredVariants(
