@@ -40,11 +40,11 @@ do
     times_wget_failed=0
     max_allowed_attempts=5
 
-    # Check if the contig belong was already downloaded
+    # Check if the contig has already been downloaded
     already_downloaded=`grep -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
     if [ $already_downloaded -eq 1 ]
     then
-        echo 'contig already in the FASTA file'
+        echo Contig ${genbank_contig} is already present in the FASTA file and doesn't need to be downloaded again.
         continue
     fi
 
