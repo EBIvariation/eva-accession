@@ -39,6 +39,15 @@ do
     set -o pipefail
     times_wget_failed=0
     max_allowed_attempts=5
+
+    # Check if the contig has already been downloaded
+    already_downloaded=`grep -F -w -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+    if [ $already_downloaded -eq 1 ]
+    then
+        echo Contig ${genbank_contig} is already present in the FASTA file and doesnt need to be downloaded again.
+        continue
+    fi
+
     while [ $times_wget_failed -lt $max_allowed_attempts ]
     do
         # Download each GenBank accession in the assembly report from ENA into a separate file
@@ -76,11 +85,26 @@ do
         else
             # Write the sequence associated with an accession to a FASTA file only once
             # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
-            matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+            matches=`grep -F -w -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
             if [ $matches -eq 0 ]
             then
+                # If the downloaded file contains a WGS, it will be compressed
+                is_wgs=$(file ${output_folder}/${genbank_contig} | grep -c 'gzip')
+                if [ $is_wgs -eq 1 ]
+                then
+                    # Uncompress file
+                    mv ${output_folder}/${genbank_contig} ${output_folder}/${genbank_contig}.gz
+                    gunzip ${output_folder}/${genbank_contig}.gz
+                fi
+                # Add sequence to FASTA file
                 cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
-                echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+                # Register written contigs
+                if [ $is_wgs -eq 1 ]
+                then
+                    grep '>' "${genbank_contig}" | cut -d'|' -f3 | cut -d' ' -f1 >> ${output_folder}/written_contigs.txt
+                else
+                    echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
+                fi
             fi
         fi
     fi
