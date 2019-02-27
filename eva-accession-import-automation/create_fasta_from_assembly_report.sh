@@ -41,10 +41,10 @@ do
     max_allowed_attempts=5
 
     # Check if the contig has already been downloaded
-    already_downloaded=`grep -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+    already_downloaded=`grep -F -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
     if [ $already_downloaded -eq 1 ]
     then
-        echo Contig ${genbank_contig} is already present in the FASTA file and doesn't need to be downloaded again.
+        echo Contig ${genbank_contig} is already present in the FASTA file and doesnt need to be downloaded again.
         continue
     fi
 
@@ -52,7 +52,7 @@ do
     do
         # Download each GenBank accession in the assembly report from ENA into a separate file
         # Delete the accession prefix from the header line
-        wget -q -O - "https://wwwdev.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
+        wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
         whole_pipe_result=$?
         if [ $whole_pipe_result -eq 0 ]
         then
@@ -88,7 +88,7 @@ do
             matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
             if [ $matches -eq 0 ]
             then
-                # Check if is a gws. If it is the file will be compressed
+                # If the downloaded file contains a WGS, it will be compressed
                 is_wgs=$(file ${output_folder}/${genbank_contig} | grep -c 'gzip')
                 if [ $is_wgs -eq 1 ]
                 then
