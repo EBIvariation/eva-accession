@@ -41,7 +41,7 @@ do
     max_allowed_attempts=5
 
     # Check if the contig has already been downloaded
-    already_downloaded=`grep -F -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+    already_downloaded=`grep -F -w -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
     if [ $already_downloaded -eq 1 ]
     then
         echo Contig ${genbank_contig} is already present in the FASTA file and doesnt need to be downloaded again.
@@ -85,7 +85,7 @@ do
         else
             # Write the sequence associated with an accession to a FASTA file only once
             # grep explanation: -m 1 means "stop after finding first match". -c means "output the number of matches"
-            matches=`grep -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+            matches=`grep -F -w -m 1 -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
             if [ $matches -eq 0 ]
             then
                 # If the downloaded file contains a WGS, it will be compressed
