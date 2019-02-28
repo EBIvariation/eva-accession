@@ -18,6 +18,8 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
@@ -31,15 +33,18 @@ public class SubmittedVariantAccessioningDatabaseService
 
     private final SubmittedVariantAccessioningRepository repository;
 
+    private SubmittedVariantInactiveService inactiveService;
+
     public SubmittedVariantAccessioningDatabaseService(SubmittedVariantAccessioningRepository repository,
-                                                       SubmittedVariantInactiveService inactiveAccessionService) {
+                                                       SubmittedVariantInactiveService inactiveService) {
         super(repository,
               accessionWrapper -> new SubmittedVariantEntity(accessionWrapper.getAccession(),
                                                              accessionWrapper.getHash(),
                                                              accessionWrapper.getData(),
                                                              accessionWrapper.getVersion()),
-              inactiveAccessionService);
+              inactiveService);
         this.repository = repository;
+        this.inactiveService = inactiveService;
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> findByClusteredVariantAccessionIn(
@@ -53,5 +58,11 @@ public class SubmittedVariantAccessioningDatabaseService
     private AccessionWrapper<ISubmittedVariant, String, Long> toModelWrapper(SubmittedVariantEntity entity) {
         return new AccessionWrapper<>(entity.getAccession(), entity.getHashedMessage(), entity.getModel(),
                                       entity.getVersion());
+    }
+
+    public IAccessionedObject<ISubmittedVariant, ?, Long> getLastInactive(Long accession) {
+        IEvent<ISubmittedVariant, Long> lastEvent = inactiveService.getLastEvent(accession);
+        List<? extends IAccessionedObject<ISubmittedVariant, ?, Long>> inactiveObjects = lastEvent.getInactiveObjects();
+        return inactiveObjects.get(inactiveObjects.size() - 1);
     }
 }

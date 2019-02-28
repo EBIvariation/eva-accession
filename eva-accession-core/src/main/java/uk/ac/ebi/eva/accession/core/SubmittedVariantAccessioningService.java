@@ -27,6 +27,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
@@ -160,6 +161,14 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
             accessioningServiceDbsnp.merge(accessionOrigin, mergeInto, reason);
         } else {
             throw new UnsupportedOperationException("Can't merge a submitted variant with a dbSNP submitted variant");
+        }
+    }
+
+    public IAccessionedObject<ISubmittedVariant, ?, Long> getLastInactive(Long accession) {
+        if (accession >= accessioningMonotonicInitSs) {
+            return accessioningService.getLastInactive(accession);
+        } else {
+            return accessioningServiceDbsnp.getLastInactive(accession);
         }
     }
 }

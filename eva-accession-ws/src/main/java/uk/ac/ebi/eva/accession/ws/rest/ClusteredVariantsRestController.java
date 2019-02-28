@@ -58,7 +58,9 @@ public class ClusteredVariantsRestController {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
-    // TODO use an inactive service that delegates in both EVA and dbSNP. only the dbSNP one exists at the moment.
+    // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
+    //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
+    //  service directly, but at the moment, {@link ClusteredVariantAccessioningService} only deals with dbSNP variants
     private DbsnpClusteredVariantInactiveService inactiveService;
 
     public ClusteredVariantsRestController(
@@ -82,7 +84,7 @@ public class ClusteredVariantsRestController {
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                                     required = true) Long identifier)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             return ResponseEntity.ok(Collections.singletonList(basicRestController.get(identifier)));
         } catch (AccessionDeprecatedException e) {

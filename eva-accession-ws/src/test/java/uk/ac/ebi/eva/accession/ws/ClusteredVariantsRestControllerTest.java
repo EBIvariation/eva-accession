@@ -39,6 +39,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -64,6 +65,7 @@ import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -512,7 +514,6 @@ public class ClusteredVariantsRestControllerTest {
      * the deprecation event is given priority over the other events.
      */
     @Test
-    @Ignore("Need the changes for querying deprecated accessions for this test to work.")
     public void testGetMergedAndDeprecatedVariants()
             throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
                    AccessionDeprecatedException, HashAlreadyExistsException {
@@ -563,12 +564,12 @@ public class ClusteredVariantsRestControllerTest {
         // then
         assertEquals(HttpStatus.GONE, response.getStatusCode());
         assertEquals(1, response.getBody().size());
-        assertEquals(clusteredVariantEntity1.getModel(), response.getBody().get(0).getData());
+        assertEquals(clusteredVariantEntity3.getModel(), response.getBody().get(0).getData());
         assertClusteredVariantCreatedDateNotNull(response.getBody());
     }
 
     @Test
-    public void testGetDeprecatedClusteredVariant()
+    public void testGetDeprecatedDbsnpClusteredVariant()
             throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
                    AccessionDeprecatedException {
         // given
@@ -583,6 +584,39 @@ public class ClusteredVariantsRestControllerTest {
         assertEquals(HttpStatus.GONE, response.getStatusCode());
         assertEquals(1, response.getBody().size());
         assertEquals(clusteredVariantEntity1.getModel(), response.getBody().get(0).getData());
+        assertClusteredVariantCreatedDateNotNull(response.getBody());
+    }
+
+    @Test
+    public void testGetDeprecatedEvaClusteredVariant()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        Long deprecatedAccession = 1L;
+        ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 2000, "CHROM1", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity1 = new DbsnpClusteredVariantEntity(deprecatedAccession,
+                                                                                              "hash-100", variant1, 1);
+        ClusteredVariant variant2 = new ClusteredVariant("ASMACC02", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        Long otherAccession = 1L;
+        DbsnpClusteredVariantEntity clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(otherAccession,
+                                                                                              "hash-200", variant2, 1);
+
+        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity2),
+                             DbsnpClusteredVariantEntity.class);
+        clusteredService.deprecate(deprecatedAccession, "deprecated for testing");
+        String getVariantUrl = URL + deprecatedAccession;
+
+        // when
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> response =
+                testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        // then
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        assertEquals(variant1, response.getBody().get(0).getData());
         assertClusteredVariantCreatedDateNotNull(response.getBody());
     }
 }

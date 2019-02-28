@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.core.service;
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
@@ -42,5 +43,9 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
             List<Long> clusteredVariantAccessions) {
         return dbService.findByClusteredVariantAccessionIn(clusteredVariantAccessions);
+    }
+
+    public IAccessionedObject<ISubmittedVariant, ?, Long> getLastInactive(Long accession) {
+        return dbService.getLastInactive(accession);
     }
 }
