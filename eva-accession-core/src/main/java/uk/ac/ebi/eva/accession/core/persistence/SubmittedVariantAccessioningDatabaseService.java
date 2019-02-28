@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.core.persistence;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.services.InactiveAccessionService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
@@ -60,9 +61,20 @@ public class SubmittedVariantAccessioningDatabaseService
                                       entity.getVersion());
     }
 
-    public IAccessionedObject<ISubmittedVariant, ?, Long> getLastInactive(Long accession) {
+    public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
+        return getLastInactive(accession, inactiveService);
+    }
+
+    static AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(
+            Long accession, InactiveAccessionService<ISubmittedVariant, Long, ?> inactiveService) {
         IEvent<ISubmittedVariant, Long> lastEvent = inactiveService.getLastEvent(accession);
         List<? extends IAccessionedObject<ISubmittedVariant, ?, Long>> inactiveObjects = lastEvent.getInactiveObjects();
-        return inactiveObjects.get(inactiveObjects.size() - 1);
+        if (inactiveObjects.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Accession " + accession + " is not inactive (not present in the operations collection");
+        }
+        IAccessionedObject<ISubmittedVariant, ?, Long> inactiveObject = inactiveObjects.get(inactiveObjects.size() - 1);
+        return new AccessionWrapper<>(accession, (String) inactiveObject.getHashedMessage(), inactiveObject.getModel(),
+                                      inactiveObject.getVersion());
     }
 }

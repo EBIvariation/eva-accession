@@ -83,15 +83,9 @@ public class SubmittedVariantsRestController {
      */
     private List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getDeprecatedSubmittedVariant(
             Long identifier) {
-        IAccessionedObject<ISubmittedVariant, ?, Long> lastInactiveWithoutType = service.getLastInactive(identifier);
-        IAccessionedObject<ISubmittedVariant, String, Long> lastInactive =
-                (IAccessionedObject<ISubmittedVariant, String, Long>) lastInactiveWithoutType;
-
         return Collections.singletonList(
                 new AccessionResponseDTO<>(
-                        new AccessionWrapper<>(identifier,
-                                               lastInactive.getHashedMessage(),
-                                               lastInactive.getModel()),
+                        service.getLastInactive(identifier),
                         SubmittedVariant::new));
     }
 }

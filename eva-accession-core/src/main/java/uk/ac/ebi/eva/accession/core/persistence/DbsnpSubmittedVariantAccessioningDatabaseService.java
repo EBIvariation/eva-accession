@@ -25,7 +25,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
@@ -139,9 +138,7 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
         return lastVersionEntity;
     }
 
-    public IAccessionedObject<ISubmittedVariant, ?, Long> getLastInactive(Long accession) {
-        IEvent<ISubmittedVariant, Long> lastEvent = inactiveService.getLastEvent(accession);
-        List<? extends IAccessionedObject<ISubmittedVariant, ?, Long>> inactiveObjects = lastEvent.getInactiveObjects();
-        return inactiveObjects.get(inactiveObjects.size() - 1);
+    public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
+        return SubmittedVariantAccessioningDatabaseService.getLastInactive(accession, inactiveService);
     }
 }

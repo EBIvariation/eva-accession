@@ -27,7 +27,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
@@ -164,7 +163,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         }
     }
 
-    public IAccessionedObject<ISubmittedVariant, ?, Long> getLastInactive(Long accession) {
+    public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
         if (accession >= accessioningMonotonicInitSs) {
             return accessioningService.getLastInactive(accession);
         } else {
