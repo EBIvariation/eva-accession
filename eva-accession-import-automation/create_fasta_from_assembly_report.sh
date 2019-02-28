@@ -101,7 +101,7 @@ do
                 # Register written contigs
                 if [ $is_wgs -eq 1 ]
                 then
-                    grep '>' "${genbank_contig}" | cut -d'|' -f3 | cut -d' ' -f1 >> ${output_folder}/written_contigs.txt
+                    grep '>' ${output_folder}/${genbank_contig} | cut -d'|' -f3 | cut -d' ' -f1 >> ${output_folder}/written_contigs.txt
                 else
                     echo "${genbank_contig}" >> ${output_folder}/written_contigs.txt
                 fi
