@@ -160,7 +160,6 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setupDbSnpClusteredVariants() {
-        dbsnpRepository.deleteAll();
         ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 1101, "CHROM1", 1234, VariantType.SNV, false,
                                                          null);
         ClusteredVariant variant2 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 1234, VariantType.MNV, true, null);
@@ -183,7 +182,6 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setupDbsnpSubmittedVariants() {
-        dbsnpSubmittedVariantRepository.deleteAll();
         // one variant has default flags, the other have no default values
         SubmittedVariant submittedVariant1 = new SubmittedVariant("ASMACC01", 1101, "PROJECT1", "CHROM1", 1234, "REF",
                                                                   "ALT", DBSNP_CLUSTERED_VARIANT_ACCESSION_1);
@@ -208,7 +206,6 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setupEvaSubmittedVariants() {
-        submittedVariantRepository.deleteAll();
         // one variant has no default flags, while the others have the default values
         SubmittedVariant submittedVariant3 = new SubmittedVariant("ASMACC01", 1102, "EVAPROJECT1", "CHROM1", 1234,
                                                                   "REF", "ALT", DBSNP_CLUSTERED_VARIANT_ACCESSION_2);
@@ -455,8 +452,7 @@ public class ClusteredVariantsRestControllerTest {
      */
     @Test
     public void testGetVariantsMergedSeveralTimes()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException, HashAlreadyExistsException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         Long outdatedAccession = 1L;
         ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 2000, "CHROM1", 1234, VariantType.SNV, false,

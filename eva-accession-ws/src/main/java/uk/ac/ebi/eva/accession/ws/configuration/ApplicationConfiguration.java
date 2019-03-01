@@ -93,10 +93,9 @@ public class ApplicationConfiguration {
      * {@link NonRedirectingClientHttpRequestFactory}.
      */
     @Bean
-    @ConditionalOnClass(RestTemplate.class)
     public RestTemplateBuilder restTemplateBuilder(
-            @Autowired ObjectProvider<HttpMessageConverters> messageConverters,
-            @Autowired ObjectProvider<List<RestTemplateCustomizer>> restTemplateCustomizers) {
+            ObjectProvider<HttpMessageConverters> messageConverters,
+            ObjectProvider<List<RestTemplateCustomizer>> restTemplateCustomizers) {
         WebClientAutoConfiguration.RestTemplateConfiguration restTemplateConfiguration =
                 new WebClientAutoConfiguration.RestTemplateConfiguration(
                         messageConverters, restTemplateCustomizers);

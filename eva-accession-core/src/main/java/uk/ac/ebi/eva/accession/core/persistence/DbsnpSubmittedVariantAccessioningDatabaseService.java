@@ -81,9 +81,15 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
         return this.toAccessionWrapper(entities);
     }
 
-    private void checkAccessionIsActive(List<DbsnpSubmittedVariantEntity> entities, Long accession) throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
+    /**
+     * if entities is empty it means that the accession is not present in the main collection. Check if it was moved
+     * to the history collection after it was merged or deprecated, and if so, throw an exception to flag that it's not
+     * an active accession.
+     */
+    private void checkAccessionIsActive(List<DbsnpSubmittedVariantEntity> entities, Long accession)
+            throws AccessionMergedException, AccessionDeprecatedException {
         if (entities == null || entities.isEmpty()) {
-            this.checkAccessionNotMergedOrDeprecated(accession);
+            this.checkAccessionIsNotMergedOrDeprecated(accession);
         }
     }
 
@@ -91,7 +97,7 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
      * dbSNP submitted variants can be "updated" and "merged" at the same time. Give priority to the "merge" events. No more
      * than 1 "merge" events will be present.
      */
-    private void checkAccessionNotMergedOrDeprecated(Long accession)
+    private void checkAccessionIsNotMergedOrDeprecated(Long accession)
             throws AccessionMergedException, AccessionDeprecatedException {
         List<? extends IEvent<ISubmittedVariant, Long>> events = inactiveService.getEvents(accession);
         Optional<? extends IEvent<ISubmittedVariant, Long>> mergedEvent = events.stream()

@@ -63,6 +63,11 @@ public class ClusteredVariantsRestController {
         this.submittedVariantsService = submittedVariantsService;
     }
 
+    /**
+     * In case the RS is not active and was merged into several other active RSs, an exception AccessionMergedException
+     * will be thrown and a redirection to an active RS will be done by {@link EvaControllerAdvice}. Although it is
+     * not entirely correct, it was decided to return only one of those merges as redirection, doesn't matter which one.
+     */
     @ApiOperation(value = "Find clustered variants (RS) by identifier", notes = "This endpoint returns the clustered "
             + "variants (RS) represented by the given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
