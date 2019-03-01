@@ -29,7 +29,6 @@ import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonot
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
-import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,7 +92,7 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
      * than 1 "merge" events will be present.
      */
     private void checkAccessionNotMergedOrDeprecated(Long accession)
-            throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDeprecatedException {
         List<? extends IEvent<ISubmittedVariant, Long>> events = inactiveService.getEvents(accession);
         Optional<? extends IEvent<ISubmittedVariant, Long>> mergedEvent = events.stream()
                                                                                 .filter(e -> EventType.MERGED.equals(
@@ -118,10 +117,10 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         List<DbsnpSubmittedVariantEntity> entities = this.repository.findByAccession(accession);
         this.checkAccessionIsActive(entities, accession);
-        return this.toModelWrapper(this.filterOldVersions(entities));
+        return this.toModelWrapper(this.getNewestVersion(entities));
     }
 
-    private DbsnpSubmittedVariantEntity filterOldVersions(List<DbsnpSubmittedVariantEntity> accessionedElements) {
+    private DbsnpSubmittedVariantEntity getNewestVersion(List<DbsnpSubmittedVariantEntity> accessionedElements) {
         int maxVersion = 1;
         DbsnpSubmittedVariantEntity lastVersionEntity = null;
         for (DbsnpSubmittedVariantEntity element : accessionedElements) {
