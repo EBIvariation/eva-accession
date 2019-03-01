@@ -22,6 +22,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.Example;
 import io.swagger.annotations.ExampleProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +50,8 @@ import java.util.stream.Collectors;
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsRestController.class);
+
     private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
 
     private SubmittedVariantAccessioningService submittedVariantsService;
@@ -59,6 +63,11 @@ public class ClusteredVariantsRestController {
         this.submittedVariantsService = submittedVariantsService;
     }
 
+    /**
+     * In case the RS is not active and was merged into several other active RSs, an exception AccessionMergedException
+     * will be thrown and a redirection to an active RS will be done by {@link EvaControllerAdvice}. Although it is
+     * not entirely correct, it was decided to return only one of those merges as redirection, doesn't matter which one.
+     */
     @ApiOperation(value = "Find clustered variants (RS) by identifier", notes = "This endpoint returns the clustered "
             + "variants (RS) represented by the given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp-or-rs")
@@ -78,14 +87,17 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
-                    required = true) Long identifier) {
+                    required = true) Long identifier)
+            throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
+        // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
+        basicRestController.get(identifier);
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = submittedVariantsService
-                .getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
-        return submittedVariants
-                .stream()
-                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                .collect(Collectors.toList());
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
+                submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
+
+        return submittedVariants.stream()
+                                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                                .collect(Collectors.toList());
     }
 }
 

@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.core.persistence;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
+
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantInactiveService;
 

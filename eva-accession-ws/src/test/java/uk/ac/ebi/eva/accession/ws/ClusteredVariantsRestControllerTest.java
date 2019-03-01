@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.ws;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,18 +27,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
@@ -45,10 +51,15 @@ import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningCo
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
@@ -86,7 +97,7 @@ public class ClusteredVariantsRestControllerTest {
 
     private static final Long EVA_SUBMITTED_VARIANT_ACCESSION_1 = 1001L;
 
-    private static final Long EVA_SUBMITTEDD_VARIANT_ACCESSION_2 = 1002L;
+    private static final Long EVA_SUBMITTED_VARIANT_ACCESSION_2 = 1002L;
 
     private static final int VERSION_1 = 1;
 
@@ -105,7 +116,20 @@ public class ClusteredVariantsRestControllerTest {
     private ClusteredVariantsRestController controller;
 
     @Autowired
+    private ClusteredVariantAccessioningService clusteredService;
+
+    @Autowired
     private TestRestTemplate testRestTemplate;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private DbsnpClusteredVariantMonotonicAccessioningService dbsnpService;
+
+    @Autowired
+    private DbsnpClusteredVariantInactiveService dbsnpInactiveService;
+
 
     private Iterable<DbsnpClusteredVariantEntity> generatedAccessions;
 
@@ -125,6 +149,11 @@ public class ClusteredVariantsRestControllerTest {
 
     @Before
     public void setUp() {
+        dbsnpRepository.deleteAll();
+        dbsnpSubmittedVariantRepository.deleteAll();
+        submittedVariantRepository.deleteAll();
+        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
         setupDbSnpClusteredVariants();
         setupDbsnpSubmittedVariants();
         setupEvaSubmittedVariants();
@@ -193,7 +222,7 @@ public class ClusteredVariantsRestControllerTest {
                                            submittedVariantSummaryFunction.apply(submittedVariant3),
                                            submittedVariant3, VERSION_1);
         evaSubmittedVariantEntity4 =
-                new SubmittedVariantEntity(EVA_SUBMITTEDD_VARIANT_ACCESSION_2,
+                new SubmittedVariantEntity(EVA_SUBMITTED_VARIANT_ACCESSION_2,
                                            submittedVariantSummaryFunction.apply(submittedVariant4),
                                            submittedVariant4, VERSION_2);
 
@@ -205,6 +234,8 @@ public class ClusteredVariantsRestControllerTest {
         dbsnpRepository.deleteAll();
         dbsnpSubmittedVariantRepository.deleteAll();
         submittedVariantRepository.deleteAll();
+        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
     }
 
     @Test
@@ -213,20 +244,20 @@ public class ClusteredVariantsRestControllerTest {
             String getVariantsUrl = URL + generatedAccession.getAccession();
             ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
                     getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                              new ParameterizedTypeReference<
-                                                      List<
-                                                              AccessionResponseDTO<
-                                                                      ClusteredVariant,
-                                                                      IClusteredVariant,
-                                                                      String,
-                                                                      Long>>>() {
-                                              });
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new ClusteredVariantType());
             assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> wsResponseBody =
                     getVariantsResponse.getBody();
             checkClusteredVariantsOutput(wsResponseBody, generatedAccession.getAccession());
         }
+    }
+
+    private static class ClusteredVariantType extends ParameterizedTypeReference<List<
+            AccessionResponseDTO<
+                    ClusteredVariant,
+                    IClusteredVariant,
+                    String,
+                    Long>>> {
     }
 
     private void checkClusteredVariantsOutput(
@@ -277,20 +308,20 @@ public class ClusteredVariantsRestControllerTest {
             String getVariantsUrl = URL + generatedAccession.getAccession() + "/submitted";
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                     getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                              new ParameterizedTypeReference<
-                                                      List<
-                                                              AccessionResponseDTO<
-                                                                      SubmittedVariant,
-                                                                      ISubmittedVariant,
-                                                                      String,
-                                                                      Long>>>() {
-                                              });
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new SubmittedVariantType());
             assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
             List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> wsResponseBody =
                     getVariantsResponse.getBody();
             checkSubmittedVariantsOutput(wsResponseBody, generatedAccession.getAccession());
         }
+    }
+
+    private static class SubmittedVariantType extends ParameterizedTypeReference<List<
+            AccessionResponseDTO<
+                    SubmittedVariant,
+                    ISubmittedVariant,
+                    String,
+                    Long>>> {
     }
 
     private void checkSubmittedVariantsOutput(
@@ -324,7 +355,8 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetSubmittedVariantsByClusteredVariantIds() {
+    public void testGetSubmittedVariantsByClusteredVariantIds()
+            throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         getAndCheckSubmittedVariantsByClusteredVariantIds(
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                 Collections.singletonList(submittedVariantEntity1));
@@ -338,11 +370,201 @@ public class ClusteredVariantsRestControllerTest {
 
     private void getAndCheckSubmittedVariantsByClusteredVariantIds(Long clusteredVariantIds,
                                                                    List<AccessionedDocument<ISubmittedVariant, Long>>
-                                                                           expectedSubmittedVariants) {
+                                                                           expectedSubmittedVariants)
+            throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
                 controller.getSubmittedVariants(clusteredVariantIds);
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
                                                        expectedSubmittedVariants,
                                                        SubmittedVariant::new);
+    }
+
+    @Test
+    public void testGetRedirectionForMergedVariants()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
+                               DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
+                               "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        // when
+        String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_2, redirectedUrl);
+
+        // and then
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2), getVariantsResponse.getBody().get(0).getAccession());
+        assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
+    }
+
+    @Test
+    public void testGetRedirectionForSubmittedVariantByMergedClusteredVariant()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
+                               DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
+                               "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        // when
+        String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1 + "/submitted";
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_2 + "/submitted", redirectedUrl);
+
+        // and then
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new SubmittedVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(2, getVariantsResponse.getBody().size());
+        for (AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> bodyEntry :
+                getVariantsResponse.getBody()) {
+            assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
+                         bodyEntry.getData().getClusteredVariantAccession());
+        }
+
+        assertSubmittedVariantCreatedDateNotNull(getVariantsResponse.getBody());
+    }
+
+    /**
+     * There could be an RS merged into several other active RSs. Not entirely correct, but it was decided to return
+     * only one of those merges as redirection, doesn't matter which one.
+     */
+    @Test
+    public void testGetVariantsMergedSeveralTimes()
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        // given
+        Long outdatedAccession = 1L;
+        ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 2000, "CHROM1", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity1 = new DbsnpClusteredVariantEntity(outdatedAccession,
+                                                                                              "hash-100", variant1, 1);
+        ClusteredVariant variant2 = new ClusteredVariant("ASMACC02", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(outdatedAccession,
+                                                                                              "hash-200", variant2, 1);
+
+        Long currentAccession = 2L;
+        ClusteredVariant variant4 = new ClusteredVariant("ASMACC03", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity4 = new DbsnpClusteredVariantEntity(currentAccession,
+                                                                                              "hash-400", variant4, 1);
+        Long anotherCurrentAccession = 3L;
+        ClusteredVariant variant5 = new ClusteredVariant("ASMACC04", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity5 = new DbsnpClusteredVariantEntity(anotherCurrentAccession,
+                                                                                              "hash-500", variant5, 1);
+
+        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity4, clusteredVariantEntity5),
+                             DbsnpClusteredVariantEntity.class);
+        dbsnpService.merge(outdatedAccession, currentAccession,
+                           "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        mongoTemplate.insert(Arrays.asList(clusteredVariantEntity2), DbsnpClusteredVariantEntity.class);
+        dbsnpService.merge(outdatedAccession, anotherCurrentAccession,
+                           "Second merge. This can totally happen importing from dbSNP. See rs106458077");
+
+        // when
+        String getVariantsUrl = URL + outdatedAccession;
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertTrue((URL + currentAccession).equals(redirectedUrl)
+                  || (URL + anotherCurrentAccession).equals(redirectedUrl));
+
+        // and then
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse = testRestTemplate
+                .exchange(redirectedUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertTrue(Arrays.asList(currentAccession, anotherCurrentAccession)
+                         .contains(getVariantsResponse.getBody().get(0).getAccession()));
+        assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
+    }
+
+    /**
+     * There could be an RS merged into several other active RSs, and deprecated at the same time. This test checks that
+     * the deprecation event is given priority over the other events.
+     */
+    @Test
+    @Ignore("Need the changes for querying deprecated accessions for this test to work.")
+    public void testGetMergedAndDeprecatedVariants()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException, HashAlreadyExistsException {
+        // given
+        Long outdatedAccession = 1L;
+        ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 2000, "CHROM1", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity1 = new DbsnpClusteredVariantEntity(outdatedAccession,
+                                                                                              "hash-100", variant1, 1);
+        ClusteredVariant variant2 = new ClusteredVariant("ASMACC02", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(outdatedAccession,
+                                                                                              "hash-200", variant2, 1);
+        ClusteredVariant variant3 = new ClusteredVariant("ASMACC02", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity3 = new DbsnpClusteredVariantEntity(outdatedAccession,
+                                                                                              "hash-300", variant3, 1);
+
+        Long currentAccession = 2L;
+        ClusteredVariant variant4 = new ClusteredVariant("ASMACC02", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity4 = new DbsnpClusteredVariantEntity(currentAccession,
+                                                                                              "hash-400", variant4, 1);
+        Long anotherCurrentAccession = 3L;
+        ClusteredVariant variant5 = new ClusteredVariant("ASMACC01", 2000, "CHROM2", 1234, VariantType.SNV, false,
+                                                         null);
+        DbsnpClusteredVariantEntity clusteredVariantEntity5 = new DbsnpClusteredVariantEntity(anotherCurrentAccession,
+                                                                                              "hash-500", variant5, 1);
+
+        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity4, clusteredVariantEntity5),
+                             DbsnpClusteredVariantEntity.class);
+        dbsnpService.merge(outdatedAccession, currentAccession,
+                           "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        mongoTemplate.insert(Arrays.asList(clusteredVariantEntity2), DbsnpClusteredVariantEntity.class);
+        dbsnpService.merge(outdatedAccession, anotherCurrentAccession,
+                           "Second merge. This can totally happen importing from dbSNP. See rs106458077");
+
+        mongoTemplate.insert(Arrays.asList(clusteredVariantEntity3), DbsnpClusteredVariantEntity.class);
+        dbsnpService.deprecate(outdatedAccession, "And then deprecated it.");
+
+        // when
+        String getVariantUrl = URL + outdatedAccession;
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> response =
+                testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        // then
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        assertEquals(clusteredVariantEntity1.getModel(), response.getBody().get(0).getData());
+        assertClusteredVariantCreatedDateNotNull(response.getBody());
     }
 }

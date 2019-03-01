@@ -26,6 +26,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +37,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -42,12 +45,17 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -71,16 +79,29 @@ public class SubmittedVariantsRestControllerTest {
     private SubmittedVariantAccessioningService service;
 
     @Autowired
+    private DbsnpSubmittedVariantMonotonicAccessioningService dbsnpService;
+
+    @Autowired
+    private DbsnpSubmittedVariantInactiveService dbsnpInactiveService;
+
+    @Autowired
     private SubmittedVariantsRestController controller;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
     @Before
     public void setUp() throws AccessionCouldNotBeGeneratedException {
         repository.deleteAll();
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
 
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
@@ -93,6 +114,10 @@ public class SubmittedVariantsRestControllerTest {
     @After
     public void tearDown() {
         repository.deleteAll();
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
     }
 
     @Test
@@ -100,22 +125,26 @@ public class SubmittedVariantsRestControllerTest {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             String getVariantsUrl = URL + generatedAccession.getAccession();
 
-            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
-                    getVariantsResponse =
-                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
-                                              new ParameterizedTypeReference<
-                                                      List<
-                                                              AccessionResponseDTO<
-                                                                      SubmittedVariant,
-                                                                      ISubmittedVariant,
-                                                                      String,
-                                                                      Long>>>() {
-                                              });
+            ResponseEntity<List<
+                    AccessionResponseDTO<
+                            SubmittedVariant,
+                            ISubmittedVariant,
+                            String,
+                            Long>>> getVariantsResponse =
+                    testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new SubmittedVariantType());
             assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
             assertEquals(1, getVariantsResponse.getBody().size());
             assertDefaultFlags(getVariantsResponse.getBody());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
         }
+    }
+
+    private static class SubmittedVariantType extends ParameterizedTypeReference<List<
+            AccessionResponseDTO<
+                    SubmittedVariant,
+                    ISubmittedVariant,
+                    String,
+                    Long>>> {
     }
 
     private void assertDefaultFlags(
@@ -148,5 +177,106 @@ public class SubmittedVariantsRestControllerTest {
             assertCreatedDateNotNull(getVariantsResponse);
             assertDefaultFlags(getVariantsResponse);
         }
+    }
+
+    @Test
+    public void testGetRedirectionForMergedVariants()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        Long CLUSTERED_VARIANT = null;
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
+                Arrays.asList(variant1, variant2));
+
+        Long outdatedAccession = accessions.get(0).getAccession();
+        Long currentAccession = accessions.get(1).getAccession();
+        service.merge(outdatedAccession,
+                      currentAccession,
+                      "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        // when
+        String getVariantsUrl = URL + outdatedAccession;
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + currentAccession, redirectedUrl);
+
+        // and then
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new SubmittedVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertEquals(currentAccession, getVariantsResponse.getBody().get(0).getAccession());
+        assertDefaultFlags(getVariantsResponse.getBody());
+        assertCreatedDateNotNull(getVariantsResponse.getBody());
+    }
+
+    /**
+     * If there is a variant with operations of several types (e.g. UPDATED and MERGED) the MERGED event should take
+     * priority and the endpoint should return a redirection, **even if the MERGED event is not the last one**.
+     *
+     * Example dbsnp variant: ss825691104. It was declustered from rs796064771 and merged into ss825691103 at the same
+     * time.
+     */
+    @Test
+    public void testGetRedirectionForMergedAndUpdatedVariants()
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException, HashAlreadyExistsException {
+        // given
+        Long CLUSTERED_VARIANT = null;
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        Long outdatedAccession = 1L;
+        SubmittedVariantEntity submittedVariantEntity1 = new SubmittedVariantEntity(outdatedAccession, "hash-100",
+                                                                                    variant1, 1);
+        Long currentAccession = 2L;
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        SubmittedVariantEntity submittedVariantEntity2 = new SubmittedVariantEntity(currentAccession, "hash-200",
+                                                                                    variant2, 1);
+
+        mongoTemplate.insert(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2),
+                             DbsnpSubmittedVariantEntity.class);
+
+        dbsnpService.merge(outdatedAccession,
+                           currentAccession,
+                           "Just for testing the endpoint, let's pretend the variants are equivalent");
+
+        SubmittedVariant updatedVariant = new SubmittedVariant(variant1);
+        updatedVariant.setContig("contig_2");
+
+        dbsnpInactiveService.update(new DbsnpSubmittedVariantEntity(outdatedAccession, "hash-300", updatedVariant, 1),
+                                    "update a merged variant");
+
+        // when
+        String getVariantsUrl = URL + outdatedAccession;
+        ResponseEntity<String> firstResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                                                                         String.class);
+
+        // then
+        assertEquals(HttpStatus.MOVED_PERMANENTLY, firstResponse.getStatusCode());
+        String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
+        String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
+        assertEquals(URL + currentAccession, redirectedUrl);
+
+        // and then
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(redirectedUrl, HttpMethod.GET, null, new SubmittedVariantType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(1, getVariantsResponse.getBody().size());
+        assertEquals(currentAccession, getVariantsResponse.getBody().get(0).getAccession());
+        assertDefaultFlags(getVariantsResponse.getBody());
+        assertCreatedDateNotNull(getVariantsResponse.getBody());
     }
 }
