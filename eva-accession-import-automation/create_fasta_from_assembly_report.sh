@@ -96,8 +96,7 @@ do
                     mv ${output_folder}/${genbank_contig} ${output_folder}/${genbank_contig}.gz
                     gunzip ${output_folder}/${genbank_contig}.gz
                     # Delete the accessions prefix
-                    sed -i.bak 's/ENA|.*|//g' ${output_folder}/${genbank_contig}
-                    rm ${output_folder}/${genbank_contig}.bak
+                    sed -i 's/ENA|.*|//g' ${output_folder}/${genbank_contig}
                 fi
                 # Add sequence to FASTA file
                 cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
