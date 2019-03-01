@@ -23,6 +23,9 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigReplacerProcessor.class);
@@ -31,14 +34,18 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
     private String assemblyAccession;
 
+    private Set<String> processedContigs;
+
     public ContigReplacerProcessor(ContigMapping contigMapping, String assemblyAccession) {
         this.contigMapping = contigMapping;
         this.assemblyAccession = assemblyAccession;
+        this.processedContigs = new HashSet<>();
     }
 
     @Override
     public SubSnpNoHgvs process(SubSnpNoHgvs subSnpNoHgvs) throws Exception {
-        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getContigName());
+        String contigName = subSnpNoHgvs.getContigName();
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contigName);
         ContigSynonyms chromosomeSynonyms = contigMapping.getContigSynonyms(subSnpNoHgvs.getChromosome());
 
         boolean chromosomePresentInAssemblyReport = chromosomeSynonyms != null;
@@ -46,7 +53,7 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
         if (!contigPresentInAssemblyReport && !chromosomePresentInAssemblyReport) {
             throw new IllegalStateException(
-                    "Neither contig '" + subSnpNoHgvs.getContigName() + "' nor chromosome '"
+                    "Neither contig '" + contigName + "' nor chromosome '"
                             + subSnpNoHgvs.getChromosome()
                             + "' were found in the assembly report! Is the assembly accession '"
                             + assemblyAccession + "' correct?");
@@ -54,10 +61,12 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
         if (chromosomePresentInAssemblyReport
                 && contigPresentInAssemblyReport
+                && !processedContigs.contains(contigName)
                 && !contigSynonyms.equals(chromosomeSynonyms)) {
             logger.warn(
-                    "Contig '" + subSnpNoHgvs.getContigName() + "' and chromosome '" + subSnpNoHgvs.getChromosome()
+                    "Contig '" + contigName + "' and chromosome '" + subSnpNoHgvs.getChromosome()
                             + "' do not appear in the same line in the assembly report!");
+            processedContigs.add(contigName);
         }
 
         if (contigPresentInAssemblyReport) {
