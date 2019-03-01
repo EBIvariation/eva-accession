@@ -59,9 +59,9 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
                             + assemblyAccession + "' correct?");
         }
 
-        if (!processedContigs.contains(contigName)
-                && chromosomePresentInAssemblyReport
+        if (chromosomePresentInAssemblyReport
                 && contigPresentInAssemblyReport
+                && !processedContigs.contains(contigName)
                 && !contigSynonyms.equals(chromosomeSynonyms)) {
             logger.warn(
                     "Contig '" + contigName + "' and chromosome '" + subSnpNoHgvs.getChromosome()
