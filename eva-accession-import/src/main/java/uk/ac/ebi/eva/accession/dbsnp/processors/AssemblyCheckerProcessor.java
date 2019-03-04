@@ -57,7 +57,7 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
         } catch (IllegalArgumentException ex) {
             if (!processedContigs.contains(contig)) {
                 processedContigs.add(contig);
-                logger.warn(ex.getLocalizedMessage());
+                logger.warn(ex.getMessage());
             }
         } finally {
             subSnpNoHgvs.setAssemblyMatch(matches);
