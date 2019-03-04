@@ -98,7 +98,7 @@ public class ClusteredVariantsRestController {
      * Retrieve the information in the collection for inactive objects.
      *
      * This method is necessary because the behaviour of BasicRestController is to return the HttpStatus.GONE with an
-     * error exception message in the body. We want instead to return the HttpStatus.GONE with the variant in the body
+     * error message in the body. We want instead to return the HttpStatus.GONE with the variant in the body.
      */
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getDeprecatedClusteredVariant(
             Long identifier) {
