@@ -22,14 +22,20 @@ import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {
 
     private static Logger logger = LoggerFactory.getLogger(AssemblyCheckerProcessor.class);
 
     private FastaSynonymSequenceReader fastaReader;
 
+    private Set<String> processedContigs;
+
     public AssemblyCheckerProcessor(FastaSynonymSequenceReader fastaReader) {
         this.fastaReader = fastaReader;
+        this.processedContigs = new HashSet<>();
     }
 
     @Override
@@ -49,7 +55,10 @@ public class AssemblyCheckerProcessor implements ItemProcessor<SubSnpNoHgvs, Sub
             String sequence = fastaReader.getSequenceToUpperCase(contig, start, end);
             matches = sequence.equals(referenceAllele.toUpperCase());
         } catch (IllegalArgumentException ex) {
-            logger.warn(ex.getLocalizedMessage());
+            if (!processedContigs.contains(contig)) {
+                processedContigs.add(contig);
+                logger.warn(ex.getLocalizedMessage());
+            }
         } finally {
             subSnpNoHgvs.setAssemblyMatch(matches);
         }

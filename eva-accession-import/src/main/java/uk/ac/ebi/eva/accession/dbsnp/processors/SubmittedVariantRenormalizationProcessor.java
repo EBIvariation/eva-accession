@@ -26,7 +26,9 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,9 +41,12 @@ public class SubmittedVariantRenormalizationProcessor implements
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
+    private Set<String> processedContigs;
+
     public SubmittedVariantRenormalizationProcessor(FastaSynonymSequenceReader fastaSequenceReader) {
         this.fastaSequenceReader = fastaSequenceReader;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        this.processedContigs = new HashSet<>();
     }
 
     @Override
@@ -80,7 +85,10 @@ public class SubmittedVariantRenormalizationProcessor implements
             boolean oneAlleleIsEmpty = variant.getReferenceAllele().isEmpty() ^ variant.getAlternateAllele().isEmpty();
             return isIndel && oneAlleleIsEmpty && areContextAndLastNucleotideEqual(variant);
         } catch (Exception e) {
-            logger.warn(e.getMessage());
+            if (!processedContigs.contains(variant.getContig())) {
+                processedContigs.add(variant.getContig());
+                logger.warn(e.getMessage());
+            }
             // if something went wrong with the fasta, we can not say it's ambiguous
             return false;
         }
