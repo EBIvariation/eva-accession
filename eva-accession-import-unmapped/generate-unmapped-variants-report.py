@@ -89,8 +89,13 @@ def get_report_creation_query(species_info):
             where all_snps.snp_id is null
         );
         """.format(**species_info)
+
+    grant_statement = "grant select on dbsnp_{database_name}.unmapped_variants_all_builds " \
+                      "to dbsnp_ro;".format(**species_info)
+
     return (os.linesep*2).join([work_mem_clause, temp_table_creation_query, subsnpseq_index_query,
-                                textwrap.dedent(contigloc_snp_id_query + unmapped_variants_report_query)])
+                                textwrap.dedent(contigloc_snp_id_query + unmapped_variants_report_query),
+                                grant_statement])
 
 
 def write_report_query_file(species_info):
