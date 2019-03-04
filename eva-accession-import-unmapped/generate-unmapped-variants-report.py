@@ -53,7 +53,6 @@ def does_subsnpseq_table_exist_for_species(species_info):
 
 
 def get_report_creation_query(species_info):
-
     work_mem_clause = "set work_mem to '128MB';"
 
     temp_table_creation_query = "create temp table snp_ids (snp_id bigint);" + os.linesep
