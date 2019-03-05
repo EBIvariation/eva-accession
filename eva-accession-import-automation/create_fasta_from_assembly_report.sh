@@ -52,7 +52,7 @@ do
     do
         # Download each GenBank accession in the assembly report from ENA into a separate file
         # Delete the accession prefix from the header line
-        wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" | sed 's/ENA|.*|//g' > ${output_folder}/${genbank_contig}
+        wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" > ${output_folder}/${genbank_contig}
         whole_pipe_result=$?
         if [ $whole_pipe_result -eq 0 ]
         then
@@ -95,9 +95,9 @@ do
                     # Uncompress file
                     mv ${output_folder}/${genbank_contig} ${output_folder}/${genbank_contig}.gz
                     gunzip ${output_folder}/${genbank_contig}.gz
-                    # Delete the accessions prefix
-                    sed -i 's/ENA|.*|//g' ${output_folder}/${genbank_contig}
                 fi
+                # Delete the accessions prefix
+                sed -i 's/ENA|.*|//g' ${output_folder}/${genbank_contig}
                 # Add sequence to FASTA file
                 cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
                 # Register written contigs
