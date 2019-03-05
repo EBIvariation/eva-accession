@@ -97,7 +97,7 @@ do
                     gunzip ${output_folder}/${genbank_contig}.gz
                 fi
                 # Delete the accessions prefix
-                sed -i 's/ENA|.*|//g' ${output_folder}/${genbank_contig}
+                sed -i 's/\s*ENA\s*|.*|\s*//g' ${output_folder}/${genbank_contig}
                 # Add sequence to FASTA file
                 cat ${output_folder}/${genbank_contig} >> ${output_folder}/${species}_custom.fa
                 # Register written contigs
