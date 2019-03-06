@@ -94,8 +94,8 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
     }
 
     /**
-     * dbSNP submitted variants can be "updated" and "merged" at the same time. Give priority to the "merge" events. No more
-     * than 1 "merge" events will be present.
+     * dbSNP submitted variants can be "updated" and "merged" at the same time. Give priority to the "merge" events.
+     * More than 1 "merge" events may be present.
      */
     private void checkAccessionIsNotMergedOrDeprecated(Long accession)
             throws AccessionMergedException, AccessionDeprecatedException {

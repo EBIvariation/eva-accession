@@ -58,6 +58,11 @@ public class SubmittedVariantsRestController {
         this.service = service;
     }
 
+    /**
+     * In case the SS is not active and was merged into several other active SSs, an exception AccessionMergedException
+     * will be thrown and a redirection to an active SS will be done by {@link EvaControllerAdvice}. Although it is
+     * not entirely correct, it was decided to return only one of those merges as redirection, doesn't matter which one.
+     */
     @ApiOperation(value = "Find submitted variants (SS) by identifier", notes = "This endpoint returns the submitted "
             + "variants (SS) represented by a given identifier. For a description of the response, see "
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
