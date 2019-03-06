@@ -33,11 +33,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -123,10 +121,6 @@ public class ClusteredVariantsRestControllerTest {
 
     @Autowired
     private DbsnpClusteredVariantMonotonicAccessioningService dbsnpService;
-
-    @Autowired
-    private DbsnpClusteredVariantInactiveService dbsnpInactiveService;
-
 
     private Iterable<DbsnpClusteredVariantEntity> generatedAccessions;
 
@@ -343,7 +337,7 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetVariantsController()
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException {
         for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
             ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
                     getVariantsResponse =
@@ -379,8 +373,7 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetRedirectionForMergedVariants()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                                DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
@@ -410,8 +403,7 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetRedirectionForSubmittedVariantByMergedClusteredVariant()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         clusteredService.merge(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
                                DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
@@ -512,8 +504,7 @@ public class ClusteredVariantsRestControllerTest {
      */
     @Test
     public void testGetMergedAndDeprecatedVariants()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException, HashAlreadyExistsException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         Long outdatedAccession = 1L;
         ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 2000, "CHROM1", 1234, VariantType.SNV, false,
@@ -567,8 +558,7 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetDeprecatedDbsnpClusteredVariant()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated for testing");
         String getVariantUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
@@ -586,8 +576,7 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void testGetDeprecatedEvaClusteredVariant()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         Long deprecatedAccession = 1L;
         ClusteredVariant variant1 = new ClusteredVariant("ASMACC01", 2000, "CHROM1", 1234, VariantType.SNV, false,
