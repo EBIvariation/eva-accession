@@ -340,8 +340,7 @@ public class ClusteredVariantsRestControllerTest {
             throws AccessionMergedException, AccessionDoesNotExistException {
         for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
             ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
-                    getVariantsResponse =
-                    controller.get(generatedAccession.getAccession());
+                    getVariantsResponse = controller.get(generatedAccession.getAccession());
             checkClusteredVariantsOutput(getVariantsResponse.getBody(), generatedAccession.getAccession());
         }
     }
@@ -571,6 +570,36 @@ public class ClusteredVariantsRestControllerTest {
         assertEquals(HttpStatus.GONE, response.getStatusCode());
         assertEquals(1, response.getBody().size());
         assertEquals(clusteredVariantEntity1.getModel(), response.getBody().get(0).getData());
+        assertClusteredVariantCreatedDateNotNull(response.getBody());
+    }
+
+    /**
+     * Note that the design is to return any of those documents that have a given accession as deprecated
+     */
+    @Test
+    public void testGetSeveralDeprecatedDbsnpClusteredVariants()
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        // given
+        clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated for testing");
+        ClusteredVariant modifiedVariant = new ClusteredVariant(clusteredVariantEntity1);
+        modifiedVariant.setTaxonomyAccession(modifiedVariant.getTaxonomyAccession() + 1);
+        DbsnpClusteredVariantEntity clusteredVariantEntityCopy = new DbsnpClusteredVariantEntity(
+                DBSNP_CLUSTERED_VARIANT_ACCESSION_1, clusteredVariantEntity1.getHashedMessage(), modifiedVariant);
+        dbsnpRepository.save(Arrays.asList(clusteredVariantEntityCopy));
+        clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated again");
+
+        String getVariantUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
+
+        // when
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> response =
+                testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new ClusteredVariantType());
+
+        // then
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+
+        ClusteredVariant data = response.getBody().get(0).getData();
+        assertTrue(modifiedVariant.equals(data) || clusteredVariantEntity1.equals(data));
         assertClusteredVariantCreatedDateNotNull(response.getBody());
     }
 
