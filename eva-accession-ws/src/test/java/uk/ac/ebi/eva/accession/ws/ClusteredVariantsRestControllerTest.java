@@ -614,7 +614,7 @@ public class ClusteredVariantsRestControllerTest {
                                                                                               "hash-100", variant1, 1);
         ClusteredVariant variant2 = new ClusteredVariant("ASMACC02", 2000, "CHROM2", 1234, VariantType.SNV, false,
                                                          null);
-        Long otherAccession = 1L;
+        Long otherAccession = 2L;
         DbsnpClusteredVariantEntity clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(otherAccession,
                                                                                               "hash-200", variant2, 1);
 
