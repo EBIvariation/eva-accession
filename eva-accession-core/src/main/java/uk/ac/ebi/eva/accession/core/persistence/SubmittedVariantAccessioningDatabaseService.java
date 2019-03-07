@@ -62,12 +62,8 @@ public class SubmittedVariantAccessioningDatabaseService
     }
 
     public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
-        return getLastInactive(accession, inactiveService);
-    }
-
-    static AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(
-            Long accession, InactiveAccessionService<ISubmittedVariant, Long, ?> inactiveService) {
-        IEvent<ISubmittedVariant, Long> lastEvent = inactiveService.getLastEvent(accession);
+        IEvent<ISubmittedVariant, Long> lastEvent = ((InactiveAccessionService<ISubmittedVariant, Long, ?>) inactiveService)
+                .getLastEvent(accession);
         List<? extends IAccessionedObject<ISubmittedVariant, ?, Long>> inactiveObjects = lastEvent.getInactiveObjects();
         if (inactiveObjects.isEmpty()) {
             throw new IllegalArgumentException(
