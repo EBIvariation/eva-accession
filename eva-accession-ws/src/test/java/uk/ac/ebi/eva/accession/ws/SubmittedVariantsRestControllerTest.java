@@ -37,7 +37,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -108,10 +107,8 @@ public class SubmittedVariantsRestControllerTest {
         mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
 
         Long CLUSTERED_VARIANT = null;
-        variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
-        variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+        variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
+        variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
     }
 
@@ -234,7 +231,7 @@ public class SubmittedVariantsRestControllerTest {
      */
     @Test
     public void testGetRedirectionForMergedAndUpdatedVariants()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException, HashAlreadyExistsException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
@@ -286,7 +283,7 @@ public class SubmittedVariantsRestControllerTest {
 
     @Test
     public void testGetDeprecatedEvaSubmittedVariant()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+            throws AccessionMergedException, AccessionDoesNotExistException,
                    AccessionDeprecatedException {
         // given
         Long accession = generatedAccessions.get(0).getAccession();
@@ -306,8 +303,7 @@ public class SubmittedVariantsRestControllerTest {
 
     @Test
     public void testGetDeprecatedDbsnpSubmittedVariant()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-                   AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
