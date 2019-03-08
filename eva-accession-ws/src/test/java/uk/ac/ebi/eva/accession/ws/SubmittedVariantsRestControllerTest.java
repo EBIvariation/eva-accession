@@ -37,7 +37,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -95,6 +94,10 @@ public class SubmittedVariantsRestControllerTest {
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
+    private SubmittedVariant variant1;
+
+    private SubmittedVariant variant2;
+
     @Before
     public void setUp() throws AccessionCouldNotBeGeneratedException {
         repository.deleteAll();
@@ -104,10 +107,8 @@ public class SubmittedVariantsRestControllerTest {
         mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
 
         Long CLUSTERED_VARIANT = null;
-        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
-        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
-                                                         CLUSTERED_VARIANT);
+        variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
+        variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
     }
 
@@ -170,12 +171,12 @@ public class SubmittedVariantsRestControllerTest {
     public void testGetVariantsController()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
-            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
-                    controller.get(generatedAccession.getAccession());
+            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                    getVariantsResponse = controller.get(generatedAccession.getAccession());
 
-            assertEquals(1, getVariantsResponse.size());
-            assertCreatedDateNotNull(getVariantsResponse);
-            assertDefaultFlags(getVariantsResponse);
+            assertEquals(1, getVariantsResponse.getBody().size());
+            assertCreatedDateNotNull(getVariantsResponse.getBody());
+            assertDefaultFlags(getVariantsResponse.getBody());
         }
     }
 
@@ -230,7 +231,7 @@ public class SubmittedVariantsRestControllerTest {
      */
     @Test
     public void testGetRedirectionForMergedAndUpdatedVariants()
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException, HashAlreadyExistsException {
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         // given
         Long CLUSTERED_VARIANT = null;
         SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
@@ -278,5 +279,57 @@ public class SubmittedVariantsRestControllerTest {
         assertEquals(currentAccession, getVariantsResponse.getBody().get(0).getAccession());
         assertDefaultFlags(getVariantsResponse.getBody());
         assertCreatedDateNotNull(getVariantsResponse.getBody());
+    }
+
+    @Test
+    public void testGetDeprecatedEvaSubmittedVariant()
+            throws AccessionMergedException, AccessionDoesNotExistException,
+                   AccessionDeprecatedException {
+        // given
+        Long accession = generatedAccessions.get(0).getAccession();
+        service.deprecate(accession, "deprecated for testing");
+        String getVariantUrl = URL + accession;
+
+        // when
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> response =
+                testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new SubmittedVariantType());
+
+        // then
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        assertEquals(variant1, response.getBody().get(0).getData());
+        assertCreatedDateNotNull(response.getBody());
+    }
+
+    @Test
+    public void testGetDeprecatedDbsnpSubmittedVariant()
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        // given
+        Long CLUSTERED_VARIANT = null;
+        SubmittedVariant variant1 = new SubmittedVariant("ASMACC01", 2000, "PROJACC01", "CHROM1", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        Long deprecatedAccession = 1L;
+        SubmittedVariantEntity submittedVariantEntity1 = new SubmittedVariantEntity(deprecatedAccession, "hash-100",
+                                                                                    variant1, 1);
+        Long otherAccession = 2L;
+        SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
+                                                         CLUSTERED_VARIANT);
+        SubmittedVariantEntity submittedVariantEntity2 = new SubmittedVariantEntity(otherAccession, "hash-200",
+                                                                                    variant2, 1);
+
+        mongoTemplate.insert(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2),
+                             DbsnpSubmittedVariantEntity.class);
+        service.deprecate(deprecatedAccession, "deprecated for testing");
+        String getVariantUrl = URL + deprecatedAccession;
+
+        // when
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> response =
+                testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, new SubmittedVariantType());
+
+        // then
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+        assertEquals(variant1, response.getBody().get(0).getData());
+        assertCreatedDateNotNull(response.getBody());
     }
 }

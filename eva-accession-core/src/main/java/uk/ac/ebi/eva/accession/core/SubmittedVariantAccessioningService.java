@@ -162,4 +162,12 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
             throw new UnsupportedOperationException("Can't merge a submitted variant with a dbSNP submitted variant");
         }
     }
+
+    public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
+        if (accession >= accessioningMonotonicInitSs) {
+            return accessioningService.getLastInactive(accession);
+        } else {
+            return accessioningServiceDbsnp.getLastInactive(accession);
+        }
+    }
 }

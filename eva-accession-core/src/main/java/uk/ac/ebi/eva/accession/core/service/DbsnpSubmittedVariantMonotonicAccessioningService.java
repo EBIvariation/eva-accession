@@ -43,4 +43,8 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
             List<Long> clusteredVariantAccessions) {
         return dbService.findByClusteredVariantAccessionIn(clusteredVariantAccessions);
     }
+
+    public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
+        return dbService.getLastInactive(accession);
+    }
 }
