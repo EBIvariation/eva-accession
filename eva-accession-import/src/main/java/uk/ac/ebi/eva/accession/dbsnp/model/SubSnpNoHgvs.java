@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -268,8 +269,13 @@ public class SubSnpNoHgvs {
     public List<String> getAlternateAllelesInForwardStrand() {
         String referenceAllele = getReferenceInForwardStrand();
         List<String> alleles = getAllelesInForwardStrand();
+        List<String> allelesWithoutReference = new ArrayList<>(alleles);
 
-        return alleles.stream().filter(allele -> !allele.equals(referenceAllele)).collect(Collectors.toList());
+        // even if the reference allele is present several times, remove it only once. if we removed all the
+        // occurrences of the reference and there were no other alleles, the pipeline would skip this variant.
+        allelesWithoutReference.remove(referenceAllele);
+
+        return allelesWithoutReference;
     }
 
     public boolean doAllelesMatch() {
