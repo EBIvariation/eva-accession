@@ -271,9 +271,13 @@ public class SubSnpNoHgvs {
         List<String> alleles = getAllelesInForwardStrand();
         List<String> allelesWithoutReference = new ArrayList<>(alleles);
 
-        // even if the reference allele is present several times, remove it only once. if we removed all the
-        // occurrences of the reference and there were no other alleles, the pipeline would skip this variant.
-        allelesWithoutReference.remove(referenceAllele);
+        allelesWithoutReference.removeIf(referenceAllele::equals);
+        if (allelesWithoutReference.isEmpty()) {
+            // if all the alleles were the reference allele (it was a no-variant), add the reference allele back
+            // (only once) so that it is stored as a clustered variant and a single submitted variant.
+            // If the reference allele was not added back here, the variant wouldn't be written at all.
+            allelesWithoutReference.add(referenceAllele);
+        }
 
         return allelesWithoutReference;
     }
