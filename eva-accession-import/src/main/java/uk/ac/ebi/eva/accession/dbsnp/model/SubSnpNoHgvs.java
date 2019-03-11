@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.model;
 import uk.ac.ebi.eva.commons.core.models.Region;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -268,8 +269,17 @@ public class SubSnpNoHgvs {
     public List<String> getAlternateAllelesInForwardStrand() {
         String referenceAllele = getReferenceInForwardStrand();
         List<String> alleles = getAllelesInForwardStrand();
+        List<String> allelesWithoutReference = new ArrayList<>(alleles);
 
-        return alleles.stream().filter(allele -> !allele.equals(referenceAllele)).collect(Collectors.toList());
+        allelesWithoutReference.removeIf(referenceAllele::equals);
+        if (allelesWithoutReference.isEmpty()) {
+            // if all the alleles were the reference allele (it was a no-variant), add the reference allele back
+            // (only once) so that it is stored as a clustered variant and a single submitted variant.
+            // If the reference allele was not added back here, the variant wouldn't be written at all.
+            allelesWithoutReference.add(referenceAllele);
+        }
+
+        return allelesWithoutReference;
     }
 
     public boolean doAllelesMatch() {
