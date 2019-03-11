@@ -14,6 +14,32 @@
       )
     },
     {
+      "_id": "DD746A372C44C468A2222A62D69A915D3571A334",
+      "asm": "GCF_000409795.2",
+      "tax": 60711,
+      "contig": "CM001954.1",
+      "start": NumberLong(20),
+      "type": "SEQUENCE_ALTERATION",
+      "accession": NumberLong(9999),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-16T13:07:00Z"
+      )
+    },
+    {
+      "_id": "165BFDD25A38F61CE865F356171A129D274515F9",
+      "asm": "GCF_000409795.2",
+      "tax": 60711,
+      "contig": "CM001954.1",
+      "start": NumberLong(30),
+      "type": "SEQUENCE_ALTERATION",
+      "accession": NumberLong(8888),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-16T13:07:00Z"
+      )
+    },
+    {
       "_id": "EFC783A3165EFA99F22D20238257DE280BCE48BF",
       "asm": "GCF_000409795.2",
       "tax": 60711,
