@@ -27,7 +27,6 @@ import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.steps.processors.ContextNucleotideAdditionProcessor;
 import uk.ac.ebi.eva.accession.release.steps.processors.ExcludeInvalidVariantsProcessor;
-import uk.ac.ebi.eva.accession.release.steps.processors.NamedToSymbolicProcessor;
 import uk.ac.ebi.eva.accession.release.steps.processors.VariantToVariantContextProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -44,8 +43,7 @@ public class ReleaseProcessorConfiguration {
     @Bean(RELEASE_PROCESSOR)
     public ItemProcessor<Variant, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader) {
         CompositeItemProcessor<Variant, VariantContext> compositeItemProcessor = new CompositeItemProcessor<>();
-        compositeItemProcessor.setDelegates(Arrays.asList(//new NamedToSymbolicProcessor(),
-                                                          new ExcludeInvalidVariantsProcessor(),
+        compositeItemProcessor.setDelegates(Arrays.asList(new ExcludeInvalidVariantsProcessor(),
                                                           new ContextNucleotideAdditionProcessor(fastaReader),
                                                           new VariantToVariantContextProcessor()));
         return compositeItemProcessor;

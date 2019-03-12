@@ -417,4 +417,11 @@ public class VariantContextWriterTest {
     public void checkSeveralAssemblyMatchFlags() throws Exception {
         assertSeveralFlagValues(ASSEMBLY_MATCH_KEY, true, false, 1);
     }
+
+    @Test
+    public void writeNamedVariant() throws Exception {
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "A", "A(1190 BP INS)", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+    }
+
 }
