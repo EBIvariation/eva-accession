@@ -23,6 +23,19 @@ sys.path.append("../eva-accession-import-automation")
 import data_ops
 
 
+def create_dummy_contigloc_table_for_schema(species_info):
+    species_pg_conn = data_ops.get_pg_conn_for_species(species_info)
+    species_pg_cursor = species_pg_conn.cursor()
+    species_pg_cursor.execute(
+        """
+        CREATE TABLE dbsnp_{0}.b{1}_snpcontigloc (snp_id bigint NOT NULL);
+        """.format(species_info["database_name"].lower(), species_info["dbsnp_build"][:3])
+    )
+    species_pg_conn.commit()
+    species_pg_cursor.close()
+    species_pg_conn.close()
+
+
 def get_contigloc_table_list_for_schema(species_info):
     species_pg_conn = data_ops.get_pg_conn_for_species(species_info)
     species_pg_cursor = species_pg_conn.cursor()
@@ -67,26 +80,73 @@ def get_report_creation_query(species_info):
 
     contigloc_snp_id_query = \
         """
-        create table if not exists dbsnp_{database_name}.contigloc_snp_ids_all_builds as 
+        drop table if exists dbsnp_{database_name}.contigloc_snp_ids_all_builds;
+        create table dbsnp_{database_name}.contigloc_snp_ids_all_builds as 
             (select snp_id from snp_ids group by 1);
-        create index if not exists contigloc_snp_ids_idx on 
+        create index contigloc_snp_ids_idx on 
             dbsnp_{database_name}.contigloc_snp_ids_all_builds using btree(snp_id); 
          """.format(**species_info)
     unmapped_variants_report_query = \
         """
-        create table if not exists dbsnp_{database_name}.unmapped_variants_all_builds as (
-            select 
-                '{database_name}' as database_name,
-                lnk.subsnp_id, lnk.snp_id, 
-                seq3.line as seq3_line, seq3.type as seq3_type, 
-                seq5.line as seq5_line, seq5.type as seq5_type, 
-                lnk.create_time, lnk.last_updated_time
+        drop table if exists dbsnp_{database_name}.unmapped_subsnps;
+        create table dbsnp_{database_name}.unmapped_subsnps as 
+        (
+            select
+                subsnp_id
             from
                 dbsnp_{database_name}.snpsubsnplink as lnk
                 left join dbsnp_{database_name}.contigloc_snp_ids_all_builds all_snps on lnk.snp_id = all_snps.snp_id
-                join dbsnp_{database_name}.subsnpseq3 as seq3 on lnk.subsnp_id = seq3.subsnp_id
-                join dbsnp_{database_name}.subsnpseq5 as seq5 on lnk.subsnp_id = seq5.subsnp_id
-            where all_snps.snp_id is null
+            where
+                all_snps.snp_id is null
+            group by 1
+        );
+        create index on dbsnp_{database_name}.unmapped_subsnps (subsnp_id);
+        
+        drop table if exists dbsnp_{database_name}.subsnpseq3_with_agg_lines;
+        create table dbsnp_{database_name}.subsnpseq3_with_agg_lines as 
+        (
+            select
+                seq3.subsnp_id
+                , seq3.type as seq3_type
+                , string_agg(coalesce(seq3.line, ''::text), ''::text ORDER BY seq3.line_num) AS seq3_line
+            from
+                dbsnp_{database_name}.subsnpseq3 seq3
+                join dbsnp_{database_name}.unmapped_subsnps ss on ss.subsnp_id = seq3.subsnp_id
+            group by 1,2
+        );
+        create index on dbsnp_{database_name}.subsnpseq3_with_agg_lines (subsnp_id);
+        
+        drop table if exists dbsnp_{database_name}.subsnpseq5_with_agg_lines;
+        create table dbsnp_{database_name}.subsnpseq5_with_agg_lines as 
+        (
+            select
+                seq5.subsnp_id
+                , seq5.type as seq5_type
+                , string_agg(coalesce(seq5.line, ''::text), ''::text ORDER BY seq5.line_num) AS seq5_line
+            from
+                dbsnp_{database_name}.subsnpseq5 seq5
+                join dbsnp_{database_name}.unmapped_subsnps ss on ss.subsnp_id = seq5.subsnp_id
+            group by 1,2
+        );
+        create index on dbsnp_{database_name}.subsnpseq5_with_agg_lines (subsnp_id);
+        
+        drop table if exists dbsnp_{database_name}.unmapped_variants_all_builds;
+        create table dbsnp_{database_name}.unmapped_variants_all_builds as (
+            select distinct
+                '{database_name}' as database_name
+                , lnk.subsnp_id
+                , lnk.snp_id
+                , seq3_line
+                , seq5_line
+                , seq3_type 
+                , seq5_type
+                , lnk.create_time
+                , lnk.last_updated_time
+            from
+                dbsnp_{database_name}.snpsubsnplink as lnk
+                join dbsnp_{database_name}.unmapped_subsnps on lnk.subsnp_id = unmapped_subsnps.subsnp_id
+                left join dbsnp_{database_name}.subsnpseq3_with_agg_lines as seq3 on lnk.subsnp_id = seq3.subsnp_id
+                left join dbsnp_{database_name}.subsnpseq5_with_agg_lines as seq5 on lnk.subsnp_id = seq5.subsnp_id
         );
         """.format(**species_info)
 
@@ -133,17 +193,24 @@ def check_prerequisites_for_species(species_info):
     if not does_subsnpseq_table_exist_for_species(species_info):
         logger.error("Species {0} does not have one or both of the tables: SUBSNPSEQ3 and SUBSNPSEQ5"
                      .format(species_info["database_name"]))
+        return
     contigloc_table_list = get_contigloc_table_list_for_schema(species_info)
     if len(contigloc_table_list) == 0:
-        logger.error("No Contigloc table found for species {0}".format(species_info["database_name"]))
-    else:
-        species_info["contigloc_table_list"] = contigloc_table_list
+        logger.info("No Contigloc table found for species {0}".format(species_info["database_name"]))
+        logger.info("Creating dummy ContigLoc table for species {0}".format(species_info["database_name"]))
+        create_dummy_contigloc_table_for_schema(species_info)
+        contigloc_table_list = ["b{1}_snpcontigloc".format(species_info["database_name"].lower(),
+                                                           species_info["dbsnp_build"][:3])]
+    species_info["contigloc_table_list"] = contigloc_table_list
 
 
 def main(command_line_args):
     curr_timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     species_info = data_ops.get_species_pg_conn_info(command_line_args.metadb, command_line_args.metauser,
-                                                     command_line_args.metahost)
+                                                     command_line_args.metahost, "dbsnp_all_species")
+
+    # Take out duplicates due to multiple entries per database in the source table (owing to multiple assemblies)
+    species_info = list({species['database_name']: species for species in species_info}.values())
     # Sort species connection information to facilitate parallel bsub invocation on multiple databases
     species_info_sorted_by_host = sorted(species_info, key=lambda species: (species["pg_host"],
                                                                             -1 * int(species["dbsnp_build"][:3]),

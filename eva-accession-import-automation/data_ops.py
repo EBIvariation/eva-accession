@@ -34,20 +34,23 @@ def get_contiginfo_table_list_for_schema(pg_cursor, schema_name):
     return results[0][0].split(",")
 
 
-def get_species_pg_conn_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host):
+def get_species_pg_conn_info(pg_metadata_dbname, pg_metadata_user, pg_metadata_host,
+                             species_info_table="import_progress"):
     """
     Get Postgres connection information for all the mirrored dbSNP species
 
     :param pg_metadata_dbname: Metadata database name
     :param pg_metadata_user: Metadata user name
     :param pg_metadata_host: Host where the metadata database resides
+    :param species_info_table: Table to use to obtain species info - default to import_progress
     :return: List of dictionaries with connection information for each species
     """
     pg_conn = psycopg2.connect("dbname='{0}' user='{1}' host='{2}'".
                                format(pg_metadata_dbname, pg_metadata_user, pg_metadata_host))
     pg_cursor = pg_conn.cursor()
-    pg_cursor.execute("select database_name,dbsnp_build,pg_host,pg_port from dbsnp_ensembl_species.import_progress a "
-                      "join dbsnp_ensembl_species.dbsnp_build_instance b on b.dbsnp_build = a.ebi_pg_dbsnp_build")
+    pg_cursor.execute("select database_name,dbsnp_build,pg_host,pg_port from dbsnp_ensembl_species.{0} a "
+                      "join dbsnp_ensembl_species.dbsnp_build_instance b on b.dbsnp_build = a.ebi_pg_dbsnp_build"
+                      .format(species_info_table))
     species_set = [{"database_name": result[0], "dbsnp_build":result[1], "pg_host":result[2], "pg_port":result[3]}
                    for result in pg_cursor.fetchall()]
     pg_cursor.close()
