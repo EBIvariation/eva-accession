@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
@@ -77,6 +78,15 @@ public class VariantContextWriterTest {
     private static final String STUDY_2 = "study_2";
 
     private static final String REFERENCE_ASSEMBLY = "GCA_00000XXX.X";
+
+    private static final int REF_COLUMN = 3;
+
+    private static final int ALT_COLUMN = 4;
+
+    private static final String SINGLE_NUCLEOTIDE_REGEX = "[ACTGNactgn]";
+
+    // inner string without space nor angle brackets, surrounded by angle brackets
+    private static final String SYMBOLIC_ALLELE_REGEX = "<[^<> ]+>";
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -419,10 +429,32 @@ public class VariantContextWriterTest {
     }
 
     @Test
-    public void writeNamedVariant() throws Exception {
-        File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "A", "(1190 BP INS)", "A",
-                                                                SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
+    public void writeNamedInsertion() throws Exception {
+        assertNamedVariant("A", "(1190 BP INS)");
     }
 
+    private void assertNamedVariant(String reference, String alternate) throws Exception {
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate, "A",
+                                                                SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
+
+        String dataLinesRegex = "^[^#].*";
+        List<String> dataLines = grepFile(output, dataLinesRegex);
+        assertEquals(1, dataLines.size());
+        String[] columns = dataLines.get(0).split("\t");
+        assertTrue(columns[REF_COLUMN].matches(SINGLE_NUCLEOTIDE_REGEX));
+        assertTrue(columns[ALT_COLUMN].matches(SYMBOLIC_ALLELE_REGEX));
+    }
+
+    @Test
+    public void writeNamedDeletion() throws Exception {
+        assertNamedVariant("A", "(1190 BP DEL)");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void throwIfNamedReference() throws Exception {
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "(1190 BP DEL)", "A",
+                                                                SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
+    }
 }
