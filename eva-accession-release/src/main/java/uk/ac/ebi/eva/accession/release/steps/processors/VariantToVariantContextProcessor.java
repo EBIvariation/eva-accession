@@ -60,7 +60,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                     "VCF specification and HTSJDK forbid empty alleles. Illegal variant: " + variant);
         }
         String[] allelesArray = getAllelesArray(variant);
-        convertNamedToSymbolicAlleles(variant, allelesArray);
+        allelesArray = convertNamedToSymbolicAlleles(variant, allelesArray);
 
         VariantContext variantContext = variantContextBuilder
                 .chr(variant.getChromosome())
@@ -80,19 +80,26 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
      * Named variants have alleles surrounded by parentheses. Those parentheses will be changed for angular brackets
      * and white spaces will be replaced by underscore so they can be represented in VCF format as symbolic alleles.
      *
-     * @param variant
+     * Correct named variants should have named (symbolic) alleles only in the alternate field. The VCF specification
+     * forbids symbolic alleles in the reference allele field.
+     *
      * @param allelesArray Array containing all alleles
      * @return Array containing all alleles, where parentheses have been replaced by square brackets and white spaces
      * with underscore
      */
-    private void convertNamedToSymbolicAlleles(IVariant variant, String[] allelesArray) {
-        if (variant.getType() == VariantType.SEQUENCE_ALTERATION && variant.getAlternate().contains("(")) {
-            for (int i=0; i < allelesArray.length; i++) {
-                allelesArray[i] = allelesArray[i].replace("(", "<").replace(")", ">").replace(" ", "_");
+    private String[] convertNamedToSymbolicAlleles(IVariant variant, String[] allelesArray) {
+        if (variant.getType() == VariantType.SEQUENCE_ALTERATION && isNamedAllele(variant.getAlternate())) {
+            String[] symbolicAlleles = new String[allelesArray.length];
+            for (int i = 0; i < allelesArray.length; i++) {
+                symbolicAlleles[i] = allelesArray[i].replace("(", "<").replace(")", ">").replace(" ", "_");
             }
+            return symbolicAlleles;
         }
-        // TODO change ref too
-        variant.
+        return allelesArray;
+    }
+
+    private boolean isNamedAllele(String allele) {
+        return allele.startsWith("(") && allele.endsWith(")");
     }
 
     private Map<String, String> getAttributes(IVariant variant) {

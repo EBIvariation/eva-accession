@@ -18,6 +18,8 @@
 package uk.ac.ebi.eva.accession.release.steps.processors;
 
 import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
@@ -28,6 +30,8 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import static java.lang.Math.max;
 
 public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant, IVariant> {
+
+    private static Logger logger = LoggerFactory.getLogger(ContextNucleotideAdditionProcessor.class);
 
     private FastaSynonymSequenceReader fastaSequenceReader;
 
@@ -51,47 +55,75 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
         String contig = variant.getChromosome();
         String oldReference = variant.getReference();
         String oldAlternate = variant.getAlternate();
-        long newStart;
-        long newEnd;
+
+        if (variant.getType().equals(VariantType.SEQUENCE_ALTERATION)) {
+            return renormalizeNamedVariant(variant, oldStart, contig, oldReference, oldAlternate);
+        } else if (oldReference.isEmpty() || oldAlternate.isEmpty()) {
+            return renormalizeIndel(variant, oldStart, contig, oldReference, oldAlternate);
+        }
+        return variant;
+    }
+
+    /**
+     * Transform a named variant into a structural variant with symbolic alleles.
+     *
+     * Examples of structural variants taken from
+     * <a href='https://samtools.github.io/hts-specs/VCFv4.3.pdf'>VCFv.3 spec</a> (section 5.3):
+     * <pre>
+     * {@code
+     * 2       321682 .    T    <DEL>        6    PASS   SVTYPE=DEL;END=321887;SVLEN=-205
+     * 2     14477084 .    C    <DEL:ME:ALU> 12   PASS   SVTYPE=DEL;END=14477381;SVLEN=-297
+     * 3      9425916 .    C    <INS:ME:L1>  23   PASS   SVTYPE=INS;END=9425916;SVLEN=6027
+     * }
+     * </pre>
+     */
+    private Variant renormalizeNamedVariant(Variant variant, long oldStart, String contig, String oldReference,
+                                         String oldAlternate) {
         String newReference;
         String newAlternate;
-
-        if (oldReference.isEmpty() || oldAlternate.isEmpty()) {
-            ImmutableTriple<Long, String, String> contextNucleotideInfo =
-                    fastaSequenceReader.getContextNucleotideAndNewStart(contig, oldStart, oldReference,
-                                                                        oldAlternate);
-
-            newStart = contextNucleotideInfo.getLeft();
-            newReference = contextNucleotideInfo.getMiddle();
-            newAlternate = contextNucleotideInfo.getRight();
-            newEnd = newStart + max(newReference.length(), newAlternate.length()) - 1;
-        } else if (variant.getType().equals(VariantType.SEQUENCE_ALTERATION)) {
-            if (oldReference.isEmpty() && isNamedAllele(oldAlternate)) {
-                ImmutableTriple<Long, String, String> startAndReferenceAndAlternate =
-                        fastaSequenceReader.getContextNucleotideAndNewStart(
+        ImmutableTriple<Long, String, String> startAndReferenceAndAlternate =
+                fastaSequenceReader.getContextNucleotideAndNewStart(
                         contig, oldStart, "", "");
-                newStart = startAndReferenceAndAlternate.getLeft();
-                newEnd = newStart;
-                newReference = startAndReferenceAndAlternate.getMiddle();
-                newAlternate = oldAlternate;
-            } else if (isNamedAllele(oldReference) && oldAlternate.isEmpty()) {
-                ImmutableTriple<Long, String, String> startAndReferenceAndAlternate =
-                        fastaSequenceReader.getContextNucleotideAndNewStart(
-                        contig, oldStart, "", "");
-                newStart = startAndReferenceAndAlternate.getLeft();
-                newEnd = newStart;
-                newReference = oldReference;
-                newAlternate = startAndReferenceAndAlternate.getRight();
-            } else {
-                throw new IllegalArgumentException("Could not put a context nucleotide in a variant: "
-                                                   + "given the reference and alternate alleles, "
-                                                   + "one should be a named allele (surrounded by "
-                                                   + "parenthesis) and the other should be empty. The variant is: "
-                                                   + variant);
-            }
+        long newStart = startAndReferenceAndAlternate.getLeft();
+        long newEnd = newStart; // TODO jmmut: can we find out the real end? named variants are not easy to parse
+
+        if (oldReference.isEmpty() && isNamedAllele(oldAlternate)) {
+            newReference = startAndReferenceAndAlternate.getMiddle();
+
+            // note that we are not putting the context base in the alternate. (Read this method's doc)
+            newAlternate = oldAlternate;
+        } else if (isNamedAllele(oldReference) && oldAlternate.isEmpty()) {
+            newReference = startAndReferenceAndAlternate.getMiddle();
+
+            // note that we are putting the named reference as the alternate allele. (Read this method's doc)
+            newAlternate = oldReference;
         } else {
-            return variant;
+            logger.warn(
+                    "Filtering out variant because a context nucleotide could not be added: given the reference and "
+                    + "alternate alleles, one should be a named allele (surrounded by parenthesis) and the other "
+                    + "should be empty. This variant will be filtered out: " + variant);
+            return null;
         }
+        variant.renormalize(newStart, newEnd, newReference, newAlternate);
+        return variant;
+    }
+
+    private boolean isNamedAllele(String allele) {
+        return allele.startsWith("(") && allele.endsWith(")");
+    }
+
+    private Variant renormalizeIndel(Variant variant, long oldStart, String contig, String oldReference,
+                                  String oldAlternate) {
+        String newReference;
+        String newAlternate;
+        ImmutableTriple<Long, String, String> contextNucleotideInfo =
+                fastaSequenceReader.getContextNucleotideAndNewStart(
+                        contig, oldStart, oldReference, oldAlternate);
+
+        long newStart = contextNucleotideInfo.getLeft();
+        newReference = contextNucleotideInfo.getMiddle();
+        newAlternate = contextNucleotideInfo.getRight();
+        long newEnd = newStart + max(newReference.length(), newAlternate.length()) - 1;
         variant.renormalize(newStart, newEnd, newReference, newAlternate);
         return variant;
     }

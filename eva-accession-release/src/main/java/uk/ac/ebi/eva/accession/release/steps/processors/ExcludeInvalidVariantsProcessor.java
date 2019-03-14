@@ -46,10 +46,6 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, V
     @Override
     public Variant process(Variant variant) throws Exception {
         if (variant.getType() == VariantType.SEQUENCE_ALTERATION) {
-            if (variant.getReference().startsWith("(") && variant.getReference().endsWith(")")) {
-                logger.warn("Variant {} excluded", variant);
-                return null;
-            }
             return variant;
         }
 
@@ -57,7 +53,7 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, V
         if(matcher.matches()) {
             return variant;
         }
-        logger.warn("Variant {} excluded", variant);
+        logger.warn("Variant {} excluded (it has non-nucleotide letters and it's not a named variant)", variant);
         return null;
     }
 }
