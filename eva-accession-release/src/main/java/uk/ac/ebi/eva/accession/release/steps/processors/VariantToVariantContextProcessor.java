@@ -91,6 +91,8 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 allelesArray[i] = allelesArray[i].replace("(", "<").replace(")", ">").replace(" ", "_");
             }
         }
+        // TODO change ref too
+        variant.
     }
 
     private Map<String, String> getAttributes(IVariant variant) {

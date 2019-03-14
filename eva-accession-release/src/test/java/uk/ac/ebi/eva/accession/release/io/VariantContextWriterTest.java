@@ -421,7 +421,8 @@ public class VariantContextWriterTest {
     @Test
     public void writeNamedVariant() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "A", "A(1190 BP INS)", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "A", "(1190 BP INS)", "A",
+                                                                SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
 }
