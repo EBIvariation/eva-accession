@@ -71,11 +71,16 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
      * <a href='https://samtools.github.io/hts-specs/VCFv4.3.pdf'>VCFv.3 spec</a> (section 5.3):
      * <pre>
      * {@code
-     * 2       321682 .    T    <DEL>        6    PASS   SVTYPE=DEL;END=321887;SVLEN=-205
-     * 2     14477084 .    C    <DEL:ME:ALU> 12   PASS   SVTYPE=DEL;END=14477381;SVLEN=-297
-     * 3      9425916 .    C    <INS:ME:L1>  23   PASS   SVTYPE=INS;END=9425916;SVLEN=6027
+     * #CHROM POS      ID   REF  ALT          QUAL FILTER INFO
+     * 2        321682 .    T    <DEL>        6    PASS   SVTYPE=DEL;END=321887;SVLEN=-205
+     * 2      14477084 .    C    <DEL:ME:ALU> 12   PASS   SVTYPE=DEL;END=14477381;SVLEN=-297
+     * 3       9425916 .    C    <INS:ME:L1>  23   PASS   SVTYPE=INS;END=9425916;SVLEN=6027
      * }
      * </pre>
+     *
+     * Note that unlike regular INDELS, with symbolic alleles the context base is only in the REF column.
+     *
+     * Also, note that the deletions have the symbolic allele in the ALT column.
      */
     private Variant renormalizeNamedVariant(Variant variant, long oldStart, String contig, String oldReference,
                                          String oldAlternate) {
@@ -95,7 +100,8 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
         } else if (isNamedAllele(oldReference) && oldAlternate.isEmpty()) {
             newReference = startAndReferenceAndAlternate.getMiddle();
 
-            // note that we are putting the named reference as the alternate allele. (Read this method's doc)
+            // note that we are putting the named reference as the alternate allele, without context base.
+            // (Read this method's doc)
             newAlternate = oldReference;
         } else {
             logger.warn(
