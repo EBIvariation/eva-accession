@@ -145,8 +145,9 @@ def get_report_creation_query(species_info):
             from
                 dbsnp_{database_name}.snpsubsnplink as lnk
                 join dbsnp_{database_name}.unmapped_subsnps on lnk.subsnp_id = unmapped_subsnps.subsnp_id
-                left join dbsnp_{database_name}.subsnpseq3_with_agg_lines as seq3 on lnk.subsnp_id = seq3.subsnp_id
-                left join dbsnp_{database_name}.subsnpseq5_with_agg_lines as seq5 on lnk.subsnp_id = seq5.subsnp_id
+                left join dbsnp_{database_name}.subsnpseq3_with_agg_lines as seq3 on lnk.subsnp_id = seq3.subsnp_id 
+                left join dbsnp_{database_name}.subsnpseq5_with_agg_lines as seq5 on lnk.subsnp_id = seq5.subsnp_id and
+                    ((seq5.seq5_type = 1 and seq3.seq3_type = 4) or (seq5.seq5_type = 2 and seq3.seq3_type = 3))
         );
         """.format(**species_info)
 
