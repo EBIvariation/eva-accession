@@ -55,9 +55,9 @@ public class DeprecateClusteredVariantsStepConfigurationTest {
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED = "dbsnpClusteredVariantEntityDeclustered";
 
-    private static final long EXPECTED_VARIANTS_TO_BE_FULLY_DECLUSTERED = 2;
+    private static final long EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED = 4;
 
-    private static final long EXPECTED_OPERATIONS = 2;
+    private static final long EXPECTED_OPERATIONS = 4;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -91,7 +91,7 @@ public class DeprecateClusteredVariantsStepConfigurationTest {
     @Test
     public void variantsDeprecated() {
         assertStepExecutesAndCompletes();
-        assertEquals(EXPECTED_VARIANTS_TO_BE_FULLY_DECLUSTERED,
+        assertEquals(EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED,
                      mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED).count());
         assertOperations();
     }

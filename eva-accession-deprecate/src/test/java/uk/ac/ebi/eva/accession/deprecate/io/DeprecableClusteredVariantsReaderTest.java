@@ -65,6 +65,8 @@ public class DeprecableClusteredVariantsReaderTest {
 
     private static final String ASM_3 = "GCA_000000003.1";
 
+    private static final String ASM_4 = "GCA_000000004.1";
+
     private ExecutionContext executionContext;
 
     private DeprecableClusteredVariantsReader reader;
@@ -99,7 +101,7 @@ public class DeprecableClusteredVariantsReaderTest {
     @Test
     public void readDeprecateClusteredVariants() {
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
-        assertEquals(3, variants.size());
+        assertEquals(4, variants.size());
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_1)));
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_2)));
     }
@@ -121,7 +123,7 @@ public class DeprecableClusteredVariantsReaderTest {
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
         assertEquals(1, variants.size());
 
-        // Not present because it was not listed to the reader
+        // Not present because it was not listed to the reader and its variants shouldn't be deprecated
         assertFalse(variants.stream().anyMatch(x -> x.getAssemblyAccession().equals(ASM_1)));
 
         // Not present because its variant shouldn't be deprecated
@@ -129,5 +131,8 @@ public class DeprecableClusteredVariantsReaderTest {
 
         // Present
         assertTrue(variants.stream().anyMatch(x -> x.getAssemblyAccession().equals(ASM_3)));
+
+        // Not present because it was not listed to the reader
+        assertFalse(variants.stream().anyMatch(x -> x.getAssemblyAccession().equals(ASM_4)));
     }
 }
