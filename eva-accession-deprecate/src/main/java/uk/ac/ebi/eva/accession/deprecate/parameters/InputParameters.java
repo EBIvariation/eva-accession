@@ -15,9 +15,13 @@
  */
 package uk.ac.ebi.eva.accession.deprecate.parameters;
 
+import java.util.List;
+
 public class InputParameters {
 
     private int chunkSize;
+
+    private List<String> assemblies;
 
     public int getChunkSize() {
         return chunkSize;
@@ -25,5 +29,13 @@ public class InputParameters {
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
+    }
+
+    public List<String> getAssemblies() {
+        return assemblies;
+    }
+
+    public void setAssemblies(List<String> assemblies) {
+        this.assemblies = assemblies;
     }
 }

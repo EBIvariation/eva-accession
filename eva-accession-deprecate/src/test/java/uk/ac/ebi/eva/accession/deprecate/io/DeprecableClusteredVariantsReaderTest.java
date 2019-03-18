@@ -38,10 +38,12 @@ import uk.ac.ebi.eva.accession.deprecate.test.configuration.MongoTestConfigurati
 import uk.ac.ebi.eva.accession.deprecate.test.rule.FixSpringMongoDbRule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
@@ -56,6 +58,12 @@ public class DeprecableClusteredVariantsReaderTest {
     private static final String ID_1 = "BCAB105FD3C0108A54354BB6B661C3146C874F4B";
 
     private static final String ID_2 = "E353FC48E7563BB79DCE4D6A2046FCE07DB17AC8";
+
+    private static final String ASM_1 = "GCA_000000001.1";
+
+    private static final String ASM_2 = "GCA_000000002.1";
+
+    private static final String ASM_3 = "GCA_000000003.1";
 
     private ExecutionContext executionContext;
 
@@ -89,9 +97,9 @@ public class DeprecableClusteredVariantsReaderTest {
     }
 
     @Test
-    public void ReadDeprecateClusteredVariants() {
+    public void readDeprecateClusteredVariants() {
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
-        assertEquals(2, variants.size());
+        assertEquals(3, variants.size());
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_1)));
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_2)));
     }
@@ -105,4 +113,21 @@ public class DeprecableClusteredVariantsReaderTest {
         return variants;
     }
 
+    @Test
+    public void readSubsetOfAssemblies() {
+        reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate,
+                                                       Arrays.asList(ASM_2, ASM_3));
+        reader.open(executionContext);
+        List<DbsnpClusteredVariantEntity> variants = readIntoList();
+        assertEquals(1, variants.size());
+
+        // Not present because it was not listed to the reader
+        assertFalse(variants.stream().anyMatch(x -> x.getAssemblyAccession().equals(ASM_1)));
+
+        // Not present because its variant shouldn't be deprecated
+        assertFalse(variants.stream().anyMatch(x -> x.getAssemblyAccession().equals(ASM_2)));
+
+        // Present
+        assertTrue(variants.stream().anyMatch(x -> x.getAssemblyAccession().equals(ASM_3)));
+    }
 }
