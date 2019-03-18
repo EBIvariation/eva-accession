@@ -72,6 +72,9 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
     
     private MongoConverter converter;
 
+    /**
+     * Use this constructor to deprecate all assemblies in the collection DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED
+     */
     public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
         this.mongoClient = mongoClient;
         this.database = database;
@@ -79,10 +82,13 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
         this.assemblies = null;
     }
 
+    /**
+     * Use this constructor to deprecate only some assemblies
+     */
     public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
-                                             List<String> assemblies) {
+                                             List<String> assemblyAccessions) {
         this(mongoClient, database, mongoTemplate);
-        this.assemblies = assemblies;
+        this.assemblies = assemblyAccessions;
     }
 
     @Override
@@ -98,7 +104,7 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
 
     private List<Bson> buildAggregation() {
         List<Bson> aggregation = new ArrayList<>();
-        if (assemblies != null) {
+        if (assemblies != null && !assemblies.isEmpty()) {
             aggregation.add(Aggregates.match(Filters.in(ASSEMBLY_FIELD, assemblies)));
         }
         aggregation.add(Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, ACCESSION_FIELD, ACCESSION_FIELD, ACTIVE));

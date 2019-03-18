@@ -21,7 +21,7 @@ public class InputParameters {
 
     private int chunkSize;
 
-    private List<String> assemblies;
+    private List<String> assemblyAccessions;
 
     public int getChunkSize() {
         return chunkSize;
@@ -31,11 +31,11 @@ public class InputParameters {
         this.chunkSize = chunkSize;
     }
 
-    public List<String> getAssemblies() {
-        return assemblies;
+    public List<String> getAssemblyAccessions() {
+        return assemblyAccessions;
     }
 
-    public void setAssemblies(List<String> assemblies) {
-        this.assemblies = assemblies;
+    public void setAssemblyAccessions(List<String> assemblyAccessions) {
+        this.assemblyAccessions = assemblyAccessions;
     }
 }
