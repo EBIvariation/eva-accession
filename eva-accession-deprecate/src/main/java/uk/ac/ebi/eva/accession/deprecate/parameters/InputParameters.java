@@ -21,7 +21,9 @@ public class InputParameters {
 
     private int chunkSize;
 
-    private List<String> assemblyAccessions;
+    private List<String> assemblyAccession;
+
+    private boolean deprecateAll;
 
     public int getChunkSize() {
         return chunkSize;
@@ -31,11 +33,19 @@ public class InputParameters {
         this.chunkSize = chunkSize;
     }
 
-    public List<String> getAssemblyAccessions() {
-        return assemblyAccessions;
+    public List<String> getAssemblyAccession() {
+        return assemblyAccession;
     }
 
-    public void setAssemblyAccessions(List<String> assemblyAccessions) {
-        this.assemblyAccessions = assemblyAccessions;
+    public void setAssemblyAccession(List<String> assemblyAccession) {
+        this.assemblyAccession = assemblyAccession;
+    }
+
+    public Boolean getDeprecateAll() {
+        return deprecateAll;
+    }
+
+    public void setDeprecateAll(Boolean deprecateAll) {
+        this.deprecateAll = deprecateAll;
     }
 }

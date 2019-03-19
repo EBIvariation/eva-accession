@@ -39,11 +39,19 @@ public class DeprecableClusteredVariantsReaderConfiguration {
                                                                         MongoProperties mongoProperties,
                                                                         MongoTemplate mongoTemplate,
                                                                         InputParameters parameters) {
-        if (parameters.getAssemblyAccessions() == null || parameters.getAssemblyAccessions().isEmpty()) {
-            return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate);
-        } else {
+        boolean assembliesProvided =
+                parameters.getAssemblyAccession() != null && !parameters.getAssemblyAccession().isEmpty();
+
+        if (parameters.getDeprecateAll() == assembliesProvided) {
+            throw new IllegalArgumentException(
+                    "Please provide either: 1) parameters.deprecateAll=true and empty parameters.assemblyAccession or"
+                    + " 2) parameters.deprecateAll=false and parameters.assemblyAccession=<comma-separated-accessions>");
+        }
+        if (assembliesProvided) {
             return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate,
-                                                         parameters.getAssemblyAccessions());
+                                                         parameters.getAssemblyAccession());
+        } else {
+            return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate);
         }
     }
 }
