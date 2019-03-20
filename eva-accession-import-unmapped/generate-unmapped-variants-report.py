@@ -145,9 +145,12 @@ def get_report_creation_query(species_info):
             from
                 dbsnp_{database_name}.snpsubsnplink as lnk
                 join dbsnp_{database_name}.unmapped_subsnps on lnk.subsnp_id = unmapped_subsnps.subsnp_id
-                left join dbsnp_{database_name}.subsnpseq3_with_agg_lines as seq3 on lnk.subsnp_id = seq3.subsnp_id 
+                left join dbsnp_{database_name}.subsnpseq3_with_agg_lines as seq3 on lnk.subsnp_id = seq3.subsnp_id
+                --Left join condition explanation: If there is/are SEQ3 entry(ies) for this SubSNP, join with a SEQ3 entry 
+                --of a "compatible" type (see https://github.com/EBIvariation/eva-accession/pull/120#issuecomment-474083460)
                 left join dbsnp_{database_name}.subsnpseq5_with_agg_lines as seq5 on lnk.subsnp_id = seq5.subsnp_id and
-                    ((seq5.seq5_type = 1 and seq3.seq3_type = 4) or (seq5.seq5_type = 2 and seq3.seq3_type = 3))
+                    ((seq5.seq5_type = 1 and seq3.seq3_type = 4) or (seq5.seq5_type = 2 and seq3.seq3_type = 3) or 
+                    (seq3.subsnp_id is null)) --If SEQ3 entry does not exist for the SubSNP, join without worries 
         );
         """.format(**species_info)
 
