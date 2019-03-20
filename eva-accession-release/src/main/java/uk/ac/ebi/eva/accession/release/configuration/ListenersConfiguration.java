@@ -38,7 +38,7 @@ public class ListenersConfiguration {
     }
 
     @Bean(PROGRESS_LISTENER)
-    public StepListenerSupport<Variant, VariantContext> importDbsnpVariantsProgressListener(
+    public StepListenerSupport<Variant, VariantContext> releaseDbsnpVariantsProgressListener(
             InputParameters parameters) {
         return new GenericProgressListener<>(parameters.getChunkSize());
     }

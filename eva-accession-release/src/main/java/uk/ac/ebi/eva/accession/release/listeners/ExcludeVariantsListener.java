@@ -30,7 +30,7 @@ public class ExcludeVariantsListener extends StepListenerSupport<IVariant, IVari
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        logger.info("Processors filtered out {} variants", stepExecution.getProcessSkipCount());
+        logger.info("Processors filtered out {} variants", stepExecution.getFilterCount());
         return stepExecution.getExitStatus();
     }
 }
