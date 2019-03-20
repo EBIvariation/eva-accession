@@ -34,6 +34,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,6 +86,8 @@ public class VariantContextWriterTest {
 
     private static final int ALT_COLUMN = 4;
 
+    private static final int INFO_COLUMN = 7;
+
     private static final String SINGLE_NUCLEOTIDE_REGEX = "[ACTGNactgn]";
 
     // inner string without space nor angle brackets, surrounded by angle brackets
@@ -89,6 +95,8 @@ public class VariantContextWriterTest {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    private static final String DATA_LINES_REGEX = "^[^#].*";
 
     @Test
     public void basicWrite() throws Exception {
@@ -328,8 +336,7 @@ public class VariantContextWriterTest {
                        buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, false, false, true, true, true,
                                     STUDY_1));
 
-        String dataLinesRegex = "^[^#]";
-        String dataLinesWithFlagsRegex = dataLinesRegex + ".*(" + CLUSTERED_VARIANT_VALIDATED_KEY
+        String dataLinesWithFlagsRegex = DATA_LINES_REGEX + "(" + CLUSTERED_VARIANT_VALIDATED_KEY
                                          + "|" + SUBMITTED_VARIANT_VALIDATED_KEY
                                          + "|" + ALLELES_MATCH_KEY
                                          + "|" + ASSEMBLY_MATCH_KEY
@@ -350,8 +357,7 @@ public class VariantContextWriterTest {
                        buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, true, true, false, false, false,
                                     STUDY_1));
 
-        String dataLinesRegex = "^[^#]";
-        String dataLinesWithValidatedRegex = dataLinesRegex + somewhereSurroundedByTabOrSemicolon(flagRegex);
+        String dataLinesWithValidatedRegex = DATA_LINES_REGEX + somewhereSurroundedByTabOrSemicolon(flagRegex);
         List<String> dataLines;
         dataLines = grepFile(output, dataLinesWithValidatedRegex);
         assertEquals(1, dataLines.size());
@@ -408,8 +414,7 @@ public class VariantContextWriterTest {
 
         File output = assertWriteVcf(outputFolder, variant);
 
-        String dataLinesRegex = "^[^#]";
-        String dataLinesWithValidatedRegex = dataLinesRegex + somewhereSurroundedByTabOrSemicolon(flagKey);
+        String dataLinesWithValidatedRegex = DATA_LINES_REGEX + somewhereSurroundedByTabOrSemicolon(flagKey);
         List<String> dataLines;
         dataLines = grepFile(output, dataLinesWithValidatedRegex);
         assertEquals(expectedLinesWithTheFlag, dataLines.size());
@@ -438,8 +443,7 @@ public class VariantContextWriterTest {
         File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate,
                                                                 SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
 
-        String dataLinesRegex = "^[^#].*";
-        List<String> dataLines = grepFile(output, dataLinesRegex);
+        List<String> dataLines = grepFile(output, DATA_LINES_REGEX);
         assertEquals(1, dataLines.size());
         String[] columns = dataLines.get(0).split("\t");
         assertTrue(columns[REF_COLUMN].matches(SINGLE_NUCLEOTIDE_REGEX));
@@ -457,4 +461,43 @@ public class VariantContextWriterTest {
         File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "<1190_BP_DEL>", "A",
                                                                 SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
     }
+
+    @Test
+    public void writeStudyWithInvalidCharacters() throws Exception {
+        File outputFolder = temporaryFolder.newFolder();
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(CHR_1, 1000, "A", "T", SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY,
+                                                  "study_id=weird, yes; but not impossible in dbSNP"),
+                                     buildVariant(CHR_1, 2000, "A", "T", SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY,
+                                                  "one =study= ",
+                                                  ";; extra study ;;"));
+
+        List<String> dataLines = grepFile(output, DATA_LINES_REGEX);
+        assertEquals(2, dataLines.size());
+        String[] columns = dataLines.get(0).split("\t");
+
+        assertEquals(Arrays.asList("study_id_weird__yes__but_not_impossible_in_dbSNP"),
+                     parseInfoFields(columns[INFO_COLUMN]).get(STUDY_ID_KEY));
+
+        columns = dataLines.get(1).split("\t");
+        assertEquals(new HashSet<>(Arrays.asList("one__study__", "___extra_study___")),
+                     new HashSet<>(parseInfoFields(columns[INFO_COLUMN]).get(STUDY_ID_KEY)));
+    }
+
+    private HashMap<String, List<String>> parseInfoFields(String column) {
+        HashMap<String, List<String>> infoMap = new HashMap<>();
+
+        for (String keyAndValue : column.split(";")) {
+            String[] keyAndValueSplit = keyAndValue.split("=");
+            if (keyAndValueSplit.length == 2) {
+                infoMap.put(keyAndValueSplit[0], Arrays.asList(keyAndValueSplit[1].split(",")));
+            } else if (keyAndValueSplit.length == 1) {
+                infoMap.put(keyAndValueSplit[0], Collections.emptyList());
+            } else {
+                throw new IllegalArgumentException("INFO field is formatted wrong ('=' or ';' signs): " + column);
+            }
+        }
+        return infoMap;
+    }
+
 }

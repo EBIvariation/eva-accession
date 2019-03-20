@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
@@ -83,7 +84,8 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 case VARIANT_CLASS_KEY:
                 case STUDY_ID_KEY:
                 case MERGED_INTO_KEY:
-                    attributes.put(attribute.getKey(), toUniqueConcatenation(attribute.getValue()));
+                    attributes.put(attribute.getKey(),
+                                   toUniqueConcatenation(replaceInvalidCharacters(attribute.getValue())));
                     break;
                 case ALLELES_MATCH_KEY:
                 case ASSEMBLY_MATCH_KEY:
@@ -108,6 +110,17 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
             }
         }
         return attributes;
+    }
+
+    /**
+     * In VCF, in the INFO column, keys and values can not have spaces, commas, semicolons or equal signs. Specially
+     * the study IDs from dbSNP are likely to contain some of those letters.
+     */
+    private List<String> replaceInvalidCharacters(List<String> infoValues) {
+        return infoValues.stream()
+                         .map(s -> s.replaceAll("[ ,;=]", "_"))
+                         .collect(Collectors.toList());
+//        return infoValues;
     }
 
     private String toUniqueConcatenation(List<String> value) {
