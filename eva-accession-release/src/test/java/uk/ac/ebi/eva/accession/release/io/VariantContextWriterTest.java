@@ -214,18 +214,11 @@ public class VariantContextWriterTest {
 
         List<String> metadataLines = grepFileContains(output, STUDY_1);
         assertEquals(1, metadataLines.size());
-        String[] infoPairs = metadataLines.get(0).split("\t")[7].split(";");
-        boolean isSidPresent = false;
-        for (String infoPair : infoPairs) {
-            String[] keyValue = infoPair.split("=");
-            if (keyValue[0].equals("SID")) {
-                isSidPresent = true;
-                String[] studies = keyValue[1].split(",");
-                assertEquals(2, studies.length);
-                assertEquals(Sets.newLinkedHashSet(STUDY_1, STUDY_2), Sets.newLinkedHashSet(studies));
-            }
-        }
-        assertTrue(isSidPresent);
+
+        HashMap<String, List<String>> infoMap = parseInfoFields(metadataLines.get(0).split("\t")[INFO_COLUMN]);
+        assertTrue(infoMap.containsKey(STUDY_ID_KEY));
+        assertEquals(2, infoMap.get(STUDY_ID_KEY).size());
+        assertEquals(new HashSet<>(Arrays.asList(STUDY_1, STUDY_2)), new HashSet<>(infoMap.get(STUDY_ID_KEY)));
     }
 
     private List<String> grepFileContains(File output, String contains) throws IOException {
@@ -243,18 +236,11 @@ public class VariantContextWriterTest {
 
         List<String> dataLines = grepFile(output, somewhereSurroundedByTabOrSemicolon(VARIANT_CLASS_KEY + "=SO:[0-9]+"));
         assertEquals(1, dataLines.size());
-        String[] infoPairs = dataLines.get(0).split("\t")[7].split(";");
-        boolean isVariantClassPresent = false;
-        for (String infoPair : infoPairs) {
-            String[] keyValue = infoPair.split("=");
-            if (keyValue[0].equals(VARIANT_CLASS_KEY)) {
-                isVariantClassPresent = true;
-                String[] variantClass = keyValue[1].split(",");
-                assertEquals(1, variantClass.length);
-                assertEquals(sequenceOntology, variantClass[0]);
-            }
-        }
-        assertTrue(isVariantClassPresent);
+
+        HashMap<String, List<String>> infoMap = parseInfoFields(dataLines.get(0).split("\t")[INFO_COLUMN]);
+        assertTrue(infoMap.containsKey(VARIANT_CLASS_KEY));
+        assertEquals(1, infoMap.get(VARIANT_CLASS_KEY).size());
+        assertEquals(sequenceOntology, infoMap.get(VARIANT_CLASS_KEY).get(0));
     }
 
     @Test
