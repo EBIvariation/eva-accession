@@ -92,8 +92,7 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
         String newReference;
         String newAlternate;
         ImmutableTriple<Long, String, String> contextNucleotideInfo =
-                fastaSequenceReader.getContextNucleotideAndNewStart(
-                        contig, oldStart, oldReference, oldAlternate);
+                fastaSequenceReader.getContextNucleotideAndNewStart(contig, oldStart, oldReference, oldAlternate);
 
         long newStart = contextNucleotideInfo.getLeft();
         newReference = contextNucleotideInfo.getMiddle();

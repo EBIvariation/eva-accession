@@ -436,7 +436,7 @@ public class VariantContextWriterTest {
 
     private void assertNamedVariant(String reference, String alternate) throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate, "A",
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate,
                                                                 SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
 
         String dataLinesRegex = "^[^#].*";

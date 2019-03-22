@@ -59,15 +59,16 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
         if (isNamedAllele(oldReference) || isSymbolicAllele(oldReference)) {
             if (isNamedAllele(oldAlternate) || isSymbolicAllele(oldAlternate)) {
                 throw new IllegalArgumentException(
-                        "This variant (with named/symbolic alleles in both the reference and alternate alleles) can't be written "
-                        + "in VCF, as only the ALT column can have symbolic alleles: " + variant);
+                        "This variant (with named/symbolic alleles in both the reference and alternate alleles) can't"
+                        + " be written in VCF, as only the ALT column can have symbolic alleles: "
+                        + variant);
             } else {
                 // swap the alleles, look this class' documentation
                 newReference = oldAlternate;
                 newAlternate = oldReference;
             }
         } else {
-                // normal case without special reference allele: ok as it is
+            // normal case without special reference allele: ok as it is
         }
 
 

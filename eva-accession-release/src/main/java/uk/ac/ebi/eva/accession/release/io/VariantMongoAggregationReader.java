@@ -147,16 +147,6 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
     }
 
     protected void addToVariants(Map<String, Variant> variants, String contig, long start, long rs, String reference,
-                                 String alternate) {
-        String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
-
-        long end = calculateEnd(reference, alternate, start);
-        Variant variant = new Variant(contig, start, end, reference, alternate);
-        variant.setMainId(buildId(rs));
-        variants.put(variantId, variant);
-    }
-
-    protected void addToVariants(Map<String, Variant> variants, String contig, long start, long rs, String reference,
                                  String alternate, VariantSourceEntry sourceEntry) {
         String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
         if (variants.containsKey(variantId)) {

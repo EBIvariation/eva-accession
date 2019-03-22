@@ -91,7 +91,7 @@ public class NamedVariantProcessorTest {
 
     @Test
     public void processNamedInsertionWithEmptyReference() throws Exception {
-        assertNamedVariant("A", "(1190 BP INS)");
+        assertNamedVariant("", "(1190 BP INS)");
     }
 
     @Test
