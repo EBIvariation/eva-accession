@@ -423,6 +423,7 @@ public class VariantContextWriterTest {
     public void checkSeveralAllelesMatchFlags() throws Exception {
         assertSeveralFlagValues(ALLELES_MATCH_KEY, true, false, 1);
     }
+
     @Test
     public void checkSeveralAssemblyMatchFlags() throws Exception {
         assertSeveralFlagValues(ASSEMBLY_MATCH_KEY, true, false, 1);
@@ -430,7 +431,7 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeNamedInsertion() throws Exception {
-        assertNamedVariant("A", "(1190 BP INS)");
+        assertNamedVariant("A", "<1190_BP_INS>");
     }
 
     private void assertNamedVariant(String reference, String alternate) throws Exception {
@@ -448,13 +449,13 @@ public class VariantContextWriterTest {
 
     @Test
     public void writeNamedDeletion() throws Exception {
-        assertNamedVariant("A", "(1190 BP DEL)");
+        assertNamedVariant("A", "<1190_BP_DEL>");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void throwIfNamedReference() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "(1190 BP DEL)", "A",
+        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "<1190_BP_DEL>", "A",
                                                                 SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 }

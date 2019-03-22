@@ -64,58 +64,27 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
         return variant;
     }
 
-    /**
-     * Transform a named variant into a structural variant with symbolic alleles.
-     *
-     * Examples of structural variants taken from
-     * <a href='https://samtools.github.io/hts-specs/VCFv4.3.pdf'>VCFv.3 spec</a> (section 5.3):
-     * <pre>
-     * {@code
-     * #CHROM POS      ID   REF  ALT          QUAL FILTER INFO
-     * 2        321682 .    T    <DEL>        6    PASS   SVTYPE=DEL;END=321887;SVLEN=-205
-     * 2      14477084 .    C    <DEL:ME:ALU> 12   PASS   SVTYPE=DEL;END=14477381;SVLEN=-297
-     * 3       9425916 .    C    <INS:ME:L1>  23   PASS   SVTYPE=INS;END=9425916;SVLEN=6027
-     * }
-     * </pre>
-     *
-     * Note that unlike regular INDELS, with symbolic alleles the context base is only in the REF column.
-     *
-     * Also, note that the deletions have the symbolic allele in the ALT column.
-     */
     private Variant renormalizeNamedVariant(Variant variant, long oldStart, String contig, String oldReference,
-                                         String oldAlternate) {
-        String newReference;
-        String newAlternate;
-        ImmutableTriple<Long, String, String> startAndReferenceAndAlternate =
-                fastaSequenceReader.getContextNucleotideAndNewStart(
-                        contig, oldStart, "", "");
-        long newStart = startAndReferenceAndAlternate.getLeft();
-        long newEnd = newStart; // TODO jmmut: can we find out the real end? named variants are not easy to parse
-
-        if (oldReference.isEmpty() && isNamedAllele(oldAlternate)) {
-            newReference = startAndReferenceAndAlternate.getMiddle();
-
-            // note that we are not putting the context base in the alternate. (Read this method's doc)
-            newAlternate = oldAlternate;
-        } else if (isNamedAllele(oldReference) && oldAlternate.isEmpty()) {
-            newReference = startAndReferenceAndAlternate.getMiddle();
-
-            // note that we are putting the named reference as the alternate allele, without context base.
-            // (Read this method's doc)
-            newAlternate = oldReference;
+                                            String oldAlternate) {
+        if (!oldReference.isEmpty()) {
+            // no need for context bases: the reference already have some
+            return variant;
         } else {
-            logger.warn(
-                    "Filtering out variant because a context nucleotide could not be added: given the reference and "
-                    + "alternate alleles, one should be a named allele (surrounded by parenthesis) and the other "
-                    + "should be empty. This variant will be filtered out: " + variant);
-            return null;
-        }
-        variant.renormalize(newStart, newEnd, newReference, newAlternate);
-        return variant;
-    }
+            ImmutableTriple<Long, String, String> startAndReferenceAndAlternate =
+                    fastaSequenceReader.getContextNucleotideAndNewStart(contig, oldStart, "", "");
+            long newStart = startAndReferenceAndAlternate.getLeft();
+            long newEnd = newStart; // TODO jmmut: can we find out the real end? named variants are not easy to parse
+            String newReference = startAndReferenceAndAlternate.getMiddle();
 
-    private boolean isNamedAllele(String allele) {
-        return allele.startsWith("(") && allele.endsWith(")");
+            /**
+             * note that we are not putting the context base in the alternate. Read class documentation of
+             * {@link uk.ac.ebi.eva.accession.release.steps.processors.NamedVariantProcessor})
+             */
+            String newAlternate = oldAlternate;
+
+            variant.renormalize(newStart, newEnd, newReference, newAlternate);
+            return variant;
+        }
     }
 
     private Variant renormalizeIndel(Variant variant, long oldStart, String contig, String oldReference,

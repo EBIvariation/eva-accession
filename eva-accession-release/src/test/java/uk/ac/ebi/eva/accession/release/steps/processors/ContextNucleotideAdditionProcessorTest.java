@@ -149,18 +149,18 @@ public class ContextNucleotideAdditionProcessorTest {
 
     @Test
     public void testNamedVariants() throws Exception {
-        Variant variant = new Variant(CONTIG, 2, 2, "", "(100 BP insertion)");
+        Variant variant = new Variant(CONTIG, 2, 2, "", "<100_BP_insertion>");
         IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
         assertEquals(1, processedVariant.getEnd());
         assertEquals("T", processedVariant.getReference());
-        assertEquals("(100 BP insertion)", processedVariant.getAlternate());
+        assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
 
-        variant = new Variant(CONTIG, 2, 2, "(100 BP deletion)", "");
+        variant = new Variant(CONTIG, 2, 2, "A", "<100_BP_insertion>");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
-        assertEquals(1, processedVariant.getStart());
-        assertEquals(1, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("(100 BP deletion)", processedVariant.getAlternate());
+        assertEquals(2, processedVariant.getStart());
+        assertEquals(2, processedVariant.getEnd());
+        assertEquals("A", processedVariant.getReference());
+        assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
     }
 }
