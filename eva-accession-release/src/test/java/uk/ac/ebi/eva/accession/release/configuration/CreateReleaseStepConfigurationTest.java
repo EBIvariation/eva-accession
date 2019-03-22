@@ -41,7 +41,6 @@ import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -62,7 +61,7 @@ public class CreateReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 3;
+    private static final long EXPECTED_LINES = 5;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -145,7 +144,7 @@ public class CreateReleaseStepConfigurationTest {
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         List<String> dataLinesWithRs = grepFile(getReleaseFile(), "^.*\trs[0-9]+\t.*$");
-        assertEquals(3, dataLinesWithRs.size());
+        assertEquals(EXPECTED_LINES, dataLinesWithRs.size());
     }
 
     @Test

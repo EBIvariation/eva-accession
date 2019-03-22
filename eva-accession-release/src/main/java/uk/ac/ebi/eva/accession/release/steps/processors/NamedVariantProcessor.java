@@ -56,29 +56,27 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
         String newReference = oldReference;
         String newAlternate = oldAlternate;
 
-        if (!isNamedAllele(oldReference) && !isNamedAllele(oldAlternate)) {
-            // normal case without special alleles: ok as it is
-        } else if (isNamedAllele(oldReference) && !isNamedAllele(oldAlternate)) {
-            // swap the alleles, look this class' documentation
-            newReference = oldAlternate;
-            newAlternate = oldReference;
-        } else if (!isNamedAllele(oldReference) && isNamedAllele(oldAlternate)) {
-            // ALT named allele: ok as it is
-        } else if (isNamedAllele(oldReference) && isNamedAllele(oldAlternate)) {
-            throw new IllegalArgumentException(
-                    "This variant (with named alleles in both the reference and alternate alleles) can't be written "
-                    + "in VCF, as only the ALT column can have symbolic alleles: " + variant);
+        if (isNamedAllele(oldReference) || isSymbolicAllele(oldReference)) {
+            if (isNamedAllele(oldAlternate) || isSymbolicAllele(oldAlternate)) {
+                throw new IllegalArgumentException(
+                        "This variant (with named/symbolic alleles in both the reference and alternate alleles) can't be written "
+                        + "in VCF, as only the ALT column can have symbolic alleles: " + variant);
+            } else {
+                // swap the alleles, look this class' documentation
+                newReference = oldAlternate;
+                newAlternate = oldReference;
+            }
         } else {
-            throw new IllegalStateException(
-                    "This case was missed in the design of this class. There is a bug with this kind of variants: "
-                    + variant);
+                // normal case without special reference allele: ok as it is
         }
+
 
         Variant newVariant = new Variant(variant.getChromosome(), variant.getStart(), variant.getEnd(),
                                          convertNamedAlleleToSymbolicAllele(newReference),
                                          convertNamedAlleleToSymbolicAllele(newAlternate));
 
         newVariant.addSourceEntries(variant.getSourceEntries());
+        newVariant.setMainId(variant.getMainId());
         return newVariant;
     }
 
@@ -96,6 +94,10 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
 
     private boolean isNamedAllele(String allele) {
         return allele.startsWith("(") && allele.endsWith(")");
+    }
+
+    private boolean isSymbolicAllele(String allele) {
+        return allele.startsWith("<") && allele.endsWith(">");
     }
 
     private String removeFirstAndLastCharacters(String allele) {

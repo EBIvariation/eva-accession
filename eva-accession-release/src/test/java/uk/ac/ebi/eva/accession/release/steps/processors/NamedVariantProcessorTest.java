@@ -23,9 +23,6 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
-import java.io.File;
-import java.util.List;
-
 import static org.junit.Assert.*;
 import static uk.ac.ebi.eva.accession.release.io.VariantMongoAggregationReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.VariantMongoAggregationReader.ASSEMBLY_MATCH_KEY;
@@ -98,12 +95,56 @@ public class NamedVariantProcessorTest {
     }
 
     @Test
-    public void writeNamedDeletion() throws Exception {
+    public void processNamedDeletion() throws Exception {
         assertNamedVariant("(1190 BP DEL)", "A");
     }
 
     @Test
-    public void writeNamedDeletionWithEmptyAlternate() throws Exception {
+    public void processNamedDeletionWithEmptyAlternate() throws Exception {
         assertNamedVariant("(1190 BP DEL)", "");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void throwIfBothAllelesAreNamed() throws Exception {
+        assertNamedVariant("(1190 BP DEL)", "(1190 BP DEL)");
+    }
+
+    @Test
+    public void keepSnvUnmodified() throws Exception {
+        assertUnmodifiedAlleles("A", "T");
+    }
+
+    private void assertUnmodifiedAlleles(String reference, String alternate) throws Exception {
+        Variant variant = buildVariant(CHR_1, 1000, reference, alternate, VariantType.SEQUENCE_ALTERATION.toString(),
+                                       STUDY_1);
+
+        IVariant processed = processor.process(variant);
+
+        assertEquals(reference, processed.getReference());
+        assertEquals(alternate, processed.getAlternate());
+    }
+
+    @Test
+    public void keepInsertionsUnmodified() throws Exception {
+        assertUnmodifiedAlleles("A", "AGC");
+        assertUnmodifiedAlleles("", "AGC");
+    }
+
+    @Test
+    public void keepDeletionsUnmodified() throws Exception {
+        assertUnmodifiedAlleles("AGC", "A");
+        assertUnmodifiedAlleles("AGC", "");
+    }
+
+    @Test
+    public void keepSymbolicAlternateAllelesUnmodified() throws Exception {
+        assertUnmodifiedAlleles("A", "<INS>");
+        assertUnmodifiedAlleles("", "<INS>");
+    }
+
+    @Test
+    public void swapSymbolicReference() throws Exception {
+        assertNamedVariant("<DEL>", "A");
+        assertNamedVariant("<DEL>", "");
     }
 }
