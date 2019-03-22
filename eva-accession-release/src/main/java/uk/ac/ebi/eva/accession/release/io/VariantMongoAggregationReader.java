@@ -158,9 +158,6 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected void addToVariants(Map<String, Variant> variants, String contig, long start, long rs, String reference,
                                  String alternate, VariantSourceEntry sourceEntry) {
-        if (isNamedAllele(reference) && !isNamedAllele(alternate)) {
-
-        }
         String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
         if (variants.containsKey(variantId)) {
             variants.get(variantId).addSourceEntry(sourceEntry);
@@ -171,10 +168,6 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
             variant.addSourceEntry(sourceEntry);
             variants.put(variantId, variant);
         }
-    }
-
-    private boolean isNamedAllele(String allele) {
-        return allele.startsWith("(") && allele.endsWith(")");
     }
 
     private long calculateEnd(String reference, String alternate, long start) {
