@@ -20,10 +20,12 @@ import org.junit.Test;
 
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.VariantMongoAggregationReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.VariantMongoAggregationReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.VariantMongoAggregationReader.CLUSTERED_VARIANT_VALIDATED_KEY;
@@ -47,16 +49,19 @@ public class NamedVariantProcessorTest {
     // inner string without space nor angle brackets, surrounded by angle brackets
     private static final String SYMBOLIC_ALLELE_REGEX = "<[^<> ]+>";
 
+    private static final String SEQUENCE_ALTERATION_SO = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(
+            VariantType.SEQUENCE_ALTERATION);
+
     private NamedVariantProcessor processor = new NamedVariantProcessor();
 
     @Test
     public void processNamedInsertion() throws Exception {
         assertNamedVariant("A", "(1190 BP INS)");
+
     }
 
     private void assertNamedVariant(String reference, String alternate) throws Exception {
-        Variant variant = buildVariant(CHR_1, 1000, reference, alternate, VariantType.SEQUENCE_ALTERATION.toString(),
-                                       STUDY_1);
+        Variant variant = buildVariant(CHR_1, 1000, reference, alternate, SEQUENCE_ALTERATION_SO, STUDY_1);
 
         IVariant processed = processor.process(variant);
 
@@ -115,8 +120,7 @@ public class NamedVariantProcessorTest {
     }
 
     private void assertUnmodifiedAlleles(String reference, String alternate) throws Exception {
-        Variant variant = buildVariant(CHR_1, 1000, reference, alternate, VariantType.SEQUENCE_ALTERATION.toString(),
-                                       STUDY_1);
+        Variant variant = buildVariant(CHR_1, 1000, reference, alternate, SEQUENCE_ALTERATION_SO, STUDY_1);
 
         IVariant processed = processor.process(variant);
 

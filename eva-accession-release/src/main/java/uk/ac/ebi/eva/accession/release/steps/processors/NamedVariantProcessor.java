@@ -21,9 +21,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
+import uk.ac.ebi.eva.commons.core.models.AbstractVariantSourceEntry;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static uk.ac.ebi.eva.accession.release.io.VariantMongoAggregationReader.VARIANT_CLASS_KEY;
 
 /**
  * Transform a named variant {@link VariantType#SEQUENCE_ALTERATION} into a structural variant with symbolic alleles.
@@ -47,6 +56,12 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
 
     private static Logger logger = LoggerFactory.getLogger(NamedVariantProcessor.class);
 
+    private static Map<String, VariantType> sequenceOntologyToVariantType =
+            Arrays.stream(VariantType.values())
+                  .filter(type -> type != VariantType.NO_ALTERNATE)
+                  .collect(Collectors.toMap(VariantTypeToSOAccessionMap::getSequenceOntologyAccession,
+                                            type -> type));
+
     @Override
     public IVariant process(Variant variant) throws Exception {
 
@@ -60,8 +75,7 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
             if (isNamedAllele(oldAlternate) || isSymbolicAllele(oldAlternate)) {
                 throw new IllegalArgumentException(
                         "This variant (with named/symbolic alleles in both the reference and alternate alleles) can't"
-                        + " be written in VCF, as only the ALT column can have symbolic alleles: "
-                        + variant);
+                        + " be written in VCF, as only the ALT column can have symbolic alleles: " + variant);
             } else {
                 // swap the alleles, look this class' documentation
                 newReference = oldAlternate;
@@ -71,13 +85,15 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
             // normal case without special reference allele: ok as it is
         }
 
-
         Variant newVariant = new Variant(variant.getChromosome(), variant.getStart(), variant.getEnd(),
                                          convertNamedAlleleToSymbolicAllele(newReference),
                                          convertNamedAlleleToSymbolicAllele(newAlternate));
 
         newVariant.addSourceEntries(variant.getSourceEntries());
         newVariant.setMainId(variant.getMainId());
+
+        logIfVariantHasWrongType(newVariant);
+
         return newVariant;
     }
 
@@ -103,5 +119,27 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
 
     private String removeFirstAndLastCharacters(String allele) {
         return allele.substring(1, allele.length() - 1);
+    }
+
+    private void logIfVariantHasWrongType(Variant variant) {
+        Set<VariantType> types = getTypeFromAttributes(variant);
+        boolean containsSequenceAlterationInMongo = types.contains(VariantType.SEQUENCE_ALTERATION);
+        boolean isSequenceAlteration = variant.getType() == VariantType.SEQUENCE_ALTERATION;
+
+        if (isSequenceAlteration && !containsSequenceAlterationInMongo
+            || !isSequenceAlteration && containsSequenceAlterationInMongo) {
+            logger.warn("Variant is stored in MongoDB with types " + types + ", but AbstractVariant::getType says"
+                        + " that the correct type is " + variant.getType() + ". The variant (" + variant.getMainId()
+                        + ") is: " + variant);
+        }
+    }
+
+    private Set<VariantType> getTypeFromAttributes(Variant variant) {
+        return variant.getSourceEntries()
+                      .stream()
+                      .map(AbstractVariantSourceEntry::getAttributes)
+                      .map(attributes -> attributes.get(VARIANT_CLASS_KEY))
+                      .map(sequenceOntologyToVariantType::get)
+                      .collect(Collectors.toSet());
     }
 }
