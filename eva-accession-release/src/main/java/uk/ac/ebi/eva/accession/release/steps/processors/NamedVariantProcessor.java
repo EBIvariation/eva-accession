@@ -86,7 +86,7 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
         }
 
         Variant newVariant = new Variant(variant.getChromosome(), variant.getStart(), variant.getEnd(), newReference,
-                                         makeAltValid(newAlternate));
+                                         makeAltAlleleValid(newAlternate));
 
         newVariant.addSourceEntries(variant.getSourceEntries());
         newVariant.setMainId(variant.getMainId());
@@ -97,13 +97,15 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
     }
 
     /**
-     * Named variants have alleles surrounded by parentheses. Those parentheses will be changed for angular brackets
-     * and invalid characters (space, comma, angular brackets) will be replaced by underscore so they can be represented
-     * in VCF format as symbolic alleles.
+     * Named variants have alleles surrounded by parentheses and symbolic alleles are surrounded by angle brackets.
+     * In order to represent those alleles in VCF format (as symbolic alleles in the ALT allele column), the surrounding
+     * characters will be replaced by angular brackets, and invalid characters (space, comma, angular brackets) within
+     * the id itself will be replaced by underscore.
      */
-    private String makeAltValid(String allele) {
+    private String makeAltAlleleValid(String allele) {
         if (isNamedAllele(allele) || isSymbolicAllele(allele)) {
-            String validSymbolicId = removeFirstAndLastCharacters(allele).replaceAll("[ ,<>]", "_");
+            String potentiallyInvalidSymbolicId = getAlleleIdWithoutSurroundingBraces(allele);
+            String validSymbolicId = potentiallyInvalidSymbolicId.replaceAll("[ ,<>]", "_");
             return "<" + validSymbolicId + ">";
         } else {
             return allele;
@@ -118,7 +120,7 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
         return allele.startsWith("<") && allele.endsWith(">");
     }
 
-    private String removeFirstAndLastCharacters(String allele) {
+    private String getAlleleIdWithoutSurroundingBraces(String allele) {
         return allele.substring(1, allele.length() - 1);
     }
 
