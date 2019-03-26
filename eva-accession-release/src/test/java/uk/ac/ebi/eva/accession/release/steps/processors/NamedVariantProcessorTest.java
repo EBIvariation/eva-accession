@@ -151,4 +151,20 @@ public class NamedVariantProcessorTest {
         assertNamedVariant("<DEL>", "A");
         assertNamedVariant("<DEL>", "");
     }
+
+    /**
+     *  Taken from EVA-1220. Some of these won't even go through the release in VCF format, but test them just in case
+     */
+    @Test
+    public void handleStrangeAlleles() throws Exception {
+        assertUnmodifiedAlleles("T", "N-,C");
+        assertUnmodifiedAlleles("T", "T, B-, R-,J-,C");
+
+        assertNamedVariant("(TAA(32)AS)", "T");
+        assertNamedVariant("(A5(5))", "T");
+        assertNamedVariant("([46-159])", "T");
+        assertNamedVariant("(B19E(I))", "T");
+        assertNamedVariant("(IGK-V12/13)", "T");
+        assertNamedVariant("(BOZ/DHARMA)", "T");
+    }
 }
