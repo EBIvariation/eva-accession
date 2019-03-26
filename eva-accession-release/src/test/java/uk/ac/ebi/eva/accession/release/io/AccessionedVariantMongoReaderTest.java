@@ -100,6 +100,8 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final String RS_3_G_C = "CP002685.1_4758626_G_C";
 
+    private static final int EXPECTED_LINES = 5;
+
     private AccessionedVariantMongoReader reader;
 
     private ExecutionContext executionContext;
@@ -137,13 +139,13 @@ public class AccessionedVariantMongoReaderTest {
             Document clusteredVariant = cursor.next();
             variants.addAll(reader.getVariants(clusteredVariant));
         }
-        assertEquals(5, variants.size());
+        assertEquals(EXPECTED_LINES, variants.size());
      }
 
     @Test
     public void reader() throws Exception {
         List<Variant> variants = readIntoList();
-        assertEquals(5, variants.size());
+        assertEquals(EXPECTED_LINES, variants.size());
     }
 
     private List<Variant> readIntoList() throws Exception {
@@ -160,7 +162,7 @@ public class AccessionedVariantMongoReaderTest {
     @Test
     public void linkedSubmittedVariants() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(5, variants.size());
+        assertEquals(EXPECTED_LINES, variants.size());
         assertEquals(2, variants.values().stream().filter(v -> v.getMainId().equals(RS_1)).count());
         assertEquals(1, variants.values().stream().filter(v -> v.getMainId().equals(RS_2)).count());
         assertEquals(1, variants.get(RS_1_G_A).getSourceEntries().size());
@@ -201,7 +203,7 @@ public class AccessionedVariantMongoReaderTest {
     @Test
     public void snpVariantClassAttribute() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(5, variants.size());
+        assertEquals(EXPECTED_LINES, variants.size());
         String snpSequenceOntology = "SO:0001483";
         assertTrue(variants
                            .get(RS_1_G_A)
@@ -252,7 +254,7 @@ public class AccessionedVariantMongoReaderTest {
     @Test
     public void studyIdAttribute() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(5, variants.size());
+        assertEquals(EXPECTED_LINES, variants.size());
 
         String studyId;
         studyId = "PRJEB7923";
