@@ -16,8 +16,11 @@
 
 package uk.ac.ebi.eva.accession.release.steps.processors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.regex.Matcher;
@@ -31,6 +34,8 @@ import java.util.regex.Pattern;
  */
 public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, Variant> {
 
+    private static final Logger logger = LoggerFactory.getLogger(ExcludeInvalidVariantsProcessor.class);
+
     private static final String ALLELES_REGEX = "^[acgtnACGTN]+$";
 
     private static final Pattern ALLELES_PATTERN = Pattern.compile(ALLELES_REGEX);
@@ -40,11 +45,15 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, V
 
     @Override
     public Variant process(Variant variant) throws Exception {
+        if (variant.getType() == VariantType.SEQUENCE_ALTERATION) {
+            return variant;
+        }
+
         Matcher matcher = ALLELES_PATTERN.matcher(variant.getReference() + variant.getAlternate());
         if(matcher.matches()) {
             return variant;
         }
+        logger.warn("Variant {} excluded (it has non-nucleotide letters and it's not a named variant)", variant);
         return null;
     }
-
 }

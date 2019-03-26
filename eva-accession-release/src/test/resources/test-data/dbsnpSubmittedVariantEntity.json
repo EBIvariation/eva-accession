@@ -49,6 +49,38 @@
       )
     },
     {
+      "_id": "E116E78AFF67930CCC56349BE1C877A945F11A96",
+      "seq": "GCF_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB2222",
+      "contig": "CM001954.1",
+      "start": NumberLong(20),
+      "ref": "(1190 BP DEL)",
+      "alt": "T",
+      "rs": NumberLong(9999),
+      "accession": NumberLong(2222),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
+      "_id": "C0D11F7811394603D2182D0D43FB69A1692CF9C6",
+      "seq": "GCF_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB3333",
+      "contig": "CM001954.1",
+      "start": NumberLong(30),
+      "ref": "T",
+      "alt": "(1190 BP DEL)",
+      "rs": NumberLong(8888),
+      "accession": NumberLong(3333),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
       "_id": "40F6E23B8F90B05D4E89B93126AB08ADEB366C14",
       "seq": "GCF_000409795.2",
       "tax": 60711,

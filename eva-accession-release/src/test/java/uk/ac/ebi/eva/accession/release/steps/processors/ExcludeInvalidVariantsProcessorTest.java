@@ -42,7 +42,7 @@ public class ExcludeInvalidVariantsProcessorTest {
 
     private static final String SPECIAL_CHARACTERS_ALLELE = "A/TT,C.";
 
-    private static final String NAMED_ALLELE = "(1000 BP DEL)";
+    private static final String NAMED_ALLELE = "<1000_BP_DEL>";
 
     private static final String SPACES_ALLELE = "A CGTN";
 
@@ -125,13 +125,13 @@ public class ExcludeInvalidVariantsProcessorTest {
     @Test
     public void referenceAlleleNamed() throws Exception {
         Variant variant = newVariant(NAMED_ALLELE, VALID_ALLELE);
-        assertNull(processor.process(variant));
+        assertNotNull(processor.process(variant));
     }
 
     @Test
     public void alternateAlleleNamed() throws Exception {
         Variant variant = newVariant(VALID_ALLELE, NAMED_ALLELE);
-        assertNull(processor.process(variant));
+        assertNotNull(processor.process(variant));
     }
 
     @Test
