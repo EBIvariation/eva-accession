@@ -85,9 +85,8 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
             // normal case without special reference allele: ok as it is
         }
 
-        Variant newVariant = new Variant(variant.getChromosome(), variant.getStart(), variant.getEnd(),
-                                         convertNamedAlleleToSymbolicAllele(newReference),
-                                         convertNamedAlleleToSymbolicAllele(newAlternate));
+        Variant newVariant = new Variant(variant.getChromosome(), variant.getStart(), variant.getEnd(), newReference,
+                                         makeAltValid(newAlternate));
 
         newVariant.addSourceEntries(variant.getSourceEntries());
         newVariant.setMainId(variant.getMainId());
@@ -99,11 +98,13 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
 
     /**
      * Named variants have alleles surrounded by parentheses. Those parentheses will be changed for angular brackets
-     * and white spaces will be replaced by underscore so they can be represented in VCF format as symbolic alleles.
+     * and invalid characters (space, comma, angular brackets) will be replaced by underscore so they can be represented
+     * in VCF format as symbolic alleles.
      */
-    private String convertNamedAlleleToSymbolicAllele(String allele) {
-        if (isNamedAllele(allele)) {
-            return ("<" + removeFirstAndLastCharacters(allele) + ">").replace(" ", "_");
+    private String makeAltValid(String allele) {
+        if (isNamedAllele(allele) || isSymbolicAllele(allele)) {
+            String validSymbolicId = removeFirstAndLastCharacters(allele).replaceAll("[ ,<>]", "_");
+            return "<" + validSymbolicId + ">";
         } else {
             return allele;
         }
