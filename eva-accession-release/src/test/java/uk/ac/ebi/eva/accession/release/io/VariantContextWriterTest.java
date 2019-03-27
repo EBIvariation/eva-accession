@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.release.io;
 
 import htsjdk.variant.variantcontext.VariantContext;
-import org.assertj.core.util.Sets;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -234,13 +233,18 @@ public class VariantContextWriterTest {
         File outputFolder = temporaryFolder.newFolder();
         File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
 
-        List<String> dataLines = grepFile(output, somewhereSurroundedByTabOrSemicolon(VARIANT_CLASS_KEY + "=SO:[0-9]+"));
+        String dataWithVariantClassRegex = surroundedByTabOrSemicolonInDataLine(VARIANT_CLASS_KEY + "=SO:[0-9]+");
+        List<String> dataLines = grepFile(output, dataWithVariantClassRegex);
         assertEquals(1, dataLines.size());
 
         HashMap<String, List<String>> infoMap = parseInfoFields(dataLines.get(0).split("\t")[INFO_COLUMN]);
         assertTrue(infoMap.containsKey(VARIANT_CLASS_KEY));
         assertEquals(1, infoMap.get(VARIANT_CLASS_KEY).size());
         assertEquals(sequenceOntology, infoMap.get(VARIANT_CLASS_KEY).get(0));
+    }
+
+    private String surroundedByTabOrSemicolonInDataLine(String regex) {
+        return DATA_LINES_REGEX + ("[\t;]" + regex + "([\t;].*|$)");
     }
 
     @Test
@@ -323,10 +327,9 @@ public class VariantContextWriterTest {
                                     STUDY_1));
 
         String dataLinesWithFlagsRegex = DATA_LINES_REGEX + "(" + CLUSTERED_VARIANT_VALIDATED_KEY
-                                         + "|" + SUBMITTED_VARIANT_VALIDATED_KEY
                                          + "|" + ALLELES_MATCH_KEY
                                          + "|" + ASSEMBLY_MATCH_KEY
-                                         + "|" + SUPPORTED_BY_EVIDENCE_KEY + ")";
+                                         + "|" + SUPPORTED_BY_EVIDENCE_KEY + ").*";
         List<String> dataLines = grepFile(output, dataLinesWithFlagsRegex);
 
         assertEquals(0, dataLines.size());
@@ -343,14 +346,10 @@ public class VariantContextWriterTest {
                        buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, true, true, false, false, false,
                                     STUDY_1));
 
-        String dataLinesWithValidatedRegex = DATA_LINES_REGEX + somewhereSurroundedByTabOrSemicolon(flagRegex);
+        String dataLinesWithValidatedRegex = surroundedByTabOrSemicolonInDataLine(flagRegex);
         List<String> dataLines;
         dataLines = grepFile(output, dataLinesWithValidatedRegex);
         assertEquals(1, dataLines.size());
-    }
-
-    private String somewhereSurroundedByTabOrSemicolon(String regex) {
-        return ".*[\t;]" + regex + "([\t;].*|$)";
     }
 
     @Test
@@ -400,7 +399,7 @@ public class VariantContextWriterTest {
 
         File output = assertWriteVcf(outputFolder, variant);
 
-        String dataLinesWithValidatedRegex = DATA_LINES_REGEX + somewhereSurroundedByTabOrSemicolon(flagKey);
+        String dataLinesWithValidatedRegex = surroundedByTabOrSemicolonInDataLine(flagKey);
         List<String> dataLines;
         dataLines = grepFile(output, dataLinesWithValidatedRegex);
         assertEquals(expectedLinesWithTheFlag, dataLines.size());
@@ -480,7 +479,8 @@ public class VariantContextWriterTest {
             } else if (keyAndValueSplit.length == 1) {
                 infoMap.put(keyAndValueSplit[0], Collections.emptyList());
             } else {
-                throw new IllegalArgumentException("INFO field is formatted wrong ('=' or ';' signs): " + column);
+                throw new IllegalArgumentException(
+                        "INFO field is wrongly formatted (contains '=' or ';' symbols):  " + column);
             }
         }
         return infoMap;
