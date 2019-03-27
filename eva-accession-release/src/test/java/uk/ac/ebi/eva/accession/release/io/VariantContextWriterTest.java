@@ -233,7 +233,7 @@ public class VariantContextWriterTest {
         File outputFolder = temporaryFolder.newFolder();
         File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
 
-        String dataWithVariantClassRegex = surroundedByTabOrSemicolonInDataLine(VARIANT_CLASS_KEY + "=SO:[0-9]+");
+        String dataWithVariantClassRegex = createRegexSurroundedByTabOrSemicolonInDataLine(VARIANT_CLASS_KEY + "=SO:[0-9]+");
         List<String> dataLines = grepFile(output, dataWithVariantClassRegex);
         assertEquals(1, dataLines.size());
 
@@ -243,7 +243,7 @@ public class VariantContextWriterTest {
         assertEquals(sequenceOntology, infoMap.get(VARIANT_CLASS_KEY).get(0));
     }
 
-    private String surroundedByTabOrSemicolonInDataLine(String regex) {
+    private String createRegexSurroundedByTabOrSemicolonInDataLine(String regex) {
         return DATA_LINES_REGEX + ("[\t;]" + regex + "([\t;].*|$)");
     }
 
@@ -346,7 +346,7 @@ public class VariantContextWriterTest {
                        buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, true, true, false, false, false,
                                     STUDY_1));
 
-        String dataLinesWithValidatedRegex = surroundedByTabOrSemicolonInDataLine(flagRegex);
+        String dataLinesWithValidatedRegex = createRegexSurroundedByTabOrSemicolonInDataLine(flagRegex);
         List<String> dataLines;
         dataLines = grepFile(output, dataLinesWithValidatedRegex);
         assertEquals(1, dataLines.size());
@@ -399,7 +399,7 @@ public class VariantContextWriterTest {
 
         File output = assertWriteVcf(outputFolder, variant);
 
-        String dataLinesWithValidatedRegex = surroundedByTabOrSemicolonInDataLine(flagKey);
+        String dataLinesWithValidatedRegex = createRegexSurroundedByTabOrSemicolonInDataLine(flagKey);
         List<String> dataLines;
         dataLines = grepFile(output, dataLinesWithValidatedRegex);
         assertEquals(expectedLinesWithTheFlag, dataLines.size());
