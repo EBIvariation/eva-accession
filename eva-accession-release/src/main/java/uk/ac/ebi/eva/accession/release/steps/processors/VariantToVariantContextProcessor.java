@@ -120,7 +120,6 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
         return infoValues.stream()
                          .map(s -> s.replaceAll("[ ,;=]", "_"))
                          .collect(Collectors.toList());
-//        return infoValues;
     }
 
     private String toUniqueConcatenation(List<String> value) {
