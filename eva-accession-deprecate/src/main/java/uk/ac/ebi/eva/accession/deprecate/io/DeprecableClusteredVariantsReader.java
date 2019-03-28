@@ -76,10 +76,7 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
      * Constructs a reader for all variants in the collection DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED, irrespective of the assembly.
      */
     public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
-        this.mongoClient = mongoClient;
-        this.database = database;
-        this.mongoTemplate = mongoTemplate;
-        this.assemblies = null;
+        this(mongoClient, database, mongoTemplate, null);
     }
 
     /**
@@ -87,7 +84,9 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
      */
     public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
                                              List<String> assemblyAccessions) {
-        this(mongoClient, database, mongoTemplate);
+        this.mongoClient = mongoClient;
+        this.database = database;
+        this.mongoTemplate = mongoTemplate;
         this.assemblies = assemblyAccessions;
     }
 

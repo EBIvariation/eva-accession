@@ -93,10 +93,10 @@ public class DeprecateClusteredVariantsStepConfigurationTest {
         assertStepExecutesAndCompletes();
         assertEquals(EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED,
                      mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED).count());
-        assertOperations();
+        assertNumDeprecatedOperations();
     }
 
-    private void assertOperations() {
+    private void assertNumDeprecatedOperations() {
         List<DbsnpClusteredVariantOperationEntity> operations = mongoTemplate
                 .find(new Query(), DbsnpClusteredVariantOperationEntity.class);
         assertEquals(EXPECTED_OPERATIONS, operations.size());
