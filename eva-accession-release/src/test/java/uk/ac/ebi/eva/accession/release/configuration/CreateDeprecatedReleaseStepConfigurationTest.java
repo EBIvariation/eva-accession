@@ -95,7 +95,8 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
 
     private File getDeprecatedReleaseFile() {
         return ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                             inputParameters.getAssemblyAccession()).toFile();
+                                                             inputParameters.getAssemblyAccession(),
+                                                             inputParameters.getBuildNumber()).toFile();
     }
 
     @Test

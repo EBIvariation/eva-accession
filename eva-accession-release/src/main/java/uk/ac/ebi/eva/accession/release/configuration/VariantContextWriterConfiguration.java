@@ -35,14 +35,16 @@ public class VariantContextWriterConfiguration {
     @Bean(RELEASE_WRITER)
     public VariantContextWriter variantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getCurrentIdsReportPath(parameters.getOutputFolder(),
-                                                                     parameters.getAssemblyAccession());
+                                                                     parameters.getAssemblyAccession(),
+                                                                     parameters.getBuildNumber());
         return new VariantContextWriter(reportPath, parameters.getAssemblyAccession());
     }
 
     @Bean(MERGED_RELEASE_WRITER)
     public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getMergedIdsReportPath(parameters.getOutputFolder(),
-                                                                    parameters.getAssemblyAccession());
+                                                                    parameters.getAssemblyAccession(),
+                                                                    parameters.getBuildNumber());
         return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession());
     }
 

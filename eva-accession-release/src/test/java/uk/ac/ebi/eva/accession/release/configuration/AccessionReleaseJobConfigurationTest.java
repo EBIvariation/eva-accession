@@ -112,18 +112,24 @@ public class AccessionReleaseJobConfigurationTest {
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getCurrentIdsReportPath(
-                inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession()).toFile());
+        return new FileInputStream(ReportPathResolver.getCurrentIdsReportPath(inputParameters.getOutputFolder(),
+                                                                              inputParameters.getAssemblyAccession(),
+                                                                              inputParameters.getBuildNumber())
+                                                     .toFile());
     }
 
     private FileInputStream getMergedRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getMergedIdsReportPath(
-                inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession()).toFile());
+        return new FileInputStream(ReportPathResolver.getMergedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                             inputParameters.getAssemblyAccession(),
+                                                                             inputParameters.getBuildNumber())
+                                                     .toFile());
     }
 
     private FileInputStream getDeprecatedRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getDeprecatedIdsReportPath(
-                inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession()).toFile());
+        return new FileInputStream(ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                                 inputParameters.getAssemblyAccession(),
+                                                                                 inputParameters.getBuildNumber())
+                                                     .toFile());
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

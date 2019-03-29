@@ -129,7 +129,8 @@ public class VariantContextWriterTest {
     }
 
     public File assertWriteVcf(File outputFolder, Variant... variants) throws Exception {
-        Path reportPath = ReportPathResolver.getCurrentIdsReportPath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
+        Path reportPath = ReportPathResolver.getCurrentIdsReportPath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY,
+                                                                     null);
         VariantContextWriter writer = new VariantContextWriter(reportPath, REFERENCE_ASSEMBLY);
         writer.open(null);
 
