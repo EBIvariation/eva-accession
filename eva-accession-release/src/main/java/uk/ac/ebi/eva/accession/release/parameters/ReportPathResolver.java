@@ -35,7 +35,7 @@ public class ReportPathResolver {
     }
 
     public static final Path getDeprecatedIdsReportPath(String outputFolder, String referenceAssembly, Long build) {
-        final String FILE_SUFFIX = "_deprecated_ids.txt";
+        final String FILE_SUFFIX = "_deprecated_ids.unsorted.txt";
         return Paths.get(outputFolder).resolve(referenceAssembly + getBuildSuffix(build) + FILE_SUFFIX);
     }
 
