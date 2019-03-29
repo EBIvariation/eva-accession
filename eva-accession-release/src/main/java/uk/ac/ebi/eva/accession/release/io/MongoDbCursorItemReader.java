@@ -164,6 +164,8 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
             mongoQuery.withHint(hint);
         }
 
+        mongoQuery.with(sort);
+
         if(StringUtils.hasText(collection)) {
             cursor = template.stream(mongoQuery, type, collection);
         } else {
