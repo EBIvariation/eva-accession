@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.io.DeprecableClusteredVariantsReader;
+import uk.ac.ebi.eva.accession.deprecate.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECABLE_CLUSTERED_VARIANTS_READER;
 
@@ -36,7 +37,21 @@ public class DeprecableClusteredVariantsReaderConfiguration {
     @StepScope
     DeprecableClusteredVariantsReader deprecableClusteredVariantsReader(MongoClient mongoClient,
                                                                         MongoProperties mongoProperties,
-                                                                        MongoTemplate mongoTemplate) {
-        return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate);
+                                                                        MongoTemplate mongoTemplate,
+                                                                        InputParameters parameters) {
+        boolean assembliesProvided =
+                parameters.getAssemblyAccession() != null && !parameters.getAssemblyAccession().isEmpty();
+
+        if (parameters.getDeprecateAll() == assembliesProvided) {
+            throw new IllegalArgumentException(
+                    "Please provide either: 1) parameters.deprecateAll=true and empty parameters.assemblyAccession or"
+                    + " 2) parameters.deprecateAll=false and parameters.assemblyAccession=<comma-separated-accessions>");
+        }
+        if (assembliesProvided) {
+            return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate,
+                                                         parameters.getAssemblyAccession());
+        } else {
+            return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate);
+        }
     }
 }

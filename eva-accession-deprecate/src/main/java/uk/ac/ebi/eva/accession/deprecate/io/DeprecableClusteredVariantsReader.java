@@ -35,6 +35,7 @@ import org.springframework.data.mongodb.core.convert.MongoConverter;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -57,9 +58,13 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
 
     private static final String ACTIVE = "active";
 
+    private static final String ASSEMBLY_FIELD = "asm";
+
     private MongoClient mongoClient;
 
     private String database;
+
+    private List<String> assemblies;
 
     private MongoCursor<Document> cursor;
 
@@ -67,10 +72,22 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
     
     private MongoConverter converter;
 
+    /**
+     * Constructs a reader for all variants in the collection DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED, irrespective of the assembly.
+     */
     public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
+        this(mongoClient, database, mongoTemplate, null);
+    }
+
+    /**
+     * Constructs a reader that retrieves variants mapped only against the specified assemblies.
+     */
+    public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
+                                             List<String> assemblyAccessions) {
         this.mongoClient = mongoClient;
         this.database = database;
         this.mongoTemplate = mongoTemplate;
+        this.assemblies = assemblyAccessions;
     }
 
     @Override
@@ -85,9 +102,13 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
     }
 
     private List<Bson> buildAggregation() {
-        Bson lookup = Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, ACCESSION_FIELD, ACCESSION_FIELD, ACTIVE);
-        Bson match = Aggregates.match(Filters.eq(ACTIVE, Collections.EMPTY_LIST));
-        List<Bson> aggregation = Arrays.asList(lookup, match);
+        List<Bson> aggregation = new ArrayList<>();
+        if (assemblies != null && !assemblies.isEmpty()) {
+            aggregation.add(Aggregates.match(Filters.in(ASSEMBLY_FIELD, assemblies)));
+        }
+        aggregation.add(Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, ACCESSION_FIELD, ACCESSION_FIELD, ACTIVE));
+        aggregation.add(Aggregates.match(Filters.eq(ACTIVE, Collections.EMPTY_LIST)));
+
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }

@@ -43,6 +43,50 @@
       "accession" : NumberLong(853461378),
       "version" : 1,
       "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "HASH_1",
+      "asm" : "GCA_000000001.1",
+      "tax" : 3827,
+      "contig" : "CM001768.1",
+      "start" : NumberLong(31898089),
+      "type" : "SNV",
+      "accession" : NumberLong(1),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "HASH_2",
+      "asm" : "GCA_000000002.1",
+      "tax" : 3827,
+      "contig" : "CM001768.1",
+      "start" : NumberLong(31898089),
+      "type" : "SNV",
+      "accession" : NumberLong(2),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "HASH_3",
+      "asm" : "GCA_000000003.1",
+      "tax" : 3827,
+      "contig" : "CM001768.1",
+      "start" : NumberLong(31898089),
+      "type" : "SNV",
+      "accession" : NumberLong(3),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
+      "_id" : "HASH_4",
+      "asm" : "GCA_000000004.1",
+      "tax" : 3827,
+      "contig" : "CM001768.1",
+      "start" : NumberLong(31898089),
+      "type" : "SNV",
+      "accession" : NumberLong(4),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
     }
   ]
 }
