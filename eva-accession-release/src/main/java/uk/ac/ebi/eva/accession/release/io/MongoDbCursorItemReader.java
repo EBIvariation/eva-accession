@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  * reader.
  * <p>
  * Its implementation is based on
- * <a href="https://github.com/spring-projects/spring-batch/blob/3.0.8.RELEASE/spring-batch-infrastructure/src/main/java/org/springframework/batch/item/data/MongoItemReader.java">MongoItemReader</a></a>
+ * <a href="https://github.com/spring-projects/spring-batch/blob/3.0.8.RELEASE/spring-batch-infrastructure/src/main/java/org/springframework/batch/item/data/MongoItemReader.java">MongoItemReader</a>
  * but replaces the paging strategy with the use of {@link org.springframework.data.mongodb.core.MongoOperations#stream}
  * , giving better performance and still allowing an automatic conversion from MongoDB documents to the user Entity.
  */
