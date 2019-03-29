@@ -18,6 +18,8 @@
 package uk.ac.ebi.eva.accession.release.io;
 
 import com.mongodb.util.JSON;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.domain.Sort;
@@ -51,14 +53,24 @@ import java.util.regex.Pattern;
 public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamItemReader<T>
         implements InitializingBean {
 
+    private static Logger logger = LoggerFactory.getLogger(MongoDbCursorItemReader.class);
+
     private static final Pattern PLACEHOLDER = Pattern.compile("\\?(\\d+)");
+
     private MongoOperations template;
+
     private String query;
+
     private Class<? extends T> type;
+
     private Sort sort;
+
     private String hint;
+
     private String fields;
+
     private String collection;
+
     private List<Object> parameterValues;
 
     private CloseableIterator<? extends T> cursor;
@@ -169,6 +181,8 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
         }
 
         mongoQuery.with(sort);
+
+        logger.info("Issuing MongoDB query: {}", mongoQuery);
 
         if(StringUtils.hasText(collection)) {
             cursor = template.stream(mongoQuery, type, collection);
