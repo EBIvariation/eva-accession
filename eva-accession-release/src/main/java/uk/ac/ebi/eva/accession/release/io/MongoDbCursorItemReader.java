@@ -44,6 +44,9 @@ import java.util.regex.Pattern;
  * <a href="https://github.com/spring-projects/spring-batch/blob/3.0.8.RELEASE/spring-batch-infrastructure/src/main/java/org/springframework/batch/item/data/MongoItemReader.java">MongoItemReader</a>
  * but replaces the paging strategy with the use of {@link org.springframework.data.mongodb.core.MongoOperations#stream}
  * , giving better performance and still allowing an automatic conversion from MongoDB documents to the user Entity.
+ *
+ * Note: if you want to use this class to resume reads, make sure to provide a sort and saveState=true. If you don't
+ * sort, you can't resume reads because the order might change, and the reader could skip the wrong items.
  */
 public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamItemReader<T>
         implements InitializingBean {
@@ -63,6 +66,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
     public MongoDbCursorItemReader() {
         super();
         setName(ClassUtils.getShortName(MongoDbCursorItemReader.class));
+        setSaveState(false);    // by default, assuming unsorted query. Further explanation in this class' description
     }
 
     /**
@@ -188,7 +192,6 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
         Assert.state(template != null, "An implementation of MongoOperations is required.");
         Assert.state(type != null, "A type to convert the input into is required.");
         Assert.state(query != null, "A query is required.");
-        Assert.state(sort != null, "A sort is required.");
     }
 
     // Copied from StringBasedMongoQuery...is there a place where this type of logic is already exposed?
