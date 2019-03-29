@@ -17,40 +17,48 @@
 
 package uk.ac.ebi.eva.accession.release.io;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import com.mongodb.util.JSON;
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.BasicQuery;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.util.CloseableIterator;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
  * Mongo item reader that is based on cursors, instead of the pagination used in the default Spring Data MongoDB
  * reader.
  * <p>
- * Its implementation is based on the one available in
- * <a href="https://github.com/acogoluegnes/Spring-Batch-MongoDB/blob/master/src/main/java/com/zenika/batch/item/database/mongo/MongoDbCursorItemReader.java</a>
- * but replaces the direct access to Mongo with a {@link MongoOperations}, following the Spring Data MongoDB model.
+ * Its implementation is based on
+ * <a href="https://github.com/spring-projects/spring-batch/blob/3.0.8.RELEASE/spring-batch-infrastructure/src/main/java/org/springframework/batch/item/data/MongoItemReader.java">MongoItemReader</a></a>
+ * but replaces the paging strategy with the use of {@link org.springframework.data.mongodb.core.MongoOperations#stream}
+ * , giving better performance and still allowing an automatic conversion from MongoDB documents to the user Entity.
  */
-public class MongoDbCursorItemReader extends AbstractItemCountingItemStreamItemReader<DBObject>
+public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamItemReader<T>
         implements InitializingBean {
 
+    private static final Pattern PLACEHOLDER = Pattern.compile("\\?(\\d+)");
     private MongoOperations template;
-    private String collectionName;
+    private String query;
+    private Class<? extends T> type;
+    private Sort sort;
+    private String hint;
+    private String fields;
+    private String collection;
+    private List<Object> parameterValues;
 
-    private DBObject query;
-    private DBObject sort;
-    private String[] fields;
-
-    private DBCursor cursor;
+    private CloseableIterator<? extends T> cursor;
 
     public MongoDbCursorItemReader() {
         super();
@@ -58,10 +66,10 @@ public class MongoDbCursorItemReader extends AbstractItemCountingItemStreamItemR
     }
 
     /**
-     * Used to perform operations against the MongoDB instance. Also handles the
-     * mapping of documents to objects.
+     * Used to perform operations against the MongoDB instance.  Also
+     * handles the mapping of documents to objects.
      *
-     * @param template The MongoOperations instance to use
+     * @param template the MongoOperations instance to use
      * @see MongoOperations
      */
     public void setTemplate(MongoOperations template) {
@@ -69,62 +77,97 @@ public class MongoDbCursorItemReader extends AbstractItemCountingItemStreamItemR
     }
 
     /**
-     * A DBObject representing the MongoDB query.
+     * A JSON formatted MongoDB query.  Parameterization of the provided query is allowed
+     * via ?&lt;index&gt; placeholders where the &lt;index&gt; indicates the index of the
+     * parameterValue to substitute.
      *
-     * @param query Mongo query to run
+     * @param query JSON formatted Mongo query
      */
-    public void setQuery(DBObject query) {
-        if (query == null) {
-            this.query = new BasicDBObject();
-        } else {
-            this.query = query;
-        }
+    public void setQuery(String query) {
+        this.query = query;
     }
 
     /**
-     * List of fields to be returned from the matching documents by MongoDB.
+     * The type of object to be returned for each {@link #read()} call.
      *
-     * @param fields List of fields to return.
+     * @param type the type of object to return
      */
-    public void setFields(String... fields) {
+    public void setTargetType(Class<? extends T> type) {
+        this.type = type;
+    }
+
+    /**
+     * {@link List} of values to be substituted in for each of the
+     * parameters in the query.
+     *
+     * @param parameterValues
+     */
+    public void setParameterValues(List<Object> parameterValues) {
+        this.parameterValues = parameterValues;
+    }
+
+    /**
+     * JSON defining the fields to be returned from the matching documents
+     * by MongoDB.
+     *
+     * @param fields JSON string that identifies the fields to sort by.
+     */
+    public void setFields(String fields) {
         this.fields = fields;
     }
 
     /**
-     * {@link Map} of property names/
-     * {@link org.springframework.data.domain.Sort.Direction} values to sort the
-     * input by.
+     * {@link Map} of property names/{@link org.springframework.data.domain.Sort.Direction} values to
+     * sort the input by.
      *
-     * @param sorts Map of properties and direction to sort each.
+     * @param sorts map of properties and direction to sort each.
      */
     public void setSort(Map<String, Sort.Direction> sorts) {
         this.sort = convertToSort(sorts);
     }
 
     /**
-     * Name of the Mongo collection to be queried.
-     *
-     * @param collection Name of the collection
+     * @param collection Mongo collection to be queried.
      */
     public void setCollection(String collection) {
-        this.collectionName = collection;
+        this.collection = collection;
+    }
+
+    /**
+     * JSON String telling MongoDB what index to use.
+     *
+     * @param hint string indicating what index to use.
+     */
+    public void setHint(String hint) {
+        this.hint = hint;
+    }
+
+    @Override
+    protected T doRead() throws Exception {
+        return cursor.hasNext() ? cursor.next() : null;
     }
 
     @Override
     protected void doOpen() throws Exception {
-        DBCollection collection = template.getCollection(collectionName);
-        cursor = collection.find(query, createDbObjectKeys());
-        if (sort != null) {
-            cursor = cursor.sort(sort);
-        }
-    }
 
-    @Override
-    protected DBObject doRead() throws Exception {
-        if (!cursor.hasNext()) {
-            return null;
+        String populatedQuery = replacePlaceholders(query, parameterValues);
+
+        Query mongoQuery = null;
+
+        if(StringUtils.hasText(fields)) {
+            mongoQuery = new BasicQuery(populatedQuery, fields);
         } else {
-            return cursor.next();
+            mongoQuery = new BasicQuery(populatedQuery);
+        }
+
+        if(StringUtils.hasText(hint)) {
+            mongoQuery.withHint(hint);
+        }
+
+        if(StringUtils.hasText(collection)) {
+            cursor = template.stream(mongoQuery, type, collection);
+        } else {
+            cursor = template.stream(mongoQuery, type);
         }
     }
 
@@ -140,30 +183,38 @@ public class MongoDbCursorItemReader extends AbstractItemCountingItemStreamItemR
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(template, "An implementation of MongoOperations is required.");
-        Assert.notNull(collectionName, "collectionName must be set");
-        Assert.notNull(query, "A query is required.");
+        Assert.state(template != null, "An implementation of MongoOperations is required.");
+        Assert.state(type != null, "A type to convert the input into is required.");
+        Assert.state(query != null, "A query is required.");
+        Assert.state(sort != null, "A sort is required.");
     }
 
-    private DBObject createDbObjectKeys() {
-        if (fields == null) {
-            return new BasicDBObject();
-        } else {
-            BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
-            for (String field : fields) {
-                builder.add(field, 1);
-            }
-            return builder.get();
+    // Copied from StringBasedMongoQuery...is there a place where this type of logic is already exposed?
+    private String replacePlaceholders(String input, List<Object> values) {
+        Matcher matcher = PLACEHOLDER.matcher(input);
+        String result = input;
+
+        while (matcher.find()) {
+            String group = matcher.group();
+            int index = Integer.parseInt(matcher.group(1));
+            result = result.replace(group, getParameterWithIndex(values, index));
         }
+
+        return result;
     }
 
-    private DBObject convertToSort(Map<String, Sort.Direction> sorts) {
-        BasicDBObject sort = new BasicDBObject();
+    // Copied from StringBasedMongoQuery...is there a place where this type of logic is already exposed?
+    private String getParameterWithIndex(List<Object> values, int index) {
+        return JSON.serialize(values.get(index));
+    }
 
-        for (Map.Entry<String, Sort.Direction> currSort : sorts.entrySet()) {
-            sort.append(currSort.getKey(), currSort.getValue());
+    private Sort convertToSort(Map<String, Sort.Direction> sorts) {
+        List<Sort.Order> sortValues = new ArrayList<Sort.Order>();
+
+        for (Map.Entry<String, Sort.Direction> curSort : sorts.entrySet()) {
+            sortValues.add(new Sort.Order(curSort.getValue(), curSort.getKey()));
         }
 
-        return sort;
+        return new Sort(sortValues);
     }
 }
