@@ -15,18 +15,19 @@
  */
 package uk.ac.ebi.eva.accession.release.configuration;
 
+import com.mongodb.MongoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
-import uk.ac.ebi.eva.accession.core.io.SubSnpNoHgvsContigReader;
+import uk.ac.ebi.eva.accession.release.io.ContigMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
-
-import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_READER;
 
@@ -38,11 +39,10 @@ public class ContigReaderConfiguration {
 
     @Bean(name = CONTIG_READER)
     @StepScope
-    SubSnpNoHgvsContigReader contigReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
-            throws Exception {
-        logger.info("Injecting ContigsReaderConfiguration with parameters: {}, {}", parameters, dbsnpDataSource);
-        DataSource dataSource = dbsnpDataSource.getDatasource();
-        return new SubSnpNoHgvsContigReader(parameters.getAssemblyName(), parameters.getBuildNumber(), dataSource,
-                                            parameters.getPageSize());
+    ItemStreamReader<String> contigReader(InputParameters parameters, MongoClient mongoClient,
+                                          MongoProperties mongoProperties) throws Exception {
+        logger.info("Injecting ContigMongoReader parameters: {}, {}", parameters.getAssemblyAccession(),
+                    mongoProperties.getDatabase());
+        return new ContigMongoReader(parameters.getAssemblyAccession(), mongoClient, mongoProperties.getDatabase());
     }
 }

@@ -22,30 +22,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.test.configuration.DbsnpTestDataSource;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionReleaseJobConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.AccessionedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ContigReaderConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ContigToInsdcProcessorConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ContigWriterConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.CreateDeprecatedReleaseStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.CreateMergedReleaseStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.CreateReleaseStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.DeprecatedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ListContigsStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.MergedVariantMongoReaderConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ReleaseProcessorConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.VariantContextWriterConfiguration;
 
 @EnableAutoConfiguration
-@Import({DbsnpTestDataSource.class,
-        MongoConfiguration.class,
-        InputParametersConfiguration.class,
-        AccessionReleaseJobConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class
+@Import({MongoConfiguration.class,
+         InputParametersConfiguration.class,
+         AccessionReleaseJobConfiguration.class,
+         ChunkSizeCompletionPolicyConfiguration.class
 })
 public class BatchTestConfiguration {
 

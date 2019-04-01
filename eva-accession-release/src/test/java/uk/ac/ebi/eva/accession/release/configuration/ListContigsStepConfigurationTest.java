@@ -26,7 +26,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import uk.ac.ebi.eva.accession.core.test.configuration.TestConfiguration;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 
@@ -35,10 +34,11 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, TestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
 public class ListContigsStepConfigurationTest {
 
@@ -51,7 +51,7 @@ public class ListContigsStepConfigurationTest {
     @Test
     @DirtiesContext
     public void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep("LIST_CONTIGS_STEP");
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_CONTIGS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
@@ -59,7 +59,7 @@ public class ListContigsStepConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        assertEquals(6, numberOfLines(getContigsFilePath(inputParameters.getOutputFolder(),
+        assertEquals(2, numberOfLines(getContigsFilePath(inputParameters.getOutputFolder(),
                                                          inputParameters.getAssemblyAccession())));
     }
 

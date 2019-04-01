@@ -26,7 +26,6 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static uk.ac.ebi.eva.accession.release.steps.processors.ExcludeInvalidVariantsProcessor.REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY;
 
 public class ExcludeInvalidVariantsProcessorTest {
 

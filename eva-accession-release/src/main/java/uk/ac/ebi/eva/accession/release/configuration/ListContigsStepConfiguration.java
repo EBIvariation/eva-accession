@@ -20,6 +20,7 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemStreamWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
@@ -47,7 +48,7 @@ public class ListContigsStepConfiguration {
 
     @Autowired
     @Qualifier(CONTIG_READER)
-    private JdbcCursorItemReader<String> contigReader;
+    private ItemStreamReader<String> contigReader;
 
     @Autowired
     @Qualifier(CONTIG_TO_INSDC_PROCESSOR)
