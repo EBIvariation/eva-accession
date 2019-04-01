@@ -39,59 +39,15 @@ import java.util.List;
 
 public class ContigMongoReader implements ItemStreamReader<String> {
 
-    private static final String CONTIG_KEY = "$contig";
-
-    private static Logger logger = LoggerFactory.getLogger(ContigMongoReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(ContigMongoReader.class);
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
-    public static final String VARIANT_CLASS_KEY = "VC";
+    private static final String REFERENCE_ASSEMBLY_FIELD = "asm";
 
-    public static final String STUDY_ID_KEY = "SID";
+    private static final String CONTIG_KEY = "$contig";
 
-    public static final String CLUSTERED_VARIANT_VALIDATED_KEY = "RS_VALIDATED";
-
-    public static final String SUBMITTED_VARIANT_VALIDATED_KEY = "SS_VALIDATED";
-
-    public static final String ASSEMBLY_MATCH_KEY = "ASMM";
-
-    public static final String ALLELES_MATCH_KEY = "ALMM";
-
-    public static final String SUPPORTED_BY_EVIDENCE_KEY = "LOE";
-
-    public static final String MERGED_INTO_KEY = "CURR";
-
-    protected static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
-
-    protected static final String ACCESSION_FIELD = "accession";
-
-    protected static final String REFERENCE_ASSEMBLY_FIELD = "asm";
-
-    protected static final String STUDY_FIELD = "study";
-
-    protected static final String CONTIG_FIELD = "contig";
-
-    protected static final String START_FIELD = "start";
-
-    protected static final String TYPE_FIELD = "type";
-
-    protected static final String REFERENCE_ALLELE_FIELD = "ref";
-
-    protected static final String ALTERNATE_ALLELE_FIELD = "alt";
-
-    protected static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
-
-    protected static final String SS_INFO_FIELD = "ssInfo";
-
-    protected static final String VALIDATED_FIELD = "validated";
-
-    protected static final String ASSEMBLY_MATCH_FIELD = "asmMatch";
-
-    protected static final String ALLELES_MATCH_FIELD = "allelesMatch";
-
-    protected static final String SUPPORTED_BY_EVIDENCE_FIELD = "evidence";
-
-    private static final String RS_PREFIX = "rs";
+    private static final String MONGO_ID_FIELD = "_id";
 
     protected String assemblyAccession;
 
@@ -137,7 +93,7 @@ public class ContigMongoReader implements ItemStreamReader<String> {
     }
 
     private String getContig(Document clusteredVariant) {
-        return clusteredVariant.getString("_id");
+        return clusteredVariant.getString(MONGO_ID_FIELD);
     }
 
     @Override

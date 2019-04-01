@@ -38,9 +38,6 @@ public class ContigMongoReaderTest {
     @Autowired
     private MongoClient mongoClient;
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
