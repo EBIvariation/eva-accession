@@ -102,8 +102,7 @@ public class CreateMergedReleaseStepConfigurationTest {
 
     private File getMergedReleaseFile() {
         return ReportPathResolver.getMergedIdsReportPath(inputParameters.getOutputFolder(),
-                                                         inputParameters.getAssemblyAccession(),
-                                                         inputParameters.getBuildNumber()).toFile();
+                                                         inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

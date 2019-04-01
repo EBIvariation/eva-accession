@@ -32,8 +32,7 @@ public class ClusteredVariantAccessionItemStreamWriterConfiguration {
     @Bean(DEPRECATED_RELEASE_WRITER)
     public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getDeprecatedIdsReportPath(parameters.getOutputFolder(),
-                                                                        parameters.getAssemblyAccession(),
-                                                                        parameters.getBuildNumber());
+                                                                        parameters.getAssemblyAccession());
         return new DeprecatedVariantAccessionWriter(reportPath);
     }
 

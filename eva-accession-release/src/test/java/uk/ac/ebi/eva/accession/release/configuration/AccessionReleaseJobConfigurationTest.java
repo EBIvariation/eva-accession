@@ -113,22 +113,19 @@ public class AccessionReleaseJobConfigurationTest {
 
     private FileInputStream getRelease() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getCurrentIdsReportPath(inputParameters.getOutputFolder(),
-                                                                              inputParameters.getAssemblyAccession(),
-                                                                              inputParameters.getBuildNumber())
+                                                                              inputParameters.getAssemblyAccession())
                                                      .toFile());
     }
 
     private FileInputStream getMergedRelease() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getMergedIdsReportPath(inputParameters.getOutputFolder(),
-                                                                             inputParameters.getAssemblyAccession(),
-                                                                             inputParameters.getBuildNumber())
+                                                                             inputParameters.getAssemblyAccession())
                                                      .toFile());
     }
 
     private FileInputStream getDeprecatedRelease() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                                                 inputParameters.getAssemblyAccession(),
-                                                                                 inputParameters.getBuildNumber())
+                                                                                 inputParameters.getAssemblyAccession())
                                                      .toFile());
     }
 

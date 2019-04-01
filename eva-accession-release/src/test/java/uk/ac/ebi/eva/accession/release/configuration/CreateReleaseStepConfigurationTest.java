@@ -101,8 +101,7 @@ public class CreateReleaseStepConfigurationTest {
 
     private File getReleaseFile() {
         return ReportPathResolver.getCurrentIdsReportPath(inputParameters.getOutputFolder(),
-                                                          inputParameters.getAssemblyAccession(),
-                                                          inputParameters.getBuildNumber()).toFile();
+                                                          inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

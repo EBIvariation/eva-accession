@@ -24,22 +24,19 @@ import java.nio.file.Paths;
  */
 public class ReportPathResolver {
 
-    public static final Path getCurrentIdsReportPath(String outputFolder, String referenceAssembly, Long build) {
+    public static Path getCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
         final String FILE_SUFFIX = "_current_ids.vcf";
-        return Paths.get(outputFolder).resolve(referenceAssembly + getBuildSuffix(build) + FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }
 
-    public static final Path getMergedIdsReportPath(String outputFolder, String referenceAssembly, Long build) {
+    public static Path getMergedIdsReportPath(String outputFolder, String referenceAssembly) {
         final String FILE_SUFFIX = "_merged_ids.vcf";
-        return Paths.get(outputFolder).resolve(referenceAssembly + getBuildSuffix(build) + FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }
 
-    public static final Path getDeprecatedIdsReportPath(String outputFolder, String referenceAssembly, Long build) {
+    public static Path getDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
         final String FILE_SUFFIX = "_deprecated_ids.unsorted.txt";
-        return Paths.get(outputFolder).resolve(referenceAssembly + getBuildSuffix(build) + FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }
 
-    public static final String getBuildSuffix(Long build) {
-        return build == null ? "" : "_" + build.toString();
-    }
 }
