@@ -51,10 +51,6 @@ public class ListContigsStepConfiguration {
     private ItemStreamReader<String> contigReader;
 
     @Autowired
-    @Qualifier(CONTIG_TO_INSDC_PROCESSOR)
-    private ItemProcessor<String, String> contigProcessor;
-
-    @Autowired
     @Qualifier(CONTIG_WRITER)
     private ItemStreamWriter<String> contigWriter;
 
@@ -63,7 +59,6 @@ public class ListContigsStepConfiguration {
         TaskletStep step = stepBuilderFactory.get(LIST_CONTIGS_STEP)
                 .<String, String>chunk(chunkSizeCompletionPolicy)
                 .reader(contigReader)
-                .processor(contigProcessor)
                 .writer(contigWriter)
                 .build();
         return step;
