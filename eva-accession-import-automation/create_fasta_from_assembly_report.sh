@@ -34,6 +34,13 @@ touch ${output_folder}/${species}_custom.fa
 touch ${output_folder}/written_contigs.txt
 
 download_fasta_to_contig_file () {
+    # make $? return the error code of any failed command in the pipe, instead of the last one only
+    set -o pipefail
+    times_wget_failed=0
+    max_allowed_attempts=5
+
+    echo "Downloading from $1"
+
     while [ $times_wget_failed -lt $max_allowed_attempts ]
     do
         # Download each GenBank accession in the assembly report from ENA into a separate file
@@ -86,8 +93,6 @@ for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
 do
     echo ${genbank_contig}
 
-    # make $? return the error code of any failed command in the pipe, instead of the last one only
-    set -o pipefail
     times_wget_failed=0
     max_allowed_attempts=5
 
@@ -108,7 +113,7 @@ do
         # Due to NCBI policy of limiting direct EUtils requests to 10 per second (see https://www.ncbi.nlm.nih.gov/books/NBK25497/),
         # introduce a delay of 1 second before calling EFetch just in case these requests line up (unlikely but playing it safe...)
         sleep 1
-        download_fasta_to_contig_file "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${genbank_contig}&rettype=fasta&retmode=text&api_key=${eutils_api_key}"
+        download_fasta_to_contig_file "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${genbank_contig}&rettype=fasta&retmode=text&api_key=${eutils_api_key}&tool=eva&email=eva-dev@ebi.ac.uk"
     fi
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
@@ -131,7 +136,7 @@ do
             if [ $matches -eq 0 ]
             then
                 # If the downloaded file contains a WGS, it will be compressed
-                is_wgs=$(file ${output_folder}/${genbank_contig} | grep -c 'gzip')
+                is_wgs=$(file "${output_folder}/${genbank_contig}" | grep -c 'gzip')
                 if [ $is_wgs -eq 1 ]
                 then
                     # Uncompress file
