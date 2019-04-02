@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
@@ -42,8 +42,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 public class AccessionReleaseJobConfiguration {
 
     @Autowired
-    @Qualifier(LIST_CONTIGS_STEP)
-    private Step listContigsStep;
+    @Qualifier(LIST_ACTIVE_CONTIGS_STEP)
+    private Step listActiveContigsStep;
 
     @Autowired
     @Qualifier(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
@@ -61,7 +61,7 @@ public class AccessionReleaseJobConfiguration {
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(ACCESSION_RELEASE_JOB)
                                 .incrementer(new RunIdIncrementer())
-                                .start(listContigsStep)
+                                .start(listActiveContigsStep)
                                 .next(createReleaseStep)
                                 .next(createMergedReleaseStep)
                                 .next(createDeprecatedReleaseStep)

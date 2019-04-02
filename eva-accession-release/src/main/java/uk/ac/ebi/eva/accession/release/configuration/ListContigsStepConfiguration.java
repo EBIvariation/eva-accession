@@ -19,10 +19,8 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemStreamWriter;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,9 +28,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_TO_INSDC_PROCESSOR;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRITER;
 
 /**
@@ -54,9 +51,9 @@ public class ListContigsStepConfiguration {
     @Qualifier(CONTIG_WRITER)
     private ItemStreamWriter<String> contigWriter;
 
-    @Bean(LIST_CONTIGS_STEP)
+    @Bean(LIST_ACTIVE_CONTIGS_STEP)
     public Step contigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(LIST_CONTIGS_STEP)
+        TaskletStep step = stepBuilderFactory.get(LIST_ACTIVE_CONTIGS_STEP)
                 .<String, String>chunk(chunkSizeCompletionPolicy)
                 .reader(contigReader)
                 .writer(contigWriter)

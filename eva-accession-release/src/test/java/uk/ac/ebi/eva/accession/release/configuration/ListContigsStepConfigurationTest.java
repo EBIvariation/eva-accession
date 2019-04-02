@@ -34,7 +34,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
 
 @RunWith(SpringRunner.class)
@@ -51,7 +51,7 @@ public class ListContigsStepConfigurationTest {
     @Test
     @DirtiesContext
     public void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_CONTIGS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_ACTIVE_CONTIGS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 

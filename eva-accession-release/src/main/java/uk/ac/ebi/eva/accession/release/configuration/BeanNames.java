@@ -43,7 +43,7 @@ public class BeanNames {
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
-    public static final String LIST_CONTIGS_STEP = "LIST_CONTIGS_STEP";
+    public static final String LIST_ACTIVE_CONTIGS_STEP = "LIST_ACTIVE_CONTIGS_STEP";
 
     public static final String CONTIG_TO_INSDC_PROCESSOR = "CONTIG_TO_INSDC_PROCESSOR";
 
