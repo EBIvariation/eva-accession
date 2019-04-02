@@ -172,7 +172,7 @@ public class VariantContextWriterTest {
     @Test
     public void checkMetadataSection() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        FileWriter fileWriter = new FileWriter(ContigWriter.getContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
+        FileWriter fileWriter = new FileWriter(ContigWriter.getActiveContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
         String contig = "CM0001.1";
         fileWriter.write(contig);
         fileWriter.close();

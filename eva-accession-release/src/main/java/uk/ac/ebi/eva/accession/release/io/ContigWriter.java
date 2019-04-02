@@ -33,7 +33,9 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     private static final String FILE_EXTENSION = ".txt";
 
-    private static final String FILE_PREFIX = "/contigs_";
+    private static final String ACTIVE_FILE_PREFIX = "/active_contigs_";
+
+    private static final String DEPRECATED_FILE_PREFIX = "/deprecated_contigs_";
 
     private final File output;
 
@@ -69,15 +71,27 @@ public class ContigWriter implements ItemStreamWriter<String> {
         }
     }
 
-    public static String getContigsFilePath(String referenceAssembly) {
-        return FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
+    public static String getActiveContigsFilePath(String referenceAssembly) {
+        return ACTIVE_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
     }
 
-    public static String getContigsFilePath(File outputFolder, String referenceAssembly) {
-        return outputFolder + getContigsFilePath(referenceAssembly);
+    public static String getActiveContigsFilePath(File outputFolder, String referenceAssembly) {
+        return outputFolder + getActiveContigsFilePath(referenceAssembly);
     }
 
-    public static String getContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + getContigsFilePath(referenceAssembly);
+    public static String getActiveContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + getActiveContigsFilePath(referenceAssembly);
+    }
+
+    public static String getDeprecatedContigsFilePath(String referenceAssembly) {
+        return DEPRECATED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
+    }
+
+    public static String getDeprecatedContigsFilePath(File outputFolder, String referenceAssembly) {
+        return outputFolder + getDeprecatedContigsFilePath(referenceAssembly);
+    }
+
+    public static String getDeprecatedContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + getDeprecatedContigsFilePath(referenceAssembly);
     }
 }

@@ -29,7 +29,8 @@ import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
 import uk.ac.ebi.eva.accession.release.io.ContigMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_CONTIG_READER;
 
 @Configuration
 @EnableConfigurationProperties({DbsnpDataSource.class})
@@ -37,12 +38,23 @@ public class ContigReaderConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigReaderConfiguration.class);
 
-    @Bean(name = CONTIG_READER)
+    @Bean(name = ACTIVE_CONTIG_READER)
     @StepScope
-    ItemStreamReader<String> contigReader(InputParameters parameters, MongoClient mongoClient,
+    ItemStreamReader<String> activeContigReader(InputParameters parameters, MongoClient mongoClient,
                                           MongoProperties mongoProperties) throws Exception {
         logger.info("Injecting ContigMongoReader parameters: {}, {}", parameters.getAssemblyAccession(),
                     mongoProperties.getDatabase());
-        return new ContigMongoReader(parameters.getAssemblyAccession(), mongoClient, mongoProperties.getDatabase());
+        return ContigMongoReader.activeContigReader(parameters.getAssemblyAccession(), mongoClient,
+                                                    mongoProperties.getDatabase());
+    }
+
+    @Bean(name = DEPRECATED_CONTIG_READER)
+    @StepScope
+    ItemStreamReader<String> deprecatedContigReader(InputParameters parameters, MongoClient mongoClient,
+                                          MongoProperties mongoProperties) throws Exception {
+        logger.info("Injecting ContigMongoReader parameters: {}, {}", parameters.getAssemblyAccession(),
+                    mongoProperties.getDatabase());
+        return ContigMongoReader.deprecatedContigReader(parameters.getAssemblyAccession(), mongoClient,
+                                                        mongoProperties.getDatabase());
     }
 }

@@ -43,9 +43,15 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
-    private static final String REFERENCE_ASSEMBLY_FIELD = "asm";
+    private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
-    private static final String CONTIG_KEY = "$contig";
+    private static final String ACTIVE_REFERENCE_ASSEMBLY_FIELD = "asm";
+
+    private static final String DEPRECATED_REFERENCE_ASSEMBLY_FIELD = "inactiveObjects.asm";
+
+    private static final String ACTIVE_CONTIG_KEY = "$contig";
+
+    private static final String DEPRECATED_CONTIG_KEY = "$inactiveObjects.contig";
 
     private static final String MONGO_ID_FIELD = "_id";
 
@@ -57,15 +63,41 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     protected MongoCursor<Document> cursor;
 
-    public ContigMongoReader(String assemblyAccession, MongoClient mongoClient, String database) {
+    private final String collection;
+
+    private final String referenceAssemblyField;
+
+    private final String contigKey;
+
+    public static ContigMongoReader activeContigReader(String assemblyAccession, MongoClient mongoClient,
+                                                       String database) {
+        return new ContigMongoReader(assemblyAccession, mongoClient, database,
+                                     DBSNP_CLUSTERED_VARIANT_ENTITY,
+                                     ACTIVE_REFERENCE_ASSEMBLY_FIELD,
+                                     ACTIVE_CONTIG_KEY);
+    }
+
+    public static ContigMongoReader deprecatedContigReader(String assemblyAccession, MongoClient mongoClient,
+                                                           String database) {
+        return new ContigMongoReader(assemblyAccession, mongoClient, database,
+                                     DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
+                                     DEPRECATED_REFERENCE_ASSEMBLY_FIELD,
+                                     DEPRECATED_CONTIG_KEY);
+    }
+
+    private ContigMongoReader(String assemblyAccession, MongoClient mongoClient, String database, String collection,
+                              String referenceAssemblyField, String contigKey) {
         this.assemblyAccession = assemblyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
+        this.collection = collection;
+        this.referenceAssemblyField = referenceAssemblyField;
+        this.contigKey = contigKey;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        aggregate(DBSNP_CLUSTERED_VARIANT_ENTITY);
+        aggregate(collection);
     }
 
     private void aggregate(String collectionName) {
@@ -79,13 +111,12 @@ public class ContigMongoReader implements ItemStreamReader<String> {
     }
 
     private List<Bson> buildAggregation() {
-        Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
-        Bson uniqueContigs = Aggregates.group(CONTIG_KEY);
+        Bson match = Aggregates.match(Filters.eq(referenceAssemblyField, assemblyAccession));
+        Bson uniqueContigs = Aggregates.group(contigKey);
         List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
-
 
     @Override
     public String read() throws UnexpectedInputException, ParseException, NonTransientResourceException {

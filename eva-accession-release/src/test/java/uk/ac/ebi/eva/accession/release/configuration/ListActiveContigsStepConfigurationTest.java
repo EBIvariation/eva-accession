@@ -35,12 +35,12 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getActiveContigsFilePath;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:application.properties")
-public class ListContigsStepConfigurationTest {
+public class ListActiveContigsStepConfigurationTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -59,8 +59,8 @@ public class ListContigsStepConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        assertEquals(2, numberOfLines(getContigsFilePath(inputParameters.getOutputFolder(),
-                                                         inputParameters.getAssemblyAccession())));
+        assertEquals(2, numberOfLines(getActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                                               inputParameters.getAssemblyAccession())));
     }
 
     private long numberOfLines(String path) throws IOException {

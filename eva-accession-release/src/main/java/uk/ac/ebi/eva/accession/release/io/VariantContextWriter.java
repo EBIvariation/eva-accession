@@ -119,7 +119,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     private void addContigs(Set<VCFHeaderLine> metaData) {
         try {
             BufferedReader bufferedReader = new BufferedReader(
-                    new FileReader(ContigWriter.getContigsFilePath(output.getParent(), referenceAssembly)));
+                    new FileReader(ContigWriter.getActiveContigsFilePath(output.getParent(), referenceAssembly)));
             String contig;
             while ((contig = bufferedReader.readLine()) != null) {
                 metaData.add(new VCFHeaderLine("contig", "<ID=" + contig + ">"));

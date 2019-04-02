@@ -45,9 +45,15 @@ public class BeanNames {
 
     public static final String LIST_ACTIVE_CONTIGS_STEP = "LIST_ACTIVE_CONTIGS_STEP";
 
+    public static final String LIST_DEPRECATED_CONTIGS_STEP = "LIST_DEPRECATED_CONTIGS_STEP";
+
     public static final String CONTIG_TO_INSDC_PROCESSOR = "CONTIG_TO_INSDC_PROCESSOR";
 
-    public static final String CONTIG_READER = "CONTIG_READER";
+    public static final String ACTIVE_CONTIG_READER = "ACTIVE_CONTIG_READER";
 
-    public static final String CONTIG_WRITER = "CONTIG_WRITER";
+    public static final String DEPRECATED_CONTIG_READER = "DEPRECATED_CONTIG_READER";
+
+    public static final String ACTIVE_CONTIG_WRITER = "ACTIVE_CONTIG_WRITER";
+
+    public static final String DEPRECATED_CONTIG_WRITER = "DEPRECATED_CONTIG_WRITER";
 }
