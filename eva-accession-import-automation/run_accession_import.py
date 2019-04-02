@@ -87,7 +87,7 @@ def get_commands_to_run(command_line_args):
                                               "-g {genbank_equivalents_file}".format(**program_args)
 
     create_fasta_file_command = "bash {program_dir}create_fasta_from_assembly_report.sh {species} " \
-                                "{assembly_report} {species_assembly_folder}".format(**program_args)
+                                "{assembly_report} {species_assembly_folder} {eutils_api_key}".format(**program_args)
 
     generate_import_job_properties_file_command = ("cd {species_accessioning_import_folder} && " +
                                                    "{python3_path} {program_dir}generate_properties.py " +
