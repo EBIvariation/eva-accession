@@ -17,7 +17,7 @@
 
 if [ "$#" -ne 4 ]
 then
-    echo "Please provide the species (eg., tomato_4081), the path to the assembly report, the output folder and the EUtils API key."
+    echo "Please provide the species (eg., tomato_4081), the path to the assembly report, the output folder and the NCBI EUtils API key."
     exit 1
 fi
 
