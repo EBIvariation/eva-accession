@@ -33,6 +33,7 @@ import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,6 +56,8 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final String MONGO_ID_FIELD = "_id";
 
+    private static final String GET_ELEMENT_MONGO_OPERATOR = "$arrayElemAt";
+
     protected String assemblyAccession;
 
     protected MongoClient mongoClient;
@@ -65,34 +68,53 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private final String collection;
 
-    private final String referenceAssemblyField;
-
-    private final String contigKey;
+    private final List<Bson> aggregation;
 
     public static ContigMongoReader activeContigReader(String assemblyAccession, MongoClient mongoClient,
                                                        String database) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
                                      DBSNP_CLUSTERED_VARIANT_ENTITY,
-                                     ACTIVE_REFERENCE_ASSEMBLY_FIELD,
-                                     ACTIVE_CONTIG_KEY);
+                                     buildAggregationForActiveContigs(assemblyAccession));
     }
 
     public static ContigMongoReader deprecatedContigReader(String assemblyAccession, MongoClient mongoClient,
                                                            String database) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
                                      DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
-                                     DEPRECATED_REFERENCE_ASSEMBLY_FIELD,
-                                     DEPRECATED_CONTIG_KEY);
+                                     buildAggregationForDeprecatedContigs(assemblyAccession));
     }
 
     private ContigMongoReader(String assemblyAccession, MongoClient mongoClient, String database, String collection,
-                              String referenceAssemblyField, String contigKey) {
+                              List<Bson> aggregation) {
         this.assemblyAccession = assemblyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
         this.collection = collection;
-        this.referenceAssemblyField = referenceAssemblyField;
-        this.contigKey = contigKey;
+        this.aggregation = aggregation;
+    }
+
+    private static List<Bson> buildAggregationForActiveContigs(String assemblyAccession) {
+        Bson match = Aggregates.match(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
+        Bson uniqueContigs = Aggregates.group(ACTIVE_CONTIG_KEY);
+        List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
+        logger.info("Issuing aggregation: {}", aggregation);
+        return aggregation;
+    }
+
+    private static List<Bson> buildAggregationForDeprecatedContigs(String assemblyAccession) {
+        Bson match = Aggregates.match(Filters.and(Filters.eq(DEPRECATED_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+                                                  Filters.eq("eventType", EventType.DEPRECATED.toString())));
+
+        Bson extractContig = Aggregates.project(new Document(MONGO_ID_FIELD, DEPRECATED_CONTIG_KEY));
+
+        Document getFirstContig = new Document(GET_ELEMENT_MONGO_OPERATOR, Arrays.asList("$" + MONGO_ID_FIELD, 0));
+        Bson projectArrayToSingleContig = Aggregates.project(new Document(MONGO_ID_FIELD, getFirstContig));
+
+        Bson uniqueContigs = Aggregates.group(MONGO_ID_FIELD);
+
+        List<Bson> aggregation = Arrays.asList(match, extractContig, projectArrayToSingleContig, uniqueContigs);
+        logger.info("Issuing aggregation: {}", aggregation);
+        return aggregation;
     }
 
     @Override
@@ -104,18 +126,10 @@ public class ContigMongoReader implements ItemStreamReader<String> {
         logger.debug("Preparing query to database {}, collection {}", database, collectionName);
         MongoDatabase db = mongoClient.getDatabase(database);
         MongoCollection<Document> collection = db.getCollection(collectionName);
-        AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
+        AggregateIterable<Document> clusteredVariants = collection.aggregate(aggregation)
                                                                   .allowDiskUse(true)
                                                                   .useCursor(true);
         cursor = clusteredVariants.iterator();
-    }
-
-    private List<Bson> buildAggregation() {
-        Bson match = Aggregates.match(Filters.eq(referenceAssemblyField, assemblyAccession));
-        Bson uniqueContigs = Aggregates.group(contigKey);
-        List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
-        logger.info("Issuing aggregation: {}", aggregation);
-        return aggregation;
     }
 
     @Override

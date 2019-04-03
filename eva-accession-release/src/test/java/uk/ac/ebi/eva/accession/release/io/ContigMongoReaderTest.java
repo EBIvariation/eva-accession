@@ -74,6 +74,7 @@ public class ContigMongoReaderTest {
         }
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")), new HashSet<>(contigs));
     }
+
     @Test
     public void basicDeprecatedContigsRead() {
         ContigMongoReader reader = ContigMongoReader.deprecatedContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
@@ -83,6 +84,6 @@ public class ContigMongoReaderTest {
         while ((contig = reader.read()) != null) {
             contigs.add(contig);
         }
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")), new HashSet<>(contigs));
+        assertEquals(new HashSet<>(Arrays.asList("CM000346.1", "AE014298.5")), new HashSet<>(contigs));
     }
 }
