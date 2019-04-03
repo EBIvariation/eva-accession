@@ -53,24 +53,24 @@ download_fasta_to_contig_file () {
             # Special checks when NCBI FASTA is retrieved
             if [[ $1 == *entrez* && $1 == *eutils* ]]; then
                 # Check if the downloaded FASTA was for the correct contig
-                FIRST_LINE=`head -1 ${output_folder}/${genbank_contig}`
-                if [[ $FIRST_LINE != *"${genbank_contig}"* ]]; then
+                first_line=`head -1 ${output_folder}/${genbank_contig}`
+                if [[ $first_line != *"${genbank_contig}"* ]]; then
                     truncate --size 0 ${output_folder}/${genbank_contig}
                     echo "${genbank_contig}: Did not get the FASTA for the correct contig!"
                     break
                 fi
 
                 # This is needed because eFetch endpoint sometimes returns extra blank lines at the end
-                NUM_LINES_IN_CONTIG_FASTA=`wc -l < ${output_folder}/${genbank_contig}`
-                while [ $NUM_LINES_IN_CONTIG_FASTA -ge 1 ]
+                num_lines_in_contig_fasta=`wc -l < ${output_folder}/${genbank_contig}`
+                while [ $num_lines_in_contig_fasta -ge 1 ]
                 do
-                    TRAILING_LINE=`tail -1 ${output_folder}/${genbank_contig}`
-                    if [[ $TRAILING_LINE == "" ]]; then
+                    trailing_line=`tail -1 ${output_folder}/${genbank_contig}`
+                    if [[ $trailing_line == "" ]]; then
                         sed -i '$ d' ${output_folder}/${genbank_contig}
                     else
                         break
                     fi
-                    NUM_LINES_IN_CONTIG_FASTA=`wc -l < ${output_folder}/${genbank_contig}`
+                    num_lines_in_contig_fasta=`wc -l < ${output_folder}/${genbank_contig}`
                 done
             fi
 
