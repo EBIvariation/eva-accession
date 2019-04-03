@@ -34,6 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.release.io.ContigWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
@@ -48,14 +49,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DEPRECATED_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getDeprecatedContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantOperationEntity.json"})
 @TestPropertySource("classpath:application.properties")
-public class ListDeprecatedContigsStepConfigurationTest {
+public class ListMergedContigsStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
@@ -77,22 +77,22 @@ public class ListDeprecatedContigsStepConfigurationTest {
 
     @Before
     public void setUp() throws Exception {
-        new File(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession()))
+        new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                       inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
     @After
     public void tearDown() throws Exception {
-        new File(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession()))
+        new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                       inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
     @Test
     @DirtiesContext
     public void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_DEPRECATED_CONTIGS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_MERGED_CONTIGS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
@@ -102,8 +102,8 @@ public class ListDeprecatedContigsStepConfigurationTest {
         assertStepExecutesAndCompletes();
 
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1")),
-                     setOfLines(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
-                                                             inputParameters.getAssemblyAccession())));
+                     setOfLines(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                                      inputParameters.getAssemblyAccession())));
     }
 
     private Set<String> setOfLines(String path) throws IOException {

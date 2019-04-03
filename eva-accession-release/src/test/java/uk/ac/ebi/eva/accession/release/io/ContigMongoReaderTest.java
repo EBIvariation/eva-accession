@@ -78,8 +78,8 @@ public class ContigMongoReaderTest {
     }
 
     @Test
-    public void basicDeprecatedContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.deprecatedContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
+    public void basicMergedContigsRead() {
+        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();

@@ -48,13 +48,13 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final String ACTIVE_REFERENCE_ASSEMBLY_FIELD = "asm";
 
-    private static final String DEPRECATED_REFERENCE_ASSEMBLY_FIELD = "inactiveObjects.asm";
+    private static final String INACTIVE_REFERENCE_ASSEMBLY_FIELD = "inactiveObjects.asm";
 
     private static final String EVENT_TYPE_FIELD = "eventType";
 
     private static final String ACTIVE_CONTIG_KEY = "$contig";
 
-    private static final String DEPRECATED_CONTIG_KEY = "$inactiveObjects.contig";
+    private static final String INACTIVE_CONTIG_KEY = "$inactiveObjects.contig";
 
     private static final String MONGO_ID_FIELD = "_id";
 
@@ -81,11 +81,11 @@ public class ContigMongoReader implements ItemStreamReader<String> {
                                      buildAggregationForActiveContigs(assemblyAccession));
     }
 
-    public static ContigMongoReader deprecatedContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                           String database) {
+    public static ContigMongoReader mergedContigReader(String assemblyAccession, MongoClient mongoClient,
+                                                       String database) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
                                      DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
-                                     buildAggregationForDeprecatedContigs(assemblyAccession));
+                                     buildAggregationForMergedContigs(assemblyAccession));
     }
 
     private ContigMongoReader(String assemblyAccession, MongoClient mongoClient, String database, String collection,
@@ -119,11 +119,11 @@ public class ContigMongoReader implements ItemStreamReader<String> {
      * $project the contig field into a toplevel field
      * before we can do the $group.
      */
-    private static List<Bson> buildAggregationForDeprecatedContigs(String assemblyAccession) {
-        Bson match = Aggregates.match(Filters.and(Filters.eq(DEPRECATED_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+    private static List<Bson> buildAggregationForMergedContigs(String assemblyAccession) {
+        Bson match = Aggregates.match(Filters.and(Filters.eq(INACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
                                                   Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString())));
 
-        Bson extractContig = Aggregates.project(new Document(MONGO_ID_FIELD, DEPRECATED_CONTIG_KEY));
+        Bson extractContig = Aggregates.project(new Document(MONGO_ID_FIELD, INACTIVE_CONTIG_KEY));
 
         Document getFirstContig = new Document(GET_ELEMENT_MONGO_OPERATOR, Arrays.asList(MONGO_ID_KEY, 0));
         Bson projectArrayToSingleContig = Aggregates.project(new Document(MONGO_ID_FIELD, getFirstContig));

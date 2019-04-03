@@ -29,11 +29,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DEPRECATED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 
 /**
  * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in
@@ -55,12 +55,12 @@ public class ListContigsStepConfiguration {
     private ItemStreamWriter<String> activeContigWriter;
 
     @Autowired
-    @Qualifier(DEPRECATED_CONTIG_READER)
-    private ItemStreamReader<String> deprecatedContigReader;
+    @Qualifier(MERGED_CONTIG_READER)
+    private ItemStreamReader<String> mergedContigReader;
 
     @Autowired
-    @Qualifier(DEPRECATED_CONTIG_WRITER)
-    private ItemStreamWriter<String> deprecatedContigWriter;
+    @Qualifier(MERGED_CONTIG_WRITER)
+    private ItemStreamWriter<String> mergedContigWriter;
 
     @Bean(LIST_ACTIVE_CONTIGS_STEP)
     public Step activeContigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
@@ -72,12 +72,12 @@ public class ListContigsStepConfiguration {
         return step;
     }
 
-    @Bean(LIST_DEPRECATED_CONTIGS_STEP)
-    public Step deprecatedContigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(LIST_DEPRECATED_CONTIGS_STEP)
+    @Bean(LIST_MERGED_CONTIGS_STEP)
+    public Step mergedContigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(LIST_MERGED_CONTIGS_STEP)
                 .<String, String>chunk(chunkSizeCompletionPolicy)
-                .reader(deprecatedContigReader)
-                .writer(deprecatedContigWriter)
+                .reader(mergedContigReader)
+                .writer(mergedContigWriter)
                 .build();
         return step;
     }

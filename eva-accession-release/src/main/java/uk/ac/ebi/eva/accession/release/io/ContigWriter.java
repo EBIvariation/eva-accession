@@ -35,7 +35,7 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     private static final String ACTIVE_FILE_PREFIX = "/active_contigs_";
 
-    private static final String DEPRECATED_FILE_PREFIX = "/deprecated_contigs_";
+    private static final String MERGED_FILE_PREFIX = "/merged_contigs_";
 
     private final File output;
 
@@ -83,15 +83,15 @@ public class ContigWriter implements ItemStreamWriter<String> {
         return Paths.get(outputFolder) + getActiveContigsFilePath(referenceAssembly);
     }
 
-    public static String getDeprecatedContigsFilePath(String referenceAssembly) {
-        return DEPRECATED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
+    public static String getMergedContigsFilePath(String referenceAssembly) {
+        return MERGED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
     }
 
-    public static String getDeprecatedContigsFilePath(File outputFolder, String referenceAssembly) {
-        return outputFolder + getDeprecatedContigsFilePath(referenceAssembly);
+    public static String getMergedContigsFilePath(File outputFolder, String referenceAssembly) {
+        return outputFolder + getMergedContigsFilePath(referenceAssembly);
     }
 
-    public static String getDeprecatedContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + getDeprecatedContigsFilePath(referenceAssembly);
+    public static String getMergedContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + getMergedContigsFilePath(referenceAssembly);
     }
 }

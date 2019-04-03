@@ -24,9 +24,9 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import java.io.File;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getActiveContigsFilePath;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getDeprecatedContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getMergedContigsFilePath;
 
 @Configuration
 public class ContigWriterConfiguration {
@@ -37,9 +37,9 @@ public class ContigWriterConfiguration {
                                                                   inputParameters.getAssemblyAccession())));
     }
 
-    @Bean(DEPRECATED_CONTIG_WRITER)
-    public ContigWriter deprecatedContigWriter(InputParameters inputParameters) {
-        return new ContigWriter(new File(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
-                                                                      inputParameters.getAssemblyAccession())));
+    @Bean(MERGED_CONTIG_WRITER)
+    public ContigWriter mergedContigWriter(InputParameters inputParameters) {
+        return new ContigWriter(new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                                               inputParameters.getAssemblyAccession())));
     }
 }

@@ -30,7 +30,7 @@ import uk.ac.ebi.eva.accession.release.io.ContigMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
 
 @Configuration
 @EnableConfigurationProperties({DbsnpDataSource.class})
@@ -42,19 +42,19 @@ public class ContigReaderConfiguration {
     @StepScope
     ItemStreamReader<String> activeContigReader(InputParameters parameters, MongoClient mongoClient,
                                           MongoProperties mongoProperties) throws Exception {
-        logger.info("Injecting ContigMongoReader parameters: {}, {}", parameters.getAssemblyAccession(),
-                    mongoProperties.getDatabase());
+        logger.info("Injecting ContigMongoReader (active contigs) parameters: {}, {}",
+                    parameters.getAssemblyAccession(), mongoProperties.getDatabase());
         return ContigMongoReader.activeContigReader(parameters.getAssemblyAccession(), mongoClient,
                                                     mongoProperties.getDatabase());
     }
 
-    @Bean(name = DEPRECATED_CONTIG_READER)
+    @Bean(name = MERGED_CONTIG_READER)
     @StepScope
-    ItemStreamReader<String> deprecatedContigReader(InputParameters parameters, MongoClient mongoClient,
+    ItemStreamReader<String> mergedContigReader(InputParameters parameters, MongoClient mongoClient,
                                           MongoProperties mongoProperties) throws Exception {
-        logger.info("Injecting ContigMongoReader parameters: {}, {}", parameters.getAssemblyAccession(),
-                    mongoProperties.getDatabase());
-        return ContigMongoReader.deprecatedContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                        mongoProperties.getDatabase());
+        logger.info("Injecting ContigMongoReader (merged contigs) parameters: {}, {}",
+                    parameters.getAssemblyAccession(), mongoProperties.getDatabase());
+        return ContigMongoReader.mergedContigReader(parameters.getAssemblyAccession(), mongoClient,
+                                                    mongoProperties.getDatabase());
     }
 }
