@@ -13,17 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Usage: create_fasta_from_assembly_report.sh <species> </path/to/assembly_report.txt> <output folder>
+# Usage: create_fasta_from_assembly_report.sh <species> </path/to/assembly_report.txt> <output folder> <eutils API key>
 
-if [ "$#" -ne 3 ]
+if [ "$#" -ne 4 ]
 then
-    echo "Please provide the species (eg., tomato_4081), the path to the assembly report and the output folder."
+    echo "Please provide the species (eg., tomato_4081), the path to the assembly report, the output folder and the NCBI EUtils API key."
     exit 1
 fi
 
 species=$1
 assembly_report=$2
 output_folder=$3
+# Need explicit API key for EUtils to counter any throttling/blocking issues
+eutils_api_key=$4
 
 exit_code=0
 
@@ -31,31 +33,47 @@ exit_code=0
 touch ${output_folder}/${species}_custom.fa
 touch ${output_folder}/written_contigs.txt
 
-for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
-do
-    echo ${genbank_contig}
-
+download_fasta_to_contig_file () {
     # make $? return the error code of any failed command in the pipe, instead of the last one only
     set -o pipefail
     times_wget_failed=0
     max_allowed_attempts=5
 
-    # Check if the contig has already been downloaded
-    already_downloaded=`grep -F -w -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
-    if [ $already_downloaded -eq 1 ]
-    then
-        echo Contig ${genbank_contig} is already present in the FASTA file and doesnt need to be downloaded again.
-        continue
-    fi
+    echo "Downloading from $1"
 
     while [ $times_wget_failed -lt $max_allowed_attempts ]
     do
         # Download each GenBank accession in the assembly report from ENA into a separate file
         # Delete the accession prefix from the header line
-        wget -q -O - "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}" > ${output_folder}/${genbank_contig}
+        wget -q -O - "$1" > ${output_folder}/${genbank_contig}
+
         whole_pipe_result=$?
         if [ $whole_pipe_result -eq 0 ]
         then
+            # Special checks when NCBI FASTA is retrieved
+            if [[ $1 == *entrez* && $1 == *eutils* ]]; then
+                # Check if the downloaded FASTA was for the correct contig
+                first_line=`head -1 ${output_folder}/${genbank_contig}`
+                if [[ $first_line != *"${genbank_contig}"* ]]; then
+                    truncate --size 0 ${output_folder}/${genbank_contig}
+                    echo "${genbank_contig}: Did not get the FASTA for the correct contig!"
+                    break
+                fi
+
+                # This is needed because eFetch endpoint sometimes returns extra blank lines at the end
+                num_lines_in_contig_fasta=`wc -l < ${output_folder}/${genbank_contig}`
+                while [ $num_lines_in_contig_fasta -ge 1 ]
+                do
+                    trailing_line=`tail -1 ${output_folder}/${genbank_contig}`
+                    if [[ $trailing_line == "" ]]; then
+                        sed -i '$ d' ${output_folder}/${genbank_contig}
+                    else
+                        break
+                    fi
+                    num_lines_in_contig_fasta=`wc -l < ${output_folder}/${genbank_contig}`
+                done
+            fi
+
             # it was correctly downloaded
             break
         fi
@@ -68,6 +86,35 @@ do
             echo Download for ${genbank_contig} failed. Retrying...
         fi
     done
+}
+
+
+for genbank_contig in `grep -v -e "^#" ${assembly_report} | cut -f5`;
+do
+    echo ${genbank_contig}
+
+    times_wget_failed=0
+    max_allowed_attempts=5
+
+    # Check if the contig has already been downloaded
+    already_downloaded=`grep -F -w -c "${genbank_contig}" ${output_folder}/written_contigs.txt`
+    if [ $already_downloaded -eq 1 ]
+    then
+        echo Contig ${genbank_contig} is already present in the FASTA file and doesnt need to be downloaded again.
+        continue
+    fi
+
+    download_fasta_to_contig_file "https://www.ebi.ac.uk/ena/browser/api/fasta/${genbank_contig}"
+    lines=`head -n 2 ${output_folder}/${genbank_contig} | wc -l`
+    # Hail Mary pass - Use NCBI FASTA!!
+    if [ $lines -le 1 ]
+    then
+        echo "Failed retrieving ENA FASTA for ${genbank_contig}. Therefore, using NCBI FASTA for ${genbank_contig}..."
+        # Due to NCBI policy of limiting direct EUtils requests to 10 per second (see https://www.ncbi.nlm.nih.gov/books/NBK25497/),
+        # introduce a delay of 1 second before calling EFetch just in case these requests line up (unlikely but playing it safe...)
+        sleep 1
+        download_fasta_to_contig_file "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${genbank_contig}&rettype=fasta&retmode=text&api_key=${eutils_api_key}&tool=eva&email=eva-dev@ebi.ac.uk"
+    fi
 
     # If a file has more than one line, then it is concatenated into the full assembly FASTA file
     # (empty sequences can't be indexed)
@@ -89,7 +136,7 @@ do
             if [ $matches -eq 0 ]
             then
                 # If the downloaded file contains a WGS, it will be compressed
-                is_wgs=$(file ${output_folder}/${genbank_contig} | grep -c 'gzip')
+                is_wgs=$(file "${output_folder}/${genbank_contig}" | grep -c 'gzip')
                 if [ $is_wgs -eq 1 ]
                 then
                     # Uncompress file
@@ -118,5 +165,5 @@ done
 echo `grep -v "^#" ${assembly_report}  | wc -l` "contigs were present in the assembly report"
 echo `cat ${output_folder}/written_contigs.txt | wc -l` "contigs were successfully retrieved and written in the FASTA file"
 rm ${output_folder}/written_contigs.txt
-
+echo "Exiting CREATE FASTA script with exit code: ${exit_code}"
 exit $exit_code
