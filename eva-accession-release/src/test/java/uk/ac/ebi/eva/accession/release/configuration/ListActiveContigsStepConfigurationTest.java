@@ -42,6 +42,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
@@ -95,12 +99,14 @@ public class ListActiveContigsStepConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        assertEquals(2, numberOfLines(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                                               inputParameters.getAssemblyAccession())));
+
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")),
+                     setOfLines(getActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                                             inputParameters.getAssemblyAccession())));
     }
 
-    private long numberOfLines(String path) throws IOException {
+    private Set<String> setOfLines(String path) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
-        return bufferedReader.lines().count();
+        return bufferedReader.lines().collect(Collectors.toSet());
     }
 }

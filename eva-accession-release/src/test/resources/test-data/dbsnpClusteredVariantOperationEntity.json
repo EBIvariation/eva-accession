@@ -63,6 +63,27 @@
       ]
     },
     {
+      "_id" : ObjectId("5c36053f4a2c10d01c39d9c6"),
+      "eventType" : "MERGED",
+      "mergeInto" : NumberLong(1153596374),
+      "accession" : NumberLong(1153596375),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm": "GCF_000409795.2",
+          "tax" : 60711,
+          "contig" : "CM000346.1",
+          "start" : NumberLong(3337129),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "7A4304A9E9AE320D0E28FCC9E23EF1E605ACACAA",
+          "accession" : NumberLong(1153596374),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-20T08:25:00Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5c519550dcc3abf7ee9125af"),
       "eventType" : "DEPRECATED",
       "accession" : NumberLong(881171680),

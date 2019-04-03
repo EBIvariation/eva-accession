@@ -27,7 +27,6 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.util.ApplicationContextTestUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
@@ -43,6 +42,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DEPRECATED_CONTIGS_STEP;
@@ -97,12 +100,14 @@ public class ListDeprecatedContigsStepConfigurationTest {
     @DirtiesContext
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        assertEquals(2, numberOfLines(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
-                                                                   inputParameters.getAssemblyAccession())));
+
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1")),
+                     setOfLines(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
+                                                             inputParameters.getAssemblyAccession())));
     }
 
-    private long numberOfLines(String path) throws IOException {
+    private Set<String> setOfLines(String path) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
-        return bufferedReader.lines().count();
+        return bufferedReader.lines().collect(Collectors.toSet());
     }
 }

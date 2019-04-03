@@ -121,7 +121,7 @@ public class ContigMongoReader implements ItemStreamReader<String> {
      */
     private static List<Bson> buildAggregationForDeprecatedContigs(String assemblyAccession) {
         Bson match = Aggregates.match(Filters.and(Filters.eq(DEPRECATED_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
-                                                  Filters.eq(EVENT_TYPE_FIELD, EventType.DEPRECATED.toString())));
+                                                  Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString())));
 
         Bson extractContig = Aggregates.project(new Document(MONGO_ID_FIELD, DEPRECATED_CONTIG_KEY));
 
