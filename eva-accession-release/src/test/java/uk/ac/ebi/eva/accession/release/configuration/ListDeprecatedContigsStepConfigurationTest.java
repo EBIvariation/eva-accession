@@ -15,12 +15,21 @@
  */
 package uk.ac.ebi.eva.accession.release.configuration;
 
+import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.util.ApplicationContextTestUtils;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -28,8 +37,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -39,14 +50,41 @@ import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getDeprecatedConti
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
+@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantOperationEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class ListDeprecatedContigsStepConfigurationTest {
+
+    private static final String TEST_DB = "test-db";
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
     private InputParameters inputParameters;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Rule
+    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
+            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+
+    @Autowired
+    MongoTemplate mongoTemplate;
+
+    @Before
+    public void setUp() throws Exception {
+        new File(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
+                                              inputParameters.getAssemblyAccession()))
+                .delete();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        new File(getDeprecatedContigsFilePath(inputParameters.getOutputFolder(),
+                                              inputParameters.getAssemblyAccession()))
+                .delete();
+    }
 
     @Test
     @DirtiesContext

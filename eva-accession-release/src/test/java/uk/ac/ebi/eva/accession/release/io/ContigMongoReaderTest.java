@@ -44,7 +44,9 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
-        "/test-data/dbsnpClusteredVariantEntity.json"})
+        "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpClusteredVariantOperationEntity.json"
+})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class ContigMongoReaderTest {
 

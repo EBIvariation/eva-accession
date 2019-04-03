@@ -50,11 +50,15 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final String DEPRECATED_REFERENCE_ASSEMBLY_FIELD = "inactiveObjects.asm";
 
+    private static final String EVENT_TYPE_FIELD = "eventType";
+
     private static final String ACTIVE_CONTIG_KEY = "$contig";
 
     private static final String DEPRECATED_CONTIG_KEY = "$inactiveObjects.contig";
 
     private static final String MONGO_ID_FIELD = "_id";
+
+    private static final String MONGO_ID_KEY = "$" + MONGO_ID_FIELD;
 
     private static final String GET_ELEMENT_MONGO_OPERATOR = "$arrayElemAt";
 
@@ -101,16 +105,30 @@ public class ContigMongoReader implements ItemStreamReader<String> {
         return aggregation;
     }
 
+    /**
+     * Apparently, a $group aggregation stage yields a different result
+     * if you do the $group on a nested field like "inactiveObjects.contig":
+     *
+     * { "_id" : [ "KB882311.1" ] }
+     *
+     * while if the $group is done on a simple toplevel field it returns
+     *
+     * { "_id" : "KB882311.1" }
+     *
+     * so, as a $group on an array is not what we want to do, we have to
+     * $project the contig field into a toplevel field
+     * before we can do the $group.
+     */
     private static List<Bson> buildAggregationForDeprecatedContigs(String assemblyAccession) {
         Bson match = Aggregates.match(Filters.and(Filters.eq(DEPRECATED_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
-                                                  Filters.eq("eventType", EventType.DEPRECATED.toString())));
+                                                  Filters.eq(EVENT_TYPE_FIELD, EventType.DEPRECATED.toString())));
 
         Bson extractContig = Aggregates.project(new Document(MONGO_ID_FIELD, DEPRECATED_CONTIG_KEY));
 
-        Document getFirstContig = new Document(GET_ELEMENT_MONGO_OPERATOR, Arrays.asList("$" + MONGO_ID_FIELD, 0));
+        Document getFirstContig = new Document(GET_ELEMENT_MONGO_OPERATOR, Arrays.asList(MONGO_ID_KEY, 0));
         Bson projectArrayToSingleContig = Aggregates.project(new Document(MONGO_ID_FIELD, getFirstContig));
 
-        Bson uniqueContigs = Aggregates.group(MONGO_ID_FIELD);
+        Bson uniqueContigs = Aggregates.group(MONGO_ID_KEY);
 
         List<Bson> aggregation = Arrays.asList(match, extractContig, projectArrayToSingleContig, uniqueContigs);
         logger.info("Issuing aggregation: {}", aggregation);
@@ -119,22 +137,23 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        aggregate(collection);
+        aggregate();
     }
 
-    private void aggregate(String collectionName) {
-        logger.debug("Preparing query to database {}, collection {}", database, collectionName);
+    private void aggregate() {
+        logger.debug("Preparing query to database {}, collection {}", database, collection);
         MongoDatabase db = mongoClient.getDatabase(database);
-        MongoCollection<Document> collection = db.getCollection(collectionName);
-        AggregateIterable<Document> clusteredVariants = collection.aggregate(aggregation)
-                                                                  .allowDiskUse(true)
-                                                                  .useCursor(true);
+        MongoCollection<Document> mongoCollection = db.getCollection(collection);
+        AggregateIterable<Document> clusteredVariants = mongoCollection.aggregate(aggregation)
+                                                                       .allowDiskUse(true)
+                                                                       .useCursor(true);
         cursor = clusteredVariants.iterator();
     }
 
     @Override
     public String read() throws UnexpectedInputException, ParseException, NonTransientResourceException {
-        return cursor.hasNext() ? getContig(cursor.next()) : null;
+        String contig = cursor.hasNext() ? getContig(cursor.next()) : null;
+        return contig;
     }
 
     private String getContig(Document clusteredVariant) {
