@@ -1,0 +1,5 @@
+# mocking of an assembly report
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+chr1	assembled-molecule	1	Chromosome	CM000093.4	=	NW_003763476.1	Primary Assembly	196202544	chr1
+chr2	assembled-molecule	2	Chromosome	CM000094.4	=	NW_003763901.1	Primary Assembly	149560735	chr2
+chr3	assembled-molecule	3	Chromosome	CM000095.4	=	NW_003763686.1	Primary Assembly	111302122	chr3

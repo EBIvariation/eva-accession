@@ -25,7 +25,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.ExcludeStructuralVariantsProcessor;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
@@ -65,5 +67,15 @@ public class VariantProcessorConfiguration {
     @Bean
     ExcludeStructuralVariantsProcessor excludeStructuralVariantsProcessor() {
         return new ExcludeStructuralVariantsProcessor();
+    }
+
+    @Bean
+    ContigReplacerProcessor contigReplacerProcessor(ContigMapping contigMapping, InputParameters parameters) {
+        return new ContigReplacerProcessor(contigMapping, parameters.getAssemblyAccession());
+    }
+
+    @Bean
+    ContigMapping contigMapping(InputParameters parameters) throws Exception {
+        return new ContigMapping(parameters.getAssemblyReportUrl());
     }
 }
