@@ -22,23 +22,27 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+/**
+ * Converts the contig to it's GenBank synonym when possible. If the synonym can't be determined it keeps the contig as
+ * is
+ */
 public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant> {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigReplacerProcessor.class);
 
     private ContigMapping contigMapping;
 
-    private String assemblyAccession;
-
     private Set<String> processedContigs;
 
-    public ContigReplacerProcessor(ContigMapping contigMapping, String assemblyAccession) {
+    public ContigReplacerProcessor(ContigMapping contigMapping) {
         this.contigMapping = contigMapping;
-        this.assemblyAccession = assemblyAccession;
         this.processedContigs = new HashSet<>();
     }
 
@@ -49,26 +53,46 @@ public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant
         boolean contigPresentInAssemblyReport = contigSynonyms != null;
 
         if (!contigPresentInAssemblyReport) {
-            throw new IllegalStateException(
-                    "Chromosome '" + variant.getChromosome() + "' was not found in the assembly report!");
+            if (!processedContigs.contains(contigName)) {
+                logger.warn("Contig '" + variant.getChromosome() + "' was not found in the assembly report!");
+                processedContigs.add(contigName);
+            }
+            return variant;
         } else {
-            return replaceContigWithGenbankAccession(variant, contigSynonyms);
+            return replaceContigWithSynonym(variant, contigSynonyms);
         }
     }
 
-    private IVariant replaceContigWithGenbankAccession(IVariant variant, ContigSynonyms contigSynonyms) {
-        if (contigSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
-            return new Variant(contigSynonyms.getGenBank(), variant.getStart(), variant.getEnd(),
+    /**
+     * The conversion will be performed only if the 'relationship' column of the assembly report is '='
+     */
+    private IVariant replaceContigWithSynonym(IVariant variant, ContigSynonyms contigSynonyms) {
+        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
+            Variant newVariant = new Variant(getContigSynonym(contigSynonyms), variant.getStart(), variant.getEnd(),
                                              variant.getReference(), variant.getAlternate());
+            Collection<VariantSourceEntry> sourceEntries = variant.getSourceEntries().stream()
+                                                                  .map(VariantSourceEntry.class::cast)
+                                                                  .collect(Collectors.toList());
+            newVariant.addSourceEntries(sourceEntries);
+            return newVariant;
         } else {
-            // genbank is not identical to refseq and the assembly is not genbank, so
-            // we must keep the original refseq
+            if (!processedContigs.contains(variant.getChromosome())) {
+                logger.warn("Genbank and refseq not identical in the assembly report for contig "
+                                    + variant.getChromosome() + ". No conversion performed");
+                processedContigs.add(variant.getChromosome());
+            }
             return variant;
         }
     }
 
-    private boolean isGenbank(String assemblyAccession) {
-        return assemblyAccession.startsWith("GCA_");
+    private String getContigSynonym(ContigSynonyms contigSynonyms) {
+        String contig;
+        if (contigSynonyms.getGenBank() != null) {
+            contig = contigSynonyms.getGenBank();
+        } else {
+            contig = contigSynonyms.getRefSeq();
+        }
+        return contig;
     }
 
 }

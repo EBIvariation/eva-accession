@@ -25,8 +25,6 @@ import static org.junit.Assert.assertEquals;
 
 public class ContigReplacerProcessorTest {
 
-    private static final String GENBANK_ASSEMBLY_ACCESSION = "GCA_000001635.8";
-
     private ContigReplacerProcessor processor;
 
     @Before
@@ -35,13 +33,49 @@ public class ContigReplacerProcessorTest {
                 "/input-files/assembly-report/assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
-        processor = new ContigReplacerProcessor(contigMapping, GENBANK_ASSEMBLY_ACCESSION);
+        processor = new ContigReplacerProcessor(contigMapping);
     }
 
     @Test
-    public void process() throws Exception {
+    public void ContigGenbank() throws Exception {
+        IVariant variant = new Variant("CM000093.4", 1, 1, "A", "T");
+        assertEquals("CM000093.4", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void ContigChrToGenbank() throws Exception {
+        IVariant variant = new Variant("chr2", 1, 1, "A", "T");
+        assertEquals("CM000094.4", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void ContigRefseqToGenbank() throws Exception {
         IVariant variant = new Variant("NW_003763476.1", 1, 1, "A", "T");
         assertEquals("CM000093.4", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void ContigGenbankAndRefseqNotEquivalents() throws Exception {
+        IVariant variant = new Variant("chr3", 1, 1, "A", "T");
+        assertEquals("chr3", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void ContigNotFoundInAssemblyReport() throws Exception {
+        IVariant variant = new Variant("chr", 1, 1, "A", "T");
+        assertEquals("chr", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void NoGenbankContigUseRefseq() throws Exception {
+        IVariant variant = new Variant("chr4", 1, 1, "A", "T");
+        assertEquals("NW_003763687.1", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void RelationshipColumnDifferentDontConvert() throws Exception {
+        IVariant variant = new Variant("chr5", 1, 1, "A", "T");
+        assertEquals("chr5", processor.process(variant).getChromosome());
     }
 
 }

@@ -70,8 +70,8 @@ public class VariantProcessorConfiguration {
     }
 
     @Bean
-    ContigReplacerProcessor contigReplacerProcessor(ContigMapping contigMapping, InputParameters parameters) {
-        return new ContigReplacerProcessor(contigMapping, parameters.getAssemblyAccession());
+    ContigReplacerProcessor contigReplacerProcessor(ContigMapping contigMapping) {
+        return new ContigReplacerProcessor(contigMapping);
     }
 
     @Bean
