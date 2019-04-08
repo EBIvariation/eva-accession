@@ -19,9 +19,8 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
-import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemStreamWriter;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,10 +28,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_TO_INSDC_PROCESSOR;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 
 /**
  * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in
@@ -46,24 +47,37 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRI
 public class ListContigsStepConfiguration {
 
     @Autowired
-    @Qualifier(CONTIG_READER)
-    private JdbcCursorItemReader<String> contigReader;
+    @Qualifier(ACTIVE_CONTIG_READER)
+    private ItemStreamReader<String> activeContigReader;
 
     @Autowired
-    @Qualifier(CONTIG_TO_INSDC_PROCESSOR)
-    private ItemProcessor<String, String> contigProcessor;
+    @Qualifier(ACTIVE_CONTIG_WRITER)
+    private ItemStreamWriter<String> activeContigWriter;
 
     @Autowired
-    @Qualifier(CONTIG_WRITER)
-    private ItemStreamWriter<String> contigWriter;
+    @Qualifier(MERGED_CONTIG_READER)
+    private ItemStreamReader<String> mergedContigReader;
 
-    @Bean(LIST_CONTIGS_STEP)
-    public Step contigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(LIST_CONTIGS_STEP)
+    @Autowired
+    @Qualifier(MERGED_CONTIG_WRITER)
+    private ItemStreamWriter<String> mergedContigWriter;
+
+    @Bean(LIST_ACTIVE_CONTIGS_STEP)
+    public Step activeContigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(LIST_ACTIVE_CONTIGS_STEP)
                 .<String, String>chunk(chunkSizeCompletionPolicy)
-                .reader(contigReader)
-                .processor(contigProcessor)
-                .writer(contigWriter)
+                .reader(activeContigReader)
+                .writer(activeContigWriter)
+                .build();
+        return step;
+    }
+
+    @Bean(LIST_MERGED_CONTIGS_STEP)
+    public Step mergedContigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(LIST_MERGED_CONTIGS_STEP)
+                .<String, String>chunk(chunkSizeCompletionPolicy)
+                .reader(mergedContigReader)
+                .writer(mergedContigWriter)
                 .build();
         return step;
     }

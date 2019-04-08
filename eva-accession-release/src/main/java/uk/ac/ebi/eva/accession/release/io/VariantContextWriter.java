@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,9 +62,12 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private htsjdk.variant.variantcontext.writer.VariantContextWriter writer;
 
-    public VariantContextWriter(Path outputPath, String referenceAssembly) {
+    private String contigsFilePath;
+
+    public VariantContextWriter(Path outputPath, String referenceAssembly, String contigsFilePath) {
         this.output = outputPath.toFile();
         this.referenceAssembly = referenceAssembly;
+        this.contigsFilePath = contigsFilePath;
     }
 
     public File getOutput() {
@@ -118,8 +120,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private void addContigs(Set<VCFHeaderLine> metaData) {
         try {
-            BufferedReader bufferedReader = new BufferedReader(
-                    new FileReader(ContigWriter.getContigsFilePath(output.getParent(), referenceAssembly)));
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(contigsFilePath));
             String contig;
             while ((contig = bufferedReader.readLine()) != null) {
                 metaData.add(new VCFHeaderLine("contig", "<ID=" + contig + ">"));

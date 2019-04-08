@@ -23,15 +23,23 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import java.io.File;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getActiveContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getMergedContigsFilePath;
 
 @Configuration
 public class ContigWriterConfiguration {
 
-    @Bean(CONTIG_WRITER)
-    public ContigWriter variantContextWriter(InputParameters inputParameters) {
-        return new ContigWriter(new File(getContigsFilePath(inputParameters.getOutputFolder(),
-                                                            inputParameters.getAssemblyAccession())));
+    @Bean(ACTIVE_CONTIG_WRITER)
+    public ContigWriter activeContigWriter(InputParameters inputParameters) {
+        return new ContigWriter(new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                                                  inputParameters.getAssemblyAccession())));
+    }
+
+    @Bean(MERGED_CONTIG_WRITER)
+    public ContigWriter mergedContigWriter(InputParameters inputParameters) {
+        return new ContigWriter(new File(getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                                  inputParameters.getAssemblyAccession())));
     }
 }

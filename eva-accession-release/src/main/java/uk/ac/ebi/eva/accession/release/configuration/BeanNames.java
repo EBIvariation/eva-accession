@@ -43,11 +43,17 @@ public class BeanNames {
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
-    public static final String LIST_CONTIGS_STEP = "LIST_CONTIGS_STEP";
+    public static final String LIST_ACTIVE_CONTIGS_STEP = "LIST_ACTIVE_CONTIGS_STEP";
+
+    public static final String LIST_MERGED_CONTIGS_STEP = "LIST_MERGED_CONTIGS_STEP";
 
     public static final String CONTIG_TO_INSDC_PROCESSOR = "CONTIG_TO_INSDC_PROCESSOR";
 
-    public static final String CONTIG_READER = "CONTIG_READER";
+    public static final String ACTIVE_CONTIG_READER = "ACTIVE_CONTIG_READER";
 
-    public static final String CONTIG_WRITER = "CONTIG_WRITER";
+    public static final String MERGED_CONTIG_READER = "MERGED_CONTIG_READER";
+
+    public static final String ACTIVE_CONTIG_WRITER = "ACTIVE_CONTIG_WRITER";
+
+    public static final String MERGED_CONTIG_WRITER = "MERGED_CONTIG_WRITER";
 }

@@ -130,7 +130,9 @@ public class VariantContextWriterTest {
 
     public File assertWriteVcf(File outputFolder, Variant... variants) throws Exception {
         Path reportPath = ReportPathResolver.getCurrentIdsReportPath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
-        VariantContextWriter writer = new VariantContextWriter(reportPath, REFERENCE_ASSEMBLY);
+        String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
+                                                                             REFERENCE_ASSEMBLY);
+        VariantContextWriter writer = new VariantContextWriter(reportPath, REFERENCE_ASSEMBLY, activeContigsFilePath);
         writer.open(null);
 
         VariantToVariantContextProcessor variantToVariantContextProcessor = new VariantToVariantContextProcessor();
@@ -172,7 +174,7 @@ public class VariantContextWriterTest {
     @Test
     public void checkMetadataSection() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        FileWriter fileWriter = new FileWriter(ContigWriter.getContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
+        FileWriter fileWriter = new FileWriter(ContigWriter.getActiveContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
         String contig = "CM0001.1";
         fileWriter.write(contig);
         fileWriter.close();

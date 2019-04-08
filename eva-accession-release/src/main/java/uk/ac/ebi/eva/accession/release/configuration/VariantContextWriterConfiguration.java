@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.release.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.release.io.ContigWriter;
 import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
@@ -36,14 +37,18 @@ public class VariantContextWriterConfiguration {
     public VariantContextWriter variantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getCurrentIdsReportPath(parameters.getOutputFolder(),
                                                                      parameters.getAssemblyAccession());
-        return new VariantContextWriter(reportPath, parameters.getAssemblyAccession());
+        String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
+                                                                             parameters.getAssemblyAccession());
+        return new VariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
     }
 
     @Bean(MERGED_RELEASE_WRITER)
     public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getMergedIdsReportPath(parameters.getOutputFolder(),
                                                                     parameters.getAssemblyAccession());
-        return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession());
+        String mergedContigsFilePath = ContigWriter.getMergedContigsFilePath(reportPath.toFile().getParent(),
+                                                                             parameters.getAssemblyAccession());
+        return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession(), mergedContigsFilePath);
     }
 
 }

@@ -19,17 +19,15 @@ import htsjdk.variant.vcf.VCFHeaderLine;
 import htsjdk.variant.vcf.VCFHeaderLineType;
 import htsjdk.variant.vcf.VCFInfoHeaderLine;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Set;
 
 import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED_INTO_KEY;
 
 public class MergedVariantContextWriter extends VariantContextWriter {
 
-    public MergedVariantContextWriter(Path outputPath, String referenceAssembly) {
-        super(outputPath, referenceAssembly);
+    public MergedVariantContextWriter(Path outputPath, String referenceAssembly, String mergedContigsFilePath) {
+        super(outputPath, referenceAssembly, mergedContigsFilePath);
     }
 
     @Override
