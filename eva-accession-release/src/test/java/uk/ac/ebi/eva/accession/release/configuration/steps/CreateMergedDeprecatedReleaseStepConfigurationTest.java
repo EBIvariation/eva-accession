@@ -61,7 +61,7 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final HashSet<String> EXPECTED_ACCESSIONS = new HashSet<>(Arrays.asList("666667"));
+    private static final HashSet<String> EXPECTED_ACCESSIONS = new HashSet<>(Arrays.asList("rs1153596375"));
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -95,21 +95,23 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
     @Test
     public void variantsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(
+                new FileInputStream(getMergedDeprecatedReleaseFile()));
         assertEquals(EXPECTED_ACCESSIONS.size(), numVariantsInRelease);
     }
 
-    private File getDeprecatedReleaseFile() {
-        return ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                             inputParameters.getAssemblyAccession()).toFile();
+    private File getMergedDeprecatedReleaseFile() {
+        return ReportPathResolver.getMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                   inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test
     public void accessionsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
+        long numVariantsInRelease = FileUtils.countNonCommentLines(
+                new FileInputStream(getMergedDeprecatedReleaseFile()));
         assertEquals(EXPECTED_ACCESSIONS.size(), numVariantsInRelease);
-        List<String> dataLinesWithRs = grepFile(getDeprecatedReleaseFile(), "^rs[0-9]+$");
+        List<String> dataLinesWithRs = grepFile(getMergedDeprecatedReleaseFile(), "^rs[0-9]+$");
         assertEquals(EXPECTED_ACCESSIONS, new HashSet<>(dataLinesWithRs));
     }
 

@@ -28,16 +28,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import uk.ac.ebi.eva.accession.release.configuration.ContigToInsdcProcessorConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.writers.ContigWriterConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.readers.ContigReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.ContigWriterConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 
 /**
  * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in
@@ -46,7 +45,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGE
 @Configuration
 @EnableBatchProcessing
 @Import({ContigReaderConfiguration.class,
-         ContigToInsdcProcessorConfiguration.class,
          ContigWriterConfiguration.class})
 public class ListContigsStepConfiguration {
 

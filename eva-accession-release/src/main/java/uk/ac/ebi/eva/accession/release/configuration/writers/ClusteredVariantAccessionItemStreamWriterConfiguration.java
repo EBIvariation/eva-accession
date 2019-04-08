@@ -25,6 +25,7 @@ import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import java.nio.file.Path;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_RELEASE_WRITER;
 
 @Configuration
 public class ClusteredVariantAccessionItemStreamWriterConfiguration {
@@ -33,6 +34,13 @@ public class ClusteredVariantAccessionItemStreamWriterConfiguration {
     public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getDeprecatedIdsReportPath(parameters.getOutputFolder(),
                                                                         parameters.getAssemblyAccession());
+        return new DeprecatedVariantAccessionWriter(reportPath);
+    }
+
+    @Bean(MERGED_DEPRECATED_RELEASE_WRITER)
+    public DeprecatedVariantAccessionWriter mergedDeprecatedVariantItemStreamWriter(InputParameters parameters) {
+        Path reportPath = ReportPathResolver.getMergedDeprecatedIdsReportPath(parameters.getOutputFolder(),
+                                                                              parameters.getAssemblyAccession());
         return new DeprecatedVariantAccessionWriter(reportPath);
     }
 

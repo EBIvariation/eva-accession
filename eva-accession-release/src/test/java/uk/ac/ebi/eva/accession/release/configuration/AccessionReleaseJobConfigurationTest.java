@@ -68,7 +68,7 @@ public class AccessionReleaseJobConfigurationTest {
 
     private static final long EXPECTED_LINES_MERGED = 3;
 
-    private static final long EXPECTED_LINES_DEPRECATED = 3;
+    private static final long EXPECTED_LINES_DEPRECATED = 2;
 
     private static final long EXPECTED_LINES_MERGED_DEPRECATED = 1;
 
@@ -98,8 +98,8 @@ public class AccessionReleaseJobConfigurationTest {
         List<String> expectedSteps = Arrays.asList(LIST_ACTIVE_CONTIGS_STEP, LIST_MERGED_CONTIGS_STEP,
                                                    RELEASE_MAPPED_ACTIVE_VARIANTS_STEP,
                                                    RELEASE_MAPPED_MERGED_VARIANTS_STEP,
-                                                   RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP,
-                                                   RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP);
+                                                   RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP,
+                                                   RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());

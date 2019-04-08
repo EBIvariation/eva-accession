@@ -30,39 +30,38 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.readers.DeprecatedVariantMongoReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.readers.MergedDeprecatedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.writers.ClusteredVariantAccessionItemStreamWriterConfiguration;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 
 @Configuration
-@Import({DeprecatedVariantMongoReaderConfiguration.class,
+@Import({MergedDeprecatedVariantMongoReaderConfiguration.class,
          ClusteredVariantAccessionItemStreamWriterConfiguration.class,
          ListenersConfiguration.class,})
-public class CreateDeprecatedReleaseStepConfiguration {
+public class CreateMergedDeprecatedReleaseStepConfiguration {
 
     @Autowired
-    @Qualifier(DEPRECATED_VARIANT_READER)
-    private ItemReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantReader;
+    @Qualifier(MERGED_DEPRECATED_VARIANT_READER)
+    private ItemReader<DbsnpClusteredVariantOperationEntity> mergedDeprecatedVariantReader;
 
     @Autowired
-    @Qualifier(DEPRECATED_RELEASE_WRITER)
+    @Qualifier(MERGED_DEPRECATED_RELEASE_WRITER)
     private ItemStreamWriter<DbsnpClusteredVariantOperationEntity> accessionWriter;
 
     @Autowired
     @Qualifier(PROGRESS_LISTENER)
     private StepExecutionListener progressListener;
 
-    @Bean(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
+    @Bean(RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
     public Step createDeprecatedReleaseStep(StepBuilderFactory stepBuilderFactory,
                                             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
+        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
                 .<DbsnpClusteredVariantOperationEntity, DbsnpClusteredVariantOperationEntity>chunk(chunkSizeCompletionPolicy)
-                .reader(deprecatedVariantReader)
+                .reader(mergedDeprecatedVariantReader)
                 .writer(accessionWriter)
                 .listener(progressListener)
                 .build();
