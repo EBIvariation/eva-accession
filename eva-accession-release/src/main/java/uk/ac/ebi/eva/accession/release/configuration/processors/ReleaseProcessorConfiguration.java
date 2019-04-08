@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.processors;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.item.ItemProcessor;

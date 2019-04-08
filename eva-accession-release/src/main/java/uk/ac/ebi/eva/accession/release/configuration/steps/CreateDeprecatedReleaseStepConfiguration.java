@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
@@ -29,6 +29,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.readers.DeprecatedVariantMongoReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.ClusteredVariantAccessionItemStreamWriterConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
@@ -38,8 +41,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 
 @Configuration
 @Import({DeprecatedVariantMongoReaderConfiguration.class,
-        ClusteredVariantAccessionItemStreamWriterConfiguration.class,
-        ListenersConfiguration.class,})
+         ClusteredVariantAccessionItemStreamWriterConfiguration.class,
+         ListenersConfiguration.class,})
 public class CreateDeprecatedReleaseStepConfiguration {
 
     @Autowired

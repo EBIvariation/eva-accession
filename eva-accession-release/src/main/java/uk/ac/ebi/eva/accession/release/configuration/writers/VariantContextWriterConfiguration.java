@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.writers;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

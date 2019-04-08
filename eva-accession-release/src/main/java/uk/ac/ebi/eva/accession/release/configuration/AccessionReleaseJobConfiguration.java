@@ -27,6 +27,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.ebi.eva.accession.release.configuration.steps.CreateDeprecatedReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.steps.CreateMergedReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.steps.CreateReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.steps.ListContigsStepConfiguration;
+
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
@@ -37,9 +42,9 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 @Configuration
 @EnableBatchProcessing
 @Import({ListContigsStepConfiguration.class,
-        CreateReleaseStepConfiguration.class,
-        CreateDeprecatedReleaseStepConfiguration.class,
-        CreateMergedReleaseStepConfiguration.class})
+         CreateReleaseStepConfiguration.class,
+         CreateDeprecatedReleaseStepConfiguration.class,
+         CreateMergedReleaseStepConfiguration.class})
 public class AccessionReleaseJobConfiguration {
 
     @Autowired

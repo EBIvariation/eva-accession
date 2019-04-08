@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -27,6 +27,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
+import uk.ac.ebi.eva.accession.release.configuration.ContigToInsdcProcessorConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.ContigWriterConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.readers.ContigReaderConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
@@ -42,8 +46,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGE
 @Configuration
 @EnableBatchProcessing
 @Import({ContigReaderConfiguration.class,
-        ContigToInsdcProcessorConfiguration.class,
-        ContigWriterConfiguration.class})
+         ContigToInsdcProcessorConfiguration.class,
+         ContigWriterConfiguration.class})
 public class ListContigsStepConfiguration {
 
     @Autowired

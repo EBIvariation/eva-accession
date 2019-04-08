@@ -29,6 +29,8 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
+import uk.ac.ebi.eva.accession.release.configuration.steps.ListContigsStepConfiguration;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -50,7 +52,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.V
  * Writes a VCF file for the release of RS IDs mapped against a reference assembly
  *
  * To include the contigs in the meta section it reads the file generated in the previous step
- * {@link uk.ac.ebi.eva.accession.release.configuration.ListContigsStepConfiguration}
+ * {@link ListContigsStepConfiguration}
  */
 public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 

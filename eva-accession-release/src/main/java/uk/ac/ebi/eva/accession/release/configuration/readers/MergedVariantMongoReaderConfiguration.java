@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.readers;
 
 import com.mongodb.MongoClient;
 import org.slf4j.Logger;
@@ -27,31 +27,31 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
-import uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSIONED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
-public class AccessionedVariantMongoReaderConfiguration {
+public class MergedVariantMongoReaderConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(MergedVariantMongoReaderConfiguration.class);
 
-    @Bean(ACCESSIONED_VARIANT_READER)
+    @Bean(MERGED_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<Variant> unwindingReader(AccessionedVariantMongoReader accessionedVariantMongoReader) {
-        return new UnwindingItemStreamReader<>(accessionedVariantMongoReader);
+    public ItemStreamReader<Variant> unwindingReader(MergedVariantMongoReader mergedVariantMongoReader) {
+        return new UnwindingItemStreamReader<>(mergedVariantMongoReader);
     }
 
     @Bean
     @StepScope
-    AccessionedVariantMongoReader accessionedVariantMongoReader(InputParameters parameters, MongoClient mongoClient,
-                                                                MongoProperties mongoProperties) {
-        logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
-        return new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                 mongoProperties.getDatabase());
+    MergedVariantMongoReader mergedVariantMongoReader(InputParameters parameters, MongoClient mongoClient,
+                                                      MongoProperties mongoProperties) {
+        logger.info("Injecting MergedVariantMongoReader with parameters: {}", parameters);
+        return new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                                            mongoProperties.getDatabase());
     }
 }

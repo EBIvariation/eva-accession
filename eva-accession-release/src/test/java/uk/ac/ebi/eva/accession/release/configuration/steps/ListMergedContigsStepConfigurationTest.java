@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
@@ -34,6 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.release.io.ContigWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
@@ -48,14 +49,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getActiveContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
-@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json"})
+@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantOperationEntity.json"})
 @TestPropertySource("classpath:application.properties")
-public class ListActiveContigsStepConfigurationTest {
+public class ListMergedContigsStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
@@ -77,21 +77,22 @@ public class ListActiveContigsStepConfigurationTest {
 
     @Before
     public void setUp() throws Exception {
-        new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                          inputParameters.getAssemblyAccession()))
+        new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                       inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
     @After
     public void tearDown() throws Exception {
-        new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                          inputParameters.getAssemblyAccession()))
+        new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                       inputParameters.getAssemblyAccession()))
                 .delete();
     }
+
     @Test
     @DirtiesContext
     public void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_ACTIVE_CONTIGS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_MERGED_CONTIGS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
@@ -100,9 +101,9 @@ public class ListActiveContigsStepConfigurationTest {
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
 
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")),
-                     setOfLines(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                                         inputParameters.getAssemblyAccession())));
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1")),
+                     setOfLines(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                                      inputParameters.getAssemblyAccession())));
     }
 
     private Set<String> setOfLines(String path) throws IOException {

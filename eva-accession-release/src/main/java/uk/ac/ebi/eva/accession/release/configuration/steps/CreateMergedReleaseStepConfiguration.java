@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.core.Step;
@@ -30,6 +30,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.processors.ReleaseProcessorConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.readers.MergedVariantMongoReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.VariantContextWriterConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
@@ -41,9 +45,9 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PR
 
 @Configuration
 @Import({MergedVariantMongoReaderConfiguration.class,
-        ReleaseProcessorConfiguration.class,
-        VariantContextWriterConfiguration.class,
-        ListenersConfiguration.class,})
+         ReleaseProcessorConfiguration.class,
+         VariantContextWriterConfiguration.class,
+         ListenersConfiguration.class,})
 public class CreateMergedReleaseStepConfiguration {
 
     @Autowired
