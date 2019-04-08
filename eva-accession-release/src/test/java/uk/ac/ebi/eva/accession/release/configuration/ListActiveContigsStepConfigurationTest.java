@@ -85,7 +85,7 @@ public class ListActiveContigsStepConfigurationTest {
     @After
     public void tearDown() throws Exception {
         new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession()))
+                                          inputParameters.getAssemblyAccession()))
                 .delete();
     }
     @Test
@@ -102,7 +102,7 @@ public class ListActiveContigsStepConfigurationTest {
 
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")),
                      setOfLines(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                                             inputParameters.getAssemblyAccession())));
+                                                         inputParameters.getAssemblyAccession())));
     }
 
     private Set<String> setOfLines(String path) throws IOException {

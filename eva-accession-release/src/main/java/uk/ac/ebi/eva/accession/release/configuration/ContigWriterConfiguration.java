@@ -39,7 +39,7 @@ public class ContigWriterConfiguration {
 
     @Bean(MERGED_CONTIG_WRITER)
     public ContigWriter mergedContigWriter(InputParameters inputParameters) {
-        return new ContigWriter(new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
-                                                                               inputParameters.getAssemblyAccession())));
+        return new ContigWriter(new File(getMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                                  inputParameters.getAssemblyAccession())));
     }
 }
