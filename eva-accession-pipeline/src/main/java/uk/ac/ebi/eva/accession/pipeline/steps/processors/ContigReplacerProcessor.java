@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Converts the contig to it's GenBank synonym when possible. If the synonym can't be determined it keeps the contig as
+ * Converts the contig to its GenBank synonym when possible. If the synonym can't be determined it keeps the contig as
  * is
  */
 public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant> {

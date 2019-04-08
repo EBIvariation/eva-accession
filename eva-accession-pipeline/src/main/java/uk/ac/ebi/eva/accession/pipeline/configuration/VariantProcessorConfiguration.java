@@ -48,10 +48,12 @@ public class VariantProcessorConfiguration {
     @StepScope
     public ItemProcessor<IVariant, ISubmittedVariant> compositeVariantProcessor(
             InputParameters inputParameters, VariantProcessor variantProcessor,
+            ContigReplacerProcessor contigReplacerProcessor,
             ExcludeStructuralVariantsProcessor excludeStructuralVariantsProcessor) {
         logger.info("Injecting dbsnpVariantProcessor with parameters: {}", inputParameters);
         CompositeItemProcessor<IVariant, ISubmittedVariant> compositeProcessor = new CompositeItemProcessor<>();
-        compositeProcessor.setDelegates(Arrays.asList(excludeStructuralVariantsProcessor, variantProcessor));
+        compositeProcessor.setDelegates(Arrays.asList(excludeStructuralVariantsProcessor, contigReplacerProcessor,
+                                                      variantProcessor));
         return compositeProcessor;
     }
 
