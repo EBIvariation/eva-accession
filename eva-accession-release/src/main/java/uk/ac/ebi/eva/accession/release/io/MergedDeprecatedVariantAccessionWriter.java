@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Writes the accessions of historical variants to a flat file.
+ * Writes the accessions of historical variants, that have been merged into a later deprecate one, to a flat file.
  */
 public class MergedDeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
 

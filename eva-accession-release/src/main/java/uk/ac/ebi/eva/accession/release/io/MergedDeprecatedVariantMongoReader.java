@@ -45,6 +45,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Reads historical variants, that have been merged into a later deprecate one, from a MongoDB database.
+ */
 public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<DbsnpClusteredVariantOperationEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(MergedDeprecatedVariantMongoReader.class);
