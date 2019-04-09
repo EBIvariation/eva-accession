@@ -59,7 +59,7 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 2;
+    private static final long EXPECTED_LINES = 3;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;

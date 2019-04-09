@@ -62,7 +62,7 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
     private static final String TEST_DB = "test-db";
 
     private static final HashSet<String> EXPECTED_ACCESSIONS = new HashSet<>(
-            Arrays.asList("rs1153596375\trs1153596374"));
+            Arrays.asList("rs1153596375\trs1153596374", "rs66666\trs66667"));
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;

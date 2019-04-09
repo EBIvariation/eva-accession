@@ -92,18 +92,6 @@ public class DeprecatedVariantMongoReaderTest {
         }
     }
 
-    @Test
-    public void itemsAreInAscendingOrder() throws Exception {
-        List<DbsnpClusteredVariantOperationEntity> variants = readIntoList();
-        Long accession, previousAccession = 0L;
-
-        for (DbsnpClusteredVariantOperationEntity variant : variants) {
-            accession = variant.getAccession();
-            assertTrue(accession > previousAccession);
-            previousAccession = accession;
-        }
-    }
-
     private List<DbsnpClusteredVariantOperationEntity> readIntoList() throws Exception {
         List<DbsnpClusteredVariantOperationEntity> variants = new ArrayList<>();
         DbsnpClusteredVariantOperationEntity variant;

@@ -101,7 +101,7 @@ public class ListMergedContigsStepConfigurationTest {
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
 
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1")),
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1", "CM000347.1")),
                      setOfLines(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
                                                                       inputParameters.getAssemblyAccession())));
     }
