@@ -54,7 +54,7 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
 
     private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
-    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
+    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
     private static final String INACTIVE_OBJECTS = "inactiveObjects";
 
@@ -64,9 +64,9 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
 
     private static final String ASSEMBLY_FIELD = "asm";
 
-    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
+    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "accession";
 
-    private static final String SS_INFO_FIELD = "ssInfo";
+    private static final String RS_INFO_FIELD = "rsInfo";
 
     private final String assemblyAccession;
 
@@ -103,10 +103,10 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
 
     List<Bson> buildAggregation() {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession));
-        Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.name()));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, MERGE_INTO_FIELD,
-                                        CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
-        Bson matchEmpty = Aggregates.match(Filters.eq(SS_INFO_FIELD, Collections.EMPTY_LIST));
+        Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
+        Bson lookup = Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, MERGE_INTO_FIELD,
+                                        CLUSTERED_VARIANT_ACCESSION_FIELD, RS_INFO_FIELD);
+        Bson matchEmpty = Aggregates.match(Filters.eq(RS_INFO_FIELD, Collections.EMPTY_LIST));
         List<Bson> aggregation = Arrays.asList(matchAssembly, matchMerged, lookup, matchEmpty);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;

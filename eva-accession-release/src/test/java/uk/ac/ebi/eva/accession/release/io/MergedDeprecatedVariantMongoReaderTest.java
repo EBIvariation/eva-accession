@@ -49,6 +49,7 @@ import static org.junit.Assert.assertTrue;
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
+        "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"
 })
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
