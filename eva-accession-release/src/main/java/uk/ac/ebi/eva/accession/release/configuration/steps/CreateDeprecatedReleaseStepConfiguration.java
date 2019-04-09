@@ -31,17 +31,16 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.readers.DeprecatedVariantMongoReaderConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.writers.ClusteredVariantAccessionItemStreamWriterConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.DeprecatedAccessionWriterConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 
 @Configuration
 @Import({DeprecatedVariantMongoReaderConfiguration.class,
-         ClusteredVariantAccessionItemStreamWriterConfiguration.class,
+         DeprecatedAccessionWriterConfiguration.class,
          ListenersConfiguration.class,})
 public class CreateDeprecatedReleaseStepConfiguration {
 

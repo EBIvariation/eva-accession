@@ -18,30 +18,22 @@ package uk.ac.ebi.eva.accession.release.configuration.writers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
+import uk.ac.ebi.eva.accession.release.io.MergedDeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 
 import java.nio.file.Path;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_RELEASE_WRITER;
 
 @Configuration
-public class ClusteredVariantAccessionItemStreamWriterConfiguration {
-
-    @Bean(DEPRECATED_RELEASE_WRITER)
-    public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getDeprecatedIdsReportPath(parameters.getOutputFolder(),
-                                                                        parameters.getAssemblyAccession());
-        return new DeprecatedVariantAccessionWriter(reportPath);
-    }
+public class MergedDeprecatedAccessionWriterConfiguration {
 
     @Bean(MERGED_DEPRECATED_RELEASE_WRITER)
-    public DeprecatedVariantAccessionWriter mergedDeprecatedVariantItemStreamWriter(InputParameters parameters) {
+    public MergedDeprecatedVariantAccessionWriter mergedDeprecatedVariantItemStreamWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getMergedDeprecatedIdsReportPath(parameters.getOutputFolder(),
                                                                               parameters.getAssemblyAccession());
-        return new DeprecatedVariantAccessionWriter(reportPath);
+        return new MergedDeprecatedVariantAccessionWriter(reportPath);
     }
 
 }

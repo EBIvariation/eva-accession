@@ -28,12 +28,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MergedDeprecatedVariantAccessionWriterTest {
 
-    private DeprecatedVariantAccessionWriter deprecatedVariantAccessionWriter;
+    private MergedDeprecatedVariantAccessionWriter writer;
 
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
@@ -41,11 +43,11 @@ public class MergedDeprecatedVariantAccessionWriterTest {
     @Before
     public void setUp() throws Exception {
         File output = temporaryFolderRule.newFile();
-        deprecatedVariantAccessionWriter = new DeprecatedVariantAccessionWriter(output.toPath());
+        writer = new MergedDeprecatedVariantAccessionWriter(output.toPath());
     }
 
     @Test
-    public void write() throws Exception {
+    public void writeLines() throws Exception {
         DbsnpClusteredVariantOperationEntity variant1 = new DbsnpClusteredVariantOperationEntity();
         variant1.fill(EventType.MERGED, 1L, 11L, "Reason", null);
         DbsnpClusteredVariantOperationEntity variant2 = new DbsnpClusteredVariantOperationEntity();
@@ -53,16 +55,33 @@ public class MergedDeprecatedVariantAccessionWriterTest {
         DbsnpClusteredVariantOperationEntity variant3 = new DbsnpClusteredVariantOperationEntity();
         variant3.fill(EventType.MERGED, 3L, 13L, "Reason", null);
 
-        deprecatedVariantAccessionWriter.open(null);
-        deprecatedVariantAccessionWriter.write(Arrays.asList(variant1, variant2, variant3));
-        deprecatedVariantAccessionWriter.close();
+        writer.open(null);
+        writer.write(Arrays.asList(variant1, variant2, variant3));
+        writer.close();
 
-        assertEquals(3, numberOfLines(deprecatedVariantAccessionWriter.getOutput()));
+        assertEquals(3, numberOfLines(writer.getOutput()));
     }
 
     private long numberOfLines(File file) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(file));
         return br.lines().count();
+    }
+
+    @Test
+    public void twoColumns() throws Exception {
+        DbsnpClusteredVariantOperationEntity variant1 = new DbsnpClusteredVariantOperationEntity();
+        long accessionIdOrigin = 1L;
+        long accessionIdDestiny = 11L;
+        variant1.fill(EventType.MERGED, accessionIdOrigin, accessionIdDestiny, "Reason", null);
+        writer.open(null);
+        writer.write(Arrays.asList(variant1));
+        writer.close();
+
+        Optional<String> line = new BufferedReader(new FileReader(
+                writer.getOutput()))
+                .lines().findFirst();
+        assertTrue(line.isPresent());
+        assertEquals(line.get(), "rs" + accessionIdOrigin + "\trs" + accessionIdDestiny);
     }
 
 }

@@ -61,7 +61,8 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final HashSet<String> EXPECTED_ACCESSIONS = new HashSet<>(Arrays.asList("rs1153596375"));
+    private static final HashSet<String> EXPECTED_ACCESSIONS = new HashSet<>(
+            Arrays.asList("rs1153596375\trs1153596374"));
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -111,7 +112,7 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
         long numVariantsInRelease = FileUtils.countNonCommentLines(
                 new FileInputStream(getMergedDeprecatedReleaseFile()));
         assertEquals(EXPECTED_ACCESSIONS.size(), numVariantsInRelease);
-        List<String> dataLinesWithRs = grepFile(getMergedDeprecatedReleaseFile(), "^rs[0-9]+$");
+        List<String> dataLinesWithRs = grepFile(getMergedDeprecatedReleaseFile(), "^rs[0-9]+\trs[0-9]+$");
         assertEquals(EXPECTED_ACCESSIONS, new HashSet<>(dataLinesWithRs));
     }
 

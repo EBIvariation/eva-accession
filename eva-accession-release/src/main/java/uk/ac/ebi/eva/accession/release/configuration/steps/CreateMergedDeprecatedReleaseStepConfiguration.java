@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.readers.MergedDeprecatedVariantMongoReaderConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.writers.ClusteredVariantAccessionItemStreamWriterConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.MergedDeprecatedAccessionWriterConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_VARIANT_READER;
@@ -40,7 +40,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 
 @Configuration
 @Import({MergedDeprecatedVariantMongoReaderConfiguration.class,
-         ClusteredVariantAccessionItemStreamWriterConfiguration.class,
+         MergedDeprecatedAccessionWriterConfiguration.class,
          ListenersConfiguration.class,})
 public class CreateMergedDeprecatedReleaseStepConfiguration {
 
