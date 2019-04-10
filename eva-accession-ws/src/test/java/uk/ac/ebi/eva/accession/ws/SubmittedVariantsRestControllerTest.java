@@ -107,6 +107,9 @@ public class SubmittedVariantsRestControllerTest {
     @Mock
     private BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> mockBasicRestController;
 
+    @Mock
+    private SubmittedVariantAccessioningService mockService;
+
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
     private SubmittedVariant variant1;
@@ -130,7 +133,7 @@ public class SubmittedVariantsRestControllerTest {
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService).queryBeacon(null, "alt", "ref",
                                                                                                     "CHROM1", 1, "ref",
                                                                                                     false, null);
-        mockController = new SubmittedVariantsRestController(mockBasicRestController, mockBeaconService);
+        mockController = new SubmittedVariantsRestController(mockBasicRestController, mockService, mockBeaconService);
     }
 
     @After

@@ -65,8 +65,10 @@ public class SubmittedVariantsRestController {
 
     public SubmittedVariantsRestController(
             BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController,
+            SubmittedVariantAccessioningService service,
             BeaconService beaconService) {
         this.basicRestController = basicRestController;
+        this.service = service;
         this.beaconService = beaconService;
     }
 
