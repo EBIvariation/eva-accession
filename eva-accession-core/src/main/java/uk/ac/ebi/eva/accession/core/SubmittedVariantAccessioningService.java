@@ -118,6 +118,10 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
                          accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions));
     }
 
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByHashedMessageIn(List<String> hashes) {
+        return accessioningService.getByHash(hashes);
+    }
+
     @Override
     public AccessionVersionsWrapper<ISubmittedVariant, String, Long> update(Long accession, int version,
                                                                             ISubmittedVariant iSubmittedVariant)

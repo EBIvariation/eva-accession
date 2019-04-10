@@ -28,4 +28,5 @@ public interface SubmittedVariantAccessioningRepository extends
 
     List<SubmittedVariantEntity> findByClusteredVariantAccessionIn(List<Long> clusteredVariantAccession);
 
+    List<SubmittedVariantEntity> findByHashedMessageIn(List<String> hashes);
 }

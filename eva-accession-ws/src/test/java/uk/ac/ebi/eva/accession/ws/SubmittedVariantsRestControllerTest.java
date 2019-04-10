@@ -21,6 +21,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -31,6 +33,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
@@ -38,6 +41,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
@@ -51,13 +55,19 @@ import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
+import uk.ac.ebi.eva.accession.ws.service.BeaconService;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
@@ -86,11 +96,16 @@ public class SubmittedVariantsRestControllerTest {
     @Autowired
     private SubmittedVariantsRestController controller;
 
+    private SubmittedVariantsRestController mockController;
+
     @Autowired
     private TestRestTemplate testRestTemplate;
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Mock
+    private BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> mockBasicRestController;
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
@@ -110,6 +125,12 @@ public class SubmittedVariantsRestControllerTest {
         variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
+
+        BeaconService mockBeaconService = Mockito.spy(new BeaconService(service));
+        Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService).queryBeacon(null, "alt", "ref",
+                                                                                                    "CHROM1", 1, "ref",
+                                                                                                    false, null);
+        mockController = new SubmittedVariantsRestController(mockBasicRestController, mockBeaconService);
     }
 
     @After
@@ -178,6 +199,98 @@ public class SubmittedVariantsRestControllerTest {
             assertCreatedDateNotNull(getVariantsResponse.getBody());
             assertDefaultFlags(getVariantsResponse.getBody());
         }
+    }
+
+    @Test
+    public void testgetByIdFields() {
+        for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
+            ISubmittedVariant variant = generatedAccession.getData();
+            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                    getVariantsResponse = controller.getByIdFields(variant.getReferenceSequenceAccession(),
+                                                                   variant.getContig(), variant.getProjectAccession(),
+                                                                   variant.getStart(), variant.getReferenceAllele(),
+                                                                   variant.getAlternateAllele());
+
+            assertEquals(1, getVariantsResponse.getBody().size());
+            assertCreatedDateNotNull(getVariantsResponse.getBody());
+            assertDefaultFlags(getVariantsResponse.getBody());
+        }
+    }
+
+    @Test
+    public void testDoesVariantExistFoundExistingVariants() {
+        for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
+            ISubmittedVariant variant = generatedAccession.getData();
+            HttpServletResponse response = new MockHttpServletResponse();
+            BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
+                    variant.getReferenceSequenceAccession(), variant.getContig(), variant.getProjectAccession(),
+                    variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(), response);
+
+            assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+            assertTrue(beaconAlleleResponse.doesExist());
+
+            BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
+            assertEquals(variant.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
+            assertEquals(variant.getContig(), embeddedRequestObject.getReferenceName());
+            assertEquals(variant.getStart(), embeddedRequestObject.getStart());
+            assertEquals(variant.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
+            assertEquals(variant.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
+        }
+    }
+
+    @Test
+    public void testDoesVariantExistNonExistentVariants() {
+        HttpServletResponse response = new MockHttpServletResponse();
+        BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
+                variant1.getReferenceSequenceAccession(), "CHROM3", variant1.getProjectAccession(),
+                variant1.getStart(), variant1.getReferenceAllele(), variant1.getAlternateAllele(), response);
+
+        assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+        assertFalse(beaconAlleleResponse.doesExist());
+
+        BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
+        assertEquals(variant1.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
+        assertEquals("CHROM3", embeddedRequestObject.getReferenceName());
+        assertEquals(variant1.getStart(), embeddedRequestObject.getStart());
+        assertEquals(variant1.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
+        assertEquals(variant1.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
+    }
+
+    @Test
+    public void testDoesVariantExistWith400Error() {
+        HttpServletResponse response = new MockHttpServletResponse();
+        BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
+                variant1.getReferenceSequenceAccession(), variant1.getContig(), variant1.getProjectAccession(),
+                -1, variant1.getReferenceAllele(), variant1.getAlternateAllele(), response);
+
+        assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
+        assertEquals(HttpServletResponse.SC_BAD_REQUEST, beaconAlleleResponse.getError().getErrorCode());
+        assertEquals("Please provide a positive number as start position",
+                     beaconAlleleResponse.getError().getErrorMessage());
+
+        BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
+        assertEquals(variant1.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
+        assertEquals(variant1.getContig(), embeddedRequestObject.getReferenceName());
+        assertEquals(-1, embeddedRequestObject.getStart());
+        assertEquals(variant1.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
+        assertEquals(variant1.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
+    }
+
+    @Test
+    public void testDoesVariantExistWith500Error() {
+        HttpServletResponse response = new MockHttpServletResponse();
+        BeaconAlleleResponse beaconAlleleResponse = mockController.doesVariantExist(
+                "asm", "CHROM1", null,1, "ref", "alt", response);
+
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, beaconAlleleResponse.getError().getErrorCode());
+
+        BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
+        assertEquals("asm", embeddedRequestObject.getAssemblyId());
+        assertEquals("CHROM1", embeddedRequestObject.getReferenceName());
+        assertEquals(1, embeddedRequestObject.getStart());
+        assertEquals("ref", embeddedRequestObject.getReferenceBases());
+        assertEquals("alt", embeddedRequestObject.getAlternateBases());
     }
 
     @Test
