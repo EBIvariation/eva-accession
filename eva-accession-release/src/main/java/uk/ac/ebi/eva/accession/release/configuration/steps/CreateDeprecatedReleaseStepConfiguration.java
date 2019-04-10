@@ -41,7 +41,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 @Configuration
 @Import({DeprecatedVariantMongoReaderConfiguration.class,
          DeprecatedAccessionWriterConfiguration.class,
-         ListenersConfiguration.class,})
+         ListenersConfiguration.class})
 public class CreateDeprecatedReleaseStepConfiguration {
 
     @Autowired

@@ -47,7 +47,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PR
 @Import({MergedVariantMongoReaderConfiguration.class,
          ReleaseProcessorConfiguration.class,
          VariantContextWriterConfiguration.class,
-         ListenersConfiguration.class,})
+         ListenersConfiguration.class})
 public class CreateMergedReleaseStepConfiguration {
 
     @Autowired

@@ -91,8 +91,7 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
         aggregate(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
     }
 
-
-    protected void aggregate(String collectionName) {
+    private void aggregate(String collectionName) {
         MongoDatabase db = mongoClient.getDatabase(database);
         MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
@@ -101,7 +100,7 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
         cursor = clusteredVariants.iterator();
     }
 
-    List<Bson> buildAggregation() {
+    private List<Bson> buildAggregation() {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson lookup = Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, MERGE_INTO_FIELD,
