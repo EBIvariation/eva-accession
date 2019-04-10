@@ -67,9 +67,9 @@ public class ContigReplacerProcessorTest {
     }
 
     @Test
-    public void NoGenbankContigUseRefseq() throws Exception {
+    public void NoGenbankDontConvert() throws Exception {
         IVariant variant = new Variant("chr4", 1, 1, "A", "T");
-        assertEquals("NW_003763687.1", processor.process(variant).getChromosome());
+        assertEquals("chr4", processor.process(variant).getChromosome());
     }
 
     @Test

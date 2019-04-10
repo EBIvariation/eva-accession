@@ -50,49 +50,45 @@ public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant
     public IVariant process(IVariant variant) throws Exception {
         String contigName = variant.getChromosome();
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contigName);
-        boolean contigPresentInAssemblyReport = contigSynonyms != null;
 
-        if (!contigPresentInAssemblyReport) {
+        StringBuilder message = new StringBuilder();
+        if (isReplacementPossible(variant, contigSynonyms, message)) {
+            return replaceContigWithGenbankAccession(variant, contigSynonyms);
+        } else {
             if (!processedContigs.contains(contigName)) {
-                logger.warn("Contig '" + variant.getChromosome() + "' was not found in the assembly report!");
+                logger.warn(message.toString());
                 processedContigs.add(contigName);
             }
             return variant;
-        } else {
-            return replaceContigWithSynonym(variant, contigSynonyms);
         }
     }
 
     /**
-     * The conversion will be performed only if the 'relationship' column of the assembly report is '='
+     * Replacement only possible if:
+     * - Contig has synonyms
+     * - Contig has Genbank synonym
+     * - Genbank and Refseq are identical
      */
-    private IVariant replaceContigWithSynonym(IVariant variant, ContigSynonyms contigSynonyms) {
-        if (contigSynonyms.isIdenticalGenBankAndRefSeq()) {
-            Variant newVariant = new Variant(getContigSynonym(contigSynonyms), variant.getStart(), variant.getEnd(),
-                                             variant.getReference(), variant.getAlternate());
-            Collection<VariantSourceEntry> sourceEntries = variant.getSourceEntries().stream()
-                                                                  .map(VariantSourceEntry.class::cast)
-                                                                  .collect(Collectors.toList());
-            newVariant.addSourceEntries(sourceEntries);
-            return newVariant;
-        } else {
-            if (!processedContigs.contains(variant.getChromosome())) {
-                logger.warn("Genbank and refseq not identical in the assembly report for contig "
-                                    + variant.getChromosome() + ". No conversion performed");
-                processedContigs.add(variant.getChromosome());
-            }
-            return variant;
+    private boolean isReplacementPossible(IVariant variant, ContigSynonyms contigSynonyms, StringBuilder message) {
+        if (contigSynonyms == null) {
+            message.append("Contig '" + variant.getChromosome() + "' was not found in the assembly report!");
+        } else if(contigSynonyms.getGenBank() == null) {
+            message.append("No Genbank equivalent found for contig '" + variant.getChromosome()
+                                   + "' in the assembly report");
+        } else if(!contigSynonyms.isIdenticalGenBankAndRefSeq()) {
+            message.append("Genbank and refseq not identical in the assembly report for contig '"
+                                   + variant.getChromosome() + "'. No conversion performed");
         }
+        return message.toString().isEmpty();
     }
 
-    private String getContigSynonym(ContigSynonyms contigSynonyms) {
-        String contig;
-        if (contigSynonyms.getGenBank() != null) {
-            contig = contigSynonyms.getGenBank();
-        } else {
-            contig = contigSynonyms.getRefSeq();
-        }
-        return contig;
+    private IVariant replaceContigWithGenbankAccession(IVariant variant, ContigSynonyms contigSynonyms) {
+        Variant newVariant = new Variant(contigSynonyms.getGenBank(), variant.getStart(), variant.getEnd(),
+                                         variant.getReference(), variant.getAlternate());
+        Collection<VariantSourceEntry> sourceEntries = variant.getSourceEntries().stream()
+                                                              .map(VariantSourceEntry.class::cast)
+                                                              .collect(Collectors.toList());
+        newVariant.addSourceEntries(sourceEntries);
+        return newVariant;
     }
-
 }
