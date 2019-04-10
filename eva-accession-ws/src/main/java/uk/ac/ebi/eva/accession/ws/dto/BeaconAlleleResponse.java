@@ -40,7 +40,7 @@ public class BeaconAlleleResponse {
         this.beaconId = beaconId;
     }
 
-    public boolean doesExist() {
+    public boolean getExists() {
         return exists;
     }
 

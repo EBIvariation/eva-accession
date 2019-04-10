@@ -227,7 +227,7 @@ public class SubmittedVariantsRestControllerTest {
                     variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(), response);
 
             assertEquals(HttpServletResponse.SC_OK, response.getStatus());
-            assertTrue(beaconAlleleResponse.doesExist());
+            assertTrue(beaconAlleleResponse.getExists());
 
             BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
             assertEquals(variant.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
@@ -246,7 +246,7 @@ public class SubmittedVariantsRestControllerTest {
                 variant1.getStart(), variant1.getReferenceAllele(), variant1.getAlternateAllele(), response);
 
         assertEquals(HttpServletResponse.SC_OK, response.getStatus());
-        assertFalse(beaconAlleleResponse.doesExist());
+        assertFalse(beaconAlleleResponse.getExists());
 
         BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
         assertEquals(variant1.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
