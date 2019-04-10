@@ -27,19 +27,27 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.ebi.eva.accession.release.configuration.steps.CreateDeprecatedReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.steps.CreateMergedDeprecatedReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.steps.CreateMergedReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.steps.CreateReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.steps.ListContigsStepConfiguration;
+
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 
 @Configuration
 @EnableBatchProcessing
 @Import({ListContigsStepConfiguration.class,
-        CreateReleaseStepConfiguration.class,
-        CreateDeprecatedReleaseStepConfiguration.class,
-        CreateMergedReleaseStepConfiguration.class})
+         CreateReleaseStepConfiguration.class,
+         CreateDeprecatedReleaseStepConfiguration.class,
+         CreateMergedDeprecatedReleaseStepConfiguration.class,
+         CreateMergedReleaseStepConfiguration.class})
 public class AccessionReleaseJobConfiguration {
 
     @Autowired
@@ -62,6 +70,10 @@ public class AccessionReleaseJobConfiguration {
     @Qualifier(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
     private Step createDeprecatedReleaseStep;
 
+    @Autowired
+    @Qualifier(RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
+    private Step createMergedDeprecatedReleaseStep;
+
     @Bean(ACCESSION_RELEASE_JOB)
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(ACCESSION_RELEASE_JOB)
@@ -71,6 +83,7 @@ public class AccessionReleaseJobConfiguration {
                                 .next(createReleaseStep)
                                 .next(createMergedReleaseStep)
                                 .next(createDeprecatedReleaseStep)
+                                .next(createMergedDeprecatedReleaseStep)
                                 .build();
     }
 }

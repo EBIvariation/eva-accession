@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -28,12 +28,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.ebi.eva.accession.release.configuration.readers.ContigReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.ContigWriterConfiguration;
+
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 
 /**
  * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in
@@ -42,8 +45,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGE
 @Configuration
 @EnableBatchProcessing
 @Import({ContigReaderConfiguration.class,
-        ContigToInsdcProcessorConfiguration.class,
-        ContigWriterConfiguration.class})
+         ContigWriterConfiguration.class})
 public class ListContigsStepConfiguration {
 
     @Autowired

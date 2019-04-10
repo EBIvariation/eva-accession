@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
@@ -101,7 +101,7 @@ public class ListMergedContigsStepConfigurationTest {
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
 
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1")),
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1", "CM000347.1")),
                      setOfLines(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
                                                                       inputParameters.getAssemblyAccession())));
     }

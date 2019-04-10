@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.writers;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.release.io.DeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.release.steps.processors.ContigToInsdcProcessor;
+import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CONTIG_TO_INSDC_PROCESSOR;
+import java.nio.file.Path;
+
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
 
 @Configuration
-public class ContigToInsdcProcessorConfiguration {
+public class DeprecatedAccessionWriterConfiguration {
 
-    @Bean(name = CONTIG_TO_INSDC_PROCESSOR)
-    public ContigToInsdcProcessor contigProcessor(ContigMapping contigMapping) {
-        return new ContigToInsdcProcessor(contigMapping);
+    @Bean(DEPRECATED_RELEASE_WRITER)
+    public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
+        Path reportPath = ReportPathResolver.getDeprecatedIdsReportPath(parameters.getOutputFolder(),
+                                                                        parameters.getAssemblyAccession());
+        return new DeprecatedVariantAccessionWriter(reportPath);
     }
 
-    @Bean
-    ContigMapping contigMapping(InputParameters parameters) throws Exception {
-        return new ContigMapping(parameters.getAssemblyReportUrl());
-    }
 }

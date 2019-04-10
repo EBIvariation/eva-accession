@@ -50,6 +50,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIV
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
@@ -67,7 +68,9 @@ public class AccessionReleaseJobConfigurationTest {
 
     private static final long EXPECTED_LINES_MERGED = 3;
 
-    private static final long EXPECTED_LINES_DEPRECATED = 2;
+    private static final long EXPECTED_LINES_DEPRECATED = 3;
+
+    private static final long EXPECTED_LINES_MERGED_DEPRECATED = 2;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -95,7 +98,8 @@ public class AccessionReleaseJobConfigurationTest {
         List<String> expectedSteps = Arrays.asList(LIST_ACTIVE_CONTIGS_STEP, LIST_MERGED_CONTIGS_STEP,
                                                    RELEASE_MAPPED_ACTIVE_VARIANTS_STEP,
                                                    RELEASE_MAPPED_MERGED_VARIANTS_STEP,
-                                                   RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP);
+                                                   RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP,
+                                                   RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
@@ -111,6 +115,8 @@ public class AccessionReleaseJobConfigurationTest {
         assertEquals(EXPECTED_LINES_MERGED, numVariantsInMergedRelease);
         long numVariantsInDeprecatedRelease = FileUtils.countNonCommentLines(getDeprecatedRelease());
         assertEquals(EXPECTED_LINES_DEPRECATED, numVariantsInDeprecatedRelease);
+        long numVariantsInMergedDeprecatedRelease = FileUtils.countNonCommentLines(getMergedDeprecatedRelease());
+        assertEquals(EXPECTED_LINES_MERGED_DEPRECATED, numVariantsInMergedDeprecatedRelease);
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
@@ -129,6 +135,12 @@ public class AccessionReleaseJobConfigurationTest {
         return new FileInputStream(ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
                                                                                  inputParameters.getAssemblyAccession())
                                                      .toFile());
+    }
+
+    private FileInputStream getMergedDeprecatedRelease() throws FileNotFoundException {
+        return new FileInputStream(
+                ReportPathResolver.getMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                    inputParameters.getAssemblyAccession()).toFile());
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

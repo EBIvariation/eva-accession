@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 EMBL - European Bioinformatics Institute
+ * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import org.springframework.batch.core.Step;
@@ -30,24 +30,28 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.processors.ReleaseProcessorConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.readers.AccessionedVariantMongoReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.VariantContextWriterConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSIONED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_RELEASE_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
 
 @Configuration
-@Import({MergedVariantMongoReaderConfiguration.class,
-        ReleaseProcessorConfiguration.class,
-        VariantContextWriterConfiguration.class,
-        ListenersConfiguration.class,})
-public class CreateMergedReleaseStepConfiguration {
+@Import({AccessionedVariantMongoReaderConfiguration.class,
+         ReleaseProcessorConfiguration.class,
+         VariantContextWriterConfiguration.class,
+         ListenersConfiguration.class})
+public class CreateReleaseStepConfiguration {
 
     @Autowired
-    @Qualifier(MERGED_VARIANT_READER)
+    @Qualifier(ACCESSIONED_VARIANT_READER)
     private ItemReader<Variant> variantReader;
 
     @Autowired
@@ -55,7 +59,7 @@ public class CreateMergedReleaseStepConfiguration {
     private ItemProcessor<Variant, VariantContext> variantProcessor;
 
     @Autowired
-    @Qualifier(MERGED_RELEASE_WRITER)
+    @Qualifier(RELEASE_WRITER)
     private ItemStreamWriter<VariantContext> accessionWriter;
 
     @Autowired
@@ -66,10 +70,10 @@ public class CreateMergedReleaseStepConfiguration {
     @Qualifier(EXCLUDE_VARIANTS_LISTENER)
     private StepExecutionListener excludeVariantsListener;
 
-    @Bean(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
-    public Step createMergedReleaseStep(StepBuilderFactory stepBuilderFactory,
-                                        SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
+    @Bean(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
+    public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
+                                          SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)

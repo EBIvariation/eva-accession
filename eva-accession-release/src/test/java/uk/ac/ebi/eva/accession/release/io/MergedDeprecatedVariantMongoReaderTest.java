@@ -20,39 +20,47 @@ import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.MongoClient;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
+        "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpClusteredVariantOperationEntity.json"
+        "/test-data/dbsnpSubmittedVariantEntity.json"
 })
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
-public class ContigMongoReaderTest {
+public class MergedDeprecatedVariantMongoReaderTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final String ASSEMBLY_ACCESSION = "GCF_000409795.2";
+    private static final String ASSEMBLY = "GCF_000409795.2";
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     private MongoClient mongoClient;
@@ -65,27 +73,40 @@ public class ContigMongoReaderTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    @Test
-    public void basicActiveContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
-        reader.open(new ExecutionContext());
-        String contig;
-        List<String> contigs = new ArrayList<>();
-        while ((contig = reader.read()) != null) {
-            contigs.add(contig);
-        }
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")), new HashSet<>(contigs));
+    private MergedDeprecatedVariantMongoReader reader;
+
+    @Before
+    public void setUp() {
+        ExecutionContext executionContext = new ExecutionContext();
+        reader = new MergedDeprecatedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, mongoTemplate.getConverter());
+        reader.open(executionContext);
+    }
+
+    @After
+    public void tearDown() {
+        reader.close();
     }
 
     @Test
-    public void basicMergedContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
-        reader.open(new ExecutionContext());
-        String contig;
-        List<String> contigs = new ArrayList<>();
-        while ((contig = reader.read()) != null) {
-            contigs.add(contig);
+    public void basicRead() throws Exception {
+        List<DbsnpClusteredVariantOperationEntity> variants = readIntoList();
+        assertEquals(2, variants.size());
+
+        for (DbsnpClusteredVariantOperationEntity variant : variants) {
+            assertEquals(EventType.MERGED, variant.getEventType());
+            variant.getInactiveObjects().stream().forEach(o -> assertEquals(ASSEMBLY, o.getAssemblyAccession()));
         }
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1", "CM000347.1")), new HashSet<>(contigs));
     }
+
+    private List<DbsnpClusteredVariantOperationEntity> readIntoList() throws Exception {
+        List<DbsnpClusteredVariantOperationEntity> variants = new ArrayList<>();
+        DbsnpClusteredVariantOperationEntity variant;
+
+        while ((variant = reader.read()) != null) {
+            variants.add(variant);
+        }
+
+        return variants;
+    }
+
 }

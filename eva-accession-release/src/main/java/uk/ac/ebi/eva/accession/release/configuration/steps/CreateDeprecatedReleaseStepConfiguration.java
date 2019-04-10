@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
@@ -29,17 +29,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.readers.DeprecatedVariantMongoReaderConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.writers.DeprecatedAccessionWriterConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 
 @Configuration
 @Import({DeprecatedVariantMongoReaderConfiguration.class,
-        ClusteredVariantAccessionItemStreamWriterConfiguration.class,
-        ListenersConfiguration.class,})
+         DeprecatedAccessionWriterConfiguration.class,
+         ListenersConfiguration.class})
 public class CreateDeprecatedReleaseStepConfiguration {
 
     @Autowired
@@ -54,10 +56,6 @@ public class CreateDeprecatedReleaseStepConfiguration {
     @Qualifier(PROGRESS_LISTENER)
     private StepExecutionListener progressListener;
 
-    @Autowired
-    @Qualifier(EXCLUDE_VARIANTS_LISTENER)
-    private StepExecutionListener excludeVariantsListener;
-
     @Bean(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
     public Step createDeprecatedReleaseStep(StepBuilderFactory stepBuilderFactory,
                                             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
@@ -65,7 +63,6 @@ public class CreateDeprecatedReleaseStepConfiguration {
                 .<DbsnpClusteredVariantOperationEntity, DbsnpClusteredVariantOperationEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(deprecatedVariantReader)
                 .writer(accessionWriter)
-                .listener(excludeVariantsListener)
                 .listener(progressListener)
                 .build();
         return step;

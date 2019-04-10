@@ -39,4 +39,9 @@ public class ReportPathResolver {
         return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }
 
+    public static Path getMergedDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
+        final String FILE_SUFFIX = "_merged_deprecated_ids.unsorted.txt";
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+    }
+
 }

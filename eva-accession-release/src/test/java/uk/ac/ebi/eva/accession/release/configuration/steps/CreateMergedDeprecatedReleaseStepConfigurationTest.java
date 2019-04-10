@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.configuration;
+package uk.ac.ebi.eva.accession.release.configuration.steps;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
@@ -44,22 +44,26 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
+        "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
-public class CreateDeprecatedReleaseStepConfigurationTest {
+public class CreateMergedDeprecatedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 2;
+    private static final HashSet<String> EXPECTED_ACCESSIONS = new HashSet<>(
+            Arrays.asList("rs1153596375\trs1153596374", "rs66666\trs66667"));
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -86,29 +90,31 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
     }
 
     private void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     @Test
     public void variantsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        long numVariantsInRelease = FileUtils.countNonCommentLines(
+                new FileInputStream(getMergedDeprecatedReleaseFile()));
+        assertEquals(EXPECTED_ACCESSIONS.size(), numVariantsInRelease);
     }
 
-    private File getDeprecatedReleaseFile() {
-        return ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                             inputParameters.getAssemblyAccession()).toFile();
+    private File getMergedDeprecatedReleaseFile() {
+        return ReportPathResolver.getMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                   inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test
     public void accessionsWritten() throws Exception {
         assertStepExecutesAndCompletes();
-        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getDeprecatedReleaseFile()));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
-        List<String> dataLinesWithRs = grepFile(getDeprecatedReleaseFile(), "^rs[0-9]+$");
-        assertEquals(EXPECTED_LINES, dataLinesWithRs.size());
+        long numVariantsInRelease = FileUtils.countNonCommentLines(
+                new FileInputStream(getMergedDeprecatedReleaseFile()));
+        assertEquals(EXPECTED_ACCESSIONS.size(), numVariantsInRelease);
+        List<String> dataLinesWithRs = grepFile(getMergedDeprecatedReleaseFile(), "^rs[0-9]+\trs[0-9]+$");
+        assertEquals(EXPECTED_ACCESSIONS, new HashSet<>(dataLinesWithRs));
     }
 
     private List<String> grepFile(File file, String regex) throws IOException {

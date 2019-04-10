@@ -23,6 +23,9 @@ public class BeanNames {
 
     public static final String RELEASE_MAPPED_MERGED_VARIANTS_STEP = "RELEASE_MAPPED_MERGED_VARIANTS_STEP";
 
+    public static final String RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP =
+            "RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP";
+
     public static final String RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP = "RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP";
 
     public static final String ACCESSIONED_VARIANT_READER = "ACCESSIONED_VARIANT_READER";
@@ -31,11 +34,15 @@ public class BeanNames {
 
     public static final String DEPRECATED_VARIANT_READER = "DEPRECATED_VARIANT_READER";
 
+    public static final String MERGED_DEPRECATED_VARIANT_READER = "MERGED_DEPRECATED_VARIANT_READER";
+
     public static final String RELEASE_PROCESSOR = "RELEASE_PROCESSOR";
 
     public static final String RELEASE_WRITER = "RELEASE_WRITER";
 
     public static final String MERGED_RELEASE_WRITER = "MERGED_RELEASE_WRITER";
+
+    public static final String MERGED_DEPRECATED_RELEASE_WRITER = "MERGED_DEPRECATED_RELEASE_WRITER";
 
     public static final String DEPRECATED_RELEASE_WRITER = "DEPRECATED_RELEASE_WRITER";
 
@@ -46,8 +53,6 @@ public class BeanNames {
     public static final String LIST_ACTIVE_CONTIGS_STEP = "LIST_ACTIVE_CONTIGS_STEP";
 
     public static final String LIST_MERGED_CONTIGS_STEP = "LIST_MERGED_CONTIGS_STEP";
-
-    public static final String CONTIG_TO_INSDC_PROCESSOR = "CONTIG_TO_INSDC_PROCESSOR";
 
     public static final String ACTIVE_CONTIG_READER = "ACTIVE_CONTIG_READER";
 
