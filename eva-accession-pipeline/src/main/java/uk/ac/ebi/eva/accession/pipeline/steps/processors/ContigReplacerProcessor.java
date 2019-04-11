@@ -66,18 +66,18 @@ public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant
     /**
      * Replacement only possible if:
      * - Contig has synonyms
+     * - Genbank and Refseq are identical or are not identical but there is no RefSeq accession
      * - Contig has Genbank synonym
-     * - Genbank and Refseq are identical
      */
     private boolean isReplacementPossible(IVariant variant, ContigSynonyms contigSynonyms, StringBuilder message) {
         if (contigSynonyms == null) {
             message.append("Contig '" + variant.getChromosome() + "' was not found in the assembly report!");
+        } else if(!contigSynonyms.isIdenticalGenBankAndRefSeq() && contigSynonyms.getRefSeq() != null) {
+            message.append("Genbank and refseq not identical in the assembly report for contig '"
+                                   + variant.getChromosome() + "'. No conversion performed");
         } else if(contigSynonyms.getGenBank() == null) {
             message.append("No Genbank equivalent found for contig '" + variant.getChromosome()
                                    + "' in the assembly report");
-        } else if(!contigSynonyms.isIdenticalGenBankAndRefSeq()) {
-            message.append("Genbank and refseq not identical in the assembly report for contig '"
-                                   + variant.getChromosome() + "'. No conversion performed");
         }
         return message.toString().isEmpty();
     }

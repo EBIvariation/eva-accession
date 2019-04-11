@@ -55,9 +55,27 @@ public class ContigReplacerProcessorTest {
     }
 
     @Test
-    public void ContigGenbankAndRefseqNotEquivalents() throws Exception {
+    public void GenbankAndRefseqNotEquivalents() throws Exception {
         IVariant variant = new Variant("chr3", 1, 1, "A", "T");
         assertEquals("chr3", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void GenbankAndRefseqNotEquivalentsRefseqNotPresent() throws Exception {
+        IVariant variant = new Variant("chr6", 1, 1, "A", "T");
+        assertEquals("CM000096.4", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void GenbankAndRefseqNotEquivalentsGenbankNotPresent() throws Exception {
+        IVariant variant = new Variant("chr5", 1, 1, "A", "T");
+        assertEquals("chr5", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void GenbankAndRefseqNotEquivalentsNonePresent() throws Exception {
+        IVariant variant = new Variant("chr7", 1, 1, "A", "T");
+        assertEquals("chr7", processor.process(variant).getChromosome());
     }
 
     @Test
@@ -71,11 +89,4 @@ public class ContigReplacerProcessorTest {
         IVariant variant = new Variant("chr4", 1, 1, "A", "T");
         assertEquals("chr4", processor.process(variant).getChromosome());
     }
-
-    @Test
-    public void RelationshipColumnDifferentDontConvert() throws Exception {
-        IVariant variant = new Variant("chr5", 1, 1, "A", "T");
-        assertEquals("chr5", processor.process(variant).getChromosome());
-    }
-
 }
