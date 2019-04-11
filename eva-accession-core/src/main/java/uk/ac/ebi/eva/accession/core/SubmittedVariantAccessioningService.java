@@ -119,7 +119,8 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByHashedMessageIn(List<String> hashes) {
-        return accessioningService.getByHash(hashes);
+        return joinLists(accessioningService.getByHash(hashes),
+                         accessioningServiceDbsnp.getByHash(hashes));
     }
 
     @Override

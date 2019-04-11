@@ -44,6 +44,10 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
         return dbService.findByClusteredVariantAccessionIn(clusteredVariantAccessions);
     }
 
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByHash(List<String> hashes) {
+        return dbService.findByHashedMessageIn(hashes);
+    }
+
     public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
         return dbService.getLastInactive(accession);
     }
