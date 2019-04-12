@@ -32,6 +32,8 @@ public class InputParameters {
 
     private String outputVcf;
 
+    private String assemblyReportUrl;
+
     private String assemblyAccession;
 
     private int taxonomyAccession;
@@ -80,6 +82,14 @@ public class InputParameters {
 
     public void setOutputVcf(String outputVcf) {
         this.outputVcf = outputVcf;
+    }
+
+    public String getAssemblyReportUrl() {
+        return assemblyReportUrl;
+    }
+
+    public void setAssemblyReportUrl(String assemblyReportUrl) {
+        this.assemblyReportUrl = assemblyReportUrl;
     }
 
     public String getAssemblyAccession() {
