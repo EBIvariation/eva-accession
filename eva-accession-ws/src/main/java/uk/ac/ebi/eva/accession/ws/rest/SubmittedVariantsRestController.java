@@ -30,14 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconError;
@@ -47,7 +45,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 @RestController
 @RequestMapping(value = "/v1/submitted-variants")
@@ -56,17 +53,13 @@ public class SubmittedVariantsRestController {
 
     private final BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController;
 
-    private Function<ISubmittedVariant, String> hashingFunction =
-            new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
-
     private BeaconService beaconService;
 
     private SubmittedVariantAccessioningService service;
 
     public SubmittedVariantsRestController(
             BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController,
-            SubmittedVariantAccessioningService service,
-            BeaconService beaconService) {
+            SubmittedVariantAccessioningService service, BeaconService beaconService) {
         this.basicRestController = basicRestController;
         this.service = service;
         this.beaconService = beaconService;
@@ -111,7 +104,7 @@ public class SubmittedVariantsRestController {
     @GetMapping(value = "/beacon/query", produces = "application/json")
     public BeaconAlleleResponse doesVariantExist(@RequestParam(name="assemblyId") String assembly,
                                                  @RequestParam(name="referenceName") String chromosome,
-                                                 @RequestParam(name="study") String study,
+                                                 @RequestParam(name="datasetIds") String study,
                                                  @RequestParam(name="start") long start,
                                                  @RequestParam(name="referenceBases") String reference,
                                                  @RequestParam(name="alternateBases") String alternate,
@@ -144,14 +137,15 @@ public class SubmittedVariantsRestController {
         return result;
     }
 
-    @ApiOperation(value = "Find submitted variants (SS) by the identifying fields", notes = "This endpoint returns the submitted "
-            + "variants (SS) represented by a given identifier. For a description of the response, see "
-            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant-subsnp-or-ss")
-    @GetMapping(value = "/by-id-fields", produces = "application/json")
+    @ApiOperation(value = "Find submitted variants (SS) by the identifying fields", notes = "This endpoint returns "
+            + "the submitted variants (SS) represented by a given identifier. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant"
+            + "-subsnp-or-ss")
+    @GetMapping(produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> getByIdFields(
             @RequestParam(name="assemblyId") String assembly,
             @RequestParam(name="referenceName") String chromosome,
-            @RequestParam(name="study") String study,
+            @RequestParam(name="datasetIds") String study,
             @RequestParam(name="start") long start,
             @RequestParam(name="referenceBases") String reference,
             @RequestParam(name="alternateBases") String alternate) {

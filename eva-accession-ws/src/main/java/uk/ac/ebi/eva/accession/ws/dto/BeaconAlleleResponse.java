@@ -30,8 +30,6 @@ public class BeaconAlleleResponse {
 
     private BeaconAlleleRequest alleleRequest;
 
-    private List<DatasetAlleleResponse> datasetAlleleResponses;
-
     public String getBeaconId() {
         return beaconId;
     }
@@ -62,14 +60,5 @@ public class BeaconAlleleResponse {
 
     public void setAlleleRequest(BeaconAlleleRequest alleleRequest) {
         this.alleleRequest = alleleRequest;
-    }
-
-    public List<DatasetAlleleResponse> getDatasetAlleleResponses() {
-        return datasetAlleleResponses;
-    }
-
-    public void setDatasetAlleleResponses(
-            List<DatasetAlleleResponse> datasetAlleleResponses) {
-        this.datasetAlleleResponses = datasetAlleleResponses;
     }
 }
