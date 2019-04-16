@@ -62,6 +62,7 @@ import uk.ac.ebi.eva.accession.ws.service.BeaconService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -116,6 +117,8 @@ public class SubmittedVariantsRestControllerTest {
 
     private SubmittedVariant variant2;
 
+    private SubmittedVariant variant3;
+
     @Before
     public void setUp() throws AccessionCouldNotBeGeneratedException {
         repository.deleteAll();
@@ -127,7 +130,8 @@ public class SubmittedVariantsRestControllerTest {
         Long CLUSTERED_VARIANT = null;
         variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
-        generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2));
+        variant3 = new SubmittedVariant("ASMACC02", 1102, "PROJACC03", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
+        generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2, variant3));
 
         BeaconService mockBeaconService = Mockito.spy(new BeaconService(service));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService).queryBeacon(null, "alt", "ref",
@@ -205,12 +209,14 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testgetByIdFields() {
+    public void testgetByIdFieldsSingleStudyPerRequest() {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ISubmittedVariant variant = generatedAccession.getData();
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
                     getVariantsResponse = controller.getByIdFields(variant.getReferenceSequenceAccession(),
-                                                                   variant.getContig(), variant.getProjectAccession(),
+                                                                   variant.getContig(),
+                                                                   Collections.singletonList(
+                                                                           variant.getProjectAccession()),
                                                                    variant.getStart(), variant.getReferenceAllele(),
                                                                    variant.getAlternateAllele());
 
@@ -221,12 +227,30 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testDoesVariantExistFoundExistingVariants() {
+    public void testgetByIdFieldsMultipleStudiesPerRequest() {
+        List<String> multipleProjectAccessions = Arrays.asList(variant1.getProjectAccession(),
+                                                               variant2.getProjectAccession(),
+                                                               variant3.getProjectAccession());
+
+        ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                getVariantsResponse = controller.getByIdFields(variant2.getReferenceSequenceAccession(),
+                                                               variant2.getContig(), multipleProjectAccessions,
+                                                               variant2.getStart(), variant2.getReferenceAllele(),
+                                                               variant2.getAlternateAllele());
+
+        assertEquals(2, getVariantsResponse.getBody().size());
+        assertCreatedDateNotNull(getVariantsResponse.getBody());
+        assertDefaultFlags(getVariantsResponse.getBody());
+    }
+
+    @Test
+    public void testDoesVariantExistFoundExistingVariantsSingleStudyPerRequest() {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ISubmittedVariant variant = generatedAccession.getData();
             HttpServletResponse response = new MockHttpServletResponse();
             BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
-                    variant.getReferenceSequenceAccession(), variant.getContig(), variant.getProjectAccession(),
+                    variant.getReferenceSequenceAccession(), variant.getContig(),
+                    Collections.singletonList(variant.getProjectAccession()),
                     variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(), response);
 
             assertEquals(HttpServletResponse.SC_OK, response.getStatus());
@@ -242,10 +266,37 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
+    public void testDoesVariantExistFoundExistingVariantsMultipleStudiesPerRequest() {
+        List<String> multipleProjectAccessions = Arrays.asList(variant1.getProjectAccession(),
+                                                               variant2.getProjectAccession(),
+                                                               variant3.getProjectAccession());
+
+        for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
+            ISubmittedVariant variant = generatedAccession.getData();
+            HttpServletResponse response = new MockHttpServletResponse();
+            BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
+                    variant.getReferenceSequenceAccession(), variant.getContig(), multipleProjectAccessions,
+                    variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(), response);
+
+            assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+            assertTrue(beaconAlleleResponse.getExists());
+
+            BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
+            assertEquals(variant.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
+            assertEquals(variant.getContig(), embeddedRequestObject.getReferenceName());
+            assertEquals(variant.getStart(), embeddedRequestObject.getStart());
+            assertEquals(variant.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
+            assertEquals(variant.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
+        }
+    }
+
+
+    @Test
     public void testDoesVariantExistNonExistentVariants() {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
-                variant1.getReferenceSequenceAccession(), "CHROM3", variant1.getProjectAccession(),
+                variant1.getReferenceSequenceAccession(), "CHROM3",
+                Collections.singletonList(variant1.getProjectAccession()),
                 variant1.getStart(), variant1.getReferenceAllele(), variant1.getAlternateAllele(), response);
 
         assertEquals(HttpServletResponse.SC_OK, response.getStatus());
@@ -263,7 +314,8 @@ public class SubmittedVariantsRestControllerTest {
     public void testDoesVariantExistWith400Error() {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
-                variant1.getReferenceSequenceAccession(), variant1.getContig(), variant1.getProjectAccession(),
+                variant1.getReferenceSequenceAccession(), variant1.getContig(),
+                Collections.singletonList(variant1.getProjectAccession()),
                 -1, variant1.getReferenceAllele(), variant1.getAlternateAllele(), response);
 
         assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
@@ -402,7 +454,8 @@ public class SubmittedVariantsRestControllerTest {
             throws AccessionMergedException, AccessionDoesNotExistException,
                    AccessionDeprecatedException {
         // given
-        Long accession = generatedAccessions.get(0).getAccession();
+        Long accession = generatedAccessions.stream().filter(wrapper -> wrapper.getData().equals(variant1))
+                                            .findFirst().get().getAccession();
         service.deprecate(accession, "deprecated for testing");
         String getVariantUrl = URL + accession;
 

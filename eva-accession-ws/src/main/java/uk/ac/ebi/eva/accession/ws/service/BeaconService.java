@@ -30,7 +30,6 @@ import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -56,21 +55,21 @@ public class BeaconService {
                                                               referenceGenome, datasetStableIds,
                                                               includeDatasetResponses);
         result.setAlleleRequest(request);
-        boolean exists = !getVariantByIdFields(referenceGenome, chromosome, datasetStableIds.get(0), start,
+        boolean exists = !getVariantByIdFields(referenceGenome, chromosome, datasetStableIds, start,
                                                referenceBases, alternateBases).isEmpty();
         result.setExists(exists);
         return result;
     }
 
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantByIdFields(
-            String assembly, String contig, String study, long start, String reference, String alternate) {
+            String assembly, String contig, List<String> studies, long start, String reference, String alternate) {
 
-        ISubmittedVariant variant = new SubmittedVariant(assembly, 0, study, contig, start, reference, alternate, null);
-        String hash = hashingFunction.apply(variant);
+        List<String> hashes = studies.stream().map(study -> hashingFunction
+                .apply(new SubmittedVariant(assembly, 0, study, contig, start, reference, alternate, null)))
+                .collect(Collectors.toList());
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> variants = submittedVariantsService
-                .getByHashedMessageIn(
-                        Collections.singletonList(hash));
+                .getByHashedMessageIn(hashes);
 
         return variants.stream()
                        .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))

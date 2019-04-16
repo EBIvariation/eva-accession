@@ -31,6 +31,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.service.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -119,8 +120,12 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByHashedMessageIn(List<String> hashes) {
-        return joinLists(accessioningService.getByHash(hashes),
-                         accessioningServiceDbsnp.getByHash(hashes));
+        return joinLists(
+                hashes.stream().flatMap(hash -> accessioningService.getByHash(Collections.singletonList(hash)).stream())
+                      .collect(Collectors.toList()),
+                hashes.stream().flatMap(
+                        hash -> accessioningServiceDbsnp.getByHash(Collections.singletonList(hash)).stream())
+                      .collect(Collectors.toList()));
     }
 
     @Override

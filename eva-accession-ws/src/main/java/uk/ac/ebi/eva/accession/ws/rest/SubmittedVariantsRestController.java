@@ -104,7 +104,7 @@ public class SubmittedVariantsRestController {
     @GetMapping(value = "/beacon/query", produces = "application/json")
     public BeaconAlleleResponse doesVariantExist(@RequestParam(name="assemblyId") String assembly,
                                                  @RequestParam(name="referenceName") String chromosome,
-                                                 @RequestParam(name="datasetIds") String study,
+                                                 @RequestParam(name="datasetIds") List<String> studies,
                                                  @RequestParam(name="start") long start,
                                                  @RequestParam(name="referenceBases") String reference,
                                                  @RequestParam(name="alternateBases") String alternate,
@@ -112,29 +112,28 @@ public class SubmittedVariantsRestController {
         if (start < 1) {
             int responseStatus = HttpServletResponse.SC_BAD_REQUEST;
             response.setStatus(responseStatus);
-            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, study,
+            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, studies,
                                                     responseStatus,
                                                     "Please provide a positive number as start position");
         }
         try {
-            return beaconService.queryBeacon(Collections.singletonList(study), alternate, reference, chromosome, start,
+            return beaconService.queryBeacon(studies, alternate, reference, chromosome, start,
                                              assembly, false);
         }
         catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
-            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, study,
+            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, studies,
                                                     responseStatus, "Unexpected Error: " + ex.getMessage());
         }
     }
 
     private BeaconAlleleResponse getBeaconResponseObjectWithError(String alternate, String reference, String chromosome,
-                                                                  long start, String assembly, String study,
+                                                                  long start, String assembly, List<String> studies,
                                                                   int errorCode, String errorMessage) {
         BeaconAlleleResponse result = new BeaconAlleleResponse();
         BeaconAlleleRequest request = new BeaconAlleleRequest(alternate, reference, chromosome, start,
-                                                              assembly, Collections.singletonList(study),
-                                                              false);
+                                                              assembly, studies, false);
         result.setAlleleRequest(request);
         result.setError(new BeaconError(errorCode, errorMessage));
         return result;
@@ -148,12 +147,12 @@ public class SubmittedVariantsRestController {
     public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> getByIdFields(
             @RequestParam(name="assemblyId") String assembly,
             @RequestParam(name="referenceName") String chromosome,
-            @RequestParam(name="datasetIds") String study,
+            @RequestParam(name="datasetIds") List<String> studies,
             @RequestParam(name="start") long start,
             @RequestParam(name="referenceBases") String reference,
             @RequestParam(name="alternateBases") String alternate) {
         try {
-            return ResponseEntity.ok(beaconService.getVariantByIdFields(assembly, chromosome, study, start, reference,
+            return ResponseEntity.ok(beaconService.getVariantByIdFields(assembly, chromosome, studies, start, reference,
                                                                         alternate));
         }
         catch (Exception e) {
