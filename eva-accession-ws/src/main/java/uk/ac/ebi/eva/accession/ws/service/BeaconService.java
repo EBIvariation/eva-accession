@@ -49,15 +49,15 @@ public class BeaconService {
 
     public BeaconAlleleResponse queryBeacon(List<String> datasetStableIds, String alternateBases, String referenceBases,
                                             String chromosome, long start, String referenceGenome,
-                                            boolean includeDatasetResponses, String study) {
+                                            boolean includeDatasetResponses) {
 
         BeaconAlleleResponse result = new BeaconAlleleResponse();
         BeaconAlleleRequest request = new BeaconAlleleRequest(alternateBases, referenceBases, chromosome, start,
                                                               referenceGenome, datasetStableIds,
                                                               includeDatasetResponses);
         result.setAlleleRequest(request);
-        boolean exists = !getVariantByIdFields(referenceGenome, chromosome, study, start, referenceBases,
-                                               alternateBases).isEmpty();
+        boolean exists = !getVariantByIdFields(referenceGenome, chromosome, datasetStableIds.get(0), start,
+                                               referenceBases, alternateBases).isEmpty();
         result.setExists(exists);
         return result;
     }

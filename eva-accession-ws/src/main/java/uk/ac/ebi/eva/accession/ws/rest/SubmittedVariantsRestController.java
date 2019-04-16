@@ -112,26 +112,29 @@ public class SubmittedVariantsRestController {
         if (start < 1) {
             int responseStatus = HttpServletResponse.SC_BAD_REQUEST;
             response.setStatus(responseStatus);
-            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly,
-                                                    responseStatus, "Please provide a positive number as start position");
+            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, study,
+                                                    responseStatus,
+                                                    "Please provide a positive number as start position");
         }
         try {
-            return beaconService.queryBeacon(null, alternate, reference, chromosome, start, assembly, false, study);
+            return beaconService.queryBeacon(Collections.singletonList(study), alternate, reference, chromosome, start,
+                                             assembly, false);
         }
         catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
-            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly,
+            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, study,
                                                     responseStatus, "Unexpected Error: " + ex.getMessage());
         }
     }
 
     private BeaconAlleleResponse getBeaconResponseObjectWithError(String alternate, String reference, String chromosome,
-                                                                  long start, String assembly, int errorCode,
-                                                                  String errorMessage) {
+                                                                  long start, String assembly, String study,
+                                                                  int errorCode, String errorMessage) {
         BeaconAlleleResponse result = new BeaconAlleleResponse();
         BeaconAlleleRequest request = new BeaconAlleleRequest(alternate, reference, chromosome, start,
-                                                              assembly, null, false);
+                                                              assembly, Collections.singletonList(study),
+                                                              false);
         result.setAlleleRequest(request);
         result.setError(new BeaconError(errorCode, errorMessage));
         return result;
