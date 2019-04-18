@@ -102,7 +102,7 @@ public class DeprecableClusteredVariantsReaderTest {
     @Test
     public void readDeprecateClusteredVariants() {
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
-        assertEquals(4, variants.size());
+        assertEquals(5, variants.size());
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_1)));
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_2)));
     }

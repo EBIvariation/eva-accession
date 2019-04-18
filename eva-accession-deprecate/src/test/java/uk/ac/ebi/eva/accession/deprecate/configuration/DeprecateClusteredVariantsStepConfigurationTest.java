@@ -58,7 +58,7 @@ public class DeprecateClusteredVariantsStepConfigurationTest {
 
     private static final long EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED = 4;
 
-    private static final long EXPECTED_OPERATIONS = 4;
+    private static final long EXPECTED_OPERATIONS = 5;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;

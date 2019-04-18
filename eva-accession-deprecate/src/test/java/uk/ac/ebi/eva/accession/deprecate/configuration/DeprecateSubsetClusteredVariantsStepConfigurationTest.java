@@ -56,7 +56,7 @@ public class DeprecateSubsetClusteredVariantsStepConfigurationTest {
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED = "dbsnpClusteredVariantEntityDeclustered";
 
-    private static final long EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED = 7;
+    private static final long EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED = 8;
 
     // from those listed in assemblyAccession (in the properties file), only GCA_000000003.1 is not present in
     // dbsnpSubmittedVariantEntity
