@@ -47,6 +47,7 @@ import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECAT
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/dbsnpClusteredVariantEntityDeclustered.json"})
 @TestPropertySource("classpath:application.properties")
 public class DeprecateClusteredVariantsStepConfigurationTest {

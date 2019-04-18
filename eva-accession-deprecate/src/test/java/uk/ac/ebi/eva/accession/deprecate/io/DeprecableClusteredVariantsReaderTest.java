@@ -49,6 +49,7 @@ import static org.junit.Assert.assertFalse;
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/dbsnpClusteredVariantEntityDeclustered.json"})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class DeprecableClusteredVariantsReaderTest {

@@ -47,6 +47,7 @@ import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECAT
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/dbsnpClusteredVariantEntityDeclustered.json"})
 @TestPropertySource("classpath:application_species_subset.properties")
 public class DeprecateSubsetClusteredVariantsStepConfigurationTest {
@@ -57,7 +58,8 @@ public class DeprecateSubsetClusteredVariantsStepConfigurationTest {
 
     private static final long EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED = 7;
 
-    // from those listed in assemblyAccessions, only GCA_000000003.1 is not present in dbsnpClusteredVariantEntity
+    // from those listed in assemblyAccession (in the properties file), only GCA_000000003.1 is not present in
+    // dbsnpSubmittedVariantEntity
     private static final long EXPECTED_OPERATIONS = 1;
 
     @Autowired
