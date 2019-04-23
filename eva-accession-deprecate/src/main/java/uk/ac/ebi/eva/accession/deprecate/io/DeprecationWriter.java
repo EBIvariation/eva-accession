@@ -104,6 +104,26 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
      * documents for the given accession, even if there are several hashes for it, because the
      * {@link DeprecableClusteredVariantsReader} said that no SubmittedVariant is associated to the accession (whatever
      * hashes the accession might have).
+     *
+     *
+     * Also, note that we can't remove by only the id (the hash) because other unrelated and active ClusteredVariants
+     * accessions would be removed erroneously. If we wanted to remove less ClusteredVariants, we could remove by id
+     * (hash) and accession, but that is problematic as well because it could leave as "active variants" some
+     * ClusteredVariants without SubmittedVariants, depending on whether the removed accession is also active with the
+     * same or a different hash. Look at this example of the resulting collections after an import:
+     *
+     * <pre>
+     * Declustered          Clustered             Submitted                 SubmittedOperations
+     * -                    RS1 (with hash 1)     SS1 (pointing to RS1)     -
+     * -                    RS2 (with hash 2)     -                         SS2 (mergedInto SS1)
+     * RS2 (with hash 2)    -                     -                         SS3 (declustered)
+     * RS2 (with hash 3)    -                     -                         SS4 (declustered)
+     * </pre>
+     *
+     * If the third line was present (RS2 with hash 2 and SS3), then the active RS2 (second line) would be removed.
+     * However, if only the fourth line was present (RS2 with hash 3 and SS4), the active RS2 (second line) wouldn't be
+     * removed. Examples like these suggest that we should only remove ClusteredVariants by accession, not using the id
+     * (the hash) at all.
      */
     private void removeDeprecableClusteredVariants(
             List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
