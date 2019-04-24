@@ -24,21 +24,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconError;
+import uk.ac.ebi.eva.accession.ws.service.BeaconService;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,13 +53,16 @@ public class SubmittedVariantsRestController {
 
     private final BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController;
 
+    private BeaconService beaconService;
+
     private SubmittedVariantAccessioningService service;
 
     public SubmittedVariantsRestController(
             BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController,
-            SubmittedVariantAccessioningService service) {
+            SubmittedVariantAccessioningService service, BeaconService beaconService) {
         this.basicRestController = basicRestController;
         this.service = service;
+        this.beaconService = beaconService;
     }
 
     /**
@@ -93,5 +100,63 @@ public class SubmittedVariantsRestController {
                         service.getLastInactive(identifier),
                         SubmittedVariant::new));
     }
-}
 
+    @GetMapping(value = "/beacon/query", produces = "application/json")
+    public BeaconAlleleResponse doesVariantExist(@RequestParam(name="assemblyId") String assembly,
+                                                 @RequestParam(name="referenceName") String chromosome,
+                                                 @RequestParam(name="datasetIds") List<String> studies,
+                                                 @RequestParam(name="start") long start,
+                                                 @RequestParam(name="referenceBases") String reference,
+                                                 @RequestParam(name="alternateBases") String alternate,
+                                                 HttpServletResponse response) {
+        if (start < 1) {
+            int responseStatus = HttpServletResponse.SC_BAD_REQUEST;
+            response.setStatus(responseStatus);
+            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, studies,
+                                                    responseStatus,
+                                                    "Please provide a positive number as start position");
+        }
+        try {
+            return beaconService.queryBeacon(studies, alternate, reference, chromosome, start,
+                                             assembly, false);
+        }
+        catch (Exception ex) {
+            int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+            response.setStatus(responseStatus);
+            return getBeaconResponseObjectWithError(alternate, reference, chromosome, start, assembly, studies,
+                                                    responseStatus, "Unexpected Error: " + ex.getMessage());
+        }
+    }
+
+    private BeaconAlleleResponse getBeaconResponseObjectWithError(String alternate, String reference, String chromosome,
+                                                                  long start, String assembly, List<String> studies,
+                                                                  int errorCode, String errorMessage) {
+        BeaconAlleleResponse result = new BeaconAlleleResponse();
+        BeaconAlleleRequest request = new BeaconAlleleRequest(alternate, reference, chromosome, start,
+                                                              assembly, studies, false);
+        result.setAlleleRequest(request);
+        result.setError(new BeaconError(errorCode, errorMessage));
+        return result;
+    }
+
+    @ApiOperation(value = "Find submitted variants (SS) by the identifying fields", notes = "This endpoint returns "
+            + "the submitted variants (SS) represented by a given identifier. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#submitted-variant"
+            + "-subsnp-or-ss")
+    @GetMapping(produces = "application/json")
+    public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> getByIdFields(
+            @RequestParam(name="assemblyId") String assembly,
+            @RequestParam(name="referenceName") String chromosome,
+            @RequestParam(name="datasetIds") List<String> studies,
+            @RequestParam(name="start") long start,
+            @RequestParam(name="referenceBases") String reference,
+            @RequestParam(name="alternateBases") String alternate) {
+        try {
+            return ResponseEntity.ok(beaconService.getVariantByIdFields(assembly, chromosome, studies, start, reference,
+                                                                        alternate));
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
+        }
+    }
+}

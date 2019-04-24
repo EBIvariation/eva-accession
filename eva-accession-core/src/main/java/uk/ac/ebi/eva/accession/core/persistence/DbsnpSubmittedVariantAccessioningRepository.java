@@ -27,4 +27,6 @@ public interface DbsnpSubmittedVariantAccessioningRepository extends
         IAccessionedObjectRepository<DbsnpSubmittedVariantEntity, Long> {
 
     List<DbsnpSubmittedVariantEntity> findByClusteredVariantAccessionIn(List<Long> clusteredVariantAccession);
+
+    List<DbsnpSubmittedVariantEntity> findByHashedMessageIn(List<String> hashes);
 }
