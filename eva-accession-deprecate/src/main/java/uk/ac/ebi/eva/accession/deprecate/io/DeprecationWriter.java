@@ -84,12 +84,12 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
      * and different id (hash) that we haven't read yet).
      */
     private void removeDeprecableClusteredVariantsDeprecated(
-            List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVatiants) {
+            List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               DbsnpClusteredVariantEntity.class,
                                                               DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
         Query query = new Query();
-        query.addCriteria(Criteria.where(ID_FIELD).in(getIds(deprecableClusteredVatiants)));
+        query.addCriteria(Criteria.where(ID_FIELD).in(getIds(deprecableClusteredVariants)));
         bulkOperations.remove(query);
         bulkOperations.execute();
     }
