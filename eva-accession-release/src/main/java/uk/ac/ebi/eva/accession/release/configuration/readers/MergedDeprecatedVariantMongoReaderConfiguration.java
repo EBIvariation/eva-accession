@@ -41,7 +41,8 @@ public class MergedDeprecatedVariantMongoReaderConfiguration {
             InputParameters parameters, MongoClient mongoClient, MongoTemplate mongoTemplate,
             MongoProperties mongoProperties) {
         return new MergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                      mongoProperties.getDatabase(), mongoTemplate.getConverter());
+                                                      mongoProperties.getDatabase(), mongoTemplate.getConverter(),
+                                                      parameters.getChunkSize());
     }
 
 }

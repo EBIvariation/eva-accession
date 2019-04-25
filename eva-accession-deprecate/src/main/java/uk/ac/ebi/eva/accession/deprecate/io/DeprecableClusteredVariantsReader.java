@@ -73,22 +73,26 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
     
     private MongoConverter converter;
 
+    private int chunkSize;
+
     /**
      * Constructs a reader for all variants in the collection DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED, irrespective of the assembly.
      */
-    public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
-        this(mongoClient, database, mongoTemplate, null);
+    public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
+                                             int chunkSize) {
+        this(mongoClient, database, mongoTemplate, null, chunkSize);
     }
 
     /**
      * Constructs a reader that retrieves variants mapped only against the specified assemblies.
      */
     public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
-                                             List<String> assemblyAccessions) {
+                                             List<String> assemblyAccessions, int chunkSize) {
         this.mongoClient = mongoClient;
         this.database = database;
         this.mongoTemplate = mongoTemplate;
         this.assemblies = assemblyAccessions;
+        this.chunkSize = chunkSize;
     }
 
     @Override
@@ -97,7 +101,8 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
         MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED);
         AggregateIterable<Document> declusteredVariants = collection.aggregate(buildAggregation())
                                                                     .allowDiskUse(true)
-                                                                    .useCursor(true);
+                                                                    .useCursor(true)
+                                                                    .batchSize(chunkSize);
         cursor = declusteredVariants.iterator();
         converter = mongoTemplate.getConverter();
     }

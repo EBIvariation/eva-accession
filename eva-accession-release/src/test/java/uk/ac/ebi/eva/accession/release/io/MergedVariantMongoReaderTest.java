@@ -82,6 +82,8 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ID_2_MERGED_INTO = "rs869927931";
 
+    private static final int CHUNK_SIZE = 5;
+
     @Autowired
     private MongoClient mongoClient;
 
@@ -103,7 +105,7 @@ public class MergedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        reader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB);
+        reader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE);
     }
 
     @Test

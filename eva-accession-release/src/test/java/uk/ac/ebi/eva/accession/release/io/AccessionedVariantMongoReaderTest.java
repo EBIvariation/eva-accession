@@ -102,6 +102,8 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final int EXPECTED_LINES = 5;
 
+    private static final int CHUNK_SIZE = 5;
+
     private AccessionedVariantMongoReader reader;
 
     private ExecutionContext executionContext;
@@ -120,7 +122,7 @@ public class AccessionedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_1, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_1, mongoClient, TEST_DB, CHUNK_SIZE);
     }
 
     @Test
@@ -190,7 +192,7 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void queryOtherAssembly() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_2, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_2, mongoClient, TEST_DB, CHUNK_SIZE);
         Map<String, Variant> variants = readIntoMap();
 
         assertEquals(3, variants.size());
@@ -224,7 +226,7 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void insertionVariantClassAttribute() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
         List<Variant> variants = readIntoList();
         assertEquals(1, variants.size());
         String insertionSequenceOntology = "SO:0000667";
@@ -236,7 +238,7 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void otherVariantClasses() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
         List<Variant> variants = readIntoList();
         assertEquals(4, variants.size());
         String indelSequenceOntology = "SO:1000032";
@@ -267,7 +269,7 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void clusteredVariantWithoutSubmittedVariants() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, mongoClient, TEST_DB, CHUNK_SIZE);
         List<Variant> variants = readIntoList();
         assertEquals(0, variants.size());
     }
@@ -305,7 +307,7 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void includeValidatedNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
         assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, true);
         assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, false, RS_4);
         assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, true, RS_5);
@@ -325,19 +327,19 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void includeAssemblyMatchNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
         assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, false);
     }
 
     @Test
     public void includeAllelesMatchNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
         assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, false);
     }
 
     @Test
     public void includeEvidenceNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
     }
 }

@@ -78,12 +78,15 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
 
     private MongoConverter mongoConverter;
 
+    private int chunkSize;
+
     public MergedDeprecatedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                              MongoConverter mongoConverter) {
+                                              MongoConverter mongoConverter, int chunkSize) {
         this.assemblyAccession = assemblyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
         this.mongoConverter = mongoConverter;
+        this.chunkSize = chunkSize;
     }
 
     @Override
@@ -96,7 +99,8 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
         MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
                                                                   .allowDiskUse(true)
-                                                                  .useCursor(true);
+                                                                  .useCursor(true)
+                                                                  .batchSize(chunkSize);
         cursor = clusteredVariants.iterator();
     }
 

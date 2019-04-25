@@ -94,10 +94,14 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected MongoCursor<Document> cursor;
 
-    public VariantMongoAggregationReader(String assemblyAccession, MongoClient mongoClient, String database) {
+    private int chunkSize;
+
+    public VariantMongoAggregationReader(String assemblyAccession, MongoClient mongoClient, String database,
+                                         int chunkSize) {
         this.assemblyAccession = assemblyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
+        this.chunkSize = chunkSize;
     }
 
     protected void aggregate(String collectionName) {
@@ -105,7 +109,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
         MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
                                                                   .allowDiskUse(true)
-                                                                  .useCursor(true);
+                                                                  .useCursor(true)
+                .batchSize(chunkSize);
         cursor = clusteredVariants.iterator();
     }
 

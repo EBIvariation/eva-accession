@@ -58,8 +58,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final String EVENT_TYPE_FIELD = "eventType";
 
-    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database) {
-        super(assemblyAccession, mongoClient, database);
+    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize) {
+        super(assemblyAccession, mongoClient, database, chunkSize);
     }
 
     @Override

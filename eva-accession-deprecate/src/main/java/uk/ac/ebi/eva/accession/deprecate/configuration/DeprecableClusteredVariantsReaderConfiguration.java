@@ -49,9 +49,10 @@ public class DeprecableClusteredVariantsReaderConfiguration {
         }
         if (assembliesProvided) {
             return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate,
-                                                         parameters.getAssemblyAccession());
+                                                         parameters.getAssemblyAccession(), parameters.getChunkSize());
         } else {
-            return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate);
+            return new DeprecableClusteredVariantsReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate,
+                                                         parameters.getChunkSize());
         }
     }
 }

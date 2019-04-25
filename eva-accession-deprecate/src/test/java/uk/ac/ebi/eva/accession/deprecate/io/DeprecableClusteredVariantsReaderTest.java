@@ -68,6 +68,8 @@ public class DeprecableClusteredVariantsReaderTest {
 
     private static final String ASM_4 = "GCA_000000004.1";
 
+    private static final int CHUNK_SIZE = 5;
+
     private ExecutionContext executionContext;
 
     private DeprecableClusteredVariantsReader reader;
@@ -89,7 +91,7 @@ public class DeprecableClusteredVariantsReaderTest {
     @Before
     public void setUp() {
         executionContext = new ExecutionContext();
-        reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate);
+        reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate, CHUNK_SIZE);
         reader.open(executionContext);
     }
 
@@ -119,7 +121,7 @@ public class DeprecableClusteredVariantsReaderTest {
     @Test
     public void readSubsetOfAssemblies() {
         reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate,
-                                                       Arrays.asList(ASM_2, ASM_3));
+                                                       Arrays.asList(ASM_2, ASM_3), CHUNK_SIZE);
         reader.open(executionContext);
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
         assertEquals(1, variants.size());

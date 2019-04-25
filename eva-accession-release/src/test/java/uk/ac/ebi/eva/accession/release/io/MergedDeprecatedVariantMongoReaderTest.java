@@ -59,6 +59,8 @@ public class MergedDeprecatedVariantMongoReaderTest {
 
     private static final String ASSEMBLY = "GCF_000409795.2";
 
+    private static final int CHUNK_SIZE = 5;
+
     @Autowired
     private MongoTemplate mongoTemplate;
 
@@ -78,7 +80,8 @@ public class MergedDeprecatedVariantMongoReaderTest {
     @Before
     public void setUp() {
         ExecutionContext executionContext = new ExecutionContext();
-        reader = new MergedDeprecatedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, mongoTemplate.getConverter());
+        reader = new MergedDeprecatedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, mongoTemplate.getConverter(),
+                                                        CHUNK_SIZE);
         reader.open(executionContext);
     }
 
