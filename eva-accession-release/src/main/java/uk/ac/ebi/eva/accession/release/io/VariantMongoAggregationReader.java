@@ -110,7 +110,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
                                                                   .allowDiskUse(true)
                                                                   .useCursor(true)
-                .batchSize(chunkSize);
+                                                                  .batchSize(chunkSize);
         cursor = clusteredVariants.iterator();
     }
 
