@@ -36,7 +36,6 @@ import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,11 +49,13 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
 
     private static final Logger logger = LoggerFactory.getLogger(DeprecableClusteredVariantsReader.class);
 
-    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
+    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED = "dbsnpClusteredVariantEntityDeclustered";
 
     private static final String ACCESSION_FIELD = "accession";
+
+    private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
 
     private static final String ACTIVE = "active";
 
@@ -72,22 +73,26 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
     
     private MongoConverter converter;
 
+    private int chunkSize;
+
     /**
      * Constructs a reader for all variants in the collection DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED, irrespective of the assembly.
      */
-    public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate) {
-        this(mongoClient, database, mongoTemplate, null);
+    public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
+                                             int chunkSize) {
+        this(mongoClient, database, mongoTemplate, null, chunkSize);
     }
 
     /**
      * Constructs a reader that retrieves variants mapped only against the specified assemblies.
      */
     public DeprecableClusteredVariantsReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
-                                             List<String> assemblyAccessions) {
+                                             List<String> assemblyAccessions, int chunkSize) {
         this.mongoClient = mongoClient;
         this.database = database;
         this.mongoTemplate = mongoTemplate;
         this.assemblies = assemblyAccessions;
+        this.chunkSize = chunkSize;
     }
 
     @Override
@@ -96,7 +101,8 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
         MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED);
         AggregateIterable<Document> declusteredVariants = collection.aggregate(buildAggregation())
                                                                     .allowDiskUse(true)
-                                                                    .useCursor(true);
+                                                                    .useCursor(true)
+                                                                    .batchSize(chunkSize);
         cursor = declusteredVariants.iterator();
         converter = mongoTemplate.getConverter();
     }
@@ -106,7 +112,9 @@ public class DeprecableClusteredVariantsReader implements ItemStreamReader<Dbsnp
         if (assemblies != null && !assemblies.isEmpty()) {
             aggregation.add(Aggregates.match(Filters.in(ASSEMBLY_FIELD, assemblies)));
         }
-        aggregation.add(Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, ACCESSION_FIELD, ACCESSION_FIELD, ACTIVE));
+        aggregation.add(
+                Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD, CLUSTERED_VARIANT_ACCESSION_FIELD,
+                                  ACTIVE));
         aggregation.add(Aggregates.match(Filters.eq(ACTIVE, Collections.EMPTY_LIST)));
 
         logger.info("Issuing aggregation: {}", aggregation);

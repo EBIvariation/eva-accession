@@ -1,0 +1,64 @@
+{
+  "dbsnpSubmittedVariantEntity": [
+    {
+      "_id": "009FD5186628C3448F66BABF0CF24A66A771C6F0",
+      "seq": "GCA_000331145.1",
+      "tax": 3827,
+      "study": "NIPGR_RESEQUENCING-BASED SNP DISCOVERY",
+      "contig": "CM001766.1",
+      "start": NumberLong(10950885),
+      "ref": "G",
+      "alt": "A",
+      "rs": NumberLong(853567325),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(1940161236),
+      "version": 1,
+      "createdDate": ISODate( "2015-10-26T13:33:00Z" )
+    },
+    {
+      "_id": "B9FD05F0B669D6E3267738A852FD27F3B813AE36",
+      "seq": "GCA_000331145.1",
+      "tax": 3827,
+      "study": "NIPGR_RESEQUENCING-BASED SNP DISCOVERY",
+      "contig": "CM001765.1",
+      "start": NumberLong(35288581),
+      "ref": "G",
+      "alt": "A",
+      "rs": NumberLong(853683894),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(1940158177),
+      "version": 1,
+      "createdDate": ISODate( "2015-10-26T13:33:00Z" )
+    },
+    {
+      "_id": "HASH_1",
+      "seq": "GCA_000000001.1",
+      "tax": 3827,
+      "study": "study1",
+      "contig": "CM001765.1",
+      "start": NumberLong(35288581),
+      "ref": "A",
+      "alt": "T",
+      "accession": NumberLong(101),
+      "rs": NumberLong(1),
+      "version": 1,
+      "createdDate": ISODate( "2015-11-21T13:13:00.000Z" )
+    },
+    {
+      "_id": "HASH_2",
+      "asm": "GCA_000000002.1",
+      "tax": 3827,
+      "study": "study2",
+      "contig": "CM001765.1",
+      "start": NumberLong(853461378),
+      "ref": "A",
+      "alt": "T",
+      "accession": NumberLong(102),
+      "rs": NumberLong(2),
+      "version": 1,
+      "createdDate": ISODate( "2015-11-21T13:13:00.000Z" )
+    }
+  ]
+}

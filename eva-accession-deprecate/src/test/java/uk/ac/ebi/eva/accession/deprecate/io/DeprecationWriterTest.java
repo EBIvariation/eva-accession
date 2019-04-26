@@ -32,6 +32,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
@@ -46,14 +47,23 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application.properties")
-@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntityDeclustered.json"})
+@UsingDataSet(locations = {
+        "/test-data/dbsnpClusteredVariantEntityDeclustered.json",
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/dbsnpClusteredVariantEntity.json"
+})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class DeprecationWriterTest {
 
@@ -88,13 +98,54 @@ public class DeprecationWriterTest {
     }
 
     @Test
-    public void write() throws Exception {
+    public void writeOperations() throws Exception {
+        // given
         List<DbsnpClusteredVariantEntity> deprecableClusteredVariants = getDeprecableClusteredVariants();
-        long declusteredVariantsBeforeDeprecation =
-                mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED).count();
+        Set<Long> accessions = deprecableClusteredVariants.stream()
+                                                          .map(AccessionedDocument::getAccession)
+                                                          .collect(Collectors.toSet());
+
+        long operationsBefore = mongoTemplate.count(query(where("accession").in(accessions)),
+                                                    DbsnpClusteredVariantOperationEntity.class);
+        assertEquals(0, operationsBefore);
+
+        // when
         writer.write(deprecableClusteredVariants);
-        long expectedVariants = declusteredVariantsBeforeDeprecation - deprecableClusteredVariants.size();
-        assertEquals(expectedVariants, mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED).count());
+
+        // then
+        long operationsAfter = mongoTemplate.count(query(where("accession").in(accessions)),
+                                                   DbsnpClusteredVariantOperationEntity.class);
+        assertNotEquals(0, operationsAfter);
+        assertOperations(deprecableClusteredVariants);
+    }
+
+    @Test
+    public void removeVariantsNotNeededAnymore() throws Exception {
+        // given
+        List<DbsnpClusteredVariantEntity> deprecableClusteredVariants = getDeprecableClusteredVariants();
+        Set<Long> accessions = deprecableClusteredVariants.stream()
+                                                          .map(AccessionedDocument::getAccession)
+                                                          .collect(Collectors.toSet());
+
+        long declusteredBefore = mongoTemplate.count(query(where("accession").in(accessions)),
+                                                     DbsnpClusteredVariantEntity.class,
+                                                     DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED);
+        long clusteredBefore = mongoTemplate.count(query(where("accession").in(accessions)),
+                                                   DbsnpClusteredVariantEntity.class);
+        assertNotEquals(0, declusteredBefore);
+        assertNotEquals(0, clusteredBefore);
+
+        // when
+        writer.write(deprecableClusteredVariants);
+
+        // then
+        long declusteredAfter = mongoTemplate.count(query(where("accession").in(accessions)),
+                                                    DbsnpClusteredVariantEntity.class,
+                                                    DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED);
+        long clusteredAfter = mongoTemplate.count(query(where("accession").in(accessions)),
+                                                  DbsnpClusteredVariantEntity.class);
+        assertEquals(0, declusteredAfter);
+        assertEquals(0, clusteredAfter);
         assertOperations(deprecableClusteredVariants);
     }
 
@@ -105,8 +156,20 @@ public class DeprecationWriterTest {
         DbsnpClusteredVariantEntity clusteredVariantEntity2 = newClusteredVariantEntity(853461378L, "GCA_000331145.1",
                                                                                         3827, "CM001768.1", 31898089,
                                                                                         VariantType.SNV, false);
+        DbsnpClusteredVariantEntity clusteredVariantEntity3 = newClusteredVariantEntity(853461378L, "GCA_000331145.1",
+                                                                                        3827, "CM001768.1", 31898090,
+                                                                                        VariantType.SNV, false);
         return Arrays.asList(clusteredVariantEntity1,
-                             clusteredVariantEntity2);
+                             clusteredVariantEntity2,
+                             clusteredVariantEntity3);
+    }
+
+    private DbsnpClusteredVariantEntity newClusteredVariantEntity(Long accession, String assembly, int taxonomy,
+                                                                  String contig, long start, VariantType type,
+                                                                  Boolean validated) {
+        ClusteredVariant variant = new ClusteredVariant(assembly, taxonomy, contig, start, type, validated,
+                                                        LocalDateTime.now());
+        return new DbsnpClusteredVariantEntity(accession, function.apply(variant), variant);
     }
 
     private void assertOperations(List<DbsnpClusteredVariantEntity> clusteredVariants) {
@@ -119,13 +182,5 @@ public class DeprecationWriterTest {
                                     .anyMatch(c -> (c.getInactiveObjects().get(0).getAccession()
                                                     .equals(clusteredVariant.getAccession()))));
         }
-    }
-
-    private DbsnpClusteredVariantEntity newClusteredVariantEntity(Long accession, String assembly, int taxonomy,
-                                                                  String contig, long start, VariantType type,
-                                                                  Boolean validated) {
-        ClusteredVariant variant = new ClusteredVariant(assembly, taxonomy, contig, start, type, validated,
-                                                         LocalDateTime.now());
-        return new DbsnpClusteredVariantEntity(accession, function.apply(variant), variant);
     }
 }

@@ -49,6 +49,7 @@ import static org.junit.Assert.assertFalse;
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/dbsnpClusteredVariantEntityDeclustered.json"})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class DeprecableClusteredVariantsReaderTest {
@@ -66,6 +67,8 @@ public class DeprecableClusteredVariantsReaderTest {
     private static final String ASM_3 = "GCA_000000003.1";
 
     private static final String ASM_4 = "GCA_000000004.1";
+
+    private static final int CHUNK_SIZE = 5;
 
     private ExecutionContext executionContext;
 
@@ -88,7 +91,7 @@ public class DeprecableClusteredVariantsReaderTest {
     @Before
     public void setUp() {
         executionContext = new ExecutionContext();
-        reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate);
+        reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate, CHUNK_SIZE);
         reader.open(executionContext);
     }
 
@@ -101,7 +104,7 @@ public class DeprecableClusteredVariantsReaderTest {
     @Test
     public void readDeprecateClusteredVariants() {
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
-        assertEquals(4, variants.size());
+        assertEquals(5, variants.size());
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_1)));
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(ID_2)));
     }
@@ -118,7 +121,7 @@ public class DeprecableClusteredVariantsReaderTest {
     @Test
     public void readSubsetOfAssemblies() {
         reader = new DeprecableClusteredVariantsReader(mongoClient, TEST_DB, mongoTemplate,
-                                                       Arrays.asList(ASM_2, ASM_3));
+                                                       Arrays.asList(ASM_2, ASM_3), CHUNK_SIZE);
         reader.open(executionContext);
         List<DbsnpClusteredVariantEntity> variants = readIntoList();
         assertEquals(1, variants.size());

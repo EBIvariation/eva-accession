@@ -51,8 +51,9 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
 
-    public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database) {
-        super(assemblyAccession, mongoClient, database);
+    public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
+                                         int chunkSize) {
+        super(assemblyAccession, mongoClient, database, chunkSize);
     }
 
     @Override

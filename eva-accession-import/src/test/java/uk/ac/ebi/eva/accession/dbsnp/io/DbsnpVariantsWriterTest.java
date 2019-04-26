@@ -53,11 +53,14 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.ISubmittedVariant.DEFAULT_VALIDATED;
 import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.ALTERNATE_ALLELE_1;
+import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.ALTERNATE_ALLELE_2;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_2;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.CLUSTERED_VARIANT_ACCESSION_3;
@@ -73,8 +76,6 @@ import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.SUBMITTED_VARIA
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.SUBMITTED_VARIANT_ACCESSION_4;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.TAXONOMY_1;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.TAXONOMY_2;
-import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.ALTERNATE_ALLELE_1;
-import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.ALTERNATE_ALLELE_2;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildClusteredVariant;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildClusteredVariantEntity;
 import static uk.ac.ebi.eva.accession.dbsnp.test.VariantBuilders.buildSimpleWrapper;
@@ -1196,4 +1197,109 @@ public class DbsnpVariantsWriterTest {
         assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(5, 3,
                                                                                         clusteredVariantAccession3);
     }
+
+    /**
+     * This test checks an example of complex SS declustering and merging and RS deprecation.
+     *
+     * The test data is not real, but it is a simplification of what happens for rs1152595904.
+     *
+     * After a submitted variant is declustered, if a copy of the clustered variant has a submitted variant that is
+     * merged into the first (declustered) submitted variant, the clustered variant copy is written as active, so we
+     * end up with a clustered variant present in both dbsnpClusteredVariantEntityDeclustered and
+     * dbsnpClusteredVariantEntity, but without active submitted variants linked to it.
+     */
+    @Test
+    public void clusteredVariantOutdatedAfterMergingSubmittedVariant() throws Exception {
+        // given
+        DbsnpVariantsWrapper wrapper1 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
+
+        setupClusteredVariantOutdatedAfterMergingSubmittedVariant(wrapper1, wrapper2);
+
+        // when
+        dbsnpVariantsWriter.write(Arrays.asList(wrapper1, wrapper2));
+
+        // then
+        assertClusteredVariantOutdatedAfterMergingSubmittedVariant(wrapper1, wrapper2);
+    }
+
+    @Test
+    public void clusteredVariantOutdatedAfterMergingSubmittedVariantMultiChunk() throws Exception {
+        // given
+        DbsnpVariantsWrapper wrapper1 = new DbsnpVariantsWrapper();
+        DbsnpVariantsWrapper wrapper2 = new DbsnpVariantsWrapper();
+
+        setupClusteredVariantOutdatedAfterMergingSubmittedVariant(wrapper1, wrapper2);
+
+        // when
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper1));
+        dbsnpVariantsWriter.write(Collections.singletonList(wrapper2));
+
+        // then
+        assertClusteredVariantOutdatedAfterMergingSubmittedVariant(wrapper1, wrapper2);
+    }
+
+    public void setupClusteredVariantOutdatedAfterMergingSubmittedVariant(DbsnpVariantsWrapper wrapper1,
+                                                                          DbsnpVariantsWrapper wrapper2) {
+        ClusteredVariant clusteredVariant1 = defaultClusteredVariant();
+
+        SubmittedVariant submittedVariant1 = buildSubmittedVariant(CLUSTERED_VARIANT_ACCESSION_1);
+        DbsnpSubmittedVariantEntity submittedVariantEntity1 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_1,
+                                                                                          submittedVariant1);
+        DbsnpClusteredVariantEntity clusteredVariantEntity1 = buildClusteredVariantEntity(CLUSTERED_VARIANT_ACCESSION_1,
+                                                                                          clusteredVariant1);
+
+        wrapper1.setClusteredVariant(clusteredVariantEntity1);
+        wrapper1.setSubmittedVariants(Collections.singletonList(submittedVariantEntity1));
+        wrapper1.setOperations(decluster(submittedVariantEntity1));
+
+
+        DbsnpSubmittedVariantEntity submittedVariantEntity2 = buildSubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION_2,
+                                                                                          submittedVariant1);
+        wrapper2.setClusteredVariant(clusteredVariantEntity1);
+        wrapper2.setSubmittedVariants(Collections.singletonList(submittedVariantEntity2));
+        wrapper2.setOperations(Collections.emptyList());
+    }
+
+    public void assertClusteredVariantOutdatedAfterMergingSubmittedVariant(DbsnpVariantsWrapper wrapper1,
+                                                                           DbsnpVariantsWrapper wrapper2)
+            throws Exception {
+        Long clusteredVariantAccession1 = wrapper1.getClusteredVariant().getAccession();
+        DbsnpSubmittedVariantEntity submittedVariantEntity1 = wrapper1.getSubmittedVariants().get(0);
+
+        DbsnpSubmittedVariantEntity expectedSubmittedVariantEntity1 = changeRS(submittedVariantEntity1, null);
+        assertions.assertSubmittedVariantsStored(1, expectedSubmittedVariantEntity1);
+
+        assertions.assertSubmittedOperationType(EventType.UPDATED, 1L);
+        assertions.assertSubmittedOperationType(EventType.MERGED, 1L);
+        assertions.assertSubmittedVariantsUpdateOperationsHaveClusteredVariantAccession(2, 1,
+                                                                                        clusteredVariantAccession1);
+
+        assertions.assertClusteredVariantDeclusteredStored(1, wrapper1);
+
+
+        String doNotFixThis = "This bug should not be fixed! The behaviour is too complex to change it. The inner "
+                              + "assertion shows what should be expected, but after "
+                              + "importing most species, it's easier to keep this bugged behaviour "
+                              + "and not relying on a variant not being present in the dbsnpClusteredVariantEntity "
+                              + "collection to mark declustered variants";
+        assertThatAssertionFails(() -> assertions.assertClusteredVariantStored(0), doNotFixThis);
+        assertThatAssertionFails(
+                () -> assertions.assertSubmittedVariantMergeOperationStored(2, 1, submittedVariantEntity1),
+                doNotFixThis);
+    }
+
+    private interface MayThrowException {
+        void run() throws Exception;
+    }
+
+    private void assertThatAssertionFails(MayThrowException assertionThatShouldFail, String message) throws Exception {
+        try {
+            assertionThatShouldFail.run();
+            fail(message);
+        } catch (AssertionError error) {
+            ; // ok, assertion failed as expected
+        }
+    }
+
 }

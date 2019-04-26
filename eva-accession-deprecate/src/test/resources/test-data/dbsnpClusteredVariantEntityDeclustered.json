@@ -45,6 +45,17 @@
       "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
     },
     {
+      "_id" : "75D415B9C75A025054387E09A600707B1317FC2A",
+      "asm" : "GCA_000331145.1",
+      "tax" : 3827,
+      "contig" : "CM001768.1",
+      "start" : NumberLong(31898090),
+      "type" : "SNV",
+      "accession" : NumberLong(853461378),
+      "version" : 1,
+      "createdDate" : ISODate("2015-11-21T13:13:00.000Z")
+    },
+    {
       "_id" : "HASH_1",
       "asm" : "GCA_000000001.1",
       "tax" : 3827,

@@ -52,6 +52,6 @@ public class AccessionedVariantMongoReaderConfiguration {
                                                                 MongoProperties mongoProperties) {
         logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
         return new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                 mongoProperties.getDatabase());
+                                                 mongoProperties.getDatabase(), parameters.getChunkSize());
     }
 }

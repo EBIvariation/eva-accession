@@ -52,6 +52,6 @@ public class MergedVariantMongoReaderConfiguration {
                                                       MongoProperties mongoProperties) {
         logger.info("Injecting MergedVariantMongoReader with parameters: {}", parameters);
         return new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                            mongoProperties.getDatabase());
+                                            mongoProperties.getDatabase(), parameters.getChunkSize());
     }
 }

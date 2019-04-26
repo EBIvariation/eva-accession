@@ -46,6 +46,8 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
 
     private static final String ID_FIELD = "_id";
 
+    private static final String ACCESSION_FIELD = "accession";
+
     private MongoTemplate mongoTemplate;
 
     public DeprecationWriter(MongoTemplate mongoTemplate) {
@@ -56,37 +58,85 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
     public void write(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) throws Exception {
         try {
             insertDeprecateOperation(deprecableClusteredVariants);
+            removeDeprecableClusteredVariantsDeprecated(deprecableClusteredVariants);
             removeDeprecableClusteredVariants(deprecableClusteredVariants);
         } catch (BulkOperationException e) {
             BulkWriteResult bulkWriteResult = e.getResult();
             logger.error("Deprecation writer failed. chunk size: {}, written operations: {}, removed rs ids: {}",
                          deprecableClusteredVariants.size(), bulkWriteResult.getInsertedCount(),
                          bulkWriteResult.getRemovedCount());
-            logger.error("RS IDs present in this failed chunk: [" + getAccessions(deprecableClusteredVariants) + "]");
+            logger.error(
+                    "RS IDs present in this failed chunk: [" + getAccessionsString(deprecableClusteredVariants) + "]");
             throw e;
         }
     }
 
-    private String getAccessions(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
+    private String getAccessionsString(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
         return deprecableClusteredVariants.stream()
                                           .map(AccessionedDocument::getAccession)
                                           .map(Objects::toString)
                                           .collect(Collectors.joining(", "));
     }
 
-    private void removeDeprecableClusteredVariants(
-            List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVatiants) {
+    /**
+     * Note that we remove documents by id. The reason is that we are iterating over the same collection, and it's not
+     * a good idea to remove elements that you haven't read yet (and there could be elements with the same accession
+     * and different id (hash) that we haven't read yet).
+     */
+    private void removeDeprecableClusteredVariantsDeprecated(
+            List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               DbsnpClusteredVariantEntity.class,
                                                               DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME);
         Query query = new Query();
-        query.addCriteria(Criteria.where(ID_FIELD).in(getIds(deprecableClusteredVatiants)));
+        query.addCriteria(Criteria.where(ID_FIELD).in(getIds(deprecableClusteredVariants)));
         bulkOperations.remove(query);
         bulkOperations.execute();
     }
 
     private List<String> getIds(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
         return deprecableClusteredVariants.stream().map(AccessionedDocument::getId).collect(Collectors.toList());
+    }
+
+    /**
+     * Note that we remove ClusteredVariants by accession. Unlike the removal from the
+     * {@link DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME} collection, here we don't care if we remove all the
+     * documents for the given accession, even if there are several hashes for it, because the
+     * {@link DeprecableClusteredVariantsReader} said that no SubmittedVariant is associated to the accession (whatever
+     * hashes the accession might have).
+     *
+     *
+     * Also, note that we can't remove by only the id (the hash) because other unrelated and active ClusteredVariants
+     * accessions would be removed erroneously. If we wanted to remove less ClusteredVariants, we could remove by id
+     * (hash) and accession, but that is problematic as well because it could leave as "active variants" some
+     * ClusteredVariants without SubmittedVariants, depending on whether the removed accession is also active with the
+     * same or a different hash. Look at this example of the resulting collections after an import:
+     *
+     * <pre>
+     * Declustered          Clustered             Submitted                 SubmittedOperations
+     * -                    RS1 (with hash 1)     SS1 (pointing to RS1)     -
+     * -                    RS2 (with hash 2)     -                         SS2 (mergedInto SS1)
+     * RS2 (with hash 2)    -                     -                         SS3 (declustered)
+     * RS2 (with hash 3)    -                     -                         SS4 (declustered)
+     * </pre>
+     *
+     * If the third line was present (RS2 with hash 2 and SS3), then the active RS2 (second line) would be removed.
+     * However, if only the fourth line was present (RS2 with hash 3 and SS4), the active RS2 (second line) wouldn't be
+     * removed. Examples like these suggest that we should only remove ClusteredVariants by accession, not using the id
+     * (the hash) at all.
+     */
+    private void removeDeprecableClusteredVariants(
+            List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
+        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                              DbsnpClusteredVariantEntity.class);
+        Query query = new Query();
+        query.addCriteria(Criteria.where(ACCESSION_FIELD).in(getAccessions(deprecableClusteredVariants)));
+        bulkOperations.remove(query);
+        bulkOperations.execute();
+    }
+
+    private List<Long> getAccessions(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
+        return deprecableClusteredVariants.stream().map(AccessionedDocument::getAccession).collect(Collectors.toList());
     }
 
     private void insertDeprecateOperation(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVatiants) {
