@@ -21,6 +21,20 @@ def get_pg_conn_for_species(species_info):
                                    species_info["pg_port"]))
 
 
+def get_mv_list_for_schema(pg_cursor, schema_name):
+    pg_cursor.execute(
+        """
+        select string_agg(table_name,',' order by table_name) from information_schema.tables where 
+        table_schema = 'dbsnp_{0}' and 
+        ((table_name like 'dbsnp_nohgvs%' and table_name ~ '\d$') or table_name like 'dbsnp_variant_load_nohgvslink%');
+        """.format(schema_name.lower())
+    )
+    results = pg_cursor.fetchall()
+    if not results:
+        return None
+    return results[0][0].split(",")
+
+
 def get_contiginfo_table_list_for_schema(pg_cursor, schema_name):
     pg_cursor.execute(
         """
