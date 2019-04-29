@@ -25,14 +25,6 @@ import sys
 import hashlib
 
 
-assembly_report_dataframe = None
-
-
-def get_assembly_report_dataframe(assembly_accession):
-    assembly_report_path = download_assembly_report(assembly_accession)
-    return get_dataframe_for_assembly_report(assembly_report_path)
-
-
 def persist_all_contigs(species, assembly_accession, contigs, contig_output_folder):
     contig_file_for_species = contig_output_folder + os.path.sep + species + "_" + assembly_accession + "_contigs.txt"
     with open(contig_file_for_species, "w") as contig_file_handle:
@@ -98,18 +90,6 @@ def get_ssids_for_contigs_without_genbank_equivalents(species_info, assembly_nam
     return accessions
 
 
-def get_genbank_contig_for_chr_from_asm_report(assembly_accession, chromosome):
-    global assembly_report_dataframe
-    if assembly_report_dataframe is None:
-        assembly_report_dataframe = get_assembly_report_dataframe(assembly_accession)
-    matching_entry_from_assembly_report = assembly_report_dataframe[assembly_report_dataframe["Assigned-Molecule"]
-                                                                    == chromosome]
-    if not matching_entry_from_assembly_report.empty:
-        return matching_entry_from_assembly_report["GenBank-Accn"].values[0]
-    else:
-        return ""
-
-
 def persist_to_file(records, file_name):
     with open(file_name, "w") as file_handle:
         for record in records:
@@ -147,22 +127,11 @@ def main(args):
                 "for the species {0} and assembly {1}...".format(args.species, args.assembly_accession))
     impacted_ssid_chr_from_dbsnp = get_eva1523_impacted_ss_id_chr_from_dbsnp(args)
     persist_to_file(impacted_ssid_chr_from_dbsnp, args.contig_output_folder + os.path.sep + args.species + "_" +
-                    "_" + args.assembly_accession + "_impacted_ssid_chr_from_dbsnp.txt")
+                    args.assembly_accession + "_impacted_ssid_chr_from_dbsnp.txt")
     if len(impacted_ssid_chr_from_dbsnp) == 0:
         logger.info("No impacted SS IDs for the species {0} and assembly {1}".format(args.species,
                                                                                      args.assembly_accession))
         sys.exit(0)
-
-    # Associate the impacted SS IDs with the correct contig from the ASM report
-    logger.info("Associating impacted SS IDs and chromosomes with corresponding Genbank contigs "
-                "for the species {0} and assembly {1}...".format(args.species, args.assembly_accession))
-    impacted_ssid_chr_from_dbsnp_with_contig = [(ss_id, chromosomes,
-                                                 [get_genbank_contig_for_chr_from_asm_report(args.assembly_accession,
-                                                                                             chromosome)
-                                                  for chromosome in chromosomes])
-                                                for ss_id, chromosomes in impacted_ssid_chr_from_dbsnp]
-    persist_to_file(impacted_ssid_chr_from_dbsnp_with_contig, args.contig_output_folder + os.path.sep + args.species +
-                    "_" + args.assembly_accession + "_impacted_ssid_chr_from_dbsnp_with_contig.txt")
 
 
 if __name__ == "__main__":
