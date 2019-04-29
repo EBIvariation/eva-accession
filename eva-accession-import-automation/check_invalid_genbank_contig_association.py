@@ -22,30 +22,15 @@ from __init__ import *
 import os
 import subprocess
 import sys
-import pymongo
 import hashlib
 
 
 assembly_report_dataframe = None
-mongo_connection = None
-mongo_dbsnpSVE_collection_handle = None
-mongo_dbsnpSVOE_collection_handle = None
 
 
 def get_assembly_report_dataframe(assembly_accession):
     assembly_report_path = download_assembly_report(assembly_accession)
     return get_dataframe_for_assembly_report(assembly_report_path)
-
-
-def get_mongo_collection_handles(mongo_uri, mongo_db):
-    global mongo_connection
-    mongo_connection = pymongo.MongoClient(mongo_uri)
-    db = mongo_connection.get_database(mongo_db)
-    return [db.get_collection("dbsnpSubmittedVariantEntity"), db.get_collection("dbsnpSubmittedVariantOperationEntity")]
-
-
-def close_mongo_connection():
-    mongo_connection.close() if mongo_connection else None
 
 
 def persist_all_contigs(species, assembly_accession, contigs, contig_output_folder):
@@ -113,25 +98,6 @@ def get_ssids_for_contigs_without_genbank_equivalents(species_info, assembly_nam
     return accessions
 
 
-def mongo_contig_non_matches(mongo_uri, mongo_db, assembly_accession, ss_id_contigs_to_match):
-    ss_id_contigs_dbsnpSVE_query = [{"accession": ss_id, "seq": assembly_accession, "contig": {"$nin": contig}}
-                                    for ss_id, _, contig in ss_id_contigs_to_match]
-    ss_id_contigs_dbsnpSVOE_query = [{"accession": ss_id, "inactiveObjects.seq": assembly_accession,
-                                      "inactiveObjects.contig": {"$nin": contig}}
-                                     for ss_id, _, contig in ss_id_contigs_to_match]
-    global mongo_dbsnpSVE_collection_handle, mongo_dbsnpSVOE_collection_handle
-    if not mongo_dbsnpSVE_collection_handle:
-        mongo_dbsnpSVE_collection_handle, mongo_dbsnpSVOE_collection_handle = get_mongo_collection_handles(mongo_uri,
-                                                                                                           mongo_db)
-    results = [(result["seq"], result["accession"], result["contig"], "NONE")
-               for result in list(mongo_dbsnpSVE_collection_handle.find({"$or": ss_id_contigs_dbsnpSVE_query}))]
-    results.extend([(result["inactiveObjects"][0]["seq"], result["accession"], result["inactiveObjects"][0]["contig"],
-                     result["eventType"])
-                    for result in list(mongo_dbsnpSVOE_collection_handle.find({"$or": ss_id_contigs_dbsnpSVOE_query}))])
-
-    return results
-
-
 def get_genbank_contig_for_chr_from_asm_report(assembly_accession, chromosome):
     global assembly_report_dataframe
     if assembly_report_dataframe is None:
@@ -197,14 +163,6 @@ def main(args):
                                                 for ss_id, chromosomes in impacted_ssid_chr_from_dbsnp]
     persist_to_file(impacted_ssid_chr_from_dbsnp_with_contig, args.contig_output_folder + os.path.sep + args.species +
                     "_" + args.assembly_accession + "_impacted_ssid_chr_from_dbsnp_with_contig.txt")
-    # Look up the above SS IDs against MongoDB to check if contigs match, if not mark them as impacted
-    logger.info("Checking for contig mismatches in MongoDB against those from the assembly report...")
-    impacted_ssids = mongo_contig_non_matches(args.mongo_uri, args.mongo_db, args.assembly_accession,
-                                              impacted_ssid_chr_from_dbsnp_with_contig)
-    persist_to_file(impacted_ssids, args.contig_output_folder + os.path.sep + args.species + "_" +
-                    args.assembly_accession + "_impacted_ssids.txt")
-
-    close_mongo_connection()
 
 
 if __name__ == "__main__":
