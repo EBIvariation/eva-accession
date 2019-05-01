@@ -71,15 +71,14 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
         if (contigPresentInAssemblyReport) {
             replaceContigWithGenbankAccession(subSnpNoHgvs, contigSynonyms);
-        } else {
-            replaceChromosomeWithGenbankAccession(subSnpNoHgvs, chromosomeSynonyms);
         }
 
         return subSnpNoHgvs;
     }
 
     private void replaceContigWithGenbankAccession(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
-        if (contigSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
+        if ((contigSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) &&
+                contigSynonyms.getGenBank() != null) {
             subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
         } else {
             // genbank is not identical to refseq and the assembly is not genbank, so

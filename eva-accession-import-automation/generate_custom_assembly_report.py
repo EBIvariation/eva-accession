@@ -85,6 +85,21 @@ def download_assembly_report(assembly_accession):
     return assembly_report_path
 
 
+def insert_entry_into_assembly_report_dataframe(assembly_report_dataframe, entry_index, refseq_accession,
+                                                equivalent_genbank_accession, equivalence="="):
+    assembly_report_dataframe.loc[entry_index, "# Sequence-Name"] = refseq_accession
+    assembly_report_dataframe.loc[entry_index, "Sequence-Role"] = "scaffold"
+    assembly_report_dataframe.loc[entry_index, "Assigned-Molecule"] = "na"
+    assembly_report_dataframe.loc[entry_index, "Assigned-Molecule-Location/Type"] = "na"
+    assembly_report_dataframe.loc[entry_index, "GenBank-Accn"] = \
+        equivalent_genbank_accession
+    assembly_report_dataframe.loc[entry_index, "Relationship"] = equivalence
+    assembly_report_dataframe.loc[entry_index, "RefSeq-Accn"] = refseq_accession
+    assembly_report_dataframe.loc[entry_index, "Assembly-Unit"] = "na"
+    assembly_report_dataframe.loc[entry_index, "Sequence-Length"] = "na"
+    assembly_report_dataframe.loc[entry_index, "UCSC-style-name"] = "na"
+
+
 def insert_absent_genbank_accessions_in_assembly_report(species, refseq_accessions_from_db,
                                                         assembly_report_dataframe, genbank_equivalents_dataframe):
     absent_refseq_accessions = \
@@ -97,19 +112,12 @@ def insert_absent_genbank_accessions_in_assembly_report(species, refseq_accessio
         try:
             equivalent_genbank_accession = \
                 genbank_equivalents_dataframe.loc[refseq_accession]["gb_acc"]
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "# Sequence-Name"] = refseq_accession
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "Sequence-Role"] = "scaffold"
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "Assigned-Molecule"] = "na"
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "Assigned-Molecule-Location/Type"] = "na"
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "GenBank-Accn"] = \
-                equivalent_genbank_accession
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "Relationship"] = "="
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "RefSeq-Accn"] = refseq_accession
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "Assembly-Unit"] = "na"
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "Sequence-Length"] = "na"
-            assembly_report_dataframe.loc[new_assembly_report_entry_index, "UCSC-style-name"] = "na"
+            insert_entry_into_assembly_report_dataframe(assembly_report_dataframe, new_assembly_report_entry_index,
+                                                        refseq_accession, equivalent_genbank_accession)
         except KeyError:
             logger.warning("Could not find equivalent GenBank accession for RefSeq accession: " + refseq_accession)
+            insert_entry_into_assembly_report_dataframe(assembly_report_dataframe, new_assembly_report_entry_index,
+                                                        refseq_accession, "na", "<>")
         finally:
             new_assembly_report_entry_index += 1
 
