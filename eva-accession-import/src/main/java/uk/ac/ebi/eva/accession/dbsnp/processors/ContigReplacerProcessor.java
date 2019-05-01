@@ -86,16 +86,6 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
         }
     }
 
-    private void replaceChromosomeWithGenbankAccession(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms chromosomeSynonyms) {
-        if (chromosomeSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) {
-            subSnpNoHgvs.setContigName(chromosomeSynonyms.getGenBank());
-            subSnpNoHgvs.setContigStart(subSnpNoHgvs.getChromosomeStart());
-        } else {
-            // genbank is not identical to refseq and the assembly is not genbank, so
-            // we must keep the original refseq, even if the refseq was not found in the assembly report
-        }
-    }
-
     private boolean isGenbank(String assemblyAccession) {
         return assemblyAccession.startsWith("GCA_");
     }
