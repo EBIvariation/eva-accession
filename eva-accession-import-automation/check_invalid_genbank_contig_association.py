@@ -47,7 +47,8 @@ def persist_contigs_without_genbank_equivalents(contig_file_species, genbank_equ
                     contig_file_handle.write(line.strip() + os.linesep)
 
         errors = os.linesep.join(process.stderr.readlines())
-    if process.returncode != 0 and process.returncode != 1:  # Grep will return 1 exit code for no matches!
+
+    if process.returncode > 1:  # Grep will return 1 exit code for no matches!
         logger.error(contigs_without_genbank_equivalents_command + " failed!" + os.linesep + errors)
         raise subprocess.CalledProcessError(process.returncode, process.args)
 
@@ -68,8 +69,8 @@ def build_contig_name_index_for_species_mvs(species_info, species_mvs):
     pg_conn.close()
 
 
-def get_ssids_for_contigs_without_genbank_equivalents(species_info, assembly_name,
-                                                      contigs_without_genbank_equivalents):
+def get_ssids_for_contigs_without_genbank_equivalents_from_dbsnp(species_info, assembly_name,
+                                                                 contigs_without_genbank_equivalents):
     pg_conn = data_ops.get_pg_conn_for_species(species_info)
     pg_cursor = pg_conn.cursor()
 
@@ -96,23 +97,19 @@ def persist_to_file(records, file_name):
             file_handle.write("\t".join([str(elem) for elem in record]) + os.linesep)
 
 
-def get_eva1523_impacted_ss_id_chr_from_dbsnp(args):
+def get_ssids_for_contigs_without_genbank_equivalents(args):
     all_contigs = get_refseq_accessions_from_db(args.species_info)
     all_contigs_file = persist_all_contigs(args.species, args.assembly_accession, all_contigs,
                                            args.contig_output_folder)
-    # This comes after writing because we want to explicitly write no results for a given species
-    # so as to be searchable by a find command with a 0k criteria in the future
-    if len(all_contigs) == 0:
-        logger.info("No Contigs without Genbank equivalents for the species: " + args.species)
-        sys.exit(0)
     contigs_without_genbank_equivalents_file = \
         persist_contigs_without_genbank_equivalents(all_contigs_file, args.genbank_equivalents_file)
     contigs_without_genbank_equivalents = list(map(str.strip,
                                                    open(contigs_without_genbank_equivalents_file).readlines()))
+
     if len(contigs_without_genbank_equivalents) > 0:
         ssid_chr_for_contigs_without_genbank_equivalents = \
-            get_ssids_for_contigs_without_genbank_equivalents(args.species_info, args.assembly_name,
-                                                              contigs_without_genbank_equivalents)
+            get_ssids_for_contigs_without_genbank_equivalents_from_dbsnp(args.species_info, args.assembly_name,
+                                                                         contigs_without_genbank_equivalents)
         return ssid_chr_for_contigs_without_genbank_equivalents
     else:
         return []
@@ -125,7 +122,7 @@ def main(args):
     # Get SS IDs (along with their chromosomes) in dbSNP which have RefSeq contigs without Genbank equivalents
     logger.info("Getting impacted SS IDs and chromosomes from dbSNP "
                 "for the species {0} and assembly {1}...".format(args.species, args.assembly_accession))
-    impacted_ssid_chr_from_dbsnp = get_eva1523_impacted_ss_id_chr_from_dbsnp(args)
+    impacted_ssid_chr_from_dbsnp = get_ssids_for_contigs_without_genbank_equivalents(args)
     persist_to_file(impacted_ssid_chr_from_dbsnp, args.contig_output_folder + os.path.sep + args.species + "_" +
                     args.assembly_accession + "_impacted_ssid_chr_from_dbsnp.txt")
     if len(impacted_ssid_chr_from_dbsnp) == 0:
@@ -135,7 +132,8 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Generate custom assembly report for a given species and assembly',
+    parser = argparse.ArgumentParser(description='Assess SS IDs with no genbank equivalents '
+                                                 'assigned to invalid contigs in Mongo',
                                      add_help=False)
     parser.add_argument("-d", "--metadb", help="Postgres metadata DB", required=True)
     parser.add_argument("-u", "--metauser", help="Postgres metadata DB username", required=True)
