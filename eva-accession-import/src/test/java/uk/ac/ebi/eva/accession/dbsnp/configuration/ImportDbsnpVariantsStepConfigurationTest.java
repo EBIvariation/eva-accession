@@ -74,7 +74,7 @@ public class ImportDbsnpVariantsStepConfigurationTest {
 
     private static final int EXPECTED_DECLUSTERED_VARIANTS = 2;
 
-    private static final String CONTIG = "CM000114.4";
+    private static final String CONTIG = "CTG1";
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -125,7 +125,7 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         clusteredVariantRepository.findAll().forEach(storedClusteredVariants::add);
 
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAssemblyMatch,
-                                     Arrays.asList(26201546L, 1540359250L, 88888888L, 44444L, 9999999L));
+                                     Arrays.asList(88888888L, 44444L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isSupportedByEvidence,
                                      Arrays.asList(26201546L, 25062583L, 25312601L, 27587141L, 44444L, 88888888L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAllelesMatch,
@@ -164,8 +164,9 @@ public class ImportDbsnpVariantsStepConfigurationTest {
                                           List<DbsnpClusteredVariantEntity> clusteredVariants) {
         DbsnpSubmittedVariantEntity submittedVariant = submittedVariants.stream().filter(
                 ss -> ss.getAccession().equals(9999999L)).findFirst().get();
-        SubmittedVariant expectedVariant = new SubmittedVariant("GCF_000002315.4", 9031, "HANDLE_BATCH", CONTIG, 2,
-                                                                "GC", "", 6666666L, false, true, true, false, null);
+        SubmittedVariant expectedVariant = new SubmittedVariant("GCF_000002315.4", 9031, "HANDLE_BATCH", CONTIG, 3,
+                                                                "CG", "", 6666666L, false, false, true, false,
+                                                                LocalDateTime.of(2004, 6, 22, 21, 41));
         assertEquals(expectedVariant, submittedVariant.getModel());
         // the hash should have been recalculated with the new model
         Function<ISubmittedVariant, String> hashingFunction = new SubmittedVariantSummaryFunction().andThen(
