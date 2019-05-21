@@ -114,7 +114,7 @@ if __name__ == "__main__":
                         help="Path to the configuration file with private connection details, credentials etc.,",
                         required=True)
     parser.add_argument("--Xmx", help="Memory allocation for the import pipeline (optional)", default="3g")
-    parser.add_argument("--only-printing", "Prepare and write the commands, but don't run them",
+    parser.add_argument("--only-printing", help="Prepare and write the commands, but don't run them",
                         action='store_true', required=False)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
