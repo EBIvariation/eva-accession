@@ -65,9 +65,12 @@ def run_jobs(command_line_args):
         # First job will always have the latest build
         first_job_bsub_command += " -l"
 
-        print("Triggering job: " + first_job_bsub_command)
         job_launch_script_file.write(first_job_bsub_command + os.linesep)
-        os.system(first_job_bsub_command)
+        if program_args["only_printing"]:
+            print("Writing job command without launching: " + first_job_bsub_command)
+        else:
+            print("Triggering job: " + first_job_bsub_command)
+            os.system(first_job_bsub_command)
 
         prev_job_name = first_job_name
         for build, assembly_name, assembly_accession in command_line_args["assembly_info"][1:]:
@@ -80,9 +83,12 @@ def run_jobs(command_line_args):
             job_bsub_command += " --step 4"
             job_bsub_command += " -l" if build == str(latest_build) else ""
 
-            print("Triggering job: " + job_bsub_command)
             job_launch_script_file.write(job_bsub_command + os.linesep)
-            os.system(job_bsub_command)
+            if program_args["only_printing"]:
+                print("Writing job command without launching: " + job_bsub_command)
+            else:
+                print("Triggering job: " + job_bsub_command)
+                os.system(job_bsub_command)
 
             prev_job_name = curr_job_name
 
@@ -108,6 +114,8 @@ if __name__ == "__main__":
                         help="Path to the configuration file with private connection details, credentials etc.,",
                         required=True)
     parser.add_argument("--Xmx", help="Memory allocation for the import pipeline (optional)", default="3g")
+    parser.add_argument("--only-printing", "Prepare and write the commands, but don't run them",
+                        action='store_true', required=False)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
