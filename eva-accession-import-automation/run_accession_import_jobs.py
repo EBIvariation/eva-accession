@@ -104,11 +104,11 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--species",
                         help="Species for which the process has to be run (e.g. red_sheep_469796)", required=True)
     parser.add_argument("--scientific-name",
-                        help="Filesystem-friendly scientific name for the species (e.g. sus_scrofa)", required=True)
+                        help="Filesystem-friendly scientific name for the species (e.g. ovis_orientalis)", required=True)
     parser.add_argument("-a", "--assembly-info", help="One or more build,assembly name,accession combinations "
                                                       "for which the process has to be run "
                                                       "(GCA preferred for assembly name) "
-                                                      "e.g. 150,Sscrofa11.1,GCA_000003025.6",
+                                                      "e.g. 143,Oar_v3.1,GCA_000298735.1",
                         nargs='+', type=assembly_info, required=True)
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private connection details, credentials etc.,",

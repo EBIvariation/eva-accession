@@ -143,15 +143,15 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--species", help="Species for which the process has to be run (e.g. red_sheep_469796"),
                         required=True)
     parser.add_argument("--scientific-name",
-                        help="Filesystem-friendly scientific name for the species (e.g. daucus_carota)", required=True)
+                        help="Filesystem-friendly scientific name for the species (e.g. ovis_orientalis)", required=True)
     parser.add_argument("-a", "--assembly-accession", help="Assembly for which the process has to be run - "
-                                                           "GCA preferred (e.g. GCA_000001215.2)", required=True)
+                                                           "GCA preferred (e.g. GCA_000298735.1)", required=True)
     parser.add_argument("-b", "--build", help="dbSNP build number, e.g. 151", required=True)
     parser.add_argument("-l", "--latest-build",
                         help="Flag that this build is the latest (relevant for dbsnp table name)",
                         action='store_true')
     parser.add_argument("-n", "--assembly-name",
-                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0", required=True)
+                        help="Assembly name for which the process has to be run, e.g. Oar_v3.1", required=True)
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private connection details, credentials etc.,",
                         required=True)
