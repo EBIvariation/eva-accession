@@ -95,8 +95,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Run the accession import process for a given species', add_help=False,
         formatter_class=RawTextHelpFormatter)
-    parser.add_argument("-s", "--species", help="Species for which the process has to be run", required=True)
-    parser.add_argument("--scientific-name", help="Scientific name for the species (e.g. sus_scrofa)", required=True)
+    parser.add_argument("-s", "--species",
+                        help="Species for which the process has to be run (e.g. red_sheep_469796)", required=True)
+    parser.add_argument("--scientific-name",
+                        help="Filesystem-friendly scientific name for the species (e.g. sus_scrofa)", required=True)
     parser.add_argument("-a", "--assembly-info", help="One or more build,assembly name,accession combinations "
                                                       "for which the process has to be run "
                                                       "(GCA preferred for assembly name) "
