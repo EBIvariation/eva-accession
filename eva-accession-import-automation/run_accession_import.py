@@ -111,10 +111,11 @@ def get_commands_to_run(command_line_args):
                                    "java -jar -Xmx{Xmx} {accession_import_jar} " \
                                    "--spring.config.location={properties_file_path}".format(**program_args)
 
+    [species_name, taxonomy] = program_args["species"].rsplit("_", 1)
     ss_counts_validation_command = ("cd {validation_script_path} && " +
                                     "bash ss_counts.sh {assembly_accession} {assembly_name} " +
-                                    program_args["species"].split("_")[0] + " " +
-                                    program_args["species"].split("_")[1] +
+                                    species_name + " " +
+                                    taxonomy +
                                     " {dbsnp_build} {species_accessioning_import_qa_folder} {env}" +
                                     (" " if program_args["latest_build"] else " {build}")).format(**program_args)
     rs_counts_validation_command = ss_counts_validation_command.replace("ss_counts", "rs_counts")
@@ -139,16 +140,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Run the accession import process for a given species, assembly and build', add_help=False,
         formatter_class=RawTextHelpFormatter)
-    parser.add_argument("-s", "--species", help="Species for which the process has to be run", required=True)
-    parser.add_argument("--scientific-name", help="Scientific name for the species (e.g. daucus_carota)", required=True)
+    parser.add_argument("-s", "--species", help="Species for which the process has to be run (e.g. red_sheep_469796)",
+                        required=True)
+    parser.add_argument("--scientific-name",
+                        help="Filesystem-friendly scientific name for the species (e.g. ovis_orientalis)", required=True)
     parser.add_argument("-a", "--assembly-accession", help="Assembly for which the process has to be run - "
-                                                           "GCA preferred (e.g. GCA_000001215.2)", required=True)
+                                                           "GCA preferred (e.g. GCA_000298735.1)", required=True)
     parser.add_argument("-b", "--build", help="dbSNP build number, e.g. 151", required=True)
     parser.add_argument("-l", "--latest-build",
                         help="Flag that this build is the latest (relevant for dbsnp table name)",
                         action='store_true')
     parser.add_argument("-n", "--assembly-name",
-                        help="Assembly name for which the process has to be run, e.g. Gallus_gallus-5.0", required=True)
+                        help="Assembly name for which the process has to be run, e.g. Oar_v3.1", required=True)
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private connection details, credentials etc.,",
                         required=True)
