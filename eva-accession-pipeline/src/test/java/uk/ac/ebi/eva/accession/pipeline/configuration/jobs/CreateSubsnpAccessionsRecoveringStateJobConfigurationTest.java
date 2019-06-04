@@ -28,6 +28,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
@@ -51,7 +52,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SU
 @TestPropertySource("classpath:accession-pipeline-recover-test.properties")
 public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
 
-    private static final int EXPECTED_VARIANTS = 22;
+    private static final int EXPECTED_VARIANTS_IN_VCF = 22;
 
     private static final long REUSED_ACCESSION = 5000000000L;
 
@@ -63,6 +64,9 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private ContiguousIdBlockRepository blockRepository;
 
     @Autowired
     private InputParameters inputParameters;
@@ -77,12 +81,17 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     public void accessionGeneratorShouldRecoverUncommitedAccessions() throws Exception {
         writeSubmittedVariantWithUncommittedAccession(REUSED_ACCESSION);
         assertEquals(1, repository.findByAccession(REUSED_ACCESSION).size());
+        assertEquals(1, blockRepository.count());
+        assertEquals(REUSED_ACCESSION - 1, blockRepository.findAll().iterator().next().getLastCommitted());
 
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         assertStepNames(jobExecution.getStepExecutions());
 
         assertEquals(1, repository.findByAccession(REUSED_ACCESSION).size());
+        assertEquals(1, blockRepository.count());
+        assertEquals(REUSED_ACCESSION + EXPECTED_VARIANTS_IN_VCF,
+                     blockRepository.findAll().iterator().next().getLastCommitted());
     }
 
     private void writeSubmittedVariantWithUncommittedAccession(long accession) {
