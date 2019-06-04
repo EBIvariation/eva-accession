@@ -17,14 +17,33 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
+import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository.BasicMongoDbAccessionedCustomRepositoryImpl;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class SubmittedVariantAccessioningRepositoryImpl
         extends BasicMongoDbAccessionedCustomRepositoryImpl<Long, SubmittedVariantEntity> {
 
+    private MongoOperations mongoOperations;
+
     public SubmittedVariantAccessioningRepositoryImpl(MongoTemplate mongoTemplate) {
         super(SubmittedVariantEntity.class, mongoTemplate);
+        mongoOperations = mongoTemplate;
     }
 
+    List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end) {
+        return mongoOperations.find(Query.query(Criteria.where("accession").gte(start).lt(end)),
+                                    SubmittedVariantEntity.class)
+                              .stream()
+                              .map(AccessionedDocument::getAccession)
+                              .map(accession -> (AccessionProjection<Long>) () -> accession)
+                              .collect(Collectors.toList());
+    }
 }

@@ -18,6 +18,7 @@
 package uk.ac.ebi.eva.accession.core.persistence;
 
 import org.springframework.stereotype.Repository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
 
 import java.util.List;
@@ -29,4 +30,6 @@ public interface SubmittedVariantAccessioningRepository extends
     List<SubmittedVariantEntity> findByClusteredVariantAccessionIn(List<Long> clusteredVariantAccession);
 
     List<SubmittedVariantEntity> findByHashedMessageIn(List<String> hashes);
+
+    List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end);
 }
