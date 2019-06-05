@@ -16,60 +16,88 @@
 
 package uk.ac.ebi.eva.accession.pipeline.configuration.jobs;
 
+import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.test.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
 @RunWith(SpringRunner.class)
+@UsingDataSet(locations = {
+        "/test-data/submittedVariantEntity.json"})
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
         MongoTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-recover-test.properties")
 public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
 
-    private static final int EXPECTED_VARIANTS_IN_VCF = 22;
+    private static final long UNCOMMITTED_ACCESSION = 5000000000L;
 
-    private static final long REUSED_ACCESSION = 5000000000L;
-
-    @Autowired
-    private JobLauncherTestUtils jobLauncherTestUtils;
+    private static final String TEST_DB = "test-db";
 
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
 
     @Autowired
-    private MongoTemplate mongoTemplate;
+    private ContiguousIdBlockService blockService;
+
 
     @Autowired
     private ContiguousIdBlockRepository blockRepository;
 
     @Autowired
+    private SubmittedVariantAccessioningDatabaseService databaseService;
+
+    @Autowired
     private InputParameters inputParameters;
+
+    //needed for @UsingDataSet
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Rule
+    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
+            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+
+    @Value("${accessioning.submitted.categoryId}")
+    private String categoryId;
+
+    @Value("${accessioning.instanceId}")
+    private String applicationInstanceId;
+
 
     @After
     public void tearDown() throws Exception {
@@ -78,32 +106,55 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     }
 
     @Test
-    public void accessionGeneratorShouldRecoverUncommitedAccessions() throws Exception {
-        writeSubmittedVariantWithUncommittedAccession(REUSED_ACCESSION);
-        assertEquals(1, repository.findByAccession(REUSED_ACCESSION).size());
-        assertEquals(1, blockRepository.count());
-        assertEquals(REUSED_ACCESSION - 1, blockRepository.findAll().iterator().next().getLastCommitted());
+    public void accessionGeneratorShouldRecoverUncommittedAccessions() throws Exception {
+        startWithAnUncommittedAccessionInMongo();
 
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        assertStepNames(jobExecution.getStepExecutions());
+        SubmittedVariantMonotonicAccessioningService service =
+                instantiateAnAccessioningServiceThatRecoversTheUncommittedAccession();
 
-        assertEquals(1, repository.findByAccession(REUSED_ACCESSION).size());
+        List<Long> generatedAccessions = accessionANewObject(service);
+
+        assertThatTheUncommittedAccessionWasNotReused(generatedAccessions);
+    }
+
+    private void startWithAnUncommittedAccessionInMongo() {
+        assertEquals(1, repository.count());
+        assertEquals(1, repository.findByAccession(UNCOMMITTED_ACCESSION).size());
         assertEquals(1, blockRepository.count());
-        assertEquals(REUSED_ACCESSION + EXPECTED_VARIANTS_IN_VCF,
+
+        // This means that the last committed accession is the previous to the UNCOMMITTED_ACCESSION
+        assertEquals(UNCOMMITTED_ACCESSION - 1, blockRepository.findAll().iterator().next().getLastCommitted());
+    }
+
+    private SubmittedVariantMonotonicAccessioningService instantiateAnAccessioningServiceThatRecoversTheUncommittedAccession() {
+        MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator = new MonotonicAccessionGenerator<>(
+                categoryId, applicationInstanceId, blockService, databaseService);
+
+        return new SubmittedVariantMonotonicAccessioningService(
+                accessionGenerator, databaseService, new SubmittedVariantSummaryFunction(), new SHA1HashingFunction());
+    }
+
+    private List<Long> accessionANewObject(SubmittedVariantMonotonicAccessioningService service)
+            throws AccessionCouldNotBeGeneratedException {
+        return service.getOrCreate(Collections.singletonList(
+                new SubmittedVariant("assembly", 1111, "project", "contig", 100, "A", "T", null, false, false, false,
+                                     false, null)))
+                      .stream()
+                      .map(AccessionWrapper::getAccession)
+                      .collect(Collectors.toList());
+    }
+
+    private void assertThatTheUncommittedAccessionWasNotReused(List<Long> generatedAccessions) {
+        assertEquals(1, generatedAccessions.size());
+        Long secondAccessionWrapper = generatedAccessions.get(0);
+        assertEquals(1, repository.findByAccession(secondAccessionWrapper).size());
+
+        assertEquals(1, repository.findByAccession(UNCOMMITTED_ACCESSION).size());
+        assertEquals((long)secondAccessionWrapper, UNCOMMITTED_ACCESSION + 1);
+
+        assertEquals(1, blockRepository.count());
+        assertEquals((long)secondAccessionWrapper,
                      blockRepository.findAll().iterator().next().getLastCommitted());
     }
 
-    private void writeSubmittedVariantWithUncommittedAccession(long accession) {
-        mongoTemplate.insert(
-                new SubmittedVariantEntity(accession, "hash-1", "GCA_x", 9999, "project_id", "contig_id", 100,
-                                           "A", "T", null, false, false, false, false, 1));
-    }
-
-    private void assertStepNames(Collection<StepExecution> stepExecutions) {
-        assertEquals(2, stepExecutions.size());
-        Iterator<StepExecution> iterator = stepExecutions.iterator();
-        assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
-        assertEquals(CHECK_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
-    }
 }
