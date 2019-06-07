@@ -37,13 +37,13 @@ import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsRecoveringStateJobConfigurationTest.UNCOMMITTED_ACCESSION;
 
 /**
- * This configuration class has the single purpose of having loaded in mongo an object *before* the
+ * This configuration class has the single purpose of having loaded in MongoDB an object *before* the
  * MonotonicAccessionGenerator is instantiated (and autowired in the accessioning service and pipeline jobs) so that
  * the generator can recover from uncommitted accessions.
  *
- * An uncommitted accession is an accession that is present in MongoDB but wasn't committed in the block service (due
- * to e.g. an unexpected crash of the application in previous executions). If the block service doesn't recover, this
- * might lead to accessions assigned to several different objects in mongo.
+ * An uncommitted accession is an accession that is present in MongoDB but wasn't committed in the block service (e.g.
+ * due to an unexpected crash of the application in previous executions). If the block service doesn't recover, this
+ * might lead to a single accession being assigned to several different objects in mongo.
  */
 @Configuration
 public class RecoveringAccessioningConfiguration {

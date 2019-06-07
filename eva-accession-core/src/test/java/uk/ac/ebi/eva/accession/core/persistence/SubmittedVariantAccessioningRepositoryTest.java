@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
@@ -92,7 +91,7 @@ public class SubmittedVariantAccessioningRepositoryTest {
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
-    public void queryAccessionRange() throws AccessionCouldNotBeGeneratedException {
+    public void queryAccessionRange() {
         long firstAccession = 1000L;
         long secondAccession = 1002L;
         List<SubmittedVariantEntity> variants = Arrays.asList(
@@ -101,21 +100,22 @@ public class SubmittedVariantAccessioningRepositoryTest {
 
         repository.save(variants);
 
-        assertAccessionsEquals(repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1000L),
-                               Arrays.asList());
+        assertAccessionsEquals(Arrays.asList(),
+                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1000L));
 
-        assertAccessionsEquals(repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1001L),
-                               Arrays.asList(firstAccession));
+        assertAccessionsEquals(Arrays.asList(firstAccession),
+                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1001L));
 
-        assertAccessionsEquals(repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1005L),
-                               Arrays.asList(firstAccession, secondAccession));
+        assertAccessionsEquals(Arrays.asList(firstAccession, secondAccession),
+                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1005L));
 
-        assertAccessionsEquals(repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1001L, 1005L),
-                               Arrays.asList(secondAccession));
+        assertAccessionsEquals(Arrays.asList(secondAccession),
+                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1001L, 1005L));
     }
 
-    private void assertAccessionsEquals(List<AccessionProjection<Long>> accessionsProjection, List<Long> accessions) {
-        assertEquals(new TreeSet<>(accessions),
+    private void assertAccessionsEquals(List<Long> expectedAccessions,
+                                        List<AccessionProjection<Long>> accessionsProjection) {
+        assertEquals(new TreeSet<>(expectedAccessions),
                      accessionsProjection.stream().map(AccessionProjection::getAccession).collect(Collectors.toSet()));
     }
 }
