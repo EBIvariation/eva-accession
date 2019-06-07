@@ -39,7 +39,7 @@ public class SubmittedVariantAccessioningRepositoryImpl
     }
 
     List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end) {
-        return mongoOperations.find(Query.query(Criteria.where("accession").gte(start).lt(end)),
+        return mongoOperations.find(Query.query(Criteria.where("accession").gte(start).lte(end)),
                                     SubmittedVariantEntity.class)
                               .stream()
                               .map(AccessionedDocument::getAccession)
