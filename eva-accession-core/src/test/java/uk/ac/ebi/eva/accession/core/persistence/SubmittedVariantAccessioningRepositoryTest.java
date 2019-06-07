@@ -100,11 +100,11 @@ public class SubmittedVariantAccessioningRepositoryTest {
 
         repository.save(variants);
 
-        assertAccessionsEquals(Arrays.asList(),
+        assertAccessionsEquals(Arrays.asList(firstAccession),
                                repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1000L));
 
-        assertAccessionsEquals(Arrays.asList(firstAccession),
-                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1001L));
+        assertAccessionsEquals(Arrays.asList(),
+                               repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1001L, 1001L));
 
         assertAccessionsEquals(Arrays.asList(firstAccession, secondAccession),
                                repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1005L));
