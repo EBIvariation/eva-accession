@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -42,7 +43,13 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconError;
+import uk.ac.ebi.eva.accession.ws.service.BeaconService;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,6 +65,8 @@ public class ClusteredVariantsRestController {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
+    private BeaconService beaconService;
+
     // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
     //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
     //  service directly, but at the moment, {@link ClusteredVariantAccessioningService} only deals with dbSNP variants
@@ -66,10 +75,11 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
-            DbsnpClusteredVariantInactiveService inactiveService) {
+            DbsnpClusteredVariantInactiveService inactiveService, BeaconService beaconService) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.inactiveService = inactiveService;
+        this.beaconService = beaconService;
     }
 
     /**
@@ -135,5 +145,54 @@ public class ClusteredVariantsRestController {
                                 .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
                                 .collect(Collectors.toList());
     }
+
+    @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "
+            + "the clustered variant (RS) represented by a given identifier. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
+            + "-or-rs")
+    @GetMapping(produces = "application/json")
+    public ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getByIdFields(
+            @RequestParam(name = "assemblyId") String assembly,
+            @RequestParam(name = "referenceName") String chromosome,
+            @RequestParam(name = "start") long start,
+            @RequestParam(name = "variantType") VariantType variantType) {
+        try {
+            return ResponseEntity.ok(beaconService.getClusteredVariantByIdFields(assembly, chromosome, start,
+                                                                                 variantType));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "
+            + "the clustered variant (RS) represented by a given identifier. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
+            + "-or-rs")
+    @GetMapping(value = "/beacon/query", produces = "application/json")
+    public BeaconAlleleResponse doesVariantExist(@RequestParam(name = "assemblyId") String assembly,
+                                                 @RequestParam(name = "referenceName") String chromosome,
+                                                 @RequestParam(name = "start") long start,
+                                                 @RequestParam(name = "variantType") VariantType variantType,
+                                                 HttpServletResponse response) {
+        try {
+            return beaconService.queryBeaconClusteredVariant(assembly, chromosome, start, variantType, false);
+        } catch (Exception ex) {
+            int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+            response.setStatus(responseStatus);
+            return getBeaconResponseObjectWithError(assembly, chromosome, start, assembly,
+                                                    responseStatus, "Unexpected Error: " + ex.getMessage());
+        }
+    }
+
+    private BeaconAlleleResponse getBeaconResponseObjectWithError(String reference, String chromosome, long start,
+                                                                  String assembly, int errorCode, String errorMessage) {
+        BeaconAlleleResponse result = new BeaconAlleleResponse();
+        BeaconAlleleRequest request = new BeaconAlleleRequest(null, reference, chromosome, start, assembly, null,
+                                                              false);
+        result.setAlleleRequest(request);
+        result.setError(new BeaconError(errorCode, errorMessage));
+        return result;
+    }
+
 }
 

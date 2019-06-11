@@ -23,13 +23,20 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -39,11 +46,18 @@ public class BeaconService {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
+    private ClusteredVariantAccessioningService clusteredVariantService;
+
     private Function<ISubmittedVariant, String> hashingFunction =
             new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
-    public BeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService) {
+    private Function<IClusteredVariant, String> hashingFunctionClusteredVariants =
+            new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+
+    public BeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService,
+                         ClusteredVariantAccessioningService clusteredVariantAccessioningService) {
         this.submittedVariantsService = submittedVariantAccessioningService;
+        this.clusteredVariantService = clusteredVariantAccessioningService;
     }
 
     public BeaconAlleleResponse queryBeacon(List<String> datasetStableIds, String alternateBases, String referenceBases,
@@ -66,7 +80,7 @@ public class BeaconService {
 
         List<String> hashes = studies.stream().map(study -> hashingFunction
                 .apply(new SubmittedVariant(assembly, 0, study, contig, start, reference, alternate, null)))
-                .collect(Collectors.toList());
+                                     .collect(Collectors.toList());
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> variants = submittedVariantsService
                 .getByHashedMessageIn(hashes);
@@ -74,6 +88,31 @@ public class BeaconService {
         return variants.stream()
                        .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
                        .collect(Collectors.toList());
+    }
+
+    public BeaconAlleleResponse queryBeaconClusteredVariant(String referenceGenome, String chromosome, long start,
+                                                            VariantType variantType, boolean includeDatasetResponses) {
+
+        BeaconAlleleResponse result = new BeaconAlleleResponse();
+        BeaconAlleleRequest request = new BeaconAlleleRequest(null, null, chromosome, start,
+                                                              referenceGenome, null,
+                                                              includeDatasetResponses);
+        result.setAlleleRequest(request);
+        boolean exists = getClusteredVariantByIdFields(referenceGenome, chromosome, start, variantType) != null;
+        result.setExists(exists);
+        return result;
+    }
+
+    public AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> getClusteredVariantByIdFields(
+            String assembly, String contig, long start, VariantType type) {
+
+        IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
+        String hash = hashingFunctionClusteredVariants.apply(clusteredVariant);
+
+        List<AccessionWrapper<IClusteredVariant, String, Long>> variants = clusteredVariantService
+                .getByHashedMessageIn(Collections.singletonList(hash));
+
+        return variants.isEmpty() ? null : new AccessionResponseDTO<>(variants.get(0), ClusteredVariant::new);
     }
 
 }

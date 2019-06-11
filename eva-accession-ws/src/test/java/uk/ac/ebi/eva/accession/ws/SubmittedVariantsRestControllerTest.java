@@ -44,6 +44,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
@@ -87,6 +88,9 @@ public class SubmittedVariantsRestControllerTest {
 
     @Autowired
     private SubmittedVariantAccessioningService service;
+
+    @Autowired
+    private ClusteredVariantAccessioningService clusteredVariantService;
 
     @Autowired
     private DbsnpSubmittedVariantMonotonicAccessioningService dbsnpService;
@@ -133,7 +137,7 @@ public class SubmittedVariantsRestControllerTest {
         variant3 = new SubmittedVariant("ASMACC02", 1102, "PROJACC03", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2, variant3));
 
-        BeaconService mockBeaconService = Mockito.spy(new BeaconService(service));
+        BeaconService mockBeaconService = Mockito.spy(new BeaconService(service, clusteredVariantService));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService).queryBeacon(null, "alt", "ref",
                                                                                                     "CHROM1", 1, "ref",
                                                                                                     false);

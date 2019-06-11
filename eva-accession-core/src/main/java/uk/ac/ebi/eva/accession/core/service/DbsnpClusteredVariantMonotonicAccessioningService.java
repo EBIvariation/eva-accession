@@ -16,15 +16,19 @@
 package uk.ac.ebi.eva.accession.core.service;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningDatabaseService;
 
+import java.util.List;
 import java.util.function.Function;
 
 public class DbsnpClusteredVariantMonotonicAccessioningService
         extends BasicAccessioningService<IClusteredVariant, String, Long> {
+
+    private final DbsnpClusteredVariantAccessioningDatabaseService dbService;
 
     public DbsnpClusteredVariantMonotonicAccessioningService(
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
@@ -32,5 +36,10 @@ public class DbsnpClusteredVariantMonotonicAccessioningService
             Function<IClusteredVariant, String> summaryFunction,
             Function<String, String> hashingFunction) {
         super(accessionGenerator, dbService, summaryFunction, hashingFunction);
+        this.dbService = dbService;
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {
+        return dbService.findByHashedMessageIn(hashes);
     }
 }

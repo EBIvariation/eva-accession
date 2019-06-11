@@ -17,16 +17,21 @@
  */
 package uk.ac.ebi.eva.accession.core.persistence;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class DbsnpClusteredVariantAccessioningDatabaseService
         extends BasicSpringDataRepositoryMonotonicDatabaseService<IClusteredVariant, DbsnpClusteredVariantEntity> {
+
+    private final DbsnpClusteredVariantAccessioningRepository repository;
 
     public DbsnpClusteredVariantAccessioningDatabaseService(DbsnpClusteredVariantAccessioningRepository repository,
                                                             DbsnpClusteredVariantInactiveService inactiveService) {
@@ -36,11 +41,24 @@ public class DbsnpClusteredVariantAccessioningDatabaseService
                                                                   accessionWrapper.getData(),
                                                                   accessionWrapper.getVersion()),
               inactiveService);
+        this.repository = repository;
     }
 
     @Override
     public long[] getAccessionsInRanges(Collection<MonotonicRange> ranges) {
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> findByHashedMessageIn(List<String> hashes) {
+        List<AccessionWrapper<IClusteredVariant, String, Long>> wrappedAccessions = new ArrayList<>();
+        repository.findByHashedMessageIn(hashes).iterator().forEachRemaining(
+                entity -> wrappedAccessions.add(toModelWrapper(entity)));
+        return wrappedAccessions;
+    }
+
+    private AccessionWrapper<IClusteredVariant, String, Long> toModelWrapper(DbsnpClusteredVariantEntity entity) {
+        return new AccessionWrapper<>(entity.getAccession(), entity.getHashedMessage(), entity.getModel(),
+                                      entity.getVersion());
     }
 
 }

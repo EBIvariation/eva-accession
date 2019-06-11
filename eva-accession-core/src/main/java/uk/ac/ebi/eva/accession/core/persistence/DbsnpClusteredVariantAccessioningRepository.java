@@ -20,8 +20,11 @@ package uk.ac.ebi.eva.accession.core.persistence;
 import org.springframework.stereotype.Repository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
 
+import java.util.List;
+
 @Repository
 public interface DbsnpClusteredVariantAccessioningRepository extends
         IAccessionedObjectRepository<DbsnpClusteredVariantEntity, Long> {
 
+    List<DbsnpClusteredVariantEntity> findByHashedMessageIn(List<String> hashes);
 }

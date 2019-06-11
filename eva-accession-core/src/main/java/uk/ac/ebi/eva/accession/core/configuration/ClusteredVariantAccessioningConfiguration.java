@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
@@ -38,6 +39,9 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -76,8 +80,14 @@ public class ClusteredVariantAccessioningConfiguration {
 
     @Bean
     public ClusteredVariantAccessioningService clusteredVariantAccessioningService() {
-        return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
-                                                       dbsnpClusteredVariantAccessioningDatabaseService());
+        return new ClusteredVariantAccessioningService(dbsnpClusteredVariantMonotonicAccessioningService());
+    }
+
+    private DbsnpClusteredVariantMonotonicAccessioningService dbsnpClusteredVariantMonotonicAccessioningService() {
+        return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
+                                                                     dbsnpClusteredVariantAccessioningDatabaseService(),
+                                                                     new ClusteredVariantSummaryFunction(),
+                                                                     new SHA1HashingFunction());
     }
 
     @Bean
@@ -88,7 +98,7 @@ public class ClusteredVariantAccessioningConfiguration {
                 properties.getClustered().getCategoryId(),
                 properties.getInstanceId(),
                 service,
-                (long[])null);
+                (long[]) null);
     }
 
     @Bean
