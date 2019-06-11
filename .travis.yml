@@ -2,7 +2,7 @@ sudo: false
 matrix:
   include:
     - language: "java"
-      jdk: "oraclejdk8"
+      jdk: "openjdk8"
       env: "MONGODB_VERSION=3.2.17"
       install:
         - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-$MONGODB_VERSION.tgz
