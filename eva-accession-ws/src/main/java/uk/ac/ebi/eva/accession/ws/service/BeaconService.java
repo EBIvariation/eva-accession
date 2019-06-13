@@ -33,6 +33,10 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponseV2;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequestBody;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconDataset;
+import uk.ac.ebi.eva.commons.beacon.models.DatasetAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
@@ -90,16 +94,28 @@ public class BeaconService {
                        .collect(Collectors.toList());
     }
 
-    public BeaconAlleleResponse queryBeaconClusteredVariant(String referenceGenome, String chromosome, long start,
-                                                            VariantType variantType, boolean includeDatasetResponses) {
+    public BeaconAlleleResponseV2 queryBeaconClusteredVariant(String referenceGenome, String chromosome, long start,
+                                                              VariantType variantType,
+                                                              boolean includeDatasetResponses) {
 
-        BeaconAlleleResponse result = new BeaconAlleleResponse();
-        BeaconAlleleRequest request = new BeaconAlleleRequest(null, null, chromosome, start,
-                                                              referenceGenome, null,
-                                                              includeDatasetResponses);
+        BeaconAlleleResponseV2 result = new BeaconAlleleResponseV2();
+
+        BeaconAlleleRequestBody request = new BeaconAlleleRequestBody(chromosome, start, null, null, null, null, null,
+                                                                      null, null, variantType.toString(),
+                                                                      referenceGenome, null, null);
+
         result.setAlleleRequest(request);
-        boolean exists = getClusteredVariantByIdFields(referenceGenome, chromosome, start, variantType) != null;
+        AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> variant = getClusteredVariantByIdFields(
+                referenceGenome, chromosome, start, variantType);
+
+        boolean exists = variant != null;
+        if (exists && includeDatasetResponses) {
+            DatasetAlleleResponse datasetAlleleResponse = new DatasetAlleleResponse();
+            datasetAlleleResponse.setDatasetId(variant.getAccession().toString());
+            result.setDatasetAlleleResponses(Collections.singletonList(datasetAlleleResponse));
+        }
         result.setExists(exists);
+
         return result;
     }
 

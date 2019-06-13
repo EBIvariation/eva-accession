@@ -43,10 +43,11 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
-import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
+import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponseV2;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconError;
 import uk.ac.ebi.eva.accession.ws.service.BeaconService;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequestBody;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import javax.servlet.http.HttpServletResponse;
@@ -93,7 +94,7 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                                    required = true) Long identifier)
+                    required = true) Long identifier)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             return ResponseEntity.ok(Collections.singletonList(basicRestController.get(identifier)));
@@ -106,7 +107,7 @@ public class ClusteredVariantsRestController {
 
     /**
      * Retrieve the information in the collection for inactive objects.
-     *
+     * <p>
      * This method is necessary because the behaviour of BasicRestController is to return the HttpStatus.GONE with an
      * error message in the body. We want instead to return the HttpStatus.GONE with the variant in the body.
      */
@@ -169,26 +170,32 @@ public class ClusteredVariantsRestController {
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
             + "-or-rs")
     @GetMapping(value = "/beacon/query", produces = "application/json")
-    public BeaconAlleleResponse doesVariantExist(@RequestParam(name = "assemblyId") String assembly,
-                                                 @RequestParam(name = "referenceName") String chromosome,
-                                                 @RequestParam(name = "start") long start,
-                                                 @RequestParam(name = "variantType") VariantType variantType,
-                                                 HttpServletResponse response) {
+    public BeaconAlleleResponseV2 doesVariantExist(@RequestParam(name = "assemblyId") String assembly,
+                                                   @RequestParam(name = "referenceName") String chromosome,
+                                                   @RequestParam(name = "start") long start,
+                                                   @RequestParam(name = "variantType") VariantType variantType,
+                                                   @RequestParam(name = "includeDatasetReponses") boolean includeDatasetReponses,
+                                                   HttpServletResponse response) {
         try {
-            return beaconService.queryBeaconClusteredVariant(assembly, chromosome, start, variantType, false);
+            return beaconService
+                    .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
         } catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
-            return getBeaconResponseObjectWithError(assembly, chromosome, start, assembly,
-                                                    responseStatus, "Unexpected Error: " + ex.getMessage());
+            return getBeaconResponseObjectWithError(chromosome, start, assembly, variantType, responseStatus,
+                                                    "Unexpected Error: " + ex.getMessage());
         }
     }
 
-    private BeaconAlleleResponse getBeaconResponseObjectWithError(String reference, String chromosome, long start,
-                                                                  String assembly, int errorCode, String errorMessage) {
-        BeaconAlleleResponse result = new BeaconAlleleResponse();
-        BeaconAlleleRequest request = new BeaconAlleleRequest(null, reference, chromosome, start, assembly, null,
-                                                              false);
+    private BeaconAlleleResponseV2 getBeaconResponseObjectWithError(String reference, long start,
+                                                                    String assembly, VariantType variantType,
+                                                                    int errorCode, String errorMessage) {
+
+        BeaconAlleleRequestBody request = new BeaconAlleleRequestBody(reference, start, null, null, null, null, null,
+                                                                      null, null, variantType.toString(), assembly,
+                                                                      null, null);
+
+        BeaconAlleleResponseV2 result = new BeaconAlleleResponseV2();
         result.setAlleleRequest(request);
         result.setError(new BeaconError(errorCode, errorMessage));
         return result;
