@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
-import uk.ac.ebi.eva.accession.core.io.SubSnpNoHgvsContigReader;
+import uk.ac.ebi.eva.accession.dbsnp.io.SubSnpNoHgvsContigAndChromosomeReader;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 
 import javax.sql.DataSource;
@@ -38,11 +38,11 @@ public class ValidateContigsReaderConfiguration {
 
     @Bean(name = CONTIG_READER)
     @StepScope
-    SubSnpNoHgvsContigReader subSnpNoHgvsContigReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
+    SubSnpNoHgvsContigAndChromosomeReader subSnpNoHgvsContigReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
             throws Exception {
-        logger.info("Injecting SubSnpNoHgvsContigReader with parameters: {}, {}", parameters, dbsnpDataSource);
+        logger.info("Injecting SubSnpNoHgvsContigAndChromosomeReader with parameters: {}, {}", parameters, dbsnpDataSource);
         DataSource dataSource = dbsnpDataSource.getDatasource();
-        return new SubSnpNoHgvsContigReader(parameters.getAssemblyName(), parameters.getBuildNumber(), dataSource,
-                                            parameters.getPageSize());
+        return new SubSnpNoHgvsContigAndChromosomeReader(parameters.getAssemblyName(), parameters.getBuildNumber(), dataSource,
+                                                         parameters.getPageSize());
     }
 }

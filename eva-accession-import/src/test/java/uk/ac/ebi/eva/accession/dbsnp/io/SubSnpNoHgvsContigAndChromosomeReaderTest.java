@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.core.io;
+package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.junit.After;
 import org.junit.Test;
@@ -26,6 +26,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
 import uk.ac.ebi.eva.accession.core.test.configuration.TestConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp.model.CoordinatesPresence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @TestPropertySource({"classpath:contig-test.properties"})
 @ContextConfiguration(classes = {TestConfiguration.class})
-public class SubSnpNoHgvsContigReaderTest {
+public class SubSnpNoHgvsContigAndChromosomeReaderTest {
 
     private static final String CHICKEN_ASSEMBLY_5 = "Gallus_gallus-5.0";
 
@@ -45,7 +46,7 @@ public class SubSnpNoHgvsContigReaderTest {
 
     private static final int PAGE_SIZE = 10;
 
-    private SubSnpNoHgvsContigReader reader;
+    private SubSnpNoHgvsContigAndChromosomeReader reader;
 
     @Autowired
     private DbsnpDataSource dbsnpDataSource;
@@ -60,37 +61,37 @@ public class SubSnpNoHgvsContigReaderTest {
     @Test
     public void readChickenVariants() throws Exception {
         reader = buildReader(CHICKEN_ASSEMBLY_5, PAGE_SIZE);
-        List<String> variants = readAll(reader);
-        assertEquals(6, variants.size());
+        List<CoordinatesPresence> coordinates = readAll(reader);
+        assertEquals(6, coordinates.size());
     }
 
     @Test
     public void readPreviousBuildChickenVariants() throws Exception {
         reader = buildReader(CHICKEN_ASSEMBLY_4, BUILD_NUMBER, PAGE_SIZE);
-        List<String> variants = readAll(reader);
-        assertEquals(3, variants.size());
+        List<CoordinatesPresence> coordinates = readAll(reader);
+        assertEquals(3, coordinates.size());
     }
 
-    private SubSnpNoHgvsContigReader buildReader(String assembly, int pageSize) throws Exception {
+    private SubSnpNoHgvsContigAndChromosomeReader buildReader(String assembly, int pageSize) throws Exception {
         return buildReader(assembly, null, pageSize);
     }
 
-    private SubSnpNoHgvsContigReader buildReader(String assembly, Long buildNumber, int pageSize) throws Exception {
-        SubSnpNoHgvsContigReader fieldsReader = new SubSnpNoHgvsContigReader(assembly, buildNumber, dbsnpDataSource.getDatasource(), pageSize);
+    private SubSnpNoHgvsContigAndChromosomeReader buildReader(String assembly, Long buildNumber, int pageSize) throws Exception {
+        SubSnpNoHgvsContigAndChromosomeReader fieldsReader = new SubSnpNoHgvsContigAndChromosomeReader(assembly, buildNumber, dbsnpDataSource.getDatasource(), pageSize);
         fieldsReader.afterPropertiesSet();
         ExecutionContext executionContext = new ExecutionContext();
         fieldsReader.open(executionContext);
         return fieldsReader;
     }
 
-    private List<String> readAll(SubSnpNoHgvsContigReader reader) throws Exception {
-        List<String> variants = new ArrayList<>();
+    private List<CoordinatesPresence> readAll(SubSnpNoHgvsContigAndChromosomeReader reader) throws Exception {
+        List<CoordinatesPresence> coordinatesPresences = new ArrayList<>();
 
-        String variant;
-        while ((variant = reader.read()) != null) {
-            variants.add(variant);
+        CoordinatesPresence coordinatesPresence;
+        while ((coordinatesPresence = reader.read()) != null) {
+            coordinatesPresences.add(coordinatesPresence);
         }
 
-        return variants;
+        return coordinatesPresences;
     }
 }
