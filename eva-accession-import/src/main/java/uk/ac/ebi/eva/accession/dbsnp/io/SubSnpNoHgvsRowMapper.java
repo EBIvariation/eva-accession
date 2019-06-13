@@ -86,7 +86,7 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
                                 resultSet.getString(BATCH_HANDLE_COLUMN),
                                 resultSet.getString(BATCH_NAME_COLUMN),
                                 resultSet.getString(CHROMOSOME_COLUMN),
-                                resultSet.getLong(CHROMOSOME_START_COLUMN),
+                                getLongOrNull(resultSet),
                                 resultSet.getString(CONTIG_NAME_COLUMN),
                                 resultSet.getLong(CONTIG_START_COLUMN),
                                 DbsnpVariantType.getVariantClass(resultSet.getInt(SNP_CLASS_COLUMN)),
@@ -100,6 +100,14 @@ public class SubSnpNoHgvsRowMapper implements RowMapper<SubSnpNoHgvs> {
                                 resultSet.getTimestamp(SS_CREATE_TIME_COLUMN),
                                 resultSet.getTimestamp(RS_CREATE_TIME_COLUMN),
                                 resultSet.getInt(TAXONOMY_ID_COLUMN));
+    }
+
+    private Long getLongOrNull(ResultSet resultSet) throws SQLException {
+        if (resultSet.getObject(CHROMOSOME_START_COLUMN) == null) {
+            return null;
+        } else {
+            return resultSet.getLong(CHROMOSOME_START_COLUMN);
+        }
     }
 
     private boolean isValidated(int validationStatusCode) throws SQLException {

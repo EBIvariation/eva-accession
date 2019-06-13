@@ -38,11 +38,13 @@ public class ValidateContigsReaderConfiguration {
 
     @Bean(name = CONTIG_AND_CHROMOSOME_READER)
     @StepScope
-    SubSnpNoHgvsContigAndChromosomeReader subSnpNoHgvsContigAndChromosomeReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
+    SubSnpNoHgvsContigAndChromosomeReader subSnpNoHgvsContigAndChromosomeReader(InputParameters parameters,
+                                                                                DbsnpDataSource dbsnpDataSource)
             throws Exception {
-        logger.info("Injecting SubSnpNoHgvsContigAndChromosomeReader with parameters: {}, {}", parameters, dbsnpDataSource);
+        logger.info("Injecting SubSnpNoHgvsContigAndChromosomeReader with parameters: {}, {}", parameters,
+                    dbsnpDataSource);
         DataSource dataSource = dbsnpDataSource.getDatasource();
-        return new SubSnpNoHgvsContigAndChromosomeReader(parameters.getAssemblyName(), parameters.getBuildNumber(), dataSource,
-                                                         parameters.getPageSize());
+        return new SubSnpNoHgvsContigAndChromosomeReader(parameters.getAssemblyName(), parameters.getBuildNumber(),
+                                                         dataSource, parameters.getPageSize());
     }
 }
