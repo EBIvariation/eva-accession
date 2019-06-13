@@ -62,7 +62,7 @@ public class SubSnpNoHgvsContigAndChromosomeReaderTest {
     public void readChickenVariants() throws Exception {
         reader = buildReader(CHICKEN_ASSEMBLY_5, PAGE_SIZE);
         List<CoordinatesPresence> coordinates = readAll(reader);
-        assertEquals(6, coordinates.size());
+        assertEquals(8, coordinates.size());
     }
 
     @Test

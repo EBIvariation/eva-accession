@@ -28,7 +28,7 @@ import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 
 import javax.sql.DataSource;
 
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.CONTIG_READER;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.CONTIG_AND_CHROMOSOME_READER;
 
 @Configuration
 @EnableConfigurationProperties({DbsnpDataSource.class})
@@ -36,9 +36,9 @@ public class ValidateContigsReaderConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ValidateContigsReaderConfiguration.class);
 
-    @Bean(name = CONTIG_READER)
+    @Bean(name = CONTIG_AND_CHROMOSOME_READER)
     @StepScope
-    SubSnpNoHgvsContigAndChromosomeReader subSnpNoHgvsContigReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
+    SubSnpNoHgvsContigAndChromosomeReader subSnpNoHgvsContigAndChromosomeReader(InputParameters parameters, DbsnpDataSource dbsnpDataSource)
             throws Exception {
         logger.info("Injecting SubSnpNoHgvsContigAndChromosomeReader with parameters: {}, {}", parameters, dbsnpDataSource);
         DataSource dataSource = dbsnpDataSource.getDatasource();

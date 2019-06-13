@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp.configuration;
 
 public class BeanNames {
 
-    public static final String CONTIG_READER = "CONTIG_READER";
+    public static final String CONTIG_AND_CHROMOSOME_READER = "CONTIG_AND_CHROMOSOME_READER";
 
     public static final String CONTIG_PROCESSOR = "CONTIG_PROCESSOR";
 

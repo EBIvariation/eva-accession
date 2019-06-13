@@ -30,8 +30,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.dbsnp.model.CoordinatesPresence;
+
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.CONTIG_PROCESSOR;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.CONTIG_READER;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.CONTIG_AND_CHROMOSOME_READER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
 
@@ -40,12 +42,12 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CON
 public class ValidateContigsStepConfiguration {
 
     @Autowired
-    @Qualifier(CONTIG_READER)
-    private ItemReader<String> contigReader;
+    @Qualifier(CONTIG_AND_CHROMOSOME_READER)
+    private ItemReader<CoordinatesPresence> contigReader;
 
     @Autowired
     @Qualifier(CONTIG_PROCESSOR)
-    private ItemProcessor<String, String> contigProcessor;
+    private ItemProcessor<CoordinatesPresence, Boolean> contigProcessor;
 
     @Autowired
     @Qualifier(VALIDATE_CONTIGS_PROGRESS_LISTENER)
@@ -54,10 +56,10 @@ public class ValidateContigsStepConfiguration {
     @Bean(VALIDATE_CONTIGS_STEP)
     public Step validateContigsStep(StepBuilderFactory stepBuilderFactory,
                                     SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        ItemWriter<String> noOperationWriter = ignoredContigs -> { };
+        ItemWriter<Boolean> noOperationWriter = ignoredContigs -> { };
 
         TaskletStep step = stepBuilderFactory.get(VALIDATE_CONTIGS_STEP)
-                .<String, String>chunk(chunkSizeCompletionPolicy)
+                .<CoordinatesPresence, Boolean>chunk(chunkSizeCompletionPolicy)
                 .reader(contigReader)
                 .processor(contigProcessor)
                 .writer(noOperationWriter)
