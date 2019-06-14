@@ -21,12 +21,14 @@ import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.dbsnp.exceptions.NonIdenticalChromosomeAccessionsException;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.springframework.util.StringUtils.hasText;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
 
 /**
  * This class replaces the RefSeq contig accessions or the chromosome names into INSDC (Genbank) accessions.
@@ -101,11 +103,13 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
                     subSnpNoHgvs.getChromosomeStart() != null,
                     chromosomeSynonyms,
                     reason);
-        } catch (IllegalStateException e) {
+        } catch (NonIdenticalChromosomeAccessionsException e) {
             replaceable = true;
             if (!nonIdenticalChromosomes.contains(chromosomeSynonyms.getGenBank())) {
                 nonIdenticalChromosomes.add(chromosomeSynonyms.getGenBank());
-                logger.warn("Performing replacement even if the equivalence is dubious: " + e.getMessage());
+                logger.warn("Performing replacement even if the equivalence is dubious. This should have failed in the "
+                            + VALIDATE_CONTIGS_STEP + ", but now we are in the " + IMPORT_DBSNP_VARIANTS_STEP
+                            + ", which means the 'forceImport' flag was set. Details:" + e.getMessage());
             }
         }
         return replaceable;

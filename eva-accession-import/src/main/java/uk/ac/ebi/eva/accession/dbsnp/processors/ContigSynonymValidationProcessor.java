@@ -19,6 +19,7 @@ import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.dbsnp.exceptions.NonIdenticalChromosomeAccessionsException;
 import uk.ac.ebi.eva.accession.dbsnp.model.CoordinatesPresence;
 
 import static org.springframework.util.StringUtils.hasText;
@@ -74,13 +75,9 @@ public class ContigSynonymValidationProcessor implements ItemProcessor<Coordinat
         }
 
         if (!chromosomeSynonyms.isIdenticalGenBankAndRefSeq()) {
-            throw new IllegalStateException(
-                    "It's not completely safe to replace the chromosome name '" + chromosome
-                    + "' with the INSDC accession '" + chromosomeSynonyms.getGenBank()
-                    + "' because the RefSeq '" + chromosomeSynonyms.getRefSeq()
-                    + "' and INSDC accessions are not identical. This could mean that dbSNP (RefSeq) "
-                    + "chromosomes are not the same as EVA (INSDC, GenBank) chromosomes, at least for this "
-                    + "species.");
+            throw new NonIdenticalChromosomeAccessionsException(chromosome,
+                                                                chromosomeSynonyms.getGenBank(),
+                                                                chromosomeSynonyms.getRefSeq());
         }
 
         return true;
