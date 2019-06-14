@@ -31,7 +31,7 @@ import static org.springframework.util.StringUtils.hasText;
 /**
  * This class replaces the RefSeq contig accessions or the chromosome names into INSDC (Genbank) accessions.
  *
- * This class assumes it will only be used for the dbsnp import! The replacement strategy is subtle in the details, so
+ * This class should only be used when importing from dbSNP! The replacement strategy is subtle in the details, so
  * don't try to reuse the class as it is for other purposes.
  */
 public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {

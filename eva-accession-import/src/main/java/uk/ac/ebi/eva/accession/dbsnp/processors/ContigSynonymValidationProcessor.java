@@ -34,7 +34,6 @@ public class ContigSynonymValidationProcessor implements ItemProcessor<Coordinat
         this.contigMapping = contigMapping;
     }
 
-
     @Override
     public Boolean process(CoordinatesPresence coordinatesPresence) throws Exception {
         String chromosome = coordinatesPresence.getChromosome();
@@ -65,7 +64,7 @@ public class ContigSynonymValidationProcessor implements ItemProcessor<Coordinat
         }
 
         if (chromosomeSynonyms == null) {
-            reason.append("There is no synonyms entry for the chromosome in the assembly report. ");
+            reason.append("The assembly report does not contain any synonyms for the chromosome. ");
             return false;
         }
 
@@ -89,7 +88,7 @@ public class ContigSynonymValidationProcessor implements ItemProcessor<Coordinat
 
     public static boolean isContigReplaceable(ContigSynonyms contigSynonyms, StringBuilder reason) {
         if (contigSynonyms == null) {
-            reason.append("There is no synonyms entry for the contig accession in the assembly report. ");
+            reason.append("The assembly report does not contain any synonyms for the contig accession. ");
             return false;
         }
 

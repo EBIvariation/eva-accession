@@ -56,6 +56,7 @@ public class ContigSynonymValidationProcessorTest {
     public void onlyChromosomeSynonymAvailable() throws Exception {
         processor.process(new CoordinatesPresence("2", true, "NT_without_synonym"));
     }
+
     @Test
     public void onlyContigSynonymAvailable() throws Exception {
         processor.process(new CoordinatesPresence(null, false, "NT_166280.1"));
