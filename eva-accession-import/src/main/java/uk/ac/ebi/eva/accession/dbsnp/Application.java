@@ -15,13 +15,19 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp;
 
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 
-@EnableBatchProcessing
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+    MongoDataAutoConfiguration.class,
+    DataSourceAutoConfiguration.class,
+    BatchAutoConfiguration.class,
+    HibernateJpaAutoConfiguration.class})
 public class Application {
 
     public static void main(String[] args) {

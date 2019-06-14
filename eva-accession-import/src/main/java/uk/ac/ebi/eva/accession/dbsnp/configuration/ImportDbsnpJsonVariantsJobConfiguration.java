@@ -26,22 +26,23 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_JOB;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_FLOW;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_JOB;
 
-
-//TODO remove comment-outs below by 01/07/2019
-//@Configuration
-//@EnableBatchProcessing
-public class ImportDbsnpVariantsJobConfiguration {
+/**
+ * Job configuration for Dbsnp Json file import
+ */
+@Configuration
+@EnableBatchProcessing
+public class ImportDbsnpJsonVariantsJobConfiguration {
 
     @Autowired
-    @Qualifier(IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER)
+    @Qualifier(IMPORT_DBSNP_JSON_VARIANTS_FLOW)
     private Flow importFlow;
 
-    @Bean(IMPORT_DBSNP_VARIANTS_JOB)
-    public Job importDbsnpVariantsJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(IMPORT_DBSNP_VARIANTS_JOB)
+    @Bean(IMPORT_DBSNP_JSON_VARIANTS_JOB)
+    public Job importDbsnpJsonVariantsJob(JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get(IMPORT_DBSNP_JSON_VARIANTS_JOB)
                                 .incrementer(new RunIdIncrementer())
                                 .start(importFlow)
                                 .end()

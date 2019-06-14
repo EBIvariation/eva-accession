@@ -22,6 +22,8 @@ public class InputParameters {
 
     private String fasta;
 
+    private String dbsnp;
+
     private String assemblyAccession;
 
     private String assemblyName;
@@ -59,6 +61,14 @@ public class InputParameters {
 
     public void setFasta(String fasta) {
         this.fasta = fasta;
+    }
+
+    public String getDbsnp() {
+        return dbsnp;
+    }
+
+    public void setDbsnp(String dbsnp) {
+        this.dbsnp = dbsnp;
     }
 
     public String getAssemblyAccession() {

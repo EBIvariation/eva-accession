@@ -24,7 +24,8 @@ import uk.ac.ebi.eva.accession.dbsnp.processors.ContigSynonymValidationProcessor
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.CONTIG_PROCESSOR;
 
-@Configuration
+//TODO remove comment-outs below by 01/07/2019
+//@Configuration
 public class ValidateContigsProcessorConfiguration {
 
     @Bean(name = CONTIG_PROCESSOR)

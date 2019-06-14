@@ -30,8 +30,9 @@ import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_READER;
 
-@Configuration
-@EnableConfigurationProperties({DbsnpDataSource.class})
+//TODO remove comment-outs below by 01/07/2019
+//@Configuration
+//@EnableConfigurationProperties({DbsnpDataSource.class})
 public class ImportDbsnpVariantsReaderConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ImportDbsnpVariantsReaderConfiguration.class);

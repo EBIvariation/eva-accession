@@ -40,8 +40,9 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIAN
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
 
-@Configuration
-@EnableBatchProcessing
+//TODO remove comment-outs below by 01/07/2019
+//@Configuration
+//@EnableBatchProcessing
 public class ImportDbsnpVariantsStepConfiguration {
 
     @Autowired

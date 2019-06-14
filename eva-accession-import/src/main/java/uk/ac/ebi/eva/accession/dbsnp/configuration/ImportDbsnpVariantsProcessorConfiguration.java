@@ -43,7 +43,8 @@ import java.util.List;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_PROCESSOR;
 
-@Configuration
+//TODO remove comment-outs below by 01/07/2019
+//@Configuration
 public class ImportDbsnpVariantsProcessorConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ImportDbsnpVariantsProcessorConfiguration.class);

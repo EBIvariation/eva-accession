@@ -78,7 +78,9 @@ public class AssemblyReportReader implements ItemReader<ContigSynonyms> {
         try {
             return getContigSynonyms(line);
         } catch (ArrayIndexOutOfBoundsException exception) {
-            throw new ParseException("Error parsing line in Assembly report: '" + line + "'", exception);
+            //TODO Remove this by 01/07/2019
+            //throw new ParseException("Error parsing line in Assembly report: '" + line + "'", exception);
+            return null;
         }
     }
 

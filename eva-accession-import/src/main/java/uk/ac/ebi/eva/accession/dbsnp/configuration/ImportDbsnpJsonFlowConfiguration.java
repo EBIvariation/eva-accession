@@ -18,44 +18,28 @@ package uk.ac.ebi.eva.accession.dbsnp.configuration;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.flow.Flow;
-import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.dbsnp.deciders.ForceImportDecider;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_FLOW;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_STEP;
 
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.FORCE_IMPORT_DECIDER;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER;
-import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
-
-//TODO remove comment-outs below by 01/07/2019
-//@Configuration
-public class ImportFlowConfiguration {
+/**
+ * Flow configuration of Dbsnp JSON import job
+ */
+@Configuration
+public class ImportDbsnpJsonFlowConfiguration {
 
     @Autowired
-    @Qualifier(IMPORT_DBSNP_VARIANTS_STEP)
-    private Step importDbsnpVariantsStep;
+    @Qualifier(IMPORT_DBSNP_JSON_VARIANTS_STEP)
+    private Step importDbsnpJsonVariantsStep;
 
-    @Autowired
-    @Qualifier(VALIDATE_CONTIGS_STEP)
-    private Step validateContigsStep;
-
-    @Bean(FORCE_IMPORT_DECIDER)
-    public JobExecutionDecider decider() {
-        return new ForceImportDecider();
-    }
-
-    @Bean(IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER)
+    @Bean(IMPORT_DBSNP_JSON_VARIANTS_FLOW)
     public Flow optionalFlow() {
         return new FlowBuilder<Flow>("OPTIONAL_FLOW")
-                .start(decider()).on("TRUE")
-                .to(importDbsnpVariantsStep)
-                .from(decider()).on("FALSE")
-                .to(validateContigsStep)
-                .next(importDbsnpVariantsStep)
+                .start(importDbsnpJsonVariantsStep)
                 .build();
     }
 }

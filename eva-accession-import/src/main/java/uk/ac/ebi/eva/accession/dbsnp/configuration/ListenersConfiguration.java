@@ -41,7 +41,8 @@ public class ListenersConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ListenersConfiguration.class);
 
-    @Bean(ASSEMBLY_CHECK_STEP_LISTENER)
+    //TODO remove comment-outs below by 01/07/2019
+    //@Bean(ASSEMBLY_CHECK_STEP_LISTENER)
     StepListenerSupport assemblyCheckStepListener(FastaSequenceReader fastaSequenceReader) {
         return new StepListenerSupport() {
             @Override
@@ -63,13 +64,15 @@ public class ListenersConfiguration {
         return new ImportCounts();
     }
 
-    @Bean(IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER)
+    //TODO remove comment-outs below by 01/07/2019
+    //@Bean(IMPORT_DBSNP_VARIANTS_PROGRESS_LISTENER)
     public StepListenerSupport<SubSnpNoHgvs, DbsnpVariantsWrapper> importDbsnpVariantsProgressListener(
             InputParameters parameters, ImportCounts importCounts) {
         return new ImportDbsnpVariantsStepProgressListener(parameters.getChunkSize(), importCounts);
     }
 
-    @Bean(VALIDATE_CONTIGS_PROGRESS_LISTENER)
+    //TODO remove comment-outs below by 01/07/2019
+    //@Bean(VALIDATE_CONTIGS_PROGRESS_LISTENER)
     public StepListenerSupport<SubSnpNoHgvs, DbsnpVariantsWrapper> importDbsnpVariantsProgressListener(
             InputParameters parameters) {
         return new GenericProgressListener<>(parameters.getChunkSize());

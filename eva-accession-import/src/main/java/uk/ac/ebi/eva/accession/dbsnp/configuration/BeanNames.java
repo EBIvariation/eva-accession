@@ -25,14 +25,19 @@ public class BeanNames {
     public static final String VALIDATE_CONTIGS_STEP = "VALIDATE_CONTIGS_STEP";
 
     public static final String DBSNP_VARIANT_READER = "DBSNP_VARIANT_READER";
+    public static final String DBSNP_JSON_VARIANT_READER = "DBSNP_JSON_VARIANT_READER";
 
     public static final String DBSNP_VARIANT_PROCESSOR = "DBSNP_VARIANT_PROCESSOR";
+    public static final String DBSNP_JSON_VARIANT_PROCESSOR = "DBSNP_JSON_VARIANT_PROCESSOR";
 
     public static final String DBSNP_VARIANT_WRITER = "DBSNP_VARIANT_WRITER";
+    public static final String DBSNP_JSON_VARIANT_WRITER = "DBSNP_JSON_VARIANT_WRITER";
 
     public static final String IMPORT_DBSNP_VARIANTS_STEP = "IMPORT_DBSNP_VARIANTS_STEP";
-    
+    public static final String IMPORT_DBSNP_JSON_VARIANTS_STEP = "IMPORT_DBSNP_JSON_VARIANTS_STEP";
+
     public static final String IMPORT_DBSNP_VARIANTS_JOB = "IMPORT_DBSNP_VARIANTS_JOB";
+    public static final String IMPORT_DBSNP_JSON_VARIANTS_JOB = "IMPORT_DBSNP_JSON_VARIANTS_JOB";
 
     public static final String ASSEMBLY_CHECK_STEP_LISTENER = "ASSEMBLY_CHECK_STEP_LISTENER";
 
@@ -43,4 +48,5 @@ public class BeanNames {
     public static final String FORCE_IMPORT_DECIDER = "FORCE_IMPORT_DECIDER";
 
     public static final String IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER = "IMPORT_DBSNP_VARIANTS_FLOW_WITH_DECIDER";
+    public static final String IMPORT_DBSNP_JSON_VARIANTS_FLOW = "IMPORT_DBSNP_JSON_VARIANTS_FLOW";
 }

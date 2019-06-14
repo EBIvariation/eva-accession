@@ -35,8 +35,9 @@ import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.CONTIG_READE
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
 
-@Configuration
-@EnableBatchProcessing
+//TODO remove comment-outs below by 01/07/2019
+//@Configuration
+//@EnableBatchProcessing
 public class ValidateContigsStepConfiguration {
 
     @Autowired

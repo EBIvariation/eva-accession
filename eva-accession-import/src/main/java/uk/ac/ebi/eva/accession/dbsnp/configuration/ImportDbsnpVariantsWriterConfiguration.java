@@ -34,8 +34,9 @@ import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.DBSNP_VARIANT_WRITER;
 
-@Configuration
-@Import({MongoConfiguration.class})
+//TODO remove comment-outs below by 01/07/2019
+//@Configuration
+//@Import({MongoConfiguration.class})
 public class ImportDbsnpVariantsWriterConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ImportDbsnpVariantsWriterConfiguration.class);
