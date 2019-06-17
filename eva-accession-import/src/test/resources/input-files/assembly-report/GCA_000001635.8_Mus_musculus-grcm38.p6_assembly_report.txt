@@ -46,12 +46,13 @@ chrom1	assembled-molecule	1	Chromosome	CM000994.2	=	NC_000067.6	C57BL/6J	1954719
 3	assembled-molecule	3	Chromosome	CM000996.2	=	NC_000069.6	C57BL/6J	160039680	chr3
 4	assembled-molecule	4	Chromosome	CM000997.2	=	NC_000070.6	C57BL/6J	156508116	chr4
 5	assembled-molecule	5	Chromosome	CM000998.2	=	NC_000071.6	C57BL/6J	151834684	chr5
-6	assembled-molecule	6	Chromosome	CM000999.2	=	NC_000072.6	C57BL/6J	149736546	chr6
+chrom6	assembled-molecule	6	Chromosome	CM000999.2	<>	NC_000072.6	C57BL/6J	149736546	chr6
 7	assembled-molecule	7	Chromosome	CM001000.2	=	NC_000073.6	C57BL/6J	145441459	chr7
 X	assembled-molecule	X	Chromosome	CM001013.2	=	NC_000086.7	C57BL/6J	171031299	chrX
 Y	assembled-molecule	Y	Chromosome	CM001014.2	=	NC_000087.7	C57BL/6J	91744698	chrY
 MMCHR1_RANDOM_CTG1	unlocalized-scaffold	1	Chromosome	GL456210.1	=	NT_166280.1	C57BL/6J	169725	chr1_GL456210_random
 CHR_without_synonym	unlocalized-scaffold	1	Chromosome	GL_without_synonym	<>	NT_without_synonym	C57BL/6J	241735	UCSC_without_synonym
+CHR_without_synonym_2	unlocalized-scaffold	100	Chromosome	GL_without_synonym_2	<>	NT_without_synonym_2	C57BL/6J	241735	UCSC_without_synonym
 MMCHR1_RANDOM_CTG5	unlocalized-scaffold	1	Chromosome	GL456221.1	=	NT_162750.1	C57BL/6J	206961	chr1_GL456221_random
 MMCHR4UN_CTG1	unlocalized-scaffold	4	Chromosome	GL456216.1	=	NT_166291.1	C57BL/6J	66673	chr4_GL456216_random
 MMCHR4UN_CTG3	unlocalized-scaffold	4	Chromosome	GL456350.1	=	NT_166434.1	C57BL/6J	227966	chr4_GL456350_random
@@ -61,6 +62,7 @@ MMCHR5_RANDOM_CTG3	unlocalized-scaffold	5	Chromosome	JH584298.1	=	NT_187058.1	C5
 MMCHR5_RANDOM_CTG5	unlocalized-scaffold	na	Chromosome	JH584299.1	=	NT_187059.1	C57BL/6J	953012	chr5_JH584299_random
 MMCHR7_RANDOM_CTG1	unlocalized-scaffold	7	Chromosome	GL456219.1	=	NT_166307.1	C57BL/6J	175968	chr7_GL456219_random
 MMCHRX_RANDOM_CTG2	unlocalized-scaffold	X	Chromosome	GL456233.1	=	NT_165789.2	C57BL/6J	336933	chrX_GL456233_random
+NON_ASSEMBLED_CHR_42	unlocalized-scaffold	42	Chromosome	GL_NON_ASSEMBLED	=	NT_NON_ASSEMBLED	C57BL/6J	336933	UCSC_NON_ASSEMBLED
 22	assembled-molecule	22	Chromosome	genbank_example_1	=	refseq_example_1	C57BL/6J	91744698	ucsc_example_1
 otherprefix_chr45	assembled-molecule	45	Chromosome	genbank_example_2	=	refseq_example_2	C57BL/6J	91744698	ucsc_example_2
 sequence_name_example_3	assembled-molecule	assigned_molecule_example_3	Chromosome	genbank_example_3	=	refseq_example_3	C57BL/6J	91744698	ucsc_example_3

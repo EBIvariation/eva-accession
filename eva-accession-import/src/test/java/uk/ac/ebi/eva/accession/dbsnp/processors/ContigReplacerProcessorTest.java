@@ -39,13 +39,14 @@ public class ContigReplacerProcessorTest {
 
     private static final String ALTERNATE_ALLELE = "T";
 
-    private static final String CHROMOSOME = "1";
+    private static final String ASSIGNED_MOLECULE = "1";
+
 
     private static final String MISSING_CHROMOSOME = "23";
 
     private static final String SEQNAME_1 = "22";
 
-    private static final String SEQNAME_2 = "chrom1";
+    private static final String SEQNAME_ASSEMBLED = "chrom1";
 
     private static final String GENBANK_CONTIG = "CM000994.2";
 
@@ -61,13 +62,37 @@ public class ContigReplacerProcessorTest {
 
     private static final Long RS_ID = 56789L;
 
-    private static final String REFSEQ_WITHOUT_SYNONYM = "NT_without_synonym";
-
-    private static final String GENBANK_WITHOUT_SYNONYM = "GL_without_synonym";
-
-    private static final String SEQNAME_WITHOUT_SYNONYM = "CHR_without_synonym";
-
     private static final String GENBANK_ASSEMBLY_ACCESSION = "GCA_000001635.8";
+
+    private static final String REFSEQ_NON_IDENTICAL = "NT_without_synonym";
+
+    private static final String REFSEQ_NON_IDENTICAL_2 = "NT_without_synonym_2";
+
+    private static final String GENBANK_NON_IDENTICAL = "GL_without_synonym";
+
+    private static final String SEQNAME_NON_IDENTICAL = "CHR_without_synonym";
+
+    private static final String ASSIGNED_MOLECULE_ASSEMBLED_NON_IDENTICAL = "6";
+
+    private static final String GENBANK_ASSEMBLED_NON_IDENTICAL = "CM000999.2";
+
+    private static final String SEQNAME_ASSEMBLED_NON_IDENTICAL = "chrom6";
+
+    private static final String SEQNAME_NON_ASSEMBLED = "NON_ASSEMBLED_CHR_42";
+
+    private static final String ASSIGNED_MOLECULE_NON_ASSEMBLED = "42";
+
+    private static final String GENBANK_NON_ASSEMBLED = "GL_NON_ASSEMBLED";
+
+    private static final String REFSEQ_NON_ASSEMBLED = "NT_NON_ASSEMBLED";
+
+    private static final String SEQNAME_NON_ASSEMBLED_NON_IDENTICAL = "CHR_without_synonym_2";
+
+    private static final String ASSIGNED_MOLECULE_NON_ASSEMBLED_NON_IDENTICAL = "100";
+
+    private static final String GENBANK_NON_ASSEMBLED_NON_IDENTICAL = "GL_without_synonym_2";
+
+    private static final String REFSEQ_NON_ASSEMBLED_NON_IDENTICAL = "NT_without_synonym_2";
 
     private ContigReplacerProcessor processor;
 
@@ -83,7 +108,7 @@ public class ContigReplacerProcessorTest {
         processor = new ContigReplacerProcessor(contigMapping, GENBANK_ASSEMBLY_ACCESSION);
     }
 
-    // test special cases (combinations of "missing in assembly report")
+    // test special cases of combinations of "missing in assembly report"
 
     @Test
     public void shouldThrowIfContigAndChromosomeAreMissingInAssemblyReport() throws Exception {
@@ -101,8 +126,14 @@ public class ContigReplacerProcessorTest {
 
     @Test
     public void shouldNotThrowIfContigAndChromosomeAreFoundInDifferentLinesInAssemblyReport() throws Exception {
-        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_2, GENBANK_1);
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_ASSEMBLED, GENBANK_1);
         processor.process(input);
+    }
+
+    @Test
+    public void convertChromosomeIfContigIsMissingInAssemblyReport() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_1, MISSING_CONTIG);
+        assertEquals(GENBANK_1, processor.process(input).getContigName());
     }
 
     @Test
@@ -111,16 +142,64 @@ public class ContigReplacerProcessorTest {
         assertEquals(GENBANK_1, processor.process(input).getContigName());
     }
 
+    // test special cases of non identical contigs
+
     @Test
-    public void doNotConvertRefseqToGenbankIfGenbankAndRefseqAreNotIdentical() throws Exception {
-        SubSnpNoHgvs input = newMockSubSnpNoHgvs(MISSING_CHROMOSOME, REFSEQ_WITHOUT_SYNONYM);
-        assertEquals(REFSEQ_WITHOUT_SYNONYM, processor.process(input).getContigName());
+    public void convertChromosomeToGenbankIfAssembledMoleculeEvenIfGenbankAndRefseqAreNotIdentical() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_ASSEMBLED_NON_IDENTICAL, MISSING_CONTIG);
+        assertEquals(GENBANK_ASSEMBLED_NON_IDENTICAL, processor.process(input).getContigName());
     }
 
     @Test
-    public void convertChromosomeToGenbankEvenIfGenbankAndRefseqAreNotIdentical() throws Exception {
-        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_WITHOUT_SYNONYM, MISSING_CONTIG);
-        assertEquals(GENBANK_WITHOUT_SYNONYM, processor.process(input).getContigName());
+    public void convertAssignedMoleculeToGenbankIfAssembledMoleculeEvenIfGenbankAndRefseqAreNotIdentical() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(ASSIGNED_MOLECULE_ASSEMBLED_NON_IDENTICAL, MISSING_CONTIG);
+        assertEquals(GENBANK_ASSEMBLED_NON_IDENTICAL, processor.process(input).getContigName());
+    }
+
+    @Test
+    public void doNotConvertRefseqToGenbankIfGenbankAndRefseqAreNotIdentical() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(MISSING_CHROMOSOME, REFSEQ_NON_IDENTICAL);
+        assertEquals(REFSEQ_NON_IDENTICAL, processor.process(input).getContigName());
+    }
+
+    // test special cases of non-assembled assigned molecules
+
+    @Test
+    public void convertChromosomeIfNonAssembled() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_NON_ASSEMBLED, MISSING_CONTIG);
+        assertEquals(GENBANK_NON_ASSEMBLED, processor.process(input).getContigName());
+    }
+
+    @Test
+    public void doNotConvertAssignedMoleculeIfNonAssembled() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(ASSIGNED_MOLECULE_NON_ASSEMBLED, REFSEQ_NON_IDENTICAL);
+        assertEquals(REFSEQ_NON_IDENTICAL, processor.process(input).getContigName());
+    }
+
+    @Test
+    public void convertContigIfNonAssembled() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(MISSING_CHROMOSOME, REFSEQ_NON_ASSEMBLED);
+        assertEquals(GENBANK_NON_ASSEMBLED, processor.process(input).getContigName());
+    }
+
+    // test special cases of non-assembled non-identical
+
+    @Test
+    public void convertChromosomeIfNonAssembledMoleculeAndNonIdentical() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_NON_ASSEMBLED_NON_IDENTICAL, MISSING_CONTIG);
+        assertEquals(GENBANK_NON_ASSEMBLED_NON_IDENTICAL, processor.process(input).getContigName());
+    }
+
+    @Test
+    public void doNotConvertAssignedMoleculeIfNonAssembledMoleculeAndNonIdentical() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(ASSIGNED_MOLECULE_NON_ASSEMBLED_NON_IDENTICAL, REFSEQ_NON_IDENTICAL);
+        assertEquals(REFSEQ_NON_IDENTICAL, processor.process(input).getContigName());
+    }
+
+    @Test
+    public void doNotConvertContigIfNonAssembledMoleculeAndNonIdentical() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(MISSING_CHROMOSOME, REFSEQ_NON_IDENTICAL_2);
+        assertEquals(REFSEQ_NON_IDENTICAL_2, processor.process(input).getContigName());
     }
 
     // test regular cases
@@ -129,6 +208,12 @@ public class ContigReplacerProcessorTest {
     public void convertVariantFromSeqNameToGenBank() throws Exception {
         SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_1, SEQNAME_1);
         assertEquals(GENBANK_1, processor.process(input).getContigName());
+    }
+
+    @Test
+    public void convertVariantFromAssignedMoleculeToGenBankIfAssembledMolecule() throws Exception {
+        SubSnpNoHgvs input = newMockSubSnpNoHgvs(ASSIGNED_MOLECULE, ASSIGNED_MOLECULE);
+        assertEquals(GENBANK_CONTIG, processor.process(input).getContigName());
     }
 
     @Test
@@ -149,6 +234,8 @@ public class ContigReplacerProcessorTest {
         assertEquals(GENBANK_1, processor.process(input).getContigName());
     }
 
+    // tests about priority between contig and chromosome
+
     @Test
     public void prioritiseChromosomeCoordinatesOverRefseq() throws Exception {
         long chromosomeStart = 100;
@@ -163,14 +250,5 @@ public class ContigReplacerProcessorTest {
                                 chromosome, chromosomeStart, contig, contigStart, DbsnpVariantType.SNV,
                                 Orientation.FORWARD, Orientation.FORWARD, Orientation.FORWARD, true, true,
                                 true, true, null, null, TAXONOMY);
-    }
-
-    @Test
-    public void prioritiseChromosomeCoordinatesOverGenbank() throws Exception {
-        long chromosomeStart = 100;
-        long contigStart = 200;
-        SubSnpNoHgvs input = newMockSubSnpNoHgvs(SEQNAME_1, chromosomeStart, GENBANK_1, contigStart);
-        assertEquals(GENBANK_1, processor.process(input).getContigName());
-        assertEquals(chromosomeStart, processor.process(input).getContigStart());
     }
 }
