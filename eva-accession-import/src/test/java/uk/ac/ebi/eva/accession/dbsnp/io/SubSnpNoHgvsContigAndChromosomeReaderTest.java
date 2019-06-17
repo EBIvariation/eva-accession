@@ -29,7 +29,10 @@ import uk.ac.ebi.eva.accession.core.test.configuration.TestConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.model.CoordinatesPresence;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
 
@@ -63,6 +66,14 @@ public class SubSnpNoHgvsContigAndChromosomeReaderTest {
         reader = buildReader(CHICKEN_ASSEMBLY_5, PAGE_SIZE);
         List<CoordinatesPresence> coordinates = readAll(reader);
         assertEquals(7, coordinates.size());
+        assertEquals(new HashSet<>(Arrays.asList(new CoordinatesPresence("22", true, "NT_455866"),
+                                                 new CoordinatesPresence("22", true, "NT_455837"),
+                                                 new CoordinatesPresence(null, true, "NT_464165.1"),
+                                                 new CoordinatesPresence(null, true, "AADN04000814.1"),
+                                                 new CoordinatesPresence(null, true, "chrUn_Scaffold827"),
+                                                 new CoordinatesPresence(null, false, "AADN04000814.1"),
+                                                 new CoordinatesPresence("22", false, "CTG1"))),
+                     new HashSet<>(coordinates));
     }
 
     @Test
@@ -70,6 +81,10 @@ public class SubSnpNoHgvsContigAndChromosomeReaderTest {
         reader = buildReader(CHICKEN_ASSEMBLY_4, BUILD_NUMBER, PAGE_SIZE);
         List<CoordinatesPresence> coordinates = readAll(reader);
         assertEquals(3, coordinates.size());
+        assertEquals(new HashSet<>(Arrays.asList(new CoordinatesPresence("1", true, "NW_003763476.1"),
+                                                 new CoordinatesPresence("12", true, "NW_003763901.1"),
+                                                 new CoordinatesPresence("3", true, "NW_003763686.1"))),
+                     new HashSet<>(coordinates));
     }
 
     private SubSnpNoHgvsContigAndChromosomeReader buildReader(String assembly, int pageSize) throws Exception {

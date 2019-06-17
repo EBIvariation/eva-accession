@@ -53,4 +53,33 @@ public class CoordinatesPresence {
     public void setContig(String contig) {
         this.contig = contig;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof CoordinatesPresence)) {
+            return false;
+        }
+
+        CoordinatesPresence presence = (CoordinatesPresence) o;
+
+        if (chromosomeStartPresent != presence.chromosomeStartPresent) {
+            return false;
+        }
+        if (chromosome != null ? !chromosome.equals(presence.chromosome) : presence.chromosome != null) {
+            return false;
+        }
+        return contig != null ? contig.equals(presence.contig) : presence.contig == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = chromosome != null ? chromosome.hashCode() : 0;
+        result = 31 * result + (chromosomeStartPresent ? 1 : 0);
+        result = 31 * result + (contig != null ? contig.hashCode() : 0);
+        return result;
+    }
 }
