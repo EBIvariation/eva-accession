@@ -69,7 +69,12 @@ public class ContigMapping {
     private void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
         normalizeNames(contigSynonyms);
 
-        sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
+        ContigSynonyms previousValue = sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
+        if (previousValue != null) {
+            throw new IllegalArgumentException(
+                    "Can't build a contig mapping because the sequence names (chromosome names) such as '"
+                    + contigSynonyms.getSequenceName() + "' are not unique.");
+        }
         if (contigSynonyms.getAssignedMolecule() != null) {
             assignedMoleculeToSynonyms.put(contigSynonyms.getAssignedMolecule(), contigSynonyms);
         }

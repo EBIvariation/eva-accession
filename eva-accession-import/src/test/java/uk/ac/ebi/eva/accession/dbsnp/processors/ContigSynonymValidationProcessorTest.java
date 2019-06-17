@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.dbsnp.model.CoordinatesPresence;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,26 +43,45 @@ public class ContigSynonymValidationProcessorTest {
 
     @Test
     public void allContigsHaveSynonyms() throws Exception {
-        List<String> contigsInDb = Arrays.asList("chrom1", "2", "NT_166280.1");
-        for (String contig : contigsInDb) {
-            processor.process(contig);
+        List<CoordinatesPresence> contigsInDb = Arrays.asList(new CoordinatesPresence("chrom1", true, "NC_000067.6"),
+                                                              new CoordinatesPresence("2", true, "NC_000068.7"),
+                                                              new CoordinatesPresence("MMCHR1_RANDOM_CTG1", true,
+                                                                                      "NT_166280.1"));
+        for (CoordinatesPresence presence : contigsInDb) {
+            processor.process(presence);
         }
     }
 
+    @Test
+    public void onlyChromosomeSynonymAvailable() throws Exception {
+        processor.process(new CoordinatesPresence("2", true, "NT_without_synonym"));
+    }
+
+    @Test
+    public void onlyContigSynonymAvailable() throws Exception {
+        processor.process(new CoordinatesPresence(null, false, "NT_166280.1"));
+    }
+
     @Test(expected = IllegalArgumentException.class)
-    public void nonIdenticalSynonym() throws Exception {
-        processor.process("NT_without_synonym");
+    public void nonIdenticalContigSynonymWithUnusableChromosome() throws Exception {
+        processor.process(new CoordinatesPresence("2", false, "NT_without_synonym"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void nonIdenticalContigSynonym() throws Exception {
+        processor.process(new CoordinatesPresence(null, false, "NT_without_synonym"));
     }
 
     @Test
     public void identicalAndNonIdenticalSynonyms() throws Exception {
-        processor.process("NT_166280.1");
+        processor.process(new CoordinatesPresence(null, false, "NT_166280.1"));
+        processor.process(new CoordinatesPresence("2", true, "NT_without_synonym"));
         thrown.expect(IllegalArgumentException.class);
-        processor.process("NT_without_synonym");
+        processor.process(new CoordinatesPresence(null, false, "NT_without_synonym"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void contigMissingFromAssemblyReport() throws Exception {
-        processor.process("contig_not_present_in_assembly_report");
+        processor.process(new CoordinatesPresence(null, false, "contig_not_present_in_assembly_report"));
     }
 }

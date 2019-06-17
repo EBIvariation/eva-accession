@@ -21,11 +21,21 @@ import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.dbsnp.exceptions.NonIdenticalChromosomeAccessionsException;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.VALIDATE_CONTIGS_STEP;
+
+/**
+ * This class replaces the RefSeq contig accessions or the chromosome names into INSDC (Genbank) accessions.
+ *
+ * This class should only be used when importing from dbSNP! The replacement strategy is subtle in the details, so
+ * don't try to reuse the class as it is for other purposes.
+ */
 public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubSnpNoHgvs> {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigReplacerProcessor.class);
@@ -36,10 +46,13 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
 
     private Set<String> processedContigs;
 
+    private Set<String> nonIdenticalChromosomes;
+
     public ContigReplacerProcessor(ContigMapping contigMapping, String assemblyAccession) {
         this.contigMapping = contigMapping;
         this.assemblyAccession = assemblyAccession;
         this.processedContigs = new HashSet<>();
+        this.nonIdenticalChromosomes = new HashSet<>();
     }
 
     @Override
@@ -69,26 +82,49 @@ public class ContigReplacerProcessor implements ItemProcessor<SubSnpNoHgvs, SubS
             processedContigs.add(contigName);
         }
 
-        if (contigPresentInAssemblyReport) {
+        if (isChromosomeReplaceable(subSnpNoHgvs, chromosomeSynonyms)) {
+            replaceChromosomeWithGenbankAccession(subSnpNoHgvs, chromosomeSynonyms);
+        } else if (isContigReplaceable(contigSynonyms)) {
             replaceContigWithGenbankAccession(subSnpNoHgvs, contigSynonyms);
+        } else {
+            // No replacement is possible. We must keep the original RefSeq accession
         }
 
         return subSnpNoHgvs;
     }
 
-    private void replaceContigWithGenbankAccession(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
-        if ((contigSynonyms.isIdenticalGenBankAndRefSeq() || isGenbank(assemblyAccession)) &&
-                contigSynonyms.getGenBank() != null) {
-            subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
-        } else {
-            // genbank is not identical to refseq and the assembly is not genbank, so
-            // we must keep the original refseq
+    private boolean isChromosomeReplaceable(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms chromosomeSynonyms) {
+        StringBuilder reason = new StringBuilder();
+
+        boolean replaceable;
+        try {
+            replaceable = ContigSynonymValidationProcessor.isChromosomeReplaceable(
+                    subSnpNoHgvs.getChromosome(),
+                    subSnpNoHgvs.getChromosomeStart() != null,
+                    chromosomeSynonyms,
+                    reason);
+        } catch (NonIdenticalChromosomeAccessionsException e) {
+            replaceable = true;
+            if (!nonIdenticalChromosomes.contains(chromosomeSynonyms.getGenBank())) {
+                nonIdenticalChromosomes.add(chromosomeSynonyms.getGenBank());
+                logger.warn("Performing replacement even if the equivalence is dubious. This should have failed in the "
+                            + VALIDATE_CONTIGS_STEP + ", but now we are in the " + IMPORT_DBSNP_VARIANTS_STEP
+                            + ", which means the 'forceImport' flag was set. Details:" + e.getMessage());
+            }
         }
+        return replaceable;
     }
 
-    private boolean isGenbank(String assemblyAccession) {
-        return assemblyAccession.startsWith("GCA_");
+    private void replaceChromosomeWithGenbankAccession(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms chromosomeSynonyms) {
+        subSnpNoHgvs.setContigName(chromosomeSynonyms.getGenBank());
+        subSnpNoHgvs.setContigStart(subSnpNoHgvs.getChromosomeStart());
     }
 
+    private boolean isContigReplaceable(ContigSynonyms contigSynonyms) {
+        return ContigSynonymValidationProcessor.isContigReplaceable(contigSynonyms, new StringBuilder());
+    }
 
+    private void replaceContigWithGenbankAccession(SubSnpNoHgvs subSnpNoHgvs, ContigSynonyms contigSynonyms) {
+        subSnpNoHgvs.setContigName(contigSynonyms.getGenBank());
+    }
 }
