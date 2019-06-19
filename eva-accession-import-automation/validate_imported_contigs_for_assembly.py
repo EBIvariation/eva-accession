@@ -90,7 +90,7 @@ def validate_imported_contigs(assembly_properties_file, config_file):
     match_contig_set = run_command_with_output("Get contigs with start match against chromosome:",
                                                get_contigs_start_match_cmd)[1]
 
-    if mismatch_contig_set != '':
+    if mismatch_contig_set != '""':
         mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
                                                               config["mongo_port"],
                                                               config["mongo_user"],
@@ -103,7 +103,7 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                                            mongo_run_command)[1]
         logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
 
-    if match_contig_set != '':
+    if match_contig_set != '""':
         mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
                                                               config["mongo_port"],
                                                               config["mongo_user"],
