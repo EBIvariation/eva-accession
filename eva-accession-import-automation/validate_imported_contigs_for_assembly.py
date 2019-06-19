@@ -102,6 +102,8 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                                            "are present in Mongo for the assembly",
                                                            mongo_run_command)[1]
         logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
+    else:
+        logger.info("No mismatch contig set available!")
 
     if match_contig_set != '""':
         mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
@@ -115,6 +117,8 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                                            "are present in Mongo for the assembly",
                                                            mongo_run_command)[1]
         logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
+    else:
+        logger.info("No matched non-chromosome contig set available!")
 
 
 @click.option("-p", "--assembly-properties-file", required=True)
