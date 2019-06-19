@@ -86,9 +86,9 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                  "\"contig\": {{$in: [{6}]}}}})'"
 
     mismatch_contig_set = run_command_with_output("Get contigs with start mismatch against chromosome:",
-                                                  get_contigs_start_mismatch_cmd)[1]
+                                                  get_contigs_start_mismatch_cmd)[1].strip()
     match_contig_set = run_command_with_output("Get contigs with start match against chromosome:",
-                                               get_contigs_start_match_cmd)[1]
+                                               get_contigs_start_match_cmd)[1].strip()
 
     if mismatch_contig_set != '""':
         mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
