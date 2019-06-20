@@ -80,7 +80,7 @@ def run_jobs(command_line_args):
             job_bsub_command += get_import_job_command(build, assembly_name, assembly_accession, program_args)
             # All jobs except the first job can skip the first 3 steps
             # which create folders, custom assembly report and the FASTA file
-            job_bsub_command += " --step 4"
+            job_bsub_command += " --step 2"
             job_bsub_command += " -l" if build == str(latest_build) else ""
 
             job_launch_script_file.write(job_bsub_command + os.linesep)

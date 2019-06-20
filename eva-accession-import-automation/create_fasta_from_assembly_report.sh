@@ -33,6 +33,8 @@ exit_code=0
 touch ${output_folder}/${species}_custom.fa
 touch ${output_folder}/written_contigs.txt
 
+grep '^>' ${output_folder}/${species}_custom.fa | cut -d' ' -f1 | sed 's/>//g' >> ${output_folder}/written_contigs.txt
+
 download_fasta_to_contig_file () {
     # make $? return the error code of any failed command in the pipe, instead of the last one only
     set -o pipefail

@@ -72,7 +72,7 @@ def get_commands_to_run(command_line_args):
                                                                               "{env}"]).format(**program_args)
 
     program_args["assembly_report"] = os.path.sep.join(["{species_assembly_report_folder}",
-                                                        "{species}_custom_assembly_report.txt"]).format(**program_args)
+                                                        "{assembly_accession}_custom_assembly_report.txt"]).format(**program_args)
     program_args["fasta_file_path"] = os.path.sep.join(["{species_assembly_folder}",
                                                         "{species}_custom.fa"]).format(**program_args)
 
@@ -80,11 +80,13 @@ def get_commands_to_run(command_line_args):
                                        "mkdir -p {species_assembly_report_folder} && " \
                                        "mkdir -p {species_accessioning_import_qa_folder}".format(**program_args)
 
-    generate_custom_assembly_report_command = "cd {species_assembly_report_folder} && " \
+    generate_custom_assembly_report_command = 'test -f "{assembly_report}" || ' \
+                                              "(cd {species_assembly_report_folder} && " \
                                               "{python3_path} {program_dir}generate_custom_assembly_report.py " \
                                               "-d {metadb} -u {metauser} -h {metahost} " \
                                               "-s {species} -a {assembly_accession} " \
-                                              "-g {genbank_equivalents_file}".format(**program_args)
+                                              "-g {genbank_equivalents_file} -o {assembly_report})"\
+                                              .format(**program_args)
 
     create_fasta_file_command = "bash {program_dir}create_fasta_from_assembly_report.sh {species} " \
                                 "{assembly_report} {species_assembly_folder} {eutils_api_key}".format(**program_args)
