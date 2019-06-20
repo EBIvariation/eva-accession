@@ -65,21 +65,21 @@ def validate_imported_contigs(assembly_properties_file, config_file):
     # We need these because string interpolation won't work if there is a dot in the key
     config["taxonomy_accession"] = config["parameters.taxonomyAccession"]
 
-
     config["contig_chr_mismatch_table"] = "dbsnp_ensembl_species.dbsnp_species_with_contig_chromosome_start_mismatch"
     config["contig_chr_match_table"] = "dbsnp_ensembl_species.dbsnp_species_with_contig_chromosome_start_match"
-    final_formatting_cmd = r"cut -d$'\t' -f5 | sort | uniq | paste -s - | sed s/$'\t'/\",\"/g | sed s/$/\"/g | sed s/^/\"/g"
+    final_formatting_genbank_accessions_cmd = r"cut -d$'\t' -f5 | sort | uniq | paste -s - | sed s/$'\t'/\",\"/g | sed s/$/\"/g | sed s/^/\"/g"
     get_contigs_start_mismatch_cmd = "psql -A -t -h {metahost} -U {metauser} -d {metadb} -c " \
                                      "\"select distinct contig_name from {contig_chr_mismatch_table} " \
                                      "where table_name like '%{assembly_md5}%'" \
                                      " and schema_name like '%{taxonomy_accession}%'\" -P pager=off " \
-                                     "| grep {assembly_report_path} -f - |".format(**config) + final_formatting_cmd
+                                     "| grep {assembly_report_path} -f - |".format(**config) + \
+                                     final_formatting_genbank_accessions_cmd
     get_contigs_start_match_cmd = "psql -A -t -h {metahost} -U {metauser} -d {metadb} -c " \
                                   "\"select distinct contig_name from {contig_chr_match_table} " \
                                   "where table_name like '%{assembly_md5}%'" \
                                   " and schema_name like '%{taxonomy_accession}%'\" -P pager=off " \
                                   "| grep {assembly_report_path} -f - | grep -v assembled-molecule |".format(**config) \
-                                  + final_formatting_cmd
+                                  + final_formatting_genbank_accessions_cmd
     mongo_run_command_template = "mongo --quiet --host {0} --port {1} --username {2} " \
                                  "--password {3} --authenticationDatabase=admin " \
                                  "{4} --eval 'db.dbsnpSubmittedVariantEntity.findOne({{\"seq\": \"{5}\", " \
