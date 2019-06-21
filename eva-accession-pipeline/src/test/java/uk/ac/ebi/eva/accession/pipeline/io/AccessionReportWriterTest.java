@@ -87,6 +87,8 @@ public class AccessionReportWriterTest {
 
     private static final String REFSEQ_2 = "refseq_2";
 
+    private static final String GENBANK_3 = "genbank_3";
+
     private AccessionReportWriter accessionReportWriter;
 
     private File output;
@@ -108,9 +110,7 @@ public class AccessionReportWriterTest {
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms("chr2", "assembled-molecule", "2", GENBANK_2, REFSEQ_2, "chr2", false),
-                new ContigSynonyms("ctg3", "unlocalized-scaffold", "1", "genbank_3", "refseq_3", "chr3_random", true),
-                new ContigSynonyms("ctg4", "unlocalized-scaffold", "2", "genbank_4", "refseq_4", "chr4_random",
-                                   false)));
+                new ContigSynonyms("ctg3", "unlocalized-scaffold", "1", GENBANK_3, "refseq_3", "chr3_random", true)));
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                           ContigNaming.SEQUENCE_NAME);
         executionContext = new ExecutionContext();
@@ -294,6 +294,11 @@ public class AccessionReportWriterTest {
         String contigMissingInAssemblyReport = "contig_missing_in_assembly_report";
         assertContigReplacement(contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
                                 contigMissingInAssemblyReport);
+    }
+
+    @Test
+    public void writeContigIgnoringNonAssembledMolecule() throws IOException {
+        assertContigReplacement(GENBANK_3, ContigNaming.ASSIGNED_MOLECULE, GENBANK_3);
     }
 
     @Test

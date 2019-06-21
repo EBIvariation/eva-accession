@@ -154,43 +154,52 @@ public class AccessionReportWriter {
     }
 
     private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
-        ImmutableTriple<Long, String, String> startAndRefAndAlt = getDenormalizedStartAndAlleles(normalizedVariant);
+        if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
+            if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
+                return createVariantWithContextBase(normalizedVariant);
+            } else {
+                throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
+                                                   + "' does not appear in the fasta file ");
+            }
+        } else {
+            return normalizedVariant;
+        }
+    }
 
-        String contig = getEquivalentContig(normalizedVariant, contigNaming);
+    private ISubmittedVariant createVariantWithContextBase(ISubmittedVariant normalizedVariant) {
+        String oldReference = normalizedVariant.getReferenceAllele();
+        String oldAlternate = normalizedVariant.getAlternateAllele();
+        long oldStart = normalizedVariant.getStart();
+        ImmutableTriple<Long, String, String> contextNucleotideInfo =
+                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
+                                                                    oldReference, oldAlternate);
 
         return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
                                     normalizedVariant.getTaxonomyAccession(),
                                     normalizedVariant.getProjectAccession(),
-                                    contig,
-                                    startAndRefAndAlt.getLeft(),
-                                    startAndRefAndAlt.getMiddle(),
-                                    startAndRefAndAlt.getRight(),
+                                    normalizedVariant.getContig(),
+                                    contextNucleotideInfo.getLeft(),
+                                    contextNucleotideInfo.getMiddle(),
+                                    contextNucleotideInfo.getRight(),
                                     normalizedVariant.getClusteredVariantAccession(),
                                     normalizedVariant.isSupportedByEvidence(),
                                     normalizedVariant.isAssemblyMatch(),
                                     normalizedVariant.isAllelesMatch(),
                                     normalizedVariant.isValidated(),
                                     normalizedVariant.getCreatedDate());
+
     }
 
-    private ImmutableTriple<Long, String, String> getDenormalizedStartAndAlleles(ISubmittedVariant normalizedVariant) {
-        String oldReference = normalizedVariant.getReferenceAllele();
-        String oldAlternate = normalizedVariant.getAlternateAllele();
-        long oldStart = normalizedVariant.getStart();
-        ImmutableTriple<Long, String, String> startAndRefAndAlt = new ImmutableTriple<>(oldStart, oldReference,
-                                                                                        oldAlternate);
-        if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
-            if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
-                startAndRefAndAlt = fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
-                                                                                        oldReference, oldAlternate);
-
-
-            } else {
-                throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
-                                                   + "' does not appear in the fasta file ");
-            }
-        }
-        return startAndRefAndAlt;
+    protected String variantToVcfLine(Long id, ISubmittedVariant variant) {
+        String contig = getEquivalentContig(variant, contigNaming);
+        String variantLine = String.join("\t",
+                                         contig,
+                                         Long.toString(variant.getStart()),
+                                         accessionPrefix + id,
+                                         variant.getReferenceAllele(),
+                                         variant.getAlternateAllele(),
+                                         VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
+        return variantLine;
     }
 
     private String getEquivalentContig(ISubmittedVariant normalizedVariant, ContigNaming contigNaming) {
@@ -223,17 +232,6 @@ public class AccessionReportWriter {
         }
 
         return replacedContig;
-    }
-
-    protected String variantToVcfLine(Long id, ISubmittedVariant variant) {
-        String variantLine = String.join("\t",
-                                         variant.getContig(),
-                                         Long.toString(variant.getStart()),
-                                         accessionPrefix + id,
-                                         variant.getReferenceAllele(),
-                                         variant.getAlternateAllele(),
-                                         VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
-        return variantLine;
     }
 
 }
