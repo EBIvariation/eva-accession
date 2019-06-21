@@ -178,7 +178,7 @@ def update_assembly_report(assembly_report_dataframe, genbank_equivalents_datafr
     return assembly_report_dataframe
 
 
-def main(metadb, metauser, metahost, species, assembly_accession, genbank_equivalents_file):
+def main(metadb, metauser, metahost, species, assembly_accession, genbank_equivalents_file, output_file):
         species_db_info = next(filter(lambda db_info: db_info["database_name"] == species,
                                       data_ops.get_species_pg_conn_info(metadb, metauser, metahost)))
         # Download assembly report
@@ -194,9 +194,7 @@ def main(metadb, metauser, metahost, species, assembly_accession, genbank_equiva
                                                            species_db_info)
 
         # Write out the modified assembly report
-        modified_assembly_report_filename = os.path.dirname(assembly_report_path) + os.path.sep + species + \
-                                            "_custom_assembly_report.txt"
-        assembly_report_dataframe.to_csv(modified_assembly_report_filename, sep='\t', index=None)
+        assembly_report_dataframe.to_csv(output_file, sep='\t', index=None)
 
 
 if __name__ == "__main__":
@@ -211,6 +209,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002315.3",
                         required=True)
+    parser.add_argument("-o", "--output-file", help="Output file for the assembly report", required=True)
     parser.add_argument("-g", "--genbank-equivalents-file", help="File with GenBank equivalents for RefSeq accessions",
                         required=True)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
@@ -219,7 +218,7 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         main(args.metadb, args.metauser, args.metahost, args.species, args.assembly_accession,
-             args.genbank_equivalents_file)
+             args.genbank_equivalents_file, args.output_file)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
