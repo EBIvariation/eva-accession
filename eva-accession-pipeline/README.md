@@ -1,17 +1,19 @@
 # EVA accession pipeline
 
-This module can be used to assign SubSNP (SS) accessions to a set of variants in a VCF file.
+This module can be used to assign SubSNP (SS) accessions to a set of variants from a VCF file.
+
+The program will reserve the accessions in a database (`spring.datasource` parameters), store the accessioned variants in another database (`spring.data.mongodb` parameters), and write a VCF report with the accessioned variants.
 
 ## Compiling
 
-The README in the root of the project contains basic instructions.
+As the README in the root of the project explains, a basic `mvn clean install` should work.
 
 ## Running
 
-You will need to provide several parameters to run this pipeline. The easiest way is to fill an `application.properties` and provide it as a CLI parameter:
+You will need to provide several parameters to run this pipeline. The easiest way to specify them is filling an `application.properties` and provide it as a CLI parameter:
 
 ```
-java -jar eva-accession-pipeline-0.3.0-SNAPSHOT-c87679a.jar --spring.config.name=application.properties`
+java -jar eva-accession-pipeline-0.3.0-SNAPSHOT-c87679a.jar --spring.config.name=application.properties
 ```
 Note: If a file named `application.properties` is present, Spring will use it automatically even without specifying it in the `spring.config.name` parameter.
 
@@ -24,7 +26,6 @@ spring.batch.job.names=CREATE_SUBSNP_ACCESSION_JOB
 
 accessioning.instanceId=
 accessioning.submitted.categoryId=ss
-
 accessioning.monotonic.ss.blockSize=100000
 accessioning.monotonic.ss.blockStartValue=5000000000
 accessioning.monotonic.ss.nextBlockInterval=1000000000
@@ -32,19 +33,22 @@ accessioning.monotonic.ss.nextBlockInterval=1000000000
 parameters.assemblyAccession=
 parameters.taxonomyAccession=
 parameters.projectAccession=
-
 parameters.vcf=
 parameters.vcfAggregation=
 parameters.fasta=
 parameters.assemblyReportUrl=
 parameters.outputVcf=
-
 parameters.chunkSize=
 parameters.forceRestart=
 parameters.contigNaming=SEQUENCE_NAME
 
 spring.data.mongodb.database=
-mongodb.read-preference=|eva.mongo.read-preference|
+spring.data.mongodb.host=
+spring.data.mongodb.port=
+spring.data.mongodb.username=
+spring.data.mongodb.password=
+spring.data.mongodb.authentication-database=
+mongodb.read-preference=
 
 spring.datasource.driver-class-name=org.postgresql.Driver
 spring.datasource.url=
