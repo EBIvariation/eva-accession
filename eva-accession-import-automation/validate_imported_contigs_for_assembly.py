@@ -40,7 +40,7 @@ def run_command_with_output(command_description, command):
         raise subprocess.CalledProcessError(process.returncode, process.args)
     else:
         logger.info(command_description + " completed successfully")
-    return process.returncode, process_output
+    return process_output
 
 
 def get_args_from_assembly_properties_file(assembly_properties_file):
@@ -60,9 +60,9 @@ def get_args_from_assembly_properties_file(assembly_properties_file):
 def validate_imported_contigs(assembly_properties_file, config_file):
     config = get_args_from_private_config_file(config_file)
     config.update(get_args_from_assembly_properties_file(assembly_properties_file))
+    # We need to rename the keys because string interpolation won't work if there is a dot character in them
     config["assembly_report_path"] = config["parameters.assemblyReportUrl"].split("file:")[-1]
     config["assembly_md5"] = hashlib.md5(config["parameters.assemblyName"].encode("utf-8")).hexdigest()
-    # We need these because string interpolation won't work if there is a dot in the key
     config["taxonomy_accession"] = config["parameters.taxonomyAccession"]
 
     config["contig_chr_mismatch_table"] = "dbsnp_ensembl_species.dbsnp_species_with_contig_chromosome_start_mismatch"
@@ -86,9 +86,9 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                  "\"contig\": {{$in: [{6}]}}}})'"
 
     mismatch_contig_set = run_command_with_output("Get contigs with start mismatch against chromosome:",
-                                                  get_contigs_start_mismatch_cmd)[1].strip()
+                                                  get_contigs_start_mismatch_cmd).strip()
     match_contig_set = run_command_with_output("Get contigs with start match against chromosome:",
-                                               get_contigs_start_match_cmd)[1].strip()
+                                               get_contigs_start_match_cmd).strip()
 
     if mismatch_contig_set != '""':
         mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
@@ -100,7 +100,7 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                                               mismatch_contig_set)
         mongo_run_command_output = run_command_with_output("Check if mismatched contigs from above "
                                                            "are present in Mongo for the assembly",
-                                                           mongo_run_command)[1]
+                                                           mongo_run_command)
         logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
     else:
         logger.info("No mismatch contig set available!")
@@ -115,7 +115,7 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                                               match_contig_set)
         mongo_run_command_output = run_command_with_output("Check if matched non-chromosome contigs from above "
                                                            "are present in Mongo for the assembly",
-                                                           mongo_run_command)[1]
+                                                           mongo_run_command)
         logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
     else:
         logger.info("No matched non-chromosome contig set available!")
