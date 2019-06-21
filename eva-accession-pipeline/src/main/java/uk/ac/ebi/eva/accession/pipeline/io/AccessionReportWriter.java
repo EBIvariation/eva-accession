@@ -24,6 +24,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
@@ -54,7 +55,7 @@ public class AccessionReportWriter {
 
     private String accessionPrefix;
 
-    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader) throws IOException {
+    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
         this.output = output;
         this.accessionPrefix = ACCESSION_PREFIX;

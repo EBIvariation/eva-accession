@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
@@ -47,9 +48,10 @@ public class AccessionWriterConfiguration {
     }
 
     @Bean
-    AccessionReportWriter accessionReportWriter(InputParameters inputParameters) throws IOException {
+    AccessionReportWriter accessionReportWriter(InputParameters inputParameters, ContigMapping contigMapping)
+            throws IOException {
         return new AccessionReportWriter(new File(inputParameters.getOutputVcf()),
-                                         new FastaSequenceReader(Paths.get(inputParameters.getFasta())));
+                                         new FastaSequenceReader(Paths.get(inputParameters.getFasta())), contigMapping);
     }
 
 }

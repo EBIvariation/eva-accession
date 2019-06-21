@@ -24,6 +24,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
@@ -35,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,7 +48,9 @@ import static org.junit.Assert.assertNotNull;
 
 public class AccessionReportWriterTest {
 
-    private static final String CONTIG_1 = "contig_1";
+    private static final String CONTIG_1 = "genbank_1";
+
+    private static final String CHROMOSOME_1 = "chr1";
 
     private static final String CONTIG_2 = "contig_2";
 
@@ -75,6 +80,8 @@ public class AccessionReportWriterTest {
 
     private static final Boolean VALIDATED = null;
 
+    private static final int CHROMOSOME_COLUMN_VCF = 0;
+
     private AccessionReportWriter accessionReportWriter;
 
     private File output;
@@ -86,12 +93,20 @@ public class AccessionReportWriterTest {
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
+    private ContigMapping contigMapping;
+
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
         fastaSequenceReader = new FastaSequenceReader(fastaPath);
-        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader);
+        contigMapping = new ContigMapping(Arrays.asList(
+                new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
+                new ContigSynonyms("chr2", "assembled-molecule", "2", "genbank_2", "refseq_2", "chr2", false),
+                new ContigSynonyms("ctg3", "unlocalized-scaffold", "1", "genbank_3", "refseq_3", "chr3_random", true),
+                new ContigSynonyms("ctg4", "unlocalized-scaffold", "2", "genbank_4", "refseq_4", "chr4_random",
+                                   false)));
+        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping);
         executionContext = new ExecutionContext();
         accessionReportWriter.open(executionContext);
     }
@@ -210,7 +225,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
         accessionReportWriter.close();
 
-        AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader);
+        AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping);
         variant.setContig(CONTIG_2);
         resumingWriter.open(executionContext);
         resumingWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
@@ -239,5 +254,22 @@ public class AccessionReportWriterTest {
         return variants.stream()
                        .map(variant -> new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, HASH, variant))
                        .collect(Collectors.toList());
+    }
+
+    @Test
+    public void writeChromosomeReplacedFromContig() throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
+                                                        ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
+                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "hash-1", variant);
+
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+
+        assertEquals(CHROMOSOME_1, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
 }

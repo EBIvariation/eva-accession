@@ -35,6 +35,7 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 
@@ -96,6 +97,9 @@ public class AccessionWriterTest {
     @Autowired
     private SubmittedVariantAccessioningService service;
 
+    @Autowired
+    private ContigMapping contigMapping;
+
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
@@ -111,7 +115,8 @@ public class AccessionWriterTest {
         output = temporaryFolderRule.newFile();
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
-                                                                                new FastaSequenceReader(fastaPath));
+                                                                                new FastaSequenceReader(fastaPath),
+                                                                                contigMapping);
         accessionWriter = new AccessionWriter(service, accessionReportWriter);
         accessionReportWriter.open(new ExecutionContext());
     }
