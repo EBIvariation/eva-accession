@@ -1,6 +1,0 @@
-# mocking of an assembly report
-# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
-chr1	assembled-molecule	1	Chromosome	genbank_1	=	refseq_1	Primary Assembly	196202544	chr1
-chr2	assembled-molecule	2	Chromosome	genbank_2	<>	refseq_2	Primary Assembly	149560735	chr2
-ctg3	unlocalized-scaffold	1	Chromosome	genbank_3	=	refseq_3	C57BL/6J	169725	chr1_GL456210_random
-ctg4	unlocalized-scaffold	2	Chromosome	genbank_4	<>	refseq_4	C57BL/6J	169725	chr1_GL456210_random
