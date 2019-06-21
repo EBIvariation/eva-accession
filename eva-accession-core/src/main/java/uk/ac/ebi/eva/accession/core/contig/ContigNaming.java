@@ -16,9 +16,9 @@
 package uk.ac.ebi.eva.accession.core.contig;
 
 public enum ContigNaming {
-    SEQUENCE_NAME,
+    SEQUENCE_NAME,  // this is the same as chromosome names
     ASSIGNED_MOLECULE,
-    INSDC,
+    INSDC,  // this is the same as GenBank
     REFSEQ,
     UCSC
 }

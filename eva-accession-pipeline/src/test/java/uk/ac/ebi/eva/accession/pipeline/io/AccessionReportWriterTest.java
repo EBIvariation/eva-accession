@@ -83,6 +83,10 @@ public class AccessionReportWriterTest {
 
     private static final int CHROMOSOME_COLUMN_VCF = 0;
 
+    private static final String GENBANK_2 = "genbank_2";
+
+    private static final String REFSEQ_2 = "refseq_2";
+
     private AccessionReportWriter accessionReportWriter;
 
     private File output;
@@ -103,7 +107,7 @@ public class AccessionReportWriterTest {
         fastaSequenceReader = new FastaSequenceReader(fastaPath);
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
-                new ContigSynonyms("chr2", "assembled-molecule", "2", "genbank_2", "refseq_2", "chr2", false),
+                new ContigSynonyms("chr2", "assembled-molecule", "2", GENBANK_2, REFSEQ_2, "chr2", false),
                 new ContigSynonyms("ctg3", "unlocalized-scaffold", "1", "genbank_3", "refseq_3", "chr3_random", true),
                 new ContigSynonyms("ctg4", "unlocalized-scaffold", "2", "genbank_4", "refseq_4", "chr4_random",
                                    false)));
@@ -261,37 +265,40 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeChromosomeReplacedFromContig() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "hash-1", variant);
-
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
-                Collections.singletonList(variant));
-
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
-
-        assertEquals(CHROMOSOME_1, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
+        assertContigReplacement(CONTIG_1, ContigNaming.SEQUENCE_NAME, CHROMOSOME_1);
     }
 
-    @Test
-    public void writeContigWithoutEquivalent() throws IOException {
-        String missing_in_assembly_report = "missing_in_assembly_report";
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", missing_in_assembly_report,
+    private void assertContigReplacement(String originalContig, ContigNaming requestedReplacement,
+                                         String replacementContig) throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", originalContig,
                                                         START_1, REFERENCE, ALTERNATE, CLUSTERED_VARIANT,
                                                         SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
                                                         VALIDATED, null);
 
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "hash-1", variant);
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
+                                                                                                    variant);
 
         AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
                 Collections.singletonList(variant));
 
+        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
+                                                          requestedReplacement);
+        accessionReportWriter.open(new ExecutionContext());
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
-        assertEquals(missing_in_assembly_report, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
+        assertEquals(replacementContig, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
+
+    @Test
+    public void writeContigWithoutEquivalent() throws IOException {
+        String contigMissingInAssemblyReport = "contig_missing_in_assembly_report";
+        assertContigReplacement(contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
+                                contigMissingInAssemblyReport);
+    }
+
+    @Test
+    public void writeContigWithoutIdenticalReplacement() throws IOException {
+        assertContigReplacement(REFSEQ_2, ContigNaming.INSDC, REFSEQ_2);
+    }
+
 }
