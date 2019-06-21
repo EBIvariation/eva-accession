@@ -33,6 +33,7 @@ exit_code=0
 touch ${output_folder}/${species}_custom.fa
 touch ${output_folder}/written_contigs.txt
 
+# If using a pre-existing FASTA file, identify the sequences already downloaded to avoid doing it again
 grep '^>' ${output_folder}/${species}_custom.fa | cut -d' ' -f1 | sed 's/>//g' >> ${output_folder}/written_contigs.txt
 
 download_fasta_to_contig_file () {
