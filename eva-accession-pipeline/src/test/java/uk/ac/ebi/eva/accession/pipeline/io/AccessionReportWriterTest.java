@@ -25,6 +25,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
@@ -106,7 +107,8 @@ public class AccessionReportWriterTest {
                 new ContigSynonyms("ctg3", "unlocalized-scaffold", "1", "genbank_3", "refseq_3", "chr3_random", true),
                 new ContigSynonyms("ctg4", "unlocalized-scaffold", "2", "genbank_4", "refseq_4", "chr4_random",
                                    false)));
-        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping);
+        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
+                                                          ContigNaming.SEQUENCE_NAME);
         executionContext = new ExecutionContext();
         accessionReportWriter.open(executionContext);
     }
@@ -126,7 +128,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
+                String.join("\t", CHROMOSOME_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
                             ALTERNATE, ".", ".", "."),
                 getFirstVariantLine(output));
     }
@@ -162,7 +164,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
+                String.join("\t", CHROMOSOME_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
@@ -180,7 +182,7 @@ public class AccessionReportWriterTest {
 
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
-        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CHROMOSOME_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  denormalizedReference, denormalizedAlternate,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
@@ -206,7 +208,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
+                String.join("\t", CHROMOSOME_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
@@ -225,7 +227,8 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
         accessionReportWriter.close();
 
-        AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping);
+        AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
+                                                                         ContigNaming.SEQUENCE_NAME);
         variant.setContig(CONTIG_2);
         resumingWriter.open(executionContext);
         resumingWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
@@ -271,5 +274,24 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(CHROMOSOME_1, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
+    }
+
+    @Test
+    public void writeContigWithoutEquivalent() throws IOException {
+        String missing_in_assembly_report = "missing_in_assembly_report";
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", missing_in_assembly_report,
+                                                        START_1, REFERENCE, ALTERNATE, CLUSTERED_VARIANT,
+                                                        SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                        VALIDATED, null);
+
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
+                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "hash-1", variant);
+
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+
+        assertEquals(missing_in_assembly_report, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
 }

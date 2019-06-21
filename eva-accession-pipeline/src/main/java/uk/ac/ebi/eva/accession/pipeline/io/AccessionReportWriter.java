@@ -25,6 +25,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
@@ -33,7 +35,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AccessionReportWriter {
 
@@ -49,16 +53,26 @@ public class AccessionReportWriter {
 
     private final File output;
 
+    private ContigMapping contigMapping;
+
     private FastaSequenceReader fastaSequenceReader;
 
     private BufferedWriter fileWriter;
 
     private String accessionPrefix;
 
-    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping) throws IOException {
+    private ContigNaming contigNaming;
+
+    private Set<String> loggedUnreplaceableContigs;
+
+    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping,
+                                 ContigNaming contigNaming) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
         this.output = output;
+        this.contigMapping = contigMapping;
+        this.contigNaming = contigNaming;
         this.accessionPrefix = ACCESSION_PREFIX;
+        this.loggedUnreplaceableContigs = new HashSet<>();
     }
 
     public String getAccessionPrefix() {
@@ -140,40 +154,75 @@ public class AccessionReportWriter {
     }
 
     private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
-        if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
-            if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
-                return createVariantWithContextBase(normalizedVariant);
-            } else {
-                throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
-                                                           + "' does not appear in the fasta file ");
-            }
-        } else {
-            return normalizedVariant;
-        }
-    }
+        ImmutableTriple<Long, String, String> startAndRefAndAlt = getDenormalizedStartAndAlleles(normalizedVariant);
 
-    private ISubmittedVariant createVariantWithContextBase(ISubmittedVariant normalizedVariant) {
-        String oldReference = normalizedVariant.getReferenceAllele();
-        String oldAlternate = normalizedVariant.getAlternateAllele();
-        long oldStart = normalizedVariant.getStart();
-        ImmutableTriple<Long, String, String> contextNucleotideInfo =
-                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
-                                                                    oldReference, oldAlternate);
+        String contig = getEquivalentContig(normalizedVariant, contigNaming);
 
         return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
                                     normalizedVariant.getTaxonomyAccession(),
                                     normalizedVariant.getProjectAccession(),
-                                    normalizedVariant.getContig(),
-                                    contextNucleotideInfo.getLeft(),
-                                    contextNucleotideInfo.getMiddle(),
-                                    contextNucleotideInfo.getRight(),
+                                    contig,
+                                    startAndRefAndAlt.getLeft(),
+                                    startAndRefAndAlt.getMiddle(),
+                                    startAndRefAndAlt.getRight(),
                                     normalizedVariant.getClusteredVariantAccession(),
                                     normalizedVariant.isSupportedByEvidence(),
                                     normalizedVariant.isAssemblyMatch(),
                                     normalizedVariant.isAllelesMatch(),
                                     normalizedVariant.isValidated(),
                                     normalizedVariant.getCreatedDate());
+    }
 
+    private ImmutableTriple<Long, String, String> getDenormalizedStartAndAlleles(ISubmittedVariant normalizedVariant) {
+        String oldReference = normalizedVariant.getReferenceAllele();
+        String oldAlternate = normalizedVariant.getAlternateAllele();
+        long oldStart = normalizedVariant.getStart();
+        ImmutableTriple<Long, String, String> startAndRefAndAlt = new ImmutableTriple<>(oldStart, oldReference,
+                                                                                        oldAlternate);
+        if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
+            if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
+                startAndRefAndAlt = fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
+                                                                                        oldReference, oldAlternate);
+
+
+            } else {
+                throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
+                                                   + "' does not appear in the fasta file ");
+            }
+        }
+        return startAndRefAndAlt;
+    }
+
+    private String getEquivalentContig(ISubmittedVariant normalizedVariant, ContigNaming contigNaming) {
+        String oldContig = normalizedVariant.getContig();
+
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(oldContig);
+        if (contigSynonyms == null) {
+            return oldContig;
+        }
+
+        String replacedContig = contigSynonyms.get(contigNaming);
+        if (replacedContig == null) {
+            return oldContig;
+        }
+
+        boolean genbankAndRefseq = oldContig.equals(contigSynonyms.getGenBank())
+                                   && replacedContig.equals(contigSynonyms.getRefSeq());
+
+        boolean refseqAndGenbank = oldContig.equals(contigSynonyms.getRefSeq())
+                                   && replacedContig.equals(contigSynonyms.getGenBank());
+
+        if (!contigSynonyms.isIdenticalGenBankAndRefSeq() && (genbankAndRefseq || refseqAndGenbank)) {
+            if (!loggedUnreplaceableContigs.contains(oldContig)) {
+                loggedUnreplaceableContigs.add(oldContig);
+                logger.warn("Will not replace '" + oldContig + "' with " + contigNaming + " '" + replacedContig
+                            + "' (in the current variant or any subsequent one) as requested because those contigs "
+                            + "are not identical according to the assembly report provided.");
+            }
+            return oldContig;
+        }
+
+        return replacedContig;
     }
 
     protected String variantToVcfLine(Long id, ISubmittedVariant variant) {

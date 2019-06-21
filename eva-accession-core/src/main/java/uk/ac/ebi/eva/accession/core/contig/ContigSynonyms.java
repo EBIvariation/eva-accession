@@ -44,6 +44,25 @@ public class ContigSynonyms {
         this.identicalGenBankAndRefSeq = identicalGenBankAndRefSeq;
     }
 
+    public String get(ContigNaming contigNaming) {
+        switch (contigNaming) {
+            case SEQUENCE_NAME:
+                return getSequenceName();
+            case ASSIGNED_MOLECULE:
+                return getAssignedMolecule();
+            case INSDC:
+                return getGenBank();
+            case REFSEQ:
+                return getRefSeq();
+            case UCSC:
+                return getUcsc();
+            default:
+                throw new RuntimeException(
+                        "Incomplete switch on enum " + ContigNaming.class.getSimpleName() + ". It doesn't handle "
+                        + contigNaming);
+        }
+    }
+
     public String getSequenceName() {
         return sequenceName;
     }

@@ -51,7 +51,8 @@ public class AccessionWriterConfiguration {
     AccessionReportWriter accessionReportWriter(InputParameters inputParameters, ContigMapping contigMapping)
             throws IOException {
         return new AccessionReportWriter(new File(inputParameters.getOutputVcf()),
-                                         new FastaSequenceReader(Paths.get(inputParameters.getFasta())), contigMapping);
+                                         new FastaSequenceReader(Paths.get(inputParameters.getFasta())), contigMapping,
+                                         inputParameters.getContigNaming());
     }
 
 }
