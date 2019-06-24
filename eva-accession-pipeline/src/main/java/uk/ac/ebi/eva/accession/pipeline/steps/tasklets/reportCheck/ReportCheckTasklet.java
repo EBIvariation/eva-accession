@@ -27,7 +27,9 @@ import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.repeat.RepeatStatus;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigReplacerProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.HashSet;
@@ -140,7 +142,20 @@ public class ReportCheckTasklet implements Tasklet {
                 }
             }
         }
+        if (variant != null) {
+            String contig = replaceContig(variant);
+            variant = new Variant(contig, variant.getStart(), variant.getEnd(), variant.getReference(), variant.getAlternate());
+        }
         return variant;
+    }
+
+    private String replaceContig(Variant variant) {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(variant.getChromosome());
+        if (ContigReplacerProcessor.isReplacementPossible(variant, contigSynonyms, new StringBuilder())) {
+            return contigSynonyms.getGenBank();
+        } else {
+            return variant.getChromosome();
+        }
     }
 
     private int removeMatchingVariants(Set<Variant> variantBuffer, Set<Variant> accessionBuffer) {
