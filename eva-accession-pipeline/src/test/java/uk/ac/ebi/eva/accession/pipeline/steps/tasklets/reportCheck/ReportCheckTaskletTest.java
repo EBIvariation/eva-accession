@@ -20,7 +20,15 @@ import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStreamException;
+import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.batch.item.NonTransientResourceException;
+import org.springframework.batch.item.ParseException;
+import org.springframework.batch.item.UnexpectedInputException;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
@@ -30,6 +38,9 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
@@ -37,6 +48,9 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUB
 public class ReportCheckTaskletTest {
 
     private static final long JOB_ID = 0L;
+
+    private ContigMapping contigMapping = new ContigMapping(
+            Collections.singletonList(new ContigSynonyms("20", "assembled-molecule", "20", "20", "20", "20", true)));
 
     @Test
     public void correctReport() throws Exception {
@@ -69,7 +83,7 @@ public class ReportCheckTaskletTest {
         VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
         UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
-        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, initialBufferSize);
+        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, initialBufferSize, contigMapping);
     }
 
     @Test
@@ -138,7 +152,7 @@ public class ReportCheckTaskletTest {
         VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
         UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
-        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, 1000);
+        return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, 1000, contigMapping);
     }
 
     @Test
@@ -226,5 +240,54 @@ public class ReportCheckTaskletTest {
         assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
         assertEquals(expectedMaxBufferSize, reportCheckTasklet.getMaxBufferSize());
         assertEquals(expectedIterations, reportCheckTasklet.getIterations());
+    }
+
+    @Test
+    public void checkWithContigSynonyms() throws Exception {
+        IteratorItemStreamReader<Variant> inputReader = new IteratorItemStreamReader<>(
+                Arrays.asList(new Variant("chromosome1", 100, 100, "A", "T")));
+        IteratorItemStreamReader<Variant> reportReader = new IteratorItemStreamReader<>(
+                Arrays.asList(new Variant("contig1", 100, 100, "A", "T")));
+
+        contigMapping = new ContigMapping(Collections.singletonList(
+                new ContigSynonyms("chromosome1", "assembled-molecule", "1", "contig1", "refseq1", "ucsc1", true)));
+
+        ReportCheckTasklet reportCheckTasklet = new ReportCheckTasklet(inputReader, reportReader, 100, contigMapping);
+        StepContribution stepContribution = new StepContribution(
+                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+        reportCheckTasklet.execute(stepContribution, null);
+
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInInputVcf());
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
+    }
+
+    private class IteratorItemStreamReader<T> implements ItemStreamReader<T> {
+
+        Iterator<? extends T> iterator;
+
+        public IteratorItemStreamReader(Iterable<? extends T> elements) {
+            this.iterator = elements.iterator();
+        }
+
+        @Override
+        public T read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+            if (iterator.hasNext()) {
+                return iterator.next();
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void open(ExecutionContext executionContext) throws ItemStreamException {
+        }
+
+        @Override
+        public void update(ExecutionContext executionContext) throws ItemStreamException {
+        }
+
+        @Override
+        public void close() throws ItemStreamException {
+        }
     }
 }

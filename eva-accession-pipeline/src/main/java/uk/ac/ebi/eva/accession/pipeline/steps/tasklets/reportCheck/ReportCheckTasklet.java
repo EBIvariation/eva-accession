@@ -26,6 +26,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.repeat.RepeatStatus;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -68,11 +69,14 @@ public class ReportCheckTasklet implements Tasklet {
 
     private SkipPolicy skipPolicy;
 
+    private ContigMapping contigMapping;
+
     public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader,
-                              long initialBufferSize) {
+                              long initialBufferSize, ContigMapping contigMapping) {
         this.inputBufferHelper = new BufferHelper(inputReader);
         this.reportBufferHelper = new BufferHelper(reportReader);
         this.initialBufferSize = initialBufferSize;
+        this.contigMapping = contigMapping;
         this.maxBufferSize = 0;
         this.iterations = 0;
         this.skipPolicy = new InvalidVariantSkipPolicy();
