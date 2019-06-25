@@ -120,8 +120,10 @@ public class AccessionReportWriterTest {
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms("chr2", "assembled-molecule", "2", GENBANK_2, REFSEQ_2, "chr2", false),
-                new ContigSynonyms(SEQUENCE_NAME_3, "unlocalized-scaffold", "1", GENBANK_3, REFSEQ_3, "chr3_random", true),
-                new ContigSynonyms(SEQUENCE_NAME_4, "unlocalized-scaffold", "4", GENBANK_4, REFSEQ_4, "chr4_random", true)));
+                new ContigSynonyms(SEQUENCE_NAME_3, "unlocalized-scaffold", "1", GENBANK_3, REFSEQ_3, "chr3_random",
+                                   true),
+                new ContigSynonyms(SEQUENCE_NAME_4, "unlocalized-scaffold", "4", GENBANK_4, REFSEQ_4, "chr4_random",
+                                   true)));
         fastaSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                           ContigNaming.SEQUENCE_NAME);
@@ -320,7 +322,6 @@ public class AccessionReportWriterTest {
 
     /**
      * Note how in the fasta there's no entry for GENBANK_4 nor SEQUENCE_NAME_4, only for REFSEQ_4
-     * @throws IOException
      */
     @Test
     public void writeContigWithSynonymFasta() throws IOException {

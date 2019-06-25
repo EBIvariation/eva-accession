@@ -33,15 +33,15 @@ import java.util.stream.Collectors;
  * Converts the contig to its GenBank synonym when possible. If the synonym can't be determined it keeps the contig as
  * is
  */
-public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant> {
+public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant, IVariant> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ContigReplacerProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(ContigToGenbankReplacerProcessor.class);
 
     private ContigMapping contigMapping;
 
     private Set<String> processedContigs;
 
-    public ContigReplacerProcessor(ContigMapping contigMapping) {
+    public ContigToGenbankReplacerProcessor(ContigMapping contigMapping) {
         this.contigMapping = contigMapping;
         this.processedContigs = new HashSet<>();
     }

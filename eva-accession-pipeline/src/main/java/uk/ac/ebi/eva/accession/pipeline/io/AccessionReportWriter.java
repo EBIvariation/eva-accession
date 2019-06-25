@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
 import java.io.BufferedWriter;
@@ -202,16 +203,33 @@ public class AccessionReportWriter {
         return variantLine;
     }
 
+    /**
+     * Note that we can't use {@link ContigToGenbankReplacerProcessor} here because we allow other replacements than
+     * genbank, while that class is used to replace to genbank only (for writing in mongo and for comparing input and
+     * report VCFs).
+     */
     private String getEquivalentContig(ISubmittedVariant normalizedVariant, ContigNaming contigNaming) {
         String oldContig = normalizedVariant.getContig();
 
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(oldContig);
         if (contigSynonyms == null) {
+            if (!loggedUnreplaceableContigs.contains(oldContig)) {
+                loggedUnreplaceableContigs.add(oldContig);
+                logger.warn("Will not replace contig '" + oldContig
+                            + "' (in the current variant or any subsequent one) as requested because there are no "
+                            + "synonyms available. (Hint: Is the assembly report correct and complete?)");
+            }
             return oldContig;
         }
 
         String replacedContig = contigSynonyms.get(contigNaming);
         if (replacedContig == null) {
+            if (!loggedUnreplaceableContigs.contains(oldContig)) {
+                loggedUnreplaceableContigs.add(oldContig);
+                logger.warn("Will not replace contig '" + oldContig
+                            + "' (in the current variant or any subsequent one) as requested because there is no "
+                            + contigNaming + " synonym for it.");
+            }
             return oldContig;
         }
 
@@ -224,7 +242,7 @@ public class AccessionReportWriter {
         if (!contigSynonyms.isIdenticalGenBankAndRefSeq() && (genbankAndRefseq || refseqAndGenbank)) {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
                 loggedUnreplaceableContigs.add(oldContig);
-                logger.warn("Will not replace '" + oldContig + "' with " + contigNaming + " '" + replacedContig
+                logger.warn("Will not replace contig '" + oldContig + "' with " + contigNaming + " '" + replacedContig
                             + "' (in the current variant or any subsequent one) as requested because those contigs "
                             + "are not identical according to the assembly report provided.");
             }
