@@ -43,11 +43,12 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
-import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
-import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponseV2;
-import uk.ac.ebi.eva.accession.ws.dto.BeaconError;
 import uk.ac.ebi.eva.accession.ws.service.BeaconService;
-import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequestBody;
+import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconError;
+import uk.ac.ebi.eva.commons.beacon.models.Chromosome;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import javax.servlet.http.HttpServletResponse;
@@ -66,7 +67,7 @@ public class ClusteredVariantsRestController {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
-    private BeaconService beaconService;
+    private ClusteredVariantsBeaconService beaconService;
 
     // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
     //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
@@ -76,7 +77,7 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
-            DbsnpClusteredVariantInactiveService inactiveService, BeaconService beaconService) {
+            DbsnpClusteredVariantInactiveService inactiveService, ClusteredVariantsBeaconService beaconService) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.inactiveService = inactiveService;
@@ -170,12 +171,13 @@ public class ClusteredVariantsRestController {
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
             + "-or-rs")
     @GetMapping(value = "/beacon/query", produces = "application/json")
-    public BeaconAlleleResponseV2 doesVariantExist(@RequestParam(name = "assemblyId") String assembly,
-                                                   @RequestParam(name = "referenceName") String chromosome,
-                                                   @RequestParam(name = "start") long start,
-                                                   @RequestParam(name = "variantType") VariantType variantType,
-                                                   @RequestParam(name = "includeDatasetReponses") boolean includeDatasetReponses,
-                                                   HttpServletResponse response) {
+    public BeaconAlleleResponse doesVariantExist(@RequestParam(name = "assemblyId") String assembly,
+                                                 @RequestParam(name = "referenceName") String chromosome,
+                                                 @RequestParam(name = "start") long start,
+                                                 @RequestParam(name = "variantType") VariantType variantType,
+                                                 @RequestParam(name = "includeDatasetReponses", required = false)
+                                                             boolean includeDatasetReponses,
+                                                 HttpServletResponse response) {
         try {
             return beaconService
                     .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
@@ -187,18 +189,23 @@ public class ClusteredVariantsRestController {
         }
     }
 
-    private BeaconAlleleResponseV2 getBeaconResponseObjectWithError(String reference, long start,
-                                                                    String assembly, VariantType variantType,
-                                                                    int errorCode, String errorMessage) {
+    private BeaconAlleleResponse getBeaconResponseObjectWithError(String reference, long start, String assembly,
+                                                                  VariantType variantType, int errorCode,
+                                                                  String errorMessage) {
+        BeaconAlleleRequest request = new BeaconAlleleRequest();
+        request.setReferenceName(Chromosome.fromValue(reference));
+        request.setStart(start);
+        request.setVariantType(variantType.toString());
+        request.setAssemblyId(assembly);
 
-        BeaconAlleleRequestBody request = new BeaconAlleleRequestBody(reference, start, null, null, null, null, null,
-                                                                      null, null, variantType.toString(), assembly,
-                                                                      null, null);
+        BeaconError error = new BeaconError();
+        error.setErrorCode(errorCode);
+        error.setErrorMessage(errorMessage);
 
-        BeaconAlleleResponseV2 result = new BeaconAlleleResponseV2();
-        result.setAlleleRequest(request);
-        result.setError(new BeaconError(errorCode, errorMessage));
-        return result;
+        BeaconAlleleResponse response = new BeaconAlleleResponse();
+        response.setAlleleRequest(request);
+        response.setError(error);
+        return response;
     }
 
 }

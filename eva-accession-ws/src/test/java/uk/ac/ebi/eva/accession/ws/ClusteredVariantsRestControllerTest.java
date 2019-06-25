@@ -21,6 +21,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -31,12 +33,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
+import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
@@ -44,6 +49,7 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
@@ -58,8 +64,12 @@ import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantMonotonicAccess
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
+import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -70,7 +80,9 @@ import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -122,6 +134,8 @@ public class ClusteredVariantsRestControllerTest {
     @Autowired
     private DbsnpClusteredVariantMonotonicAccessioningService dbsnpService;
 
+    private ClusteredVariantsRestController mockController;
+
     private Iterable<DbsnpClusteredVariantEntity> generatedAccessions;
 
     private DbsnpSubmittedVariantEntity submittedVariantEntity1;
@@ -138,6 +152,15 @@ public class ClusteredVariantsRestControllerTest {
 
     private DbsnpClusteredVariantEntity clusteredVariantEntity3;
 
+    @Mock
+    private BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> mockBasicRestController;
+
+    @Mock
+    private SubmittedVariantAccessioningService mockService;
+
+    @Mock
+    private DbsnpClusteredVariantInactiveService inactiveService;
+
     @Before
     public void setUp() {
         dbsnpRepository.deleteAll();
@@ -148,6 +171,13 @@ public class ClusteredVariantsRestControllerTest {
         setupDbSnpClusteredVariants();
         setupDbsnpSubmittedVariants();
         setupEvaSubmittedVariants();
+
+        ClusteredVariantsBeaconService mockBeaconService = Mockito.spy(
+                new ClusteredVariantsBeaconService(clusteredService));
+        Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
+               .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, false);
+        mockController = new ClusteredVariantsRestController(mockBasicRestController, mockService, inactiveService,
+                                                             mockBeaconService);
     }
 
     private void setupDbSnpClusteredVariants() {
@@ -157,13 +187,15 @@ public class ClusteredVariantsRestControllerTest {
         ClusteredVariant variant3 = new ClusteredVariant("ASMACC01", 1102, "CHROM1", 4567, VariantType.SNV, false,
                                                          null);
 
-        ClusteredVariantSummaryFunction function = new ClusteredVariantSummaryFunction();
+        Function<IClusteredVariant, String> function =
+                new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+
         clusteredVariantEntity1 = new DbsnpClusteredVariantEntity(DBSNP_CLUSTERED_VARIANT_ACCESSION_1,
-                                                                              function.apply(variant1), variant1);
+                                                                  function.apply(variant1), variant1);
         clusteredVariantEntity2 = new DbsnpClusteredVariantEntity(DBSNP_CLUSTERED_VARIANT_ACCESSION_2,
-                                                                              function.apply(variant2), variant2);
+                                                                  function.apply(variant2), variant2);
         clusteredVariantEntity3 = new DbsnpClusteredVariantEntity(DBSNP_CLUSTERED_VARIANT_ACCESSION_3,
-                                                                              function.apply(variant3), variant3);
+                                                                  function.apply(variant3), variant3);
 
         // No new dbSNP accessions can be generated, so the variants can only be stored directly using a repository
         // TODO When the support for new EVA accessions is implemented, this could be changed
@@ -256,8 +288,8 @@ public class ClusteredVariantsRestControllerTest {
             Long accession) {
         List<AccessionedDocument<IClusteredVariant, Long>> expectedVariants =
                 Stream.of(clusteredVariantEntity1, clusteredVariantEntity2, clusteredVariantEntity3)
-                .filter(v -> v.getAccession().equals(accession))
-                .collect(Collectors.toList());
+                      .filter(v -> v.getAccession().equals(accession))
+                      .collect(Collectors.toList());
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
                                                        expectedVariants,
                                                        ClusteredVariant::new);
@@ -396,7 +428,8 @@ public class ClusteredVariantsRestControllerTest {
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(1, getVariantsResponse.getBody().size());
-        assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2), getVariantsResponse.getBody().get(0).getAccession());
+        assertEquals(new Long(DBSNP_CLUSTERED_VARIANT_ACCESSION_2),
+                     getVariantsResponse.getBody().get(0).getAccession());
         assertClusteredVariantCreatedDateNotNull(getVariantsResponse.getBody());
     }
 
@@ -484,7 +517,7 @@ public class ClusteredVariantsRestControllerTest {
         String redirectUrlIncludingHostAndPort = firstResponse.getHeaders().get(HttpHeaders.LOCATION).get(0);
         String redirectedUrl = redirectUrlIncludingHostAndPort.substring(redirectUrlIncludingHostAndPort.indexOf(URL));
         assertTrue((URL + currentAccession).equals(redirectedUrl)
-                  || (URL + anotherCurrentAccession).equals(redirectedUrl));
+                           || (URL + anotherCurrentAccession).equals(redirectedUrl));
 
         // and then
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse = testRestTemplate
@@ -633,5 +666,109 @@ public class ClusteredVariantsRestControllerTest {
         assertEquals(1, response.getBody().size());
         assertEquals(variant1, response.getBody().get(0).getData());
         assertClusteredVariantCreatedDateNotNull(response.getBody());
+    }
+
+    @Test
+    public void findByIdFields() {
+        ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+                controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
+                                         clusteredVariantEntity1.getContig(),
+                                         clusteredVariantEntity1.getStart(),
+                                         clusteredVariantEntity1.getType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(clusteredVariantEntity1.getAccession(), getVariantsResponse.getBody().getAccession());
+    }
+
+    @Test
+    public void findByIdFieldsClusteredVariantDoesntExists() {
+        ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+                controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
+                                         clusteredVariantEntity1.getContig(),
+                                         123,
+                                         clusteredVariantEntity1.getType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertNull(getVariantsResponse.getBody());
+    }
+
+    @Test
+    public void doesVariantExistTrueWithDatasets() {
+        HttpServletResponse response = new MockHttpServletResponse();
+        BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
+                clusteredVariantEntity1.getAssemblyAccession(),
+                clusteredVariantEntity1.getContig(),
+                clusteredVariantEntity1.getStart(),
+                clusteredVariantEntity1.getType(),
+                true,
+                response);
+
+        assertTrue(beaconAlleleResponse.isExists());
+        assertNotNull(beaconAlleleResponse.getDatasetAlleleResponses());
+        assertEmbeddedAlleleRequest(beaconAlleleResponse, clusteredVariantEntity1);
+    }
+
+    private void assertEmbeddedAlleleRequest(BeaconAlleleResponse beaconAlleleResponse,
+                                             DbsnpClusteredVariantEntity clusteredVariantEntity) {
+        assertEmbeddedAlleleRequest(beaconAlleleResponse, clusteredVariantEntity.getAssemblyAccession(),
+                                    clusteredVariantEntity.getStart(), clusteredVariantEntity.getType());
+    }
+
+    private void assertEmbeddedAlleleRequest(BeaconAlleleResponse beaconAlleleResponse, String assemblyId,
+                                             long start, VariantType variantType){
+        BeaconAlleleRequest alleleRequest = beaconAlleleResponse.getAlleleRequest();
+        assertEquals(alleleRequest.getAssemblyId(), assemblyId);
+        //The chromosome assert would fail because its not one of the Chromosome enum values, for now the allele
+        //request sent in the response will not have that value if its different from the enum
+        //assertEquals(alleleRequest.getReferenceName().toString(), clusteredVariantEntity1.getContig());
+        assertEquals((long) alleleRequest.getStart(), start);
+        assertEquals(alleleRequest.getVariantType(), variantType.toString());
+    }
+
+    @Test
+    public void doesVariantExistTrueWithoutDatasets() {
+        HttpServletResponse response = new MockHttpServletResponse();
+        BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
+                clusteredVariantEntity1.getAssemblyAccession(),
+                clusteredVariantEntity1.getContig(),
+                clusteredVariantEntity1.getStart(),
+                clusteredVariantEntity1.getType(),
+                false,
+                response);
+
+        assertTrue(beaconAlleleResponse.isExists());
+        assertNull(beaconAlleleResponse.getDatasetAlleleResponses());
+        assertEmbeddedAlleleRequest(beaconAlleleResponse, clusteredVariantEntity1);
+    }
+
+    @Test
+    public void doesVariantExistFalse() {
+        HttpServletResponse response = new MockHttpServletResponse();
+        BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
+                clusteredVariantEntity1.getAssemblyAccession(),
+                clusteredVariantEntity1.getContig(),
+                123L,
+                clusteredVariantEntity1.getType(),
+                false,
+                response);
+
+        assertFalse(beaconAlleleResponse.isExists());
+        assertNull(beaconAlleleResponse.getDatasetAlleleResponses());
+        assertEmbeddedAlleleRequest(beaconAlleleResponse, clusteredVariantEntity1.getAssemblyAccession(), 123L,
+                                    clusteredVariantEntity1.getType());
+    }
+
+    @Test
+    public void doesVariantExistError500() {
+        HttpServletResponse response = new MockHttpServletResponse();
+        String assemblyId = "GCA_ERROR";
+        String chromosome = "CHROM1";
+        int start = 123;
+        BeaconAlleleResponse beaconAlleleResponse = mockController
+                .doesVariantExist(assemblyId, chromosome, start, VariantType.SNV, false, response);
+
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, (int)beaconAlleleResponse.getError().getErrorCode());
+        assertEmbeddedAlleleRequest(beaconAlleleResponse, assemblyId, start, VariantType.SNV);
     }
 }
