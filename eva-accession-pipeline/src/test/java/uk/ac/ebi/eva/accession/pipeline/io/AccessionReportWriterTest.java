@@ -87,7 +87,17 @@ public class AccessionReportWriterTest {
 
     private static final String REFSEQ_2 = "refseq_2";
 
+    private static final String SEQUENCE_NAME_3 = "ctg3";
+
     private static final String GENBANK_3 = "genbank_3";
+
+    private static final String REFSEQ_3 = "refseq_3";
+
+    private static final String SEQUENCE_NAME_4 = "ctg4";
+
+    private static final String GENBANK_4 = "genbank_4";
+
+    private static final String REFSEQ_4 = "refseq_4";
 
     private AccessionReportWriter accessionReportWriter;
 
@@ -110,7 +120,8 @@ public class AccessionReportWriterTest {
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms("chr2", "assembled-molecule", "2", GENBANK_2, REFSEQ_2, "chr2", false),
-                new ContigSynonyms("ctg3", "unlocalized-scaffold", "1", GENBANK_3, "refseq_3", "chr3_random", true)));
+                new ContigSynonyms(SEQUENCE_NAME_3, "unlocalized-scaffold", "1", GENBANK_3, REFSEQ_3, "chr3_random", true),
+                new ContigSynonyms(SEQUENCE_NAME_4, "unlocalized-scaffold", "4", GENBANK_4, REFSEQ_4, "chr4_random", true)));
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                           ContigNaming.SEQUENCE_NAME);
         executionContext = new ExecutionContext();
@@ -271,7 +282,7 @@ public class AccessionReportWriterTest {
     private void assertContigReplacement(String originalContig, ContigNaming requestedReplacement,
                                          String replacementContig) throws IOException {
         SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", originalContig,
-                                                        START_1, REFERENCE, ALTERNATE, CLUSTERED_VARIANT,
+                                                        START_1, "", ALTERNATE, CLUSTERED_VARIANT,
                                                         SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
                                                         VALIDATED, null);
 
@@ -304,6 +315,15 @@ public class AccessionReportWriterTest {
     @Test
     public void writeContigWithoutIdenticalReplacement() throws IOException {
         assertContigReplacement(REFSEQ_2, ContigNaming.INSDC, REFSEQ_2);
+    }
+
+    /**
+     * Note how in the fasta there's no entry for GENBANK_4 nor SEQUENCE_NAME_4, only for REFSEQ_4
+     * @throws IOException
+     */
+    @Test
+    public void writeContigWithSynonymFasta() throws IOException {
+        assertContigReplacement(GENBANK_4, ContigNaming.SEQUENCE_NAME, SEQUENCE_NAME_4);
     }
 
 }

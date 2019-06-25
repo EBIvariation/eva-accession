@@ -15,6 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.core.contig;
 
+/**
+ * This enum can be used to specify one of the synonyms from NCBI's assembly reports.
+ */
 public enum ContigNaming {
     SEQUENCE_NAME,  // this is the same as chromosome names
     ASSIGNED_MOLECULE,

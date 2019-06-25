@@ -1,4 +1,10 @@
 >genbank_1
 GTCAGTCAGTCA
->genbank_2
+>refseq_2
+GTCAGTCAGTCA
+>genbank_3
+GTCAGTCAGTCA
+>refseq_4
+GTCAGTCAGTCA
+>contig_missing_in_assembly_report
 GTCAGTCAGTCA
