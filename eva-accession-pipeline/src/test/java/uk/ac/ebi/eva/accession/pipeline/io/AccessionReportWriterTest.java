@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
@@ -116,12 +117,12 @@ public class AccessionReportWriterTest {
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
-        fastaSequenceReader = new FastaSequenceReader(fastaPath);
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms("chr2", "assembled-molecule", "2", GENBANK_2, REFSEQ_2, "chr2", false),
                 new ContigSynonyms(SEQUENCE_NAME_3, "unlocalized-scaffold", "1", GENBANK_3, REFSEQ_3, "chr3_random", true),
                 new ContigSynonyms(SEQUENCE_NAME_4, "unlocalized-scaffold", "4", GENBANK_4, REFSEQ_4, "chr4_random", true)));
+        fastaSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                           ContigNaming.SEQUENCE_NAME);
         executionContext = new ExecutionContext();
@@ -300,7 +301,7 @@ public class AccessionReportWriterTest {
         assertEquals(replacementContig, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void writeContigWithoutEquivalent() throws IOException {
         String contigMissingInAssemblyReport = "contig_missing_in_assembly_report";
         assertContigReplacement(contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
