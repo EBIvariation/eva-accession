@@ -101,8 +101,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         metaData.add(new VCFInfoHeaderLine(CLUSTERED_VARIANT_VALIDATED_KEY, 0, VCFHeaderLineType.Flag,
                                            "RS validated flag, present when the RS was validated by any method "
                                            + "as indicated by the dbSNP validation status"));
-        metaData.add(new VCFInfoHeaderLine(SUBMITTED_VARIANT_VALIDATED_KEY, VCFHeaderLineCount.UNBOUNDED,
-                                           VCFHeaderLineType.Integer,
+        metaData.add(new VCFInfoHeaderLine(SUBMITTED_VARIANT_VALIDATED_KEY, 1, VCFHeaderLineType.Integer,
                                            "Number of submitted variants clustered in an RS that were validated by any"
                                            + " method as indicated by the dbSNP validation status"));
 
