@@ -44,18 +44,14 @@ public class ContigMapping {
     }
 
     public ContigMapping(AssemblyReportReader assemblyReportReader) throws Exception {
-        populateMaps(assemblyReportReader);
-    }
-
-    public ContigMapping(List<ContigSynonyms> contigSynonyms) {
-        contigSynonyms.forEach(this::fillContigConventionMaps);
-    }
-
-    private void populateMaps(AssemblyReportReader assemblyReportReader) throws Exception {
         ContigSynonyms contigSynonyms;
         while ((contigSynonyms = assemblyReportReader.read()) != null) {
             fillContigConventionMaps(contigSynonyms);
         }
+    }
+
+    public ContigMapping(List<ContigSynonyms> contigSynonyms) {
+        contigSynonyms.forEach(this::fillContigConventionMaps);
     }
 
     /**
@@ -69,7 +65,14 @@ public class ContigMapping {
     private void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
         normalizeNames(contigSynonyms);
 
-        sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
+        if (contigSynonyms.getSequenceName() != null) {
+            ContigSynonyms previousValue = sequenceNameToSynonyms.put(contigSynonyms.getSequenceName(), contigSynonyms);
+            if (previousValue != null) {
+                throw new IllegalArgumentException(
+                        "Can't build a contig mapping because the sequence names (chromosome names) such as '"
+                        + contigSynonyms.getSequenceName() + "' are not unique.");
+            }
+        }
         if (contigSynonyms.getAssignedMolecule() != null) {
             assignedMoleculeToSynonyms.put(contigSynonyms.getAssignedMolecule(), contigSynonyms);
         }
@@ -86,6 +89,9 @@ public class ContigMapping {
     }
 
     private void normalizeNames(ContigSynonyms contigSynonyms) {
+        if (NOT_AVAILABLE.equals(contigSynonyms.getSequenceName())) {
+            contigSynonyms.setSequenceName(null);
+        }
         if (NOT_AVAILABLE.equals(contigSynonyms.getAssignedMolecule())
                 || !ASSEMBLED_MOLECULE.equals(contigSynonyms.getSequenceRole())) {
             contigSynonyms.setAssignedMolecule(null);

@@ -13,29 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.core.io;
+package uk.ac.ebi.eva.accession.dbsnp.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.util.DigestUtils;
 
+import uk.ac.ebi.eva.accession.dbsnp.model.CoordinatesPresence;
+
 import javax.sql.DataSource;
 
 /**
  * This Spring Batch reader obtains the list of distinct contigs in a dbSNP database.
  */
-public class SubSnpNoHgvsContigReader extends JdbcCursorItemReader<String> {
+public class SubSnpNoHgvsContigAndChromosomeReader extends JdbcCursorItemReader<CoordinatesPresence> {
 
     static final String CONTIG_NAME_COLUMN = "contig_name";
 
-    private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsContigReader.class);
+    static final String CHROMOSOME_NAME_COLUMN = "chromosome";
 
-    public SubSnpNoHgvsContigReader(String assembly, Long buildNumber, DataSource dataSource,
-                                    int pageSize) throws Exception {
+    static final String CHROMOSOME_START_PRESENT_COLUMN = "chromosome_start_present";
+
+    private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsContigAndChromosomeReader.class);
+
+    public SubSnpNoHgvsContigAndChromosomeReader(String assembly, Long buildNumber, DataSource dataSource,
+                                                 int pageSize) throws Exception {
         setDataSource(dataSource);
         setSql(buildSql(assembly, buildNumber));
-        setRowMapper(new SubSnpNoHgvsContigRowMapper());
+        setRowMapper(new SubSnpNoHgvsContigAndChromosomeRowMapper());
         setFetchSize(pageSize);
     }
 
@@ -43,6 +49,8 @@ public class SubSnpNoHgvsContigReader extends JdbcCursorItemReader<String> {
         String tableName = getTableName(assembly, buildNumber);
         logger.debug("querying table {} for assembly {}", tableName, assembly);
         String sql = "SELECT DISTINCT " + CONTIG_NAME_COLUMN
+                     + ", " + CHROMOSOME_NAME_COLUMN
+                     + ", chromosome_start is not null as "  + CHROMOSOME_START_PRESENT_COLUMN
                      + " FROM " + tableName;
         return sql;
     }

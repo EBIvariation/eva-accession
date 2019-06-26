@@ -125,7 +125,7 @@ public class ImportDbsnpVariantsStepConfigurationTest {
         clusteredVariantRepository.findAll().forEach(storedClusteredVariants::add);
 
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAssemblyMatch,
-                                     Arrays.asList(88888888L, 44444L));
+                                     Arrays.asList(26201546L, 1540359250L, 88888888L, 44444L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isSupportedByEvidence,
                                      Arrays.asList(26201546L, 25062583L, 25312601L, 27587141L, 44444L, 88888888L));
         checkFlagInSubmittedVariants(storedSubmittedVariants, SubmittedVariantEntity::isAllelesMatch,
