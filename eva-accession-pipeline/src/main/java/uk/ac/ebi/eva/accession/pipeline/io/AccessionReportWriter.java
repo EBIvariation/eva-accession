@@ -160,7 +160,7 @@ public class AccessionReportWriter {
                 return createVariantWithContextBase(normalizedVariant);
             } else {
                 throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
-                                                   + "' does not appear in the fasta file ");
+                                                   + "' does not appear in the FASTA file ");
             }
         } else {
             return normalizedVariant;
@@ -205,7 +205,7 @@ public class AccessionReportWriter {
 
     /**
      * Note that we can't use {@link ContigToGenbankReplacerProcessor} here because we allow other replacements than
-     * genbank, while that class is used to replace to genbank only (for writing in mongo and for comparing input and
+     * GenBank, while that class is used to replace to GenBank only (for writing in Mongo and for comparing input and
      * report VCFs).
      */
     private String getEquivalentContig(ISubmittedVariant normalizedVariant, ContigNaming contigNaming) {

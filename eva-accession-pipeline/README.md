@@ -4,16 +4,16 @@ This module can be used to assign SubSNP (SS) accessions to a set of variants fr
 
 The program will reserve the accessions in a database (`spring.datasource` parameters), store the accessioned variants in another database (`spring.data.mongodb` parameters), and write a VCF report with the accessioned variants.
 
-## Compiling
+## Build
 
 As the README in the root of the project explains, a basic `mvn clean install` should work.
 
-## Running
+## Run
 
 You will need to provide several parameters to run this pipeline. The easiest way to specify them is filling an `application.properties` and provide it as a CLI parameter:
 
 ```
-java -jar eva-accession-pipeline-0.3.0-SNAPSHOT-c87679a.jar --spring.config.name=application.properties
+java -jar eva-accession-pipeline-x.y.z.jar --spring.config.name=application.properties
 ```
 Note: If a file named `application.properties` is present, Spring will use it automatically even without specifying it in the `spring.config.name` parameter.
 
@@ -70,7 +70,7 @@ Available values (from ContigNaming):
 - `SEQUENCE_NAME`: Use chromosome or scaffold names.
 - `ASSIGNED_MOLECULE`: Usually similar to SEQUENCE_NAME but without prefixes.
 - `INSDC`: Use GenBank contig accessions.
-- `REFSEQ`
-- `UCSC`
+- `REFSEQ`: Use RefSeq contig accessions.
+- `UCSC`: Use chromosome names defined by UCSC, usually of the form `chr<name>`.
 
 If not provided, the default value is `SEQUENCE_NAME`.

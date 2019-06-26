@@ -58,7 +58,7 @@ public class ContigSynonyms {
                 return getUcsc();
             default:
                 throw new RuntimeException(
-                        "Incomplete switch on enum " + ContigNaming.class.getSimpleName() + ". It doesn't handle "
+                        "Enum type " + ContigNaming.class.getSimpleName() + " doesn't accept value "
                         + contigNaming);
         }
     }
