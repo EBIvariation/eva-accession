@@ -1,7 +1,10 @@
 # eva-accession
-EVA non-human variant accessioning service
+EVA non-human variant accessioning service.
 
-To compile the project you only need to run `mvn clean install`.
+The EVA is responsible for issuing RS IDs and SS IDs for variants in non-human species. The official announcement is available at https://www.ebi.ac.uk/about/news/press-releases/eva-issues-long-term-ids-non-human-variants.
+
+# Build
+To compile the whole project you only need to run `mvn clean install`.
 
 You can use maven profiles (e.g. `mvn clean install -Pproduction`) to fill some required parameters and include them in the compiled jars/wars.
 

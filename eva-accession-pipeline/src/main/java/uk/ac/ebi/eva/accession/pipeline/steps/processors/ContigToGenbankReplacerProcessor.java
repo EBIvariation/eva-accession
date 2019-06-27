@@ -72,14 +72,21 @@ public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant,
     public static boolean isReplacementPossible(IVariant variant, ContigSynonyms contigSynonyms, StringBuilder message) {
         if (contigSynonyms == null) {
             message.append("Contig '" + variant.getChromosome() + "' was not found in the assembly report!");
-        } else if(!contigSynonyms.isIdenticalGenBankAndRefSeq() && contigSynonyms.getRefSeq() != null) {
+            return false;
+        }
+
+        if(!contigSynonyms.isIdenticalGenBankAndRefSeq() && contigSynonyms.getRefSeq() != null) {
             message.append("Genbank and refseq not identical in the assembly report for contig '"
                                    + variant.getChromosome() + "'. No conversion performed");
-        } else if(contigSynonyms.getGenBank() == null) {
+            return false;
+        }
+
+        if(contigSynonyms.getGenBank() == null) {
             message.append("No Genbank equivalent found for contig '" + variant.getChromosome()
                                    + "' in the assembly report");
+            return false;
         }
-        return message.toString().isEmpty();
+        return true;
     }
 
     private IVariant replaceContigWithGenbankAccession(IVariant variant, ContigSynonyms contigSynonyms) {

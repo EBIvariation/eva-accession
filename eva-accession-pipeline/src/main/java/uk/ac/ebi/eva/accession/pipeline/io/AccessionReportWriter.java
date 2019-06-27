@@ -148,8 +148,8 @@ public class AccessionReportWriter {
             List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = new ArrayList<>();
         for (AccessionWrapper<ISubmittedVariant, String, Long> accession : accessions) {
-            denormalizedAccessions.add(new AccessionWrapper(accession.getAccession(), accession.getHash(),
-                                                            denormalizeVariant(accession.getData())));
+            denormalizedAccessions.add(new AccessionWrapper<>(accession.getAccession(), accession.getHash(),
+                                                              denormalizeVariant(accession.getData())));
         }
         return denormalizedAccessions;
     }
@@ -222,8 +222,8 @@ public class AccessionReportWriter {
             return oldContig;
         }
 
-        String replacedContig = contigSynonyms.get(contigNaming);
-        if (replacedContig == null) {
+        String contigReplacement = contigSynonyms.get(contigNaming);
+        if (contigReplacement == null) {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
                 loggedUnreplaceableContigs.add(oldContig);
                 logger.warn("Will not replace contig '" + oldContig
@@ -233,23 +233,24 @@ public class AccessionReportWriter {
             return oldContig;
         }
 
-        boolean genbankAndRefseq = oldContig.equals(contigSynonyms.getGenBank())
-                                   && replacedContig.equals(contigSynonyms.getRefSeq());
+        boolean genbankReplacedWithRefseq = oldContig.equals(contigSynonyms.getGenBank())
+                                            && contigReplacement.equals(contigSynonyms.getRefSeq());
 
-        boolean refseqAndGenbank = oldContig.equals(contigSynonyms.getRefSeq())
-                                   && replacedContig.equals(contigSynonyms.getGenBank());
+        boolean refseqReplacedWithGenbank = oldContig.equals(contigSynonyms.getRefSeq())
+                                            && contigReplacement.equals(contigSynonyms.getGenBank());
 
-        if (!contigSynonyms.isIdenticalGenBankAndRefSeq() && (genbankAndRefseq || refseqAndGenbank)) {
+        if (!contigSynonyms.isIdenticalGenBankAndRefSeq() && (genbankReplacedWithRefseq || refseqReplacedWithGenbank)) {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
                 loggedUnreplaceableContigs.add(oldContig);
-                logger.warn("Will not replace contig '" + oldContig + "' with " + contigNaming + " '" + replacedContig
-                            + "' (in the current variant or any subsequent one) as requested because those contigs "
-                            + "are not identical according to the assembly report provided.");
+                logger.warn(
+                        "Will not replace contig '" + oldContig + "' with " + contigNaming + " '" + contigReplacement
+                        + "' (in the current variant or any subsequent one) as requested because those contigs "
+                        + "are not identical according to the assembly report provided.");
             }
             return oldContig;
         }
 
-        return replacedContig;
+        return contigReplacement;
     }
 
 }
