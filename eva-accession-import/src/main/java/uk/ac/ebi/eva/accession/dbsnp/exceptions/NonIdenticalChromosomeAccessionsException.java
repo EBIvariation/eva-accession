@@ -15,6 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.exceptions;
 
+import static org.springframework.util.StringUtils.hasText;
+
 /**
  * This exception signals a possible issue with the chromosome accession equivalences in a species.
  *
@@ -29,6 +31,9 @@ package uk.ac.ebi.eva.accession.dbsnp.exceptions;
  * We don't expect this to happen, but (at the time of writing)
  * {@link uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor} will replace the chromosome with the
  * GenBank accession if the 'forceImport' is set.
+ *
+ * Note that this doesn't apply if refseq is not available ("CM123.1 <> na") because then it's clear that the chromosome
+ * is identical to the genbank contig, and the replacement "chromosome to genbank" can be safely done.
  */
 public class NonIdenticalChromosomeAccessionsException extends RuntimeException {
 
@@ -52,5 +57,12 @@ public class NonIdenticalChromosomeAccessionsException extends RuntimeException 
                + "' and INSDC accessions are not identical. This could mean that dbSNP (RefSeq) "
                + "chromosomes are not the same as EVA (INSDC, GenBank) chromosomes, at least for this "
                + "species.";
+    }
+
+    /**
+     * This check was extracted to give visibility to this class' documentation
+     */
+    public static boolean isExceptionApplicable(boolean genbankAndRefseqIdentical, String refSeq) {
+        return !genbankAndRefseqIdentical && hasText(refSeq);
     }
 }
