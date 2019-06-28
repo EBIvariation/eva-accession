@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.util.StringUtils.hasText;
+
 public class ContigMapping {
 
     private static final String ASSEMBLED_MOLECULE = "assembled-molecule";
@@ -125,5 +127,33 @@ public class ContigMapping {
             return contigSynonyms;
         }
         return null;
+    }
+
+    /**
+     * Replacement to genbanks is only possible if:
+     * - Contig has synonyms
+     * - Genbank and Refseq are identical or are not identical but there is no RefSeq accession. This means that no
+     *   replacement will be done with a line like "chr1 ... genbank1 <> refseq1 ...", not even chr -> genbank
+     * - Contig has Genbank synonym
+     */
+    public boolean isGenbankReplacementPossible(String contig, ContigSynonyms contigSynonyms, StringBuilder reason) {
+        if (contigSynonyms == null) {
+            reason.append("Contig '" + contig + "' was not found in the assembly report!");
+            return false;
+        }
+
+        if(!contigSynonyms.isIdenticalGenBankAndRefSeq() && hasText(contigSynonyms.getRefSeq())) {
+            reason.append("Genbank and refseq not identical in the assembly report for contig '" + contig
+                          + "' and refseq is not empty. No conversion performed, even unrelated to refseq (e.g. "
+                          + "chromosome to genbank");
+            return false;
+        }
+
+        if(!hasText(contigSynonyms.getGenBank())) {
+            reason.append("No Genbank equivalent found for contig '" + contig
+                          + "' in the assembly report");
+            return false;
+        }
+        return true;
     }
 }

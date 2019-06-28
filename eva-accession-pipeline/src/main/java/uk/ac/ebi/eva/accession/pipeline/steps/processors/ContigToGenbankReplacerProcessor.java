@@ -52,7 +52,7 @@ public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant,
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contigName);
 
         StringBuilder message = new StringBuilder();
-        if (isReplacementPossible(variant, contigSynonyms, message)) {
+        if (contigMapping.isGenbankReplacementPossible(contigName, contigSynonyms, message)) {
             return replaceContigWithGenbankAccession(variant, contigSynonyms);
         } else {
             if (!processedContigs.contains(contigName)) {
@@ -61,32 +61,6 @@ public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant,
             }
             return variant;
         }
-    }
-
-    /**
-     * Replacement only possible if:
-     * - Contig has synonyms
-     * - Genbank and Refseq are identical or are not identical but there is no RefSeq accession
-     * - Contig has Genbank synonym
-     */
-    public static boolean isReplacementPossible(IVariant variant, ContigSynonyms contigSynonyms, StringBuilder message) {
-        if (contigSynonyms == null) {
-            message.append("Contig '" + variant.getChromosome() + "' was not found in the assembly report!");
-            return false;
-        }
-
-        if(!contigSynonyms.isIdenticalGenBankAndRefSeq() && contigSynonyms.getRefSeq() != null) {
-            message.append("Genbank and refseq not identical in the assembly report for contig '"
-                                   + variant.getChromosome() + "'. No conversion performed");
-            return false;
-        }
-
-        if(contigSynonyms.getGenBank() == null) {
-            message.append("No Genbank equivalent found for contig '" + variant.getChromosome()
-                                   + "' in the assembly report");
-            return false;
-        }
-        return true;
     }
 
     private IVariant replaceContigWithGenbankAccession(IVariant variant, ContigSynonyms contigSynonyms) {

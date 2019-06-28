@@ -152,7 +152,7 @@ public class ReportCheckTasklet implements Tasklet {
 
     private String getEquivalentGenbankContig(Variant variant) {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(variant.getChromosome());
-        if (ContigToGenbankReplacerProcessor.isReplacementPossible(variant, contigSynonyms, new StringBuilder())) {
+        if (contigMapping.isGenbankReplacementPossible(variant.getChromosome(), contigSynonyms, new StringBuilder())) {
             return contigSynonyms.getGenBank();
         } else {
             return variant.getChromosome();
