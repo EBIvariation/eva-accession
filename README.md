@@ -1,4 +1,4 @@
-# eva-accession
+# eva-accession [![Build Status](https://travis-ci.com/EBIvariation/eva-accession.svg?branch=master)](https://travis-ci.com/EBIvariation/eva-accession)
 EVA non-human variant accessioning service.
 
 The EVA is responsible for issuing RS IDs and SS IDs for variants in non-human species. The official announcement is available at https://www.ebi.ac.uk/about/news/press-releases/eva-issues-long-term-ids-non-human-variants.
