@@ -73,6 +73,11 @@ public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant,
                                                               .peek(e -> e.addAttribute(ORIGINAL_CHROMOSOME,
                                                                                         variant.getChromosome()))
                                                               .collect(Collectors.toList());
+        if (sourceEntries.isEmpty()) {
+            throw new IllegalArgumentException("This class can only process variants with at least 1 source entry. "
+                                               + "Otherwise, the original (replaced) chromosome is lost.");
+        }
+
         newVariant.addSourceEntries(sourceEntries);
         return newVariant;
     }

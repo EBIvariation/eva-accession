@@ -21,6 +21,7 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariantSourceEntry;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.Collections;
 import java.util.List;
@@ -101,7 +102,8 @@ public class ContigToGenbankReplacerProcessorTest {
     @Test
     public void keepOriginalChromosomeInInfo() throws Exception {
         String originalChromosome = "chr1";
-        IVariant variant = new Variant(originalChromosome, 1, 1, "A", "T");
+        Variant variant = new Variant(originalChromosome, 1, 1, "A", "T");
+        variant.addSourceEntry(new VariantSourceEntry("fileId", "studyId"));
         Set<String> originalChromosomes = processor.process(variant)
                                                    .getSourceEntries()
                                                    .stream()
