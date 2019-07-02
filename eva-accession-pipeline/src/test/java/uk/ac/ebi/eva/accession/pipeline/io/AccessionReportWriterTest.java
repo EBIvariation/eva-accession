@@ -128,14 +128,14 @@ public class AccessionReportWriterTest {
                                    true)));
         fastaSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
-                                                          ContigNaming.SEQUENCE_NAME);
+                                                          ContigNaming.INSDC);
         executionContext = new ExecutionContext();
         accessionReportWriter.open(executionContext);
     }
 
     @Test
     public void writeSnpWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, START_1, REFERENCE,
                                                         ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                         MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
@@ -148,7 +148,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CHROMOSOME_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
+                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
                             ALTERNATE, ".", ".", "."),
                 getFirstVariantLine(output));
     }
@@ -171,7 +171,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeInsertionWithAccessionFirstPositionStart() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, 1, "",
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, 1, "",
                                                         "A", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                         MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
@@ -184,13 +184,13 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CHROMOSOME_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
+                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
     private void writeIndelWithAccessionHelper(String reference, String alternate, String denormalizedReference,
                                                String denormalizedAlternate) throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, reference,
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, START_1, reference,
                                                         alternate, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                         MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
@@ -202,7 +202,7 @@ public class AccessionReportWriterTest {
 
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
-        assertEquals(String.join("\t", CHROMOSOME_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  denormalizedReference, denormalizedAlternate,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
@@ -215,7 +215,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeDeletionWithAccessionFirstPositionStart() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, 1, "G",
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, 1, "G",
                                                         "", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                         MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
 
@@ -228,7 +228,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CHROMOSOME_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
+                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
