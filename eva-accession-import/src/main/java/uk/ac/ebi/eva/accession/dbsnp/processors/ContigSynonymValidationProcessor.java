@@ -74,7 +74,8 @@ public class ContigSynonymValidationProcessor implements ItemProcessor<Coordinat
             return false;
         }
 
-        if (!chromosomeSynonyms.isIdenticalGenBankAndRefSeq()) {
+        if (NonIdenticalChromosomeAccessionsException.isExceptionApplicable(
+                chromosomeSynonyms.isIdenticalGenBankAndRefSeq(), chromosomeSynonyms.getRefSeq())) {
             throw new NonIdenticalChromosomeAccessionsException(chromosome,
                                                                 chromosomeSynonyms.getGenBank(),
                                                                 chromosomeSynonyms.getRefSeq());

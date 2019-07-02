@@ -26,7 +26,10 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.repeat.RepeatStatus;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.HashSet;
@@ -68,11 +71,14 @@ public class ReportCheckTasklet implements Tasklet {
 
     private SkipPolicy skipPolicy;
 
+    private ContigMapping contigMapping;
+
     public ReportCheckTasklet(ItemStreamReader<Variant> inputReader, ItemStreamReader<Variant> reportReader,
-                              long initialBufferSize) {
+                              long initialBufferSize, ContigMapping contigMapping) {
         this.inputBufferHelper = new BufferHelper(inputReader);
         this.reportBufferHelper = new BufferHelper(reportReader);
         this.initialBufferSize = initialBufferSize;
+        this.contigMapping = contigMapping;
         this.maxBufferSize = 0;
         this.iterations = 0;
         this.skipPolicy = new InvalidVariantSkipPolicy();
@@ -136,7 +142,21 @@ public class ReportCheckTasklet implements Tasklet {
                 }
             }
         }
+        if (variant != null) {
+            String contig = getEquivalentGenbankContig(variant);
+            variant = new Variant(contig, variant.getStart(), variant.getEnd(), variant.getReference(),
+                                  variant.getAlternate());
+        }
         return variant;
+    }
+
+    private String getEquivalentGenbankContig(Variant variant) {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(variant.getChromosome());
+        if (contigMapping.isGenbankReplacementPossible(variant.getChromosome(), contigSynonyms, new StringBuilder())) {
+            return contigSynonyms.getGenBank();
+        } else {
+            return variant.getChromosome();
+        }
     }
 
     private int removeMatchingVariants(Set<Variant> variantBuffer, Set<Variant> accessionBuffer) {

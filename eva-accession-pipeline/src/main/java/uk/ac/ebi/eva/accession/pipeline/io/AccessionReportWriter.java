@@ -24,7 +24,11 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 
 import java.io.BufferedWriter;
@@ -32,7 +36,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AccessionReportWriter {
 
@@ -48,16 +54,26 @@ public class AccessionReportWriter {
 
     private final File output;
 
+    private ContigMapping contigMapping;
+
     private FastaSequenceReader fastaSequenceReader;
 
     private BufferedWriter fileWriter;
 
     private String accessionPrefix;
 
-    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader) throws IOException {
+    private ContigNaming contigNaming;
+
+    private Set<String> loggedUnreplaceableContigs;
+
+    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping,
+                                 ContigNaming contigNaming) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
         this.output = output;
+        this.contigMapping = contigMapping;
+        this.contigNaming = contigNaming;
         this.accessionPrefix = ACCESSION_PREFIX;
+        this.loggedUnreplaceableContigs = new HashSet<>();
     }
 
     public String getAccessionPrefix() {
@@ -132,8 +148,8 @@ public class AccessionReportWriter {
             List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = new ArrayList<>();
         for (AccessionWrapper<ISubmittedVariant, String, Long> accession : accessions) {
-            denormalizedAccessions.add(new AccessionWrapper(accession.getAccession(), accession.getHash(),
-                                                            denormalizeVariant(accession.getData())));
+            denormalizedAccessions.add(new AccessionWrapper<>(accession.getAccession(), accession.getHash(),
+                                                              denormalizeVariant(accession.getData())));
         }
         return denormalizedAccessions;
     }
@@ -144,7 +160,7 @@ public class AccessionReportWriter {
                 return createVariantWithContextBase(normalizedVariant);
             } else {
                 throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
-                                                           + "' does not appear in the fasta file ");
+                                                   + "' does not appear in the FASTA file ");
             }
         } else {
             return normalizedVariant;
@@ -176,14 +192,65 @@ public class AccessionReportWriter {
     }
 
     protected String variantToVcfLine(Long id, ISubmittedVariant variant) {
+        String contig = getEquivalentContig(variant, contigNaming);
         String variantLine = String.join("\t",
-                                         variant.getContig(),
+                                         contig,
                                          Long.toString(variant.getStart()),
                                          accessionPrefix + id,
                                          variant.getReferenceAllele(),
                                          variant.getAlternateAllele(),
                                          VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
         return variantLine;
+    }
+
+    /**
+     * Note that we can't use {@link ContigToGenbankReplacerProcessor} here because we allow other replacements than
+     * GenBank, while that class is used to replace to GenBank only (for writing in Mongo and for comparing input and
+     * report VCFs).
+     */
+    private String getEquivalentContig(ISubmittedVariant normalizedVariant, ContigNaming contigNaming) {
+        String oldContig = normalizedVariant.getContig();
+
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(oldContig);
+        if (contigSynonyms == null) {
+            if (!loggedUnreplaceableContigs.contains(oldContig)) {
+                loggedUnreplaceableContigs.add(oldContig);
+                logger.warn("Will not replace contig '" + oldContig
+                            + "' (in the current variant or any subsequent one) as requested because there are no "
+                            + "synonyms available. (Hint: Is the assembly report correct and complete?)");
+            }
+            return oldContig;
+        }
+
+        String contigReplacement = contigSynonyms.get(contigNaming);
+        if (contigReplacement == null) {
+            if (!loggedUnreplaceableContigs.contains(oldContig)) {
+                loggedUnreplaceableContigs.add(oldContig);
+                logger.warn("Will not replace contig '" + oldContig
+                            + "' (in the current variant or any subsequent one) as requested because there is no "
+                            + contigNaming + " synonym for it.");
+            }
+            return oldContig;
+        }
+
+        boolean genbankReplacedWithRefseq = oldContig.equals(contigSynonyms.getGenBank())
+                                            && contigReplacement.equals(contigSynonyms.getRefSeq());
+
+        boolean refseqReplacedWithGenbank = oldContig.equals(contigSynonyms.getRefSeq())
+                                            && contigReplacement.equals(contigSynonyms.getGenBank());
+
+        if (!contigSynonyms.isIdenticalGenBankAndRefSeq() && (genbankReplacedWithRefseq || refseqReplacedWithGenbank)) {
+            if (!loggedUnreplaceableContigs.contains(oldContig)) {
+                loggedUnreplaceableContigs.add(oldContig);
+                logger.warn(
+                        "Will not replace contig '" + oldContig + "' with " + contigNaming + " '" + contigReplacement
+                        + "' (in the current variant or any subsequent one) as requested because those contigs "
+                        + "are not identical according to the assembly report provided.");
+            }
+            return oldContig;
+        }
+
+        return contigReplacement;
     }
 
 }

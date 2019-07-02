@@ -35,6 +35,9 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 
@@ -67,9 +70,13 @@ public class AccessionWriterTest {
 
     private static final long EXPECTED_ACCESSION = 5000000000L;
 
-    private static final String CONTIG_1 = "contig_1";
+    private static final String CONTIG_1 = "genbank_1";
 
-    private static final String CONTIG_2 = "contig_2";
+    private static final String CHROMOSOME_1 = "chr1";
+
+    private static final String CONTIG_2 = "genbank_2";
+
+    private static final String CHROMOSOME_2 = "chr2";
 
     private static final int START_1 = 2;
 
@@ -96,6 +103,8 @@ public class AccessionWriterTest {
     @Autowired
     private SubmittedVariantAccessioningService service;
 
+    private ContigMapping contigMapping;
+
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
@@ -108,10 +117,15 @@ public class AccessionWriterTest {
 
     @Before
     public void setUp() throws Exception {
+        contigMapping = new ContigMapping(Arrays.asList(
+                new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
+                new ContigSynonyms(CHROMOSOME_2, "assembled-molecule", "2", CONTIG_2, "refseq_2", "chr2", true)));
         output = temporaryFolderRule.newFile();
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
-                                                                                new FastaSequenceReader(fastaPath));
+                                                                                new FastaSequenceReader(fastaPath),
+                                                                                contigMapping,
+                                                                                ContigNaming.SEQUENCE_NAME);
         accessionWriter = new AccessionWriter(service, accessionReportWriter);
         accessionReportWriter.open(new ExecutionContext());
     }
@@ -178,9 +192,9 @@ public class AccessionWriterTest {
                 service.get(Arrays.asList(firstVariant, secondVariant));
         assertEquals(2, accessions.size());
 
-        int firstVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + START_1);
+        int firstVariantLineNumber = getVariantLineNumberByPosition(output, CHROMOSOME_1 + "\t" + START_1);
         //secondVariant position is 1 because it is an insertion and the context base is added
-        int secondVariantLineNumber = getVariantLineNumberByPosition(output, CONTIG_1 + "\t" + (START_1 - 1));
+        int secondVariantLineNumber = getVariantLineNumberByPosition(output, CHROMOSOME_1 + "\t" + (START_1 - 1));
         assertTrue(firstVariantLineNumber > secondVariantLineNumber);
     }
 
@@ -299,12 +313,12 @@ public class AccessionWriterTest {
         while ((line = fileInputStream.readLine()) != null && line.startsWith("#")) {
         }
 
-        assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_1));
+        assertThat(line, Matchers.startsWith(CHROMOSOME_1 + "\t" + START_1));
         line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CONTIG_1 + "\t" + START_2));
+        assertThat(line, Matchers.startsWith(CHROMOSOME_1 + "\t" + START_2));
         line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CONTIG_2 + "\t" + START_1));
+        assertThat(line, Matchers.startsWith(CHROMOSOME_2 + "\t" + START_1));
         line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CONTIG_2 + "\t" + START_2));
+        assertThat(line, Matchers.startsWith(CHROMOSOME_2 + "\t" + START_2));
     }
 }

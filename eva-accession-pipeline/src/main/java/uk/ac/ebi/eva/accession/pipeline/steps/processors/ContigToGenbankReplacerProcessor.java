@@ -33,15 +33,15 @@ import java.util.stream.Collectors;
  * Converts the contig to its GenBank synonym when possible. If the synonym can't be determined it keeps the contig as
  * is
  */
-public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant> {
+public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant, IVariant> {
 
-    private static final Logger logger = LoggerFactory.getLogger(ContigReplacerProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(ContigToGenbankReplacerProcessor.class);
 
     private ContigMapping contigMapping;
 
     private Set<String> processedContigs;
 
-    public ContigReplacerProcessor(ContigMapping contigMapping) {
+    public ContigToGenbankReplacerProcessor(ContigMapping contigMapping) {
         this.contigMapping = contigMapping;
         this.processedContigs = new HashSet<>();
     }
@@ -52,7 +52,7 @@ public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contigName);
 
         StringBuilder message = new StringBuilder();
-        if (isReplacementPossible(variant, contigSynonyms, message)) {
+        if (contigMapping.isGenbankReplacementPossible(contigName, contigSynonyms, message)) {
             return replaceContigWithGenbankAccession(variant, contigSynonyms);
         } else {
             if (!processedContigs.contains(contigName)) {
@@ -61,25 +61,6 @@ public class ContigReplacerProcessor implements ItemProcessor<IVariant, IVariant
             }
             return variant;
         }
-    }
-
-    /**
-     * Replacement only possible if:
-     * - Contig has synonyms
-     * - Genbank and Refseq are identical or are not identical but there is no RefSeq accession
-     * - Contig has Genbank synonym
-     */
-    private boolean isReplacementPossible(IVariant variant, ContigSynonyms contigSynonyms, StringBuilder message) {
-        if (contigSynonyms == null) {
-            message.append("Contig '" + variant.getChromosome() + "' was not found in the assembly report!");
-        } else if(!contigSynonyms.isIdenticalGenBankAndRefSeq() && contigSynonyms.getRefSeq() != null) {
-            message.append("Genbank and refseq not identical in the assembly report for contig '"
-                                   + variant.getChromosome() + "'. No conversion performed");
-        } else if(contigSynonyms.getGenBank() == null) {
-            message.append("No Genbank equivalent found for contig '" + variant.getChromosome()
-                                   + "' in the assembly report");
-        }
-        return message.toString().isEmpty();
     }
 
     private IVariant replaceContigWithGenbankAccession(IVariant variant, ContigSynonyms contigSynonyms) {
