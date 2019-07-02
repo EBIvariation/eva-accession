@@ -32,8 +32,8 @@ import static org.springframework.util.StringUtils.hasText;
  * {@link uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor} will replace the chromosome with the
  * GenBank accession if the 'forceImport' is set.
  *
- * Note that this doesn't apply if refseq is not available ("CM123.1 <> na") because then it's clear that the chromosome
- * is identical to the genbank contig, and the replacement "chromosome to genbank" can be safely done.
+ * Note that this doesn't apply if RefSeq is not available ("CM123.1 <> na") because then it's clear that the chromosome
+ * is identical to the GenBank contig, and the replacement "chromosome to GenBank" can be safely done.
  */
 public class NonIdenticalChromosomeAccessionsException extends RuntimeException {
 

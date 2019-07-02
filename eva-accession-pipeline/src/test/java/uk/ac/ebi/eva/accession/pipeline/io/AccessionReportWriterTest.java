@@ -321,8 +321,8 @@ public class AccessionReportWriterTest {
     }
 
     /**
-     * This test checks that the context base is added from the fasta, and it doesn't matter which contig naming the
-     * fasta uses: it's independent of the accessioned contig naming (genbank) and the VCF report contig naming.
+     * This test checks that the context base is added from the FASTA, and it doesn't matter which contig naming the
+     * FASTA uses: it's independent of the accessioned contig naming (GenBank) and the VCF report contig naming.
      *
      * Note how in the fasta there's no entry for GENBANK_4 nor SEQUENCE_NAME_4, only for REFSEQ_4
      */

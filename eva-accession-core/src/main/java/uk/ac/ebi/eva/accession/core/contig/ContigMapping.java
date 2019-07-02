@@ -130,11 +130,11 @@ public class ContigMapping {
     }
 
     /**
-     * Replacement to genbanks is only possible if:
+     * Replacement with a GenBank sequence accession is only possible if:
      * - Contig has synonyms
-     * - Genbank and Refseq are identical or are not identical but there is no RefSeq accession. This means that no
+     * - GenBank and RefSeq are identical or are not identical but there is no RefSeq accession. This means that no
      *   replacement will be done with a line like "chr1 ... genbank1 <> refseq1 ...", not even chr -> genbank
-     * - Contig has Genbank synonym
+     * - Contig has a GenBank synonym
      */
     public boolean isGenbankReplacementPossible(String contig, ContigSynonyms contigSynonyms, StringBuilder reason) {
         if (contigSynonyms == null) {
@@ -143,9 +143,9 @@ public class ContigMapping {
         }
 
         if(!contigSynonyms.isIdenticalGenBankAndRefSeq() && hasText(contigSynonyms.getRefSeq())) {
-            reason.append("Genbank and refseq not identical in the assembly report for contig '" + contig
-                          + "' and refseq is not empty. No conversion performed, even unrelated to refseq (e.g. "
-                          + "chromosome to genbank");
+            reason.append("GenBank and RefSeq not identical in the assembly report for contig '" + contig
+                          + "' and RefSeq is not empty. No conversion performed, even unrelated to RefSeq (e.g. "
+                          + "chromosome to GenBank");
             return false;
         }
 
