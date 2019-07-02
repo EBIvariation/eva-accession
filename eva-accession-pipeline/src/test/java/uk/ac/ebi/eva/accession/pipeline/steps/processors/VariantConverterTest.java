@@ -27,7 +27,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-public class VariantProcessorTest {
+public class VariantConverterTest {
 
     private static final String ASSEMBLY = "assembly";
 
@@ -53,17 +53,17 @@ public class VariantProcessorTest {
 
     private static final Boolean VALIDATED = false;
 
-    private VariantProcessor processor;
+    private VariantConverter processor;
 
     @Before
     public void setUp() {
-        processor = new VariantProcessor(ASSEMBLY, TAXONOMY, PROJECT);
+        processor = new VariantConverter(ASSEMBLY, TAXONOMY, PROJECT);
     }
 
     @Test
     public void process() throws Exception {
         Variant variant = new Variant(CONTIG, START, 1001, REFERENCE_ALLELE, ALTERNATE_ALLELE);
-        ISubmittedVariant processed = processor.process(variant);
+        ISubmittedVariant processed = processor.convert(variant);
         ISubmittedVariant expected = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, CONTIG, START, REFERENCE_ALLELE,
                                                           ALTERNATE_ALLELE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
                                                           MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);

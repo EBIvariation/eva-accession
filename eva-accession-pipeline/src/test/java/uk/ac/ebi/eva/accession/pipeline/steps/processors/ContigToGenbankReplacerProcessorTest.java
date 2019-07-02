@@ -19,9 +19,17 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.commons.core.models.IVariantSourceEntry;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 public class ContigToGenbankReplacerProcessorTest {
 
@@ -88,5 +96,18 @@ public class ContigToGenbankReplacerProcessorTest {
     public void NoGenbankDontConvert() throws Exception {
         IVariant variant = new Variant("chr4", 1, 1, "A", "T");
         assertEquals("chr4", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void keepOriginalChromosomeInInfo() throws Exception {
+        String originalChromosome = "chr1";
+        IVariant variant = new Variant(originalChromosome, 1, 1, "A", "T");
+        Set<String> originalChromosomes = processor.process(variant)
+                                                   .getSourceEntries()
+                                                   .stream()
+                                                   .map(e -> e.getAttributes().get(ORIGINAL_CHROMOSOME))
+                                                   .collect(Collectors.toSet());
+
+        assertEquals(new TreeSet<>(Collections.singleton(originalChromosome)), originalChromosomes);
     }
 }

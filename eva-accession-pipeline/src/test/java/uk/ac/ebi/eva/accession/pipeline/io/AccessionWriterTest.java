@@ -39,7 +39,9 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -54,6 +56,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -115,6 +118,8 @@ public class AccessionWriterTest {
 
     private File output;
 
+    private VariantConverter variantConverter;
+
     @Before
     public void setUp() throws Exception {
         contigMapping = new ContigMapping(Arrays.asList(
@@ -126,24 +131,25 @@ public class AccessionWriterTest {
                                                                                 new FastaSequenceReader(fastaPath),
                                                                                 contigMapping,
                                                                                 ContigNaming.SEQUENCE_NAME);
-        accessionWriter = new AccessionWriter(service, accessionReportWriter);
+        variantConverter = new VariantConverter("assembly", TAXONOMY, "project");
+        accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter);
         accessionReportWriter.open(new ExecutionContext());
     }
 
     @Test
     @DirtiesContext
     public void saveSingleAccession() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1, "reference",
-                                                        "alternate", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+        Variant variant = new Variant("contig", START_1, START_1, "reference", "alternate");
 
         accessionWriter.write(Collections.singletonList(variant));
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(Collections.singletonList(variant));
+        ISubmittedVariant submittedVariant = variantConverter.convert(variant);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
+                .get(Collections.singletonList(submittedVariant));
         assertEquals(1, accessions.size());
         assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
 
-        assertEquals(variant, accessions.iterator().next().getData());
+        assertEquals(submittedVariant, accessions.iterator().next().getData());
         // the creation date is added by the writer
         assertNotNull(accessions.iterator().next().getData().getCreatedDate());
     }
@@ -151,45 +157,41 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void saveTwoAccession() throws Exception {
-        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
-                                                             "reference", "alternate", CLUSTERED_VARIANT, false,
-                                                             MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_2,
-                                                              "reference", "alternate", CLUSTERED_VARIANT, false,
-                                                              MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+        Variant firstVariant = new Variant("contig", START_1, START_1, "reference", "alternate");
+        Variant secondVariant = new Variant("contig", START_2, START_2, "reference", "alternate");
 
-        accessionWriter.write(Arrays.asList(firstVariant, secondVariant));
+        List<Variant> variants = Arrays.asList(firstVariant, secondVariant);
+        accessionWriter.write(variants);
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = 
-                service.get(Arrays.asList(firstVariant, secondVariant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(convert(variants));
         assertEquals(2, accessions.size());
 
         Iterator<AccessionWrapper<ISubmittedVariant, String, Long>> iterator = accessions.iterator();
         ISubmittedVariant firstSavedVariant = iterator.next().getData();
         ISubmittedVariant secondSavedVariant = iterator.next().getData();
         if (firstSavedVariant.getStart() == firstVariant.getStart()) {
-            assertEquals(firstVariant, firstSavedVariant);
-            assertEquals(secondVariant, secondSavedVariant);
+            assertEquals(variantConverter.convert(firstVariant), firstSavedVariant);
+            assertEquals(variantConverter.convert(secondVariant), secondSavedVariant);
         } else {
-            assertEquals(secondVariant, firstSavedVariant);
-            assertEquals(firstVariant, secondSavedVariant);
+            assertEquals(variantConverter.convert(secondVariant), firstSavedVariant);
+            assertEquals(variantConverter.convert(firstVariant), secondSavedVariant);
         }
+    }
+
+    private List<ISubmittedVariant> convert(List<Variant> variants) {
+        return variants.stream().map(variantConverter::convert).collect(Collectors.toList());
     }
 
     @Test
     @DirtiesContext
     public void variantInsertionCheckOrder() throws Exception {
-        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
-                                                             "C", "A", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY,
-                                                             ALLELES_MATCH, VALIDATED, null);
-        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
-                                                              "", "A", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY,
-                                                              ALLELES_MATCH, VALIDATED, null);
+        Variant firstVariant = new Variant(CONTIG_1, START_1, START_1, "C", "A");
+        Variant secondVariant = new Variant(CONTIG_1, START_1, START_1, "", "A");
 
-        accessionWriter.write(Arrays.asList(firstVariant, secondVariant));
+        List<Variant> variants = Arrays.asList(firstVariant, secondVariant);
+        accessionWriter.write(variants);
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions =
-                service.get(Arrays.asList(firstVariant, secondVariant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(convert(variants));
         assertEquals(2, accessions.size());
 
         int firstVariantLineNumber = getVariantLineNumberByPosition(output, CHROMOSOME_1 + "\t" + START_1);
@@ -214,29 +216,28 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void saveSameAccessionTwice() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1, "reference",
-                                                        "alternate", CLUSTERED_VARIANT, false, MATCHES_ASSEMBLY,
-                                                        ALLELES_MATCH, VALIDATED, null);
+        Variant variant = new Variant("contig", START_1, START_1, "reference", "alternate");
 
         accessionWriter.write(Arrays.asList(variant, variant));
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(Collections.singletonList(variant));
+        ISubmittedVariant submittedVariant = variantConverter.convert(variant);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
+                .get(Collections.singletonList(submittedVariant));
         assertEquals(1, accessions.size());
 
-        assertEquals(variant, accessions.iterator().next().getData());
+        assertEquals(submittedVariant, accessions.iterator().next().getData());
     }
 
     @Test
     @DirtiesContext
     public void testSaveInitializesCreatedDate() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", "contig", START_1,
-                                                        "reference", "alternate", CLUSTERED_VARIANT, false,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+        Variant variant = new Variant("contig", START_1, START_1, "reference", "alternate");
         LocalDateTime beforeSave = LocalDateTime.now();
         accessionWriter.write(Collections.singletonList(variant));
         LocalDateTime afterSave = LocalDateTime.now();
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(Collections.singletonList(variant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
+                .get(Collections.singletonList(variantConverter.convert(variant)));
         assertEquals(1, accessions.size());
         ISubmittedVariant savedVariant = accessions.iterator().next().getData();
         assertTrue(beforeSave.isBefore(savedVariant.getCreatedDate()));
@@ -246,13 +247,12 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void createAccessionAndItAppearsInTheReportVcf() throws Exception {
-        SubmittedVariant variant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
-                                                        REFERENCE_ALLELE, ALTERNATE_ALLELE, CLUSTERED_VARIANT, false,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+        Variant variant = new Variant("contig", START_1, START_1, REFERENCE_ALLELE, ALTERNATE_ALLELE);
 
         accessionWriter.write(Arrays.asList(variant, variant));
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(Collections.singletonList(variant));
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
+                .get(Collections.singletonList(variantConverter.convert(variant)));
         assertEquals(1, accessions.size());
 
         String vcfLine = AccessionReportWriterTest.getFirstVariantLine(output);
@@ -290,19 +290,11 @@ public class AccessionWriterTest {
     @Test
     public void shouldSortReport() throws Exception {
         // given
-        SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_1,
-                                                             "reference", "alternate", CLUSTERED_VARIANT, false,
-                                                             MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-        SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_2, START_2,
-                                                              "reference", "alternate", CLUSTERED_VARIANT, false,
-                                                              MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-        SubmittedVariant thirdVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_1, START_2,
-                                                             "reference", "alternate", CLUSTERED_VARIANT, false,
-                                                             MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-        SubmittedVariant fourthVariant = new SubmittedVariant("assembly", TAXONOMY, "project", CONTIG_2, START_1,
-                                                              "reference", "alternate", CLUSTERED_VARIANT, false,
-                                                              MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-        List<SubmittedVariant> variants = Arrays.asList(firstVariant, secondVariant, thirdVariant, fourthVariant);
+        Variant firstVariant = new Variant(CONTIG_1, START_1, START_1, "reference", "alternate");
+        Variant secondVariant = new Variant(CONTIG_2, START_2, START_2, "reference", "alternate");
+        Variant thirdVariant = new Variant(CONTIG_1, START_2, START_2, "reference", "alternate");
+        Variant fourthVariant = new Variant(CONTIG_2, START_1, START_1, "reference", "alternate");
+        List<Variant> variants = Arrays.asList(firstVariant, secondVariant, thirdVariant, fourthVariant);
 
         // when
         accessionWriter.write(variants);

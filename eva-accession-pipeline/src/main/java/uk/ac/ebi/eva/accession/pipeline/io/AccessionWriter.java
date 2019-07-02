@@ -24,14 +24,16 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
+public class AccessionWriter implements ItemStreamWriter<IVariant> {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionWriter.class);
 
@@ -39,16 +41,22 @@ public class AccessionWriter implements ItemStreamWriter<ISubmittedVariant> {
 
     private AccessionReportWriter accessionReportWriter;
 
-    public AccessionWriter(SubmittedVariantAccessioningService service, AccessionReportWriter accessionReportWriter) {
+    private VariantConverter variantConverter;
+
+    public AccessionWriter(SubmittedVariantAccessioningService service, AccessionReportWriter accessionReportWriter,
+                           VariantConverter variantConverter) {
         this.service = service;
         this.accessionReportWriter = accessionReportWriter;
+        this.variantConverter = variantConverter;
     }
 
     @Override
-    public void write(List<? extends ISubmittedVariant> variants) throws Exception {
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(variants);
-        accessionReportWriter.write(accessions, new AccessionWrapperComparator(variants));
-        checkCountsMatch(variants, accessions);
+    public void write(List<? extends IVariant> variants) throws Exception {
+        List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
+                                                            .collect(Collectors.toList());
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants);
+        accessionReportWriter.write(accessions, new AccessionWrapperComparator(submittedVariants));
+        checkCountsMatch(submittedVariants, accessions);
     }
 
     void checkCountsMatch(List<? extends ISubmittedVariant> variants,

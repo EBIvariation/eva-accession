@@ -84,6 +84,8 @@ public class AccessionReportWriterTest {
 
     private static final int CHROMOSOME_COLUMN_VCF = 0;
 
+    private static final int INFO_COLUMN_VCF = 7;
+
     private static final String GENBANK_2 = "genbank_2";
 
     private static final String REFSEQ_2 = "refseq_2";
@@ -331,4 +333,24 @@ public class AccessionReportWriterTest {
         assertContigReplacement(GENBANK_4, ContigNaming.SEQUENCE_NAME, SEQUENCE_NAME_4);
     }
 
+    @Test
+    public void checkOriginalChromosomeIsWrittenInVcfInfo() throws IOException {
+        String originalChromosome = SEQUENCE_NAME_3;
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", originalChromosome,
+                                                        START_1, "", ALTERNATE, CLUSTERED_VARIANT,
+                                                        SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                        VALIDATED, null);
+
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
+                                                                                                    variant);
+
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+
+        assertEquals(GENBANK_3, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
+        String info = getFirstVariantLine(output).split("\t")[INFO_COLUMN_VCF];
+        assertEquals(originalChromosome, info.split("=")[1]);
+    }
 }

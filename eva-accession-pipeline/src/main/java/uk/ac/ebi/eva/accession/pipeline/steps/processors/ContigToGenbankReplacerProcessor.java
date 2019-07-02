@@ -37,6 +37,8 @@ public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant,
 
     private static final Logger logger = LoggerFactory.getLogger(ContigToGenbankReplacerProcessor.class);
 
+    public static final String ORIGINAL_CHROMOSOME = "CHR";
+
     private ContigMapping contigMapping;
 
     private Set<String> processedContigs;
@@ -68,6 +70,8 @@ public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant,
                                          variant.getReference(), variant.getAlternate());
         Collection<VariantSourceEntry> sourceEntries = variant.getSourceEntries().stream()
                                                               .map(VariantSourceEntry.class::cast)
+                                                              .peek(e -> e.addAttribute(ORIGINAL_CHROMOSOME,
+                                                                                        variant.getChromosome()))
                                                               .collect(Collectors.toList());
         newVariant.addSourceEntries(sourceEntries);
         return newVariant;
