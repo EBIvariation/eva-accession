@@ -43,7 +43,6 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
-import uk.ac.ebi.eva.accession.ws.service.BeaconService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
@@ -60,8 +59,6 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/v1/clustered-variants")
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
-
-    private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsRestController.class);
 
     private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
 
@@ -153,16 +150,17 @@ public class ClusteredVariantsRestController {
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
             + "-or-rs")
     @GetMapping(produces = "application/json")
-    public ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getByIdFields(
+    public ResponseEntity getByIdFields(
             @RequestParam(name = "assemblyId") String assembly,
             @RequestParam(name = "referenceName") String chromosome,
             @RequestParam(name = "start") long start,
             @RequestParam(name = "variantType") VariantType variantType) {
         try {
-            return ResponseEntity.ok(beaconService.getClusteredVariantByIdFields(assembly, chromosome, start,
-                                                                                 variantType));
+            AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> clusteredVariant = beaconService
+                    .getClusteredVariantByIdFields(assembly, chromosome, start,variantType);
+            return clusteredVariant != null ? ResponseEntity.ok(clusteredVariant) : ResponseEntity.notFound().build();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
@@ -207,6 +205,5 @@ public class ClusteredVariantsRestController {
         response.setError(error);
         return response;
     }
-
 }
 

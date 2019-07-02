@@ -41,9 +41,6 @@ public class ClusteredVariantsBeaconService {
 
     private ClusteredVariantAccessioningService clusteredVariantService;
 
-    private Function<IClusteredVariant, String> hashingFunctionClusteredVariants =
-            new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
-
     public ClusteredVariantsBeaconService(ClusteredVariantAccessioningService clusteredVariantAccessioningService) {
         this.clusteredVariantService = clusteredVariantAccessioningService;
     }
@@ -51,7 +48,7 @@ public class ClusteredVariantsBeaconService {
     public BeaconAlleleResponse queryBeaconClusteredVariant(String referenceGenome, String chromosome, long start,
                                                             VariantType variantType, boolean includeDatasetResponses) {
 
-        BeaconAlleleResponse result = new BeaconAlleleResponse();
+        BeaconAlleleResponse response = new BeaconAlleleResponse();
 
         BeaconAlleleRequest request = new BeaconAlleleRequest();
         request.setReferenceName(Chromosome.fromValue(chromosome));
@@ -59,7 +56,7 @@ public class ClusteredVariantsBeaconService {
         request.setVariantType(variantType.toString());
         request.setAssemblyId(referenceGenome);
 
-        result.setAlleleRequest(request);
+        response.setAlleleRequest(request);
         AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> variant = getClusteredVariantByIdFields(
                 referenceGenome, chromosome, start, variantType);
 
@@ -67,23 +64,19 @@ public class ClusteredVariantsBeaconService {
         if (exists && includeDatasetResponses) {
             BeaconDatasetAlleleResponse datasetAlleleResponse = new BeaconDatasetAlleleResponse();
             datasetAlleleResponse.setDatasetId("rs" + variant.getAccession().toString());
-            result.setDatasetAlleleResponses(Collections.singletonList(datasetAlleleResponse));
+            response.setDatasetAlleleResponses(Collections.singletonList(datasetAlleleResponse));
         }
-        result.setExists(exists);
+        response.setExists(exists);
 
-        return result;
+        return response;
     }
 
     public AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> getClusteredVariantByIdFields(
             String assembly, String contig, long start, VariantType type) {
 
         IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
-        String hash = hashingFunctionClusteredVariants.apply(clusteredVariant);
-
         List<AccessionWrapper<IClusteredVariant, String, Long>> variants = clusteredVariantService
-                .getByHashedMessageIn(Collections.singletonList(hash));
-
+                .get(Collections.singletonList(clusteredVariant));
         return variants.isEmpty() ? null : new AccessionResponseDTO<>(variants.get(0), ClusteredVariant::new);
     }
-
 }

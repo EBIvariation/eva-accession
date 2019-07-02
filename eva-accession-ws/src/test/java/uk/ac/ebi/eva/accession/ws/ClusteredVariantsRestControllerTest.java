@@ -176,6 +176,8 @@ public class ClusteredVariantsRestControllerTest {
                 new ClusteredVariantsBeaconService(clusteredService));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
                .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, false);
+        Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
+               .getClusteredVariantByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV);
         mockController = new ClusteredVariantsRestController(mockBasicRestController, mockService, inactiveService,
                                                              mockBeaconService);
     }
@@ -688,8 +690,18 @@ public class ClusteredVariantsRestControllerTest {
                                          123,
                                          clusteredVariantEntity1.getType());
 
-        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        assertNull(getVariantsResponse.getBody());
+        assertEquals(HttpStatus.NOT_FOUND, getVariantsResponse.getStatusCode());
+    }
+
+    @Test
+    public void getByIdFieldstError500() {
+        String assemblyId = "GCA_ERROR";
+        String chromosome = "CHROM1";
+        int start = 123;
+        ResponseEntity reponseEntity = mockController.getByIdFields(assemblyId, chromosome, start, VariantType.SNV);
+
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, reponseEntity.getStatusCode().value());
+        assertEquals("Some unexpected error", reponseEntity.getBody());
     }
 
     @Test
