@@ -82,23 +82,24 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                   + final_formatting_genbank_accessions_cmd
     mongo_run_command_template = "mongo --quiet --host {0} --port {1} --username {2} " \
                                  "--password {3} --authenticationDatabase=admin " \
-                                 "{4} --eval 'db.{5}.findOne({{\"seq\": \"{6}\", " \
-                                 "\"contig\": {{$in: [{7}]}}}})'"
+                                 "{4} --eval 'db.{5}.findOne({{\"{6}\": \"{7}\", " \
+                                 "\"contig\": {{$in: [{8}]}}}})'"
 
     mismatch_contig_set = run_command_with_output("Get contigs with start mismatch against chromosome:",
                                                   get_contigs_start_mismatch_cmd).strip()
     match_contig_set = run_command_with_output("Get contigs with start match against chromosome:",
                                                get_contigs_start_match_cmd).strip()
 
-    collections_to_check = ["dbsnpSubmittedVariantEntity", "dbsnpClusteredVariantEntity"]
+    collections_to_check = {"dbsnpSubmittedVariantEntity": "seq", "dbsnpClusteredVariantEntity": "asm"}
     if mismatch_contig_set != '""':
-        for collection in collections_to_check:
+        for collection, asm_col in collections_to_check.items():
             mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
                                                                   config["mongo_port"],
                                                                   config["mongo_user"],
                                                                   config["mongo_password"],
                                                                   config["mongo_acc_db"],
                                                                   collection,
+                                                                  asm_col,
                                                                   config["parameters.assemblyAccession"],
                                                                   mismatch_contig_set)
             mongo_run_command_output = run_command_with_output("Check if mismatched contigs from above " +
@@ -109,13 +110,14 @@ def validate_imported_contigs(assembly_properties_file, config_file):
         logger.info("No mismatch contig set available!")
 
     if match_contig_set != '""':
-        for collection in collections_to_check:
+        for collection, asm_col in collections_to_check.items():
             mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
                                                                   config["mongo_port"],
                                                                   config["mongo_user"],
                                                                   config["mongo_password"],
                                                                   config["mongo_acc_db"],
                                                                   collection,
+                                                                  asm_col,
                                                                   config["parameters.assemblyAccession"],
                                                                   match_contig_set)
             mongo_run_command_output = run_command_with_output("Check if matched contigs from above " +
