@@ -20,8 +20,6 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -74,7 +72,8 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
-            DbsnpClusteredVariantInactiveService inactiveService, ClusteredVariantsBeaconService beaconService) {
+            DbsnpClusteredVariantInactiveService inactiveService,
+            ClusteredVariantsBeaconService beaconService) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.inactiveService = inactiveService;
@@ -105,7 +104,7 @@ public class ClusteredVariantsRestController {
 
     /**
      * Retrieve the information in the collection for inactive objects.
-     * <p>
+     *
      * This method is necessary because the behaviour of BasicRestController is to return the HttpStatus.GONE with an
      * error message in the body. We want instead to return the HttpStatus.GONE with the variant in the body.
      */
