@@ -20,25 +20,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.commons.core.models.IVariantSourceEntry;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AccessionReportWriter {
 
@@ -51,6 +54,8 @@ public class AccessionReportWriter {
     private static final String IS_HEADER_WRITTEN_VALUE = "true";   // use string because ExecutionContext doesn't support boolean
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionReportWriter.class);
+
+    private static final String ORIGINAL_CHROMOSOME = "CHR";
 
     private final File output;
 
@@ -107,6 +112,10 @@ public class AccessionReportWriter {
     private void writeHeader() throws IOException {
         fileWriter.write("##fileformat=VCFv4.2");
         fileWriter.newLine();
+        fileWriter.write("##INFO=<ID=" + ORIGINAL_CHROMOSOME +
+                         ",Number=1,Type=String,Description=\"The EVA encourages the use of INSDC accessions for "
+                         + "chromosomes and contigs. This field keeps track of the chromosome name as originally "
+                         + "submitted\">");
         fileWriter.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO");
         fileWriter.newLine();
     }
@@ -123,43 +132,62 @@ public class AccessionReportWriter {
         }
     }
 
-    public void write(List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions,
+    public void write(List<? extends IVariant> variants,
                       AccessionWrapperComparator accessionWrapperComparator) throws IOException {
         if (fileWriter == null) {
             throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
-                                          "called AccessionReportWriter::open");
+                                          "called " + this.getClass().getSimpleName() + "::open");
         }
-        List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = denormalizeVariants(
-                accessions);
-        denormalizedAccessions.sort(accessionWrapperComparator);
-        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : denormalizedAccessions) {
-            writeVariant(variant.getAccession(), variant.getData());
+        List<? extends IVariant> denormalizedVariants = denormalizeVariants(variants);
+        denormalizedVariants.sort(accessionWrapperComparator);
+        for (IVariant variant : denormalizedVariants) {
+            writeVariant(variant);
         }
         fileWriter.flush();
     }
 
-    private void writeVariant(Long id, ISubmittedVariant denormalizedVariant) throws IOException {
-        String vcfLine = variantToVcfLine(id, denormalizedVariant);
-        fileWriter.write(vcfLine);
+    private void writeVariant(IVariant denormalizedVariant) throws IOException {
+        String contig = getEquivalentContig(denormalizedVariant.getChromosome(), contigNaming);
+        Set<String> originalChromosomes = denormalizedVariant.getSourceEntries()
+                                                             .stream()
+                                                             .map(e -> e.getAttributes()
+                                                                        .get(ContigToGenbankReplacerProcessor
+                                                                                     .ORIGINAL_CHROMOSOME))
+                                                             .collect(Collectors.toSet());
+        if (originalChromosomes.size() != 1) {
+            throw new IllegalStateException(
+                    "Expected one distinct chromosome for a variant. Found: " + String.join(
+                            ",", originalChromosomes) + " for variant " + denormalizedVariant);
+        }
+
+        String variantLine = String.join("\t",
+                                         contig,
+                                         Long.toString(denormalizedVariant.getStart()),
+                                         accessionPrefix + denormalizedVariant.getMainId(),
+                                         denormalizedVariant.getReference(),
+                                         denormalizedVariant.getAlternate(),
+                                         VCF_MISSING_VALUE, VCF_MISSING_VALUE,
+                                         originalChromosomes.iterator().next());
+        fileWriter.write(variantLine);
         fileWriter.newLine();
     }
 
-    private List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizeVariants(
-            List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = new ArrayList<>();
-        for (AccessionWrapper<ISubmittedVariant, String, Long> accession : accessions) {
-            denormalizedAccessions.add(new AccessionWrapper<>(accession.getAccession(), accession.getHash(),
-                                                              denormalizeVariant(accession.getData())));
+    private List<? extends IVariant> denormalizeVariants(List<? extends IVariant> accessions) {
+        List<? extends IVariant> denormalizedAccessions = new ArrayList<>();
+        for (IVariant accession : accessions) {
+            IVariant iVariant = denormalizeVariant(accession);
+            Variant v = new Variant("", 0, 0, "", "");
+            denormalizedAccessions.add(v);
         }
         return denormalizedAccessions;
     }
 
-    private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
-        if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
-            if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
+    private IVariant denormalizeVariant(IVariant normalizedVariant) {
+        if (normalizedVariant.getReference().isEmpty() || normalizedVariant.getAlternate().isEmpty()) {
+            if (fastaSequenceReader.doesContigExist(normalizedVariant.getChromosome())) {
                 return createVariantWithContextBase(normalizedVariant);
             } else {
-                throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
+                throw new IllegalArgumentException("Contig '" + normalizedVariant.getChromosome()
                                                    + "' does not appear in the FASTA file ");
             }
         } else {
@@ -167,40 +195,25 @@ public class AccessionReportWriter {
         }
     }
 
-    private ISubmittedVariant createVariantWithContextBase(ISubmittedVariant normalizedVariant) {
-        String oldReference = normalizedVariant.getReferenceAllele();
-        String oldAlternate = normalizedVariant.getAlternateAllele();
+    private IVariant createVariantWithContextBase(IVariant normalizedVariant) {
+        String oldReference = normalizedVariant.getReference();
+        String oldAlternate = normalizedVariant.getAlternate();
         long oldStart = normalizedVariant.getStart();
-        ImmutableTriple<Long, String, String> contextNucleotideInfo =
-                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
+        ImmutableTriple<Long, String, String> startAndReferenceAndAlternate =
+                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getChromosome(), oldStart,
                                                                     oldReference, oldAlternate);
+        String reference = startAndReferenceAndAlternate.getMiddle();
+        String alternate = startAndReferenceAndAlternate.getRight();
 
-        return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
-                                    normalizedVariant.getTaxonomyAccession(),
-                                    normalizedVariant.getProjectAccession(),
-                                    normalizedVariant.getContig(),
-                                    contextNucleotideInfo.getLeft(),
-                                    contextNucleotideInfo.getMiddle(),
-                                    contextNucleotideInfo.getRight(),
-                                    normalizedVariant.getClusteredVariantAccession(),
-                                    normalizedVariant.isSupportedByEvidence(),
-                                    normalizedVariant.isAssemblyMatch(),
-                                    normalizedVariant.isAllelesMatch(),
-                                    normalizedVariant.isValidated(),
-                                    normalizedVariant.getCreatedDate());
+        Variant variant = new Variant(normalizedVariant.getChromosome(),
+                                      startAndReferenceAndAlternate.getLeft(),
+                                      Math.max(reference.length(), alternate.length()),
+                                      reference,
+                                      alternate);
+        variant.setMainId(normalizedVariant.getMainId());
+        variant.addSourceEntries((Collection<VariantSourceEntry>) normalizedVariant.getSourceEntries());
+        return variant;
 
-    }
-
-    protected String variantToVcfLine(Long id, ISubmittedVariant variant) {
-        String contig = getEquivalentContig(variant, contigNaming);
-        String variantLine = String.join("\t",
-                                         contig,
-                                         Long.toString(variant.getStart()),
-                                         accessionPrefix + id,
-                                         variant.getReferenceAllele(),
-                                         variant.getAlternateAllele(),
-                                         VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
-        return variantLine;
     }
 
     /**
@@ -208,9 +221,7 @@ public class AccessionReportWriter {
      * GenBank, while that class is used to replace to GenBank only (for writing in Mongo and for comparing input and
      * report VCFs).
      */
-    private String getEquivalentContig(ISubmittedVariant normalizedVariant, ContigNaming contigNaming) {
-        String oldContig = normalizedVariant.getContig();
-
+    private String getEquivalentContig(String oldContig, ContigNaming contigNaming) {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(oldContig);
         if (contigSynonyms == null) {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
