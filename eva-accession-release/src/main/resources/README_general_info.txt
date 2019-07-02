@@ -1,28 +1,24 @@
-Release 2019-07
+EVA RefSNP RELEASE 2019-07 NOTES
+================================
 
-Definitions
-==================================
+1. DEFINITIONS
+--------------
 
-Accession
------------------------------------------------------------------
+1.1. Accession
 
 An accession is a unique and permanent identifier for an entity that enables
 cross resource references to submitted objects.
 
-
-Variant locus accessions
------------------------------------------------------------------
+1.2. Variant locus accessions
 
 SS or SubSnp represent an allele change in a genomic study. They are identified
 by the reference sequence, project/study, contig, start position, reference
-allele, alternate allele.
+allele and alternate allele.
 
 RS or RefSnp is a cluster of SS IDs. They are identified by reference sequence,
-contig, start position, variant class.
+contig, start position and variant class.
 
-
-Assembly accessions
------------------------------------------------------------------
+1.3. Assembly accessions
 
 An assembly accession starting with the three letters prefix GCA correspond to
 INSDC assemblies. The prefix is followed by an underscore, 9 digits and a
@@ -30,8 +26,8 @@ version is added at the end. For example, the assembly accession for the INSDC
 version of the public horse reference assembly (EquCab2.0) is GCA_000002305.1.
 
 
-EVA RefSNP release
-==================================
+2. EVA RefSNP RELEASE
+---------------------
 
 The EVA RS release is a collection of files organized by species that list all
 the RS IDs for variants stored in the European Variation Archive (EVA,
@@ -48,8 +44,7 @@ be present in the RS release:
 - GCA_000002305.1_merged_deprecated_ids.txt.gz
 
 
-GCA_000002305.1_current_ids.vcf.gz
------------------------------------------------------------------
+2.1. GCA_000002305.1_current_ids.vcf.gz
 
 Contains the RS IDs which can be browsed from the EVA website
 (https://www.ebi.ac.uk/eva/) and web services
@@ -79,8 +74,7 @@ column, using the next keys:
 - VC: Variant class according to the Sequence Ontology.
 
 
-horse_9796_unmapped_variant_report.txt.gz
------------------------------------------------------------------
+2.2. horse_9796_unmapped_variant_report.txt.gz
 
 Contains RS IDs that couldn't be mapped against an assembly by dbSNP. Flanking
 sequences are provided when possible.
@@ -89,8 +83,7 @@ Columns SEQ3 and SEQ5 contain the actual sequence in 3' and 5' respectively for
 a particular SS ID as submitted originally to dbSNP.
 
 
-GCA_000002305.1_merged_ids.vcf.gz
------------------------------------------------------------------
+2.3. GCA_000002305.1_merged_ids.vcf.gz
 
 Contains RS IDs that should NOT be used because they have been merged into
 other active RS IDs that represent the same variants. The VCF contains the same INFO
@@ -99,8 +92,7 @@ attributes than the "current_ids" VCF plus the next one:
 - CURR: RS ID that currently represents the variant
 
 
-GCA_000002305.1_deprecated_ids.txt.gz
------------------------------------------------------------------
+2.4. GCA_000002305.1_deprecated_ids.txt.gz
 
 Contains a list of RS IDs that should NOT be used since these RS IDs were
 deprecated due to the following reason(s):
@@ -111,8 +103,7 @@ deprecated due to the following reason(s):
 - Other factors that prevent us from describing the variants with certainty
 
 
-GCA_000002305.1_merged_deprecated_ids.txt.gz
------------------------------------------------------------------
+2.5. GCA_000002305.1_merged_deprecated_ids.txt.gz
 
 Contains RS IDs that should NOT be used because they have been merged into an
 RS ID that was deprecated later on. The deprecated RS ID is listed in the
