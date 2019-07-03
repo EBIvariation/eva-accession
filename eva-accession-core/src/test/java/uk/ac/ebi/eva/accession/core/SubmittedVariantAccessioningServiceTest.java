@@ -220,13 +220,37 @@ public class SubmittedVariantAccessioningServiceTest {
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
-    public void getOrCreateDbsnpVariants() throws AccessionCouldNotBeGeneratedException {
+    public void getOrCreateDbsnpIdenticalVariants() throws AccessionCouldNotBeGeneratedException {
         SubmittedVariant variantPresentInDbsnp = new SubmittedVariant("GCA_000009999.3", 9999, PROJECT_DBSNP, "21",
                                                                       20849999, "", "GG", null);
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
                 Collections.singletonList(variantPresentInDbsnp));
         assertEquals(1, generatedAccessions.size());
+    }
+
+    @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
+    @Test
+    public void getOrCreateDbsnpEquivalentVariants() throws AccessionCouldNotBeGeneratedException {
+        SubmittedVariant identicalVariantPresentInDbsnp = new SubmittedVariant("GCA_000009999.3", 9999, PROJECT_DBSNP,
+                                                                               "21", 20849999, "", "GG", null);
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
+                Arrays.asList(identicalVariantPresentInDbsnp));
+
+        assertEquals(Collections.singleton(ACCESSION_DBSNP_1),
+                     generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet()));
+
+        int differentTaxonomy = 1000;
+        SubmittedVariant equivalentVariantPresentInDbsnp = new SubmittedVariant("GCA_000009999.3", differentTaxonomy,
+                                                                                PROJECT_DBSNP, "21", 20849999, "", "GG",
+                                                                                null);
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions2 = service.getOrCreate(
+                Arrays.asList(identicalVariantPresentInDbsnp, equivalentVariantPresentInDbsnp));
+
+        assertEquals(Collections.singleton(ACCESSION_DBSNP_1),
+                     generatedAccessions2.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet()));
     }
 
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})
