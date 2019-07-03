@@ -218,6 +218,17 @@ public class SubmittedVariantAccessioningServiceTest {
         assertEquals(3, submittedVariants.size());
     }
 
+    @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
+    @Test
+    public void getOrCreateDbsnpVariants() throws AccessionCouldNotBeGeneratedException {
+        SubmittedVariant variantPresentInDbsnp = new SubmittedVariant("GCA_000009999.3", 9999, PROJECT_DBSNP, "21",
+                                                                      20849999, "", "GG", null);
+
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
+                Collections.singletonList(variantPresentInDbsnp));
+        assertEquals(1, generatedAccessions.size());
+    }
+
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
     public void getFromBothRepositories() {
@@ -445,4 +456,5 @@ public class SubmittedVariantAccessioningServiceTest {
 
         assertEquals(createdDate, generatedAccessions.get(0).getData().getCreatedDate());
     }
+
 }
