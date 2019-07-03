@@ -59,9 +59,13 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
             throws AccessionCouldNotBeGeneratedException {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> dbsnpVariants = accessioningServiceDbsnp.get(variants);
         List<ISubmittedVariant> variantsNotInDbsnp = removeFromList(variants, dbsnpVariants);
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = accessioningService.getOrCreate(
-                variantsNotInDbsnp);
-        return joinLists(submittedVariants, dbsnpVariants);
+        if (variantsNotInDbsnp.isEmpty()) {
+            return dbsnpVariants;
+        } else {
+            List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = accessioningService.getOrCreate(
+                    variantsNotInDbsnp);
+            return joinLists(submittedVariants, dbsnpVariants);
+        }
     }
 
     private List<ISubmittedVariant> removeFromList(List<? extends ISubmittedVariant> allVariants,
