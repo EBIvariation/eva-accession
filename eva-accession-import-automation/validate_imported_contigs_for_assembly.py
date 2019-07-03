@@ -82,41 +82,48 @@ def validate_imported_contigs(assembly_properties_file, config_file):
                                   + final_formatting_genbank_accessions_cmd
     mongo_run_command_template = "mongo --quiet --host {0} --port {1} --username {2} " \
                                  "--password {3} --authenticationDatabase=admin " \
-                                 "{4} --eval 'db.dbsnpSubmittedVariantEntity.findOne({{\"seq\": \"{5}\", " \
-                                 "\"contig\": {{$in: [{6}]}}}})'"
+                                 "{4} --eval 'db.{5}.findOne({{\"{6}\": \"{7}\", " \
+                                 "\"contig\": {{$in: [{8}]}}}})'"
 
     mismatch_contig_set = run_command_with_output("Get contigs with start mismatch against chromosome:",
                                                   get_contigs_start_mismatch_cmd).strip()
     match_contig_set = run_command_with_output("Get contigs with start match against chromosome:",
                                                get_contigs_start_match_cmd).strip()
 
+    collections_to_check = {"dbsnpSubmittedVariantEntity": "seq", "dbsnpClusteredVariantEntity": "asm"}
     if mismatch_contig_set != '""':
-        mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
-                                                              config["mongo_port"],
-                                                              config["mongo_user"],
-                                                              config["mongo_password"],
-                                                              config["mongo_acc_db"],
-                                                              config["parameters.assemblyAccession"],
-                                                              mismatch_contig_set)
-        mongo_run_command_output = run_command_with_output("Check if mismatched contigs from above "
-                                                           "are present in Mongo for the assembly",
-                                                           mongo_run_command)
-        logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
+        for collection, asm_col in collections_to_check.items():
+            mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
+                                                                  config["mongo_port"],
+                                                                  config["mongo_user"],
+                                                                  config["mongo_password"],
+                                                                  config["mongo_acc_db"],
+                                                                  collection,
+                                                                  asm_col,
+                                                                  config["parameters.assemblyAccession"],
+                                                                  mismatch_contig_set)
+            mongo_run_command_output = run_command_with_output("Check if mismatched contigs from above " +
+                                                               "are present in " + collection + " for the assembly",
+                                                               mongo_run_command)
+            logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
     else:
         logger.info("No mismatch contig set available!")
 
     if match_contig_set != '""':
-        mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
-                                                              config["mongo_port"],
-                                                              config["mongo_user"],
-                                                              config["mongo_password"],
-                                                              config["mongo_acc_db"],
-                                                              config["parameters.assemblyAccession"],
-                                                              match_contig_set)
-        mongo_run_command_output = run_command_with_output("Check if matched non-chromosome contigs from above "
-                                                           "are present in Mongo for the assembly",
-                                                           mongo_run_command)
-        logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
+        for collection, asm_col in collections_to_check.items():
+            mongo_run_command = mongo_run_command_template.format(config["mongo_host"],
+                                                                  config["mongo_port"],
+                                                                  config["mongo_user"],
+                                                                  config["mongo_password"],
+                                                                  config["mongo_acc_db"],
+                                                                  collection,
+                                                                  asm_col,
+                                                                  config["parameters.assemblyAccession"],
+                                                                  match_contig_set)
+            mongo_run_command_output = run_command_with_output("Check if matched contigs from above " +
+                                                               "are present in " + collection + " for the assembly",
+                                                               mongo_run_command)
+            logger.info("Mongo command output:" + os.linesep + mongo_run_command_output)
     else:
         logger.info("No matched non-chromosome contig set available!")
 
