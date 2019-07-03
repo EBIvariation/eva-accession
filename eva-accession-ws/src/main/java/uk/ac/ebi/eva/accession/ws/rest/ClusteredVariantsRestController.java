@@ -51,6 +51,7 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -104,7 +105,7 @@ public class ClusteredVariantsRestController {
 
     /**
      * Retrieve the information in the collection for inactive objects.
-     *
+     * <p>
      * This method is necessary because the behaviour of BasicRestController is to return the HttpStatus.GONE with an
      * error message in the body. We want instead to return the HttpStatus.GONE with the variant in the body.
      */
@@ -149,32 +150,33 @@ public class ClusteredVariantsRestController {
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
             + "-or-rs")
     @GetMapping(produces = "application/json")
-    public ResponseEntity getByIdFields(
-            @RequestParam(name = "assemblyId") String assembly,
-            @RequestParam(name = "referenceName") String chromosome,
+    public ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getByIdFields(
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+                    String assembly,
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+                    String chromosome,
             @RequestParam(name = "start") long start,
             @RequestParam(name = "variantType") VariantType variantType) {
-        try {
-            AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> clusteredVariant = beaconService
-                    .getClusteredVariantByIdFields(assembly, chromosome, start,variantType);
-            return clusteredVariant != null ? ResponseEntity.ok(clusteredVariant) : ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+        Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariant =
+                beaconService.getClusteredVariantByIdFields(assembly, chromosome, start, variantType);
+        return clusteredVariant.isPresent() ? ResponseEntity.ok(clusteredVariant.get()) : ResponseEntity.notFound()
+                                                                                                        .build();
     }
 
-    @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "
-            + "the clustered variant (RS) represented by a given identifier. For a description of the response, see "
-            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
-            + "-or-rs")
+    @ApiOperation(value = "Find if a clustered variant (RS) with the given identifying fields exists in our database",
+            notes = "This endpoint returns true or false to indicate if the RS ID is present. Optionally return the " +
+                    "RS ID.")
     @GetMapping(value = "/beacon/query", produces = "application/json")
-    public BeaconAlleleResponse doesVariantExist(@RequestParam(name = "assemblyId") String assembly,
-                                                 @RequestParam(name = "referenceName") String chromosome,
-                                                 @RequestParam(name = "start") long start,
-                                                 @RequestParam(name = "variantType") VariantType variantType,
-                                                 @RequestParam(name = "includeDatasetReponses", required = false)
-                                                             boolean includeDatasetReponses,
-                                                 HttpServletResponse response) {
+    public BeaconAlleleResponse doesVariantExist(
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+                    String assembly,
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+                    String chromosome,
+            @RequestParam(name = "start") long start,
+            @RequestParam(name = "variantType") VariantType variantType,
+            @RequestParam(name = "includeDatasetReponses", required = false)
+                    boolean includeDatasetReponses,
+            HttpServletResponse response) {
         try {
             return beaconService
                     .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);

@@ -692,16 +692,13 @@ public class ClusteredVariantsRestControllerTest {
 
         assertEquals(HttpStatus.NOT_FOUND, getVariantsResponse.getStatusCode());
     }
-
-    @Test
+    
+    @Test(expected = RuntimeException.class)
     public void getByIdFieldstError500() {
         String assemblyId = "GCA_ERROR";
         String chromosome = "CHROM1";
         int start = 123;
-        ResponseEntity reponseEntity = mockController.getByIdFields(assemblyId, chromosome, start, VariantType.SNV);
-
-        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, reponseEntity.getStatusCode().value());
-        assertEquals("Some unexpected error", reponseEntity.getBody());
+        mockController.getByIdFields(assemblyId, chromosome, start, VariantType.SNV);
     }
 
     @Test
@@ -727,7 +724,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void assertEmbeddedAlleleRequest(BeaconAlleleResponse beaconAlleleResponse, String assemblyId,
-                                             long start, VariantType variantType){
+                                             long start, VariantType variantType) {
         BeaconAlleleRequest alleleRequest = beaconAlleleResponse.getAlleleRequest();
         assertEquals(alleleRequest.getAssemblyId(), assemblyId);
         //The chromosome assert would fail because its not one of the Chromosome enum values, for now the allele
@@ -780,7 +777,8 @@ public class ClusteredVariantsRestControllerTest {
                 .doesVariantExist(assemblyId, chromosome, start, VariantType.SNV, false, response);
 
         assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatus());
-        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, (int)beaconAlleleResponse.getError().getErrorCode());
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                     (int) beaconAlleleResponse.getError().getErrorCode());
         assertEmbeddedAlleleRequest(beaconAlleleResponse, assemblyId, start, VariantType.SNV);
     }
 }

@@ -19,13 +19,11 @@ package uk.ac.ebi.eva.accession.ws.service;
 
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
@@ -34,7 +32,7 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Optional;
 
 @Service
 public class ClusteredVariantsBeaconService {
@@ -57,26 +55,27 @@ public class ClusteredVariantsBeaconService {
         request.setAssemblyId(referenceGenome);
 
         response.setAlleleRequest(request);
-        AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> variant = getClusteredVariantByIdFields(
-                referenceGenome, chromosome, start, variantType);
+        Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> variant =
+                getClusteredVariantByIdFields(referenceGenome, chromosome, start, variantType);
 
-        boolean exists = variant != null;
-        if (exists && includeDatasetResponses) {
+        if (variant.isPresent() && includeDatasetResponses) {
             BeaconDatasetAlleleResponse datasetAlleleResponse = new BeaconDatasetAlleleResponse();
-            datasetAlleleResponse.setDatasetId("rs" + variant.getAccession().toString());
+            datasetAlleleResponse.setDatasetId("rs" + variant.get().getAccession().toString());
             response.setDatasetAlleleResponses(Collections.singletonList(datasetAlleleResponse));
         }
-        response.setExists(exists);
+        response.setExists(variant.isPresent());
 
         return response;
     }
 
-    public AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> getClusteredVariantByIdFields(
+    public Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getClusteredVariantByIdFields(
             String assembly, String contig, long start, VariantType type) {
 
         IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
         List<AccessionWrapper<IClusteredVariant, String, Long>> variants = clusteredVariantService
                 .get(Collections.singletonList(clusteredVariant));
-        return variants.isEmpty() ? null : new AccessionResponseDTO<>(variants.get(0), ClusteredVariant::new);
+
+        return variants.isEmpty() ? Optional.empty() : Optional.of(new AccessionResponseDTO<>(variants.get(0),
+                                                                                              ClusteredVariant::new));
     }
 }
