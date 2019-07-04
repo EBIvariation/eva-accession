@@ -23,12 +23,16 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningDatabaseService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class DbsnpSubmittedVariantMonotonicAccessioningService
         extends BasicAccessioningService<ISubmittedVariant, String, Long> {
 
     private final DbsnpSubmittedVariantAccessioningDatabaseService dbService;
+
+    private final Function<ISubmittedVariant, String> hashingFunction;
 
     public DbsnpSubmittedVariantMonotonicAccessioningService(
             MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
@@ -36,6 +40,7 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
             Function<ISubmittedVariant, String> summaryFunction,
             Function<String, String> hashingFunction) {
         super(accessionGenerator, dbService, summaryFunction, hashingFunction);
+        this.hashingFunction = summaryFunction.andThen(hashingFunction);
         this.dbService = dbService;
     }
 
@@ -50,5 +55,9 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
 
     public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {
         return dbService.getLastInactive(accession);
+    }
+
+    public String getHash(ISubmittedVariant message) {
+        return this.hashingFunction.apply(message);
     }
 }

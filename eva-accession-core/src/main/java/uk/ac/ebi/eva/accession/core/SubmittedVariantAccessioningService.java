@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
@@ -33,6 +34,8 @@ import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessionin
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SubmittedVariantAccessioningService implements AccessioningService<ISubmittedVariant, String, Long> {
@@ -60,6 +63,8 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         List<AccessionWrapper<ISubmittedVariant, String, Long>> dbsnpVariants = accessioningServiceDbsnp.get(variants);
         List<ISubmittedVariant> variantsNotInDbsnp = removeFromList(variants, dbsnpVariants);
         if (variantsNotInDbsnp.isEmpty()) {
+            // check this special case because mongo bulk inserts don't allow inserting empty lists
+            // (accession-commons BasicMongoDbAccessionedCustomRepositoryImpl.insert would need to change)
             return dbsnpVariants;
         } else {
             List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = accessioningService.getOrCreate(
@@ -70,15 +75,16 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     private List<ISubmittedVariant> removeFromList(List<? extends ISubmittedVariant> allVariants,
                                                    List<AccessionWrapper<ISubmittedVariant, String, Long>>
-                                                           vatiantsToDelete) {
-        return allVariants.stream().filter(variant -> !contains(vatiantsToDelete, variant))
-                          .collect(Collectors.toList());
-    }
+                                                           variantsToDelete) {
+        Set<String> hashesToDelete = variantsToDelete.stream()
+                                                     .map(AccessionWrapper::getHash)
+                                                     .collect(Collectors.toSet());
 
-    private Boolean contains(List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionWrappers,
-                             ISubmittedVariant iSubmittedVariant) {
-        return accessionWrappers.stream().anyMatch(
-                accessionWrapper -> accessionWrapper.getData().equals(iSubmittedVariant));
+        return allVariants.stream()
+                          .map(variant -> new Pair<>(accessioningServiceDbsnp.getHash(variant), variant))
+                          .filter(pair -> !hashesToDelete.contains(pair.getKey()))
+                          .map(Pair::getValue)
+                          .collect(Collectors.toList());
     }
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> joinLists(
