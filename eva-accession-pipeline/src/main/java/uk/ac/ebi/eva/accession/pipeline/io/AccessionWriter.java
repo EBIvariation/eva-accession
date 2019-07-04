@@ -25,7 +25,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantConverter;
-import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 import java.util.HashSet;
@@ -55,7 +54,7 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
         List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
                                                             .collect(Collectors.toList());
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants);
-        accessionReportWriter.write(accessions, new AccessionWrapperComparator(submittedVariants));
+        accessionReportWriter.write(variants, accessions);
         checkCountsMatch(submittedVariants, accessions);
     }
 

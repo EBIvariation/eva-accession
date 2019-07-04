@@ -20,7 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
@@ -38,8 +41,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -132,18 +137,74 @@ public class AccessionReportWriter {
         }
     }
 
-    public void write(List<? extends IVariant> variants,
-                      AccessionWrapperComparator accessionWrapperComparator) throws IOException {
+    public void write(List<? extends IVariant> originalVariants,
+                      List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionedVariants) throws IOException {
         if (fileWriter == null) {
             throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
                                           "called " + this.getClass().getSimpleName() + "::open");
         }
-        List<? extends IVariant> denormalizedVariants = denormalizeVariants(variants);
-        denormalizedVariants.sort(accessionWrapperComparator);
-        for (IVariant variant : denormalizedVariants) {
+        Map<String, String> contigMapping = getContigMapping(originalVariants);
+        List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedVariants = denormalizeVariants(
+                accessionedVariants);
+        denormalizedVariants.sort(new AccessionWrapperComparator(originalVariants));
+        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : denormalizedVariants) {
             writeVariant(variant);
         }
         fileWriter.flush();
+    }
+
+    private Map<String, String> getContigMapping(List<? extends IVariant> originalVariantsWithReplacedContigs) {
+        Map<String, String> contigToChromosomeMap = new HashMap<>();
+        Map<String, List<String>> duplicateContigToChromosomeMap = new HashMap<>();
+
+        for (IVariant variantWithContig : originalVariantsWithReplacedContigs) {
+            String originalChromosome = getOriginalChromosome(variantWithContig);
+            contigToChromosomeMap.put(variantWithContig.getChromosome(), originalChromosome);
+            duplicateContigToChromosomeMap.computeIfAbsent(variantWithContig.getChromosome(), key -> new ArrayList<>())
+                                          .add(originalChromosome);
+        }
+
+        List<Map.Entry<String, List<String>>> duplicates =
+                duplicateContigToChromosomeMap.entrySet()
+                                              .stream()
+                                              .filter(entry -> entry.getValue().size() > 1)
+                                              .collect(Collectors.toList());
+
+        if (!duplicates.isEmpty()) {
+            StringBuilder message = new StringBuilder();
+            message.append("Can not provide a mapping from contig accession to original chromosome (as submitted) ");
+            message.append("because several original chromosomes were replaced by the same contig accession: ");
+            for (Map.Entry<String, List<String>> duplicate : duplicates) {
+                message.append("Chromosomes ['");
+                message.append(String.join("', '", duplicate.getValue()));
+                message.append("'] were replaced by the same contig '");
+                message.append(duplicate.getKey());
+                message.append("'. ");
+            }
+            throw new IllegalArgumentException(message.toString());
+        }
+        return contigToChromosomeMap;
+    }
+
+    private String getOriginalChromosome(IVariant variant) {
+        Set<String> originalChromosomes = variant.getSourceEntries()
+                                                 .stream()
+                                                 .map(se -> se.getAttributes().get(
+                                                         ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME))
+                                                 .collect(Collectors.toSet());
+
+        if (originalChromosomes.size() != 1) {
+            throw new IllegalStateException(
+                    "Can not provide the original chromosome of a variant because there are several ones in its "
+                    + "attributes. Contig '"
+                    + variant.getChromosome() + "' replaced all of [" + String.join(", ", originalChromosomes)
+                    + "] contigs");
+        }
+        return originalChromosomes.iterator().next();
+    }
+
+    private String getId(AccessionWrapper<ISubmittedVariant, String, Long> accessionedVariant) {
+
     }
 
     private void writeVariant(IVariant denormalizedVariant) throws IOException {
@@ -172,22 +233,22 @@ public class AccessionReportWriter {
         fileWriter.newLine();
     }
 
-    private List<? extends IVariant> denormalizeVariants(List<? extends IVariant> accessions) {
-        List<? extends IVariant> denormalizedAccessions = new ArrayList<>();
-        for (IVariant accession : accessions) {
-            IVariant iVariant = denormalizeVariant(accession);
-            Variant v = new Variant("", 0, 0, "", "");
-            denormalizedAccessions.add(v);
+    private List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizeVariants(
+            List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = new ArrayList<>();
+        for (AccessionWrapper<ISubmittedVariant, String, Long> accession : accessions) {
+            denormalizedAccessions.add(new AccessionWrapper<>(accession.getAccession(), accession.getHash(),
+                                                              denormalizeVariant(accession.getData())));
         }
         return denormalizedAccessions;
     }
 
-    private IVariant denormalizeVariant(IVariant normalizedVariant) {
-        if (normalizedVariant.getReference().isEmpty() || normalizedVariant.getAlternate().isEmpty()) {
-            if (fastaSequenceReader.doesContigExist(normalizedVariant.getChromosome())) {
+    private ISubmittedVariant denormalizeVariant(ISubmittedVariant normalizedVariant) {
+        if (normalizedVariant.getReferenceAllele().isEmpty() || normalizedVariant.getAlternateAllele().isEmpty()) {
+            if (fastaSequenceReader.doesContigExist(normalizedVariant.getContig())) {
                 return createVariantWithContextBase(normalizedVariant);
             } else {
-                throw new IllegalArgumentException("Contig '" + normalizedVariant.getChromosome()
+                throw new IllegalArgumentException("Contig '" + normalizedVariant.getContig()
                                                    + "' does not appear in the FASTA file ");
             }
         } else {
@@ -195,24 +256,27 @@ public class AccessionReportWriter {
         }
     }
 
-    private IVariant createVariantWithContextBase(IVariant normalizedVariant) {
-        String oldReference = normalizedVariant.getReference();
-        String oldAlternate = normalizedVariant.getAlternate();
+    private ISubmittedVariant createVariantWithContextBase(ISubmittedVariant normalizedVariant) {
+        String oldReference = normalizedVariant.getReferenceAllele();
+        String oldAlternate = normalizedVariant.getAlternateAllele();
         long oldStart = normalizedVariant.getStart();
-        ImmutableTriple<Long, String, String> startAndReferenceAndAlternate =
-                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getChromosome(), oldStart,
+        ImmutableTriple<Long, String, String> contextNucleotideInfo =
+                fastaSequenceReader.getContextNucleotideAndNewStart(normalizedVariant.getContig(), oldStart,
                                                                     oldReference, oldAlternate);
-        String reference = startAndReferenceAndAlternate.getMiddle();
-        String alternate = startAndReferenceAndAlternate.getRight();
 
-        Variant variant = new Variant(normalizedVariant.getChromosome(),
-                                      startAndReferenceAndAlternate.getLeft(),
-                                      Math.max(reference.length(), alternate.length()),
-                                      reference,
-                                      alternate);
-        variant.setMainId(normalizedVariant.getMainId());
-        variant.addSourceEntries((Collection<VariantSourceEntry>) normalizedVariant.getSourceEntries());
-        return variant;
+        return new SubmittedVariant(normalizedVariant.getReferenceSequenceAccession(),
+                                    normalizedVariant.getTaxonomyAccession(),
+                                    normalizedVariant.getProjectAccession(),
+                                    normalizedVariant.getContig(),
+                                    contextNucleotideInfo.getLeft(),
+                                    contextNucleotideInfo.getMiddle(),
+                                    contextNucleotideInfo.getRight(),
+                                    normalizedVariant.getClusteredVariantAccession(),
+                                    normalizedVariant.isSupportedByEvidence(),
+                                    normalizedVariant.isAssemblyMatch(),
+                                    normalizedVariant.isAllelesMatch(),
+                                    normalizedVariant.isValidated(),
+                                    normalizedVariant.getCreatedDate());
 
     }
 

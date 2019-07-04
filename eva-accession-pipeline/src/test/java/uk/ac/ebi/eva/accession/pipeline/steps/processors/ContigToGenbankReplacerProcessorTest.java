@@ -110,6 +110,6 @@ public class ContigToGenbankReplacerProcessorTest {
                                                    .map(e -> e.getAttributes().get(ORIGINAL_CHROMOSOME))
                                                    .collect(Collectors.toSet());
 
-        assertEquals(new TreeSet<>(Collections.singleton(originalChromosome)), originalChromosomes);
+        assertEquals(Collections.singleton(originalChromosome), originalChromosomes);
     }
 }

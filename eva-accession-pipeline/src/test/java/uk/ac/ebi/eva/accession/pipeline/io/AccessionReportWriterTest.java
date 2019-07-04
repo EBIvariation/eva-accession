@@ -29,7 +29,7 @@ import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
-import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
+import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.VariantComparator;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.BufferedReader;
@@ -142,10 +142,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+        VariantComparator variantComparator = new VariantComparator(
                 Collections.singletonList(variant));
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
 
         assertEquals(
                 String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
@@ -178,10 +178,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+        VariantComparator variantComparator = new VariantComparator(
                 Collections.singletonList(variant));
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
 
         assertEquals(
                 String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
@@ -197,10 +197,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
                                                                                                     variant);
 
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+        VariantComparator variantComparator = new VariantComparator(
                 Collections.singletonList(variant));
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  denormalizedReference, denormalizedAlternate,
@@ -222,10 +222,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+        VariantComparator variantComparator = new VariantComparator(
                 Collections.singletonList(variant));
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
 
         assertEquals(
                 String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
@@ -241,17 +241,17 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
                 new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+        VariantComparator variantComparator = new VariantComparator(
                 Collections.singletonList(variant));
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
         accessionReportWriter.close();
 
         AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                                          ContigNaming.SEQUENCE_NAME);
         variant.setContig(CONTIG_2);
         resumingWriter.open(executionContext);
-        resumingWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        resumingWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
         resumingWriter.close();
 
         assertHeaderIsNotWrittenTwice(output);
@@ -294,13 +294,13 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
                                                                                                     variant);
 
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+        VariantComparator variantComparator = new VariantComparator(
                 Collections.singletonList(variant));
 
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                           requestedReplacement);
         accessionReportWriter.open(new ExecutionContext());
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
 
         assertEquals(replacementContig, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
@@ -344,10 +344,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
                                                                                                     variant);
 
-        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+        VariantComparator variantComparator = new VariantComparator(
                 Collections.singletonList(variant));
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
 
         assertEquals(GENBANK_3, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
         String info = getFirstVariantLine(output).split("\t")[INFO_COLUMN_VCF];

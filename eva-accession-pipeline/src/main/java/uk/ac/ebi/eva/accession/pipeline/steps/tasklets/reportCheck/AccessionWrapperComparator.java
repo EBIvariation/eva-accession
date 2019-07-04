@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,16 +29,30 @@ public class AccessionWrapperComparator implements Comparator<AccessionWrapper<I
 
     private Map<String, Integer> contigOrder;
 
-    public AccessionWrapperComparator(List<? extends ISubmittedVariant> variants) {
-        this.contigOrder = getContigOrder(variants);
+//    public AccessionWrapperComparator(List<ISubmittedVariant> variants) {
+//        this.contigOrder = this.getContigOrderFromSubmittedVariants(variants);
+//    }
+    public AccessionWrapperComparator(List<? extends IVariant> variants) {
+        this.contigOrder = getContigOrderFromVariants(variants);
     }
 
-    private Map<String, Integer> getContigOrder(List<? extends ISubmittedVariant> variants) {
+    private Map<String, Integer> getContigOrderFromSubmittedVariants(List<ISubmittedVariant> variants) {
         Map<String, Integer> contigsOrder = new HashMap<>();
         int nextIndex = 0;
         for (ISubmittedVariant variant : variants) {
             if (!contigsOrder.containsKey(variant.getContig())) {
                 contigsOrder.put(variant.getContig(), nextIndex++);
+            }
+        }
+        return contigsOrder;
+    }
+
+    private Map<String, Integer> getContigOrderFromVariants(List<? extends IVariant> variants) {
+        Map<String, Integer> contigsOrder = new HashMap<>();
+        int nextIndex = 0;
+        for (IVariant variant : variants) {
+            if (!contigsOrder.containsKey(variant.getChromosome())) {
+                contigsOrder.put(variant.getChromosome(), nextIndex++);
             }
         }
         return contigsOrder;
