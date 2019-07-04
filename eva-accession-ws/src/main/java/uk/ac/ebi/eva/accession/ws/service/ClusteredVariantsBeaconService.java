@@ -60,11 +60,10 @@ public class ClusteredVariantsBeaconService {
 
         if (variant.isPresent() && includeDatasetResponses) {
             BeaconDatasetAlleleResponse datasetAlleleResponse = new BeaconDatasetAlleleResponse();
-            datasetAlleleResponse.setDatasetId("rs" + variant.get().getAccession().toString());
+            datasetAlleleResponse.setDatasetId(variant.get().getAccession().toString());
             response.setDatasetAlleleResponses(Collections.singletonList(datasetAlleleResponse));
         }
         response.setExists(variant.isPresent());
-
         return response;
     }
 

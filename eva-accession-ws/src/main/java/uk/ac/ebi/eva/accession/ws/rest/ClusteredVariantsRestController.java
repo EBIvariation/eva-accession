@@ -44,14 +44,23 @@ import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconDataset;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconError;
 import uk.ac.ebi.eva.commons.beacon.models.Chromosome;
+import uk.ac.ebi.eva.commons.beacon.models.KeyValuePair;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -178,14 +187,53 @@ public class ClusteredVariantsRestController {
                     boolean includeDatasetReponses,
             HttpServletResponse response) {
         try {
-            return beaconService
+            BeaconAlleleResponse beaconAlleleResponse = beaconService
                     .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
+            if (includeDatasetReponses) {
+                String clusteredVariantId = beaconAlleleResponse.getDatasetAlleleResponses().get(0).getDatasetId();
+                List<BeaconDatasetAlleleResponse> datasetAlleleResponses = getBeaconDatasetAlleleResponses(
+                        clusteredVariantId);
+                beaconAlleleResponse.setDatasetAlleleResponses(datasetAlleleResponses);
+            }
+            return beaconAlleleResponse;
         } catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
             return getBeaconResponseObjectWithError(chromosome, start, assembly, variantType, responseStatus,
                                                     "Unexpected Error: " + ex.getMessage());
         }
+    }
+
+    private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(String clusteredVariantId) {
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
+                submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(
+                        Long.parseLong(clusteredVariantId)));
+
+        Map<String, Set<String>> projects = new HashMap<>();
+        submittedVariants.forEach(sv -> {
+            String projectAccession = sv.getData().getProjectAccession();
+            String submittedVariantAccession = "ss" + sv.getAccession().toString();
+            if (projects.containsKey(projectAccession)) {
+                projects.get(projectAccession).add(submittedVariantAccession);
+            } else {
+                projects.put(projectAccession, new HashSet<>(Collections.singletonList(submittedVariantAccession)));
+            }
+        });
+
+        List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
+        projects.forEach((project, ids) -> {
+            BeaconDatasetAlleleResponse datasetAlleleResponse = new BeaconDatasetAlleleResponse();
+            datasetAlleleResponse.setDatasetId(project);
+
+            KeyValuePair ss = new KeyValuePair().key("SS IDs").value(String.join(",", ids));
+            KeyValuePair rs = new KeyValuePair().key("RS ID").value("rs" + clusteredVariantId);
+            List<KeyValuePair> info = new ArrayList<>(Arrays.asList(rs, ss));
+            datasetAlleleResponse.setInfo(info);
+
+            datasetAlleleResponse.exists(true);
+            datasetAlleleResponses.add(datasetAlleleResponse);
+        });
+        return datasetAlleleResponses;
     }
 
     private BeaconAlleleResponse getBeaconResponseObjectWithError(String reference, long start, String assembly,
