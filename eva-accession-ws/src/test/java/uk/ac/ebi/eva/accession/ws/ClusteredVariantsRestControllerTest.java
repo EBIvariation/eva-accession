@@ -730,8 +730,9 @@ public class ClusteredVariantsRestControllerTest {
         //The chromosome assert would fail because its not one of the Chromosome enum values, for now the allele
         //request sent in the response will not have that value if its different from the enum
         //assertEquals(alleleRequest.getReferenceName().toString(), clusteredVariantEntity1.getContig());
-        assertEquals((long) alleleRequest.getStart(), start);
-        assertEquals(alleleRequest.getVariantType(), variantType.toString());
+        assertNull(alleleRequest.getReferenceName());
+        assertEquals(start, (long) alleleRequest.getStart());
+        assertEquals(variantType.toString(), alleleRequest.getVariantType());
     }
 
     @Test
