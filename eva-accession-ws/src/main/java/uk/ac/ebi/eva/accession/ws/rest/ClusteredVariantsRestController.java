@@ -214,8 +214,7 @@ public class ClusteredVariantsRestController {
         submittedVariants.forEach(variant -> {
             String projectAccession = variant.getData().getProjectAccession();
             String submittedVariantAccession = "ss" + variant.getAccession().toString();
-            projects.computeIfAbsent(projectAccession, key -> new HashSet<>(Collections.singletonList(
-                    submittedVariantAccession))).add(submittedVariantAccession);
+            projects.computeIfAbsent(projectAccession, key -> new HashSet<>()).add(submittedVariantAccession);
         });
 
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
