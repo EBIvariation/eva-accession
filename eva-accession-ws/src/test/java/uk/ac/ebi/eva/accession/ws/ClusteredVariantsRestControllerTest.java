@@ -67,6 +67,8 @@ import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
+import uk.ac.ebi.eva.commons.beacon.models.KeyValuePair;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import javax.servlet.http.HttpServletResponse;
@@ -713,8 +715,23 @@ public class ClusteredVariantsRestControllerTest {
                 response);
 
         assertTrue(beaconAlleleResponse.isExists());
-        assertNotNull(beaconAlleleResponse.getDatasetAlleleResponses());
+        assertDatasets(beaconAlleleResponse);
         assertEmbeddedAlleleRequest(beaconAlleleResponse, clusteredVariantEntity1);
+    }
+
+    private void assertDatasets(BeaconAlleleResponse beaconAlleleResponse) {
+        assertNotNull(beaconAlleleResponse.getDatasetAlleleResponses());
+
+        BeaconDatasetAlleleResponse datasetAlleleResponse = beaconAlleleResponse.getDatasetAlleleResponses().get(0);
+        assertEquals("PROJECT1", datasetAlleleResponse.getDatasetId());
+
+        KeyValuePair rsInfo = datasetAlleleResponse.getInfo().get(0);
+        assertEquals("RS ID", rsInfo.getKey());
+        assertEquals("rs1", rsInfo.getValue());
+
+        KeyValuePair ssInfo = datasetAlleleResponse.getInfo().get(1);
+        assertEquals("SS IDs", ssInfo.getKey());
+        assertEquals("ss11", ssInfo.getValue());
     }
 
     private void assertEmbeddedAlleleRequest(BeaconAlleleResponse beaconAlleleResponse,
