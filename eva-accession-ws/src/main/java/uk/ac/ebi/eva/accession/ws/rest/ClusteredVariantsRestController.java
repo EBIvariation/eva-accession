@@ -189,10 +189,10 @@ public class ClusteredVariantsRestController {
         try {
             BeaconAlleleResponse beaconAlleleResponse = beaconService
                     .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
-            if (includeDatasetReponses) {
-                String clusteredVariantId = beaconAlleleResponse.getDatasetAlleleResponses().get(0).getDatasetId();
+            if (beaconAlleleResponse.isExists() && includeDatasetReponses) {
+                String clusteredVariantAccession = beaconAlleleResponse.getDatasetAlleleResponses().get(0).getDatasetId();
                 List<BeaconDatasetAlleleResponse> datasetAlleleResponses = getBeaconDatasetAlleleResponses(
-                        clusteredVariantId);
+                        clusteredVariantAccession);
                 beaconAlleleResponse.setDatasetAlleleResponses(datasetAlleleResponses);
             }
             return beaconAlleleResponse;
@@ -204,15 +204,15 @@ public class ClusteredVariantsRestController {
         }
     }
 
-    private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(String clusteredVariantId) {
+    private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(String clusteredVariantAccession) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
                 submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(
-                        Long.parseLong(clusteredVariantId)));
+                        Long.parseLong(clusteredVariantAccession)));
 
         Map<String, Set<String>> projects = new HashMap<>();
-        submittedVariants.forEach(sv -> {
-            String projectAccession = sv.getData().getProjectAccession();
-            String submittedVariantAccession = "ss" + sv.getAccession().toString();
+        submittedVariants.forEach(variant -> {
+            String projectAccession = variant.getData().getProjectAccession();
+            String submittedVariantAccession = "ss" + variant.getAccession().toString();
             if (projects.containsKey(projectAccession)) {
                 projects.get(projectAccession).add(submittedVariantAccession);
             } else {
@@ -225,8 +225,8 @@ public class ClusteredVariantsRestController {
             BeaconDatasetAlleleResponse datasetAlleleResponse = new BeaconDatasetAlleleResponse();
             datasetAlleleResponse.setDatasetId(project);
 
+            KeyValuePair rs = new KeyValuePair().key("RS ID").value("rs" + clusteredVariantAccession);
             KeyValuePair ss = new KeyValuePair().key("SS IDs").value(String.join(",", ids));
-            KeyValuePair rs = new KeyValuePair().key("RS ID").value("rs" + clusteredVariantId);
             List<KeyValuePair> info = new ArrayList<>(Arrays.asList(rs, ss));
             datasetAlleleResponse.setInfo(info);
 
