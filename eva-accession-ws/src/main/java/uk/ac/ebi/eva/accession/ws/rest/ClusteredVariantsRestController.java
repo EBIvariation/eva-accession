@@ -190,7 +190,8 @@ public class ClusteredVariantsRestController {
             BeaconAlleleResponse beaconAlleleResponse = beaconService
                     .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
             if (beaconAlleleResponse.isExists() && includeDatasetReponses) {
-                String clusteredVariantAccession = beaconAlleleResponse.getDatasetAlleleResponses().get(0).getDatasetId();
+                String clusteredVariantAccession = beaconAlleleResponse.getDatasetAlleleResponses().get(0)
+                                                                       .getDatasetId();
                 List<BeaconDatasetAlleleResponse> datasetAlleleResponses = getBeaconDatasetAlleleResponses(
                         clusteredVariantAccession);
                 beaconAlleleResponse.setDatasetAlleleResponses(datasetAlleleResponses);
@@ -213,11 +214,8 @@ public class ClusteredVariantsRestController {
         submittedVariants.forEach(variant -> {
             String projectAccession = variant.getData().getProjectAccession();
             String submittedVariantAccession = "ss" + variant.getAccession().toString();
-            if (projects.containsKey(projectAccession)) {
-                projects.get(projectAccession).add(submittedVariantAccession);
-            } else {
-                projects.put(projectAccession, new HashSet<>(Collections.singletonList(submittedVariantAccession)));
-            }
+            projects.computeIfAbsent(projectAccession, key -> new HashSet<>(Collections.singletonList(
+                    submittedVariantAccession))).add(submittedVariantAccession);
         });
 
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
