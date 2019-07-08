@@ -17,6 +17,10 @@
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>variation-commons-beacon</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
