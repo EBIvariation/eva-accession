@@ -27,7 +27,7 @@ import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_PROCESSOR;
 
 /**
- * Parses dbSNP JSON line item map to submitted variant object model
+ * Parses dbSNP JSON line item map to clustered variant
  */
 @Configuration
 public class ImportDbsnpJsonClusteredVariantsProcessorConfiguration {

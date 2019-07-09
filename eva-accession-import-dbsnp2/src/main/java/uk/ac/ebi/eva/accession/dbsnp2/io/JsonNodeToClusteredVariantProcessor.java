@@ -61,7 +61,7 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     private ClusteredVariant parseJsonNodeToClusteredVariant(JsonNode jsonRootNode) {
         String assemblyAccession, contig;
         assemblyAccession = contig = DEFAULT_VALUE_STRING;
-        // @see https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=9606
+        // @see <a href=https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=9606>Human taxonomy</a>
         int taxonomyAccession = 9606;
         long start = 0L;
 
@@ -115,7 +115,9 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
                 return VariantType.INDEL;
             case "IDENTITY":
                 return VariantType.NO_SEQUENCE_ALTERATION;
+            default:
+                throw new IllegalArgumentException(
+                    "The dbSNP variant type provided doesn't have a direct mapping to an EVA type");
         }
-        return null;
     }
 }
