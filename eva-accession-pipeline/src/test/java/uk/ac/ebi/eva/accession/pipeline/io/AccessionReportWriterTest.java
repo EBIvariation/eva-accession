@@ -29,7 +29,8 @@ import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
-import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.VariantComparator;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.BufferedReader;
@@ -42,11 +43,14 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 public class AccessionReportWriterTest {
 
@@ -115,6 +119,8 @@ public class AccessionReportWriterTest {
 
     private ContigMapping contigMapping;
 
+    private Map<String, String> inputChromosomeToContig;
+
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
@@ -128,29 +134,35 @@ public class AccessionReportWriterTest {
                                    true)));
         fastaSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
-                                                          ContigNaming.INSDC);
+                                                          ContigNaming.NO_REPLACEMENT);
         executionContext = new ExecutionContext();
         accessionReportWriter.open(executionContext);
     }
 
     @Test
     public void writeSnpWithAccession() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, START_1, REFERENCE,
-                                                        ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+        writeVariantWithAccessionHelper(START_1, REFERENCE, ALTERNATE, START_1, REFERENCE, ALTERNATE);
+    }
 
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
+    private void writeVariantWithAccessionHelper(int start, String reference, String alternate, int denormalizedStart,
+                                                 String denormalizedReference, String denormalizedAlternate)
+            throws IOException {
+        Variant variant = buildMockVariant(CONTIG_1, CONTIG_1, start, reference, alternate);
 
-        VariantComparator variantComparator = new VariantComparator(
-                Collections.singletonList(variant));
+        SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, start,
+                                                                 reference, alternate, CLUSTERED_VARIANT,
+                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                                 VALIDATED, null);
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
+                                                                                                    submittedVariant);
 
-        assertEquals(
-                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
-                            ALTERNATE, ".", ".", "."),
-                getFirstVariantLine(output));
+        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
+
+
+        assertEquals(String.join("\t", CONTIG_1, Integer.toString(denormalizedStart), ACCESSION_PREFIX + ACCESSION,
+                                 denormalizedReference, denormalizedAlternate, ".", ".", "."),
+                     getFirstVariantLine(output));
     }
 
     public static String getFirstVariantLine(File output) throws IOException {
@@ -166,96 +178,59 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeInsertionWithAccession() throws IOException {
-        writeIndelWithAccessionHelper("", ALTERNATE, CONTEXT_BASE, CONTEXT_BASE + ALTERNATE);
+        writeVariantWithAccessionHelper(START_1, "", ALTERNATE, START_1 - 1, CONTEXT_BASE, CONTEXT_BASE + ALTERNATE);
     }
 
     @Test
     public void writeInsertionWithAccessionFirstPositionStart() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, 1, "",
-                                                        "A", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
-
-        VariantComparator variantComparator = new VariantComparator(
-                Collections.singletonList(variant));
-
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
-
-        assertEquals(
-                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
-                getFirstVariantLine(output));
-    }
-
-    private void writeIndelWithAccessionHelper(String reference, String alternate, String denormalizedReference,
-                                               String denormalizedAlternate) throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, START_1, reference,
-                                                        alternate, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
-                                                                                                    variant);
-
-        VariantComparator variantComparator = new VariantComparator(
-                Collections.singletonList(variant));
-
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
-
-        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
-                                 denormalizedReference, denormalizedAlternate,
-                                 ".", ".", "."),
-                     getFirstVariantLine(output));
+        writeVariantWithAccessionHelper(1, "", "A", 1, "G", "AG");
     }
 
     @Test
     public void writeDeletionWithAccession() throws IOException {
-        writeIndelWithAccessionHelper(REFERENCE, "", CONTEXT_BASE + REFERENCE, CONTEXT_BASE);
+        writeVariantWithAccessionHelper(START_1, REFERENCE, "", START_1 - 1, CONTEXT_BASE + REFERENCE, CONTEXT_BASE);
     }
 
     @Test
     public void writeDeletionWithAccessionFirstPositionStart() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CHROMOSOME_1, 1, "G",
-                                                        "", CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
-
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
-
-        VariantComparator variantComparator = new VariantComparator(
-                Collections.singletonList(variant));
-
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
-
-        assertEquals(
-                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
-                getFirstVariantLine(output));
+        writeVariantWithAccessionHelper(1, "G", "", 1, "GT", "T");
     }
 
     @Test
     public void resumeWriting() throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1, REFERENCE,
-                                                        ALTERNATE, CLUSTERED_VARIANT, SUPPORTED_BY_EVIDENCE,
-                                                        MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
+        Variant variant = buildMockVariant(CHROMOSOME_1, CONTIG_1, START_1, REFERENCE, ALTERNATE);
 
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper =
-                new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, "1", variant);
 
-        VariantComparator variantComparator = new VariantComparator(
-                Collections.singletonList(variant));
+        SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1,
+                                                                 REFERENCE, ALTERNATE, CLUSTERED_VARIANT,
+                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                                 VALIDATED, null);
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
+                                                                                                    submittedVariant);
+
+        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
         accessionReportWriter.close();
 
         AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                                          ContigNaming.SEQUENCE_NAME);
-        variant.setContig(CONTIG_2);
+        variant = buildMockVariant(GENBANK_2, GENBANK_2, START_1, REFERENCE, ALTERNATE);
+        submittedVariant.setContig(GENBANK_2);
         resumingWriter.open(executionContext);
-        resumingWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
+        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
         resumingWriter.close();
 
         assertHeaderIsNotWrittenTwice(output);
         assertEquals(2, FileUtils.countNonCommentLines(new FileInputStream(output)));
+    }
+
+    private Variant buildMockVariant(String originalChromosome, String replacementContig, int start, String reference,
+                                     String alternate) {
+        Variant variant = new Variant(replacementContig, start, start, reference, alternate);
+        VariantSourceEntry sourceEntry = new VariantSourceEntry("fileId", "studyId");
+        sourceEntry.addAttribute(ORIGINAL_CHROMOSOME, originalChromosome);
+        variant.addSourceEntry(sourceEntry);
+        return variant;
     }
 
     private void assertHeaderIsNotWrittenTwice(File output) throws IOException {
@@ -280,46 +255,51 @@ public class AccessionReportWriterTest {
     }
 
     @Test
-    public void writeChromosomeReplacedFromContig() throws IOException {
-        assertContigReplacement(CONTIG_1, ContigNaming.SEQUENCE_NAME, CHROMOSOME_1);
+    public void writeChromosomeAsSubmitted() throws IOException {
+        assertContigReplacement(CHROMOSOME_1, CONTIG_1, ContigNaming.NO_REPLACEMENT, CHROMOSOME_1);
     }
 
-    private void assertContigReplacement(String originalContig, ContigNaming requestedReplacement,
-                                         String replacementContig) throws IOException {
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", originalContig,
-                                                        START_1, "", ALTERNATE, CLUSTERED_VARIANT,
-                                                        SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                        VALIDATED, null);
+    private void assertContigReplacement(String originalContig, String accessionedContig,
+                                         ContigNaming requestedReplacement, String replacementContig)
+            throws IOException {
+        Variant variant = buildMockVariant(originalContig, accessionedContig, START_1, REFERENCE, ALTERNATE);
+
+        SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", accessionedContig,
+                                                                 START_1, "", ALTERNATE, CLUSTERED_VARIANT,
+                                                                 SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                                 VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
-                                                                                                    variant);
-
-        VariantComparator variantComparator = new VariantComparator(
-                Collections.singletonList(variant));
+                                                                                                    submittedVariant);
 
         accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                           requestedReplacement);
         accessionReportWriter.open(new ExecutionContext());
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
+        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
 
         assertEquals(replacementContig, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
+    }
+
+    @Test
+    public void writeChromosomeReplacedFromContig() throws IOException {
+        assertContigReplacement(CHROMOSOME_1, CONTIG_1, ContigNaming.SEQUENCE_NAME, CHROMOSOME_1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void writeContigWithoutEquivalent() throws IOException {
         String contigMissingInAssemblyReport = "contig_missing_in_assembly_report";
-        assertContigReplacement(contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
+        assertContigReplacement(contigMissingInAssemblyReport, contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
                                 contigMissingInAssemblyReport);
     }
 
     @Test
     public void writeContigWithNoAvailableAssignedMolecule() throws IOException {
-        assertContigReplacement(GENBANK_3, ContigNaming.ASSIGNED_MOLECULE, GENBANK_3);
+        assertContigReplacement(GENBANK_3, GENBANK_3, ContigNaming.ASSIGNED_MOLECULE, GENBANK_3);
     }
 
     @Test
     public void writeContigWithoutIdenticalReplacement() throws IOException {
-        assertContigReplacement(REFSEQ_2, ContigNaming.INSDC, REFSEQ_2);
+        assertContigReplacement(REFSEQ_2, REFSEQ_2, ContigNaming.INSDC, REFSEQ_2);
     }
 
     /**
@@ -330,27 +310,37 @@ public class AccessionReportWriterTest {
      */
     @Test
     public void writeContigWithSynonymFasta() throws IOException {
-        assertContigReplacement(GENBANK_4, ContigNaming.SEQUENCE_NAME, SEQUENCE_NAME_4);
+        assertContigReplacement(GENBANK_4, GENBANK_4, ContigNaming.SEQUENCE_NAME, SEQUENCE_NAME_4);
     }
 
     @Test
     public void checkOriginalChromosomeIsWrittenInVcfInfo() throws IOException {
         String originalChromosome = SEQUENCE_NAME_3;
-        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", originalChromosome,
+        String accessionedContig = GENBANK_3;
+
+        Variant variant = buildMockVariant(originalChromosome, accessionedContig, START_1, REFERENCE, ALTERNATE);
+
+        SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", accessionedContig,
                                                         START_1, "", ALTERNATE, CLUSTERED_VARIANT,
                                                         SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
                                                         VALIDATED, null);
 
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
-                                                                                                    variant);
+                                                                                                    submittedVariant);
 
-        VariantComparator variantComparator = new VariantComparator(
-                Collections.singletonList(variant));
 
-        accessionReportWriter.write(Collections.singletonList(accessionWrapper), variantComparator);
+        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
 
-        assertEquals(GENBANK_3, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
-        String info = getFirstVariantLine(output).split("\t")[INFO_COLUMN_VCF];
-        assertEquals(originalChromosome, info.split("=")[1]);
+
+        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
+        String line;
+        while ((line = fileInputStream.readLine()) != null) {
+            if (line.startsWith("##contig")) {
+                String[] attributePairs = line.substring(line.indexOf("<"), line.length() - 1).split(",");
+                assertEquals(originalChromosome, attributePairs[0].split("=")[1]);
+                assertTrue(attributePairs[1].split("=")[1].contains(accessionedContig));
+            }
+        }
+        assertEquals(originalChromosome, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
 }

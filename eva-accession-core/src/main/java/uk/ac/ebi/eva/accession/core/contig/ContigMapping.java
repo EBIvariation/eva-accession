@@ -129,6 +129,30 @@ public class ContigMapping {
         return null;
     }
 
+    public String getContigSynonym(String contig, ContigSynonyms contigSynonyms, ContigNaming contigNaming) {
+        if (contigSynonyms == null) {
+            return null;
+        }
+        switch (contigNaming) {
+            case SEQUENCE_NAME:
+                return contigSynonyms.getSequenceName();
+            case ASSIGNED_MOLECULE:
+                return contigSynonyms.getAssignedMolecule();
+            case INSDC:
+                return contigSynonyms.getGenBank();
+            case REFSEQ:
+                return contigSynonyms.getRefSeq();
+            case UCSC:
+                return contigSynonyms.getUcsc();
+            case NO_REPLACEMENT:
+                return contig;
+            default:
+                throw new RuntimeException(
+                        "Enum type " + ContigNaming.class.getSimpleName() + " doesn't accept value "
+                        + contigNaming);
+        }
+    }
+
     /**
      * Replacement with a GenBank sequence accession is only possible if:
      * - Contig has synonyms

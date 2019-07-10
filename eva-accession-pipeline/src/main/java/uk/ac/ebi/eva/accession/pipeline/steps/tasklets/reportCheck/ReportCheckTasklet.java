@@ -29,7 +29,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.pipeline.policies.InvalidVariantSkipPolicy;
-import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.HashSet;

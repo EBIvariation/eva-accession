@@ -40,7 +40,6 @@ parameters.assemblyReportUrl=
 parameters.outputVcf=
 parameters.chunkSize=
 parameters.forceRestart=
-parameters.contigNaming=SEQUENCE_NAME
 
 spring.data.mongodb.database=
 spring.data.mongodb.host=
@@ -72,5 +71,6 @@ Available values (from ContigNaming):
 - `INSDC`: Use GenBank contig accessions.
 - `REFSEQ`: Use RefSeq contig accessions.
 - `UCSC`: Use chromosome names defined by UCSC, usually of the form `chr<name>`.
+- `NO_REPLACEMENT`: Do not use any particular naming, just keep whatever contig is provided.
 
-If not provided, the default value is `SEQUENCE_NAME`.
+If not provided, the default value is `NO_REPLACEMENT`.
