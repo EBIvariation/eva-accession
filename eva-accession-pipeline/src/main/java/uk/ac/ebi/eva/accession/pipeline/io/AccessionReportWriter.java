@@ -86,7 +86,7 @@ public class AccessionReportWriter {
 
     private Map<String, Set<String>> duplicatedInputContigsToInsdc;
 
-    private Map<String, Set<String>> duplicatedInsdcToOutputContigs;
+    private Map<String, Set<String>> duplicatedInsdcToInputContigs;
 
     public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping,
                                  ContigNaming contigNaming) throws IOException {
@@ -100,7 +100,7 @@ public class AccessionReportWriter {
         this.inputContigsToInsdc = new HashMap<>();
         this.insdcToInputContigs = new HashMap<>();
         this.duplicatedInputContigsToInsdc = new HashMap<>();
-        this.duplicatedInsdcToOutputContigs = new HashMap<>();
+        this.duplicatedInsdcToInputContigs = new HashMap<>();
     }
 
     public String getAccessionPrefix() {
@@ -111,6 +111,10 @@ public class AccessionReportWriter {
         this.accessionPrefix = accessionPrefix;
     }
 
+    /**
+     * Even though we do not load the variants, there might be duplicates,
+     * @see AccessionReportWriterTest.resumeWritingWithRepeatedVariant
+     */
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         boolean isHeaderAlreadyWritten = IS_HEADER_WRITTEN_VALUE.equals(executionContext.get(IS_HEADER_WRITTEN_KEY));
 
@@ -118,11 +122,11 @@ public class AccessionReportWriter {
             if (isHeaderAlreadyWritten) {
                 // we are resuming a job
                 if (contigsOutput.exists() && variantsOutput.exists()) {
-                    inputContigsToInsdc = loadContigMappingFromTemporaryFile(contigsOutput);
+                    loadContigMappingFromTemporaryFile(contigsOutput);
                     boolean append = true;
                     this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
 
-                    // no need to load the variants, we can just append because there can't be duplicates
+                    // This
                     this.variantsWriter = new BufferedWriter(new FileWriter(this.variantsOutput, append));
                 } else {
                     throw new IllegalStateException(
@@ -153,8 +157,7 @@ public class AccessionReportWriter {
      * Loads contig replacement mapping from a previous execution to avoid writing duplicate contig entries in the final
      * VCF.
      */
-    private Map<String, String> loadContigMappingFromTemporaryFile(File contigMappingFile) throws IOException {
-        Map<String, String> inputContigsToInsdc = new HashMap<>();
+    private void loadContigMappingFromTemporaryFile(File contigMappingFile) throws IOException {
         BufferedReader contigReader = new BufferedReader(new FileReader(contigMappingFile));
         String line;
         while ((line = contigReader.readLine()) != null) {
@@ -165,8 +168,8 @@ public class AccessionReportWriter {
                                                 + "start a new job.");
             }
             inputContigsToInsdc.put(contigColumns[0], contigColumns[1]);
+            insdcToInputContigs.put(contigColumns[1], contigColumns[0]);
         }
-        return inputContigsToInsdc;
     }
 
     public void update(ExecutionContext executionContext) throws ItemStreamException {
@@ -177,6 +180,15 @@ public class AccessionReportWriter {
         try {
             contigsWriter.close();
             variantsWriter.close();
+            if (!duplicatedInputContigsToInsdc.isEmpty()) {
+                logger.warn(
+                        "The same chromosome (in the original input) was replaced by several INSDC contig accessions. "
+                        + "This happened for: " + duplicatedInputContigsToInsdc.toString());
+            }
+            if (!duplicatedInsdcToInputContigs.isEmpty()) {
+                logger.warn("The same INSDC contig accessions replaced several input chromosomes. This happened for: "
+                            + duplicatedInsdcToInputContigs.toString());
+            }
         } catch (IOException e) {
             throw new ItemStreamException(e);
         }
@@ -219,7 +231,7 @@ public class AccessionReportWriter {
 
             String previousChromosome = insdcToInputContigs.put(variantWithContig.getChromosome(), originalChromosome);
             if (previousChromosome != null && !previousChromosome.equals(originalChromosome)) {
-                Set<String> chromosomesAssociatedToTheSameContig = duplicatedInsdcToOutputContigs.computeIfAbsent(
+                Set<String> chromosomesAssociatedToTheSameContig = duplicatedInsdcToInputContigs.computeIfAbsent(
                         variantWithContig.getChromosome(), key -> new HashSet<>());
                 chromosomesAssociatedToTheSameContig.add(originalChromosome);
                 chromosomesAssociatedToTheSameContig.add(previousChromosome);

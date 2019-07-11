@@ -15,8 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -32,25 +32,20 @@ import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
-import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 public class AccessionReportWriterTest {
@@ -59,9 +54,9 @@ public class AccessionReportWriterTest {
 
     private static final String CHROMOSOME_1 = "chr1";
 
-    private static final String CONTIG_2 = "contig_2";
-
     private static final int START_1 = 10;
+
+    private static final int START_2 = 14;
 
     private static final String REFERENCE = "T";
 
@@ -75,8 +70,6 @@ public class AccessionReportWriterTest {
 
     private static final long ACCESSION = 100L;
 
-    private static final String HASH = "hash";
-
     private static final Long CLUSTERED_VARIANT = null;
 
     private static final Boolean SUPPORTED_BY_EVIDENCE = null;
@@ -88,8 +81,6 @@ public class AccessionReportWriterTest {
     private static final Boolean VALIDATED = null;
 
     private static final int CHROMOSOME_COLUMN_VCF = 0;
-
-    private static final int INFO_COLUMN_VCF = 7;
 
     private static final String GENBANK_2 = "genbank_2";
 
@@ -121,8 +112,6 @@ public class AccessionReportWriterTest {
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
     private ContigMapping contigMapping;
-
-    private Map<String, String> inputChromosomeToContig;
 
     @Before
     public void setUp() throws Exception {
@@ -204,10 +193,19 @@ public class AccessionReportWriterTest {
 
     @Test
     public void resumeWriting() throws IOException {
-        Variant variant = buildMockVariant(CHROMOSOME_1, CONTIG_1, START_1, REFERENCE, ALTERNATE);
+        writeAndResumeAndWrite(CHROMOSOME_1, CONTIG_1, START_1, GENBANK_2, GENBANK_2, START_1);
+
+        assertEquals(2, Files.lines(contigsOutput.toPath()).count());
+        assertEquals(2, Files.lines(variantsOutput.toPath()).count());
+    }
+
+    private void writeAndResumeAndWrite(String originalChromosome1, String contig1, int start1, String originalChromosome2,
+                                        String contig2, int start2) throws IOException {
+        // first writer
+        Variant variant = buildMockVariant(originalChromosome1, contig1, start1, REFERENCE, ALTERNATE);
 
 
-        SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", CONTIG_1, START_1,
+        SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", contig1, start1,
                                                                  REFERENCE, ALTERNATE, CLUSTERED_VARIANT,
                                                                  SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
                                                                  VALIDATED, null);
@@ -222,16 +220,36 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
         accessionReportWriter.close();
 
+        // second writer
         AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
-                                                                         ContigNaming.SEQUENCE_NAME);
-        variant = buildMockVariant(GENBANK_2, GENBANK_2, START_1, REFERENCE, ALTERNATE);
-        submittedVariant.setContig(GENBANK_2);
+                                                                         ContigNaming.NO_REPLACEMENT);
+        variant = buildMockVariant(originalChromosome2, contig2, start2, REFERENCE, ALTERNATE);
+        submittedVariant.setContig(contig2);
+        submittedVariant.setStart(start2);
+
         resumingWriter.open(executionContext);
         resumingWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
         resumingWriter.close();
+    }
 
-        assertEquals(2, FileUtils.countNonCommentLines(new FileInputStream(contigsOutput)));
-        assertEquals(2, FileUtils.countNonCommentLines(new FileInputStream(variantsOutput)));
+    @Test
+    public void resumeWritingWithSameContigs() throws IOException {
+        writeAndResumeAndWrite(CHROMOSOME_1, CONTIG_1, START_1, CHROMOSOME_1, CONTIG_1, START_2);
+
+        assertEquals(1, Files.lines(contigsOutput.toPath()).count());
+        assertEquals(2, Files.lines(variantsOutput.toPath()).count());
+    }
+
+    @Test
+    @Ignore("A duplicated variant (two input variants that get the same accession) will appear twice in the VCF "
+            + "report if they are processed in different batches. There is no easy solution for this, as we would "
+            + "need to cache previous batches. It is even worse if the job fails between the affected batches, as we "
+            + "would need to parse the temporary VCF output or keep some variants in the job repository.")
+    public void resumeWritingWithRepeatedVariant() throws IOException {
+        writeAndResumeAndWrite(CHROMOSOME_1, CONTIG_1, START_1, CHROMOSOME_1, CONTIG_1, START_1);
+
+        assertEquals(1, Files.lines(contigsOutput.toPath()).count());
+        assertEquals(1, Files.lines(variantsOutput.toPath()).count());
     }
 
     private Variant buildMockVariant(String originalChromosome, String replacementContig, int start, String reference,
@@ -241,13 +259,6 @@ public class AccessionReportWriterTest {
         sourceEntry.addAttribute(ORIGINAL_CHROMOSOME, originalChromosome);
         variant.addSourceEntry(sourceEntry);
         return variant;
-    }
-
-
-    private List<AccessionWrapper<ISubmittedVariant, String, Long>> mockWrap(List<SubmittedVariant> variants) {
-        return variants.stream()
-                       .map(variant -> new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, HASH, variant))
-                       .collect(Collectors.toList());
     }
 
     @Test
