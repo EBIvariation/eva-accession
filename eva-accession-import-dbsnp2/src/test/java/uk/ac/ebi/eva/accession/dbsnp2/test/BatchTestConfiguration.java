@@ -20,14 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsJobConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonClusteredVariantsProcessorConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.JsonNodeToClusteredVariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsReaderConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsStepConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonFlowConfiguration;
@@ -35,12 +35,13 @@ import uk.ac.ebi.eva.accession.dbsnp2.configuration.InputParametersConfiguration
 import uk.ac.ebi.eva.accession.dbsnp2.runner.DbsnpJsonImportVariantsJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
+@Configuration
 @EnableAutoConfiguration
 @Import({MongoConfiguration.class,
         ImportDbsnpJsonVariantsJobConfiguration.class,
         ImportDbsnpJsonVariantsStepConfiguration.class,
         ImportDbsnpJsonVariantsReaderConfiguration.class,
-        ImportDbsnpJsonClusteredVariantsProcessorConfiguration.class,
+        JsonNodeToClusteredVariantProcessorConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
         InputParametersConfiguration.class,
         ImportDbsnpJsonFlowConfiguration.class,
@@ -49,9 +50,6 @@ public class BatchTestConfiguration {
 
     @Autowired
     private BatchProperties properties;
-
-    @Autowired
-    private ResourceLoader resourceLoader;
 
     @Autowired
     private PlatformTransactionManager platformTransactionManager;

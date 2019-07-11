@@ -27,7 +27,7 @@ import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSN
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_STEP;
 
 /**
- * Configuration class that describes flow process in the import dbSNP JSON job.
+ * Configuration class that describes the flow in the job to import a dbSNP JSON file.
  * <p>
  * This flow executes imports the dbSNP JSON and persists it into the data store.
  */

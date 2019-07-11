@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
 import uk.ac.ebi.eva.accession.dbsnp2.io.BzipLazyResource;
-import uk.ac.ebi.eva.accession.dbsnp2.io.NDJsonLineMapper;
+import uk.ac.ebi.eva.accession.dbsnp2.io.JsonNodeLineMapper;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 import java.io.File;
 
@@ -39,11 +39,11 @@ public class ImportDbsnpJsonVariantsReaderConfiguration {
     @Bean(name = DBSNP_JSON_VARIANT_READER)
     @StepScope
     FlatFileItemReader<JsonNode> dbsnpJsonItemReader(InputParameters parameters) {
-        String sourceFileName = parameters.getInput() == null ? "" : parameters.getInput();
+        String sourceFileName = parameters.getInput();
         FlatFileItemReader<JsonNode> jsonReader = new FlatFileItemReader<>();
         jsonReader.setName("DbsnpJsonItemReader");
         jsonReader.setResource(new BzipLazyResource(new File(sourceFileName)));
-        jsonReader.setLineMapper(new NDJsonLineMapper());
+        jsonReader.setLineMapper(new JsonNodeLineMapper());
         return jsonReader;
     }
 }

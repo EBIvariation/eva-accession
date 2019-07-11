@@ -29,7 +29,7 @@ import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSN
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_JOB;
 
 /**
- * Configuration to run an import dbSNP JSON job
+ * Configuration to run a job that imports a dbSNP JSON file.
  */
 @Configuration
 @EnableBatchProcessing

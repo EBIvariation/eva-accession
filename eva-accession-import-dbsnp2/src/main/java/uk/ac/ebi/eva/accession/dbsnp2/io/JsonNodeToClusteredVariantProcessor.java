@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.dbsnp2.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -34,7 +33,6 @@ import java.util.function.Function;
 
 public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNode, DbsnpClusteredVariantEntity> {
 
-    private static String DEFAULT_VALUE_STRING = "-";
     private static Logger logger = LoggerFactory.getLogger(JsonNodeToClusteredVariantProcessor.class);
     private Function<IClusteredVariant, String> hashingFunction =
             new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -42,16 +40,12 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     public JsonNodeToClusteredVariantProcessor() {
     }
 
-    public DbsnpClusteredVariantEntity process(JsonNode jsonNode) {
-        return parseJsonNodeToDbsnpClusteredVariantEntity(jsonNode);
-    }
-
     /**
      * Parses the JSON into a DbsnpClusteredVariantEntity
      * @param jsonRootNode root node of a dbSNP JSON line item
      * @return dbsnpClusteredVariantEntity
      */
-    private DbsnpClusteredVariantEntity parseJsonNodeToDbsnpClusteredVariantEntity(JsonNode jsonRootNode) {
+    public DbsnpClusteredVariantEntity process(JsonNode jsonRootNode) {
         long accession = jsonRootNode.path("refsnp_id").asLong();
         ClusteredVariant clusteredVariant = parseJsonNodeToClusteredVariant(jsonRootNode);
         String hashedMessage = hashingFunction.apply(clusteredVariant);
@@ -59,11 +53,8 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     }
 
     private ClusteredVariant parseJsonNodeToClusteredVariant(JsonNode jsonRootNode) {
-        String assemblyAccession, contig;
-        assemblyAccession = contig = DEFAULT_VALUE_STRING;
-        // @see <a href=https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=9606>Human taxonomy</a>
+        // @see <a href=https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=9606>Human Tax ID.</a>
         int taxonomyAccession = 9606;
-        long start = 0L;
 
         // JSON date in ISO-8601 format
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-d'T'HH:mm'Z'");
@@ -71,13 +62,15 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
         VariantType type = prepareVariantType(jsonRootNode.path("primary_snapshot_data").path("variant_type").asText());
         JsonNode infoNode = jsonRootNode.path("primary_snapshot_data").path("placements_with_allele");
         for(JsonNode alleleInfo : infoNode) {
+            String assemblyAccession;
             boolean isPtlp = alleleInfo.path("is_ptlp").asBoolean();
             JsonNode assemblyInfo = alleleInfo.path("placement_annot").path("seq_id_traits_by_assembly");
             if(assemblyInfo.size() == 0 || !isPtlp) {
                 continue;
             }
             assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
-            String alternateAllele, referenceAllele;
+            String contig, alternateAllele, referenceAllele;
+            long start = 0L;
             for (JsonNode alleleAndHgvs : alleleInfo.path("alleles")) {
                 JsonNode spdi = alleleAndHgvs.path("allele").path("spdi");
                 alternateAllele = spdi.path("inserted_sequence").asText();
@@ -90,16 +83,16 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
                 }
             }
         }
-        // no PLTP found
-        logger.error("No PLTP found for accession {}", jsonRootNode.path("refsnp_id").asLong());
-        return new ClusteredVariant(assemblyAccession, taxonomyAccession, contig, start,
-                type, Boolean.FALSE, createdDate);
+        // absence of primary top level placement (PLTP) data
+        logger.error("Primary top level placement data not present for accession refSNP ID: {}",
+            jsonRootNode.path("refsnp_id").asLong());
+        return null;
     }
 
     /**
      * @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/#/>dbSNP JSON 2.0 schema spec</a>
      * @param variantType DbSNP2.0 JSON variant type
-     * @return EVA variant type
+     * @return EVA variant type representation
      */
     private VariantType prepareVariantType(String variantType) {
         switch(variantType.toUpperCase()) {

@@ -22,10 +22,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 
-@SpringBootApplication(exclude = {
-        DataSourceAutoConfiguration.class,
-        BatchAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class})
+@SpringBootApplication
 public class Application {
 
     public static void main(String[] args) {
