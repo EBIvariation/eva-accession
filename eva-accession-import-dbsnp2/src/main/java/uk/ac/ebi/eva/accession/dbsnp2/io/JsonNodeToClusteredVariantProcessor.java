@@ -18,10 +18,10 @@ package uk.ac.ebi.eva.accession.dbsnp2.io;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 
 import org.springframework.batch.item.ItemProcessor;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
@@ -31,11 +31,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Function;
 
+/**
+ * Processes a DbSNP JsonNode to produce a clustered variant entity.
+ */
 public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNode, DbsnpClusteredVariantEntity> {
 
     private static Logger logger = LoggerFactory.getLogger(JsonNodeToClusteredVariantProcessor.class);
     private Function<IClusteredVariant, String> hashingFunction =
-            new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
     public JsonNodeToClusteredVariantProcessor() {
     }
@@ -59,38 +62,37 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
         // JSON date in ISO-8601 format
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-d'T'HH:mm'Z'");
         LocalDateTime createdDate = LocalDateTime.parse(jsonRootNode.path("create_date").asText(), formatter);
+
         VariantType type = prepareVariantType(jsonRootNode.path("primary_snapshot_data").path("variant_type").asText());
+
         JsonNode infoNode = jsonRootNode.path("primary_snapshot_data").path("placements_with_allele");
         for(JsonNode alleleInfo : infoNode) {
-            String assemblyAccession;
+
             boolean isPtlp = alleleInfo.path("is_ptlp").asBoolean();
             JsonNode assemblyInfo = alleleInfo.path("placement_annot").path("seq_id_traits_by_assembly");
+            JsonNode spdi = alleleInfo.path("alleles").get(0).path("allele").path("spdi");
             if(assemblyInfo.size() == 0 || !isPtlp) {
                 continue;
             }
-            assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
-            String contig, alternateAllele, referenceAllele;
-            long start = 0L;
-            for (JsonNode alleleAndHgvs : alleleInfo.path("alleles")) {
-                JsonNode spdi = alleleAndHgvs.path("allele").path("spdi");
-                alternateAllele = spdi.path("inserted_sequence").asText();
-                referenceAllele = spdi.path("deleted_sequence").asText();
-                if(alternateAllele.equals(referenceAllele)) {
-                    contig = spdi.path("seq_id").asText();
-                    start = spdi.path("position").asLong(); //dbSNP stores in 0 base, EVA in 1 base
-                    return new ClusteredVariant(assemblyAccession, taxonomyAccession, contig, start,
-                            type, Boolean.FALSE, createdDate);
-                }
-            }
+
+            String assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
+            String contig = spdi.path("seq_id").asText();
+            // DbSNP JSON in 0 base, EVA in 1 base
+            // @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/>DbSNP JSON 2.0 schema specification</a>
+            long start = spdi.path("position").asLong() + 1;
+
+            return new ClusteredVariant(assemblyAccession, taxonomyAccession, contig, start,
+                type, Boolean.FALSE, createdDate);
         }
-        // absence of primary top level placement (PLTP) data
+        // Absence of primary top level placement (PLTP) data
         logger.error("Primary top level placement data not present for accession refSNP ID: {}",
             jsonRootNode.path("refsnp_id").asLong());
         return null;
     }
 
     /**
-     * @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/#/>dbSNP JSON 2.0 schema spec</a>
+     * Derives the corresponding EVA variant type representation from the NCBI variant type
+     * @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/>DbSNP JSON 2.0 schema specification</a>
      * @param variantType DbSNP2.0 JSON variant type
      * @return EVA variant type representation
      */

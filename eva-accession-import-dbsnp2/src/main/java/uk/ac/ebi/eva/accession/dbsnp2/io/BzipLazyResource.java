@@ -26,7 +26,7 @@ import java.io.InputStream;
 
 /**
  * There's no way to read a compressed file with Spring classes.
- * reference: https://jira.spring.io/browse/BATCH-1750
+ * reference: <a href=https://jira.spring.io/browse/BATCH-1750>Jira Spring Issue #1750</a>
  * <p>
  * It's lazy because otherwise it will try to open the file on creation. The creation may be at the start of the
  * runtime if this class is used to create beans for auto-wiring, and at the start of the application it's
