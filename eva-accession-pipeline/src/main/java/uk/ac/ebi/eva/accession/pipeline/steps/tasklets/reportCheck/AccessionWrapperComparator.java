@@ -30,34 +30,19 @@ public class AccessionWrapperComparator implements Comparator<AccessionWrapper<I
 
     private Map<String, Integer> contigOrder;
 
-    private Map<String, String> contigMapping;
-
     /**
      * @param variants      The contig order will be extracted from this initial variant list
-     * @param contigMapping This mapping will be applied to the contigs of the initial variant list
      */
-    public AccessionWrapperComparator(List<? extends IVariant> variants, Map<String, String> contigMapping) {
-        this.contigOrder = getContigOrderFromVariants(
-                variants.stream().map(IVariant::getChromosome).collect(Collectors.toList()), contigMapping);
-         this.contigMapping = contigMapping;
-    }
     public AccessionWrapperComparator(List<? extends IVariant> variants) {
-        this.contigOrder = getContigOrderFromVariants(
-                variants.stream().map(IVariant::getChromosome).collect(Collectors.toList()), null);
-         this.contigMapping = null;
+        this.contigOrder = getContigOrder(variants.stream().map(IVariant::getChromosome).collect(Collectors.toList()));
     }
 
-    private static Map<String, Integer> getContigOrderFromVariants(Iterable<String> contigs,
-                                                                   Map<String, String> contigMapping) {
+    private static Map<String, Integer> getContigOrder(Iterable<String> contigs) {
         Map<String, Integer> contigsOrder = new HashMap<>();
         int nextIndex = 0;
         for (String contig : contigs) {
-            String replacementContig = contigMapping != null ? contigMapping.get(contig) : contig;
-            if (replacementContig == null) {
-                throw new IllegalStateException("No mapping provided for '" + contig + "'");
-            }
-            if (!contigsOrder.containsKey(replacementContig)) {
-                contigsOrder.put(replacementContig, nextIndex++);
+            if (!contigsOrder.containsKey(contig)) {
+                contigsOrder.put(contig, nextIndex++);
             }
         }
         return contigsOrder;
@@ -78,8 +63,7 @@ public class AccessionWrapperComparator implements Comparator<AccessionWrapper<I
                                                     + ", because "
                                                     + missingContigInOrdering
                                                     + " was not contained in the initial list of variants that is "
-                                                    + "used to extract the order: " + contigOrder.toString()
-                                                    + ", using mapping: " + contigMapping.toString());
+                                                    + "used to extract the order: " + contigOrder.toString());
         }
         Integer contigComparison = firstAccessionOrder - secondAccessionOrder;
         if (contigComparison < 0) {

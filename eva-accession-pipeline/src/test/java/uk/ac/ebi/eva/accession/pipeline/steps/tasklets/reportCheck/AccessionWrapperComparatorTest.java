@@ -60,24 +60,13 @@ public class AccessionWrapperComparatorTest {
     @Before
     public void setUp() throws Exception {
         List<Variant> variants = Arrays.asList(buildMockVariant(CONTIG_A),
-                                                        buildMockVariant(CONTIG_B),
-                                                        buildMockVariant(CONTIG_2),
-                                                        buildMockVariant(CONTIG_11),
-                                                        buildMockVariant(CONTIG_PREFIX_2),
-                                                        buildMockVariant(CONTIG_PREFIX_11)
+                                               buildMockVariant(CONTIG_B),
+                                               buildMockVariant(CONTIG_2),
+                                               buildMockVariant(CONTIG_11),
+                                               buildMockVariant(CONTIG_PREFIX_2),
+                                               buildMockVariant(CONTIG_PREFIX_11)
         );
-
-        contigMapping = new HashMap<>();
-        contigMapping.put(CONTIG_A, CONTIG_A);
-        contigMapping.put(CONTIG_B, CONTIG_B);
-        contigMapping.put(CONTIG_2, CONTIG_2);
-        contigMapping.put(CONTIG_11, CONTIG_11);
-        contigMapping.put(CONTIG_PREFIX_2, CONTIG_PREFIX_2);
-        contigMapping.put(CONTIG_PREFIX_11, CONTIG_PREFIX_11);
-        contigMapping.put(REPLACED_CONTIG, REPLACEMENT_CONTIG);
-
-        accessionWrapperComparator = new AccessionWrapperComparator(variants, contigMapping);
-
+        accessionWrapperComparator = new AccessionWrapperComparator(variants);
     }
 
     @Test
@@ -139,15 +128,15 @@ public class AccessionWrapperComparatorTest {
     @Test
     public void checkDifferentInputOrder() {
         List<Variant> variants = Arrays.asList(buildMockVariant(CONTIG_B),
-                                                        buildMockVariant(CONTIG_A),
-                                                        buildMockVariant(CONTIG_A),
-                                                        buildMockVariant(CONTIG_A),
-                                                        buildMockVariant(CONTIG_11),
-                                                        buildMockVariant(CONTIG_11),
-                                                        buildMockVariant(CONTIG_2),
-                                                        buildMockVariant(CONTIG_2),
-                                                        buildMockVariant(CONTIG_2));
-        AccessionWrapperComparator comparator = new AccessionWrapperComparator(variants, contigMapping);
+                                               buildMockVariant(CONTIG_A),
+                                               buildMockVariant(CONTIG_A),
+                                               buildMockVariant(CONTIG_A),
+                                               buildMockVariant(CONTIG_11),
+                                               buildMockVariant(CONTIG_11),
+                                               buildMockVariant(CONTIG_2),
+                                               buildMockVariant(CONTIG_2),
+                                               buildMockVariant(CONTIG_2));
+        AccessionWrapperComparator comparator = new AccessionWrapperComparator(variants);
 
         assertEquals(-1, comparator.compare(buildMockAccessionWrapper(CONTIG_11, 100),
                                             buildMockAccessionWrapper(CONTIG_2, 100)));
@@ -163,6 +152,7 @@ public class AccessionWrapperComparatorTest {
     private Variant buildMockVariant(String contig) {
         return new Variant(contig, 0,  0, "", "");
     }
+
     private SubmittedVariant buildMockSubmittedVariant(String contig) {
         return new SubmittedVariant("", 0, "", contig, 0, "", "", null, null, null, null, null, null);
     }
@@ -170,8 +160,8 @@ public class AccessionWrapperComparatorTest {
     @Test
     public void checkUnexpectedContigRaisesException() {
         List<Variant> variants = Arrays.asList(buildMockVariant(CONTIG_B),
-                                                        buildMockVariant(CONTIG_A));
-        AccessionWrapperComparator comparator = new AccessionWrapperComparator(variants, contigMapping);
+                                               buildMockVariant(CONTIG_A));
+        AccessionWrapperComparator comparator = new AccessionWrapperComparator(variants);
 
         thrown.expect(IllegalStateException.class);
         comparator.compare(buildMockAccessionWrapper(CONTIG_11, 100),
