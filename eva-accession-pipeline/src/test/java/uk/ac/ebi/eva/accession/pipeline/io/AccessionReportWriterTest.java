@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.io;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -106,9 +107,11 @@ public class AccessionReportWriterTest {
 
     private static final String REFSEQ_4 = "refseq_4";
 
-    private AccessionReportWriter accessionReportWriter;
-
     private File output;
+
+    private File variantsOutput;
+
+    private File contigsOutput;
 
     private FastaSequenceReader fastaSequenceReader;
 
@@ -124,6 +127,8 @@ public class AccessionReportWriterTest {
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
+        variantsOutput = new File(output.getAbsolutePath() + AccessionReportWriter.VARIANTS_FILE_SUFFIX);
+        contigsOutput = new File(output.getAbsolutePath() + AccessionReportWriter.CONTIGS_FILE_SUFFIX);
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
         contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
@@ -133,10 +138,7 @@ public class AccessionReportWriterTest {
                 new ContigSynonyms(SEQUENCE_NAME_4, "unlocalized-scaffold", "4", GENBANK_4, REFSEQ_4, "chr4_random",
                                    true)));
         fastaSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
-        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
-                                                          ContigNaming.NO_REPLACEMENT);
         executionContext = new ExecutionContext();
-        accessionReportWriter.open(executionContext);
     }
 
     @Test
@@ -157,12 +159,16 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
                                                                                                     submittedVariant);
 
+        AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader,
+                                                                                contigMapping,
+                                                                                ContigNaming.NO_REPLACEMENT);
+        accessionReportWriter.open(executionContext);
         accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
 
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(denormalizedStart), ACCESSION_PREFIX + ACCESSION,
                                  denormalizedReference, denormalizedAlternate, ".", ".", "."),
-                     getFirstVariantLine(output));
+                     getFirstVariantLine(variantsOutput));
     }
 
     public static String getFirstVariantLine(File output) throws IOException {
@@ -209,6 +215,10 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "1",
                                                                                                     submittedVariant);
 
+        AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader,
+                                                                                contigMapping,
+                                                                                ContigNaming.NO_REPLACEMENT);
+        accessionReportWriter.open(executionContext);
         accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
         accessionReportWriter.close();
 
@@ -217,11 +227,11 @@ public class AccessionReportWriterTest {
         variant = buildMockVariant(GENBANK_2, GENBANK_2, START_1, REFERENCE, ALTERNATE);
         submittedVariant.setContig(GENBANK_2);
         resumingWriter.open(executionContext);
-        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
+        resumingWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
         resumingWriter.close();
 
-        assertHeaderIsNotWrittenTwice(output);
-        assertEquals(2, FileUtils.countNonCommentLines(new FileInputStream(output)));
+        assertEquals(2, FileUtils.countNonCommentLines(new FileInputStream(contigsOutput)));
+        assertEquals(2, FileUtils.countNonCommentLines(new FileInputStream(variantsOutput)));
     }
 
     private Variant buildMockVariant(String originalChromosome, String replacementContig, int start, String reference,
@@ -233,20 +243,6 @@ public class AccessionReportWriterTest {
         return variant;
     }
 
-    private void assertHeaderIsNotWrittenTwice(File output) throws IOException {
-        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
-        String line;
-        do {
-            line = fileInputStream.readLine();
-            assertNotNull("VCF report was shorter than expected", line);
-        } while (line.startsWith("#"));
-
-        String variantLine = line;
-        do {
-            assertFalse("VCF report has header lines after variant lines", variantLine.startsWith("#"));
-            variantLine = fileInputStream.readLine();
-        } while (variantLine != null);
-    }
 
     private List<AccessionWrapper<ISubmittedVariant, String, Long>> mockWrap(List<SubmittedVariant> variants) {
         return variants.stream()
@@ -272,12 +268,12 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
                                                                                                     submittedVariant);
 
-        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
+        AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
                                                           requestedReplacement);
         accessionReportWriter.open(new ExecutionContext());
         accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
 
-        assertEquals(replacementContig, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
+        assertEquals(replacementContig, getFirstVariantLine(variantsOutput).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }
 
     @Test
@@ -313,34 +309,4 @@ public class AccessionReportWriterTest {
         assertContigReplacement(GENBANK_4, GENBANK_4, ContigNaming.SEQUENCE_NAME, SEQUENCE_NAME_4);
     }
 
-    @Test
-    public void checkOriginalChromosomeIsWrittenInVcfInfo() throws IOException {
-        String originalChromosome = SEQUENCE_NAME_3;
-        String accessionedContig = GENBANK_3;
-
-        Variant variant = buildMockVariant(originalChromosome, accessionedContig, START_1, REFERENCE, ALTERNATE);
-
-        SubmittedVariant submittedVariant = new SubmittedVariant("accession", TAXONOMY, "project", accessionedContig,
-                                                        START_1, "", ALTERNATE, CLUSTERED_VARIANT,
-                                                        SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
-                                                        VALIDATED, null);
-
-        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
-                                                                                                    submittedVariant);
-
-
-        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
-
-
-        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
-        String line;
-        while ((line = fileInputStream.readLine()) != null) {
-            if (line.startsWith("##contig")) {
-                String[] attributePairs = line.substring(line.indexOf("<"), line.length() - 1).split(",");
-                assertEquals(originalChromosome, attributePairs[0].split("=")[1]);
-                assertTrue(attributePairs[1].split("=")[1].contains(accessionedContig));
-            }
-        }
-        assertEquals(originalChromosome, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
-    }
 }

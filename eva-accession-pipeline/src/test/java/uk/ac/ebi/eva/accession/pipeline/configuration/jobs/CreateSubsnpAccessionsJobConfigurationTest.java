@@ -31,6 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.pipeline.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
@@ -48,6 +49,7 @@ import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
@@ -71,6 +73,8 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
     @After
     public void tearDown() throws Exception {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
     }
 
@@ -114,9 +118,10 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
     }
 
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
-        assertEquals(2, stepExecutions.size());
+        assertEquals(3, stepExecutions.size());
         Iterator<StepExecution> iterator = stepExecutions.iterator();
         assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
+        assertEquals(BUILD_REPORT_STEP, iterator.next().getStepName());
         assertEquals(CHECK_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
     }
 }

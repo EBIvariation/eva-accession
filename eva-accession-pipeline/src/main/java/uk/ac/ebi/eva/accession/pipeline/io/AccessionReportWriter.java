@@ -32,6 +32,7 @@ import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacer
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -47,6 +48,10 @@ import java.util.stream.Collectors;
 
 public class AccessionReportWriter {
 
+    public static final String CONTIGS_FILE_SUFFIX = ".contigs";
+
+    public static final String VARIANTS_FILE_SUFFIX = ".variants";
+
     private static final String SUBSNP_ACCESSION_PREFIX = "ss";
 
     private static final String VCF_MISSING_VALUE = ".";
@@ -57,19 +62,17 @@ public class AccessionReportWriter {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionReportWriter.class);
 
-    private static final String ORIGINAL_CHROMOSOME = "CHR";
+    private final File contigsOutput;
 
-    private final File output;
+    private final File variantsOutput;
 
-    private final File temporaryOutput;
+    private BufferedWriter contigsWriter;
+
+    private BufferedWriter variantsWriter;
 
     private ContigMapping contigMapping;
 
     private FastaSequenceReader fastaSequenceReader;
-
-    private BufferedWriter outputWriter;
-
-    private BufferedWriter temporaryOutputWriter;
 
     private String accessionPrefix;
 
@@ -79,7 +82,7 @@ public class AccessionReportWriter {
 
     private Map<String, String> inputContigsToInsdc;
 
-    private Map<String, String> insdcToOutputContigs;
+    private Map<String, String> insdcToInputContigs;
 
     private Map<String, Set<String>> duplicatedInputContigsToInsdc;
 
@@ -88,14 +91,14 @@ public class AccessionReportWriter {
     public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping,
                                  ContigNaming contigNaming) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
-        this.output = output;
-        this.temporaryOutput = new File(output.getPath() + ".tmp");
+        this.contigsOutput = new File(output.getPath() + CONTIGS_FILE_SUFFIX);
+        this.variantsOutput = new File(output.getPath() + VARIANTS_FILE_SUFFIX);
         this.contigMapping = contigMapping;
         this.contigNaming = contigNaming;
         this.accessionPrefix = SUBSNP_ACCESSION_PREFIX;
         this.loggedUnreplaceableContigs = new HashSet<>();
         this.inputContigsToInsdc = new HashMap<>();
-        this.insdcToOutputContigs = new HashMap<>();
+        this.insdcToInputContigs = new HashMap<>();
         this.duplicatedInputContigsToInsdc = new HashMap<>();
         this.duplicatedInsdcToOutputContigs = new HashMap<>();
     }
@@ -110,23 +113,60 @@ public class AccessionReportWriter {
 
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         boolean isHeaderAlreadyWritten = IS_HEADER_WRITTEN_VALUE.equals(executionContext.get(IS_HEADER_WRITTEN_KEY));
-        if ((output.exists() || temporaryOutput.exists()) && !isHeaderAlreadyWritten) {
-            logger.warn("According to the job's execution context, the accession report should not exist, but it does" +
-                                " exist. The AccessionReportWriter will append to the file, but it's possible that " +
-                                "there will be 2 non-contiguous header sections in the report VCF. This can happen if" +
-                                " the job execution context was not properly retrieved from the job repository.");
-        }
+
         try {
-            // TODO what to do if the job was interrupted and resumed?
-            boolean append = true;
-            this.outputWriter = new BufferedWriter(new FileWriter(this.output, append));
-            this.temporaryOutputWriter = new BufferedWriter(new FileWriter(this.temporaryOutput, append));
-            if (!isHeaderAlreadyWritten) {
-                executionContext.put(IS_HEADER_WRITTEN_KEY, IS_HEADER_WRITTEN_VALUE);
+            if (isHeaderAlreadyWritten) {
+                // we are resuming a job
+                if (contigsOutput.exists() && variantsOutput.exists()) {
+                    inputContigsToInsdc = loadContigMappingFromTemporaryFile(contigsOutput);
+                    boolean append = true;
+                    this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
+
+                    // no need to load the variants, we can just append because there can't be duplicates
+                    this.variantsWriter = new BufferedWriter(new FileWriter(this.variantsOutput, append));
+                } else {
+                    throw new IllegalStateException(
+                            "Can not resume step safely. All temporary files from the previous execution ("
+                            + contigsOutput.getAbsolutePath() + " and " + variantsOutput.getAbsolutePath()
+                            + ") should exist to resume the step. Please delete those files and start a new job.");
+                }
+            } else {
+                // new job
+                if (contigsOutput.exists() || variantsOutput.exists()) {
+                    throw new IllegalStateException(
+                            "A new job was started (did not resume a previous job) but temporary files exist ("
+                            + contigsOutput.getAbsolutePath() + " or " + variantsOutput.getAbsolutePath()
+                            + "). Please delete them and start a new job");
+                } else {
+                    boolean append = false;
+                    this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
+                    this.variantsWriter = new BufferedWriter(new FileWriter(this.variantsOutput, append));
+                    executionContext.put(IS_HEADER_WRITTEN_KEY, IS_HEADER_WRITTEN_VALUE);
+                }
             }
         } catch (IOException e) {
             throw new ItemStreamException(e);
         }
+    }
+
+    /**
+     * Loads contig replacement mapping from a previous execution to avoid writing duplicate contig entries in the final
+     * VCF.
+     */
+    private Map<String, String> loadContigMappingFromTemporaryFile(File contigMappingFile) throws IOException {
+        Map<String, String> inputContigsToInsdc = new HashMap<>();
+        BufferedReader contigReader = new BufferedReader(new FileReader(contigMappingFile));
+        String line;
+        while ((line = contigReader.readLine()) != null) {
+            String[] contigColumns = line.split("\t");
+            if (contigColumns.length != 2) {
+                throw new IllegalStateException("Temporary file " + contigMappingFile.getAbsolutePath()
+                                                + " doesn't have the expected format. Please delete it and "
+                                                + "start a new job.");
+            }
+            inputContigsToInsdc.put(contigColumns[0], contigColumns[1]);
+        }
+        return inputContigsToInsdc;
     }
 
     public void update(ExecutionContext executionContext) throws ItemStreamException {
@@ -135,70 +175,50 @@ public class AccessionReportWriter {
 
     public void close() throws ItemStreamException {
         try {
-            temporaryOutputWriter.close();
-            writeHeader(outputWriter);
-            appendFileToWriter(temporaryOutput, outputWriter);
-            outputWriter.close();
+            contigsWriter.close();
+            variantsWriter.close();
         } catch (IOException e) {
             throw new ItemStreamException(e);
         }
     }
 
-    private void appendFileToWriter(File inputFile, BufferedWriter output) throws IOException {
-        FileReader fileReader = new FileReader(inputFile);
-        char[] buffer = new char[4000];
-        int charactersRead = fileReader.read(buffer);
-        boolean endOfFileReached = charactersRead == -1;
-
-        while (!endOfFileReached) {
-            output.write(buffer, 0, charactersRead);
-            charactersRead = fileReader.read(buffer);
-            endOfFileReached = charactersRead == -1;
-        }
-    }
-
-    private void writeHeader(BufferedWriter writer) throws IOException {
-        writer.write("##fileformat=VCFv4.2");
-        writer.newLine();
-        for(Map.Entry<String, String> contigAndChromosome : inputContigsToInsdc.entrySet()) {
-            writer.write("##contig=<ID=" + contigAndChromosome.getKey()
-                         + ",Description=\"" + contigAndChromosome.getValue() + "\">");
-            writer.newLine();
-        }
-        writer.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO");
-        writer.newLine();
-    }
-
-    public void write(List<? extends IVariant> originalVariants,
+    public void write(List<? extends IVariant> originalVariantsWithInsdcContigs,
                       List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionedVariants) throws IOException {
-        if (temporaryOutputWriter == null) {
-            throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
-                                          "called " + this.getClass().getSimpleName() + "::open");
+        if (variantsWriter == null) {
+            throw new IOException("The file " + variantsOutput + " was not opened properly. Hint: Check that the code "
+                                  + "called " + this.getClass().getSimpleName() + "::open");
         }
-        updateChromosomeMappings(originalVariants);
+        updateChromosomeMappings(originalVariantsWithInsdcContigs);
         List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedVariants = denormalizeVariants(
                 accessionedVariants);
-        denormalizedVariants.sort(AccessionWrapperComparator.fromIVariant(originalVariants, inputContigsToInsdc));
+        denormalizedVariants.sort(new AccessionWrapperComparator(originalVariantsWithInsdcContigs));
+//        denormalizedVariants.sort(new AccessionWrapperComparator(originalVariantsWithInsdcContigs, inputContigsToInsdc));
         for (AccessionWrapper<ISubmittedVariant, String, Long> variant : denormalizedVariants) {
-            writeSortedVariant(variant, inputContigsToInsdc);
+            writeSortedVariant(variant, insdcToInputContigs);
         }
-        temporaryOutputWriter.flush();
+        variantsWriter.flush();
     }
 
-    private void updateChromosomeMappings(List<? extends IVariant> originalVariantsWithReplacedContigs) {
+    private void updateChromosomeMappings(List<? extends IVariant> originalVariantsWithReplacedContigs)
+            throws IOException {
         for (IVariant variantWithContig : originalVariantsWithReplacedContigs) {
             String originalChromosome = getOriginalChromosome(variantWithContig);
 
             String previousContig = inputContigsToInsdc.put(originalChromosome, variantWithContig.getChromosome());
-            if (previousContig != null) {
+            if (previousContig == null) {
+                // there was no previous entry, so this is not present in the contigs file: write it
+                contigsWriter.write(originalChromosome + "\t" + variantWithContig.getChromosome());
+                contigsWriter.newLine();
+                contigsWriter.flush();
+            } else if (!previousContig.equals(variantWithContig.getChromosome())) {
                 Set<String> contigsAssociatedToTheSameChromosome = duplicatedInputContigsToInsdc.computeIfAbsent(
                         originalChromosome, key -> new HashSet<>());
                 contigsAssociatedToTheSameChromosome.add(variantWithContig.getChromosome());
                 contigsAssociatedToTheSameChromosome.add(previousContig);
             }
 
-            String previousChromosome = insdcToOutputContigs.put(variantWithContig.getChromosome(), originalChromosome);
-            if (previousChromosome != null) {
+            String previousChromosome = insdcToInputContigs.put(variantWithContig.getChromosome(), originalChromosome);
+            if (previousChromosome != null && !previousChromosome.equals(originalChromosome)) {
                 Set<String> chromosomesAssociatedToTheSameContig = duplicatedInsdcToOutputContigs.computeIfAbsent(
                         variantWithContig.getChromosome(), key -> new HashSet<>());
                 chromosomesAssociatedToTheSameContig.add(originalChromosome);
@@ -276,10 +296,13 @@ public class AccessionReportWriter {
      *
      * Note how this is done after the sorting (using {@link AccessionWrapperComparator} because the mappings we
      * passed to it are mappings from the input naming to INSDC, not from input naming to requested output naming.
+     *
+     * Also, we have to get the equivalent of the original chromosome (not the INSDC contig) because we will mostly use
+     * {@link ContigNaming#NO_REPLACEMENT} and it means "do not replace the submitter's original chromosome".
      */
     private void writeSortedVariant(AccessionWrapper<ISubmittedVariant, String, Long> denormalizedVariant,
-                                    Map<String, String> contigsToChromosomes) throws IOException {
-        String originalChromosome = contigsToChromosomes.get(denormalizedVariant.getData().getContig());
+                                    Map<String, String> insdcToInputContigs) throws IOException {
+        String originalChromosome = insdcToInputContigs.get(denormalizedVariant.getData().getContig());
         String contigFromRequestedContigNaming = getEquivalentContig(originalChromosome, contigNaming);
 
         String variantLine = String.join("\t",
@@ -289,8 +312,8 @@ public class AccessionReportWriter {
                                          denormalizedVariant.getData().getReferenceAllele(),
                                          denormalizedVariant.getData().getAlternateAllele(),
                                          VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
-        temporaryOutputWriter.write(variantLine);
-        temporaryOutputWriter.newLine();
+        variantsWriter.write(variantLine);
+        variantsWriter.newLine();
     }
 
     /**

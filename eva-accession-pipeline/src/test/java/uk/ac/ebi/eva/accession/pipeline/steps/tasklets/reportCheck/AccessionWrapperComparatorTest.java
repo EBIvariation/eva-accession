@@ -76,7 +76,7 @@ public class AccessionWrapperComparatorTest {
         contigMapping.put(CONTIG_PREFIX_11, CONTIG_PREFIX_11);
         contigMapping.put(REPLACED_CONTIG, REPLACEMENT_CONTIG);
 
-        accessionWrapperComparator = AccessionWrapperComparator.fromIVariant(variants, contigMapping);
+        accessionWrapperComparator = new AccessionWrapperComparator(variants, contigMapping);
 
     }
 

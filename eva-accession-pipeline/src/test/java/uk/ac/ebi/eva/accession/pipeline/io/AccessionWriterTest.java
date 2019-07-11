@@ -42,6 +42,7 @@ import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -62,6 +63,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -80,6 +82,10 @@ public class AccessionWriterTest {
     private static final String CONTIG_2 = "genbank_2";
 
     private static final String CHROMOSOME_2 = "chr2";
+
+    private static final String CONTIG_3 = "genbank_3";
+
+    private static final String CHROMOSOME_3 = "chr3";
 
     private static final int START_1 = 2;
 
@@ -103,6 +109,10 @@ public class AccessionWriterTest {
 
     private static final Boolean VALIDATED = false;
 
+    private static final String REFERENCE = "reference";
+
+    private static final String ALTERNATE = "alternate";
+
     @Autowired
     private SubmittedVariantAccessioningService service;
 
@@ -118,6 +128,8 @@ public class AccessionWriterTest {
 
     private File output;
 
+    private File variantOutput;
+
     private VariantConverter variantConverter;
 
     @Before
@@ -126,6 +138,7 @@ public class AccessionWriterTest {
                 new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
                 new ContigSynonyms(CHROMOSOME_2, "assembled-molecule", "2", CONTIG_2, "refseq_2", "chr2", true)));
         output = temporaryFolderRule.newFile();
+        variantOutput = new File(output.getAbsolutePath() + AccessionReportWriter.VARIANTS_FILE_SUFFIX);
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
         AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output,
                                                                                 new FastaSequenceReader(fastaPath),
@@ -139,7 +152,7 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void saveSingleAccession() throws Exception {
-        Variant variant = new Variant("contig", START_1, START_1, "reference", "alternate");
+        Variant variant = buildMockVariant("contig", START_1);
 
         accessionWriter.write(Collections.singletonList(variant));
 
@@ -157,8 +170,8 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void saveTwoAccession() throws Exception {
-        Variant firstVariant = new Variant("contig", START_1, START_1, "reference", "alternate");
-        Variant secondVariant = new Variant("contig", START_2, START_2, "reference", "alternate");
+        Variant firstVariant = buildMockVariant("contig", START_1);
+        Variant secondVariant = buildMockVariant("contig", START_2);
 
         List<Variant> variants = Arrays.asList(firstVariant, secondVariant);
         accessionWriter.write(variants);
@@ -185,8 +198,8 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void variantInsertionCheckOrder() throws Exception {
-        Variant firstVariant = new Variant(CONTIG_1, START_1, START_1, "C", "A");
-        Variant secondVariant = new Variant(CONTIG_1, START_1, START_1, "", "A");
+        Variant firstVariant = buildMockVariant(CONTIG_1, START_1, "C", "A");
+        Variant secondVariant = buildMockVariant(CONTIG_1, START_1, "", "A");
 
         List<Variant> variants = Arrays.asList(firstVariant, secondVariant);
         accessionWriter.write(variants);
@@ -194,9 +207,10 @@ public class AccessionWriterTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(convert(variants));
         assertEquals(2, accessions.size());
 
-        int firstVariantLineNumber = getVariantLineNumberByPosition(output, CHROMOSOME_1 + "\t" + START_1);
-        //secondVariant position is 1 because it is an insertion and the context base is added
-        int secondVariantLineNumber = getVariantLineNumberByPosition(output, CHROMOSOME_1 + "\t" + (START_1 - 1));
+        int firstVariantLineNumber = getVariantLineNumberByPosition(variantOutput, CHROMOSOME_1 + "\t" + START_1);
+        //secondVariant position is START_1 - 1 because it is an insertion and the context base is added
+        int secondVariantLineNumber = getVariantLineNumberByPosition(variantOutput,
+                                                                     CHROMOSOME_1 + "\t" + (START_1 - 1));
         assertTrue(firstVariantLineNumber > secondVariantLineNumber);
     }
 
@@ -216,7 +230,7 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void saveSameAccessionTwice() throws Exception {
-        Variant variant = new Variant("contig", START_1, START_1, "reference", "alternate");
+        Variant variant = buildMockVariant("contig", START_1);
 
         accessionWriter.write(Arrays.asList(variant, variant));
 
@@ -231,7 +245,7 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void testSaveInitializesCreatedDate() throws Exception {
-        Variant variant = new Variant("contig", START_1, START_1, "reference", "alternate");
+        Variant variant = buildMockVariant("contig", START_1);
         LocalDateTime beforeSave = LocalDateTime.now();
         accessionWriter.write(Collections.singletonList(variant));
         LocalDateTime afterSave = LocalDateTime.now();
@@ -247,7 +261,7 @@ public class AccessionWriterTest {
     @Test
     @DirtiesContext
     public void createAccessionAndItAppearsInTheReportVcf() throws Exception {
-        Variant variant = new Variant("contig", START_1, START_1, REFERENCE_ALLELE, ALTERNATE_ALLELE);
+        Variant variant = buildMockVariant("contig", START_1);
 
         accessionWriter.write(Arrays.asList(variant, variant));
 
@@ -255,7 +269,7 @@ public class AccessionWriterTest {
                 .get(Collections.singletonList(variantConverter.convert(variant)));
         assertEquals(1, accessions.size());
 
-        String vcfLine = AccessionReportWriterTest.getFirstVariantLine(output);
+        String vcfLine = AccessionReportWriterTest.getFirstVariantLine(variantOutput);
         assertEquals(vcfLine.split("\t")[ACCESSION_COLUMN],
                      ACCESSION_PREFIX + accessions.iterator().next().getAccession());
     }
@@ -273,10 +287,10 @@ public class AccessionWriterTest {
     @Test
     public void shouldThrowIfSomeVariantsWereNotAccessionedInAChunkWithRepeatedVariants() {
         SubmittedVariant firstVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
-                                                             "reference", "alternate", CLUSTERED_VARIANT, false,
+                                                             REFERENCE, ALTERNATE, CLUSTERED_VARIANT, false,
                                                              MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         SubmittedVariant secondVariant = new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_2,
-                                                              "reference", "alternate", CLUSTERED_VARIANT, false,
+                                                              REFERENCE, ALTERNATE, CLUSTERED_VARIANT, false,
                                                               MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
         List<SubmittedVariant> variants = Arrays.asList(firstVariant, secondVariant, firstVariant, secondVariant);
 
@@ -290,27 +304,50 @@ public class AccessionWriterTest {
     @Test
     public void shouldSortReport() throws Exception {
         // given
-        Variant firstVariant = new Variant(CONTIG_1, START_1, START_1, "reference", "alternate");
-        Variant secondVariant = new Variant(CONTIG_2, START_2, START_2, "reference", "alternate");
-        Variant thirdVariant = new Variant(CONTIG_1, START_2, START_2, "reference", "alternate");
-        Variant fourthVariant = new Variant(CONTIG_2, START_1, START_1, "reference", "alternate");
-        List<Variant> variants = Arrays.asList(firstVariant, secondVariant, thirdVariant, fourthVariant);
+        List<Variant> variants = Arrays.asList(buildMockVariant(CONTIG_2, CHROMOSOME_2, START_1),
+                                               buildMockVariant(CONTIG_1, CHROMOSOME_1, START_2),
+                                               buildMockVariant(CONTIG_3, CHROMOSOME_3, START_1),
+                                               buildMockVariant(CONTIG_1, CHROMOSOME_1, START_1),
+                                               buildMockVariant(CONTIG_2, CHROMOSOME_2, START_2));
 
         // when
         accessionWriter.write(variants);
 
         // then
-        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(output)));
+        BufferedReader fileInputStream = new BufferedReader(new InputStreamReader(new FileInputStream(variantOutput)));
         String line;
         while ((line = fileInputStream.readLine()) != null && line.startsWith("#")) {
         }
 
+        assertThat(line, Matchers.startsWith(CHROMOSOME_2 + "\t" + START_1));
+        line = fileInputStream.readLine();
+        assertThat(line, Matchers.startsWith(CHROMOSOME_2 + "\t" + START_2));
+        line = fileInputStream.readLine();
         assertThat(line, Matchers.startsWith(CHROMOSOME_1 + "\t" + START_1));
         line = fileInputStream.readLine();
         assertThat(line, Matchers.startsWith(CHROMOSOME_1 + "\t" + START_2));
         line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CHROMOSOME_2 + "\t" + START_1));
-        line = fileInputStream.readLine();
-        assertThat(line, Matchers.startsWith(CHROMOSOME_2 + "\t" + START_2));
+        assertThat(line, Matchers.startsWith(CHROMOSOME_3 + "\t" + START_1));
+    }
+
+    private Variant buildMockVariant(String contig, int start) {
+        return buildMockVariant(contig, contig, start, REFERENCE, ALTERNATE);
+    }
+
+    private Variant buildMockVariant(String contig, String originalChromosome, int start) {
+        return buildMockVariant(contig, originalChromosome, start, REFERENCE, ALTERNATE);
+    }
+
+    private Variant buildMockVariant(String contig, int start, String reference, String alternate) {
+        return buildMockVariant(contig, contig, start, reference, alternate);
+    }
+
+    private Variant buildMockVariant(String contig, String originalChromosome, int start, String reference,
+                                     String alternate) {
+        Variant variant = new Variant(contig, start, start, reference, alternate);
+        VariantSourceEntry sourceEntry = new VariantSourceEntry("fileId", "studyId");
+        sourceEntry.addAttribute(ORIGINAL_CHROMOSOME, originalChromosome);
+        variant.addSourceEntry(sourceEntry);
+        return variant;
     }
 }

@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.pipeline.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
@@ -51,6 +52,8 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
 
     private static final int EXPECTED_VARIANTS = 22;
 
+    private static final long EXPECTED_CONTIGS = 1;
+
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
@@ -63,6 +66,8 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     @After
     public void tearDown() throws Exception {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
     }
 
@@ -75,7 +80,12 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
         long numVariantsInDatabase = repository.count();
         assertEquals(EXPECTED_VARIANTS, numVariantsInDatabase);
 
-        long numVariantsInReport = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
+        long numVariantsInReport = FileUtils.countNonCommentLines(
+                new FileInputStream(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
         assertEquals(EXPECTED_VARIANTS, numVariantsInReport);
+
+        long contigCount = Files.lines(
+                Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX)).count();
+        assertEquals(EXPECTED_CONTIGS, contigCount);
     }
 }
