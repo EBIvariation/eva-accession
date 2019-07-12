@@ -40,6 +40,7 @@ parameters.assemblyReportUrl=
 parameters.outputVcf=
 parameters.chunkSize=
 parameters.forceRestart=
+parameters.contigNaming=NO_REPLACEMENT
 
 spring.data.mongodb.database=
 spring.data.mongodb.host=
