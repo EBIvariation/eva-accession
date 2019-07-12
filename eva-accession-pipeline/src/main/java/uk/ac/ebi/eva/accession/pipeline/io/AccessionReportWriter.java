@@ -112,8 +112,8 @@ public class AccessionReportWriter {
     }
 
     /**
-     * Even though we do not load the variants, there might be duplicates,
-     * @see AccessionReportWriterTest.resumeWritingWithRepeatedVariant
+     * We do not load the variants written in previous failed executions, but there might be duplicates hard to avoid,
+     * @see AccessionReportWriterTest#resumeWritingWithRepeatedVariant
      */
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         boolean isHeaderAlreadyWritten = IS_HEADER_WRITTEN_VALUE.equals(executionContext.get(IS_HEADER_WRITTEN_KEY));
@@ -126,7 +126,7 @@ public class AccessionReportWriter {
                     boolean append = true;
                     this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
 
-                    // This
+                    // Not loading the variants might lead to duplicates. see this method's documentation
                     this.variantsWriter = new BufferedWriter(new FileWriter(this.variantsOutput, append));
                 } else {
                     throw new IllegalStateException(
@@ -135,7 +135,7 @@ public class AccessionReportWriter {
                             + ") should exist to resume the step. Please delete those files and start a new job.");
                 }
             } else {
-                // new job
+                // we started a new job
                 if (contigsOutput.exists() || variantsOutput.exists()) {
                     throw new IllegalStateException(
                             "A new job was started (did not resume a previous job) but temporary files exist ("
@@ -204,7 +204,6 @@ public class AccessionReportWriter {
         List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedVariants = denormalizeVariants(
                 accessionedVariants);
         denormalizedVariants.sort(new AccessionWrapperComparator(originalVariantsWithInsdcContigs));
-//        denormalizedVariants.sort(new AccessionWrapperComparator(originalVariantsWithInsdcContigs, inputContigsToInsdc));
         for (AccessionWrapper<ISubmittedVariant, String, Long> variant : denormalizedVariants) {
             writeSortedVariant(variant, insdcToInputContigs);
         }
@@ -248,10 +247,10 @@ public class AccessionReportWriter {
 
         if (originalChromosomes.size() != 1) {
             throw new IllegalStateException(
-                    "Can not provide the original chromosome of a variant because there are several ones in its "
-                    + "attributes. Contig '"
-                    + variant.getChromosome() + "' replaced all of [" + String.join(", ", originalChromosomes)
-                    + "] contigs");
+                    "Bug detected: Can not provide the original chromosome of a variant because there should be "
+                    + "exactly one in its attributes. The attributes had the next list of original chromosomes: ["
+                    + String.join(", ", originalChromosomes) + "]. Contig '" + variant.getChromosome()
+                    + "' was used as replacement.");
         }
         return originalChromosomes.iterator().next();
     }
@@ -306,7 +305,7 @@ public class AccessionReportWriter {
     /**
      * Replace the contig using the requested contig naming and write the variant to the output file.
      *
-     * Note how this is done after the sorting (using {@link AccessionWrapperComparator} because the mappings we
+     * Note how this is done after the sorting (using {@link AccessionWrapperComparator}) because the mappings we
      * passed to it are mappings from the input naming to INSDC, not from input naming to requested output naming.
      *
      * Also, we have to get the equivalent of the original chromosome (not the INSDC contig) because we will mostly use

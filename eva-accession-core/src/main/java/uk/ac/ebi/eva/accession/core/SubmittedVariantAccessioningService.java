@@ -17,9 +17,9 @@
  */
 package uk.ac.ebi.eva.accession.core;
 
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.util.Pair;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
@@ -34,7 +34,6 @@ import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessionin
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -81,9 +80,9 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
                                                      .collect(Collectors.toSet());
 
         return allVariants.stream()
-                          .map(variant -> new Pair<>(accessioningServiceDbsnp.getHash(variant), variant))
-                          .filter(pair -> !hashesToDelete.contains(pair.getKey()))
-                          .map(Pair::getValue)
+                          .map(variant -> Pair.of(accessioningServiceDbsnp.getHash(variant), variant))
+                          .filter(pair -> !hashesToDelete.contains(pair.getFirst()))
+                          .map(Pair::getSecond)
                           .collect(Collectors.toList());
     }
 

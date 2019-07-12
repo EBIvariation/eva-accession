@@ -43,7 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
