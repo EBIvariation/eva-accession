@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.test;
 
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -37,15 +38,16 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 @Configuration
 @EnableAutoConfiguration
+@EnableBatchProcessing
 @Import({MongoConfiguration.class,
-        ImportDbsnpJsonVariantsJobConfiguration.class,
-        ImportDbsnpJsonVariantsStepConfiguration.class,
-        ImportDbsnpJsonVariantsReaderConfiguration.class,
-        JsonNodeToClusteredVariantProcessorConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class,
-        InputParametersConfiguration.class,
-        ImportDbsnpJsonFlowConfiguration.class,
-        DbsnpJsonImportVariantsJobLauncherCommandLineRunner.class})
+    ImportDbsnpJsonVariantsJobConfiguration.class,
+    ImportDbsnpJsonVariantsStepConfiguration.class,
+    ImportDbsnpJsonVariantsReaderConfiguration.class,
+    JsonNodeToClusteredVariantProcessorConfiguration.class,
+    ChunkSizeCompletionPolicyConfiguration.class,
+    InputParametersConfiguration.class,
+    ImportDbsnpJsonFlowConfiguration.class,
+    DbsnpJsonImportVariantsJobLauncherCommandLineRunner.class})
 public class BatchTestConfiguration {
 
     @Autowired
