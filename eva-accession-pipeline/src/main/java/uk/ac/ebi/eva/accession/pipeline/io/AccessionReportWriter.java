@@ -181,13 +181,18 @@ public class AccessionReportWriter {
             contigsWriter.close();
             variantsWriter.close();
             if (!duplicatedInputContigsToInsdc.isEmpty()) {
-                logger.warn(
+                logger.error(
                         "The same chromosome (in the original input) was replaced by several INSDC contig accessions. "
                         + "This happened for: " + duplicatedInputContigsToInsdc.toString());
             }
             if (!duplicatedInsdcToInputContigs.isEmpty()) {
-                logger.warn("The same INSDC contig accessions replaced several input chromosomes. This happened for: "
-                            + duplicatedInsdcToInputContigs.toString());
+                logger.error("The same INSDC contig accessions replaced several input chromosomes. This happened for: "
+                             + duplicatedInsdcToInputContigs.toString());
+            }
+            if (!duplicatedInputContigsToInsdc.isEmpty() || !duplicatedInsdcToInputContigs.isEmpty()) {
+                throw new IllegalStateException(
+                        "Contig replacement was done but the replacements were not unique. See errors above for "
+                        + "details");
             }
         } catch (IOException e) {
             throw new ItemStreamException(e);
@@ -214,24 +219,26 @@ public class AccessionReportWriter {
             throws IOException {
         for (IVariant variantWithContig : originalVariantsWithReplacedContigs) {
             String originalChromosome = getOriginalChromosome(variantWithContig);
+            String currentInsdcContig = variantWithContig.getChromosome();
 
-            String previousContig = inputContigsToInsdc.put(originalChromosome, variantWithContig.getChromosome());
-            if (previousContig == null) {
+            String previousInsdcReplacementForOriginalChromosome = inputContigsToInsdc.put(originalChromosome,
+                                                                                           currentInsdcContig);
+            if (previousInsdcReplacementForOriginalChromosome == null) {
                 // there was no previous entry, so this is not present in the contigs file: write it
-                contigsWriter.write(originalChromosome + "\t" + variantWithContig.getChromosome());
+                contigsWriter.write(originalChromosome + "\t" + currentInsdcContig);
                 contigsWriter.newLine();
                 contigsWriter.flush();
-            } else if (!previousContig.equals(variantWithContig.getChromosome())) {
+            } else if (!previousInsdcReplacementForOriginalChromosome.equals(currentInsdcContig)) {
                 Set<String> contigsAssociatedToTheSameChromosome = duplicatedInputContigsToInsdc.computeIfAbsent(
                         originalChromosome, key -> new HashSet<>());
-                contigsAssociatedToTheSameChromosome.add(variantWithContig.getChromosome());
-                contigsAssociatedToTheSameChromosome.add(previousContig);
+                contigsAssociatedToTheSameChromosome.add(currentInsdcContig);
+                contigsAssociatedToTheSameChromosome.add(previousInsdcReplacementForOriginalChromosome);
             }
 
-            String previousChromosome = insdcToInputContigs.put(variantWithContig.getChromosome(), originalChromosome);
+            String previousChromosome = insdcToInputContigs.put(currentInsdcContig, originalChromosome);
             if (previousChromosome != null && !previousChromosome.equals(originalChromosome)) {
                 Set<String> chromosomesAssociatedToTheSameContig = duplicatedInsdcToInputContigs.computeIfAbsent(
-                        variantWithContig.getChromosome(), key -> new HashSet<>());
+                        currentInsdcContig, key -> new HashSet<>());
                 chromosomesAssociatedToTheSameContig.add(originalChromosome);
                 chromosomesAssociatedToTheSameContig.add(previousChromosome);
             }
@@ -247,8 +254,8 @@ public class AccessionReportWriter {
 
         if (originalChromosomes.size() != 1) {
             throw new IllegalStateException(
-                    "Bug detected: Can not provide the original chromosome of a variant because there should be "
-                    + "exactly one in its attributes. The attributes had the next list of original chromosomes: ["
+                    "Bug detected: Multiple original chromosomes were found to be associated with the same variant "
+                    + variant.toString() + ". The attributes had the next list of original chromosomes: ["
                     + String.join(", ", originalChromosomes) + "]. Contig '" + variant.getChromosome()
                     + "' was used as replacement.");
         }

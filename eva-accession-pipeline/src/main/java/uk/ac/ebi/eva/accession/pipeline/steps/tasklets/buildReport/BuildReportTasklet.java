@@ -76,14 +76,16 @@ public class BuildReportTasklet implements Tasklet {
 
     private Stream<Pair<String, String>> getContigPairs(File contigsFile) throws IOException {
         return Files.lines(contigsFile.toPath()).map(line -> {
-                String[] contigColumns = line.split("\t");
-                if (contigColumns.length != 2) {
-                    throw new IllegalStateException("Temporary file " + contigsFile.getAbsolutePath()
-                                                    + " doesn't have the expected format. Please delete it and "
-                                                    + "start a new job.");
-                }
-                return Pair.of(contigColumns[0], contigColumns[1]);
-            });
+            String[] contigColumns = line.split("\t");
+            if (contigColumns.length != 2) {
+                throw new IllegalStateException("Temporary file " + contigsFile.getAbsolutePath()
+                                                + " doesn't have the expected format. Please delete it and "
+                                                + "start a new job.");
+            }
+            String originalContig = contigColumns[0];
+            String insdcContig = contigColumns[1];
+            return Pair.of(originalContig, insdcContig);
+        });
     }
 
     private void writeHeader(BufferedWriter writer, Stream<Pair<String, String>> inputContigAndInsdcPairs)
