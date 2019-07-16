@@ -183,7 +183,7 @@ do
     else
       cd ${UNMAPPED_VARIANTS_FOLDER}
       cp ${dbsnp_database_name}* ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-      species_folder=`grep "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1`
+      species_folder=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1`
       cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
       cd -
     fi
