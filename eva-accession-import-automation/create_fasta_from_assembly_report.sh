@@ -33,6 +33,9 @@ exit_code=0
 touch ${output_folder}/${species}_custom.fa
 touch ${output_folder}/written_contigs.txt
 
+# remove the FASTA index because it might get outdated (EVA-1581)
+rm -f ${output_folder}/${species}_custom.fa.fai
+
 # If using a pre-existing FASTA file, identify the sequences already downloaded to avoid doing it again
 grep '^>' ${output_folder}/${species}_custom.fa | cut -d' ' -f1 | sed 's/>//g' >> ${output_folder}/written_contigs.txt
 
