@@ -54,9 +54,6 @@ fi
 # on rs.dbsnp_db_name = p.database_name
 # where assembly_accession <> ''
 # order by assembly_accession, tax_id;
-#
-# but without previous assembly of dog: GCA_000002285.1 9615
-# which is not ready yet after the issue of wrong contig/chr replacement
 echo "GCA_000001215.4	7227
 GCA_000001515.4	9598
 GCA_000001545.3	9601
@@ -179,7 +176,7 @@ do
 
   for taxonomy in `grep ${assembly} /tmp/assembly_to_taxonomy_map.txt | cut -f2`
   do
-    dbsnp_database_name=`grep "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f4`
+    dbsnp_database_name=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f4`
     if [ -z "${dbsnp_database_name}" ]
     then
       echo "Warning: taxonomy ${taxonomy} not found in ${INPUT_FOLDER}/species_name_mapping.tsv. Won't copy the unmapped_ids report for that taxonomy."
@@ -204,7 +201,7 @@ do
   taxonomy=`echo "${assembly_and_species}" | cut -f 2`
 
   assembly_folder=${OUTPUT_FOLDER}/${ASSEMBLIES}/${assembly}
-  species_folder=`grep "${taxonomy}$" $INPUT_FOLDER/species_name_mapping.tsv | cut -f 1`
+  species_folder=`grep -w "${taxonomy}$" $INPUT_FOLDER/species_name_mapping.tsv | cut -f 1`
 
   if [ -z "${species_folder}" ]
   then
