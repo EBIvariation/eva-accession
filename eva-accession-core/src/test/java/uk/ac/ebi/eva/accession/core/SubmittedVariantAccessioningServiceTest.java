@@ -226,7 +226,8 @@ public class SubmittedVariantAccessioningServiceTest {
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions = service.getOrCreate(
                 Collections.singletonList(variantPresentInDbsnp));
-        assertEquals(1, generatedAccessions.size());
+        assertEquals(Collections.singleton(ACCESSION_DBSNP_1),
+                     generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet()));
     }
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})

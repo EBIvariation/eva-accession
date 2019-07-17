@@ -59,9 +59,13 @@ public class AccessionReportWriterTest {
 
     private static final String REFERENCE = "T";
 
+    private static final String REFERENCE_1 = "G";
+
     private static final String ALTERNATE = "A";
 
     private static final String CONTEXT_BASE = "G";
+
+    private static final String CONTEXT_BASE_1 = "T";
 
     private static final int TAXONOMY = 3880;
 
@@ -177,7 +181,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeInsertionWithAccessionFirstPositionStart() throws IOException {
-        writeVariantWithAccessionHelper(1, "", "A", 1, "G", "AG");
+        writeVariantWithAccessionHelper(1, "", ALTERNATE, 1, CONTEXT_BASE, ALTERNATE + CONTEXT_BASE);
     }
 
     @Test
@@ -187,7 +191,7 @@ public class AccessionReportWriterTest {
 
     @Test
     public void writeDeletionWithAccessionFirstPositionStart() throws IOException {
-        writeVariantWithAccessionHelper(1, "G", "", 1, "GT", "T");
+        writeVariantWithAccessionHelper(1, REFERENCE_1, "", 1, REFERENCE_1 + CONTEXT_BASE_1, CONTEXT_BASE_1);
     }
 
     @Test
