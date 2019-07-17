@@ -15,6 +15,8 @@
 
 # Usage: copy_release_to_ftp.sh <input_folder> <output_folder> <intermediate_folder> <unmapped_variants_folder>
 
+set -eu -o pipefail
+
 ASSEMBLIES="by_assembly"
 ALL_SPECIES_FOLDER="by_species"
 
@@ -143,8 +145,8 @@ do
   species_folder=`echo "${species_line}" | cut -f 1`
   dbsnp_database_name=`echo "${species_line}" | cut -f 4`
   mkdir ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}
-  cp ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/
-  md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt
+  cp ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/ || true
+  md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt || true
 done
 cd -
 
@@ -159,32 +161,32 @@ do
   mkdir ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
   cp $INPUT_FOLDER/README_general_info.txt ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
   cd $INPUT_FOLDER/${assembly}
-  cp README_species_issues.txt ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-  cp ${assembly}_merged_ids.vcf.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-  md5sum ${assembly}_merged_ids.vcf.gz > ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
-  cp ${assembly}_merged_ids.vcf.gz.tbi ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-  md5sum ${assembly}_merged_ids.vcf.gz.tbi >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
-  cp ${assembly}_current_ids.vcf.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-  md5sum ${assembly}_current_ids.vcf.gz >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
-  cp ${assembly}_current_ids.vcf.gz.tbi ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-  md5sum ${assembly}_current_ids.vcf.gz.tbi >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
-  cp ${assembly}_deprecated_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-  md5sum ${assembly}_deprecated_ids.txt.gz >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
-  cp ${assembly}_merged_deprecated_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-  md5sum ${assembly}_merged_deprecated_ids.txt.gz >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
+  cp README_species_issues.txt ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  cp ${assembly}_merged_ids.vcf.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  md5sum ${assembly}_merged_ids.vcf.gz > ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+  cp ${assembly}_merged_ids.vcf.gz.tbi ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  md5sum ${assembly}_merged_ids.vcf.gz.tbi >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+  cp ${assembly}_current_ids.vcf.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  md5sum ${assembly}_current_ids.vcf.gz >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+  cp ${assembly}_current_ids.vcf.gz.tbi ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  md5sum ${assembly}_current_ids.vcf.gz.tbi >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+  cp ${assembly}_deprecated_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  md5sum ${assembly}_deprecated_ids.txt.gz >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+  cp ${assembly}_merged_deprecated_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  md5sum ${assembly}_merged_deprecated_ids.txt.gz >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
   cd -
 
   for taxonomy in `grep ${assembly} ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt | cut -f2`
   do
-    dbsnp_database_name=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f4`
+    dbsnp_database_name=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f4` || true
     if [ -z "${dbsnp_database_name}" ]
     then
       echo "Warning: taxonomy ${taxonomy} not found in ${INPUT_FOLDER}/species_name_mapping.tsv. Won't copy the unmapped_ids report for that taxonomy."
     else
       cd ${UNMAPPED_VARIANTS_FOLDER}
-      cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
-      species_folder=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1`
-      cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
+      cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+      species_folder=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1` || true
+      cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
       cd -
     fi
   done
@@ -201,8 +203,7 @@ do
   taxonomy=`echo "${assembly_and_species}" | cut -f 2`
 
   assembly_folder=${OUTPUT_FOLDER}/${ASSEMBLIES}/${assembly}
-  species_folder=`grep -w "${taxonomy}$" $INPUT_FOLDER/species_name_mapping.tsv | cut -f 1`
-
+  species_folder=`grep -w "${taxonomy}$" $INPUT_FOLDER/species_name_mapping.tsv | cut -f 1` || true
   if [ -z "${species_folder}" ]
   then
     echo "Warning: taxonomy ${taxonomy} not found in ${INPUT_FOLDER}/species_name_mapping.tsv. Won't add symbolic links to the assembly folders of this taxonomy."
@@ -222,5 +223,3 @@ done
 
 echo -e "\nFinished copying. Removing intermediate copy at ${INTERMEDIATE_FOLDER}"
 rm -rf ${INTERMEDIATE_FOLDER}
-
-#rm ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt
