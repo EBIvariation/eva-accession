@@ -37,7 +37,7 @@ public class AccessionWrapperComparator implements Comparator<AccessionWrapper<I
         this.contigOrder = getContigOrder(variants.stream().map(IVariant::getChromosome).collect(Collectors.toList()));
     }
 
-    private static Map<String, Integer> getContigOrder(Iterable<String> contigs) {
+    private Map<String, Integer> getContigOrder(Iterable<String> contigs) {
         Map<String, Integer> contigsOrder = new HashMap<>();
         int nextIndex = 0;
         for (String contig : contigs) {
