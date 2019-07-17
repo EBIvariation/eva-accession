@@ -15,8 +15,8 @@
 
 # Usage: copy_release_to_ftp.sh <input_folder> <output_folder> <intermediate_folder> <unmapped_variants_folder>
 
-ASSEMBLIES=by_assembly
-ALL_SPECIES_FOLDER=by_species
+ASSEMBLIES="by_assembly"
+ALL_SPECIES_FOLDER="by_species"
 
 if [ $# -ne 4 ]
 then
@@ -127,7 +127,7 @@ GCA_001433935.1	4530
 GCA_001465895.2	105023
 GCA_001522545.1	9157
 GCA_001577835.1	93934
-GCA_001625215.1	79200" > /tmp/assembly_to_taxonomy_map.txt
+GCA_001625215.1	79200" > ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt
 
 echo -e "\nCopying to intermediate folder ${INTERMEDIATE_FOLDER}"
 # copy only relevant files. Any missing file will be listed in stderr. It's ok if some species don't have the *_issues.txt
@@ -143,8 +143,8 @@ do
   species_folder=`echo "${species_line}" | cut -f 1`
   dbsnp_database_name=`echo "${species_line}" | cut -f 4`
   mkdir ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}
-  cp ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}* ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/
-  md5sum ${dbsnp_database_name}* > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt
+  cp ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/
+  md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt
 done
 cd -
 
@@ -174,7 +174,7 @@ do
   md5sum ${assembly}_merged_deprecated_ids.txt.gz >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
   cd -
 
-  for taxonomy in `grep ${assembly} /tmp/assembly_to_taxonomy_map.txt | cut -f2`
+  for taxonomy in `grep ${assembly} ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt | cut -f2`
   do
     dbsnp_database_name=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f4`
     if [ -z "${dbsnp_database_name}" ]
@@ -182,7 +182,7 @@ do
       echo "Warning: taxonomy ${taxonomy} not found in ${INPUT_FOLDER}/species_name_mapping.tsv. Won't copy the unmapped_ids report for that taxonomy."
     else
       cd ${UNMAPPED_VARIANTS_FOLDER}
-      cp ${dbsnp_database_name}* ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
+      cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
       species_folder=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1`
       cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt
       cd -
@@ -191,10 +191,10 @@ do
 done
 
 echo -e "\nCopying to FTP folder ${OUTPUT_FOLDER}"
-become ftpadmin rsync -va ${INTERMEDIATE_FOLDER}/* ${OUTPUT_FOLDER}/
+become ftpadmin rsync -va --exclude 'assembly_to_taxonomy_map.txt' ${INTERMEDIATE_FOLDER}/* ${OUTPUT_FOLDER}/
 
 # add symlinks to assemblies inside each species' folder
-cat /tmp/assembly_to_taxonomy_map.txt |
+cat ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt |
 while read assembly_and_species
 do
   assembly=`echo "${assembly_and_species}" | cut -f 1`
@@ -223,4 +223,4 @@ done
 echo -e "\nFinished copying. Removing intermediate copy at ${INTERMEDIATE_FOLDER}"
 rm -rf ${INTERMEDIATE_FOLDER}
 
-rm /tmp/assembly_to_taxonomy_map.txt
+#rm ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt
