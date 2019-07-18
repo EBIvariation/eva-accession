@@ -167,8 +167,10 @@ public class AccessionReportWriter {
                                                 + " doesn't have the expected format. Please delete it and "
                                                 + "start a new job.");
             }
-            inputContigsToInsdc.put(contigColumns[0], contigColumns[1]);
-            insdcToInputContigs.put(contigColumns[1], contigColumns[0]);
+            String inputContig = contigColumns[0];
+            String insdcContigAccession = contigColumns[1];
+            inputContigsToInsdc.put(inputContig, insdcContigAccession);
+            insdcToInputContigs.put(insdcContigAccession, inputContig);
         }
     }
 
