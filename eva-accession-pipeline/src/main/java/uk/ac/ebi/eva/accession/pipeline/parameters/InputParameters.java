@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.pipeline.parameters;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
 
 public class InputParameters {
@@ -43,6 +44,23 @@ public class InputParameters {
     private int chunkSize;
 
     private boolean forceRestart;
+
+    private ContigNaming contigNaming;
+
+    public JobParameters toJobParameters() {
+        return new JobParametersBuilder()
+                .addString("vcf", vcf)
+                .addString("vcfAggregation", vcfAggregation.toString())
+                .addString("aggregatedMappingFile", aggregatedMappingFile)
+                .addString("fasta", fasta)
+                .addString("outputVcf", outputVcf)
+                .addLong("taxonomyAccession", (long)taxonomyAccession)
+                .addString("assemblyAccession", assemblyAccession)
+                .addString("projectAccession", projectAccession)
+                .addLong("chunkSize", (long)chunkSize)
+                .addString("contigNaming", contigNaming.toString())
+                .toJobParameters();
+    }
 
     public String getVcf() {
         return vcf;
@@ -124,25 +142,19 @@ public class InputParameters {
         this.chunkSize = chunkSize;
     }
 
-    public JobParameters toJobParameters() {
-        return new JobParametersBuilder()
-                .addString("vcf", vcf)
-                .addString("vcfAggregation", vcfAggregation.toString())
-                .addString("aggregatedMappingFile", aggregatedMappingFile)
-                .addString("fasta", fasta)
-                .addString("outputVcf", outputVcf)
-                .addLong("taxonomyAccession", (long)taxonomyAccession)
-                .addString("assemblyAccession", assemblyAccession)
-                .addString("projectAccession", projectAccession)
-                .addLong("chunkSize", (long)chunkSize)
-                .toJobParameters();
-    }
-
     public boolean isForceRestart() {
         return forceRestart;
     }
 
     public void setForceRestart(boolean forceRestart) {
         this.forceRestart = forceRestart;
+    }
+
+    public ContigNaming getContigNaming() {
+        return contigNaming;
+    }
+
+    public void setContigNaming(ContigNaming contigNaming) {
+        this.contigNaming = contigNaming;
     }
 }

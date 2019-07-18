@@ -20,13 +20,12 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -42,9 +41,26 @@ import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconDataset;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
+import uk.ac.ebi.eva.commons.beacon.models.BeaconError;
+import uk.ac.ebi.eva.commons.beacon.models.Chromosome;
+import uk.ac.ebi.eva.commons.beacon.models.KeyValuePair;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -52,11 +68,11 @@ import java.util.stream.Collectors;
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantsRestController.class);
-
     private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
 
     private SubmittedVariantAccessioningService submittedVariantsService;
+
+    private ClusteredVariantsBeaconService beaconService;
 
     // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
     //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
@@ -66,10 +82,12 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
-            DbsnpClusteredVariantInactiveService inactiveService) {
+            DbsnpClusteredVariantInactiveService inactiveService,
+            ClusteredVariantsBeaconService beaconService) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.inactiveService = inactiveService;
+        this.beaconService = beaconService;
     }
 
     /**
@@ -83,7 +101,7 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                                    required = true) Long identifier)
+                    required = true) Long identifier)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             return ResponseEntity.ok(Collections.singletonList(basicRestController.get(identifier)));
@@ -96,7 +114,7 @@ public class ClusteredVariantsRestController {
 
     /**
      * Retrieve the information in the collection for inactive objects.
-     *
+     * <p>
      * This method is necessary because the behaviour of BasicRestController is to return the HttpStatus.GONE with an
      * error message in the body. We want instead to return the HttpStatus.GONE with the variant in the body.
      */
@@ -134,6 +152,104 @@ public class ClusteredVariantsRestController {
         return submittedVariants.stream()
                                 .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
                                 .collect(Collectors.toList());
+    }
+
+    @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "
+            + "the clustered variant (RS) represented by a given identifier. For a description of the response, see "
+            + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
+            + "-or-rs")
+    @GetMapping(produces = "application/json")
+    public ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getByIdFields(
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+                    String assembly,
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+                    String chromosome,
+            @RequestParam(name = "start") long start,
+            @RequestParam(name = "variantType") VariantType variantType) {
+        Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariant =
+                beaconService.getClusteredVariantByIdFields(assembly, chromosome, start, variantType);
+        return clusteredVariant.isPresent() ? ResponseEntity.ok(clusteredVariant.get()) : ResponseEntity.notFound()
+                                                                                                        .build();
+    }
+
+    @ApiOperation(value = "Find if a clustered variant (RS) with the given identifying fields exists in our database",
+            notes = "This endpoint returns true or false to indicate if the RS ID is present. Optionally return the " +
+                    "RS ID.")
+    @GetMapping(value = "/beacon/query", produces = "application/json")
+    public BeaconAlleleResponse doesVariantExist(
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+                    String assembly,
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+                    String chromosome,
+            @RequestParam(name = "start") long start,
+            @RequestParam(name = "variantType") VariantType variantType,
+            @RequestParam(name = "includeDatasetReponses", required = false)
+                    boolean includeDatasetReponses,
+            HttpServletResponse response) {
+        try {
+            BeaconAlleleResponse beaconAlleleResponse = beaconService
+                    .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
+            if (beaconAlleleResponse.isExists() && includeDatasetReponses) {
+                String clusteredVariantAccession = beaconAlleleResponse.getDatasetAlleleResponses().get(0)
+                                                                       .getDatasetId();
+                List<BeaconDatasetAlleleResponse> datasetAlleleResponses = getBeaconDatasetAlleleResponses(
+                        clusteredVariantAccession);
+                beaconAlleleResponse.setDatasetAlleleResponses(datasetAlleleResponses);
+            }
+            return beaconAlleleResponse;
+        } catch (Exception ex) {
+            int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+            response.setStatus(responseStatus);
+            return getBeaconResponseObjectWithError(chromosome, start, assembly, variantType, responseStatus,
+                                                    "Unexpected Error: " + ex.getMessage());
+        }
+    }
+
+    private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(String clusteredVariantAccession) {
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
+                submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(
+                        Long.parseLong(clusteredVariantAccession)));
+
+        Map<String, Set<String>> projects = new HashMap<>();
+        submittedVariants.forEach(variant -> {
+            String projectAccession = variant.getData().getProjectAccession();
+            String submittedVariantAccession = "ss" + variant.getAccession().toString();
+            projects.computeIfAbsent(projectAccession, key -> new HashSet<>()).add(submittedVariantAccession);
+        });
+
+        List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
+        projects.forEach((project, ids) -> {
+            BeaconDatasetAlleleResponse datasetAlleleResponse = new BeaconDatasetAlleleResponse();
+            datasetAlleleResponse.setDatasetId(project);
+
+            KeyValuePair rs = new KeyValuePair().key("RS ID").value("rs" + clusteredVariantAccession);
+            KeyValuePair ss = new KeyValuePair().key("SS IDs").value(String.join(",", ids));
+            List<KeyValuePair> info = new ArrayList<>(Arrays.asList(rs, ss));
+            datasetAlleleResponse.setInfo(info);
+
+            datasetAlleleResponse.exists(true);
+            datasetAlleleResponses.add(datasetAlleleResponse);
+        });
+        return datasetAlleleResponses;
+    }
+
+    private BeaconAlleleResponse getBeaconResponseObjectWithError(String reference, long start, String assembly,
+                                                                  VariantType variantType, int errorCode,
+                                                                  String errorMessage) {
+        BeaconAlleleRequest request = new BeaconAlleleRequest();
+        request.setReferenceName(Chromosome.fromValue(reference));
+        request.setStart(start);
+        request.setVariantType(variantType.toString());
+        request.setAssemblyId(assembly);
+
+        BeaconError error = new BeaconError();
+        error.setErrorCode(errorCode);
+        error.setErrorMessage(errorMessage);
+
+        BeaconAlleleResponse response = new BeaconAlleleResponse();
+        response.setAlleleRequest(request);
+        response.setError(error);
+        return response;
     }
 }
 

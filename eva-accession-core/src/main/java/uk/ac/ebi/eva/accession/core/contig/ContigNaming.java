@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.core.io;
+package uk.ac.ebi.eva.accession.core.contig;
 
-import org.springframework.jdbc.core.RowMapper;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import static uk.ac.ebi.eva.accession.core.io.SubSnpNoHgvsContigReader.CONTIG_NAME_COLUMN;
-
-public class SubSnpNoHgvsContigRowMapper implements RowMapper<String> {
-
-    @Override
-    public String mapRow(ResultSet resultSet, int i) throws SQLException {
-        return resultSet.getString(CONTIG_NAME_COLUMN);
-    }
+/**
+ * This enum can be used to specify one of the synonyms from NCBI's assembly reports.
+ */
+public enum ContigNaming {
+    SEQUENCE_NAME,  // this is the same as chromosome names
+    ASSIGNED_MOLECULE,
+    INSDC,  // this is the same as GenBank
+    REFSEQ,
+    UCSC
 }

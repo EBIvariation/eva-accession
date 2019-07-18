@@ -24,7 +24,11 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
@@ -35,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,7 +50,9 @@ import static org.junit.Assert.assertNotNull;
 
 public class AccessionReportWriterTest {
 
-    private static final String CONTIG_1 = "contig_1";
+    private static final String CONTIG_1 = "genbank_1";
+
+    private static final String CHROMOSOME_1 = "chr1";
 
     private static final String CONTIG_2 = "contig_2";
 
@@ -75,6 +82,24 @@ public class AccessionReportWriterTest {
 
     private static final Boolean VALIDATED = null;
 
+    private static final int CHROMOSOME_COLUMN_VCF = 0;
+
+    private static final String GENBANK_2 = "genbank_2";
+
+    private static final String REFSEQ_2 = "refseq_2";
+
+    private static final String SEQUENCE_NAME_3 = "ctg3";
+
+    private static final String GENBANK_3 = "genbank_3";
+
+    private static final String REFSEQ_3 = "refseq_3";
+
+    private static final String SEQUENCE_NAME_4 = "ctg4";
+
+    private static final String GENBANK_4 = "genbank_4";
+
+    private static final String REFSEQ_4 = "refseq_4";
+
     private AccessionReportWriter accessionReportWriter;
 
     private File output;
@@ -86,12 +111,22 @@ public class AccessionReportWriterTest {
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
+    private ContigMapping contigMapping;
+
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
         Path fastaPath = Paths.get(AccessionReportWriterTest.class.getResource("/input-files/fasta/mock.fa").toURI());
-        fastaSequenceReader = new FastaSequenceReader(fastaPath);
-        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader);
+        contigMapping = new ContigMapping(Arrays.asList(
+                new ContigSynonyms(CHROMOSOME_1, "assembled-molecule", "1", CONTIG_1, "refseq_1", "chr1", true),
+                new ContigSynonyms("chr2", "assembled-molecule", "2", GENBANK_2, REFSEQ_2, "chr2", false),
+                new ContigSynonyms(SEQUENCE_NAME_3, "unlocalized-scaffold", "1", GENBANK_3, REFSEQ_3, "chr3_random",
+                                   true),
+                new ContigSynonyms(SEQUENCE_NAME_4, "unlocalized-scaffold", "4", GENBANK_4, REFSEQ_4, "chr4_random",
+                                   true)));
+        fastaSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
+        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
+                                                          ContigNaming.SEQUENCE_NAME);
         executionContext = new ExecutionContext();
         accessionReportWriter.open(executionContext);
     }
@@ -111,7 +146,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CONTIG_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
+                String.join("\t", CHROMOSOME_1, Integer.toString(START_1), ACCESSION_PREFIX + ACCESSION, REFERENCE,
                             ALTERNATE, ".", ".", "."),
                 getFirstVariantLine(output));
     }
@@ -147,7 +182,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
+                String.join("\t", CHROMOSOME_1, "1", ACCESSION_PREFIX + ACCESSION, "G", "AG", ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
@@ -165,7 +200,7 @@ public class AccessionReportWriterTest {
 
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
-        assertEquals(String.join("\t", CONTIG_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
+        assertEquals(String.join("\t", CHROMOSOME_1, Integer.toString(START_1 - 1), ACCESSION_PREFIX + ACCESSION,
                                  denormalizedReference, denormalizedAlternate,
                                  ".", ".", "."),
                      getFirstVariantLine(output));
@@ -191,7 +226,7 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
 
         assertEquals(
-                String.join("\t", CONTIG_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
+                String.join("\t", CHROMOSOME_1, "1", ACCESSION_PREFIX + ACCESSION, "GT", "T", ".", ".", "."),
                 getFirstVariantLine(output));
     }
 
@@ -210,7 +245,8 @@ public class AccessionReportWriterTest {
         accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
         accessionReportWriter.close();
 
-        AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader);
+        AccessionReportWriter resumingWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
+                                                                         ContigNaming.SEQUENCE_NAME);
         variant.setContig(CONTIG_2);
         resumingWriter.open(executionContext);
         resumingWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
@@ -240,4 +276,59 @@ public class AccessionReportWriterTest {
                        .map(variant -> new AccessionWrapper<ISubmittedVariant, String, Long>(ACCESSION, HASH, variant))
                        .collect(Collectors.toList());
     }
+
+    @Test
+    public void writeChromosomeReplacedFromContig() throws IOException {
+        assertContigReplacement(CONTIG_1, ContigNaming.SEQUENCE_NAME, CHROMOSOME_1);
+    }
+
+    private void assertContigReplacement(String originalContig, ContigNaming requestedReplacement,
+                                         String replacementContig) throws IOException {
+        SubmittedVariant variant = new SubmittedVariant("accession", TAXONOMY, "project", originalContig,
+                                                        START_1, "", ALTERNATE, CLUSTERED_VARIANT,
+                                                        SUPPORTED_BY_EVIDENCE, MATCHES_ASSEMBLY, ALLELES_MATCH,
+                                                        VALIDATED, null);
+
+        AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
+                                                                                                    variant);
+
+        AccessionWrapperComparator accessionWrapperComparator = new AccessionWrapperComparator(
+                Collections.singletonList(variant));
+
+        accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
+                                                          requestedReplacement);
+        accessionReportWriter.open(new ExecutionContext());
+        accessionReportWriter.write(Collections.singletonList(accessionWrapper), accessionWrapperComparator);
+
+        assertEquals(replacementContig, getFirstVariantLine(output).split("\t")[CHROMOSOME_COLUMN_VCF]);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void writeContigWithoutEquivalent() throws IOException {
+        String contigMissingInAssemblyReport = "contig_missing_in_assembly_report";
+        assertContigReplacement(contigMissingInAssemblyReport, ContigNaming.SEQUENCE_NAME,
+                                contigMissingInAssemblyReport);
+    }
+
+    @Test
+    public void writeContigWithNoAvailableAssignedMolecule() throws IOException {
+        assertContigReplacement(GENBANK_3, ContigNaming.ASSIGNED_MOLECULE, GENBANK_3);
+    }
+
+    @Test
+    public void writeContigWithoutIdenticalReplacement() throws IOException {
+        assertContigReplacement(REFSEQ_2, ContigNaming.INSDC, REFSEQ_2);
+    }
+
+    /**
+     * This test checks that the context base is added from the FASTA, and it doesn't matter which contig naming the
+     * FASTA uses: it's independent of the accessioned contig naming (GenBank) and the VCF report contig naming.
+     *
+     * Note how in the fasta there's no entry for GENBANK_4 nor SEQUENCE_NAME_4, only for REFSEQ_4
+     */
+    @Test
+    public void writeContigWithSynonymFasta() throws IOException {
+        assertContigReplacement(GENBANK_4, ContigNaming.SEQUENCE_NAME, SEQUENCE_NAME_4);
+    }
+
 }

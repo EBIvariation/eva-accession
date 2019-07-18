@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.ReportCheckTasklet;
@@ -48,6 +49,9 @@ public class CheckSubsnpAccessionsStepConfiguration {
     private InputParameters inputParameters;
 
     @Autowired
+    private ContigMapping contigMapping;
+
+    @Autowired
     @Qualifier(VARIANT_READER)
     private ItemStreamReader<Variant> inputReader;
 
@@ -61,7 +65,7 @@ public class CheckSubsnpAccessionsStepConfiguration {
     @Bean(CHECK_SUBSNP_ACCESSION_STEP)
     public Step checkSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory) throws IOException {
         ReportCheckTasklet tasklet = new ReportCheckTasklet(inputReader, reportReader(),
-                                                            inputParameters.getChunkSize() * 2);
+                                                            inputParameters.getChunkSize() * 2, contigMapping);
         TaskletStep step = stepBuilderFactory.get(CHECK_SUBSNP_ACCESSION_STEP)
                                              .tasklet(tasklet)
                                              .build();

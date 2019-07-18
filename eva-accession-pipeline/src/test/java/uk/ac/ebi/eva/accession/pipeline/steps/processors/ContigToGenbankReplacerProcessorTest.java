@@ -23,17 +23,17 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static org.junit.Assert.assertEquals;
 
-public class ContigReplacerProcessorTest {
+public class ContigToGenbankReplacerProcessorTest {
 
-    private ContigReplacerProcessor processor;
+    private ContigToGenbankReplacerProcessor processor;
 
     @Before
     public void setUp() throws Exception {
-        String fileString = ContigReplacerProcessorTest.class.getResource(
+        String fileString = ContigToGenbankReplacerProcessorTest.class.getResource(
                 "/input-files/assembly-report/assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
-        processor = new ContigReplacerProcessor(contigMapping);
+        processor = new ContigToGenbankReplacerProcessor(contigMapping);
     }
 
     @Test
