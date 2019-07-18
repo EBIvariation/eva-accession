@@ -55,7 +55,7 @@ public class DbsnpJsonItemReaderTest {
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void readChrYDbsnpJsonVariants() throws Exception {
+    public void readExistingSource() throws Exception {
         reader.setResource(new BzipLazyResource(new File("src/test/resources/input-files/test-dbsnp.json.bz2")));
         reader.open(new ExecutionContext());
         List<JsonNode> variants = readAll(reader);
@@ -63,7 +63,7 @@ public class DbsnpJsonItemReaderTest {
     }
 
     @Test
-    public void readWrongSource() throws Exception {
+    public void readNonExistingSource() throws Exception {
         reader.setResource(new BzipLazyResource(new File("INVALID_DIRECTORY")));
         thrown.expect(ItemStreamException.class);
         reader.open(new ExecutionContext());

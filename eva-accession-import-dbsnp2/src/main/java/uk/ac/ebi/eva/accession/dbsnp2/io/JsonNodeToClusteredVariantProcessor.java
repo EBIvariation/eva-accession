@@ -58,35 +58,29 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     private ClusteredVariant parseJsonNodeToClusteredVariant(JsonNode jsonRootNode) {
         // @see <a href=https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=9606>Human Tax ID.</a>
         int taxonomyAccession = 9606;
-
         // JSON date in ISO-8601 format
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-d'T'HH:mm'Z'");
         LocalDateTime createdDate = LocalDateTime.parse(jsonRootNode.path("create_date").asText(), formatter);
-
         VariantType type = prepareVariantType(jsonRootNode.path("primary_snapshot_data").path("variant_type").asText());
-
         JsonNode infoNode = jsonRootNode.path("primary_snapshot_data").path("placements_with_allele");
         for(JsonNode alleleInfo : infoNode) {
-
             boolean isPtlp = alleleInfo.path("is_ptlp").asBoolean();
             JsonNode assemblyInfo = alleleInfo.path("placement_annot").path("seq_id_traits_by_assembly");
-            JsonNode spdi = alleleInfo.path("alleles").get(0).path("allele").path("spdi");
             if(assemblyInfo.size() == 0 || !isPtlp) {
                 continue;
             }
-
             String assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
+            JsonNode spdi = alleleInfo.path("alleles").get(0).path("allele").path("spdi");
             String contig = spdi.path("seq_id").asText();
             // DbSNP JSON in 0 base, EVA in 1 base
             // @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/>DbSNP JSON 2.0 schema specification</a>
             long start = spdi.path("position").asLong() + 1;
-
             return new ClusteredVariant(assemblyAccession, taxonomyAccession, contig, start,
-                type, Boolean.FALSE, createdDate);
+                                        type, Boolean.FALSE, createdDate);
         }
         // Absence of primary top level placement (PLTP) data
         logger.error("Primary top level placement data not present for accession refSNP ID: {}",
-            jsonRootNode.path("refsnp_id").asLong());
+                     jsonRootNode.path("refsnp_id").asLong());
         return null;
     }
 

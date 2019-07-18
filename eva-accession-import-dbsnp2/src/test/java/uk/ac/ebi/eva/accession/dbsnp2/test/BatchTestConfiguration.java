@@ -40,14 +40,14 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 @EnableAutoConfiguration
 @EnableBatchProcessing
 @Import({MongoConfiguration.class,
-    ImportDbsnpJsonVariantsJobConfiguration.class,
-    ImportDbsnpJsonVariantsStepConfiguration.class,
-    ImportDbsnpJsonVariantsReaderConfiguration.class,
-    JsonNodeToClusteredVariantProcessorConfiguration.class,
-    ChunkSizeCompletionPolicyConfiguration.class,
-    InputParametersConfiguration.class,
-    ImportDbsnpJsonFlowConfiguration.class,
-    DbsnpJsonImportVariantsJobLauncherCommandLineRunner.class})
+        ImportDbsnpJsonVariantsJobConfiguration.class,
+        ImportDbsnpJsonVariantsStepConfiguration.class,
+        ImportDbsnpJsonVariantsReaderConfiguration.class,
+        JsonNodeToClusteredVariantProcessorConfiguration.class,
+        ChunkSizeCompletionPolicyConfiguration.class,
+        InputParametersConfiguration.class,
+        ImportDbsnpJsonFlowConfiguration.class,
+        DbsnpJsonImportVariantsJobLauncherCommandLineRunner.class})
 public class BatchTestConfiguration {
 
     @Autowired

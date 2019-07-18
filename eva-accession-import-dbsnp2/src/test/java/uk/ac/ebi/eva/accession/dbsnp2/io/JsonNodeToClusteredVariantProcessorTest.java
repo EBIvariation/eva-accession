@@ -106,8 +106,6 @@ public class JsonNodeToClusteredVariantProcessorTest {
         assertEquals(5, filteredClusteredVariants.size());
     }
 
-
-
     public List<DbsnpClusteredVariantEntity> getFilteredDbsnpClusteredVariantEntities(VariantType type) {
         return variants.stream()
             .map(variant -> processor.process(variant))
