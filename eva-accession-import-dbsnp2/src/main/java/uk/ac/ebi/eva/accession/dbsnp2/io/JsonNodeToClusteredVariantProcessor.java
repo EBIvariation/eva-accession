@@ -61,7 +61,7 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
         // JSON date in ISO-8601 format
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-d'T'HH:mm'Z'");
         LocalDateTime createdDate = LocalDateTime.parse(jsonRootNode.path("create_date").asText(), formatter);
-        VariantType type = prepareVariantType(jsonRootNode.path("primary_snapshot_data").path("variant_type").asText());
+        VariantType type = translateVariantType(jsonRootNode.path("primary_snapshot_data").path("variant_type").asText());
         JsonNode infoNode = jsonRootNode.path("primary_snapshot_data").path("placements_with_allele");
         for(JsonNode alleleInfo : infoNode) {
             boolean isPtlp = alleleInfo.path("is_ptlp").asBoolean();
@@ -85,12 +85,12 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     }
 
     /**
-     * Derives the corresponding EVA variant type representation from the NCBI variant type
+     * Translates a dbSNP variant type to the corresponding EVA one
      * @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/>DbSNP JSON 2.0 schema specification</a>
      * @param variantType DbSNP2.0 JSON variant type
      * @return EVA variant type representation
      */
-    private VariantType prepareVariantType(String variantType) {
+    private VariantType translateVariantType(String variantType) {
         switch(variantType.toUpperCase()) {
             case "SNV":
                 return VariantType.SNV;
