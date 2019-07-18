@@ -30,19 +30,29 @@ import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck.AccessionWrapperComparator;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AccessionReportWriter {
 
-    private static final String ACCESSION_PREFIX = "ss";
+    public static final String CONTIGS_FILE_SUFFIX = ".contigs";
+
+    public static final String VARIANTS_FILE_SUFFIX = ".variants";
+
+    private static final String SUBSNP_ACCESSION_PREFIX = "ss";
 
     private static final String VCF_MISSING_VALUE = ".";
 
@@ -52,13 +62,17 @@ public class AccessionReportWriter {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionReportWriter.class);
 
-    private final File output;
+    private final File contigsOutput;
+
+    private final File variantsOutput;
+
+    private BufferedWriter contigsWriter;
+
+    private BufferedWriter variantsWriter;
 
     private ContigMapping contigMapping;
 
     private FastaSequenceReader fastaSequenceReader;
-
-    private BufferedWriter fileWriter;
 
     private String accessionPrefix;
 
@@ -66,14 +80,27 @@ public class AccessionReportWriter {
 
     private Set<String> loggedUnreplaceableContigs;
 
+    private Map<String, String> inputContigsToInsdc;
+
+    private Map<String, String> insdcToInputContigs;
+
+    private Map<String, Set<String>> duplicatedInputContigsToInsdc;
+
+    private Map<String, Set<String>> duplicatedInsdcToInputContigs;
+
     public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping,
                                  ContigNaming contigNaming) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
-        this.output = output;
+        this.contigsOutput = new File(output.getPath() + CONTIGS_FILE_SUFFIX);
+        this.variantsOutput = new File(output.getPath() + VARIANTS_FILE_SUFFIX);
         this.contigMapping = contigMapping;
         this.contigNaming = contigNaming;
-        this.accessionPrefix = ACCESSION_PREFIX;
+        this.accessionPrefix = SUBSNP_ACCESSION_PREFIX;
         this.loggedUnreplaceableContigs = new HashSet<>();
+        this.inputContigsToInsdc = new HashMap<>();
+        this.insdcToInputContigs = new HashMap<>();
+        this.duplicatedInputContigsToInsdc = new HashMap<>();
+        this.duplicatedInsdcToInputContigs = new HashMap<>();
     }
 
     public String getAccessionPrefix() {
@@ -84,31 +111,67 @@ public class AccessionReportWriter {
         this.accessionPrefix = accessionPrefix;
     }
 
+    /**
+     * We do not load the variants written in previous failed executions, but there might be duplicates hard to avoid,
+     * @see AccessionReportWriterTest#resumeWritingWithRepeatedVariant
+     */
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         boolean isHeaderAlreadyWritten = IS_HEADER_WRITTEN_VALUE.equals(executionContext.get(IS_HEADER_WRITTEN_KEY));
-        if (output.exists() && !isHeaderAlreadyWritten) {
-            logger.warn("According to the job's execution context, the accession report should not exist, but it does" +
-                                " exist. The AccessionReportWriter will append to the file, but it's possible that " +
-                                "there will be 2 non-contiguous header sections in the report VCF. This can happen if" +
-                                " the job execution context was not properly retrieved from the job repository.");
-        }
+
         try {
-            boolean append = true;
-            this.fileWriter = new BufferedWriter(new FileWriter(this.output, append));
-            if (!isHeaderAlreadyWritten) {
-                writeHeader();
-                executionContext.put(IS_HEADER_WRITTEN_KEY, IS_HEADER_WRITTEN_VALUE);
+            if (isHeaderAlreadyWritten) {
+                // we are resuming a job
+                if (contigsOutput.exists() && variantsOutput.exists()) {
+                    loadContigMappingFromTemporaryFile(contigsOutput);
+                    boolean append = true;
+                    this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
+
+                    // Not loading the variants might lead to duplicates. see this method's documentation
+                    this.variantsWriter = new BufferedWriter(new FileWriter(this.variantsOutput, append));
+                } else {
+                    throw new IllegalStateException(
+                            "Can not resume step safely. All temporary files from the previous execution ("
+                            + contigsOutput.getAbsolutePath() + " and " + variantsOutput.getAbsolutePath()
+                            + ") should exist to resume the step. Please delete those files and start a new job.");
+                }
+            } else {
+                // we started a new job
+                if (contigsOutput.exists() || variantsOutput.exists()) {
+                    throw new IllegalStateException(
+                            "A new job was started (did not resume a previous job) but temporary files exist ("
+                            + contigsOutput.getAbsolutePath() + " or " + variantsOutput.getAbsolutePath()
+                            + "). Please delete them and start a new job");
+                } else {
+                    boolean append = false;
+                    this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
+                    this.variantsWriter = new BufferedWriter(new FileWriter(this.variantsOutput, append));
+                    executionContext.put(IS_HEADER_WRITTEN_KEY, IS_HEADER_WRITTEN_VALUE);
+                }
             }
         } catch (IOException e) {
             throw new ItemStreamException(e);
         }
     }
 
-    private void writeHeader() throws IOException {
-        fileWriter.write("##fileformat=VCFv4.2");
-        fileWriter.newLine();
-        fileWriter.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO");
-        fileWriter.newLine();
+    /**
+     * Loads contig replacement mapping from a previous execution to avoid writing duplicate contig entries in the final
+     * VCF.
+     */
+    private void loadContigMappingFromTemporaryFile(File contigMappingFile) throws IOException {
+        BufferedReader contigReader = new BufferedReader(new FileReader(contigMappingFile));
+        String line;
+        while ((line = contigReader.readLine()) != null) {
+            String[] contigColumns = line.split("\t");
+            if (contigColumns.length != 2) {
+                throw new IllegalStateException("Temporary file " + contigMappingFile.getAbsolutePath()
+                                                + " doesn't have the expected format. Please delete it and "
+                                                + "start a new job.");
+            }
+            String inputContig = contigColumns[0];
+            String insdcContigAccession = contigColumns[1];
+            inputContigsToInsdc.put(inputContig, insdcContigAccession);
+            insdcToInputContigs.put(insdcContigAccession, inputContig);
+        }
     }
 
     public void update(ExecutionContext executionContext) throws ItemStreamException {
@@ -117,31 +180,88 @@ public class AccessionReportWriter {
 
     public void close() throws ItemStreamException {
         try {
-            fileWriter.close();
+            contigsWriter.close();
+            variantsWriter.close();
+            if (!duplicatedInputContigsToInsdc.isEmpty()) {
+                logger.error(
+                        "The same chromosome (in the original input) was replaced by several INSDC contig accessions. "
+                        + "This happened for: " + duplicatedInputContigsToInsdc.toString());
+            }
+            if (!duplicatedInsdcToInputContigs.isEmpty()) {
+                logger.error("The same INSDC contig accessions replaced several input chromosomes. This happened for: "
+                             + duplicatedInsdcToInputContigs.toString());
+            }
+            if (!duplicatedInputContigsToInsdc.isEmpty() || !duplicatedInsdcToInputContigs.isEmpty()) {
+                throw new IllegalStateException(
+                        "Contig replacement was done but the replacements were not unique. See errors above for "
+                        + "details");
+            }
         } catch (IOException e) {
             throw new ItemStreamException(e);
         }
     }
 
-    public void write(List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> accessions,
-                      AccessionWrapperComparator accessionWrapperComparator) throws IOException {
-        if (fileWriter == null) {
-            throw new IOException("The file " + output + " was not opened properly. Hint: Check that the code " +
-                                          "called AccessionReportWriter::open");
+    public void write(List<? extends IVariant> originalVariantsWithInsdcContigs,
+                      List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionedVariants) throws IOException {
+        if (variantsWriter == null) {
+            throw new IOException("The file " + variantsOutput + " was not opened properly. Hint: Check that the code "
+                                  + "called " + this.getClass().getSimpleName() + "::open");
         }
-        List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedAccessions = denormalizeVariants(
-                accessions);
-        denormalizedAccessions.sort(accessionWrapperComparator);
-        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : denormalizedAccessions) {
-            writeVariant(variant.getAccession(), variant.getData());
+        updateChromosomeMappings(originalVariantsWithInsdcContigs);
+        List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizedVariants = denormalizeVariants(
+                accessionedVariants);
+        denormalizedVariants.sort(new AccessionWrapperComparator(originalVariantsWithInsdcContigs));
+        for (AccessionWrapper<ISubmittedVariant, String, Long> variant : denormalizedVariants) {
+            writeSortedVariant(variant, insdcToInputContigs);
         }
-        fileWriter.flush();
+        variantsWriter.flush();
     }
 
-    private void writeVariant(Long id, ISubmittedVariant denormalizedVariant) throws IOException {
-        String vcfLine = variantToVcfLine(id, denormalizedVariant);
-        fileWriter.write(vcfLine);
-        fileWriter.newLine();
+    private void updateChromosomeMappings(List<? extends IVariant> originalVariantsWithReplacedContigs)
+            throws IOException {
+        for (IVariant variantWithContig : originalVariantsWithReplacedContigs) {
+            String originalChromosome = getOriginalChromosome(variantWithContig);
+            String currentInsdcContig = variantWithContig.getChromosome();
+
+            String previousInsdcReplacementForOriginalChromosome = inputContigsToInsdc.put(originalChromosome,
+                                                                                           currentInsdcContig);
+            if (previousInsdcReplacementForOriginalChromosome == null) {
+                // there was no previous entry, so this is not present in the contigs file: write it
+                contigsWriter.write(originalChromosome + "\t" + currentInsdcContig);
+                contigsWriter.newLine();
+                contigsWriter.flush();
+            } else if (!previousInsdcReplacementForOriginalChromosome.equals(currentInsdcContig)) {
+                Set<String> contigsAssociatedToTheSameChromosome = duplicatedInputContigsToInsdc.computeIfAbsent(
+                        originalChromosome, key -> new HashSet<>());
+                contigsAssociatedToTheSameChromosome.add(currentInsdcContig);
+                contigsAssociatedToTheSameChromosome.add(previousInsdcReplacementForOriginalChromosome);
+            }
+
+            String previousChromosome = insdcToInputContigs.put(currentInsdcContig, originalChromosome);
+            if (previousChromosome != null && !previousChromosome.equals(originalChromosome)) {
+                Set<String> chromosomesAssociatedToTheSameContig = duplicatedInsdcToInputContigs.computeIfAbsent(
+                        currentInsdcContig, key -> new HashSet<>());
+                chromosomesAssociatedToTheSameContig.add(originalChromosome);
+                chromosomesAssociatedToTheSameContig.add(previousChromosome);
+            }
+        }
+    }
+
+    private String getOriginalChromosome(IVariant variant) {
+        Set<String> originalChromosomes = variant.getSourceEntries()
+                                                 .stream()
+                                                 .map(se -> se.getAttributes().get(
+                                                         ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME))
+                                                 .collect(Collectors.toSet());
+
+        if (originalChromosomes.size() != 1) {
+            throw new IllegalStateException(
+                    "Bug detected: Multiple original chromosomes were found to be associated with the same variant "
+                    + variant.toString() + ". The attributes had the next list of original chromosomes: ["
+                    + String.join(", ", originalChromosomes) + "]. Contig '" + variant.getChromosome()
+                    + "' was used as replacement.");
+        }
+        return originalChromosomes.iterator().next();
     }
 
     private List<? extends AccessionWrapper<ISubmittedVariant, String, Long>> denormalizeVariants(
@@ -191,16 +311,29 @@ public class AccessionReportWriter {
 
     }
 
-    protected String variantToVcfLine(Long id, ISubmittedVariant variant) {
-        String contig = getEquivalentContig(variant, contigNaming);
+    /**
+     * Replace the contig using the requested contig naming and write the variant to the output file.
+     *
+     * Note how this is done after the sorting (using {@link AccessionWrapperComparator}) because the mappings we
+     * passed to it are mappings from the input naming to INSDC, not from input naming to requested output naming.
+     *
+     * Also, we have to get the equivalent of the original chromosome (not the INSDC contig) because we will mostly use
+     * {@link ContigNaming#NO_REPLACEMENT} and it means "do not replace the submitter's original chromosome".
+     */
+    private void writeSortedVariant(AccessionWrapper<ISubmittedVariant, String, Long> denormalizedVariant,
+                                    Map<String, String> insdcToInputContigs) throws IOException {
+        String originalChromosome = insdcToInputContigs.get(denormalizedVariant.getData().getContig());
+        String contigFromRequestedContigNaming = getEquivalentContig(originalChromosome, contigNaming);
+
         String variantLine = String.join("\t",
-                                         contig,
-                                         Long.toString(variant.getStart()),
-                                         accessionPrefix + id,
-                                         variant.getReferenceAllele(),
-                                         variant.getAlternateAllele(),
+                                         contigFromRequestedContigNaming,
+                                         Long.toString(denormalizedVariant.getData().getStart()),
+                                         accessionPrefix + denormalizedVariant.getAccession(),
+                                         denormalizedVariant.getData().getReferenceAllele(),
+                                         denormalizedVariant.getData().getAlternateAllele(),
                                          VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
-        return variantLine;
+        variantsWriter.write(variantLine);
+        variantsWriter.newLine();
     }
 
     /**
@@ -208,9 +341,7 @@ public class AccessionReportWriter {
      * GenBank, while that class is used to replace to GenBank only (for writing in Mongo and for comparing input and
      * report VCFs).
      */
-    private String getEquivalentContig(ISubmittedVariant normalizedVariant, ContigNaming contigNaming) {
-        String oldContig = normalizedVariant.getContig();
-
+    private String getEquivalentContig(String oldContig, ContigNaming contigNaming) {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(oldContig);
         if (contigSynonyms == null) {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
@@ -222,7 +353,7 @@ public class AccessionReportWriter {
             return oldContig;
         }
 
-        String contigReplacement = contigSynonyms.get(contigNaming);
+        String contigReplacement = contigMapping.getContigSynonym(oldContig, contigSynonyms, contigNaming);
         if (contigReplacement == null) {
             if (!loggedUnreplaceableContigs.contains(oldContig)) {
                 loggedUnreplaceableContigs.add(oldContig);

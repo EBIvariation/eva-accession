@@ -17,13 +17,13 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.steps.processors;
 
-import org.springframework.batch.item.ItemProcessor;
+import org.springframework.core.convert.converter.Converter;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
-public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVariant> {
+public class VariantConverter implements Converter<IVariant, ISubmittedVariant> {
 
     private static final Long UNDEFINED_CLUSTERED_VARIANT = null;
 
@@ -45,14 +45,14 @@ public class VariantProcessor implements ItemProcessor<IVariant, ISubmittedVaria
 
     private String projectAccession;
 
-    public VariantProcessor(String assemblyAccession, int taxonomyAccession, String projectAccession) {
+    public VariantConverter(String assemblyAccession, int taxonomyAccession, String projectAccession) {
         this.assemblyAccession = assemblyAccession;
         this.taxonomyAccession = taxonomyAccession;
         this.projectAccession = projectAccession;
     }
 
     @Override
-    public ISubmittedVariant process(final IVariant variant) throws Exception {
+    public ISubmittedVariant convert(IVariant variant) {
         return new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession, variant.getChromosome(),
                                     variant.getStart(), variant.getReference(), variant.getAlternate(),
                                     UNDEFINED_CLUSTERED_VARIANT,

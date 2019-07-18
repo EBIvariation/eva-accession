@@ -49,7 +49,7 @@ public class CreateSubsnpAccessionsStepConfiguration {
 
     @Autowired
     @Qualifier(COMPOSITE_VARIANT_PROCESSOR)
-    private ItemProcessor<IVariant, ISubmittedVariant> variantProcessor;
+    private ItemProcessor<IVariant, IVariant> variantProcessor;
 
     @Autowired
     @Qualifier(ACCESSION_WRITER)
@@ -62,7 +62,7 @@ public class CreateSubsnpAccessionsStepConfiguration {
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CREATE_SUBSNP_ACCESSION_STEP)
-                .<IVariant, ISubmittedVariant>chunk(chunkSizeCompletionPolicy)
+                .<IVariant, IVariant>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)

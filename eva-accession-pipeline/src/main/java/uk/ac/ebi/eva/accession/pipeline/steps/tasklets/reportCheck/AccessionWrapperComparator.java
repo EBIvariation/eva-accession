@@ -18,26 +18,31 @@ package uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AccessionWrapperComparator implements Comparator<AccessionWrapper<ISubmittedVariant, String, Long>> {
 
     private Map<String, Integer> contigOrder;
 
-    public AccessionWrapperComparator(List<? extends ISubmittedVariant> variants) {
-        this.contigOrder = getContigOrder(variants);
+    /**
+     * @param variants      The contig order will be extracted from this initial variant list
+     */
+    public AccessionWrapperComparator(List<? extends IVariant> variants) {
+        this.contigOrder = getContigOrder(variants.stream().map(IVariant::getChromosome).collect(Collectors.toList()));
     }
 
-    private Map<String, Integer> getContigOrder(List<? extends ISubmittedVariant> variants) {
+    private Map<String, Integer> getContigOrder(Iterable<String> contigs) {
         Map<String, Integer> contigsOrder = new HashMap<>();
         int nextIndex = 0;
-        for (ISubmittedVariant variant : variants) {
-            if (!contigsOrder.containsKey(variant.getContig())) {
-                contigsOrder.put(variant.getContig(), nextIndex++);
+        for (String contig : contigs) {
+            if (!contigsOrder.containsKey(contig)) {
+                contigsOrder.put(contig, nextIndex++);
             }
         }
         return contigsOrder;
@@ -58,8 +63,7 @@ public class AccessionWrapperComparator implements Comparator<AccessionWrapper<I
                                                     + ", because "
                                                     + missingContigInOrdering
                                                     + " was not contained in the initial list of variants that is "
-                                                    + "used to extract the order: "
-                                                    + contigOrder.toString());
+                                                    + "used to extract the order: " + contigOrder.toString());
         }
         Integer contigComparison = firstAccessionOrder - secondAccessionOrder;
         if (contigComparison < 0) {

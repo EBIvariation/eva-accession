@@ -23,5 +23,6 @@ public enum ContigNaming {
     ASSIGNED_MOLECULE,
     INSDC,  // this is the same as GenBank
     REFSEQ,
-    UCSC
+    UCSC,
+    NO_REPLACEMENT  // do not use any particular naming, just keep whatever contig is provided
 }

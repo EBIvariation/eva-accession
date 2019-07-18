@@ -25,8 +25,8 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionWriter;
-import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantConverter;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,8 +44,9 @@ public class AccessionWriterConfiguration {
 
     @Bean(ACCESSION_WRITER)
     public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service,
-                                           AccessionReportWriter accessionReportWriter) throws IOException {
-        return new AccessionWriter(service, accessionReportWriter);
+                                           AccessionReportWriter accessionReportWriter,
+                                           VariantConverter variantConverter) throws IOException {
+        return new AccessionWriter(service, accessionReportWriter, variantConverter);
     }
 
     @Bean
@@ -56,6 +57,15 @@ public class AccessionWriterConfiguration {
                                                                         Paths.get(inputParameters.getFasta())),
                                          contigMapping,
                                          inputParameters.getContigNaming());
+    }
+
+    @Bean
+    VariantConverter variantConverter(InputParameters inputParameters) {
+        String assemblyAccession = inputParameters.getAssemblyAccession();
+        int taxonomyAccession = inputParameters.getTaxonomyAccession();
+        String projectAccession = inputParameters.getProjectAccession();
+
+        return new VariantConverter(assemblyAccession, taxonomyAccession, projectAccession);
     }
 
 }

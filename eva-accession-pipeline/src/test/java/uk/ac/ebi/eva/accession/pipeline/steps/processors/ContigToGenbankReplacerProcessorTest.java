@@ -19,9 +19,18 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.commons.core.models.IVariantSourceEntry;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 public class ContigToGenbankReplacerProcessorTest {
 
@@ -38,55 +47,75 @@ public class ContigToGenbankReplacerProcessorTest {
 
     @Test
     public void ContigGenbank() throws Exception {
-        IVariant variant = new Variant("CM000093.4", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("CM000093.4");
         assertEquals("CM000093.4", processor.process(variant).getChromosome());
     }
 
     @Test
     public void ContigChrToGenbank() throws Exception {
-        IVariant variant = new Variant("chr2", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("chr2");
         assertEquals("CM000094.4", processor.process(variant).getChromosome());
     }
 
     @Test
     public void ContigRefseqToGenbank() throws Exception {
-        IVariant variant = new Variant("NW_003763476.1", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("NW_003763476.1");
         assertEquals("CM000093.4", processor.process(variant).getChromosome());
     }
 
     @Test
     public void GenbankAndRefseqNotEquivalents() throws Exception {
-        IVariant variant = new Variant("chr3", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("chr3");
         assertEquals("chr3", processor.process(variant).getChromosome());
     }
 
     @Test
     public void GenbankAndRefseqNotEquivalentsRefseqNotPresent() throws Exception {
-        IVariant variant = new Variant("chr6", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("chr6");
         assertEquals("CM000096.4", processor.process(variant).getChromosome());
     }
 
     @Test
     public void GenbankAndRefseqNotEquivalentsGenbankNotPresent() throws Exception {
-        IVariant variant = new Variant("chr5", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("chr5");
         assertEquals("chr5", processor.process(variant).getChromosome());
     }
 
     @Test
     public void GenbankAndRefseqNotEquivalentsNonePresent() throws Exception {
-        IVariant variant = new Variant("chr7", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("chr7");
         assertEquals("chr7", processor.process(variant).getChromosome());
     }
 
     @Test
     public void ContigNotFoundInAssemblyReport() throws Exception {
-        IVariant variant = new Variant("chr", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("chr");
         assertEquals("chr", processor.process(variant).getChromosome());
     }
 
     @Test
     public void NoGenbankDontConvert() throws Exception {
-        IVariant variant = new Variant("chr4", 1, 1, "A", "T");
+        IVariant variant = buildMockVariant("chr4");
         assertEquals("chr4", processor.process(variant).getChromosome());
+    }
+
+    @Test
+    public void keepOriginalChromosomeInInfo() throws Exception {
+        String originalChromosome = "chr1";
+        Variant variant = buildMockVariant(originalChromosome);
+
+        Set<String> originalChromosomes = processor.process(variant)
+                                                   .getSourceEntries()
+                                                   .stream()
+                                                   .map(e -> e.getAttributes().get(ORIGINAL_CHROMOSOME))
+                                                   .collect(Collectors.toSet());
+
+        assertEquals(Collections.singleton(originalChromosome), originalChromosomes);
+    }
+
+    private Variant buildMockVariant(String originalChromosome) {
+        Variant variant = new Variant(originalChromosome, 1, 1, "A", "T");
+        variant.addSourceEntry(new VariantSourceEntry("fileId", "studyId"));
+        return variant;
     }
 }

@@ -29,7 +29,6 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.ExcludeStructuralVariantsProcessor;
-import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantProcessor;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 import java.util.Arrays;
@@ -46,25 +45,15 @@ public class VariantProcessorConfiguration {
 
     @Bean(COMPOSITE_VARIANT_PROCESSOR)
     @StepScope
-    public ItemProcessor<IVariant, ISubmittedVariant> compositeVariantProcessor(
-            InputParameters inputParameters, VariantProcessor variantProcessor,
+    public ItemProcessor<IVariant, IVariant> compositeVariantProcessor(
+            InputParameters inputParameters,
             ContigToGenbankReplacerProcessor contigToGenbankReplacerProcessor,
             ExcludeStructuralVariantsProcessor excludeStructuralVariantsProcessor) {
         logger.info("Injecting dbsnpVariantProcessor with parameters: {}", inputParameters);
-        CompositeItemProcessor<IVariant, ISubmittedVariant> compositeProcessor = new CompositeItemProcessor<>();
+        CompositeItemProcessor<IVariant, IVariant> compositeProcessor = new CompositeItemProcessor<>();
         compositeProcessor.setDelegates(Arrays.asList(excludeStructuralVariantsProcessor,
-                                                      contigToGenbankReplacerProcessor,
-                                                      variantProcessor));
+                                                      contigToGenbankReplacerProcessor));
         return compositeProcessor;
-    }
-
-    @Bean
-    VariantProcessor variantProcessor(InputParameters inputParameters) {
-        String assemblyAccession = inputParameters.getAssemblyAccession();
-        int taxonomyAccession = inputParameters.getTaxonomyAccession();
-        String projectAccession = inputParameters.getProjectAccession();
-
-        return new VariantProcessor(assemblyAccession, taxonomyAccession, projectAccession);
     }
 
     @Bean
