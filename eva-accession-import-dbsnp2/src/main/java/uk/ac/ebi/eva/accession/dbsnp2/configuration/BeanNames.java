@@ -21,6 +21,8 @@ public class BeanNames {
 
     public static final String DBSNP_JSON_VARIANT_PROCESSOR = "DBSNP_JSON_VARIANT_PROCESSOR";
 
+    public static final String DBSNP_JSON_VARIANT_WRITER = "DBSNP_JSON_VARIANT_WRITER";
+
     public static final String IMPORT_DBSNP_JSON_VARIANTS_STEP = "IMPORT_DBSNP_JSON_VARIANTS_STEP";
 
     public static final String IMPORT_DBSNP_JSON_VARIANTS_JOB = "IMPORT_DBSNP_JSON_VARIANTS_JOB";

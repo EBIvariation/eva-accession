@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsWriterConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsJobConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.JsonNodeToClusteredVariantProcessorConfiguration;
@@ -44,6 +45,7 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
         ImportDbsnpJsonVariantsStepConfiguration.class,
         ImportDbsnpJsonVariantsReaderConfiguration.class,
         JsonNodeToClusteredVariantProcessorConfiguration.class,
+        ImportDbsnpJsonVariantsWriterConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class,
         InputParametersConfiguration.class,
         ImportDbsnpJsonFlowConfiguration.class,
