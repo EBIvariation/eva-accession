@@ -17,6 +17,7 @@
         <module>eva-accession-import</module>
         <module>eva-accession-release</module>
         <module>eva-accession-deprecate</module>
+        <module>eva-accession-import-dbsnp2</module>
     </modules>
 
     <properties>
@@ -61,7 +62,6 @@
                 <artifactId>variation-commons-beacon</artifactId>
                 <version>0.7-SNAPSHOT</version>
             </dependency>
-
             <dependency>
                 <groupId>com.github.fakemongo</groupId>
                 <artifactId>fongo</artifactId>
