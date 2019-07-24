@@ -61,7 +61,7 @@ import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.SUPPOR
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json"
 })
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class MergedVariantMongoReaderTest {
@@ -78,9 +78,7 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ID_1_MERGED_INTO = "rs869808637";
 
-    private static final String ID_2 = "CM001941.2_13_T_G";
-
-    private static final String ID_2_MERGED_INTO = "rs869927931";
+    private static final int EXPECTED_MERGED_VARIANTS = 3;
 
     private static final int CHUNK_SIZE = 5;
 
@@ -121,13 +119,13 @@ public class MergedVariantMongoReaderTest {
         while (iterator.hasNext()) {
             operations.addAll(reader.getVariants(iterator.next()));
         }
-        assertEquals(3, operations.size());
+        assertEquals(EXPECTED_MERGED_VARIANTS, operations.size());
     }
 
     @Test
     public void basicRead() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(3, variants.size());
+        assertEquals(EXPECTED_MERGED_VARIANTS, variants.size());
     }
 
     private Map<String, Variant> readIntoMap() throws Exception {
@@ -151,7 +149,7 @@ public class MergedVariantMongoReaderTest {
     @Test
     public void checkMergedInto() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(3, variants.size());
+        assertEquals(EXPECTED_MERGED_VARIANTS, variants.size());
 
         assertTrue(variants.get(ID_1_A)
                            .getSourceEntries()
@@ -162,32 +160,24 @@ public class MergedVariantMongoReaderTest {
                            .getSourceEntries()
                            .stream()
                            .allMatch(e -> ID_1_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
-
-        assertTrue(variants.get(ID_2)
-                           .getSourceEntries()
-                           .stream()
-                           .allMatch(e -> ID_2_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
     }
 
     @Test
     public void checkAlleles() throws Exception {
         Map<String, Variant> variants = readIntoMap();
-        assertEquals(3, variants.size());
+        assertEquals(EXPECTED_MERGED_VARIANTS, variants.size());
 
         assertEquals("G", variants.get(ID_1_A).getReference());
         assertEquals("A", variants.get(ID_1_A).getAlternate());
 
         assertEquals("G", variants.get(ID_1_T).getReference());
         assertEquals("T", variants.get(ID_1_T).getAlternate());
-
-        assertEquals("T", variants.get(ID_2).getReference());
-        assertEquals("G", variants.get(ID_2).getAlternate());
     }
 
     @Test
     public void includeValidatedFlag() throws Exception {
         assertFlagEqualsInAllVariants(CLUSTERED_VARIANT_VALIDATED_KEY, false);
-        assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, false);
+        assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, true);
     }
 
     private void assertFlagEqualsInAllVariants(String key, boolean value) throws Exception {
@@ -212,7 +202,38 @@ public class MergedVariantMongoReaderTest {
 
     @Test
     public void includeEvidenceFlag() throws Exception {
-        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, true);
+        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
     }
 
+    /**
+     * This test will use a different reader for assembly GCA_000001215.4 to evaluate this specific scenario:
+     * - 1 Merge operation in dbsnpClusteredVariantOperationEntity (rs881301177 merged into rs80393223)
+     * - 2 Submitted variants in dbsnpSubmittedVariantEntity (ss99056614, ss1986084768) with the same rs80393223
+     * - 1 Update operation in dbsnpSubmittedVariantOperationEntity for ss1986084768 (Original rs881301177 was merged
+     * into rs80393223)
+     * - 1 Merge operation in dbsnpSubmittedVariantOperationEntity for ss1986084768
+     *
+     * Even though the rs80393223 was involved in a merge operation it doesn't mean all of it's associated variants were
+     * also involved in that merge. Hence we should only list the variants that were updated, merge operations of
+     * submitted variants should be ignored.
+     */
+    @Test
+    public void includeOnlyMergedVariants() throws Exception {
+        MergedVariantMongoReader reader2 = new MergedVariantMongoReader("GCA_000001215.4", mongoClient, TEST_DB,
+                                                                        CHUNK_SIZE);
+        reader2.open(executionContext);
+        Map<String, Variant> allVariants = new HashMap<>();
+        List<Variant> variants;
+        while ((variants = reader2.read()) != null) {
+            for (Variant variant : variants) {
+                allVariants.put(getStringId(variant), variant);
+            }
+        }
+        reader2.close();
+
+        assertEquals(1, allVariants.size());
+        assertEquals("rs881301177", allVariants.get("AE013599.5_7680720_T_").getMainId());
+        assertEquals("rs80393223", allVariants.get("AE013599.5_7680720_T_").getSourceEntries().iterator().next()
+                                              .getAttributes().get("CURR"));
+    }
 }

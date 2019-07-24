@@ -56,6 +56,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
 
+    protected static final String DBSNP_SUBMITTED_VARIANT_OPERATION_ENTITY = "dbsnpSubmittedVariantOperationEntity";
+
     protected static final String ACCESSION_FIELD = "accession";
 
     protected static final String REFERENCE_ASSEMBLY_FIELD = "asm";

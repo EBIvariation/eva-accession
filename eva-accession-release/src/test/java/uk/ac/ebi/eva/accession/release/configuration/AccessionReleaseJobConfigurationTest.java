@@ -58,7 +58,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"})
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class AccessionReleaseJobConfigurationTest {
 

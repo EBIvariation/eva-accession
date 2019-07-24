@@ -204,6 +204,27 @@
           "createdDate": ISODate("2017-06-21T10:11:40.907Z")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("5c51c1e5dcc3abf7ee913269"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(881301177),
+      "mergeInto" : NumberLong(80393223),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000001215.4",
+          "tax" : 7227,
+          "contig" : "AE013599.5",
+          "start" : NumberLong(7680720),
+          "type" : "DEL",
+          "validated" : false,
+          "hashedMessage" : "3D0AFF1E1CD40ED24279EF031D3E54B36D2A2244",
+          "accession" : NumberLong(881301177),
+          "version" : 1,
+          "createdDate" : ISODate("2016-10-26T12:53:36.007Z")
+        }
+      ]
     }
   ]
 }

@@ -69,11 +69,12 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     @Override
     List<Bson> buildAggregation() {
-        Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
+        Bson matchAssembly = Aggregates
+                .match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, MERGE_INTO_FIELD,
-                                        CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
+        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_OPERATION_ENTITY, ACCESSION_FIELD,
+                                        getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD), SS_INFO_FIELD);
         List<Bson> aggregation = Arrays.asList(matchAssembly, matchMerged, sort, lookup);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
@@ -87,9 +88,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Collection<Document> inactiveObjects = (Collection<Document>) mergedVariant.get(INACTIVE_OBJECTS);
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()
-                                     + "' was designed assuming there's only one element in the field "
-                                     + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
-                                     + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
+                                             + "' was designed assuming there's only one element in the field "
+                                             + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
+                                             + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
         }
         Document inactiveEntity = inactiveObjects.iterator().next();
         String contig = inactiveEntity.getString(VariantMongoAggregationReader.CONTIG_FIELD);
@@ -101,22 +102,29 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
 
         Map<String, Variant> variants = new HashMap<>();
-        Collection<Document> submittedVariants = (Collection<Document>)mergedVariant.get(SS_INFO_FIELD);
+        Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
 
-        for (Document submittedVariant : submittedVariants) {
-            String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
-            String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
-            String study = submittedVariant.getString(STUDY_FIELD);
-            boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
-            boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
-            boolean assemblyMatch = submittedVariant.getBoolean(ASSEMBLY_MATCH_FIELD, DEFAULT_ASSEMBLY_MATCH);
-            boolean evidence = submittedVariant.getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
+        for (Document submittedVariantOperation : submittedVariantOperations) {
+            if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())) {
+                Collection<Document> inactiveEntitySubmittedVariant = (Collection<Document>) submittedVariantOperation
+                        .get("inactiveObjects");
+                Document submittedVariant = inactiveEntitySubmittedVariant.iterator().next();
 
-            VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
-                                                                     submittedVariantValidated, allelesMatch,
-                                                                     assemblyMatch, evidence, mergedInto);
+                String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
+                String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
+                String study = submittedVariant.getString(STUDY_FIELD);
+                boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
+                boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
+                boolean assemblyMatch = submittedVariant.getBoolean(ASSEMBLY_MATCH_FIELD, DEFAULT_ASSEMBLY_MATCH);
+                boolean evidence = submittedVariant
+                        .getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
 
-            addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
+                VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
+                                                                         submittedVariantValidated, allelesMatch,
+                                                                         assemblyMatch, evidence, mergedInto);
+
+                addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
+            }
         }
         return new ArrayList<>(variants.values());
     }
