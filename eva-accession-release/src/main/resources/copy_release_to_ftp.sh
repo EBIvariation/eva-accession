@@ -166,6 +166,7 @@ do
   cp $INPUT_FOLDER/README_general_info.txt ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
   cd $INPUT_FOLDER/${assembly}
   cp README_species_issues.txt ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
+  cp README_rs_ids_counts.txt ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
   cp ${assembly}_merged_ids.vcf.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
   md5sum ${assembly}_merged_ids.vcf.gz > ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
   cp ${assembly}_merged_ids.vcf.gz.tbi ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
