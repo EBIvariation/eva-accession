@@ -145,8 +145,12 @@ do
   species_folder=`echo "${species_line}" | cut -f 1`
   dbsnp_database_name=`echo "${species_line}" | cut -f 4`
   mkdir ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}
-  cp ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/ || true
-  md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt || true
+  if [ -f ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}_unmapped_ids.txt.gz ]
+  then
+    cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/
+    md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt
+    zcat ${dbsnp_database_name}_unmapped_ids.txt.gz | tail -n +2 | cut -f 1 | sort -u | wc -l | sed 's/^/Different RS IDs in '${dbsnp_database_name}_unmapped_ids.txt.gz':\t/' >> ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt
+  fi
 done
 cd -
 
@@ -187,6 +191,7 @@ do
       cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
       species_folder=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1` || true
       cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+      cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/README_rs_ids_counts.txt || true
       cd -
     fi
   done
