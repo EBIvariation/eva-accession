@@ -1,0 +1,109 @@
+/*
+ * Copyright 2019 EMBL - European Bioinformatics Institute
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package uk.ac.ebi.eva.accession.dbsnp2.io;
+
+import org.junit.Before;
+import org.junit.Test;
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
+
+import java.time.LocalDateTime;
+
+import static org.junit.Assert.assertEquals;
+
+public class ContigToGenbankReplacerProcessorTest {
+
+    private ContigToGenbankReplacerProcessor processor;
+
+    @Before
+    public void setUp() throws Exception {
+        String fileString = ContigToGenbankReplacerProcessorTest.class.getResource(
+                "/input-files/assembly-report/GCF_000001405.38_GRCh38.p12_assembly_report.txt").toString();
+        ContigMapping contigMapping = new ContigMapping(fileString);
+
+        processor = new ContigToGenbankReplacerProcessor(contigMapping);
+    }
+
+    @Test
+    public void ContigGenbank() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("CM000686.2");
+        assertEquals("CM000686.2", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void ContigChrToGenbank() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("chrY");
+        assertEquals("CM000686.2", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void ContigRefseqToGenbank() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("NC_000024.10");
+        assertEquals("CM000686.2", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void GenbankAndRefseqNotEquivalents() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("chr3");
+        assertEquals("chr3", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void GenbankAndRefseqNotEquivalentsRefseqNotPresent() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("chrUn_KI270752v1");
+        assertEquals("KI270752.1", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void GenbankAndRefseqNotEquivalentsGenbankNotPresent() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr2");
+        assertEquals("tstchr2", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void GenbankAndRefseqNotEquivalentsNonePresent() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr3");
+        assertEquals("tstchr3", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void ContigNotFoundInAssemblyReport() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("chr");
+        assertEquals("chr", processor.process(variant).getContig());
+    }
+
+    @Test
+    public void NoGenbankDontConvert() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr4");
+        assertEquals("tstchr4", processor.process(variant).getContig());
+    }
+
+    private DbsnpClusteredVariantEntity buildMockVariant(String originalChromosome) {
+        ClusteredVariant newVariant = new ClusteredVariant("1",
+                9606,
+                originalChromosome,
+                1,
+                VariantType.SNV,
+                Boolean.FALSE,
+                LocalDateTime.now());
+        return new DbsnpClusteredVariantEntity(1l,
+                "jkjkj",
+                newVariant,
+                0);
+    }
+}

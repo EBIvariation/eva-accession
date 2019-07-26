@@ -62,7 +62,8 @@ public class JsonNodeToClusteredVariantProcessorTest {
 
     @Before
     public void setUp() throws Exception {
-        reader.setResource(new BzipLazyResource(new File("src/test/resources/input-files/test-dbsnp.json.bz2")));
+        reader.setResource(new BzipLazyResource(
+            new File("src/test/resources/input-files/json/test-dbsnp.json.bz2")));
         reader.open(new ExecutionContext());
         JsonNode variant;
         while ((variant = reader.read()) != null) {

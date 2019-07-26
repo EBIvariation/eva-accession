@@ -24,6 +24,8 @@ public class InputParameters {
 
     private String assembly;
 
+    private String assemblyReportUrl;
+
     private int chunkSize;
 
     private boolean forceRestart;
@@ -52,6 +54,14 @@ public class InputParameters {
 
     public void setAssembly(String assembly) {
         this.assembly = assembly;
+    }
+
+    public String getAssemblyReportUrl() {
+        return assemblyReportUrl;
+    }
+
+    public void setAssemblyReportUrl(String assemblyReportUrl) {
+        this.assemblyReportUrl = assemblyReportUrl;
     }
 
     public int getChunkSize() {
