@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 
 import java.util.List;
 

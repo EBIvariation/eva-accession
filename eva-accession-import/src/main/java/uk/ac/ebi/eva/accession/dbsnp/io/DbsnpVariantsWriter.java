@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocu
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 
+import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
@@ -39,7 +40,7 @@ import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
-import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 
 import java.util.ArrayList;

@@ -18,11 +18,14 @@ package uk.ac.ebi.eva.accession.dbsnp2.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.item.data.MongoItemWriter;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
+import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_WRITER;
 
@@ -33,10 +36,10 @@ public class ImportDbsnpJsonVariantsWriterConfiguration {
 
     @Bean(name = DBSNP_JSON_VARIANT_WRITER)
     @StepScope
-    public MongoItemWriter<DbsnpClusteredVariantEntity> writer(MongoTemplate mongoTemplate) {
-        MongoItemWriter<DbsnpClusteredVariantEntity> writer = new MongoItemWriter<>();
-        writer.setCollection("dbsnpClusteredVariantEntity");
-        writer.setTemplate(mongoTemplate);
-        return writer;
+    public ItemWriter<DbsnpClusteredVariantEntity> writer(InputParameters parameters,
+                                                          MongoTemplate mongoTemplate,
+                                                          ImportCounts importCounts) {
+        logger.info("Injecting dbsnpClusteredVariantWriter with parameters: {}", parameters);
+        return new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
     }
 }

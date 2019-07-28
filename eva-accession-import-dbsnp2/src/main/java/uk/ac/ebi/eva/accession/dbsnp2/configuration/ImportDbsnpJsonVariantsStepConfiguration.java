@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.dbsnp2.configuration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.item.ItemProcessor;
@@ -33,6 +34,7 @@ import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_WRITER;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_PROGRESS_LISTENER;
 
 /**
  * Configuration for dbSNP JSON import flow step
@@ -53,6 +55,11 @@ public class ImportDbsnpJsonVariantsStepConfiguration {
     @Qualifier(DBSNP_JSON_VARIANT_WRITER)
     private ItemWriter<DbsnpClusteredVariantEntity> variantWriter;
 
+    @Autowired
+    @Qualifier(IMPORT_DBSNP_JSON_VARIANTS_PROGRESS_LISTENER)
+    private StepExecutionListener importDbsnpJsonVariantsProgressListener;
+
+
     @Bean(IMPORT_DBSNP_JSON_VARIANTS_STEP)
     public Step importDbsnpJsonVariantsStep(StepBuilderFactory stepBuilderFactory,
                                             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
@@ -61,6 +68,7 @@ public class ImportDbsnpJsonVariantsStepConfiguration {
             .reader(variantReader)
             .processor(variantProcessor)
             .writer(variantWriter)
+            .listener(importDbsnpJsonVariantsProgressListener)
             .build();
     }
 }

@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.configuration;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
@@ -49,6 +50,7 @@ public class ImportDbsnpJsonVariantsJobConfigurationTest {
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
+    @Ignore
     @Test
     @DirtiesContext
     public void executeJobTrueForceImport() throws Exception {
@@ -60,6 +62,7 @@ public class ImportDbsnpJsonVariantsJobConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void executeJobFalseForceImport() throws Exception {
@@ -71,6 +74,7 @@ public class ImportDbsnpJsonVariantsJobConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void executeJobEmptyForceImport() throws Exception {
