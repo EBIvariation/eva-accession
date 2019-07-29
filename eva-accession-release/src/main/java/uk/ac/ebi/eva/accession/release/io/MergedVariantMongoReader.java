@@ -69,8 +69,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     @Override
     List<Bson> buildAggregation() {
-        Bson matchAssembly = Aggregates
-                .match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
+        Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_OPERATION_ENTITY, ACCESSION_FIELD,
@@ -88,9 +87,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Collection<Document> inactiveObjects = (Collection<Document>) mergedVariant.get(INACTIVE_OBJECTS);
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()
-                                             + "' was designed assuming there's only one element in the field "
-                                             + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
-                                             + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
+                                     + "' was designed assuming there's only one element in the field "
+                                     + "'" + INACTIVE_OBJECTS + "'. Found " + inactiveObjects.size()
+                                     + " elements in _id=" + mergedVariant.get(ACCESSION_FIELD));
         }
         Document inactiveEntity = inactiveObjects.iterator().next();
         String contig = inactiveEntity.getString(VariantMongoAggregationReader.CONTIG_FIELD);

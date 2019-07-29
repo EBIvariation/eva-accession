@@ -78,6 +78,10 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ID_1_MERGED_INTO = "rs869808637";
 
+    private static final String ID_2 = "CM001941.2_13_T_G";
+
+    private static final String ID_2_MERGED_INTO = "rs869927931";
+
     private static final int EXPECTED_MERGED_VARIANTS = 3;
 
     private static final int CHUNK_SIZE = 5;
@@ -172,12 +176,15 @@ public class MergedVariantMongoReaderTest {
 
         assertEquals("G", variants.get(ID_1_T).getReference());
         assertEquals("T", variants.get(ID_1_T).getAlternate());
+
+        assertEquals("T", variants.get(ID_2).getReference());
+        assertEquals("G", variants.get(ID_2).getAlternate());
     }
 
     @Test
     public void includeValidatedFlag() throws Exception {
         assertFlagEqualsInAllVariants(CLUSTERED_VARIANT_VALIDATED_KEY, false);
-        assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, true);
+        assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, false);
     }
 
     private void assertFlagEqualsInAllVariants(String key, boolean value) throws Exception {
