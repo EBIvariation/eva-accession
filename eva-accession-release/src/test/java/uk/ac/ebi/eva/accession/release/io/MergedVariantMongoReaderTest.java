@@ -220,7 +220,7 @@ public class MergedVariantMongoReaderTest {
      * into rs80393223)
      * - 1 Merge operation in dbsnpSubmittedVariantOperationEntity for ss1986084768
      *
-     * Even though the rs80393223 was involved in a merge operation it doesn't mean all of it's associated variants were
+     * Even though the rs80393223 was involved in a merge operation it doesn't mean all of its associated variants were
      * also involved in that merge. Hence we should only list the variants that were updated, merge operations of
      * submitted variants should be ignored.
      */
