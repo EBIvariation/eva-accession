@@ -1,0 +1,22 @@
+# Assembly name:  GRCh38.p12
+# Description:    Genome Reference Consortium Human Build 38 patch release 12 (GRCh38.p12)
+# Organism name:  Homo sapiens (human)
+# Taxid:          9606
+# BioProject:     PRJNA31257
+# Submitter:      Genome Reference Consortium
+# Date:           2017-12-21
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+1	assembled-molecule	1	Chromosome	CM000663.2	=	NC_000001.11	Primary Assembly	248956422	chr1
+Y	assembled-molecule	Y	Chromosome	CM000686.2	=	NC_000024.10	Primary Assembly	57227415	chrY
+MT	assembled-molecule	MT	Mitochondrion	J01415.2	=	NC_012920.1	non-nuclear	16569	chrM
+HSCHRUN_RANDOM_CTG29	unplaced-scaffold	na	na	KI270752.1	<>	na	Primary Assembly	27745	chrUn_KI270752v1
+tstchr1	assembled-molecule	3	Chromosome	CM000095.4	<>	NW_003763686.1	Primary Assembly	111302122	tstchr1
+tstchr2	assembled-molecule	5	Chromosome	na	<>	NW_003763688.1	Primary Assembly	111302124	tstchr2
+tstchr3	assembled-molecule	7	Chromosome	na	<>	na	Primary Assembly	111302126	tstchr3
+tstchr4	assembled-molecule	4	Chromosome	na	=	NW_003763687.1	Primary Assembly	111302123	tstchr4

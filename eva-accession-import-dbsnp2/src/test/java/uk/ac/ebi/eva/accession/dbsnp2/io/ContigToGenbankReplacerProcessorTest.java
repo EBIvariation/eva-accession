@@ -33,77 +33,77 @@ public class ContigToGenbankReplacerProcessorTest {
     @Before
     public void setUp() throws Exception {
         String fileString = ContigToGenbankReplacerProcessorTest.class.getResource(
-                "/input-files/assembly-report/GCF_000001405.38_GRCh38.p12_assembly_report.txt").toString();
+                "/input-files/GCF_000001405.38_GRCh38.p12_assembly_report.txt").toString();
         ContigMapping contigMapping = new ContigMapping(fileString);
 
         processor = new ContigToGenbankReplacerProcessor(contigMapping);
     }
 
     @Test
-    public void ContigGenbank() throws Exception {
+    public void contigGenbank() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("CM000686.2");
         assertEquals("CM000686.2", processor.process(variant).getContig());
     }
 
     @Test
-    public void ContigChrToGenbank() throws Exception {
+    public void contigChrToGenbank() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chrY");
         assertEquals("CM000686.2", processor.process(variant).getContig());
     }
 
     @Test
-    public void ContigRefseqToGenbank() throws Exception {
+    public void contigRefseqToGenbank() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("NC_000024.10");
         assertEquals("CM000686.2", processor.process(variant).getContig());
     }
 
     @Test
-    public void GenbankAndRefseqNotEquivalents() throws Exception {
+    public void genbankAndRefseqNotEquivalents() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chr3");
         assertEquals("chr3", processor.process(variant).getContig());
     }
 
     @Test
-    public void GenbankAndRefseqNotEquivalentsRefseqNotPresent() throws Exception {
+    public void genbankAndRefseqNotEquivalentsRefseqNotPresent() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chrUn_KI270752v1");
         assertEquals("KI270752.1", processor.process(variant).getContig());
     }
 
     @Test
-    public void GenbankAndRefseqNotEquivalentsGenbankNotPresent() throws Exception {
+    public void genbankAndRefseqNotEquivalentsGenbankNotPresent() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr2");
         assertEquals("tstchr2", processor.process(variant).getContig());
     }
 
     @Test
-    public void GenbankAndRefseqNotEquivalentsNonePresent() throws Exception {
+    public void genbankAndRefseqNotEquivalentsNonePresent() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr3");
         assertEquals("tstchr3", processor.process(variant).getContig());
     }
 
     @Test
-    public void ContigNotFoundInAssemblyReport() throws Exception {
+    public void contigNotFoundInAssemblyReport() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chr");
         assertEquals("chr", processor.process(variant).getContig());
     }
 
     @Test
-    public void NoGenbankDontConvert() throws Exception {
+    public void noGenbankDontConvert() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("tstchr4");
         assertEquals("tstchr4", processor.process(variant).getContig());
     }
 
     private DbsnpClusteredVariantEntity buildMockVariant(String originalChromosome) {
         ClusteredVariant newVariant = new ClusteredVariant("1",
-                9606,
-                originalChromosome,
-                1,
-                VariantType.SNV,
-                Boolean.FALSE,
-                LocalDateTime.now());
+                                                           9606,
+                                                           originalChromosome,
+                                                           1,
+                                                           VariantType.SNV,
+                                                           Boolean.FALSE,
+                                                           LocalDateTime.now());
         return new DbsnpClusteredVariantEntity(1l,
-                "jkjkj",
-                newVariant,
-                0);
+                                               "hashedMessage",
+                                               newVariant,
+                                               1);
     }
 }
