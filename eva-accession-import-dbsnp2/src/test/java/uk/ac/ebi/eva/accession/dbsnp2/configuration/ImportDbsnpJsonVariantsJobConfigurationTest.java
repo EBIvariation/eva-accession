@@ -50,7 +50,6 @@ public class ImportDbsnpJsonVariantsJobConfigurationTest {
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
-    @Ignore
     @Test
     @DirtiesContext
     public void executeJobTrueForceImport() throws Exception {
@@ -62,7 +61,6 @@ public class ImportDbsnpJsonVariantsJobConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
-    @Ignore
     @Test
     @DirtiesContext
     public void executeJobFalseForceImport() throws Exception {
@@ -74,7 +72,6 @@ public class ImportDbsnpJsonVariantsJobConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
-    @Ignore
     @Test
     @DirtiesContext
     public void executeJobEmptyForceImport() throws Exception {

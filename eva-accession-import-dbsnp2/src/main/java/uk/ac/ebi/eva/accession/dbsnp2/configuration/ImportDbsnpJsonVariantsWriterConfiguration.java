@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp2.io.DbsnpJsonClusteredVariantsWriter;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_WRITER;
@@ -40,6 +41,6 @@ public class ImportDbsnpJsonVariantsWriterConfiguration {
                                                           MongoTemplate mongoTemplate,
                                                           ImportCounts importCounts) {
         logger.info("Injecting dbsnpClusteredVariantWriter with parameters: {}", parameters);
-        return new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
+        return new DbsnpJsonClusteredVariantsWriter(mongoTemplate, importCounts);
     }
 }
