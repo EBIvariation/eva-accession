@@ -43,6 +43,26 @@ be present in the RS release:
 - Deprecated IDs (e.g. GCA_000002305.1_deprecated_ids.txt.gz)
 - Merged then deprecated IDs (e.g. GCA_000002305.1_merged_deprecated_ids.txt.gz)
 
+The VCF files (containing current and merged variants) of this release can include the same
+RS ID in multiple lines because each line will report one alternate allele. Alleles are
+associated with SS IDs and one RS ID will group more than one SS ID for the following reasons:
+
+- By definition an RS ID is a cluster of SS IDs.
+ss1(A>C) -> rs1
+ss2(A>T) -> rs1
+
+- Multiallelic variants under the same SS IDs are linked to the same RS ID.
+ss1(A>C) -> rs1
+ss1(A>T) -> rs1
+
+- RS IDs can be mapped to multiple start positions in the same chromosome.
+ss1(A>C chr:1, start:1000) -> rs1 (chr:1, start:1000)
+ss2(A>T chr:1, start:2000) -> rs1 (chr:1, start:2000)
+
+- RS IDs can be mapped to multiple chromosomes
+ss1(A>C chr:1, start:1000) -> rs1 (chr:1, start:1000)
+ss3(A>T chr:2, start:2000) -> rs1 (chr:2, start:2000)
+
 
 2.1. Current IDs (e.g. GCA_000002305.1_current_ids.vcf.gz)
 
