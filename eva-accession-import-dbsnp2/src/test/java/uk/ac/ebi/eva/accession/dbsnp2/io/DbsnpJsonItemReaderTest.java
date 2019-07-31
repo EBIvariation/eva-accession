@@ -40,11 +40,11 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_READER;
 
-@TestPropertySource({"classpath:application.properties"})
+@RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class,
         StepScopeTestExecutionListener.class})
-@RunWith(SpringJUnit4ClassRunner.class)
+@TestPropertySource({"classpath:application.properties"})
 public class DbsnpJsonItemReaderTest {
 
     @Autowired
