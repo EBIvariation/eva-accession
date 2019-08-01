@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.configuration;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;

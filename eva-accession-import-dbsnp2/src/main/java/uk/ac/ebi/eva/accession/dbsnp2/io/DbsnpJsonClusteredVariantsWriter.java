@@ -15,25 +15,37 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.io;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+/**
+ * Writes a clustered variant to mongo DB collection: dbsnpClusteredVariantEntity
+ * The writer skips the duplicates, and lists those in logger error messages for reporting
+ */
 public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpClusteredVariantEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(DbsnpJsonClusteredVariantsWriter.class);
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
 
+    private MongoTemplate mongoTemplate;
+
     public DbsnpJsonClusteredVariantsWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
         dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -41,7 +53,16 @@ public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpCluster
         try {
             dbsnpClusteredVariantWriter.write(clusteredVariants);
         } catch (BulkOperationException exception) {
-            logger.error(exception.getMessage());
+            List<String> ids = new ArrayList<>();
+            exception.getErrors().forEach(
+                error -> ids.add(StringUtils.substringBetween(error.getMessage(), "\"")));
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").in(ids));
+            List<DbsnpClusteredVariantEntity> entities = mongoTemplate.find(query, DbsnpClusteredVariantEntity.class);
+            List<Long> rsIDs = entities.stream()
+                .map(entity -> entity.getAccession())
+                .collect(Collectors.toList());
+            logger.error("RS IDs of duplicate documents: {}", rsIDs);
             logger.debug("Error trace", exception);
         }
     }
