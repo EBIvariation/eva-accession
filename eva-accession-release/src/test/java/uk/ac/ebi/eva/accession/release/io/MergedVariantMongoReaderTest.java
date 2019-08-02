@@ -84,7 +84,7 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ID_2_MERGED_INTO = "rs869927931";
 
-    private static final int EXPECTED_MERGED_VARIANTS = 3;
+    private static final int EXPECTED_MERGED_VARIANTS = 5;
 
     private static final int CHUNK_SIZE = 5;
 

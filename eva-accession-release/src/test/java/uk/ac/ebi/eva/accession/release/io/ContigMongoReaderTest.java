@@ -86,6 +86,6 @@ public class ContigMongoReaderTest {
         while ((contig = reader.read()) != null) {
             contigs.add(contig);
         }
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2", "CM000346.1", "CM000347.1")), new HashSet<>(contigs));
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")), new HashSet<>(contigs));
     }
 }

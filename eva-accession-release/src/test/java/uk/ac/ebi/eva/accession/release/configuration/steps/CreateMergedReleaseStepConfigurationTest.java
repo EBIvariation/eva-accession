@@ -62,7 +62,7 @@ public class CreateMergedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 3;
+    private static final long EXPECTED_LINES = 5;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -151,7 +151,7 @@ public class CreateMergedReleaseStepConfigurationTest {
         String column = "[^\t]+\t";
         List<String> dataLinesWithRs = grepFile(getMergedReleaseFile(),
                                                 "^" + column + column +"rs[0-9]+\t.*$");
-        assertEquals(3, dataLinesWithRs.size());
+        assertEquals(5, dataLinesWithRs.size());
     }
 
     @Test

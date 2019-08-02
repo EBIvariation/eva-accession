@@ -51,7 +51,7 @@
         {
           "asm": "GCF_000409795.2",
           "tax" : 60711,
-          "contig" : "CM000346.1",
+          "contig" : "CM001954.1",
           "start" : NumberLong(3337129),
           "type" : "SNV",
           "validated" : false,
@@ -72,7 +72,7 @@
         {
           "asm": "GCF_000409795.2",
           "tax" : 60711,
-          "contig" : "CM000346.1",
+          "contig" : "CM001954.1",
           "start" : NumberLong(3337129),
           "type" : "SNV",
           "validated" : false,
@@ -112,7 +112,7 @@
         {
           "asm": "GCF_000409795.2",
           "tax" : 60711,
-          "contig" : "CM000347.1",
+          "contig" : "CM001941.2",
           "start" : NumberLong(3337129),
           "type" : "SNV",
           "validated" : false,
@@ -133,7 +133,7 @@
         {
           "asm": "GCF_000409795.2",
           "tax" : 60711,
-          "contig" : "CM000347.1",
+          "contig" : "CM001941.2",
           "start" : NumberLong(3337129),
           "type" : "SNV",
           "validated" : false,
