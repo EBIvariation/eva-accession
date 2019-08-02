@@ -135,6 +135,12 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                 addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
             }
         }
+
+        if (variants.isEmpty()) {
+            throw new IllegalStateException("There was a merge operation for rs" + rs + " but there is no update " +
+                                                    "operation for the SS IDs.");
+        }
+
         return new ArrayList<>(variants.values());
     }
 }
