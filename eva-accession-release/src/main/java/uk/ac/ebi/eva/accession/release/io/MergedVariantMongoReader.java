@@ -58,6 +58,10 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final String EVENT_TYPE_FIELD = "eventType";
 
+    private static final String REASON = "reason";
+
+    private static final String MERGE_OPERATION_REASON_FIRST_WORD = "Original";
+
     public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize) {
         super(assemblyAccession, mongoClient, database, chunkSize);
     }
@@ -104,10 +108,16 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
 
         for (Document submittedVariantOperation : submittedVariantOperations) {
-            if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())) {
+            if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())
+                    && submittedVariantOperation.getString(REASON).startsWith(MERGE_OPERATION_REASON_FIRST_WORD)) {
                 Collection<Document> inactiveEntitySubmittedVariant = (Collection<Document>) submittedVariantOperation
                         .get("inactiveObjects");
                 Document submittedVariant = inactiveEntitySubmittedVariant.iterator().next();
+
+                if (!contig.equals(submittedVariant.getString(CONTIG_FIELD))
+                        || start != submittedVariant.getLong(START_FIELD)){
+                    continue;
+                }
 
                 String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
                 String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
