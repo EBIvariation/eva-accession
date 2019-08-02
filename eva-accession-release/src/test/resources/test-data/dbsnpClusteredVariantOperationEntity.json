@@ -225,6 +225,48 @@
           "createdDate" : ISODate("2016-10-26T12:53:36.007Z")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef958a"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(69314228),
+      "mergeInto" : NumberLong(68736359),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000002305.1",
+          "tax" : 9796,
+          "contig" : "CM000399.2",
+          "start" : NumberLong(175891),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "37E75A5352055330EA1CDE6C91DE9ED051E36374",
+          "accession" : NumberLong(69314228),
+          "version" : 1,
+          "createdDate" : ISODate("2009-02-10T21:16:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef957e"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(69314228),
+      "mergeInto" : NumberLong(68736359),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000002305.1",
+          "tax" : 9796,
+          "contig" : "AAWR02045368.1",
+          "start" : NumberLong(505),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "F1E41F56A295A2C2B66836C293394AA803584993",
+          "accession" : NumberLong(69314228),
+          "version" : 1,
+          "createdDate" : ISODate("2009-02-10T21:16:00.000Z")
+        }
+      ]
     }
   ]
 }

@@ -49,6 +49,8 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
@@ -242,5 +244,38 @@ public class MergedVariantMongoReaderTest {
         assertEquals("rs881301177", allVariants.get("AE013599.5_7680720_T_").getMainId());
         assertEquals("rs80393223", allVariants.get("AE013599.5_7680720_T_").getSourceEntries().iterator().next()
                                               .getAttributes().get("CURR"));
+    }
+
+    /**
+     * This test will use a different reader for assembly GCA_000002305.1 to evaluate this specific scenario:
+     * - 2 Merge operations for Clustered Variants with the same accession (rs69314228) and mergeInto (rs68736359) but
+     *   different chromosome or/and start
+     * - 2 Update (merge RS) operations for Submitted Variants
+     * - 1 Update (decluster) operation for Submitted Variants
+     *
+     * For every Clustered Variant Operation there will be N Submitted Variant Operations but only the merged
+     * operations with the same chromosome and start must be taking into account to build the merged VCF file.
+     */
+    @Test
+    public void includeOnlyMergedVariantsWithSameChrAndSameStartInRsAndSs() {
+        MergedVariantMongoReader reader2 = new MergedVariantMongoReader("GCA_000002305.1", mongoClient, TEST_DB,
+                                                                        CHUNK_SIZE);
+        reader2.open(executionContext);
+        Map<String, Variant> allVariants = new HashMap<>();
+        List<Variant> variants;
+        while ((variants = reader2.read()) != null) {
+            for (Variant variant : variants) {
+                allVariants.put(getStringId(variant), variant);
+            }
+        }
+        reader2.close();
+
+        assertEquals(2, allVariants.size());
+
+        assertNotNull(allVariants.get("CM000399.2_175891_A_T"));
+        assertNull(allVariants.get("CM000399.2_175891_T_A"));
+
+        assertNotNull(allVariants.get("AAWR02045368.1_505_T_A"));
+        assertNull(allVariants.get("AAWR02045368.1_505_A_T"));
     }
 }

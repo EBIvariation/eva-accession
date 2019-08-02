@@ -156,6 +156,84 @@
           "createdDate" : ISODate("2016-04-26T11:55:00.000Z")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95a8"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(107450259),
+      "reason" : "Original rs69314228 was merged into rs68736359.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000002305.1",
+          "tax" : 9796,
+          "study" : "BROAD_GENOME_BROAD_EQUCAB2.0:2008.08.08",
+          "contig" : "CM000399.2",
+          "start" : NumberLong(175891),
+          "ref" : "A",
+          "alt" : "T",
+          "rs" : NumberLong(69314228),
+          "evidence" : true,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : true,
+          "hashedMessage" : "F303838BCAA5A26F46936B040CDAA3D1F6A76F5F",
+          "accession" : NumberLong(107450259),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c3"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(107450259),
+      "reason" : "Declustered: None of the variant alleles match the reference allele.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000002305.1",
+          "tax" : 9796,
+          "study" : "BROAD_GENOME_BROAD_EQUCAB2.0:2008.08.08",
+          "contig" : "AAWR02045368.1",
+          "start" : NumberLong(505),
+          "ref" : "T",
+          "alt" : "A",
+          "rs" : NumberLong(69314228),
+          "evidence" : true,
+          "asmMatch" : false,
+          "allelesMatch" : false,
+          "validated" : true,
+          "hashedMessage" : "0B132CD580DE49817786CEBC235285C9B49C5E2A",
+          "accession" : NumberLong(107450259),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c4"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(107450259),
+      "reason" : "Original rs69314228 was merged into rs68736359.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000002305.1",
+          "tax" : 9796,
+          "study" : "BROAD_GENOME_BROAD_EQUCAB2.0:2008.08.08",
+          "contig" : "AAWR02045368.1",
+          "start" : NumberLong(505),
+          "ref" : "T",
+          "alt" : "A",
+          "rs" : NumberLong(69314228),
+          "evidence" : true,
+          "asmMatch" : false,
+          "allelesMatch" : false,
+          "validated" : true,
+          "hashedMessage" : "0B132CD580DE49817786CEBC235285C9B49C5E2A",
+          "accession" : NumberLong(107450259),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
     }
   ]
 }
