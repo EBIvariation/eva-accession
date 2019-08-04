@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.io;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -27,9 +26,10 @@ import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
+import static uk.ac.ebi.eva.accession.core.utils.BulkOperationExceptionUtils.extractUniqueHashesForDuplicateKeyError;
 
 /**
  * Writes a clustered variant to mongo DB collection: dbsnpClusteredVariantEntity
@@ -53,16 +53,14 @@ public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpCluster
         try {
             dbsnpClusteredVariantWriter.write(clusteredVariants);
         } catch (BulkOperationException exception) {
-            List<String> ids = new ArrayList<>();
-            exception.getErrors().forEach(
-                error -> ids.add(StringUtils.substringBetween(error.getMessage(), "\"")));
+            List<String> ids = extractUniqueHashesForDuplicateKeyError(exception).collect(toList());
             Query query = new Query();
             query.addCriteria(Criteria.where("_id").in(ids));
             List<DbsnpClusteredVariantEntity> entities = mongoTemplate.find(query, DbsnpClusteredVariantEntity.class);
             List<Long> rsIDs = entities.stream()
-                .map(entity -> entity.getAccession())
-                .collect(Collectors.toList());
-            logger.error("RS IDs of duplicate documents: {}", rsIDs);
+                .map(DbsnpClusteredVariantEntity::getAccession)
+                .collect(toList());
+            logger.error("Duplicate RS IDs: {}", rsIDs);
             logger.debug("Error trace", exception);
         }
     }

@@ -15,8 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.io;
 
-import com.mongodb.BulkWriteError;
-import com.mongodb.ErrorCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -52,11 +50,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static uk.ac.ebi.eva.accession.core.utils.BulkOperationExceptionUtils.extractUniqueHashesForDuplicateKeyError;
 import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
 
 public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
@@ -351,13 +348,6 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
     private class MergeOperationBuilder<ENTITY extends AccessionedDocument<?, Long>,
             OPERATION_ENTITY extends EventDocument<?, Long, ?>> {
 
-        private final String DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME = "IDKEY";
-
-        private final String DUPLICATE_KEY_ERROR_MESSAGE_REGEX = "index:\\s.*\\{\\s?\\:\\s?\"(?<"
-                + DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME + ">[a-zA-Z0-9]+)\"\\s?\\}";
-
-        private final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(DUPLICATE_KEY_ERROR_MESSAGE_REGEX);
-
         IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository;
 
         IAccessionedObjectRepository<ENTITY, Long> variantRepository;
@@ -384,7 +374,7 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                                                                  BulkOperationException exception) {
             List<OPERATION_ENTITY> operations = new ArrayList<>();
             checkForNulls(variants);
-            extractUniqueHashes(exception)
+            extractUniqueHashesForDuplicateKeyError(exception)
                     .forEach(hash -> {
                         ENTITY mergedInto = findOneVariantEntityById.apply(hash);
                         if (mergedInto == null) {
@@ -411,38 +401,6 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                             "with that hash was found. Make sure you are using ReadPreference=primaryPreferred and "
                             + "WriteConcern=Majority. These variants have that hash: " +
                             printedVariants);
-        }
-
-        private Stream<String> extractUniqueHashes(BulkOperationException exception) {
-            return exception.getErrors()
-                            .stream()
-                            .filter(this::isDuplicateKeyError)
-                            .map(error -> {
-                                Matcher matcher = DUPLICATE_KEY_PATTERN.matcher(error.getMessage());
-
-                                if (!matcher.find()) {
-                                    throw new IllegalStateException("A duplicate key exception was caught, but the " +
-                                                                            "message couldn't be parsed correctly",
-                                                                    exception);
-                                } else {
-                                    String hash = matcher.group(DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME);
-                                    if (hash == null) {
-                                        throw new IllegalStateException(
-                                                "A duplicate key exception was caught, but the message couldn't be " +
-                                                        "parsed correctly. The group in the regex " +
-                                                        DUPLICATE_KEY_ERROR_MESSAGE_REGEX + " failed to match part of" +
-                                                        " the input",
-                                                exception);
-                                    }
-                                    return hash;
-                                }
-                            })
-                            .distinct();
-        }
-
-        private boolean isDuplicateKeyError(BulkWriteError error) {
-            ErrorCategory errorCategory = ErrorCategory.fromErrorCode(error.getCode());
-            return errorCategory.equals(ErrorCategory.DUPLICATE_KEY);
         }
 
         private List<OPERATION_ENTITY> buildMergeOperations(List<ENTITY> variants, String hash, ENTITY mergedInto) {
