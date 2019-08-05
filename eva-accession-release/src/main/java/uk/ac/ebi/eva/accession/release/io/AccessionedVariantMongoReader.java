@@ -83,6 +83,10 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
 
         for (Document submittedVariant : submittedVariants) {
+            if (!contig.equals(submittedVariant.getString(CONTIG_FIELD))
+                    || start != submittedVariant.getLong(START_FIELD)) {
+                continue;
+            }
             String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
             String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
             String study = submittedVariant.getString(STUDY_FIELD);
