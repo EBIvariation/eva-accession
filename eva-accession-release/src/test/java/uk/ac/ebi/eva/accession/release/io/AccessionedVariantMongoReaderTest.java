@@ -46,7 +46,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
@@ -341,5 +344,35 @@ public class AccessionedVariantMongoReaderTest {
     public void includeEvidenceNonDefaultFlag() throws Exception {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
+    }
+
+    @Test
+    public void includeOnlyVariantsWithTheSameChromosomeAndStartInRsAndSs() {
+        AccessionedVariantMongoReader reader2 = new AccessionedVariantMongoReader("GCA_000002775.1", mongoClient,
+                                                                                  TEST_DB,CHUNK_SIZE);
+
+        reader2.open(executionContext);
+        List<Variant> allVariants = new ArrayList<>();
+        List<Variant> variants;
+        while ((variants = reader2.read()) != null) {
+            allVariants.addAll(variants);
+        }
+        reader2.close();
+
+        assertEquals(3, allVariants.size());
+
+        assertTrue(isVariantPresent(allVariants, "CM000337.1", 19922L, "G", "A"));
+        assertTrue(isVariantPresent(allVariants, "CM000337.1", 19922L, "G", "T"));
+        assertFalse(isVariantPresent(allVariants, "CM000337.1", 19922L, "C", "T"));
+
+        assertTrue(isVariantPresent(allVariants, "CM000351.1", 3474340L, "C", "T"));
+        assertFalse(isVariantPresent(allVariants, "CM000351.1", 3474340L, "G", "A"));
+        assertFalse(isVariantPresent(allVariants, "CM000351.1", 3474340L, "G", "T"));
+    }
+
+    private boolean isVariantPresent(List<Variant> variants, String chromosome, long start, String reference,
+                                     String alernate) {
+        return variants.stream().anyMatch(v -> v.getChromosome().equals(chromosome) && v.getStart() == start
+                && v.getReference().equals(reference) && v.getAlternate().equals(alernate));
     }
 }

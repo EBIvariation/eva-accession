@@ -309,6 +309,54 @@
       "createdDate" : ISODate(
       "2016-04-26T11:55:00.000Z"
       )
+    },
+    {
+      "_id" : "3C881100879954FB682FC8976CB1FB462F7B10C4",
+      "seq" : "GCA_000002775.1",
+      "tax" : 3694,
+      "study" : "BESC_ASSOC_544",
+      "contig" : "CM000337.1",
+      "start" : NumberLong(19922),
+      "ref" : "G",
+      "alt" : "A",
+      "rs" : NumberLong(1153055382),
+      "evidence" : false,
+      "validated" : true,
+      "accession" : NumberLong(1122557780),
+      "version" : 1,
+      "createdDate" : ISODate("2014-07-29T22:13:00.000Z")
+    },
+    {
+      "_id" : "A92DDF05899B9B6F0FCDE66CC64E65378EE9EF05",
+      "seq" : "GCA_000002775.1",
+      "tax" : 3694,
+      "study" : "BESC_ASSOC_544",
+      "contig" : "CM000337.1",
+      "start" : NumberLong(19922),
+      "ref" : "G",
+      "alt" : "T",
+      "rs" : NumberLong(1153055382),
+      "evidence" : false,
+      "validated" : true,
+      "accession" : NumberLong(1125436664),
+      "version" : 1,
+      "createdDate" : ISODate("2014-07-30T01:41:00.000Z")
+    },
+    {
+      "_id" : "47B7C562F91D91DC8CFC4A2102DF7E7A9AB38315",
+      "seq" : "GCA_000002775.1",
+      "tax" : 3694,
+      "study" : "BESC_ASSOC_544",
+      "contig" : "CM000351.1",
+      "start" : NumberLong(3474340),
+      "ref" : "C",
+      "alt" : "T",
+      "rs" : NumberLong(1153055382),
+      "evidence" : false,
+      "validated" : true,
+      "accession" : NumberLong(1122557780),
+      "version" : 1,
+      "createdDate" : ISODate("2014-07-29T22:13:00.000Z")
     }
   ]
 }

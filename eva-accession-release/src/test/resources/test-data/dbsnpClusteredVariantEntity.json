@@ -130,6 +130,28 @@
       "createdDate" : ISODate(
       "2010-03-24T15:04:00.000Z"
       )
+    },
+    {
+      "_id" : "963B5901449DA80430C87E1D0EAB45A243AA8F29",
+      "asm" : "GCA_000002775.1",
+      "tax" : 3694,
+      "contig" : "CM000337.1",
+      "start" : NumberLong(19922),
+      "type" : "SNV",
+      "accession" : NumberLong(1153055382),
+      "version" : 1,
+      "createdDate" : ISODate("2017-09-20T08:25:00.000Z")
+    },
+    {
+      "_id" : "6400015A93030F0BF842E25106CB63580374A403",
+      "asm" : "GCA_000002775.1",
+      "tax" : 3694,
+      "contig" : "CM000351.1",
+      "start" : NumberLong(3474340),
+      "type" : "SNV",
+      "accession" : NumberLong(1153055382),
+      "version" : 1,
+      "createdDate" : ISODate("2017-09-20T08:25:00.000Z")
     }
   ]
 }
