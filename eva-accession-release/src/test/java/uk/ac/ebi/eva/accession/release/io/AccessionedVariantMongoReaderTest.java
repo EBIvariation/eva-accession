@@ -346,18 +346,17 @@ public class AccessionedVariantMongoReaderTest {
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
     }
 
+    /**
+     * Two clustered variants with the same accession but mapped against different locations. Each clustered variant
+     * should only appear with the alleles of the its corresponding submitted variants.
+     *
+     * This means variants will only be returned by the reader when the clustered and submitted variant have the same location
+     * (contig and start)
+     */
     @Test
-    public void includeOnlyVariantsWithTheSameChromosomeAndStartInRsAndSs() {
-        AccessionedVariantMongoReader reader2 = new AccessionedVariantMongoReader("GCA_000002775.1", mongoClient,
-                                                                                  TEST_DB,CHUNK_SIZE);
-
-        reader2.open(executionContext);
-        List<Variant> allVariants = new ArrayList<>();
-        List<Variant> variants;
-        while ((variants = reader2.read()) != null) {
-            allVariants.addAll(variants);
-        }
-        reader2.close();
+    public void includeOnlyVariantsWithTheSameChromosomeAndStartInRsAndSs() throws Exception {
+        reader = new AccessionedVariantMongoReader("GCA_000002775.1", mongoClient, TEST_DB,CHUNK_SIZE);
+        List<Variant> allVariants = readIntoList();
 
         assertEquals(3, allVariants.size());
 
