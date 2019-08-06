@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.listeners.GenericProgressListener;
-import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportDbsnpVariantsStepProgressListener;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
