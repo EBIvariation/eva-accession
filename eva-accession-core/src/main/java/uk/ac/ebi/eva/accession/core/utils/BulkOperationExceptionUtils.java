@@ -41,11 +41,7 @@ public class BulkOperationExceptionUtils {
                         .filter(BulkOperationExceptionUtils::isDuplicateKeyError)
                         .map(error -> {
                             Matcher matcher = DUPLICATE_KEY_PATTERN.matcher(error.getMessage());
-                            if (!matcher.find()) {
-                                throw new IllegalStateException("A duplicate key exception was caught, but the " +
-                                            "message couldn't be parsed correctly",
-                                    exception);
-                            } else {
+                            if (matcher.find()) {
                                 String hash = matcher.group(DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME);
                                 if (hash == null) {
                                     throw new IllegalStateException(
@@ -56,6 +52,10 @@ public class BulkOperationExceptionUtils {
                                         exception);
                                 }
                                 return hash;
+                            } else {
+                                throw new IllegalStateException("A duplicate key exception was caught, but the " +
+                                            "message couldn't be parsed correctly",
+                                    exception);
                             }
                         })
                         .distinct();
