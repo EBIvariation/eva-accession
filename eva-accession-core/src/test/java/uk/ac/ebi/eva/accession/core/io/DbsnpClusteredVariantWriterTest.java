@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.io;
+package uk.ac.ebi.eva.accession.core.io;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,7 +34,7 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -150,7 +150,6 @@ public class DbsnpClusteredVariantWriterTest {
         } catch (Exception e) {
             // it's correct and expected that an exception is thrown here
         }
-
         assertJustOneVariantHasBeenStored();
     }
 
@@ -163,7 +162,6 @@ public class DbsnpClusteredVariantWriterTest {
         } catch (Exception e) {
             // it's correct and expected that an exception is thrown here
         }
-        
         assertJustOneVariantHasBeenStored();
     }
 

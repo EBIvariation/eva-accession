@@ -29,7 +29,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
@@ -41,13 +41,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_READER;
 
-@TestPropertySource({"classpath:application.properties"})
+@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class,
     StepScopeTestExecutionListener.class})
-@RunWith(SpringJUnit4ClassRunner.class)
+@TestPropertySource({"classpath:application.properties"})
 public class JsonNodeToClusteredVariantProcessorTest {
 
     @Autowired
@@ -104,6 +105,33 @@ public class JsonNodeToClusteredVariantProcessorTest {
         List<DbsnpClusteredVariantEntity> filteredClusteredVariants =
             getFilteredDbsnpClusteredVariantEntities(VariantType.INDEL);
         assertEquals(5, filteredClusteredVariants.size());
+    }
+
+    @Test
+    public void variantAttributesDerivationCheck() {
+        List<DbsnpClusteredVariantEntity> filteredClusteredVariants =
+            getFilteredDbsnpClusteredVariantEntities(VariantType.INDEL);
+        List<DbsnpClusteredVariantEntity> variant3906List = filteredClusteredVariants.stream()
+            .filter(dbsnpClusteredVariantEntity -> dbsnpClusteredVariantEntity.getAccession() == 3906L)
+            .collect(Collectors.toList());
+        assertEquals(1, variant3906List.size());
+        DbsnpClusteredVariantEntity variant3906 = variant3906List.get(0);
+        assertEquals("GCF_000001405.38", variant3906.getAssemblyAccession());
+        assertEquals(9606L, variant3906.getTaxonomyAccession());
+        assertEquals("NC_000024.10", variant3906.getContig());
+        assertEquals(19562813L, variant3906.getStart());
+        assertEquals("2000-09-19T17:02", String.valueOf(variant3906.getCreatedDate()));
+    }
+
+    @Test
+    public void nullForNoPTLPCaseCheck() throws Exception {
+        reader = new FlatFileItemReader<JsonNode>();
+        reader.setLineMapper(new JsonNodeLineMapper());
+        reader.setResource(new BzipLazyResource(
+            new File("src/test/resources/input-files/test-dbsnp-no-ptlp.json.bz2")));
+        reader.open(new ExecutionContext());
+        JsonNode variant = reader.read();
+        assertNull(processor.process(variant));
     }
 
     public List<DbsnpClusteredVariantEntity> getFilteredDbsnpClusteredVariantEntities(VariantType type) {

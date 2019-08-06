@@ -32,10 +32,10 @@ public class InputParameters {
 
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
-                .addString("input", input)
-                .addString("assembly", assembly)
-                .addLong("chunkSize", (long) chunkSize, false)
-                .toJobParameters();
+            .addString("input", input)
+            .addString("assembly", assembly)
+            .addLong("chunkSize", (long) chunkSize, false)
+            .toJobParameters();
     }
 
     public String getInput() {

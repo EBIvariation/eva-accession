@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp.io;
+package uk.ac.ebi.eva.accession.core.io;
 
 import com.mongodb.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.dbsnp.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 
 import java.util.List;
 
@@ -51,5 +50,4 @@ public class DbsnpClusteredVariantWriter implements ItemWriter<DbsnpClusteredVar
             throw e;
         }
     }
-
 }
