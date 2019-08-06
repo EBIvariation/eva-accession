@@ -114,7 +114,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                         .get("inactiveObjects");
                 Document submittedVariant = inactiveEntitySubmittedVariant.iterator().next();
 
-                if (isSameLocation(contig, start, submittedVariant)){
+                if (!isSameLocation(contig, start, submittedVariant)){
                     continue;
                 }
 
@@ -151,7 +151,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
     private boolean isSameLocation(String contig, long start, Document submittedVariant) {
         long submittedVariantStart = submittedVariant.getLong(START_FIELD);
         String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
-        return !contig.equals(submittedVariantContig) || !isSameStart(start, submittedVariantStart);
+        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart);
     }
 
     /**
