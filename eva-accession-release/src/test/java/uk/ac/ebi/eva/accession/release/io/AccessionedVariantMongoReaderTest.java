@@ -48,8 +48,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
@@ -373,5 +371,35 @@ public class AccessionedVariantMongoReaderTest {
                                      String alernate) {
         return variants.stream().anyMatch(v -> v.getChromosome().equals(chromosome) && v.getStart() == start
                 && v.getReference().equals(reference) && v.getAlternate().equals(alernate));
+    }
+
+    /**
+     * For ambiguous INDELS the start position in the clustered variant and its submitted variants can be different
+     * because the renormalization process is performed only for submitted variants. this will be handled by trying to
+     * match with the exact position or either the one before or after.
+     *
+     * Variants are represented in different ways by dbSNP and the EVA
+     * dbSNP    (start: 7356605, reference: , alternate: GAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCACA)
+     * EVA      (start: 7356604, reference: , alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
+     *
+     * FASTA (NC_024803.1:7356603-7356606) TATC
+     *
+     * dbSNP remove the context nucleotide before an INDEL while the EVA removes the rightmost bases
+     *
+     * dbSNP:   TA(GAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCACA)TC, start: 7356605
+     * EVA:     T(AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)ATC, start: 7356604
+     *
+     * For the rs268233057 (start: 7356605) and its ss490570267 (start: 7356604) the submitted variant start will be
+     * used along with its alleles even when the start position does not exactly match.
+     */
+    @Test
+    public void includeAmbiguousVariantsWithDifferentStartInSsAndRs() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
+        List<Variant> allVariants = readIntoList();
+
+        assertEquals(1, allVariants.size());
+
+        assertTrue(isVariantPresent(allVariants, "CM001642.1", 7356604L, "",
+                                    "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC"));
     }
 }
