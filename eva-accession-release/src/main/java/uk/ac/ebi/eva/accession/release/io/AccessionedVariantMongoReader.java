@@ -84,7 +84,9 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
 
         for (Document submittedVariant : submittedVariants) {
-            if (!isSameLocation(contig, start, submittedVariant)) {
+            long submittedVariantStart = submittedVariant.getLong(START_FIELD);
+            String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
+            if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart)) {
                 continue;
             }
             String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
@@ -99,7 +101,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
                                                                      submittedVariantValidated, allelesMatch,
                                                                      assemblyMatch, evidence);
 
-            addToVariants(variants, contig, start, rs, reference, alternate, sourceEntry);
+            addToVariants(variants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
         }
         return new ArrayList<>(variants.values());
     }
@@ -109,9 +111,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
      * clustered variant is mapped against multiple locations. So we need to check that that clustered variant we are
      * processing only appears in the VCF release file with the alleles from submitted variants matching the location.
      */
-    private boolean isSameLocation(String contig, long start, Document submittedVariant) {
-        long submittedVariantStart = submittedVariant.getLong(START_FIELD);
-        String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
+    private boolean isSameLocation(String contig, long start, String submittedVariantContig, long submittedVariantStart) {
         return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart);
     }
 
