@@ -35,8 +35,6 @@ public class ContigToGenbankReplacerProcessor
 
     private static final Logger logger = LoggerFactory.getLogger(ContigToGenbankReplacerProcessor.class);
 
-    public static final String ORIGINAL_CHROMOSOME = "CHR";
-
     private ContigMapping contigMapping;
 
     private Set<String> processedContigs;
@@ -47,7 +45,7 @@ public class ContigToGenbankReplacerProcessor
     }
 
     @Override
-    public DbsnpClusteredVariantEntity process(DbsnpClusteredVariantEntity variant) throws Exception {
+    public DbsnpClusteredVariantEntity process(DbsnpClusteredVariantEntity variant) {
         String contigName = variant.getContig();
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contigName);
 
