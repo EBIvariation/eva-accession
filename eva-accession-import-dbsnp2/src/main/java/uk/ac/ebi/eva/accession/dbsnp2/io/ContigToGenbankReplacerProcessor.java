@@ -45,10 +45,15 @@ public class ContigToGenbankReplacerProcessor
     }
 
     @Override
-    public DbsnpClusteredVariantEntity process(DbsnpClusteredVariantEntity variant) {
+    public DbsnpClusteredVariantEntity process(DbsnpClusteredVariantEntity variant) throws IllegalStateException {
         String contigName = variant.getContig();
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contigName);
-
+        boolean contigPresentInAssemblyReport = contigSynonyms != null; 
+        if (!contigPresentInAssemblyReport) {
+            throw new IllegalStateException(
+                    "Contig '" + contigName + "' was not found in the assembly report! "
+                            + "Is the assembly accession '" + variant.getAssemblyAccession() + "' correct?");
+        }
         StringBuilder message = new StringBuilder();
         if (contigMapping.isGenbankReplacementPossible(contigName, contigSynonyms, message)) {
             ClusteredVariant newVariant = new ClusteredVariant(variant.getAssemblyAccession(),
