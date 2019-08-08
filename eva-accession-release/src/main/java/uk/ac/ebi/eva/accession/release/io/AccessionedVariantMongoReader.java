@@ -86,7 +86,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         for (Document submittedVariant : submittedVariants) {
             long submittedVariantStart = submittedVariant.getLong(START_FIELD);
             String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
-            if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart)) {
+            if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart, type)) {
                 continue;
             }
             String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
@@ -111,8 +111,9 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
      * clustered variant is mapped against multiple locations. So we need to check that that clustered variant we are
      * processing only appears in the VCF release file with the alleles from submitted variants matching the location.
      */
-    private boolean isSameLocation(String contig, long start, String submittedVariantContig, long submittedVariantStart) {
-        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart);
+    private boolean isSameLocation(String contig, long start, String submittedVariantContig, long submittedVariantStart,
+                                   String type) {
+        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart, type);
     }
 
     /**
@@ -129,8 +130,12 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
      * SS (assembly: GCA_000309985.1, accession: 490570267, chromosome: CM001642.1, start: 7356604, reference: ,
      *     alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
      */
-    private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart) {
+    private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart, String type) {
          return clusteredVariantStart == submittedVariantStart
-                 || Math.abs(clusteredVariantStart - submittedVariantStart) == 1L;
+                 || (isIndel(type) && Math.abs(clusteredVariantStart - submittedVariantStart) == 1L);
+    }
+
+    private boolean isIndel(String type) {
+        return type.equals(VariantType.INS.toString()) || type.equals(VariantType.DEL.toString());
     }
 }
