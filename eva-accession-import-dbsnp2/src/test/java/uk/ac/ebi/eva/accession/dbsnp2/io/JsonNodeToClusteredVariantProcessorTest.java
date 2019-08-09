@@ -47,7 +47,7 @@ import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class,
-    StepScopeTestExecutionListener.class})
+        StepScopeTestExecutionListener.class})
 @TestPropertySource({"classpath:application.properties"})
 public class JsonNodeToClusteredVariantProcessorTest {
 
@@ -63,7 +63,8 @@ public class JsonNodeToClusteredVariantProcessorTest {
 
     @Before
     public void setUp() throws Exception {
-        reader.setResource(new BzipLazyResource(new File("src/test/resources/input-files/test-dbsnp.json.bz2")));
+        reader.setResource(new BzipLazyResource(
+            new File("src/test/resources/input-files/test-dbsnp.json.bz2")));
         reader.open(new ExecutionContext());
         JsonNode variant;
         while ((variant = reader.read()) != null) {

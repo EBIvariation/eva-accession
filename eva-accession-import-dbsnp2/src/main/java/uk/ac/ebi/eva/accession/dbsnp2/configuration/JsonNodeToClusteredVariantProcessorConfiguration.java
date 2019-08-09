@@ -16,12 +16,20 @@
 package uk.ac.ebi.eva.accession.dbsnp2.configuration;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp2.io.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.accession.dbsnp2.io.JsonNodeToClusteredVariantProcessor;
+import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
+
+import java.util.Arrays;
 
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_PROCESSOR;
 
@@ -31,9 +39,35 @@ import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_
 @Configuration
 public class JsonNodeToClusteredVariantProcessorConfiguration {
 
+    private static final Logger logger = LoggerFactory
+        .getLogger(JsonNodeToClusteredVariantProcessorConfiguration.class);
+
     @Bean(name = DBSNP_JSON_VARIANT_PROCESSOR)
     @StepScope
-    public ItemProcessor<JsonNode, DbsnpClusteredVariantEntity> dbsnpJsonVariantProcessor() {
+    public ItemProcessor<JsonNode, DbsnpClusteredVariantEntity> dbsnpJsonVariantProcessor(
+            InputParameters parameters,
+            ContigToGenbankReplacerProcessor contigToGenbankReplacerProcessor,
+            JsonNodeToClusteredVariantProcessor jsonNodeToClusteredVariantProcessor) {
+        logger.info("Injecting dbsnpVariantProcessor with parameters: {}", parameters);
+        CompositeItemProcessor<JsonNode, DbsnpClusteredVariantEntity> compositeProcessor =
+            new CompositeItemProcessor<>();
+        compositeProcessor.setDelegates(Arrays.asList(jsonNodeToClusteredVariantProcessor,
+                                                      contigToGenbankReplacerProcessor));
+        return compositeProcessor;
+    }
+
+    @Bean
+    JsonNodeToClusteredVariantProcessor jsonNodeToClusteredVariantProcessor() {
         return new JsonNodeToClusteredVariantProcessor();
+    }
+
+    @Bean
+    ContigToGenbankReplacerProcessor contigReplacerProcessor(ContigMapping contigMapping) {
+        return new ContigToGenbankReplacerProcessor(contigMapping);
+    }
+
+    @Bean
+    ContigMapping contigMapping(InputParameters parameters) throws Exception {
+        return new ContigMapping(parameters.getAssemblyReportUrl());
     }
 }
