@@ -60,6 +60,7 @@ public class ContigToGenbankReplacerProcessorTest {
     @Test
     public void genbankAndRefseqNotEquivalents() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chr3");
+        thrown.expect(IllegalStateException.class);
         assertEquals("chr3", processor.process(variant).getContig());
     }
 
@@ -84,6 +85,7 @@ public class ContigToGenbankReplacerProcessorTest {
     @Test
     public void contigNotFoundInAssemblyReport() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("chr");
+        thrown.expect(IllegalStateException.class);
         assertEquals("chr", processor.process(variant).getContig());
     }
 
