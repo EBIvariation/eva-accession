@@ -16,6 +16,8 @@
 package uk.ac.ebi.eva.accession.dbsnp2.io;
 
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
 import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
@@ -29,6 +31,9 @@ import static org.junit.Assert.assertEquals;
 public class ContigToGenbankReplacerProcessorTest {
 
     private ContigToGenbankReplacerProcessor processor;
+    
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() throws Exception {
