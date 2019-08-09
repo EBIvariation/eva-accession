@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
@@ -341,5 +342,64 @@ public class AccessionedVariantMongoReaderTest {
     public void includeEvidenceNonDefaultFlag() throws Exception {
         reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
+    }
+
+    /**
+     * Two clustered variants with the same accession but mapped against different locations. Each clustered variant
+     * should only appear with the alleles of the its corresponding submitted variants.
+     *
+     * This means variants will only be returned by the reader when the clustered and submitted variant have the same location
+     * (contig and start)
+     */
+    @Test
+    public void includeOnlyVariantsWithTheSameChromosomeAndStartInRsAndSs() throws Exception {
+        reader = new AccessionedVariantMongoReader("GCA_000002775.1", mongoClient, TEST_DB,CHUNK_SIZE);
+        List<Variant> allVariants = readIntoList();
+
+        assertEquals(3, allVariants.size());
+
+        assertTrue(isVariantPresent(allVariants, "CM000337.1", 19922L, "G", "A"));
+        assertTrue(isVariantPresent(allVariants, "CM000337.1", 19922L, "G", "T"));
+        assertFalse(isVariantPresent(allVariants, "CM000337.1", 19922L, "C", "T"));
+
+        assertTrue(isVariantPresent(allVariants, "CM000351.1", 3474340L, "C", "T"));
+        assertFalse(isVariantPresent(allVariants, "CM000351.1", 3474340L, "G", "A"));
+        assertFalse(isVariantPresent(allVariants, "CM000351.1", 3474340L, "G", "T"));
+    }
+
+    private boolean isVariantPresent(List<Variant> variants, String chromosome, long start, String reference,
+                                     String alernate) {
+        return variants.stream().anyMatch(v -> v.getChromosome().equals(chromosome) && v.getStart() == start
+                && v.getReference().equals(reference) && v.getAlternate().equals(alernate));
+    }
+
+    /**
+     * For ambiguous INDELS the start position in the clustered variant and its submitted variants can be different
+     * because the renormalization process is performed only for submitted variants. this will be handled by trying to
+     * match with the exact position or either the one before or after.
+     *
+     * Variants are represented in different ways by dbSNP and the EVA
+     * dbSNP    (start: 7356605, reference: , alternate: GAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCACA)
+     * EVA      (start: 7356604, reference: , alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
+     *
+     * FASTA (NC_024803.1:7356603-7356606) TATC
+     *
+     * dbSNP remove the context nucleotide before an INDEL while the EVA removes the rightmost bases
+     *
+     * dbSNP:   TA(GAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCACA)TC, start: 7356605
+     * EVA:     T(AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)ATC, start: 7356604
+     *
+     * For the rs268233057 (start: 7356605) and its ss490570267 (start: 7356604) the submitted variant start will be
+     * used along with its alleles even when the start position does not exactly match.
+     */
+    @Test
+    public void includeAmbiguousVariantsWithDifferentStartInSsAndRs() throws Exception {
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
+        List<Variant> allVariants = readIntoList();
+
+        assertEquals(1, allVariants.size());
+
+        assertTrue(isVariantPresent(allVariants, "CM001642.1", 7356604L, "",
+                                    "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC"));
     }
 }
