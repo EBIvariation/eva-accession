@@ -100,8 +100,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         long start = inactiveEntity.getLong(VariantMongoAggregationReader.START_FIELD);
         long rs = mergedVariant.getLong(ACCESSION_FIELD);
         long mergedInto = mergedVariant.getLong(MERGE_INTO_FIELD);
-        VariantType type = VariantType.valueOf(inactiveEntity.getString(TYPE_FIELD));
-        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(type);
+        String type = inactiveEntity.getString(TYPE_FIELD);
+        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
         boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
 
         Map<String, Variant> variants = new HashMap<>();
@@ -116,7 +116,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                 long submittedVariantStart = submittedVariant.getLong(START_FIELD);
                 String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
 
-                if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart)){
+                if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart, type)){
                     continue;
                 }
 
@@ -150,8 +150,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
      * clustered variant is mapped against multiple locations. So we need to check that that clustered variant we are
      * processing only appears in the VCF release file with the alleles from submitted variants matching the location.
      */
-    private boolean isSameLocation(String contig, long start, String submittedVariantContig, long submittedVariantStart) {
-        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart);
+    private boolean isSameLocation(String contig, long start, String submittedVariantContig, long submittedVariantStart,
+                                   String type) {
+        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart, type);
     }
 
     /**
@@ -168,8 +169,12 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
      * SS (assembly: GCA_000309985.1, accession: 490570267, chromosome: CM001642.1, start: 7356604, reference: ,
      *     alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
      */
-    private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart) {
+    private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart, String type) {
         return clusteredVariantStart == submittedVariantStart
-                || Math.abs(clusteredVariantStart - submittedVariantStart) == 1L;
+                || (isIndel(type) && Math.abs(clusteredVariantStart - submittedVariantStart) == 1L);
+    }
+
+    private boolean isIndel(String type) {
+        return type.equals(VariantType.INS.toString()) || type.equals(VariantType.DEL.toString());
     }
 }
