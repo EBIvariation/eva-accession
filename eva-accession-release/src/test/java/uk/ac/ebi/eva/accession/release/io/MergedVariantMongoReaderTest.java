@@ -49,6 +49,8 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
@@ -61,7 +63,7 @@ import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.SUPPOR
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json"
 })
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class MergedVariantMongoReaderTest {
@@ -80,7 +82,7 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ID_2 = "CM001941.2_13_T_G";
 
-    private static final String ID_2_MERGED_INTO = "rs869927931";
+    private static final int EXPECTED_MERGED_VARIANTS = 5;
 
     private static final int CHUNK_SIZE = 5;
 
@@ -98,14 +100,14 @@ public class MergedVariantMongoReaderTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    private MergedVariantMongoReader reader;
+    private MergedVariantMongoReader defaultReader;
 
     private ExecutionContext executionContext;
 
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        reader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE);
+        defaultReader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE);
     }
 
     @Test
@@ -113,24 +115,24 @@ public class MergedVariantMongoReaderTest {
         MongoDatabase db = mongoClient.getDatabase(TEST_DB);
         MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
 
-        AggregateIterable<Document> result = collection.aggregate(reader.buildAggregation())
+        AggregateIterable<Document> result = collection.aggregate(defaultReader.buildAggregation())
                                                        .allowDiskUse(true)
                                                        .useCursor(true);
         MongoCursor<Document> iterator = result.iterator();
         List<Variant> operations = new ArrayList<>();
         while (iterator.hasNext()) {
-            operations.addAll(reader.getVariants(iterator.next()));
+            operations.addAll(defaultReader.getVariants(iterator.next()));
         }
-        assertEquals(3, operations.size());
+        assertEquals(EXPECTED_MERGED_VARIANTS, operations.size());
     }
 
     @Test
     public void basicRead() throws Exception {
-        Map<String, Variant> variants = readIntoMap();
-        assertEquals(3, variants.size());
+        Map<String, Variant> variants = readIntoMap(defaultReader);
+        assertEquals(EXPECTED_MERGED_VARIANTS, variants.size());
     }
 
-    private Map<String, Variant> readIntoMap() throws Exception {
+    private Map<String, Variant> readIntoMap(MergedVariantMongoReader reader) throws Exception {
         reader.open(executionContext);
         Map<String, Variant> allVariants = new HashMap<>();
         List<Variant> variants;
@@ -150,8 +152,8 @@ public class MergedVariantMongoReaderTest {
 
     @Test
     public void checkMergedInto() throws Exception {
-        Map<String, Variant> variants = readIntoMap();
-        assertEquals(3, variants.size());
+        Map<String, Variant> variants = readIntoMap(defaultReader);
+        assertEquals(EXPECTED_MERGED_VARIANTS, variants.size());
 
         assertTrue(variants.get(ID_1_A)
                            .getSourceEntries()
@@ -162,17 +164,12 @@ public class MergedVariantMongoReaderTest {
                            .getSourceEntries()
                            .stream()
                            .allMatch(e -> ID_1_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
-
-        assertTrue(variants.get(ID_2)
-                           .getSourceEntries()
-                           .stream()
-                           .allMatch(e -> ID_2_MERGED_INTO.equals(e.getAttribute(MERGED_INTO_KEY))));
     }
 
     @Test
     public void checkAlleles() throws Exception {
-        Map<String, Variant> variants = readIntoMap();
-        assertEquals(3, variants.size());
+        Map<String, Variant> variants = readIntoMap(defaultReader);
+        assertEquals(EXPECTED_MERGED_VARIANTS, variants.size());
 
         assertEquals("G", variants.get(ID_1_A).getReference());
         assertEquals("A", variants.get(ID_1_A).getAlternate());
@@ -191,7 +188,7 @@ public class MergedVariantMongoReaderTest {
     }
 
     private void assertFlagEqualsInAllVariants(String key, boolean value) throws Exception {
-        Map<String, Variant> variants = readIntoMap();
+        Map<String, Variant> variants = readIntoMap(defaultReader);
         assertNotEquals(0, variants.size());
         assertTrue(variants.values().stream()
                            .flatMap(v -> v.getSourceEntries().stream())
@@ -212,7 +209,55 @@ public class MergedVariantMongoReaderTest {
 
     @Test
     public void includeEvidenceFlag() throws Exception {
-        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, true);
+        assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
     }
 
+    /**
+     * This test will use a different defaultReader for assembly GCA_000001215.4 to evaluate this specific scenario:
+     * - 1 Merge operation in dbsnpClusteredVariantOperationEntity (rs881301177 merged into rs80393223)
+     * - 2 Submitted variants in dbsnpSubmittedVariantEntity (ss99056614, ss1986084768) with the same rs80393223
+     * - 1 Update operation in dbsnpSubmittedVariantOperationEntity for ss1986084768 (Original rs881301177 was merged
+     * into rs80393223)
+     * - 1 Merge operation in dbsnpSubmittedVariantOperationEntity for ss1986084768
+     *
+     * Even though the rs80393223 was involved in a merge operation it doesn't mean all of its associated variants were
+     * also involved in that merge. Hence we should only list the variants that were updated, merge operations of
+     * submitted variants should be ignored.
+     */
+    @Test
+    public void includeOnlyMergedVariants() throws Exception {
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001215.4", mongoClient, TEST_DB,
+                                                                        CHUNK_SIZE);
+        Map<String, Variant> allVariants = readIntoMap(reader);
+
+        assertEquals(1, allVariants.size());
+        assertEquals("rs881301177", allVariants.get("AE013599.5_7680720_T_").getMainId());
+        assertEquals("rs80393223", allVariants.get("AE013599.5_7680720_T_").getSourceEntries().iterator().next()
+                                              .getAttributes().get("CURR"));
+    }
+
+    /**
+     * This test will use a different defaultReader for assembly GCA_000002305.1 to evaluate this specific scenario:
+     * - 2 Merge operations for Clustered Variants with the same accession (rs69314228) and mergeInto (rs68736359) but
+     *   different chromosome or/and start
+     * - 2 Update (merge RS) operations for Submitted Variants
+     * - 1 Update (decluster) operation for Submitted Variants
+     *
+     * For every Clustered Variant Operation there will be N Submitted Variant Operations but only the merged
+     * operations with the same chromosome and start must be taking into account to build the merged VCF file.
+     */
+    @Test
+    public void includeOnlyMergedVariantsWithSameChrAndSameStartInRsAndSs() throws Exception {
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000002305.1", mongoClient, TEST_DB,
+                                                                        CHUNK_SIZE);
+        Map<String, Variant> allVariants = readIntoMap(reader);
+
+        assertEquals(2, allVariants.size());
+
+        assertNotNull(allVariants.get("CM000399.2_175891_A_T"));
+        assertNull(allVariants.get("CM000399.2_175891_T_A"));
+
+        assertNotNull(allVariants.get("AAWR02045368.1_505_T_A"));
+        assertNull(allVariants.get("AAWR02045368.1_505_A_T"));
+    }
 }

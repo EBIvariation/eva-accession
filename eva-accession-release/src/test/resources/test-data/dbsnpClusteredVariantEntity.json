@@ -117,6 +117,19 @@
       "createdDate": ISODate(
       "2010-05-27T06:00:00Z"
       )
+    },
+    {
+      "_id" : "3D0AFF1E1CD40ED24279EF031D3E54B36D2A2244",
+      "asm" : "GCA_000001215.4",
+      "tax" : 7227,
+      "contig" : "AE013599.5",
+      "start" : NumberLong(7680720),
+      "type" : "DEL",
+      "accession" : NumberLong(80393223),
+      "version" : 1,
+      "createdDate" : ISODate(
+      "2010-03-24T15:04:00.000Z"
+      )
     }
   ]
 }

@@ -58,7 +58,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"})
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class AccessionReleaseJobConfigurationTest {
 
@@ -66,7 +67,7 @@ public class AccessionReleaseJobConfigurationTest {
 
     private static final long EXPECTED_LINES = 5;
 
-    private static final long EXPECTED_LINES_MERGED = 3;
+    private static final long EXPECTED_LINES_MERGED = 5;
 
     private static final long EXPECTED_LINES_DEPRECATED = 3;
 
