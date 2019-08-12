@@ -23,10 +23,18 @@ else
 	VCF_VALIDATOR_PATH=$7
 	VCF_ASM_CHECKER_PATH=$8
 
+	if [ ! -f ${IMPORT_FILE} ]; then
+		echo "The properties file ${IMPORT_FILE} doesn't exist! Stopping script"
+		exit 1
+	fi
+
 	OUTPUT_FILE=application.properties
 	if [ -f ${OUTPUT_FILE} ]; then
 		mv ${OUTPUT_FILE} ${OUTPUT_FILE}.bk
 		echo "# Made a backup of \"${OUTPUT_FILE}\" into \"${OUTPUT_FILE}.bk\"";
+		if [ ${OUTPUT_FILE} = ${IMPORT_FILE} ]; then
+			IMPORT_FILE=${IMPORT_FILE}.bk
+		fi
 	fi
 
 	# extract values from the existing properties file
@@ -89,7 +97,7 @@ bsub -J \${jobname}_sort -w \${jobname} -o sort_ids.log -e sort_ids.err -M 8192 
 bsub -J \${jobname}_compress -w \${jobname}_sort -o bgzip.log -e bgzip.err \"${BGZIP_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf; ${BGZIP_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf\"
 bsub -w \${jobname}_compress -o tabix.log -e tabix.err \"${TABIX_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz; ${TABIX_PATH}  ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz\"
 bsub -w \${jobname}_compress -o count_ids.log -e count_ids.err \"echo '# Unique RS ID counts' > ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.txt.gz | wc -l | sed 's/^/'${assemblyAccession}_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.txt.gz | cut -f 1 | uniq | wc -l | sed 's/^/'${assemblyAccession}_merged_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt\"
-bsub -J \${jobname}_validate -w \${jobname}_compress -o validate.log -e validate.err \"${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz -o ${OUTPUT_FOLDER}; ${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz -o ${OUTPUT_FOLDER}; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz -f ${fasta} -o ${OUTPUT_FOLDER}; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz -f ${fasta} -o ${OUTPUT_FOLDER};\"
+bsub -J \${jobname}_validate -w \${jobname}_compress -o validate.log -e validate.err \"zcat ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz | ${VCF_VALIDATOR_PATH} -o ${OUTPUT_FOLDER}; zcat ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz | ${VCF_VALIDATOR_PATH} -o ${OUTPUT_FOLDER}; zcat ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz | ${VCF_ASM_CHECKER_PATH} -f ${fasta} -o ${OUTPUT_FOLDER}; zcat ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz | ${VCF_ASM_CHECKER_PATH} -f ${fasta} -o ${OUTPUT_FOLDER};\"
 " | tee release_commands_${assemblyAccession}.txt
 
 fi
