@@ -62,6 +62,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final String MERGE_OPERATION_REASON_FIRST_WORD = "Original";
 
+    public static final String DECLUSTER_OPERATION_REASON_FIRST_WORD = "Declustered: ";
+
     public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize) {
         super(assemblyAccession, mongoClient, database, chunkSize);
     }
@@ -107,6 +109,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Map<String, Variant> variants = new HashMap<>();
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
 
+        boolean hasSubmittedVariantsDeclustered = false;
         for (Document submittedVariantOperation : submittedVariantOperations) {
             if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())
                     && submittedVariantOperation.getString(REASON).startsWith(MERGE_OPERATION_REASON_FIRST_WORD)) {
@@ -135,11 +138,19 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
                 addToVariants(variants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
             }
+
+            if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())
+                    && submittedVariantOperation.getString(REASON).startsWith(DECLUSTER_OPERATION_REASON_FIRST_WORD)) {
+                hasSubmittedVariantsDeclustered = true;
+            }
         }
 
-        if (variants.isEmpty()) {
-            throw new IllegalStateException("There was a merge operation for rs" + rs + " but there is no update " +
-                                                    "operation for the SS IDs.");
+        if (!hasSubmittedVariantsDeclustered && variants.isEmpty()) {
+            throw new IllegalStateException ("There was a merge operation for rs" + rs + " but there is no update " +
+                                                     "operation for the SS IDs. This can be either an error or a " +
+                                                     "special scenario where all the corresponding SS IDs were " +
+                                                     "declustered so when the merge operation occurs, there are no " +
+                                                     "SS IDs to update.");
         }
 
         return new ArrayList<>(variants.values());
