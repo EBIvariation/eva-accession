@@ -28,6 +28,7 @@ import org.bson.Document;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -263,7 +264,7 @@ public class MergedVariantMongoReaderTest {
 
     /**
      * This test will use a different defaultReader for assembly GCA_000001635.5 to evaluate this specific scenario:
-     * - One merge operation for clustered variants (rs258660893 merged into 244942339)
+     * - One merge operation for clustered variants (rs258660893 merged into rs244942339)
      * - One update operations for submitted variants but the reason is a DECLUSTER
      *
      * This happens because the decluster operations are created in the processor and the merge operations in the writer.
@@ -276,9 +277,22 @@ public class MergedVariantMongoReaderTest {
     public void noExceptionIfSsWereDeclustered() throws Exception {
         MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.5", mongoClient, TEST_DB,
                                                                        CHUNK_SIZE);
-
         Map<String, Variant> allVariants = readIntoMap(reader);
-
         assertEquals(0, allVariants.size());
+    }
+
+    /**
+     * This test will use a different defaultReader for assembly GCA_000181335.3 to evaluate this specific scenario:
+     * - One merge operation for clustered variants (rs782965190 merged into rs43955718)
+     * - No submitted variants operations associated to rs782965190
+     *
+     * Given that the are not merge nor decluster operations for any submitted variant associated this should throw
+     * an exception
+     */
+    @Test(expected = IllegalStateException.class)
+    public void exceptionIfRsMergedHasNoSsMergeOperations() throws Exception {
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000181335.3", mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE);
+        readIntoMap(reader);
     }
 }
