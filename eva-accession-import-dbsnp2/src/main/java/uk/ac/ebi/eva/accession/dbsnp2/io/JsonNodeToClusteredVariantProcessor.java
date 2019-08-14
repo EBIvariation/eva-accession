@@ -81,7 +81,7 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
             // Ignore variant if it's assembly accession doesn't match the one supplied in input parameters
             if(!refseqAssembly.equals(assemblyAccession)) {
                 logger.error("Variant with RS ID {} has a different assembly accession {}"
-                        + "than the Reference Sequence accession {} supplied in input parameters",
+                        + "than the RefSeq accession {} supplied in input parameters",
                     jsonRootNode.path("refsnp_id").asText(),
                     assemblyAccession,
                     refseqAssembly);
