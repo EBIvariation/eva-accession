@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.dbsnp2.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,10 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     private static Logger logger = LoggerFactory.getLogger(JsonNodeToClusteredVariantProcessor.class);
     private Function<IClusteredVariant, String> hashingFunction =
         new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+    private String refseqAssembly;
 
-    public JsonNodeToClusteredVariantProcessor() {
+    public JsonNodeToClusteredVariantProcessor(String refseqAssembly) {
+        this.refseqAssembly = refseqAssembly;
     }
 
     /**
@@ -73,6 +76,15 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
                 continue;
             }
             String assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
+            // Ignore variant if it's assembly accession doesn't match the one supplied in input parameters
+            if(!StringUtils.equals(refseqAssembly, assemblyAccession)) {
+                logger.error("Variant with RSID {} has a different assembly accession {}"
+                        + "than the Reference Sequence accession {} supplied in input parameters",
+                    jsonRootNode.path("refsnp_id").asText(),
+                    assemblyAccession,
+                    refseqAssembly);
+                return null;
+            }
             JsonNode spdi = alleleInfo.path("alleles").get(0).path("allele").path("spdi");
             String contig = spdi.path("seq_id").asText();
             // DbSNP JSON in 0 base, EVA in 1 base

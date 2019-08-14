@@ -21,7 +21,9 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp2.io.DbsnpJsonClusteredVariantsWriter;
@@ -30,6 +32,7 @@ import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_WRITER;
 
 @Configuration
+@Import({MongoConfiguration.class})
 public class ImportDbsnpJsonVariantsWriterConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ImportDbsnpJsonVariantsWriterConfiguration.class);

@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonFlowConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsJobConfiguration;
@@ -41,6 +42,7 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 @EnableAutoConfiguration
 @EnableBatchProcessing
 @Import({ListenersConfiguration.class,
+        MongoConfiguration.class,
         ImportDbsnpJsonVariantsJobConfiguration.class,
         ImportDbsnpJsonVariantsStepConfiguration.class,
         ImportDbsnpJsonVariantsReaderConfiguration.class,
