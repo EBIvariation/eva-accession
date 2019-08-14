@@ -37,19 +37,21 @@ else
 		fi
 	fi
 
-	# extract values from the existing properties file
-	assemblyAccession=`grep -m 1 "^parameters.assemblyAccession" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	assemblyReport=`grep -m 1 "^parameters.assemblyReport" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	fasta=`grep -m 1 "^parameters.fasta" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	db_url=`grep -m 1 "^spring.datasource.url" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	db_user=`grep -m 1 "^spring.datasource.username" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	db_pass=`grep -m 1 "^spring.datasource.password" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	mongo_host=`grep -m 1 "^spring.data.mongodb.host" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	mongo_port=`grep -m 1 "^spring.data.mongodb.port" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	mongo_db=`grep -m 1 "^spring.data.mongodb.database" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	mongo_user=`grep -m 1 "^spring.data.mongodb.username" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	mongo_pass=`grep -m 1 "^spring.data.mongodb.password" $IMPORT_FILE | sed "s/^[^=]\+=//"`
-	mongo_authdb=`grep -m 1 "^spring.data.mongodb.authentication-database" $IMPORT_FILE | sed "s/^[^=]\+=//"`
+	# extract values from the existing properties file, trimming surrounding spaces
+	assemblyAccession=`grep -m 1 "^parameters.assemblyAccession" $IMPORT_FILE | sed "s/^[^=]\+= *\([^ ]*\) */\1/"`
+	fasta=`grep -m 1 "^parameters.fasta" $IMPORT_FILE | sed "s/^[^=]\+= *\([^ ]*\) */\1/"`
+
+	# extract whole lines
+	assemblyReport=`grep -m 1 "^parameters.assemblyReport" $IMPORT_FILE`
+	db_url=`grep -m 1 "^spring.datasource.url" $IMPORT_FILE`
+	db_user=`grep -m 1 "^spring.datasource.username" $IMPORT_FILE`
+	db_pass=`grep -m 1 "^spring.datasource.password" $IMPORT_FILE`
+	mongo_host=`grep -m 1 "^spring.data.mongodb.host" $IMPORT_FILE`
+	mongo_port=`grep -m 1 "^spring.data.mongodb.port" $IMPORT_FILE`
+	mongo_db=`grep -m 1 "^spring.data.mongodb.database" $IMPORT_FILE`
+	mongo_user=`grep -m 1 "^spring.data.mongodb.username" $IMPORT_FILE`
+	mongo_pass=`grep -m 1 "^spring.data.mongodb.password" $IMPORT_FILE`
+	mongo_authdb=`grep -m 1 "^spring.data.mongodb.authentication-database" $IMPORT_FILE`
 
 	OUTPUT_FOLDER=${OUTPUT_RELEASE_FOLDER}/${assemblyAccession}/
 
@@ -58,7 +60,7 @@ else
 spring.batch.job.names=ACCESSION_RELEASE_JOB
 
 parameters.assemblyAccession=${assemblyAccession}
-parameters.assemblyReportUrl=${assemblyReport}
+${assemblyReport}
 parameters.chunkSize=1000
 parameters.fasta=${fasta}
 parameters.forceRestart=false
@@ -66,21 +68,21 @@ parameters.outputFolder=${OUTPUT_FOLDER}
 
 # job repository datasource
 spring.datasource.driver-class-name=org.postgresql.Driver
-spring.datasource.url=${db_url}
-spring.datasource.username=${db_user}
-spring.datasource.password=${db_pass}
+${db_url}
+${db_user}
+${db_pass}
 spring.datasource.tomcat.max-active=3
 
 # Only to set up the database!
 # spring.jpa.generate-ddl=true
 
 # MongoDB for storing imported accessions
-spring.data.mongodb.host=${mongo_host}
-spring.data.mongodb.port=${mongo_port}
-spring.data.mongodb.database=${mongo_db}
-spring.data.mongodb.username=${mongo_user}
-spring.data.mongodb.password=${mongo_pass}
-spring.data.mongodb.authentication-database=${mongo_authdb}
+${mongo_host}
+${mongo_port}
+${mongo_db}
+${mongo_user}
+${mongo_pass}
+${mongo_authdb}
 mongodb.read-preference=primaryPreferred
 
 spring.main.web-environment=false
