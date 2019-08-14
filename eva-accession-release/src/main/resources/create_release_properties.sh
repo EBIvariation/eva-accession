@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if (( $# != 8 )); then
-	echo  "This script creates a '.properties' file for the eva-accession-release pipeline, taking the properties from the import, and suggesting commands to run all the release for an assembly.
+	echo  "This script creates a '.properties' file for the eva-accession-release pipeline, taking the properties from the import, and suggesting commands to run the whole release process for an assembly.
 This script needs the next parameters in order:
 - The path to the import properties file with information about the assembly to release
-- The output folder for the release, where this script will create a folder for the assembly
-- The path to the eva-accession-release java jar
+- The root output folder for the release, where this script will create a subfolder for the assembly
+- The path to the eva-accession-release JAR file
 - The path to the bgzip executable
 - The path to the tabix executable
 - The path to the script count_ids_in_vcf.sh
