@@ -41,9 +41,11 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     private Function<IClusteredVariant, String> hashingFunction =
         new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     private String refseqAssembly;
+    private String genbankAssembly;
 
-    public JsonNodeToClusteredVariantProcessor(String refseqAssembly) {
+    public JsonNodeToClusteredVariantProcessor(String refseqAssembly, String genbankAssembly) {
         this.refseqAssembly = refseqAssembly;
+        this.genbankAssembly = genbankAssembly;
     }
 
     /**
@@ -77,7 +79,7 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
             }
             String assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
             // Ignore variant if it's assembly accession doesn't match the one supplied in input parameters
-            if(!StringUtils.equals(refseqAssembly, assemblyAccession)) {
+            if(!refseqAssembly.equals(assemblyAccession)) {
                 logger.error("Variant with RS ID {} has a different assembly accession {}"
                         + "than the Reference Sequence accession {} supplied in input parameters",
                     jsonRootNode.path("refsnp_id").asText(),
@@ -90,7 +92,7 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
             // DbSNP JSON in 0 base, EVA in 1 base
             // @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/>DbSNP JSON 2.0 schema specification</a>
             long start = spdi.path("position").asLong() + 1;
-            return new ClusteredVariant(assemblyAccession, taxonomyAccession, contig, start,
+            return new ClusteredVariant(genbankAssembly, taxonomyAccession, contig, start,
                                         type, Boolean.FALSE, createdDate);
         }
         // Absence of primary top level placement (PLTP) data

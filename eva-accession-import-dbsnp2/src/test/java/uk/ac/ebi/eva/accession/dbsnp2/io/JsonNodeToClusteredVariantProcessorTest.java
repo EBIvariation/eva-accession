@@ -72,7 +72,8 @@ public class JsonNodeToClusteredVariantProcessorTest {
         while ((variant = reader.read()) != null) {
             variants.add(variant);
         }
-        processor = new JsonNodeToClusteredVariantProcessor(inputParameters.getRefseqAssembly());
+        processor = new JsonNodeToClusteredVariantProcessor(inputParameters.getRefseqAssembly(),
+                                                            inputParameters.getGenbankAssembly());
     }
 
     @Test
@@ -119,7 +120,7 @@ public class JsonNodeToClusteredVariantProcessorTest {
             .collect(Collectors.toList());
         assertEquals(1, variant3906List.size());
         DbsnpClusteredVariantEntity variant3906 = variant3906List.get(0);
-        assertEquals("GCF_000001405.38", variant3906.getAssemblyAccession());
+        assertEquals("GCA_000001405.27", variant3906.getAssemblyAccession());
         assertEquals(9606L, variant3906.getTaxonomyAccession());
         assertEquals("NC_000024.10", variant3906.getContig());
         assertEquals(19562813L, variant3906.getStart());
