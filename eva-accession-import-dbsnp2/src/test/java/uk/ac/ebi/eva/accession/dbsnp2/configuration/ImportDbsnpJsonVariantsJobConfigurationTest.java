@@ -45,7 +45,6 @@ public class ImportDbsnpJsonVariantsJobConfigurationTest {
 
     @Autowired
     private InputParameters inputParameters;
-
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 

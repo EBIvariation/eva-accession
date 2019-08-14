@@ -32,12 +32,14 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -54,9 +56,9 @@ public class JsonNodeToClusteredVariantProcessorTest {
     @Autowired
     @Qualifier(DBSNP_JSON_VARIANT_READER)
     private FlatFileItemReader<JsonNode> reader;
-
+    @Autowired
+    private InputParameters inputParameters;
     private JsonNodeToClusteredVariantProcessor processor;
-
     private List<JsonNode> variants = new ArrayList<>();
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -70,7 +72,8 @@ public class JsonNodeToClusteredVariantProcessorTest {
         while ((variant = reader.read()) != null) {
             variants.add(variant);
         }
-        processor = new JsonNodeToClusteredVariantProcessor();
+        processor = new JsonNodeToClusteredVariantProcessor(inputParameters.getRefseqAssembly(),
+                                                            inputParameters.getGenbankAssembly());
     }
 
     @Test
@@ -117,7 +120,7 @@ public class JsonNodeToClusteredVariantProcessorTest {
             .collect(Collectors.toList());
         assertEquals(1, variant3906List.size());
         DbsnpClusteredVariantEntity variant3906 = variant3906List.get(0);
-        assertEquals("GCF_000001405.38", variant3906.getAssemblyAccession());
+        assertEquals("GCA_000001405.27", variant3906.getAssemblyAccession());
         assertEquals(9606L, variant3906.getTaxonomyAccession());
         assertEquals("NC_000024.10", variant3906.getContig());
         assertEquals(19562813L, variant3906.getStart());
@@ -138,6 +141,7 @@ public class JsonNodeToClusteredVariantProcessorTest {
     public List<DbsnpClusteredVariantEntity> getFilteredDbsnpClusteredVariantEntities(VariantType type) {
         return variants.stream()
             .map(variant -> processor.process(variant))
+            .filter(Objects::nonNull)
             .filter(dbsnpClusteredVariantEntity -> dbsnpClusteredVariantEntity.getType().equals(type))
             .collect(Collectors.toList());
     }

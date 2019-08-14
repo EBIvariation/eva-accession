@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.dbsnp2.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,12 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
     private static Logger logger = LoggerFactory.getLogger(JsonNodeToClusteredVariantProcessor.class);
     private Function<IClusteredVariant, String> hashingFunction =
         new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+    private String refseqAssembly;
+    private String genbankAssembly;
 
-    public JsonNodeToClusteredVariantProcessor() {
+    public JsonNodeToClusteredVariantProcessor(String refseqAssembly, String genbankAssembly) {
+        this.refseqAssembly = refseqAssembly;
+        this.genbankAssembly = genbankAssembly;
     }
 
     /**
@@ -73,12 +78,21 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
                 continue;
             }
             String assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
+            // Ignore variant if its assembly accession doesn't match the one supplied in input parameters
+            if(!refseqAssembly.equals(assemblyAccession)) {
+                logger.error("Variant with RS ID {} has a different assembly accession {}"
+                        + "than the RefSeq accession {} supplied in input parameters",
+                    jsonRootNode.path("refsnp_id").asText(),
+                    assemblyAccession,
+                    refseqAssembly);
+                return null;
+            }
             JsonNode spdi = alleleInfo.path("alleles").get(0).path("allele").path("spdi");
             String contig = spdi.path("seq_id").asText();
             // DbSNP JSON in 0 base, EVA in 1 base
             // @see <a href=https://api.ncbi.nlm.nih.gov/variation/v0/>DbSNP JSON 2.0 schema specification</a>
             long start = spdi.path("position").asLong() + 1;
-            return new ClusteredVariant(assemblyAccession, taxonomyAccession, contig, start,
+            return new ClusteredVariant(genbankAssembly, taxonomyAccession, contig, start,
                                         type, Boolean.FALSE, createdDate);
         }
         // Absence of primary top level placement (PLTP) data

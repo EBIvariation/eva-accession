@@ -21,21 +21,18 @@ import org.springframework.batch.core.JobParametersBuilder;
 public class InputParameters {
 
     private String input;
-
-    private String assembly;
-
+    private String genbankAssembly;
+    private String refseqAssembly;
     private String assemblyReportUrl;
-
     private int chunkSize;
-
     private boolean forceRestart;
-
     private boolean forceImport;
 
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
             .addString("input", input)
-            .addString("assembly", assembly)
+            .addString("genbankAssembly", genbankAssembly)
+            .addString("refseqAssembly", refseqAssembly)
             .addLong("chunkSize", (long) chunkSize, false)
             .toJobParameters();
     }
@@ -48,12 +45,20 @@ public class InputParameters {
         this.input = input;
     }
 
-    public String getAssembly() {
-        return assembly;
+    public String getGenbankAssembly() {
+        return genbankAssembly;
     }
 
-    public void setAssembly(String assembly) {
-        this.assembly = assembly;
+    public void setGenbankAssembly(String genbankAssembly) {
+        this.genbankAssembly = genbankAssembly;
+    }
+
+    public String getRefseqAssembly() {
+        return refseqAssembly;
+    }
+
+    public void setRefseqAssembly(String refseqAssembly) {
+        this.refseqAssembly = refseqAssembly;
     }
 
     public String getAssemblyReportUrl() {

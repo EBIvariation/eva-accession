@@ -44,21 +44,17 @@ public class ImportDbsnpJsonVariantsStepConfigurationTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
-
-    @Autowired
-    private InputParameters inputParameters;
-
     @Autowired
     private MongoTemplate mongoTemplate;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
     }
 
     @Test
     @DirtiesContext
-    public void executeStep() throws IOException {
+    public void executeStep() {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(IMPORT_DBSNP_JSON_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
