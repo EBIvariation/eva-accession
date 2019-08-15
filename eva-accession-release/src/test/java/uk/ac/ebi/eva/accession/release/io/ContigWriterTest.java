@@ -20,6 +20,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -40,13 +43,17 @@ public class ContigWriterTest {
     @Before
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
-        contigWriter = new ContigWriter(output);
+        ContigMapping contigMapping = new ContigMapping(Arrays.asList(
+                new ContigSynonyms("Chr1", "A", "A", "CM0001.1", "A", "A", true),
+                new ContigSynonyms("Chr2", "A", "A", "CM0002.1", "A", "A", true),
+                new ContigSynonyms("Chr3", "A", "A", "CM0003.1", "A", "A", true)));
+        contigWriter = new ContigWriter(output, contigMapping);
     }
 
     @Test
     public void write() throws Exception {
         contigWriter.open(null);
-        contigWriter.write(Arrays.asList("CM0001.1", "CM0001.2", "CM0001.3"));
+        contigWriter.write(Arrays.asList("CM0001.1", "CM0002.2", "CM0003.3"));
         contigWriter.close();
 
         assertEquals(3, numberOfLines(output));

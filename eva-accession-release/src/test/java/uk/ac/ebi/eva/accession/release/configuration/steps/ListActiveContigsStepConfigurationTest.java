@@ -100,7 +100,7 @@ public class ListActiveContigsStepConfigurationTest {
     public void contigsWritten() throws Exception {
         assertStepExecutesAndCompletes();
 
-        assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")),
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1,CAE13", "CM001941.2,CAE1")),
                      setOfLines(getActiveContigsFilePath(inputParameters.getOutputFolder(),
                                                          inputParameters.getAssemblyAccession())));
     }

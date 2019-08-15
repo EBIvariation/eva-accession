@@ -122,9 +122,12 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     private void addContigs(Set<VCFHeaderLine> metaData) {
         try {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(contigsFilePath));
-            String contig;
-            while ((contig = bufferedReader.readLine()) != null) {
-                metaData.add(new VCFHeaderLine("contig", "<ID=" + contig + ">"));
+            String contigLine;
+            while ((contigLine = bufferedReader.readLine()) != null) {
+                String[] contigAndName = contigLine.split(",");
+                String contig = contigAndName[0];
+                String name = contigAndName[1];
+                metaData.add(new VCFHeaderLine("contig", "<ID=" + name + ",Name=\"" + contig + "\">"));
             }
         } catch (IOException e) {
             logger.warn("Contigs file not found, VCF header will not have any contigs in the metadata section");

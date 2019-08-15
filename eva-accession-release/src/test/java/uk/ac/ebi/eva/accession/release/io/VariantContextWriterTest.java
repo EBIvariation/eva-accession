@@ -175,7 +175,7 @@ public class VariantContextWriterTest {
     public void checkMetadataSection() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
         FileWriter fileWriter = new FileWriter(ContigWriter.getActiveContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
-        String contig = "CM0001.1";
+        String contig = "CM0001.1,Chr1";
         fileWriter.write(contig);
         fileWriter.close();
 
@@ -183,7 +183,7 @@ public class VariantContextWriterTest {
 
         List<String> metadataLines = grepFile(output, "^##.*");
         assertEquals(10, metadataLines.size());
-        List<String> contigLines = grepFile(output, "##contig=<ID=CM0001.1>");
+        List<String> contigLines = grepFile(output, "##contig=<ID=Chr1,Name=\"CM0001.1\">");
         assertEquals(1, contigLines.size());
         List<String> headerLines = grepFile(output, "^#CHROM.*");
         assertEquals(1, headerLines.size());

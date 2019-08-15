@@ -19,6 +19,10 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,10 +43,13 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     private final File output;
 
+    private ContigMapping contigMapping;
+
     private PrintWriter printWriter;
 
-    public ContigWriter(File output) {
+    public ContigWriter(File output, ContigMapping contigMapping) {
         this.output = output;
+        this.contigMapping = contigMapping;
     }
 
     @Override
@@ -67,7 +74,9 @@ public class ContigWriter implements ItemStreamWriter<String> {
     @Override
     public void write(List<? extends String> contigs) {
         for (String contig : contigs) {
-            printWriter.println(contig);
+            ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
+            printWriter.println(contig + "," + contigMapping.getContigSynonym(contig, contigSynonyms,
+                                                                              ContigNaming.SEQUENCE_NAME));
         }
     }
 
