@@ -19,6 +19,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import uk.ac.ebi.eva.accession.release.io.AssemblyNameRetriever.EnaAssemblyXml;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -27,6 +29,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 public class AssemblyNameRetrieverTest {
 
@@ -34,7 +38,7 @@ public class AssemblyNameRetrieverTest {
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
     @Test
-    public void xmlParsing() throws IOException, JAXBException {
+    public void parseXml() throws IOException, JAXBException {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
         fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
@@ -45,10 +49,30 @@ public class AssemblyNameRetrieverTest {
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(xml);
-        assertEquals("GRCh38.p13", enaAssembly.getAlias());
+        assertEquals("GRCh38.p13", enaAssembly.getAssembly().getAlias());
     }
+
     @Test
-    public void basicRetrieval() throws IOException, JAXBException {
-        assertEquals("GRCh38.p13", new AssemblyNameRetriever("GCA_000001405.28").getAssemblyName());
+    public void parseMissingAlias() throws IOException, JAXBException {
+        File xml = temporaryFolderRule.newFile();
+        FileWriter fileWriter = new FileWriter(xml);
+        fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
+                         + "center_name=\"Genome Reference Consortium\"></ASSEMBLY></ROOT>");
+        fileWriter.close();
+
+        JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(xml);
+        assertNull(enaAssembly.getAssembly().getAlias());
+    }
+
+    @Test
+    public void retrieve() throws IOException, JAXBException {
+        assertEquals("GRCh38.p13", new AssemblyNameRetriever("GCA_000001405.28").getAssemblyName().get());
+    }
+
+    @Test
+    public void retrieveNonExistentAssembly() throws IOException, JAXBException {
+        assertFalse(new AssemblyNameRetriever("GCA_non_existent").getAssemblyName().isPresent());
     }
 }
