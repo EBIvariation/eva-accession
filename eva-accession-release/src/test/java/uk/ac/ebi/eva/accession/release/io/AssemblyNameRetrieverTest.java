@@ -15,8 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.release.io;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -28,7 +26,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class AssemblyNameRetrieverTest {
 
@@ -39,22 +37,18 @@ public class AssemblyNameRetrieverTest {
     public void xmlParsing() throws IOException, JAXBException {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
-        fileWriter.write("<ASSEMBLY accession=\"GCA_000001405.28\" "
+        fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
                          + "alias=\"GRCh38.p13\" "
-                         + "center_name=\"Genome Reference Consortium\">");
+                         + "center_name=\"Genome Reference Consortium\"></ASSEMBLY></ROOT>");
         fileWriter.close();
-//        XmlMapper xmlMapper = new XmlMapper();
-//        xmlMapper.configure(JsonParser.Feature.IGNORE_UNDEFINED, true);
-//        EnaAssemblyXml enaAssembly = xmlMapper.readValue(xml, EnaAssemblyXml.class);
+
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
-
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
         EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(xml);
         assertEquals("GRCh38.p13", enaAssembly.getAlias());
     }
     @Test
-    public void basicRetrieval() throws IOException {
+    public void basicRetrieval() throws IOException, JAXBException {
         assertEquals("GRCh38.p13", new AssemblyNameRetriever("GCA_000001405.28").getAssemblyName());
     }
 }

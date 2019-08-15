@@ -84,11 +84,6 @@
                 <artifactId>htsjdk</artifactId>
                 <version>2.14.3</version>
             </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.dataformat</groupId>
-                <artifactId>jackson-dataformat-xml</artifactId>
-                <version>2.9.9</version>
-            </dependency>
 
             <dependency>
                 <groupId>io.springfox</groupId>

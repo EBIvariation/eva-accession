@@ -15,27 +15,38 @@
  */
 package uk.ac.ebi.eva.accession.release.io;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-@JacksonXmlRootElement
-@JsonIgnoreProperties
+@XmlRootElement(name = "ROOT")
 class EnaAssemblyXml {
 
-    @JacksonXmlProperty(isAttribute = true)
+    @XmlElement(name = "ASSEMBLY")
     private Assembly assembly;
 
     public EnaAssemblyXml() {
+    }
+
+    public void setAssembly(Assembly assembly) {
+        this.assembly = assembly;
     }
 
     public String getAlias() {
         return assembly.getAlias();
     }
 
-    class Assembly {
-        @JacksonXmlProperty(isAttribute = true)
+    static class Assembly {
+
+        @XmlAttribute
         private String alias;
+
+        public Assembly() {
+        }
+
+        public void setAlias(String alias) {
+            this.alias = alias;
+        }
 
         String getAlias() {
             return alias;

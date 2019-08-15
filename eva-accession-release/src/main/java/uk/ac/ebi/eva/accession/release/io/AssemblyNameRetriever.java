@@ -15,14 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.release.io;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationConfig;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import org.springframework.core.io.UrlResource;
-
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
 import java.net.URL;
 
@@ -34,17 +29,17 @@ public class AssemblyNameRetriever {
 
     private String assemblyName;
 
-    public AssemblyNameRetriever(String assemblyAccession) throws IOException {
+    public AssemblyNameRetriever(String assemblyAccession) throws IOException, JAXBException {
         this.assemblyAccession = assemblyAccession;
         this.assemblyName = fetchAssemblyName(assemblyAccession);
     }
 
-    private String fetchAssemblyName(String assemblyAccession) throws IOException {
+    private String fetchAssemblyName(String assemblyAccession) throws IOException, JAXBException {
         String url = String.format(ENA_ASSMEBLY_URL_FORMAT_STRING, assemblyAccession);
-        UrlResource resource = new UrlResource(url);
-        XmlMapper xmlMapper = new XmlMapper();
-        xmlMapper.configure(JsonParser.Feature.IGNORE_UNDEFINED, true);
-        EnaAssemblyXml enaAssembly = xmlMapper.readValue(new URL(url), EnaAssemblyXml.class);
+
+        JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(new URL(url));
         return enaAssembly.getAlias();
     }
 
