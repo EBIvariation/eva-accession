@@ -147,10 +147,12 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
         if (!hasSubmittedVariantsDeclustered && variants.isEmpty()) {
             throw new IllegalStateException ("There was a merge operation for rs" + rs + " but there is no update " +
-                                                     "operation for the SS IDs. This can be either an error or a " +
-                                                     "special scenario where all the corresponding SS IDs were " +
-                                                     "declustered so when the merge operation occurs, there are no " +
-                                                     "SS IDs to update.");
+                                                     "operation for the SS IDs. This happens because there were no " +
+                                                     "update (merge/decluster) operations for the corresponding SS IDs" +
+                                                     "Every RS ID in dbSNP comes with at least one associated SS ID. " +
+                                                     "If an RS ID is merged, its corresponding SS IDs must be " +
+                                                     "updated (with the new RS ID) unless they have been previously " +
+                                                     "declustered (rs = null).");
         }
 
         return new ArrayList<>(variants.values());
