@@ -286,6 +286,32 @@
           "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("5d4bd7e256ccf06f703798cc"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(181942290),
+      "reason" : "Declustered: None of the variant alleles match the reference allele.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001635.5",
+          "tax" : 10090,
+          "study" : "UNISTS_SUBMISSION_08-24-2009",
+          "contig" : "CM000996.2",
+          "start" : NumberLong(121461812),
+          "ref" : "TCTACACACACACACACACACACACACACACACACACACAGCACTAGAATTAGGCATGTAACATCACAGTCATCTTTTATGTGGTAGTGGTCTCATGCACAGAAACTTTA",
+          "alt" : "(D3MIT42)",
+          "rs" : NumberLong(258660893),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "29E8AA6153CEB07AA14CFCFC56BDC144DFA1A476",
+          "accession" : NumberLong(181942290),
+          "version" : 1,
+          "createdDate" : ISODate("2009-12-15T15:28:00.000+0000")
+        }
+      ]
     }
   ]
 }

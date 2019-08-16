@@ -62,6 +62,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final String MERGE_OPERATION_REASON_FIRST_WORD = "Original";
 
+    public static final String DECLUSTER_OPERATION_REASON_FIRST_WORD = "Declustered: ";
+
     public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize) {
         super(assemblyAccession, mongoClient, database, chunkSize);
     }
@@ -104,9 +106,10 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
         boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
 
-        Map<String, Variant> variants = new HashMap<>();
+        Map<String, Variant> mergedVariants = new HashMap<>();
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
 
+        boolean hasSubmittedVariantsDeclustered = false;
         for (Document submittedVariantOperation : submittedVariantOperations) {
             if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())
                     && submittedVariantOperation.getString(REASON).startsWith(MERGE_OPERATION_REASON_FIRST_WORD)) {
@@ -133,16 +136,24 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                                                                          submittedVariantValidated, allelesMatch,
                                                                          assemblyMatch, evidence, mergedInto);
 
-                addToVariants(variants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
+                addToVariants(mergedVariants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
+            }
+
+            if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())
+                    && submittedVariantOperation.getString(REASON).startsWith(DECLUSTER_OPERATION_REASON_FIRST_WORD)) {
+                hasSubmittedVariantsDeclustered = true;
             }
         }
 
-        if (variants.isEmpty()) {
-            throw new IllegalStateException("There was a merge operation for rs" + rs + " but there is no update " +
-                                                    "operation for the SS IDs.");
+        if (!hasSubmittedVariantsDeclustered && mergedVariants.isEmpty()) {
+            throw new IllegalStateException ("Found merge operation for rs" + rs + " but no SS IDs updates " +
+                                                     "(merge/update) in the collection containing operations. " +
+                                                     "Since every RS ID in dbSNP is associated with at least one SS " +
+                                                     "ID, the latter must be updated when the former are merged, " +
+                                                     "unless they have been previously declustered (RS ID = null).");
         }
 
-        return new ArrayList<>(variants.values());
+        return new ArrayList<>(mergedVariants.values());
     }
 
     /**
