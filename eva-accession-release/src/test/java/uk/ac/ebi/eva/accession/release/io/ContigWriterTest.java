@@ -29,6 +29,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class ContigWriterTest {
@@ -44,23 +45,32 @@ public class ContigWriterTest {
     public void setUp() throws Exception {
         output = temporaryFolderRule.newFile();
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
-                new ContigSynonyms("Chr1", "A", "A", "CM0001.1", "A", "A", true),
-                new ContigSynonyms("Chr2", "A", "A", "CM0002.1", "A", "A", true),
-                new ContigSynonyms("Chr3", "A", "A", "CM0003.1", "A", "A", true)));
+                new ContigSynonyms("Chr1", "assembled-molecule", "1", "CM0001.1", "NC0001.1", "ucsc1", true),
+                new ContigSynonyms("Chr2", "assembled-molecule", "2", "CM0002.1", "NC0001.1", "ucsc1", false),
+                new ContigSynonyms("Chr3", "assembled-molecule", "3", "CM0003.1", "na", "ucsc1", false)));
         contigWriter = new ContigWriter(output, contigMapping);
     }
 
     @Test
     public void write() throws Exception {
         contigWriter.open(null);
-        contigWriter.write(Arrays.asList("CM0001.1", "CM0002.2", "CM0003.3"));
+        contigWriter.write(Arrays.asList("CM0001.1", "CM0002.1", "CM0003.1"));
         contigWriter.close();
 
         assertEquals(3, numberOfLines(output));
+        assertContigFileContent(output);
     }
 
     private long numberOfLines(File file) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(file));
         return br.lines().count();
+    }
+
+    private void assertContigFileContent(File file) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String line;
+        while ((line = br.readLine()) != null) {
+            assertTrue(line.equals("CM0001.1,Chr1") || line.equals("CM0002.1,Chr2") || line.equals("CM0003.1,Chr3"));
+        }
     }
 }
