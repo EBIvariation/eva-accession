@@ -20,6 +20,9 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import org.springframework.batch.item.ItemProcessor;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariantSourceEntry;
 
@@ -47,9 +50,12 @@ import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED
  */
 public class VariantToVariantContextProcessor implements ItemProcessor<IVariant, VariantContext> {
 
+    private final ContigMapping contigMapping;
+
     private final VariantContextBuilder variantContextBuilder;
 
-    public VariantToVariantContextProcessor() {
+    public VariantToVariantContextProcessor(ContigMapping contigMapping) {
+        this.contigMapping = contigMapping;
         this.variantContextBuilder = new VariantContextBuilder();
     }
 
@@ -61,8 +67,11 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
         }
         String[] allelesArray = getAllelesArray(variant);
 
+        String contig = variant.getChromosome();
+        String sequenceName = getSequenceName(contig);
+
         VariantContext variantContext = variantContextBuilder
-                .chr(variant.getChromosome())
+                .chr(sequenceName)
                 .start(variant.getStart())
                 .stop(getVariantContextStop(variant))
                 .id(variant.getMainId())
@@ -73,6 +82,11 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 .make();
 
         return variantContext;
+    }
+
+    private String getSequenceName(String contig) {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
+        return contigMapping.getContigSynonym(contig, contigSynonyms, ContigNaming.SEQUENCE_NAME);
     }
 
     private Map<String, String> getAttributes(IVariant variant) {
