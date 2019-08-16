@@ -53,6 +53,10 @@ public class ContigWriterTest {
 
     private static final String SEQUENCE_NAME_3 = "Chr3";
 
+    private static final String REFSEQ_ACCESSION_1 = "NC0001.1";
+
+    private static final String REFSEQ_ACCESSION_2 = "NC0002.1";
+
     private File output;
 
     @Rule
@@ -66,10 +70,10 @@ public class ContigWriterTest {
     @Test
     public void write() throws Exception {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
-                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, "NC0001.1", "ucsc1",
-                                   true),
-                new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, "NC0001.1", "ucsc2",
-                                   false),
+                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
+                                   "ucsc1", true),
+                new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, REFSEQ_ACCESSION_2,
+                                   "ucsc2", false),
                 new ContigSynonyms(SEQUENCE_NAME_3, "assembled-molecule", "3", GENBANK_ACCESSION_3, "na", "ucsc3",
                                    false)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
@@ -80,7 +84,9 @@ public class ContigWriterTest {
         contigWriter.close();
 
         assertEquals(contigs.size(), numberOfLines(output));
-        assertContigFileContent(output);
+
+        List<String> expectedLines = Arrays.asList("CM0001.1,Chr1", "CM0002.1,Chr2", "CM0003.1,Chr3");
+        assertContigFileContent(output, expectedLines);
     }
 
     private long numberOfLines(File file) throws IOException {
@@ -88,12 +94,37 @@ public class ContigWriterTest {
         return br.lines().count();
     }
 
-    private void assertContigFileContent(File file) throws IOException {
+    private void assertContigFileContent(File file, List<String> expectedLines) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(file));
         String line;
         while ((line = br.readLine()) != null) {
-            assertTrue(line.equals("CM0001.1,Chr1") || line.equals("CM0002.1,Chr2") || line.equals("CM0003.1,Chr3"));
+            assertTrue(expectedLines.contains(line));
         }
+    }
+
+    /**
+     * The Replacement to sequence name must be performed when the contig is a RefSeq Accession
+     */
+    @Test
+    public void useSequenceNameIfContigIsRefSeqAccession() throws IOException {
+        ContigMapping contigMapping = new ContigMapping(Arrays.asList(
+                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
+                                   "ucsc1", true),
+                new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, REFSEQ_ACCESSION_2,
+                                   "ucsc2", false),
+                new ContigSynonyms(SEQUENCE_NAME_3, "assembled-molecule", "3", GENBANK_ACCESSION_3, "na", "ucsc3",
+                                   false)));
+        ContigWriter contigWriter = new ContigWriter(output, contigMapping);
+
+        contigWriter.open(null);
+        List<String> contigs = Arrays.asList(REFSEQ_ACCESSION_1, REFSEQ_ACCESSION_2, GENBANK_ACCESSION_3);
+        contigWriter.write(contigs);
+        contigWriter.close();
+
+        assertEquals(contigs.size(), numberOfLines(output));
+
+        List<String> expectedLines = Arrays.asList("NC0001.1,Chr1", "NC0002.1,Chr2", "CM0003.1,Chr3");
+        assertContigFileContent(output, expectedLines);
     }
 
     /**
@@ -102,10 +133,10 @@ public class ContigWriterTest {
     @Test(expected = IllegalArgumentException.class)
     public void throwExceptionIfNullContig() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
-                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, "NC0001.1", "ucsc1",
-                                   true),
-                new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, "NC0001.1", "ucsc2",
-                                   false),
+                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
+                                   "ucsc1", true),
+                new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, REFSEQ_ACCESSION_2,
+                                   "ucsc2", false),
                 new ContigSynonyms(SEQUENCE_NAME_3, "assembled-molecule", "3", GENBANK_ACCESSION_3, "na", "ucsc3",
                                    false)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
@@ -121,8 +152,8 @@ public class ContigWriterTest {
     @Test(expected = IllegalArgumentException.class)
     public void throwExceptionIfEmptySequenceName() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
-                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, "NC0001.1", "ucsc1",
-                                   true),
+                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
+                                   "ucsc1", true),
                 new ContigSynonyms(EMPTY_STRING, "assembled-molecule", "4", GENBANK_ACCESSION_EMPTY_SEQUENCE_NAME, "na",
                                    "ucsc4", false)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
@@ -138,8 +169,8 @@ public class ContigWriterTest {
     @Test(expected = IllegalArgumentException.class)
     public void throwExceptionIfEmptyContig() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
-                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, "NC0001.1", "ucsc1",
-                                   true)));
+                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
+                                   "ucsc1", true)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
