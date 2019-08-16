@@ -75,8 +75,16 @@ public class ContigWriter implements ItemStreamWriter<String> {
     public void write(List<? extends String> contigs) {
         for (String contig : contigs) {
             ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
-            printWriter.println(contig + "," + contigMapping.getContigSynonym(contig, contigSynonyms,
-                                                                              ContigNaming.SEQUENCE_NAME));
+            String sequenceName = contigMapping.getContigSynonym(contig, contigSynonyms, ContigNaming.SEQUENCE_NAME);
+
+            if (contig == null || contig.isEmpty()) {
+                throw new IllegalArgumentException("The contig cannot be null or empty");
+            }
+            if (sequenceName == null || sequenceName.isEmpty()) {
+                throw new IllegalArgumentException("Could not find the corresponding sequence name for contig " + contig);
+            }
+
+            printWriter.println(contig + "," + sequenceName);
         }
     }
 
