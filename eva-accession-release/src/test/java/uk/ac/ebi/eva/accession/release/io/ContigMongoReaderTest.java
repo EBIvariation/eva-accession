@@ -52,7 +52,7 @@ public class ContigMongoReaderTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final String ASSEMBLY_ACCESSION = "GCF_000409795.2";
+    private static final String ASSEMBLY_ACCESSION = "GCA_000409795.2";
 
     @Autowired
     private MongoClient mongoClient;

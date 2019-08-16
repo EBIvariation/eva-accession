@@ -19,13 +19,17 @@ package uk.ac.ebi.eva.accession.release.configuration.writers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.release.io.AssemblyNameRetriever;
 import uk.ac.ebi.eva.accession.release.io.ContigWriter;
 import uk.ac.ebi.eva.accession.release.io.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
@@ -34,21 +38,26 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WR
 public class VariantContextWriterConfiguration {
 
     @Bean(RELEASE_WRITER)
-    public VariantContextWriter variantContextWriter(InputParameters parameters) {
+    public VariantContextWriter variantContextWriter(InputParameters parameters) throws IOException, JAXBException {
         Path reportPath = ReportPathResolver.getCurrentIdsReportPath(parameters.getOutputFolder(),
                                                                      parameters.getAssemblyAccession());
         String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
                                                                              parameters.getAssemblyAccession());
-        return new VariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
+        Optional<String> assemblyName = new AssemblyNameRetriever(parameters.getAssemblyAccession()).getAssemblyName();
+        return new VariantContextWriter(reportPath, assemblyName.orElse(parameters.getAssemblyAccession()),
+                                        activeContigsFilePath);
     }
 
     @Bean(MERGED_RELEASE_WRITER)
-    public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
+    public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters)
+            throws IOException, JAXBException {
         Path reportPath = ReportPathResolver.getMergedIdsReportPath(parameters.getOutputFolder(),
                                                                     parameters.getAssemblyAccession());
         String mergedContigsFilePath = ContigWriter.getMergedContigsFilePath(reportPath.toFile().getParent(),
                                                                              parameters.getAssemblyAccession());
-        return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession(), mergedContigsFilePath);
+        Optional<String> assemblyName = new AssemblyNameRetriever(parameters.getAssemblyAccession()).getAssemblyName();
+        return new MergedVariantContextWriter(reportPath, assemblyName.orElse(parameters.getAssemblyAccession()),
+                                              mergedContigsFilePath);
     }
 
 }
