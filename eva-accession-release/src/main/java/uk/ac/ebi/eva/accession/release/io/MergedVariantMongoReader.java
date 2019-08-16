@@ -106,7 +106,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
         boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
 
-        Map<String, Variant> variants = new HashMap<>();
+        Map<String, Variant> mergedVariants = new HashMap<>();
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
 
         boolean hasSubmittedVariantsDeclustered = false;
@@ -136,7 +136,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                                                                          submittedVariantValidated, allelesMatch,
                                                                          assemblyMatch, evidence, mergedInto);
 
-                addToVariants(variants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
+                addToVariants(mergedVariants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
             }
 
             if (submittedVariantOperation.getString(EVENT_TYPE_FIELD).equals(EventType.UPDATED.toString())
@@ -145,17 +145,15 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
             }
         }
 
-        if (!hasSubmittedVariantsDeclustered && variants.isEmpty()) {
-            throw new IllegalStateException ("There was a merge operation for rs" + rs + " but there is no update " +
-                                                     "operation for the SS IDs. This happens because there were no " +
-                                                     "update (merge/decluster) operations for the corresponding SS IDs" +
-                                                     "Every RS ID in dbSNP comes with at least one associated SS ID. " +
-                                                     "If an RS ID is merged, its corresponding SS IDs must be " +
-                                                     "updated (with the new RS ID) unless they have been previously " +
-                                                     "declustered (rs = null).");
+        if (!hasSubmittedVariantsDeclustered && mergedVariants.isEmpty()) {
+            throw new IllegalStateException ("Found merge operation for rs" + rs + " but no SS IDs updates " +
+                                                     "(merge/update) in the collection containing operations. " +
+                                                     "Since every RS ID in dbSNP is associated with at least one SS " +
+                                                     "ID, the latter must be updated when the former are merged, " +
+                                                     "unless they have been previously declustered (RS ID = null).");
         }
 
-        return new ArrayList<>(variants.values());
+        return new ArrayList<>(mergedVariants.values());
     }
 
     /**
