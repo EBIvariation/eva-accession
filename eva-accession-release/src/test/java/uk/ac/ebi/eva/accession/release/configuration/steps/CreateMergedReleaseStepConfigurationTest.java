@@ -118,7 +118,7 @@ public class CreateMergedReleaseStepConfigurationTest {
 
         String assemblyName = assemblyAccessionToName.get(inputParameters.getAssemblyAccession());
         assertNotNull(assemblyName);
-        List<String> referenceLines = grepFile(getMergedReleaseFile(), "^##reference=" + assemblyName + "$");
+        List<String> referenceLines = grepFile(getMergedReleaseFile(), "^##reference=<ID=" + assemblyName + ",.*$");
         assertEquals(1, referenceLines.size());
 
         List<String> metadataVariantClassLines = grepFile(getMergedReleaseFile(),

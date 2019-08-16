@@ -21,7 +21,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 
@@ -46,15 +46,38 @@ import java.util.Optional;
  */
 public class AssemblyNameRetriever {
 
-    private static final String ENA_ASSMEBLY_URL_FORMAT_STRING = "https://www.ebi.ac.uk/ena/data/view/%s&display=xml";
+    private static final String ENA_ASSMEBLY_URL_FORMAT_STRING = "https://www.ebi.ac.uk/ena/data/view/%s";
+
+    private static final String ENA_ASSMEBLY_XML_DISPLAY_SUFFIX = "&display=xml";
 
     private String assemblyAccession;
 
     private String assemblyName;
 
-    public AssemblyNameRetriever(String assemblyAccession) throws IOException, JAXBException {
+    public AssemblyNameRetriever(String assemblyAccession) {
         this.assemblyAccession = assemblyAccession;
         this.assemblyName = fetchAssemblyName(assemblyAccession);
+    }
+
+    private String fetchAssemblyName(String assemblyAccession) {
+        String url = buildAssemblyUrl(assemblyAccession) + ENA_ASSMEBLY_XML_DISPLAY_SUFFIX;
+
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(new URL(url));
+            if (enaAssembly.getAssembly() == null) {
+                return null;
+            } else {
+                return enaAssembly.getAssembly().getAlias();
+            }
+        } catch (JAXBException | MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String buildAssemblyUrl(String assemblyAccession) {
+        return String.format(ENA_ASSMEBLY_URL_FORMAT_STRING, assemblyAccession);
     }
 
     public String getAssemblyAccession() {
@@ -69,17 +92,8 @@ public class AssemblyNameRetriever {
         }
     }
 
-    private String fetchAssemblyName(String assemblyAccession) throws IOException, JAXBException {
-        String url = String.format(ENA_ASSMEBLY_URL_FORMAT_STRING, assemblyAccession);
-
-        JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(new URL(url));
-        if (enaAssembly.getAssembly() == null) {
-            return null;
-        } else {
-            return enaAssembly.getAssembly().getAlias();
-        }
+    public String buildAssemblyUrl() {
+        return buildAssemblyUrl(assemblyAccession);
     }
 
     @XmlRootElement(name = "ROOT")

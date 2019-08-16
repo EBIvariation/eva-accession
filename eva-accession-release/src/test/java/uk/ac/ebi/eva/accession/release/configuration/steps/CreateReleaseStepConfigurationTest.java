@@ -116,7 +116,7 @@ public class CreateReleaseStepConfigurationTest {
 
         String assemblyName = assemblyAccessionToName.get(inputParameters.getAssemblyAccession());
         assertNotNull(assemblyName);
-        List<String> referenceLines = grepFile(getReleaseFile(), "^##reference=" + assemblyName + "$");
+        List<String> referenceLines = grepFile(getReleaseFile(), "^##reference=<ID=" + assemblyName + ",.*$");
         assertEquals(1, referenceLines.size());
 
         List<String> metadataVariantClassLines = grepFile(getReleaseFile(),

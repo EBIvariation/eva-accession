@@ -75,4 +75,10 @@ public class AssemblyNameRetrieverTest {
     public void retrieveNonExistentAssembly() throws IOException, JAXBException {
         assertFalse(new AssemblyNameRetriever("GCA_non_existent").getAssemblyName().isPresent());
     }
+
+    @Test
+    public void buildUrl() {
+        assertEquals("https://www.ebi.ac.uk/ena/data/view/GCA_000001405.28",
+                     new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyUrl());
+    }
 }

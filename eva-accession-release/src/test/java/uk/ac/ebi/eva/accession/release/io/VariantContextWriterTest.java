@@ -166,7 +166,8 @@ public class VariantContextWriterTest {
 
         List<String> referenceLines = grepFile(output, "^##reference.*");
         assertEquals(1, referenceLines.size());
-        assertEquals("##reference=" + REFERENCE_ASSEMBLY, referenceLines.get(0));
+        assertEquals("##reference=<ID=" + REFERENCE_ASSEMBLY + ",URL=https://www.ebi.ac.uk/ena/data/view/"
+                     + REFERENCE_ASSEMBLY + ">", referenceLines.get(0));
     }
 
     private List<String> grepFile(File file, String regex) throws IOException {
