@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.io;
+package uk.ac.ebi.eva.accession.dbsnp2.processors;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -22,7 +22,6 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.dbsnp2.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.time.LocalDateTime;
