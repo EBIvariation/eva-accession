@@ -128,21 +128,34 @@ public class ContigWriterTest {
     }
 
     /**
-     * This will happen a contig is null or empty
+     * This will happen a contig is null
      */
     @Test(expected = IllegalArgumentException.class)
     public void throwExceptionIfNullContig() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
-                                   "ucsc1", true),
-                new ContigSynonyms(SEQUENCE_NAME_2, "assembled-molecule", "2", GENBANK_ACCESSION_2, REFSEQ_ACCESSION_2,
-                                   "ucsc2", false),
-                new ContigSynonyms(SEQUENCE_NAME_3, "assembled-molecule", "3", GENBANK_ACCESSION_3, "na", "ucsc3",
-                                   false)));
+                                   "ucsc1", true)));
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
-        contigWriter.write(Arrays.asList(GENBANK_ACCESSION_1, null));
+        String nullGenbankAccession = null;
+        contigWriter.write(Arrays.asList(GENBANK_ACCESSION_1, nullGenbankAccession));
+        contigWriter.close();
+    }
+
+    /**
+     * This will happen a contig is empty
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void throwExceptionIfEmptyContig() {
+        ContigMapping contigMapping = new ContigMapping(Arrays.asList(
+                new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
+                                   "ucsc1", true)));
+        ContigWriter contigWriter = new ContigWriter(output, contigMapping);
+
+        contigWriter.open(null);
+        String emptyGenbankAccession = "";
+        contigWriter.write(Arrays.asList(GENBANK_ACCESSION_1, emptyGenbankAccession));
         contigWriter.close();
     }
 
@@ -167,7 +180,7 @@ public class ContigWriterTest {
      * This will happen if there is any contig in mongo that is not in the assembly report
      */
     @Test(expected = IllegalArgumentException.class)
-    public void throwExceptionIfEmptyContig() {
+    public void throwExceptionIfContigNotInAssemblyReport() {
         ContigMapping contigMapping = new ContigMapping(Arrays.asList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "assembled-molecule", "1", GENBANK_ACCESSION_1, REFSEQ_ACCESSION_1,
                                    "ucsc1", true)));
