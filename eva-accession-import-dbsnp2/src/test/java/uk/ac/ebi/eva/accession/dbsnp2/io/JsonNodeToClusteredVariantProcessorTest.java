@@ -33,6 +33,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.dbsnp2.processors.JsonNodeToClusteredVariantProcessor;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 

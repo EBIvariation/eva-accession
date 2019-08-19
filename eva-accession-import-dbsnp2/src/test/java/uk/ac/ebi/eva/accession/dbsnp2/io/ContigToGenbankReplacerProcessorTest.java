@@ -22,6 +22,7 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.dbsnp2.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.time.LocalDateTime;
