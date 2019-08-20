@@ -195,7 +195,7 @@ public class VariantContextWriterTest {
 
         List<String> metadataLines = grepFile(output, "^##.*");
         assertEquals(10, metadataLines.size());
-        List<String> contigLines = grepFile(output, "##contig=<ID=Chr1,Name=\"CM0001.1\">");
+        List<String> contigLines = grepFile(output, "##contig=<ID=Chr1,accession=\"CM0001.1\">");
         assertEquals(1, contigLines.size());
         List<String> headerLines = grepFile(output, "^#CHROM.*");
         assertEquals(1, headerLines.size());
