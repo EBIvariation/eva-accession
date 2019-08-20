@@ -66,9 +66,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                     "VCF specification and HTSJDK forbid empty alleles. Illegal variant: " + variant);
         }
         String[] allelesArray = getAllelesArray(variant);
-
-        String contig = variant.getChromosome();
-        String sequenceName = getSequenceName(contig);
+        String sequenceName = getSequenceName(variant.getChromosome());
 
         VariantContext variantContext = variantContextBuilder
                 .chr(sequenceName)
