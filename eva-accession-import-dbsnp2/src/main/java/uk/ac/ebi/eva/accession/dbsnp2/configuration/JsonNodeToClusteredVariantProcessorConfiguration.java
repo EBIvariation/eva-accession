@@ -25,8 +25,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.dbsnp2.io.ContigToGenbankReplacerProcessor;
-import uk.ac.ebi.eva.accession.dbsnp2.io.JsonNodeToClusteredVariantProcessor;
+import uk.ac.ebi.eva.accession.dbsnp2.processors.ContigToGenbankReplacerProcessor;
+import uk.ac.ebi.eva.accession.dbsnp2.processors.JsonNodeToClusteredVariantProcessor;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 
 import java.util.Arrays;

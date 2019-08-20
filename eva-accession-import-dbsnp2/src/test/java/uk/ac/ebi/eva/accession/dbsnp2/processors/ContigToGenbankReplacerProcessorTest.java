@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.io;
+package uk.ac.ebi.eva.accession.dbsnp2.processors;
 
 import org.junit.Before;
 import org.junit.Rule;
