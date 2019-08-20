@@ -64,7 +64,8 @@ import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.SUPPOR
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
-        "/test-data/dbsnpSubmittedVariantOperationEntity.json"
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json",
+        "/test-data/dbsnpClusteredVariantEntity.json"
 })
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class MergedVariantMongoReaderTest {
@@ -294,5 +295,23 @@ public class MergedVariantMongoReaderTest {
         MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000181335.3", mongoClient, TEST_DB,
                                                                        CHUNK_SIZE);
         readIntoMap(reader);
+    }
+
+    /**
+     * This test will use a different defaultReader for assembly GCA_000004515.3 to evaluate this specific scenario:
+     * - Two merge operation for clustered variants
+     * - Two corresponding operations for its submitted variants
+     * - Only one of the clustered variants is active (Present in dbsnpClusteredVariantEntity collection)
+     *
+     * Only the clustered operation associated to the active clustered variant should be returned
+     */
+    @Test
+    public void excludeMergedIntoADeprecatedRs() throws Exception {
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000004515.3", mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE);
+        Map<String, Variant> allVariants = readIntoMap(reader);
+        assertEquals(1, allVariants.size());
+        assertNotNull(allVariants.get("CM000851.2_2715437_G_A"));
+        assertNull(allVariants.get("CM000851.2_40018568_A_G"));
     }
 }

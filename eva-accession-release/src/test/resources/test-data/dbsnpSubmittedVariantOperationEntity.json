@@ -312,6 +312,58 @@
           "createdDate" : ISODate("2009-12-15T15:28:00.000+0000")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("5ca60fecdab486ab4f9d5950"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(3062726743),
+      "reason" : "Original rs1155511751 was merged into rs127195882.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000004515.3",
+          "tax" : 3847,
+          "study" : "BELZILE-LAB_WHOLE_GENOME_SNP_DISCOVERY",
+          "contig" : "CM000851.2",
+          "start" : NumberLong(2715437),
+          "ref" : "G",
+          "alt" : "A",
+          "rs" : NumberLong(1155511751),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "F82060CBC359D9B4A65C5C642F47288C5BD4367E",
+          "accession" : NumberLong(3062726743),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-01T11:00:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5ca60ff9dab486ab4f9d5c2a"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(3060073575),
+      "reason" : "Original rs1155918185 was merged into rs393316094.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000004515.3",
+          "tax" : 3847,
+          "study" : "BELZILE-LAB_WHOLE_GENOME_SNP_DISCOVERY",
+          "contig" : "CM000836.2",
+          "start" : NumberLong(40018568),
+          "ref" : "A",
+          "alt" : "G",
+          "rs" : NumberLong(1155918185),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "4F02D37F6D5FDD777E74533CC144E0D512D3CF6A",
+          "accession" : NumberLong(3060073575),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-01T11:00:00.000Z")
+        }
+      ]
     }
   ]
 }
