@@ -127,7 +127,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                 String[] contigAndName = contigLine.split(",");
                 String contig = contigAndName[0];
                 String name = contigAndName[1];
-                metaData.add(new VCFHeaderLine("contig", "<ID=" + name + ",Name=\"" + contig + "\">"));
+                metaData.add(new VCFHeaderLine("contig", "<ID=" + name + ",accession=\"" + contig + "\">"));
             }
         } catch (IOException e) {
             logger.warn("Contigs file not found, VCF header will not have any contigs in the metadata section");
