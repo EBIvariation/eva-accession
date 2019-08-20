@@ -26,6 +26,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -312,6 +313,28 @@ public class MergedVariantMongoReaderTest {
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());
         assertNotNull(allVariants.get("CM000851.2_2715437_G_A"));
-        assertNull(allVariants.get("CM000851.2_40018568_A_G"));
+        assertNull(allVariants.get("CM000836.2_40018568_A_G"));
+    }
+
+    /**
+     * This test will use a different defaultReader for assembly GCA_000001111.1 to evaluate this specific scenario:
+     * - Two merge operations for clustered variants to the same RS IS (rs2222->rs1111 and rs3333->rs1111). Note that
+     * rs1111 is mapped to multiple locations (start:100 and start:200)
+     * - Two submitted variant operations indicating the merged operations of its RS ID
+     * - Only one clustered variant in the active collection (rs1111 start:100). This means that rs1111 start:200 has
+     * been deprecated
+     *
+     * Even though the rs1111 is only active with start 100, the merge reader will also allow the merged RS ID with
+     * start 200 in the merged VCF.
+     */
+    @Ignore
+    @Test
+    public void rsMappedToDifferentLocationsOneDeprecated() throws Exception {
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001111.1", mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE);
+        Map<String, Variant> allVariants = readIntoMap(reader);
+        assertEquals(1, allVariants.size());
+        assertNotNull(allVariants.get("CM000111.1_100_G_A"));
+        assertNull(allVariants.get("CM000111.1_200_A_G"));
     }
 }

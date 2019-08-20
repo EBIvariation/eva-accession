@@ -211,6 +211,18 @@
       "accession" : NumberLong(68736359),
       "version" : 1,
       "createdDate" : ISODate("2009-02-10T17:22:00.000Z")
+    },
+    {
+      "_id" : "1F78CECB25A9D35DDE993515FEF8016B8F9776E3",
+      "asm" : "GCA_000001111.1",
+      "tax" : 1111,
+      "contig" : "CM000111.1",
+      "start" : NumberLong(100),
+      "type" : "SNV",
+      "validated" : true,
+      "accession" : NumberLong(1111),
+      "version" : 1,
+      "createdDate" : ISODate("2013-08-05T13:53:00.000Z")
     }
   ]
 }

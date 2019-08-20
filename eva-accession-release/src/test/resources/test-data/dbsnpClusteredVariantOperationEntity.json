@@ -332,7 +332,7 @@
       ]
     },
     {
-      "_id" : ObjectId("5ca60ff9dab486ab4f9d5c28"),
+      "_id" : ObjectId("5ca60ff9dab486ab4f9d5c21"),
       "eventType" : "MERGED",
       "accession" : NumberLong(1155918185),
       "mergeInto" : NumberLong(393316094),
@@ -347,6 +347,48 @@
           "validated" : false,
           "hashedMessage" : "1F78CECB25A9D35DDE993515FEF8016B8F9776E3",
           "accession" : NumberLong(1155918185),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-28T15:13:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5ca60ff9dab486ab4f9d5c22"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(2222),
+      "mergeInto" : NumberLong(1111),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000001111.1",
+          "tax" : 1111,
+          "contig" : "CM000111.1",
+          "start" : NumberLong(100),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "1F78CECB25A9D35DDE993515FEF8016B8F9776E3",
+          "accession" : NumberLong(2222),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-28T15:13:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5ca60ff9dab486ab4f9d5c23"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(3333),
+      "mergeInto" : NumberLong(1111),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000001111.1",
+          "tax" : 1111,
+          "contig" : "CM000111.1",
+          "start" : NumberLong(200),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "1F78CECB25A9D35DDE993515FEF8016B8F9776E4",
+          "accession" : NumberLong(3333),
           "version" : 1,
           "createdDate" : ISODate("2017-09-28T15:13:00.000Z")
         }
