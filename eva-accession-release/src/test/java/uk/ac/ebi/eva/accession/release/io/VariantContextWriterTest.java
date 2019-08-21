@@ -20,6 +20,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.steps.processors.VariantToVariantContextProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -53,7 +55,9 @@ public class VariantContextWriterTest {
 
     private static final String ID = "rs123";
 
-    private static final String CHR_1 = "1";
+    private static final String SEQUENCE_NAME_1 = "Chr1";
+
+    private static final String GENBANK_ACCESSION_1 = "CM0001.1";
 
     private static final String FILE_ID = "fileId";
 
@@ -100,18 +104,19 @@ public class VariantContextWriterTest {
     @Test
     public void basicWrite() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
-    private Variant buildVariant(String chr, int start, String reference, String alternate,
-                                 String sequenceOntologyTerm, String... studies) {
+    private Variant buildVariant(String chr, int start, String reference, String alternate,String sequenceOntologyTerm,
+                                 String... studies) {
         return buildVariant(chr, start, reference, alternate, sequenceOntologyTerm, false, false, true, true, true,
                             studies);
     }
 
-    private Variant buildVariant(String chr, int start, String reference, String alternate,
-                                 String sequenceOntologyTerm, boolean validated, boolean submittedVariantValidated,
-                                 boolean allelesMatch, boolean assemblyMatch, boolean evidence, String... studies) {
+    private Variant buildVariant(String chr, int start, String reference, String alternate, String sequenceOntologyTerm,
+                                 boolean validated, boolean submittedVariantValidated, boolean allelesMatch,
+                                 boolean assemblyMatch, boolean evidence, String... studies) {
         Variant variant = new Variant(chr, start, start + alternate.length(), reference, alternate);
         variant.setMainId(ID);
         for (String study : studies) {
@@ -128,14 +133,19 @@ public class VariantContextWriterTest {
         return variant;
     }
 
-    public File assertWriteVcf(File outputFolder, Variant... variants) throws Exception {
+    private File assertWriteVcf(File outputFolder, Variant... variants) throws Exception {
         Path reportPath = ReportPathResolver.getCurrentIdsReportPath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
         String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
                                                                              REFERENCE_ASSEMBLY);
         VariantContextWriter writer = new VariantContextWriter(reportPath, REFERENCE_ASSEMBLY, activeContigsFilePath);
         writer.open(null);
 
-        VariantToVariantContextProcessor variantToVariantContextProcessor = new VariantToVariantContextProcessor();
+        ContigMapping contigMapping = new ContigMapping(Collections.singletonList(
+                new ContigSynonyms(SEQUENCE_NAME_1, "A", "A", GENBANK_ACCESSION_1, "A", "A", true)));
+
+        VariantToVariantContextProcessor variantToVariantContextProcessor =
+                new VariantToVariantContextProcessor(contigMapping);
+
         List<VariantContext> variantContexts =
                 Stream.of(variants).map(variantToVariantContextProcessor::process).collect(Collectors.toList());
         writer.write(variantContexts);
@@ -151,7 +161,8 @@ public class VariantContextWriterTest {
     @Test
     public void checkReference() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> referenceLines = grepFile(output, "^##reference.*");
         assertEquals(1, referenceLines.size());
@@ -175,15 +186,16 @@ public class VariantContextWriterTest {
     public void checkMetadataSection() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
         FileWriter fileWriter = new FileWriter(ContigWriter.getActiveContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
-        String contig = "CM0001.1";
+        String contig = "CM0001.1,Chr1";
         fileWriter.write(contig);
         fileWriter.close();
 
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> metadataLines = grepFile(output, "^##.*");
         assertEquals(10, metadataLines.size());
-        List<String> contigLines = grepFile(output, "##contig=<ID=CM0001.1>");
+        List<String> contigLines = grepFile(output, "##contig=<ID=Chr1,accession=\"CM0001.1\">");
         assertEquals(1, contigLines.size());
         List<String> headerLines = grepFile(output, "^#CHROM.*");
         assertEquals(1, headerLines.size());
@@ -192,7 +204,8 @@ public class VariantContextWriterTest {
     @Test
     public void checkAccession() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
@@ -201,7 +214,8 @@ public class VariantContextWriterTest {
     @Test
     public void checkColumns() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
@@ -211,7 +225,9 @@ public class VariantContextWriterTest {
     @Test
     public void checkStudies() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1, STUDY_2));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1,
+                                                  STUDY_2));
 
         List<String> metadataLines = grepFileContains(output, STUDY_1);
         assertEquals(1, metadataLines.size());
@@ -233,9 +249,12 @@ public class VariantContextWriterTest {
 
     private void checkSequenceOntology(String sequenceOntology, String reference, String alternate) throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate, sequenceOntology, STUDY_1, STUDY_2));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, reference, alternate, sequenceOntology,
+                                                  STUDY_1, STUDY_2));
 
-        String dataWithVariantClassRegex = createRegexSurroundedByTabOrSemicolonInDataLine(VARIANT_CLASS_KEY + "=SO:[0-9]+");
+        String dataWithVariantClassRegex = createRegexSurroundedByTabOrSemicolonInDataLine(
+                VARIANT_CLASS_KEY + "=SO:[0-9]+");
         List<String> dataLines = grepFile(output, dataWithVariantClassRegex);
         assertEquals(1, dataLines.size());
 
@@ -290,9 +309,12 @@ public class VariantContextWriterTest {
         String alternate3 = "G";
 
         File output = assertWriteVcf(outputFolder,
-                       buildVariant(CHR_1, position1, "C", alternate1, SNP_SEQUENCE_ONTOLOGY, STUDY_1),
-                       buildVariant(CHR_1, position2, "C", alternate2, SNP_SEQUENCE_ONTOLOGY, STUDY_1),
-                       buildVariant(CHR_1, position3, "C", alternate3, SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+                                     buildVariant(GENBANK_ACCESSION_1, position1, "C", alternate1,
+                                                  SNP_SEQUENCE_ONTOLOGY, STUDY_1),
+                                     buildVariant(GENBANK_ACCESSION_1, position2, "C", alternate2,
+                                                  SNP_SEQUENCE_ONTOLOGY, STUDY_1),
+                                     buildVariant(GENBANK_ACCESSION_1, position3, "C", alternate3,
+                                                  SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFileContains(output, ID);
         assertEquals(3, dataLines.size());
@@ -309,7 +331,9 @@ public class VariantContextWriterTest {
     @Test
     public void checkStandardNucleotides() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "NACTG", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "NACTG", SNP_SEQUENCE_ONTOLOGY,
+                                                  STUDY_1));
 
         List<String> dataLines = grepFileContains(output, ID);
         assertEquals(1, dataLines.size());
@@ -318,20 +342,22 @@ public class VariantContextWriterTest {
     @Test(expected = IllegalArgumentException.class)
     public void throwIfNonStandardNucleotides() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "C", "U", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
+        File output = assertWriteVcf(outputFolder,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "U", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
     @Test
     public void checkFlagsAreNotPresentWhenDefaultValues() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
         File output = assertWriteVcf(outputFolder,
-                       buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, false, false, true, true, true,
-                                    STUDY_1));
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, false,
+                                                  false, true, true, true,
+                                                  STUDY_1));
 
         String dataLinesWithFlagsRegex = DATA_LINES_REGEX + "(" + CLUSTERED_VARIANT_VALIDATED_KEY
-                                         + "|" + ALLELES_MATCH_KEY
-                                         + "|" + ASSEMBLY_MATCH_KEY
-                                         + "|" + SUPPORTED_BY_EVIDENCE_KEY + ").*";
+                + "|" + ALLELES_MATCH_KEY
+                + "|" + ASSEMBLY_MATCH_KEY
+                + "|" + SUPPORTED_BY_EVIDENCE_KEY + ").*";
         List<String> dataLines = grepFile(output, dataLinesWithFlagsRegex);
 
         assertEquals(0, dataLines.size());
@@ -345,8 +371,9 @@ public class VariantContextWriterTest {
     private void assertFlagIsPresent(String flagRegex) throws Exception {
         File outputFolder = temporaryFolder.newFolder();
         File output = assertWriteVcf(outputFolder,
-                       buildVariant(CHR_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, true, true, false, false, false,
-                                    STUDY_1));
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "C", "G", SNP_SEQUENCE_ONTOLOGY, true,
+                                                  true, false, false, false,
+                                                  STUDY_1));
 
         String dataLinesWithValidatedRegex = createRegexSurroundedByTabOrSemicolonInDataLine(flagRegex);
         List<String> dataLines;
@@ -358,13 +385,14 @@ public class VariantContextWriterTest {
     public void checkHowShouldTabsBeWrittenInJavaRegex() {
         assertTrue("\t".matches("\t")); // java string containing literal tab
         assertTrue("\t".matches("\\t"));    // java string containing a backwards slash and a 't', interpreted as
-                                            // a tab by the regex classes, @see Pattern
+        // a tab by the regex classes, @see Pattern
     }
 
     @Test
     public void checkNonDefaultSubmittedVariantValidatedFlag() throws Exception {
         assertFlagIsPresent(SUBMITTED_VARIANT_VALIDATED_KEY + "=[0-9]");
     }
+
     @Test
     public void checkNonDefaultAllelesMatchFlag() throws Exception {
         assertFlagIsPresent(ALLELES_MATCH_KEY);
@@ -387,7 +415,7 @@ public class VariantContextWriterTest {
 
     private void assertSeveralFlagValues(String flagKey, boolean firstValue, boolean secondValue,
                                          int expectedLinesWithTheFlag) throws Exception {
-        Variant variant = new Variant(CHR_1, 1000, 1000, "C", "G");
+        Variant variant = new Variant(GENBANK_ACCESSION_1, 1000, 1000, "C", "G");
         variant.setMainId(ID);
 
         VariantSourceEntry sourceEntry1 = new VariantSourceEntry(STUDY_1, FILE_ID);
@@ -406,10 +434,12 @@ public class VariantContextWriterTest {
         dataLines = grepFile(output, dataLinesWithValidatedRegex);
         assertEquals(expectedLinesWithTheFlag, dataLines.size());
     }
+
     @Test
     public void checkSeveralValidatedFlags() throws Exception {
         assertSeveralFlagValues(CLUSTERED_VARIANT_VALIDATED_KEY, true, false, 1);
     }
+
     @Test
     public void checkSeveralAllelesMatchFlags() throws Exception {
         assertSeveralFlagValues(ALLELES_MATCH_KEY, true, false, 1);
@@ -427,7 +457,7 @@ public class VariantContextWriterTest {
 
     private void assertNamedVariant(String reference, String alternate) throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, reference, alternate,
+        File output = assertWriteVcf(outputFolder, buildVariant(GENBANK_ACCESSION_1, 1000, reference, alternate,
                                                                 SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> dataLines = grepFile(output, DATA_LINES_REGEX);
@@ -445,7 +475,7 @@ public class VariantContextWriterTest {
     @Test(expected = IllegalArgumentException.class)
     public void throwIfNamedReference() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant(CHR_1, 1000, "<1190_BP_DEL>", "A",
+        File output = assertWriteVcf(outputFolder, buildVariant(GENBANK_ACCESSION_1, 1000, "<1190_BP_DEL>", "A",
                                                                 SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY, STUDY_1));
     }
 
@@ -453,9 +483,11 @@ public class VariantContextWriterTest {
     public void writeStudyWithInvalidCharacters() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
         File output = assertWriteVcf(outputFolder,
-                                     buildVariant(CHR_1, 1000, "A", "T", SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY,
+                                     buildVariant(GENBANK_ACCESSION_1, 1000, "A", "T",
+                                                  SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY,
                                                   "study_id=weird, yes; but not impossible in dbSNP"),
-                                     buildVariant(CHR_1, 2000, "A", "T", SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY,
+                                     buildVariant(GENBANK_ACCESSION_1, 2000, "A", "T",
+                                                  SEQUENCE_ALTERATION_SEQUENCE_ONTOLOGY,
                                                   "one =study= ",
                                                   ";; extra study ;;"));
 

@@ -19,6 +19,10 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,10 +43,13 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     private final File output;
 
+    private ContigMapping contigMapping;
+
     private PrintWriter printWriter;
 
-    public ContigWriter(File output) {
+    public ContigWriter(File output, ContigMapping contigMapping) {
         this.output = output;
+        this.contigMapping = contigMapping;
     }
 
     @Override
@@ -67,7 +74,18 @@ public class ContigWriter implements ItemStreamWriter<String> {
     @Override
     public void write(List<? extends String> contigs) {
         for (String contig : contigs) {
-            printWriter.println(contig);
+            if (contig == null || contig.isEmpty()) {
+                throw new IllegalArgumentException("The contig cannot be null or empty");
+            }
+
+            ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
+            String sequenceName = contigMapping.getContigSynonym(contig, contigSynonyms, ContigNaming.SEQUENCE_NAME);
+
+            if (sequenceName == null || sequenceName.isEmpty()) {
+                throw new IllegalArgumentException("Could not find the corresponding sequence name for contig " + contig);
+            }
+
+            printWriter.println(contig + "," + sequenceName);
         }
     }
 

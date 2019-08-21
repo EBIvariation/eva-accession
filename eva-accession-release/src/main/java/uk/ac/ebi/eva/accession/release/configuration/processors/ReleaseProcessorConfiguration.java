@@ -42,12 +42,13 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PR
 public class ReleaseProcessorConfiguration {
 
     @Bean(RELEASE_PROCESSOR)
-    public ItemProcessor<Variant, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader) {
+    public ItemProcessor<Variant, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader,
+                                                                   ContigMapping contigMapping) {
         CompositeItemProcessor<Variant, VariantContext> compositeItemProcessor = new CompositeItemProcessor<>();
         compositeItemProcessor.setDelegates(Arrays.asList(new NamedVariantProcessor(),
                                                           new ExcludeInvalidVariantsProcessor(),
                                                           new ContextNucleotideAdditionProcessor(fastaReader),
-                                                          new VariantToVariantContextProcessor()));
+                                                          new VariantToVariantContextProcessor(contigMapping)));
         return compositeItemProcessor;
     }
 

@@ -15,9 +15,11 @@
  */
 package uk.ac.ebi.eva.accession.release.configuration.writers;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.release.io.ContigWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
@@ -31,15 +33,20 @@ import static uk.ac.ebi.eva.accession.release.io.ContigWriter.getMergedContigsFi
 @Configuration
 public class ContigWriterConfiguration {
 
+    @Autowired
+    private ContigMapping contigMapping;
+
     @Bean(ACTIVE_CONTIG_WRITER)
     public ContigWriter activeContigWriter(InputParameters inputParameters) {
         return new ContigWriter(new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                                                  inputParameters.getAssemblyAccession())));
+                                                                  inputParameters.getAssemblyAccession())),
+                                contigMapping);
     }
 
     @Bean(MERGED_CONTIG_WRITER)
     public ContigWriter mergedContigWriter(InputParameters inputParameters) {
         return new ContigWriter(new File(getMergedContigsFilePath(inputParameters.getOutputFolder(),
-                                                                  inputParameters.getAssemblyAccession())));
+                                                                  inputParameters.getAssemblyAccession())),
+                                contigMapping);
     }
 }
