@@ -56,7 +56,8 @@ import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.VARIAN
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
-        "/test-data/dbsnpSubmittedVariantOperationEntity.json"})
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json",
+        "/test-data/dbsnpClusteredVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class CreateMergedReleaseStepConfigurationTest {
 

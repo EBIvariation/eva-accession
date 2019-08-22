@@ -35,6 +35,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final String MERGE_OPERATION_REASON_FIRST_WORD = "Original";
 
-    public static final String DECLUSTER_OPERATION_REASON_FIRST_WORD = "Declustered: ";
+    private static final String DECLUSTER_OPERATION_REASON_FIRST_WORD = "Declustered: ";
+
+    private static final String ACTIVE_RS = "activeRs";
 
     public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize) {
         super(assemblyAccession, mongoClient, database, chunkSize);
@@ -78,9 +81,12 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_OPERATION_ENTITY, ACCESSION_FIELD,
+        Bson lookupSubmittedVariantsOperations = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_OPERATION_ENTITY, ACCESSION_FIELD,
                                         getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD), SS_INFO_FIELD);
-        List<Bson> aggregation = Arrays.asList(matchAssembly, matchMerged, sort, lookup);
+        Bson lookupClusteredVariants = Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, MERGE_INTO_FIELD,
+                                                         ACCESSION_FIELD, ACTIVE_RS);
+        List<Bson> aggregation = Arrays.asList(matchAssembly, matchMerged, sort, lookupSubmittedVariantsOperations,
+                                               lookupClusteredVariants);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
@@ -108,6 +114,11 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
         Map<String, Variant> mergedVariants = new HashMap<>();
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
+
+        Collection<Document> activeClusteredVariant = (Collection<Document>) mergedVariant.get(ACTIVE_RS);
+        if (activeClusteredVariant.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         boolean hasSubmittedVariantsDeclustered = false;
         for (Document submittedVariantOperation : submittedVariantOperations) {

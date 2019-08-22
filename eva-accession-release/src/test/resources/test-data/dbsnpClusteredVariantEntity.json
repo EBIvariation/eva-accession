@@ -53,6 +53,30 @@
       )
     },
     {
+      "_id": "7A4304A9E9AE320D0E28FCC9E23EF1E605ACA111",
+      "asm": "GCF_000409795.2",
+      "tax" : 60711,
+      "contig" : "CM001954.1",
+      "start" : NumberLong(3337129),
+      "type" : "SNV",
+      "validated" : false,
+      "accession" : NumberLong(1153596374),
+      "version" : 1,
+      "createdDate" : ISODate("2017-09-20T08:25:00Z")
+    },
+    {
+      "_id": "7A4304A9E9AE320D0E28FCC9E23EF1E605ACA222",
+      "asm": "GCF_000409795.2",
+      "tax" : 60711,
+      "contig" : "CM001941.2",
+      "start" : NumberLong(3337129),
+      "type" : "SNV",
+      "validated" : false,
+      "accession" : NumberLong(66667),
+      "version" : 1,
+      "createdDate" : ISODate("2017-09-20T08:25:00Z")
+    },
+    {
       "_id": "488EA6AC249A14ECC80E020353D2CFBE366DD324",
       "asm": "GCF_000001735.3",
       "tax": 3702,
@@ -152,6 +176,53 @@
       "accession" : NumberLong(1153055382),
       "version" : 1,
       "createdDate" : ISODate("2017-09-20T08:25:00.000Z")
+    },
+    {
+      "_id" : "A3B87BE803AD7528981BB50459E0827A58440EA5",
+      "asm" : "GCA_000004515.3",
+      "tax" : 3847,
+      "contig" : "CM000851.2",
+      "start" : NumberLong(2715437),
+      "type" : "SNV",
+      "validated" : true,
+      "accession" : NumberLong(127195882),
+      "version" : 1,
+      "createdDate" : ISODate("2010-12-28T04:25:00.000Z")
+    },
+    {
+      "_id" : "A3B87BE803AD7528981BB50459E0827A58440111",
+      "asm" : "GCA_000181335.3",
+      "tax" : 9685,
+      "contig" : "AANG03312718.1",
+      "start" : NumberLong(1977),
+      "type" : "SNV",
+      "validated" : false,
+      "accession" : NumberLong(43955718),
+      "version" : 1,
+      "createdDate" : ISODate("2015-04-16T13:30:00.000Z")
+    },
+    {
+      "_id" : "37E75A5352055330EA1CDE6C91DE9ED051E36374",
+      "asm" : "GCA_000002305.1",
+      "tax" : 9796,
+      "contig" : "CM000399.2",
+      "start" : NumberLong(175891),
+      "type" : "SNV",
+      "accession" : NumberLong(68736359),
+      "version" : 1,
+      "createdDate" : ISODate("2009-02-10T17:22:00.000Z")
+    },
+    {
+      "_id" : "1F78CECB25A9D35DDE993515FEF8016B8F9776E3",
+      "asm" : "GCA_000001111.1",
+      "tax" : 1111,
+      "contig" : "CM000111.1",
+      "start" : NumberLong(100),
+      "type" : "SNV",
+      "validated" : true,
+      "accession" : NumberLong(1111),
+      "version" : 1,
+      "createdDate" : ISODate("2013-08-05T13:53:00.000Z")
     }
   ]
 }
