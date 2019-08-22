@@ -323,7 +323,7 @@ public class MergedVariantMongoReaderTest {
      * location.
      *
      * This test will use a different defaultReader for assembly GCA_000001111.1 to evaluate this specific scenario:
-     * - Two merge operations for clustered variants to the same RS IS (rs2222->rs1111 and rs3333->rs1111). Note that
+     * - Two merge operations for clustered variants to the same RS ID (rs2222->rs1111 and rs3333->rs1111). Note that
      * rs1111 is mapped to multiple locations (start:100 and start:200)
      * - Two submitted variant operations indicating the merged operations of its RS ID
      * - Only one clustered variant in the active collection (rs1111 start:100). This means that rs1111 start:200 has
