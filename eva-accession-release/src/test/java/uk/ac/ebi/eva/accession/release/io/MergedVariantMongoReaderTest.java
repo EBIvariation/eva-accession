@@ -317,9 +317,6 @@ public class MergedVariantMongoReaderTest {
     }
 
     /**
-     * This test is ignored because it would fail with the current implementation but we need to be aware of this
-     * situation:
-     *
      * In the dbSNP data the same RS IDs (e.g. rs1111) can be mapped to different locations (start: 100 and start:200)
      * and that RS ID in one location can be deprecated but active in the other one. In that case we will count the
      * RS ID as active because it will be present in the dbsnpClusteredVariantEntity collection for at least one
@@ -335,7 +332,8 @@ public class MergedVariantMongoReaderTest {
      * Even though the rs1111 is only active with start 100, the merge reader will also include rs1111 as
      * "current RS ID" for the line of rs2222 with start 200 in the merged VCF.
      */
-    @Ignore
+    @Ignore("This test is ignored because it would fail with the current implementation but we need to be aware of" +
+            "this situation (More details in javadoc)")
     @Test
     public void rsMappedToDifferentLocationsOneDeprecated() throws Exception {
         MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001111.1", mongoClient, TEST_DB,
