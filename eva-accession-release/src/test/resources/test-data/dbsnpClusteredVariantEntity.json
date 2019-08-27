@@ -14,6 +14,19 @@
       )
     },
     {
+      "_id" : "3D0AFF1E1CD40ED24279EF031D3E54B36D2A1111",
+      "asm" : "GCF_000409795.2",
+      "tax" : 60711,
+      "contig" : "CM001954.1",
+      "start" : NumberLong(70000000),
+      "type" : "DEL",
+      "accession" : NumberLong(100),
+      "version" : 1,
+      "createdDate" : ISODate(
+      "2010-03-24T15:04:00.000Z"
+      )
+    },
+    {
       "_id": "DD746A372C44C468A2222A62D69A915D3571A334",
       "asm": "GCA_000409795.2",
       "tax": 60711,
