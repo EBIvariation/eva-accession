@@ -21,11 +21,15 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.context.annotation.Bean;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static java.lang.Math.max;
 
@@ -35,8 +39,11 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
 
     private FastaSynonymSequenceReader fastaSequenceReader;
 
+    private Set<Variant> failedVariants;
+
     public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader) {
         this.fastaSequenceReader = fastaReader;
+        this.failedVariants = new HashSet<>();
     }
 
     @Override
@@ -50,7 +57,10 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
                 throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
             }
         } catch (IllegalArgumentException e) {
-            logger.warn(e.getMessage());
+            if (!failedVariants.contains(variant)) {
+                failedVariants.add(variant);
+                logger.warn(e.getMessage());
+            }
             return null;
         }
     }
