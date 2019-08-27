@@ -45,12 +45,12 @@ public class ReleaseProcessorConfiguration {
     @Bean(RELEASE_PROCESSOR)
     public ItemProcessor<Variant, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader,
                                                                    ContigMapping contigMapping,
-                                                                   Set<String> errorMessagesVariantStartOutOfBounds) {
+                                                                   Set<Variant> variantsWithStartOutOfBounds) {
         CompositeItemProcessor<Variant, VariantContext> compositeItemProcessor = new CompositeItemProcessor<>();
         compositeItemProcessor.setDelegates(Arrays.asList(new NamedVariantProcessor(),
                                                           new ExcludeInvalidVariantsProcessor(),
                                                           new ContextNucleotideAdditionProcessor(
-                                                                  fastaReader, errorMessagesVariantStartOutOfBounds),
+                                                                  fastaReader, variantsWithStartOutOfBounds),
                                                           new VariantToVariantContextProcessor(contigMapping)));
         return compositeItemProcessor;
     }

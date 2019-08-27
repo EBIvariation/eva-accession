@@ -37,7 +37,7 @@ public class ListenersConfiguration {
 
     @Bean(EXCLUDE_VARIANTS_LISTENER)
     public StepListenerSupport excludeVariantsListener() {
-        return new ExcludeVariantsListener(errorMessagesVariantStartOutOfBounds());
+        return new ExcludeVariantsListener(variantsWithStartOutOfBounds());
     }
 
     @Bean(PROGRESS_LISTENER)
@@ -47,7 +47,7 @@ public class ListenersConfiguration {
     }
 
     @Bean
-    public Set<String> errorMessagesVariantStartOutOfBounds() {
+    public Set<Variant> variantsWithStartOutOfBounds() {
         return new HashSet<>();
     }
 }

@@ -22,26 +22,34 @@ import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.listener.StepListenerSupport;
 
+import uk.ac.ebi.eva.commons.core.models.AbstractVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ExcludeVariantsListener extends StepListenerSupport<IVariant, IVariant> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcludeVariantsListener.class);
 
-    private Set<String> errorMessagesVariantStartOutOfBounds;
+    private Set<Variant> variantsWithStartOutOfBounds;
 
-    public ExcludeVariantsListener(Set<String> errorMessagesVariantStartOutOfBounds) {
-        this.errorMessagesVariantStartOutOfBounds = errorMessagesVariantStartOutOfBounds;
+    public ExcludeVariantsListener(Set<Variant> errorMessagesVariantStartOutOfBounds) {
+        this.variantsWithStartOutOfBounds = errorMessagesVariantStartOutOfBounds;
     }
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        logger.info("Processors filtered out {} variants", stepExecution.getFilterCount());
-        logger.warn("{} Variants filtered out because the start position is greater than the chromosome end",
-                    errorMessagesVariantStartOutOfBounds.size());
-        errorMessagesVariantStartOutOfBounds.forEach(logger::warn);
+        logger.info("Processors filtered out {} variants in total", stepExecution.getFilterCount());
+        String contigs = variantsWithStartOutOfBounds.stream()
+                                                     .map(AbstractVariant::getChromosome)
+                                                     .distinct()
+                                                     .collect(Collectors.joining(","));
+        logger.warn("{} Variants filtered out because the start position is greater than the chromosome end. Contigs: {}",
+                    variantsWithStartOutOfBounds.size(), contigs);
+        logger.warn("{} Variants filtered for being invalid",
+                    stepExecution.getFilterCount() - variantsWithStartOutOfBounds.size());
         return stepExecution.getExitStatus();
     }
 }

@@ -18,6 +18,8 @@
 package uk.ac.ebi.eva.accession.release.steps.processors;
 
 import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
@@ -31,13 +33,15 @@ import static java.lang.Math.max;
 
 public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant, IVariant> {
 
+    private Logger log = LoggerFactory.getLogger(ContextNucleotideAdditionProcessor.class);
+
     private FastaSynonymSequenceReader fastaSequenceReader;
 
-    private Set<String> errorMessagesVariantStartOutOfBounds;
+    private Set<Variant> variantsWithStartOutOfBounds;
 
-    public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader, Set<String> failedVariants) {
+    public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader, Set<Variant> failedVariants) {
         this.fastaSequenceReader = fastaReader;
-        this.errorMessagesVariantStartOutOfBounds = failedVariants;
+        this.variantsWithStartOutOfBounds = failedVariants;
     }
 
     @Override
@@ -51,7 +55,10 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
                 throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
             }
         } catch (IllegalArgumentException e) {
-            errorMessagesVariantStartOutOfBounds.add(e.getMessage() + ". " + variant);
+            if (!variantsWithStartOutOfBounds.contains(variant)) {
+                log.warn(e.getMessage() + ". " + variant.toString());
+                variantsWithStartOutOfBounds.add(variant);
+            }
             return null;
         }
     }

@@ -46,7 +46,7 @@ public class ContextNucleotideAdditionProcessorTest {
 
     private static ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor;
 
-    private static Set<String> errorMessagesVariantStartOutOfBounds = new HashSet<>();
+    private static Set<Variant> variantsWithStartOutOfBounds = new HashSet<>();
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -55,7 +55,7 @@ public class ContextNucleotideAdditionProcessorTest {
                 new ContigSynonyms(CONTIG, "", "", "", "", "", true)));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
         contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor (fastaSynonymSequenceReader,
-                                                                                     errorMessagesVariantStartOutOfBounds);
+                                                                                     variantsWithStartOutOfBounds);
     }
 
     @AfterClass
