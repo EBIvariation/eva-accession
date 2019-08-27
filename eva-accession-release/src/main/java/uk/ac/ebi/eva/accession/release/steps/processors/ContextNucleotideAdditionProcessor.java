@@ -43,10 +43,15 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
     public IVariant process(Variant variant) throws Exception {
         String contig = variant.getChromosome();
 
-        if (fastaSequenceReader.doesContigExist(contig)) {
-            return getVariantWithContextNucleotide(variant);
-        } else {
-            throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
+        try {
+            if (fastaSequenceReader.doesContigExist(contig)) {
+                return getVariantWithContextNucleotide(variant);
+            } else {
+                throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn(e.getMessage());
+            return null;
         }
     }
 
