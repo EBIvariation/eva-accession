@@ -32,10 +32,14 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class ContextNucleotideAdditionProcessorTest {
 
     private static final String CONTIG = "22";
+
+    private static final int START_OUTSIDE_CHOMOSOME = 5000000;
+
     private static FastaSynonymSequenceReader fastaSynonymSequenceReader;
     private static ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor;
 
@@ -161,5 +165,23 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals(2, processedVariant.getEnd());
         assertEquals("A", processedVariant.getReference());
         assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
+    }
+
+    @Test
+    public void testStartPositionGreaterThanChromosomeEnd() throws Exception {
+        Variant variant = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
+        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
+        assertNull(processedVariant);
+    }
+
+    @Test
+    public void testStartPositionGreaterThanChromosomeEndMultipleVariants() throws Exception {
+        Variant variant1 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
+        IVariant processedVariant1 = contextNucleotideAdditionProcessor.process(variant1);
+        assertNull(processedVariant1);
+
+        Variant variant2 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME + 1, START_OUTSIDE_CHOMOSOME + 1, "", "T");
+        IVariant processedVariant2 = contextNucleotideAdditionProcessor.process(variant2);
+        assertNull(processedVariant2);
     }
 }
