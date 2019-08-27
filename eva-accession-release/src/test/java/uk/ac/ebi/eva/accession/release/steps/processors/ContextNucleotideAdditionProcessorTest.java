@@ -30,6 +30,8 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -41,7 +43,10 @@ public class ContextNucleotideAdditionProcessorTest {
     private static final int START_OUTSIDE_CHOMOSOME = 5000000;
 
     private static FastaSynonymSequenceReader fastaSynonymSequenceReader;
+
     private static ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor;
+
+    private static Set<String> errorMessagesVariantStartOutOfBounds = new HashSet<>();
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -49,7 +54,8 @@ public class ContextNucleotideAdditionProcessorTest {
         ContigMapping contigMapping = new ContigMapping(Collections.singletonList(
                 new ContigSynonyms(CONTIG, "", "", "", "", "", true)));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
-        contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor (fastaSynonymSequenceReader);
+        contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor (fastaSynonymSequenceReader,
+                                                                                     errorMessagesVariantStartOutOfBounds);
     }
 
     @AfterClass

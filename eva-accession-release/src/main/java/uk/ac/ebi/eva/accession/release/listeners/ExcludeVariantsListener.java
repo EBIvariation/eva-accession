@@ -24,13 +24,24 @@ import org.springframework.batch.core.listener.StepListenerSupport;
 
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
+import java.util.Set;
+
 public class ExcludeVariantsListener extends StepListenerSupport<IVariant, IVariant> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcludeVariantsListener.class);
 
+    private Set<String> errorMessagesVariantStartOutOfBounds;
+
+    public ExcludeVariantsListener(Set<String> errorMessagesVariantStartOutOfBounds) {
+        this.errorMessagesVariantStartOutOfBounds = errorMessagesVariantStartOutOfBounds;
+    }
+
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         logger.info("Processors filtered out {} variants", stepExecution.getFilterCount());
+        logger.warn("{} Variants filtered out because the start position is greater than the chromosome end",
+                    errorMessagesVariantStartOutOfBounds.size());
+        errorMessagesVariantStartOutOfBounds.forEach(logger::warn);
         return stepExecution.getExitStatus();
     }
 }

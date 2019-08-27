@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Set;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 
@@ -43,11 +44,13 @@ public class ReleaseProcessorConfiguration {
 
     @Bean(RELEASE_PROCESSOR)
     public ItemProcessor<Variant, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader,
-                                                                   ContigMapping contigMapping) {
+                                                                   ContigMapping contigMapping,
+                                                                   Set<String> errorMessagesVariantStartOutOfBounds) {
         CompositeItemProcessor<Variant, VariantContext> compositeItemProcessor = new CompositeItemProcessor<>();
         compositeItemProcessor.setDelegates(Arrays.asList(new NamedVariantProcessor(),
                                                           new ExcludeInvalidVariantsProcessor(),
-                                                          new ContextNucleotideAdditionProcessor(fastaReader),
+                                                          new ContextNucleotideAdditionProcessor(
+                                                                  fastaReader, errorMessagesVariantStartOutOfBounds),
                                                           new VariantToVariantContextProcessor(contigMapping)));
         return compositeItemProcessor;
     }

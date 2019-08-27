@@ -21,10 +21,13 @@ import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.release.listeners.ExcludeVariantsListener;
 import uk.ac.ebi.eva.accession.core.listeners.GenericProgressListener;
+import uk.ac.ebi.eva.accession.release.listeners.ExcludeVariantsListener;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
@@ -34,12 +37,17 @@ public class ListenersConfiguration {
 
     @Bean(EXCLUDE_VARIANTS_LISTENER)
     public StepListenerSupport excludeVariantsListener() {
-        return new ExcludeVariantsListener();
+        return new ExcludeVariantsListener(errorMessagesVariantStartOutOfBounds());
     }
 
     @Bean(PROGRESS_LISTENER)
     public StepListenerSupport<Variant, VariantContext> releaseDbsnpVariantsProgressListener(
             InputParameters parameters) {
         return new GenericProgressListener<>(parameters.getChunkSize());
+    }
+
+    @Bean
+    public Set<String> errorMessagesVariantStartOutOfBounds() {
+        return new HashSet<>();
     }
 }
