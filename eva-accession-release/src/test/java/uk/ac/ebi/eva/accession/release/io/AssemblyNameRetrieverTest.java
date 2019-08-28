@@ -81,4 +81,9 @@ public class AssemblyNameRetrieverTest {
         assertEquals("https://www.ebi.ac.uk/ena/data/view/GCA_000001405.28",
                      new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyUrl());
     }
+
+    @Test
+    public void retrieveNameWithMorePriorityThanEnaName() {
+        assertEquals("Genoscope.12X", new AssemblyNameRetriever("GCA_000003745.2").getAssemblyName().get());
+    }
 }

@@ -23,10 +23,13 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
- * Use ENA webservices to query the assembly name associated with an assembly accession.
+ * Use a curated list and the ENA webservices to return the assembly name associated with an assembly accession.
  *
  * The ENA webservices can return an xml that starts like this:
  * <pre>
@@ -50,6 +53,16 @@ public class AssemblyNameRetriever {
 
     private static final String ENA_ASSMEBLY_XML_DISPLAY_SUFFIX = "&display=xml";
 
+    /**
+     * These curated assembly names take priority over ENA assembly names because they are used in specific community
+     * databases, and these are more likely to be known by users than ENA names.
+     */
+    private static final Map<String, String> priorityAssemblyNames = ((Supplier<Map<String, String>>) () -> {
+        Map<String, String> priorityNames = new HashMap<>();
+        priorityNames.put("GCA_000003745.2", "Genoscope.12X");
+        return priorityNames;
+    }).get();
+
     private String assemblyAccession;
 
     private String assemblyName;
@@ -60,19 +73,23 @@ public class AssemblyNameRetriever {
     }
 
     private String fetchAssemblyName(String assemblyAccession) {
-        String url = buildAssemblyUrl(assemblyAccession) + ENA_ASSMEBLY_XML_DISPLAY_SUFFIX;
+        if (priorityAssemblyNames.containsKey(assemblyAccession)) {
+            return priorityAssemblyNames.get(assemblyAccession);
+        } else {
+            String url = buildAssemblyUrl(assemblyAccession) + ENA_ASSMEBLY_XML_DISPLAY_SUFFIX;
 
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(new URL(url));
-            if (enaAssembly.getAssembly() == null) {
-                return null;
-            } else {
-                return enaAssembly.getAssembly().getAlias();
+            try {
+                JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
+                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+                EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(new URL(url));
+                if (enaAssembly.getAssembly() == null) {
+                    return null;
+                } else {
+                    return enaAssembly.getAssembly().getAlias();
+                }
+            } catch (JAXBException | MalformedURLException e) {
+                throw new RuntimeException(e);
             }
-        } catch (JAXBException | MalformedURLException e) {
-            throw new RuntimeException(e);
         }
     }
 
