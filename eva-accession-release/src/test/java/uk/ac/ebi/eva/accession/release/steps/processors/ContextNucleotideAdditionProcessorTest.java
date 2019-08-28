@@ -33,7 +33,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class ContextNucleotideAdditionProcessorTest {
 
@@ -175,7 +174,6 @@ public class ContextNucleotideAdditionProcessorTest {
         String rs1000 = "rs1000";
         variant1.setMainId(rs1000);
         variant1.setIds(Collections.singleton(rs1000));
-        IVariant processedVariant1 = contextNucleotideAdditionProcessor.process(variant1);
-        assertNull(processedVariant1);
+        contextNucleotideAdditionProcessor.process(variant1);
     }
 }

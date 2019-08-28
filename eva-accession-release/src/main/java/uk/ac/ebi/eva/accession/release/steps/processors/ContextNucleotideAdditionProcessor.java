@@ -35,15 +35,15 @@ import static java.lang.Math.max;
 
 public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant, IVariant> {
 
-    private Logger log = LoggerFactory.getLogger(ContextNucleotideAdditionProcessor.class);
+    private static Logger logger = LoggerFactory.getLogger(ContextNucleotideAdditionProcessor.class);
 
     private FastaSynonymSequenceReader fastaSequenceReader;
 
-    private Set<Variant> variantsWithStartOutOfBounds;
+    private Set<Variant> variantsWithIllegalStart;
 
     public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader) {
         this.fastaSequenceReader = fastaReader;
-        this.variantsWithStartOutOfBounds = new HashSet<>();
+        this.variantsWithIllegalStart = new HashSet<>();
     }
 
     @Override
@@ -57,9 +57,9 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
                 throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
             }
         } catch (IllegalArgumentException e) {
-            if (!variantsWithStartOutOfBounds.contains(variant)) {
-                log.warn(e.getMessage() + ". " + variant.toString());
-                variantsWithStartOutOfBounds.add(variant);
+            if (!variantsWithIllegalStart.contains(variant)) {
+                logger.warn(e.getMessage() + ". " + variant.toString());
+                variantsWithIllegalStart.add(variant);
             }
             throw new IllegalStartPositionException(e.getMessage());
         }

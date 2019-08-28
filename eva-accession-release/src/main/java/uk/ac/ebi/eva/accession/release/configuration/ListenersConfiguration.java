@@ -21,8 +21,8 @@ import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.core.listeners.GenericProgressListener;
 import uk.ac.ebi.eva.accession.release.listeners.ExcludeVariantsListener;
+import uk.ac.ebi.eva.accession.core.listeners.GenericProgressListener;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 

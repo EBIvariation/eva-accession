@@ -22,12 +22,7 @@ import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.listener.StepListenerSupport;
 
-import uk.ac.ebi.eva.commons.core.models.AbstractVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
-import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
-
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ExcludeVariantsListener extends StepListenerSupport<IVariant, IVariant> {
 
