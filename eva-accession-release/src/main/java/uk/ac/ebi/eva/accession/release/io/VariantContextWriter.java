@@ -126,7 +126,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         String assemblyUrl = assemblyNameRetriever.buildAssemblyUrl();
 
         if (assemblyName.isPresent()) {
-            return "<ID=" + assemblyName.get() + ",Accession=" + referenceAssembly + ",URL=" + assemblyUrl + ">";
+            return "<ID=" + assemblyName.get() + ",accession=" + referenceAssembly + ",URL=" + assemblyUrl + ">";
         } else {
             return "<ID=" + referenceAssembly + ",URL=" + assemblyUrl + ">";
         }
