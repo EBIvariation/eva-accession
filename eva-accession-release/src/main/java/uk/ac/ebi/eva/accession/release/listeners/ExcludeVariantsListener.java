@@ -35,7 +35,7 @@ public class ExcludeVariantsListener extends StepListenerSupport<IVariant, IVari
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        logger.info("Processors filtered out {} variants in total", stepExecution.getFilterCount());
+        logger.info("Processors filtered out {} variants", stepExecution.getFilterCount());
         logger.warn("Processors skipped {} variants because the start position is greater than the chromosome end",
                     stepExecution.getSkipCount());
         return stepExecution.getExitStatus();

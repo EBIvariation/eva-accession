@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release;
+package uk.ac.ebi.eva.accession.release.policies;
 
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 
+import uk.ac.ebi.eva.accession.release.exceptions.IllegalStartPositionException;
+
 public class IllegalStartSkipPolicy implements SkipPolicy {
 
     @Override
-    public boolean shouldSkip(Throwable exception, int count) throws SkipLimitExceededException {
+    public boolean shouldSkip(Throwable exception, int skipCount) throws SkipLimitExceededException {
         return exception instanceof IllegalStartPositionException;
     }
 }

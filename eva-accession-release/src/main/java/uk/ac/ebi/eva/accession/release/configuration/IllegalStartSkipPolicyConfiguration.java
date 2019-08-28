@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.release.configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.release.IllegalStartSkipPolicy;
+import uk.ac.ebi.eva.accession.release.policies.IllegalStartSkipPolicy;
 
 @Configuration
 public class IllegalStartSkipPolicyConfiguration {

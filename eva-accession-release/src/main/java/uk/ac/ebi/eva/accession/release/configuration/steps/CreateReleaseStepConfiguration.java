@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import uk.ac.ebi.eva.accession.release.IllegalStartSkipPolicy;
+import uk.ac.ebi.eva.accession.release.policies.IllegalStartSkipPolicy;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.readers.AccessionedVariantMongoReaderConfiguration;
