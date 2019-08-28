@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.release.io;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.net.MalformedURLException;
@@ -49,9 +48,9 @@ import java.util.function.Supplier;
  */
 public class AssemblyNameRetriever {
 
-    private static final String ENA_ASSMEBLY_URL_FORMAT_STRING = "https://www.ebi.ac.uk/ena/data/view/%s";
+    private static final String ENA_ASSEMBLY_URL_FORMAT_STRING = "https://www.ebi.ac.uk/ena/data/view/%s";
 
-    private static final String ENA_ASSMEBLY_XML_DISPLAY_SUFFIX = "&display=xml";
+    private static final String ENA_ASSEMBLY_XML_DISPLAY_SUFFIX = "&display=xml";
 
     /**
      * These curated assembly names take priority over ENA assembly names because they are used in specific community
@@ -76,7 +75,7 @@ public class AssemblyNameRetriever {
         if (priorityAssemblyNames.containsKey(assemblyAccession)) {
             return priorityAssemblyNames.get(assemblyAccession);
         } else {
-            String url = buildAssemblyUrl(assemblyAccession) + ENA_ASSMEBLY_XML_DISPLAY_SUFFIX;
+            String url = buildAssemblyUrl(assemblyAccession) + ENA_ASSEMBLY_XML_DISPLAY_SUFFIX;
 
             try {
                 JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
@@ -85,7 +84,7 @@ public class AssemblyNameRetriever {
                 if (enaAssembly.getAssembly() == null) {
                     return null;
                 } else {
-                    return enaAssembly.getAssembly().getAlias();
+                    return enaAssembly.getAssembly().getName();
                 }
             } catch (JAXBException | MalformedURLException e) {
                 throw new RuntimeException(e);
@@ -94,7 +93,7 @@ public class AssemblyNameRetriever {
     }
 
     private String buildAssemblyUrl(String assemblyAccession) {
-        return String.format(ENA_ASSMEBLY_URL_FORMAT_STRING, assemblyAccession);
+        return String.format(ENA_ASSEMBLY_URL_FORMAT_STRING, assemblyAccession);
     }
 
     public String getAssemblyAccession() {
@@ -128,14 +127,14 @@ public class AssemblyNameRetriever {
 
         static class Assembly {
 
-            @XmlAttribute
-            private String alias;
+            @XmlElement(name = "NAME")
+            private String name;
 
             public Assembly() {
             }
 
-            String getAlias() {
-                return alias;
+            String getName() {
+                return name;
             }
         }
     }

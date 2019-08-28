@@ -42,14 +42,14 @@ public class AssemblyNameRetrieverTest {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
         fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
-                         + "alias=\"GRCh38.p13\" "
-                         + "center_name=\"Genome Reference Consortium\"></ASSEMBLY></ROOT>");
+                         + "center_name=\"Genome Reference Consortium\">"
+                         + "<NAME>GRCh38.p13</NAME></ASSEMBLY></ROOT>");
         fileWriter.close();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(xml);
-        assertEquals("GRCh38.p13", enaAssembly.getAssembly().getAlias());
+        assertEquals("GRCh38.p13", enaAssembly.getAssembly().getName());
     }
 
     @Test
@@ -63,7 +63,7 @@ public class AssemblyNameRetrieverTest {
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         EnaAssemblyXml enaAssembly = (EnaAssemblyXml) unmarshaller.unmarshal(xml);
-        assertNull(enaAssembly.getAssembly().getAlias());
+        assertNull(enaAssembly.getAssembly().getName());
     }
 
     @Test
