@@ -24,6 +24,7 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.release.IllegalStartPositionException;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -46,16 +47,13 @@ public class ContextNucleotideAdditionProcessorTest {
 
     private static ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor;
 
-    private static Set<Variant> variantsWithStartOutOfBounds = new HashSet<>();
-
     @BeforeClass
     public static void setUpClass() throws Exception {
         Path fastaPath = Paths.get("../eva-accession-core/src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
         ContigMapping contigMapping = new ContigMapping(Collections.singletonList(
                 new ContigSynonyms(CONTIG, "", "", "", "", "", true)));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
-        contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor (fastaSynonymSequenceReader,
-                                                                                     variantsWithStartOutOfBounds);
+        contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor (fastaSynonymSequenceReader);
     }
 
     @AfterClass
@@ -173,21 +171,13 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
     }
 
-    @Test
+    @Test(expected = IllegalStartPositionException.class)
     public void testStartPositionGreaterThanChromosomeEnd() throws Exception {
-        Variant variant = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
-        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
-        assertNull(processedVariant);
-    }
-
-    @Test
-    public void testStartPositionGreaterThanChromosomeEndMultipleVariants() throws Exception {
         Variant variant1 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
+        String rs1000 = "rs1000";
+        variant1.setMainId(rs1000);
+        variant1.setIds(Collections.singleton(rs1000));
         IVariant processedVariant1 = contextNucleotideAdditionProcessor.process(variant1);
         assertNull(processedVariant1);
-
-        Variant variant2 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME + 1, START_OUTSIDE_CHOMOSOME + 1, "", "T");
-        IVariant processedVariant2 = contextNucleotideAdditionProcessor.process(variant2);
-        assertNull(processedVariant2);
     }
 }

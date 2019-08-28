@@ -33,23 +33,11 @@ public class ExcludeVariantsListener extends StepListenerSupport<IVariant, IVari
 
     private static final Logger logger = LoggerFactory.getLogger(ExcludeVariantsListener.class);
 
-    private Set<Variant> variantsWithStartOutOfBounds;
-
-    public ExcludeVariantsListener(Set<Variant> errorMessagesVariantStartOutOfBounds) {
-        this.variantsWithStartOutOfBounds = errorMessagesVariantStartOutOfBounds;
-    }
-
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         logger.info("Processors filtered out {} variants in total", stepExecution.getFilterCount());
-        String contigs = variantsWithStartOutOfBounds.stream()
-                                                     .map(AbstractVariant::getChromosome)
-                                                     .distinct()
-                                                     .collect(Collectors.joining(","));
-        logger.warn("{} Variants filtered out because the start position is greater than the chromosome end. Contigs: {}",
-                    variantsWithStartOutOfBounds.size(), contigs);
-        logger.warn("{} Variants filtered for being invalid",
-                    stepExecution.getFilterCount() - variantsWithStartOutOfBounds.size());
+        logger.warn("Processors skipped {} variants because the start position is greater than the chromosome end",
+                    stepExecution.getSkipCount());
         return stepExecution.getExitStatus();
     }
 }

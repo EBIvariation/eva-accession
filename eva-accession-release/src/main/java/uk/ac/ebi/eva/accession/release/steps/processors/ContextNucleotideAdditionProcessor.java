@@ -23,10 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.release.IllegalStartPositionException;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static java.lang.Math.max;
@@ -39,9 +41,9 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
 
     private Set<Variant> variantsWithStartOutOfBounds;
 
-    public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader, Set<Variant> failedVariants) {
+    public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader) {
         this.fastaSequenceReader = fastaReader;
-        this.variantsWithStartOutOfBounds = failedVariants;
+        this.variantsWithStartOutOfBounds = new HashSet<>();
     }
 
     @Override
@@ -59,7 +61,7 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
                 log.warn(e.getMessage() + ". " + variant.toString());
                 variantsWithStartOutOfBounds.add(variant);
             }
-            return null;
+            throw new IllegalStartPositionException(e.getMessage());
         }
     }
 

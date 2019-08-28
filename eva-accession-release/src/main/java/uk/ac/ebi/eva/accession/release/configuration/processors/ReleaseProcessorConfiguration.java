@@ -44,13 +44,11 @@ public class ReleaseProcessorConfiguration {
 
     @Bean(RELEASE_PROCESSOR)
     public ItemProcessor<Variant, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader,
-                                                                   ContigMapping contigMapping,
-                                                                   Set<Variant> variantsWithStartOutOfBounds) {
+                                                                   ContigMapping contigMapping) {
         CompositeItemProcessor<Variant, VariantContext> compositeItemProcessor = new CompositeItemProcessor<>();
         compositeItemProcessor.setDelegates(Arrays.asList(new NamedVariantProcessor(),
                                                           new ExcludeInvalidVariantsProcessor(),
-                                                          new ContextNucleotideAdditionProcessor(
-                                                                  fastaReader, variantsWithStartOutOfBounds),
+                                                          new ContextNucleotideAdditionProcessor(fastaReader),
                                                           new VariantToVariantContextProcessor(contigMapping)));
         return compositeItemProcessor;
     }
@@ -66,5 +64,4 @@ public class ReleaseProcessorConfiguration {
     ContigMapping contigMapping(InputParameters parameters) throws Exception {
         return new ContigMapping(parameters.getAssemblyReportUrl());
     }
-
 }
