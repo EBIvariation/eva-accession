@@ -53,7 +53,7 @@ public class AssemblyNameRetrieverTest {
     }
 
     @Test
-    public void parseMissingAlias() throws IOException, JAXBException {
+    public void parseMissingName() throws IOException, JAXBException {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
         fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "

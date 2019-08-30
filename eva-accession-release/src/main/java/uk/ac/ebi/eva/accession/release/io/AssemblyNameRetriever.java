@@ -30,21 +30,20 @@ import java.util.function.Supplier;
 /**
  * Use a curated list and the ENA webservices to return the assembly name associated with an assembly accession.
  *
- * The ENA webservices can return an xml that starts like this:
+ * The ENA webservices in URLs like https://www.ebi.ac.uk/ena/data/view/GCA_000001405.28&display=xml
+ * can return an xml that starts like this:
  * <pre>
  * {@code
  * <?xml version="1.0" encoding="UTF-8"?>
  * <ROOT request="GCA_000001405.28&amp;display=xml">
- * <ASSEMBLY accession="GCA_000001405.28" alias="GRCh38.p13" center_name="Genome Reference Consortium">
+ * <ASSEMBLY accession="GCA_000001405.28" ...>
+ *      <NAME>GRCh38.p13</NAME>
  * ...
  * }
  * </pre>
  *
- * However, the alias is optional, according to
- * https://github.com/enasequence/schema/blob/master/src/main/resources/uk/ac/ebi/ena/sra/schema/ENA.assembly.xsd#L32
- * which defines an AssemblyType as an extension of ObjectType, and
- * https://github.com/enasequence/schema/blob/master/src/main/resources/uk/ac/ebi/ena/sra/schema/SRA.common.xsd#L21
- * defines alias as optional attribute of ObjectType.
+ * The schema for these XMLs (and the definition of the NAME element) is here:
+ * https://github.com/enasequence/schema/blob/master/src/main/resources/uk/ac/ebi/ena/sra/schema/ENA.assembly.xsd#L44
  */
 public class AssemblyNameRetriever {
 
