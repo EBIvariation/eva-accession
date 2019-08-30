@@ -15,7 +15,7 @@
     },
     {
       "_id" : "3D0AFF1E1CD40ED24279EF031D3E54B36D2A1111",
-      "asm" : "GCF_000409795.2",
+      "asm" : "GCA_000409795.2",
       "tax" : 60711,
       "contig" : "CM001954.1",
       "start" : NumberLong(70000000),
@@ -67,7 +67,7 @@
     },
     {
       "_id": "7A4304A9E9AE320D0E28FCC9E23EF1E605ACA111",
-      "asm": "GCF_000409795.2",
+      "asm": "GCA_000409795.2",
       "tax" : 60711,
       "contig" : "CM001954.1",
       "start" : NumberLong(3337129),
@@ -79,7 +79,7 @@
     },
     {
       "_id": "7A4304A9E9AE320D0E28FCC9E23EF1E605ACA222",
-      "asm": "GCF_000409795.2",
+      "asm": "GCA_000409795.2",
       "tax" : 60711,
       "contig" : "CM001941.2",
       "start" : NumberLong(3337129),
