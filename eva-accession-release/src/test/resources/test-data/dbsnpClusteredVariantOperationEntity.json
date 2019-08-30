@@ -8,7 +8,7 @@
       "reason" : "Identical clustered variant received multiple RS identifiers",
       "inactiveObjects" : [
         {
-          "asm": "GCF_000409795.2",
+          "asm": "GCA_000409795.2",
           "tax" : 60711,
           "contig": "CM001954.1",
           "start" : NumberLong(5),
@@ -29,7 +29,7 @@
       "reason" : "Identical clustered variant received multiple RS identifiers",
       "inactiveObjects" : [
         {
-          "asm": "GCF_000409795.2",
+          "asm": "GCA_000409795.2",
           "tax" : 60711,
           "contig": "CM001941.2",
           "start" : NumberLong(13),
@@ -49,7 +49,7 @@
       "reason" : "All associated submitted variants have been declustered",
       "inactiveObjects" : [
         {
-          "asm": "GCF_000409795.2",
+          "asm": "GCA_000409795.2",
           "tax" : 60711,
           "contig" : "CM001954.1",
           "start" : NumberLong(3337129),
@@ -70,7 +70,7 @@
       "reason" : "Identical clustered variant received multiple RS identifiers",
       "inactiveObjects" : [
         {
-          "asm": "GCF_000409795.2",
+          "asm": "GCA_000409795.2",
           "tax" : 60711,
           "contig" : "CM001954.1",
           "start" : NumberLong(3337129),
@@ -90,7 +90,7 @@
       "reason" : "All associated submitted variants have been declustered",
       "inactiveObjects" : [
         {
-          "asm": "GCF_000409795.2",
+          "asm": "GCA_000409795.2",
           "tax" : 60711,
           "contig" : "AE014298.5",
           "start" : NumberLong(8421515),
@@ -110,7 +110,7 @@
       "reason" : "All associated submitted variants have been declustered",
       "inactiveObjects" : [
         {
-          "asm": "GCF_000409795.2",
+          "asm": "GCA_000409795.2",
           "tax" : 60711,
           "contig" : "CM001941.2",
           "start" : NumberLong(3337129),
@@ -131,7 +131,7 @@
       "reason" : "Identical clustered variant received multiple RS identifiers",
       "inactiveObjects" : [
         {
-          "asm": "GCF_000409795.2",
+          "asm": "GCA_000409795.2",
           "tax" : 60711,
           "contig" : "CM001941.2",
           "start" : NumberLong(3337129),

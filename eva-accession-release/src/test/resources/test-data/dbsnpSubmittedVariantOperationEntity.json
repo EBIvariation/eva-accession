@@ -60,7 +60,7 @@
       "reason" : "Original rs1099214387 was merged into rs869808637.",
       "inactiveObjects" : [
         {
-          "seq": "GCF_000409795.2",
+          "seq": "GCA_000409795.2",
           "tax": 60711,
           "study": "PRJEB7923",
           "contig": "CM001954.1",
@@ -86,7 +86,7 @@
       "reason" : "Original rs1099214387 was merged into rs869808637.",
       "inactiveObjects" : [
         {
-          "seq": "GCF_000409795.2",
+          "seq": "GCA_000409795.2",
           "tax": 60711,
           "study": "PRJEB9999",
           "contig": "CM001954.1",
@@ -112,7 +112,7 @@
       "reason" : "Original rs1099214387 was merged into rs869808637.",
       "inactiveObjects" : [
         {
-          "seq": "GCF_000409795.2",
+          "seq": "GCA_000409795.2",
           "tax": 60711,
           "study": "PRJEB1111",
           "contig": "CM001954.1",
@@ -138,7 +138,7 @@
       "reason" : "Original rs1099214387 was merged into rs869808637.",
       "inactiveObjects" : [
         {
-          "seq": "GCF_000409795.2",
+          "seq": "GCA_000409795.2",
           "tax": 60711,
           "study": "PRJEB7923",
           "contig": "CM001941.2",
@@ -242,7 +242,7 @@
       "reason" : "Original rs1153596375 was merged into rs1153596374.",
       "inactiveObjects" : [
         {
-          "seq" : "GCF_000409795.2",
+          "seq" : "GCA_000409795.2",
           "tax" : 60711,
           "study" : "PRJEB1000",
           "contig" : "CM001954.1",
@@ -268,7 +268,7 @@
       "reason" : "Original rs66666 was merged into rs66667.",
       "inactiveObjects" : [
         {
-          "seq" : "GCF_000409795.2",
+          "seq" : "GCA_000409795.2",
           "tax" : 60711,
           "study" : "PRJEB2000",
           "contig" : "CM001941.2",

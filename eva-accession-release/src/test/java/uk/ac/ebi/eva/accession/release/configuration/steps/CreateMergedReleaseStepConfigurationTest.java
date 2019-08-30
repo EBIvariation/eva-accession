@@ -44,9 +44,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.MERGED_INTO_KEY;
 import static uk.ac.ebi.eva.accession.release.io.MergedVariantMongoReader.STUDY_ID_KEY;
@@ -64,6 +67,9 @@ public class CreateMergedReleaseStepConfigurationTest {
     private static final String TEST_DB = "test-db";
 
     private static final long EXPECTED_LINES = 5;
+
+    private static final Map<String, String> assemblyAccessionToName =
+            Collections.singletonMap("GCA_000409795.2", "Chlorocebus_sabeus 1.1");
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -110,8 +116,9 @@ public class CreateMergedReleaseStepConfigurationTest {
     public void metadataIsPresent() throws Exception {
         assertStepExecutesAndCompletes();
 
-        List<String> referenceLines = grepFile(getMergedReleaseFile(),
-                                               "^##reference=" + inputParameters.getAssemblyAccession() + "$");
+        String assemblyName = assemblyAccessionToName.get(inputParameters.getAssemblyAccession());
+        assertNotNull(assemblyName);
+        List<String> referenceLines = grepFile(getMergedReleaseFile(), "^##reference=<ID=" + assemblyName + ",.*$");
         assertEquals(1, referenceLines.size());
 
         List<String> metadataVariantClassLines = grepFile(getMergedReleaseFile(),

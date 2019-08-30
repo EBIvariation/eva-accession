@@ -2,7 +2,7 @@
   "dbsnpSubmittedVariantEntity": [
     {
       "_id": "81901D6C149D283D8E00859E8BADC1C89750F88D",
-      "seq": "GCF_000409795.2",
+      "seq": "GCA_000409795.2",
       "tax": 60711,
       "study": "PRJEB7923",
       "contig": "CM001954.1",
@@ -18,7 +18,7 @@
     },
     {
       "_id": "D6E93A861A45942E591879572995BB50B9485AEE",
-      "seq": "GCF_000409795.2",
+      "seq": "GCA_000409795.2",
       "tax": 60711,
       "study": "PRJEB9999",
       "contig": "CM001954.1",
@@ -34,7 +34,7 @@
     },
     {
       "_id": "58731F96EC160846B969D5D3EA88BCDF209D2D2D",
-      "seq": "GCF_000409795.2",
+      "seq": "GCA_000409795.2",
       "tax": 60711,
       "study": "PRJEB1111",
       "contig": "CM001954.1",
@@ -50,7 +50,7 @@
     },
     {
       "_id": "E116E78AFF67930CCC56349BE1C877A945F11A96",
-      "seq": "GCF_000409795.2",
+      "seq": "GCA_000409795.2",
       "tax": 60711,
       "study": "PRJEB2222",
       "contig": "CM001954.1",
@@ -66,7 +66,7 @@
     },
     {
       "_id": "C0D11F7811394603D2182D0D43FB69A1692CF9C6",
-      "seq": "GCF_000409795.2",
+      "seq": "GCA_000409795.2",
       "tax": 60711,
       "study": "PRJEB3333",
       "contig": "CM001954.1",
@@ -82,7 +82,7 @@
     },
     {
       "_id": "40F6E23B8F90B05D4E89B93126AB08ADEB366C14",
-      "seq": "GCF_000409795.2",
+      "seq": "GCA_000409795.2",
       "tax": 60711,
       "study": "PRJEB7923",
       "contig": "CM001941.2",

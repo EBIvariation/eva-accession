@@ -75,7 +75,7 @@ public class MergedVariantMongoReaderTest {
 
     private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
-    private static final String ASSEMBLY = "GCF_000409795.2";
+    private static final String ASSEMBLY = "GCA_000409795.2";
 
     private static final String ID_1_A = "CM001954.1_5_G_A";
 

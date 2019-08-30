@@ -57,7 +57,7 @@ public class MergedDeprecatedVariantMongoReaderTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final String ASSEMBLY = "GCF_000409795.2";
+    private static final String ASSEMBLY = "GCA_000409795.2";
 
     private static final int CHUNK_SIZE = 5;
 

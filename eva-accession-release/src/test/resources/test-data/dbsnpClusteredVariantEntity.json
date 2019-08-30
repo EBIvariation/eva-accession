@@ -2,7 +2,7 @@
   "dbsnpClusteredVariantEntity": [
     {
       "_id": "F475F4F6657CF52CE8BF8416AA945EF669CB1BCD",
-      "asm": "GCF_000409795.2",
+      "asm": "GCA_000409795.2",
       "tax": 60711,
       "contig": "CM001954.1",
       "start": NumberLong(5),
@@ -15,7 +15,7 @@
     },
     {
       "_id": "DD746A372C44C468A2222A62D69A915D3571A334",
-      "asm": "GCF_000409795.2",
+      "asm": "GCA_000409795.2",
       "tax": 60711,
       "contig": "CM001954.1",
       "start": NumberLong(20),
@@ -28,7 +28,7 @@
     },
     {
       "_id": "165BFDD25A38F61CE865F356171A129D274515F9",
-      "asm": "GCF_000409795.2",
+      "asm": "GCA_000409795.2",
       "tax": 60711,
       "contig": "CM001954.1",
       "start": NumberLong(30),
@@ -41,7 +41,7 @@
     },
     {
       "_id": "EFC783A3165EFA99F22D20238257DE280BCE48BF",
-      "asm": "GCF_000409795.2",
+      "asm": "GCA_000409795.2",
       "tax": 60711,
       "contig": "CM001941.2",
       "start": NumberLong(13),

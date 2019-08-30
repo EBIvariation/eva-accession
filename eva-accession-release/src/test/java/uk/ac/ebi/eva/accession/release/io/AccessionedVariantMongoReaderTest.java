@@ -65,7 +65,7 @@ import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.V
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class AccessionedVariantMongoReaderTest {
 
-    private static final String ASSEMBLY_ACCESSION_1 = "GCF_000409795.2";
+    private static final String ASSEMBLY_ACCESSION_1 = "GCA_000409795.2";
 
     private static final String ASSEMBLY_ACCESSION_2 = "GCF_000001735.3";
 

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static uk.ac.ebi.eva.accession.release.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
@@ -92,7 +93,7 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     protected Set<VCFHeaderLine> buildHeaderLines() {
         Set<VCFHeaderLine> metaData = new HashSet<>();
         addContigs(metaData);
-        metaData.add(new VCFHeaderLine("reference", referenceAssembly));
+        metaData.add(new VCFHeaderLine("reference", getReferenceAssemblyLine()));
         metaData.add(new VCFInfoHeaderLine(VARIANT_CLASS_KEY, 1, VCFHeaderLineType.String,
                                            "Variant class according to the Sequence Ontology"));
         metaData.add(new VCFInfoHeaderLine(STUDY_ID_KEY, VCFHeaderLineCount.UNBOUNDED, VCFHeaderLineType.String,
@@ -117,6 +118,18 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                                            "Lack of evidence flag, present if no submitted variant includes genotype "
                                            + "or frequency information"));
         return metaData;
+    }
+
+    private String getReferenceAssemblyLine() {
+        AssemblyNameRetriever assemblyNameRetriever = new AssemblyNameRetriever(referenceAssembly);
+        Optional<String> assemblyName = assemblyNameRetriever.getAssemblyName();
+        String assemblyUrl = assemblyNameRetriever.buildAssemblyUrl();
+
+        if (assemblyName.isPresent()) {
+            return "<ID=" + assemblyName.get() + ",accession=" + referenceAssembly + ",URL=" + assemblyUrl + ">";
+        } else {
+            return "<ID=" + referenceAssembly + ",URL=" + assemblyUrl + ">";
+        }
     }
 
     private void addContigs(Set<VCFHeaderLine> metaData) {
