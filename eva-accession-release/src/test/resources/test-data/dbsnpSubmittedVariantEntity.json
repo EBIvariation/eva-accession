@@ -17,6 +17,38 @@
       )
     },
     {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750F111",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(70000000),
+      "ref": "A",
+      "alt": "",
+      "rs": NumberLong(100),
+      "accession": NumberLong(200),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750F112",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7929",
+      "contig": "CM001954.1",
+      "start": NumberLong(70000000),
+      "ref": "T",
+      "alt": "",
+      "rs": NumberLong(100),
+      "accession": NumberLong(200),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
       "_id": "D6E93A861A45942E591879572995BB50B9485AEE",
       "seq": "GCA_000409795.2",
       "tax": 60711,

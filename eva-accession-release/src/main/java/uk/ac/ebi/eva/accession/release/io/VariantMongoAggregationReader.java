@@ -33,6 +33,7 @@ import org.springframework.batch.item.UnexpectedInputException;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -164,6 +165,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
             long end = calculateEnd(reference, alternate, start);
             Variant variant = new Variant(contig, start, end, reference, alternate);
             variant.setMainId(buildId(rs));
+            variant.setIds(Collections.singleton(buildId(rs)));
             variant.addSourceEntry(sourceEntry);
             variants.put(variantId, variant);
         }

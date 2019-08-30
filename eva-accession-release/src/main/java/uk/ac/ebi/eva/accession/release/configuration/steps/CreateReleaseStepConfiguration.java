@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
+import uk.ac.ebi.eva.accession.release.policies.IllegalStartSkipPolicy;
 import uk.ac.ebi.eva.accession.release.configuration.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.readers.AccessionedVariantMongoReaderConfiguration;
@@ -70,6 +71,9 @@ public class CreateReleaseStepConfiguration {
     @Qualifier(EXCLUDE_VARIANTS_LISTENER)
     private StepExecutionListener excludeVariantsListener;
 
+    @Autowired
+    private IllegalStartSkipPolicy illegalStartSkipPolicy;
+
     @Bean(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
@@ -78,6 +82,8 @@ public class CreateReleaseStepConfiguration {
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)
+                .faultTolerant()
+                .skipPolicy(illegalStartSkipPolicy)
                 .listener(excludeVariantsListener)
                 .listener(progressListener)
                 .build();

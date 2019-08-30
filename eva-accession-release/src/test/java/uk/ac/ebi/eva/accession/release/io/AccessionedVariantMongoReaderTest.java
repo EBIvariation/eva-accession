@@ -101,7 +101,7 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final String RS_3_G_C = "CP002685.1_4758626_G_C";
 
-    private static final int EXPECTED_LINES = 5;
+    private static final int EXPECTED_LINES = 7;
 
     private static final int CHUNK_SIZE = 5;
 

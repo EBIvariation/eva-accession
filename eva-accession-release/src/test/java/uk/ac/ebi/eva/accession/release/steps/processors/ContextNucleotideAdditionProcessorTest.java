@@ -24,6 +24,7 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.release.exceptions.IllegalStartPositionException;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -36,7 +37,11 @@ import static org.junit.Assert.assertEquals;
 public class ContextNucleotideAdditionProcessorTest {
 
     private static final String CONTIG = "22";
+
+    private static final int START_OUTSIDE_CHOMOSOME = 5000000;
+
     private static FastaSynonymSequenceReader fastaSynonymSequenceReader;
+
     private static ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor;
 
     @BeforeClass
@@ -161,5 +166,14 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals(2, processedVariant.getEnd());
         assertEquals("A", processedVariant.getReference());
         assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
+    }
+
+    @Test(expected = IllegalStartPositionException.class)
+    public void testStartPositionGreaterThanChromosomeEnd() throws Exception {
+        Variant variant1 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
+        String rs1000 = "rs1000";
+        variant1.setMainId(rs1000);
+        variant1.setIds(Collections.singleton(rs1000));
+        contextNucleotideAdditionProcessor.process(variant1);
     }
 }

@@ -25,12 +25,14 @@ import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionReleaseJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.IllegalStartSkipPolicyConfiguration;
 
 @EnableAutoConfiguration
 @Import({MongoConfiguration.class,
          InputParametersConfiguration.class,
          AccessionReleaseJobConfiguration.class,
-         ChunkSizeCompletionPolicyConfiguration.class
+         ChunkSizeCompletionPolicyConfiguration.class,
+         IllegalStartSkipPolicyConfiguration.class
 })
 public class BatchTestConfiguration {
 

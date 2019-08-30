@@ -90,6 +90,7 @@ public class NamedVariantProcessor implements ItemProcessor<Variant, IVariant> {
 
         newVariant.addSourceEntries(variant.getSourceEntries());
         newVariant.setMainId(variant.getMainId());
+        newVariant.setIds(variant.getIds());
 
         logIfVariantHasWrongType(newVariant);
 
