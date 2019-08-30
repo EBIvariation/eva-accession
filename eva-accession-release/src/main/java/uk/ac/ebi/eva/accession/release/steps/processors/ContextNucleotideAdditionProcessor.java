@@ -28,9 +28,6 @@ import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import static java.lang.Math.max;
 
 public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant, IVariant> {
@@ -39,11 +36,8 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
 
     private FastaSynonymSequenceReader fastaSequenceReader;
 
-    private Set<Variant> variantsWithIllegalStart;
-
     public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader) {
         this.fastaSequenceReader = fastaReader;
-        this.variantsWithIllegalStart = new HashSet<>();
     }
 
     @Override
@@ -57,10 +51,7 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
                 throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
             }
         } catch (IllegalArgumentException e) {
-            if (!variantsWithIllegalStart.contains(variant)) {
-                logger.warn(e.getMessage() + ". " + variant.toString());
-                variantsWithIllegalStart.add(variant);
-            }
+            logger.warn(e.getMessage() + ". " + variant.toString());
             throw new IllegalStartPositionException(e.getMessage());
         }
     }
@@ -103,7 +94,7 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
     }
 
     private Variant renormalizeIndel(Variant variant, long oldStart, String contig, String oldReference,
-                                  String oldAlternate) {
+                                     String oldAlternate) {
         String newReference;
         String newAlternate;
         ImmutableTriple<Long, String, String> contextNucleotideInfo =
