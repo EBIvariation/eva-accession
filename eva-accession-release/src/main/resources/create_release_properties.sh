@@ -40,9 +40,9 @@ else
 	# extract values from the existing properties file, trimming surrounding spaces
 	assemblyAccession=`grep -m 1 "^parameters.assemblyAccession" $IMPORT_FILE | sed "s/^[^=]\+= *\([^ ]*\) */\1/"`
 	fasta=`grep -m 1 "^parameters.fasta" $IMPORT_FILE | sed "s/^[^=]\+= *\([^ ]*\) */\1/"`
+	assembly_report=`grep -m 1 "^parameters.assemblyReport" $IMPORT_FILE | sed "s/^[^=]\+= *\([^ ]*\) */\1/"`
 
 	# extract whole lines
-	assemblyReport=`grep -m 1 "^parameters.assemblyReport" $IMPORT_FILE`
 	db_url=`grep -m 1 "^spring.datasource.url" $IMPORT_FILE`
 	db_user=`grep -m 1 "^spring.datasource.username" $IMPORT_FILE`
 	db_pass=`grep -m 1 "^spring.datasource.password" $IMPORT_FILE`
@@ -60,7 +60,7 @@ else
 spring.batch.job.names=ACCESSION_RELEASE_JOB
 
 parameters.assemblyAccession=${assemblyAccession}
-${assemblyReport}
+parameters.assemblyReport=${assembly_report}
 parameters.chunkSize=1000
 parameters.fasta=${fasta}
 parameters.forceRestart=false
@@ -96,7 +96,7 @@ mkdir -p ${OUTPUT_FOLDER}
 jobname=\`date +\"%Y%m%d_%H%M%S\"\`_${assemblyAccession}
 bsub -J \${jobname} -o release.log -e release.err -M 8192 -R \"rusage[mem=8192]\" \"java -Xmx7g -jar ${EVA_ACCESSION_JAR_PATH}\"
 bsub -J \${jobname}_sort -w \${jobname} -o sort_ids.log -e sort_ids.err -M 8192 -R \"rusage[mem=8192]\" \"sort -V ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.unsorted.txt | uniq | gzip > ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.txt.gz; sort -V ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.unsorted.txt | uniq | gzip > ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.txt.gz\"
-bsub -J \${jobname}_validate -w \${jobname} -o ${OUTPUT_FOLDER}validate.log -e ${OUTPUT_FOLDER}validate.err \"${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -f ${fasta} -o ${OUTPUT_FOLDER} -r text,summary ; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -f ${fasta} -o ${OUTPUT_FOLDER} -r text,summary ;\"
+bsub -J \${jobname}_validate -w \${jobname} -o ${OUTPUT_FOLDER}validate.log -e ${OUTPUT_FOLDER}validate.err \"${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -f ${fasta} -a ${assembly_report} -o ${OUTPUT_FOLDER} -r text,summary ; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -f ${fasta} -a ${assembly_report} -o ${OUTPUT_FOLDER} -r text,summary ;\"
 bsub -J \${jobname}_compress -w \"ended(\${jobname}_validate)\" -o bgzip.log -e bgzip.err \"${BGZIP_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf; ${BGZIP_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf\"
 bsub -J \${jobname}_tabix -w \${jobname}_compress -o tabix.log -e tabix.err \"${TABIX_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz; ${TABIX_PATH}  ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz\"
 bsub -J \${jobname}_count -w \${jobname}_compress -o count_ids.log -e count_ids.err \"echo '# Unique RS ID counts' > ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.txt.gz | wc -l | sed 's/^/'${assemblyAccession}_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.txt.gz | cut -f 1 | uniq | wc -l | sed 's/^/'${assemblyAccession}_merged_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt\"
