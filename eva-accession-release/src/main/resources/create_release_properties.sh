@@ -62,7 +62,7 @@ else
 spring.batch.job.names=ACCESSION_RELEASE_JOB
 
 parameters.assemblyAccession=${assemblyAccession}
-parameters.assemblyReport=${assembly_report}
+parameters.assemblyReportUrl=${assembly_report}
 parameters.chunkSize=1000
 parameters.fasta=${fasta}
 parameters.forceRestart=false
