@@ -282,7 +282,7 @@ def diff_release_ids_against_mongo_rs_ids(unique_release_ids_file, unique_mongo_
     curr_dir = os.getcwd()
     missing_ids_file = os.path.sep.join([curr_dir, assembly_accession]) + "_missing_ids.txt"
     run_command("Comparing RS IDs from the release files against those in Mongo",
-                "comm -31 {0} {1} | grep -E \"^[0-9]+$\" > {2}"
+                "comm -31 {0} {1} | grep -E \"^[0-9]+$\" | cat > {2}"
                 .format(unique_release_ids_file, unique_mongo_ids_file, missing_ids_file))
     return missing_ids_file
 
