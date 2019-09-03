@@ -331,12 +331,12 @@ def get_missing_ids_attributions(missing_ids_file):
 
     missing_ids = get_missing_ids_array(missing_ids_file)
     rs_with_merged_ss = get_rs_with_merged_ss(missing_ids)
-    logger.info("Writing missing IDs with merged SS parents....")
+    logger.info("Writing missing IDs with merged SS....")
     open(rs_with_merged_ss_file, "w").writelines([str(elem) + "\n" for elem in rs_with_merged_ss])
 
     missing_ids = list(set(missing_ids) - set(rs_with_merged_ss))
     rs_with_declustered_ss = get_rs_with_declustered_ss(missing_ids)
-    logger.info("Writing missing IDs with declustered SS parents....")
+    logger.info("Writing missing IDs with declustered SS....")
     open(rs_with_declustered_ss_file, "w").writelines([str(elem) + "\n" for elem in
                                                                rs_with_declustered_ss])
 
