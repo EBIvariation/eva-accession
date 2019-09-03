@@ -26,7 +26,7 @@ from __init__ import *
 
 release_dir, assembly_accession, dbsnpCVE, dbsnpSVE, dbsnpSVOE = None, None, None, None, None
 
-get_merged_ss_parents_query = [
+get_merged_ss_query = [
         {
             "$match": {
                 "eventType": "MERGED",
@@ -64,7 +64,7 @@ get_merged_ss_parents_query = [
         }
     ]
 
-get_declustered_ss_parents_query = [
+get_declustered_ss_query = [
         {
             "$match" : {
                 "eventType" : "UPDATED",
@@ -291,15 +291,15 @@ def get_missing_ids_array(missing_ids_file):
     return [int(line) for line in open(missing_ids_file).readlines()]
 
 
-def get_rs_with_merged_ss_parents(missing_ids):
-    get_merged_ss_parents_query[0]["$match"]["inactiveObjects.rs"]["$in"] = list(missing_ids)
-    return [elem["accession"][0] for elem in list(dbsnpSVOE.aggregate(pipeline=get_merged_ss_parents_query,
+def get_rs_with_merged_ss(missing_ids):
+    get_merged_ss_query[0]["$match"]["inactiveObjects.rs"]["$in"] = list(missing_ids)
+    return [elem["accession"][0] for elem in list(dbsnpSVOE.aggregate(pipeline=get_merged_ss_query,
                                                                       allowDiskUse=True))]
 
 
-def get_rs_with_declustered_ss_parents(missing_ids):
-    get_declustered_ss_parents_query[0]["$match"]["inactiveObjects.rs"]["$in"] = list(missing_ids)
-    return [elem["accession"][0] for elem in list(dbsnpSVOE.aggregate(pipeline=get_declustered_ss_parents_query,
+def get_rs_with_declustered_ss(missing_ids):
+    get_declustered_ss_query[0]["$match"]["inactiveObjects.rs"]["$in"] = list(missing_ids)
+    return [elem["accession"][0] for elem in list(dbsnpSVOE.aggregate(pipeline=get_declustered_ss_query,
                                                                       allowDiskUse=True))]
 
 
@@ -323,24 +323,24 @@ def get_rs_with_non_nucleotide_letters(missing_ids):
 def get_missing_ids_attributions(missing_ids_file):
     logger.info("Beginning attributions for missing IDs....")
     file_prefix = os.path.sep.join([os.path.dirname(missing_ids_file), assembly_accession])
-    rs_with_merged_ss_parents_file = file_prefix + "_rs_with_merged_ss_parents.txt"
-    rs_with_declustered_ss_parents_file = file_prefix + "_rs_with_declustered_ss_parents.txt"
+    rs_with_merged_ss_file = file_prefix + "_rs_with_merged_ss.txt"
+    rs_with_declustered_ss_file = file_prefix + "_rs_with_declustered_ss.txt"
     rs_with_tandem_repeats_file = file_prefix + "_rs_with_tandem_repeat_type.txt"
     rs_with_non_nucleotide_letters_file = file_prefix + "_rs_with_non_nucleotide_letters.txt"
     still_missing_rs_file = file_prefix + "_rs_still_missing.txt"
 
     missing_ids = get_missing_ids_array(missing_ids_file)
-    rs_with_merged_ss_parents = get_rs_with_merged_ss_parents(missing_ids)
+    rs_with_merged_ss = get_rs_with_merged_ss(missing_ids)
     logger.info("Writing missing IDs with merged SS parents....")
-    open(rs_with_merged_ss_parents_file, "w").writelines([str(elem) + "\n" for elem in rs_with_merged_ss_parents])
+    open(rs_with_merged_ss_file, "w").writelines([str(elem) + "\n" for elem in rs_with_merged_ss])
 
-    missing_ids = list(set(missing_ids) - set(rs_with_merged_ss_parents))
-    rs_with_declustered_ss_parents = get_rs_with_declustered_ss_parents(missing_ids)
+    missing_ids = list(set(missing_ids) - set(rs_with_merged_ss))
+    rs_with_declustered_ss = get_rs_with_declustered_ss(missing_ids)
     logger.info("Writing missing IDs with declustered SS parents....")
-    open(rs_with_declustered_ss_parents_file, "w").writelines([str(elem) + "\n" for elem in
-                                                               rs_with_declustered_ss_parents])
+    open(rs_with_declustered_ss_file, "w").writelines([str(elem) + "\n" for elem in
+                                                               rs_with_declustered_ss])
 
-    missing_ids = list(set(missing_ids) - set(rs_with_declustered_ss_parents))
+    missing_ids = list(set(missing_ids) - set(rs_with_declustered_ss))
     rs_with_tandem_repeats = get_rs_with_tandem_repeat_type(missing_ids)
     logger.info("Writing missing IDs which are STRs....")
     open(rs_with_tandem_repeats_file, "w").writelines([str(elem) + "\n" for elem in rs_with_tandem_repeats])
