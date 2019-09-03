@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if (( $# != 8 )); then
+if (( $# != 9 )); then
 	echo  "This script creates a '.properties' file for the eva-accession-release pipeline, taking the properties from the import, and suggesting commands to run the whole release process for an assembly.
 This script needs the next parameters in order:
 - The path to the import properties file with information about the assembly to release
@@ -11,6 +11,7 @@ This script needs the next parameters in order:
 - The path to the script count_ids_in_vcf.sh
 - The path to the vcf-validator executable
 - The path to the vcf-assembly-checker executable
+- The path to the sort_vcf script
 "
 
 else
@@ -22,6 +23,7 @@ else
 	COUNT_IDS_PATH=$6
 	VCF_VALIDATOR_PATH=$7
 	VCF_ASM_CHECKER_PATH=$8
+	SORT_SCRIPT_PATH=$9
 
 	if [ ! -f ${IMPORT_FILE} ]; then
 		echo "The properties file ${IMPORT_FILE} doesn't exist! Stopping script"
@@ -94,9 +96,10 @@ logging.level.uk.ac.ebi.eva.accession.release=INFO
 	echo "
 mkdir -p ${OUTPUT_FOLDER}
 jobname=\`date +\"%Y%m%d_%H%M%S\"\`_${assemblyAccession}
-bsub -J \${jobname} -o release.log -e release.err -M 8192 -R \"rusage[mem=8192]\" \"java -Xmx7g -jar ${EVA_ACCESSION_JAR_PATH}\"
+bsub -J \${jobname} -o release.log -e release.err -M 8192 -R \"rusage[mem=8192]\" \"java -Xmx7g -jar ${EVA_ACCESSION_JAR_PATH}; mv ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf ${OUTPUT_FOLDER}${assemblyAccession}_current_ids_unsorted.vcf; mv ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids_unsorted.vcf\"
 bsub -J \${jobname}_sort -w \${jobname} -o sort_ids.log -e sort_ids.err -M 8192 -R \"rusage[mem=8192]\" \"sort -V ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.unsorted.txt | uniq | gzip > ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.txt.gz; sort -V ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.unsorted.txt | uniq | gzip > ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.txt.gz\"
-bsub -J \${jobname}_validate -w \${jobname} -o ${OUTPUT_FOLDER}validate.log -e ${OUTPUT_FOLDER}validate.err \"${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -f ${fasta} -a ${assembly_report} -o ${OUTPUT_FOLDER} -r text,summary ; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -f ${fasta} -a ${assembly_report} -o ${OUTPUT_FOLDER} -r text,summary ;\"
+bsub -J \${jobname}_sort_vcf -w \${jobname} -o ${OUTPUT_FOLDER}sort_vcf.log -e ${OUTPUT_FOLDER}sort_vcf.err \"${SORT_SCRIPT_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids_unsorted.vcf ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf; ${SORT_SCRIPT_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids_unsorted.vcf ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf\"
+bsub -J \${jobname}_validate -w \${jobname}_sort_vcf -o ${OUTPUT_FOLDER}validate.log -e ${OUTPUT_FOLDER}validate.err \"${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf -f ${fasta} -a ${assembly_report} -o ${OUTPUT_FOLDER} -r text,summary ; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -f ${fasta} -a ${assembly_report} -o ${OUTPUT_FOLDER} -r text,summary ;\"
 bsub -J \${jobname}_compress -w \"ended(\${jobname}_validate)\" -o bgzip.log -e bgzip.err \"${BGZIP_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf; ${BGZIP_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf\"
 bsub -J \${jobname}_tabix -w \${jobname}_compress -o tabix.log -e tabix.err \"${TABIX_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz; ${TABIX_PATH}  ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz\"
 bsub -J \${jobname}_count -w \${jobname}_compress -o count_ids.log -e count_ids.err \"echo '# Unique RS ID counts' > ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.txt.gz | wc -l | sed 's/^/'${assemblyAccession}_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.txt.gz | cut -f 1 | uniq | wc -l | sed 's/^/'${assemblyAccession}_merged_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt\"
