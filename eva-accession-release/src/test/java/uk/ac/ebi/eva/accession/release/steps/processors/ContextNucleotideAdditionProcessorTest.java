@@ -24,19 +24,27 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
-import uk.ac.ebi.eva.accession.release.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class ContextNucleotideAdditionProcessorTest {
 
     private static final String CONTIG = "22";
+
+    private static final String SCAFFOLD = "scaffold";
+
+    private static final String SCAFFOLD_GENBANK_IN_FASTA = "AADN04000814.1";
+
+    private static final String MISSING_IN_FASTA = "chrMissing";
 
     private static final int START_OUTSIDE_CHOMOSOME = 5000000;
 
@@ -47,10 +55,12 @@ public class ContextNucleotideAdditionProcessorTest {
     @BeforeClass
     public static void setUpClass() throws Exception {
         Path fastaPath = Paths.get("../eva-accession-core/src/test/resources/input-files/fasta/Gallus_gallus-5.0.test.fa");
-        ContigMapping contigMapping = new ContigMapping(Collections.singletonList(
-                new ContigSynonyms(CONTIG, "", "", "", "", "", true)));
+        ContigMapping contigMapping = new ContigMapping(
+                Arrays.asList(new ContigSynonyms(CONTIG, "", "", "", "", "", true),
+                              new ContigSynonyms(SCAFFOLD, "", "", SCAFFOLD_GENBANK_IN_FASTA, "", "", true),
+                              new ContigSynonyms(MISSING_IN_FASTA, "", "", "", "", "", true)));
         fastaSynonymSequenceReader = new FastaSynonymSequenceReader(contigMapping, fastaPath);
-        contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor (fastaSynonymSequenceReader);
+        contextNucleotideAdditionProcessor = new ContextNucleotideAdditionProcessor(fastaSynonymSequenceReader);
     }
 
     @AfterClass
@@ -168,12 +178,34 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
     }
 
-    @Test(expected = IllegalStartPositionException.class)
+    @Test(expected = PositionOutsideOfContigException.class)
     public void testStartPositionGreaterThanChromosomeEnd() throws Exception {
         Variant variant1 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
         String rs1000 = "rs1000";
         variant1.setMainId(rs1000);
         variant1.setIds(Collections.singleton(rs1000));
         contextNucleotideAdditionProcessor.process(variant1);
+    }
+
+    @Test
+    public void addContextBaseUsingSynonymContig() throws Exception {
+        Variant variant = new Variant(SCAFFOLD, 7, 8, "", "A");
+        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
+        assertEquals(6, processedVariant.getStart());
+        assertEquals(7, processedVariant.getEnd());
+        assertEquals("T", processedVariant.getReference());
+        assertEquals("TA", processedVariant.getAlternate());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void contigNotFound() throws Exception {
+        Variant variant1 = new Variant(MISSING_IN_FASTA, 10, 10, "", "A");
+        try {
+            contextNucleotideAdditionProcessor.process(variant1);
+        } catch (PositionOutsideOfContigException wrongException) {
+            fail("The exception (" + wrongException.getClass().getSimpleName()
+                 + ") is wrong because the variant doesn't have a position outside of chromosome. The correct "
+                 + "exception should be that the contig is not present in the fasta");
+        }
     }
 }
