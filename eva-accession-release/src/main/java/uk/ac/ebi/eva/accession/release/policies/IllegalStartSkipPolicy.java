@@ -18,12 +18,12 @@ package uk.ac.ebi.eva.accession.release.policies;
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 
-import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 
 public class IllegalStartSkipPolicy implements SkipPolicy {
 
     @Override
     public boolean shouldSkip(Throwable exception, int skipCount) throws SkipLimitExceededException {
-        return exception instanceof IllegalStartPositionException;
+        return exception instanceof PositionOutsideOfContigException;
     }
 }

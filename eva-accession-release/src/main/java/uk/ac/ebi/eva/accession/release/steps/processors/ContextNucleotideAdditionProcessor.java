@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
-import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -50,7 +50,7 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
             } else {
                 throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
             }
-        } catch (IllegalStartPositionException e) {
+        } catch (PositionOutsideOfContigException e) {
             logger.warn(e.getMessage() + ". " + variant.toString());
             throw e;
         }

@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.release.policies;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -34,7 +34,7 @@ public class IllegalStartSkipPolicyTest {
 
     @Test
     public void shouldSkipException() {
-        Throwable illegalStartPositionException = new IllegalStartPositionException("exception");
+        Throwable illegalStartPositionException = new PositionOutsideOfContigException("exception");
         assertTrue(illegalStartSkipPolicy.shouldSkip(illegalStartPositionException, 0));
     }
 

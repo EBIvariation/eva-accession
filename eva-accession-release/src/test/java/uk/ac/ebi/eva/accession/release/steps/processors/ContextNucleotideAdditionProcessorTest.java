@@ -24,7 +24,7 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
-import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -178,7 +178,7 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
     }
 
-    @Test(expected = IllegalStartPositionException.class)
+    @Test(expected = PositionOutsideOfContigException.class)
     public void testStartPositionGreaterThanChromosomeEnd() throws Exception {
         Variant variant1 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
         String rs1000 = "rs1000";
@@ -202,7 +202,7 @@ public class ContextNucleotideAdditionProcessorTest {
         Variant variant1 = new Variant(MISSING_IN_FASTA, 10, 10, "", "A");
         try {
             contextNucleotideAdditionProcessor.process(variant1);
-        } catch (IllegalStartPositionException wrongException) {
+        } catch (PositionOutsideOfContigException wrongException) {
             fail("The exception (" + wrongException.getClass().getSimpleName()
                  + ") is wrong because the variant doesn't have a position outside of chromosome. The correct "
                  + "exception should be that the contig is not present in the fasta");
