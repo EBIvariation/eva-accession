@@ -25,6 +25,7 @@ import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.IOException;
@@ -138,7 +139,7 @@ public class FastaSequenceReader {
         } else {
             int sequenceLengthInFastaFile = sequenceDictionary.getSequence(contig).getSequenceLength();
             if (end > sequenceLengthInFastaFile) {
-                throw new IllegalArgumentException(
+                throw new IllegalStartPositionException(
                         "Variant coordinate " + end + " greater than end of chromosome " + contig + ": " +
                                 sequenceLengthInFastaFile);
             }

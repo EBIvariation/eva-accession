@@ -24,7 +24,7 @@ import org.junit.Test;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
-import uk.ac.ebi.eva.accession.release.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 

@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.release.policies;
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 
-import uk.ac.ebi.eva.accession.release.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
 
 public class IllegalStartSkipPolicy implements SkipPolicy {
 

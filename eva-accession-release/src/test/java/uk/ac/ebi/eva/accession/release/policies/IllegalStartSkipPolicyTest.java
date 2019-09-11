@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.release.policies;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.release.exceptions.IllegalStartPositionException;
+import uk.ac.ebi.eva.accession.core.exceptions.IllegalStartPositionException;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
