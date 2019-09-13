@@ -137,9 +137,9 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(contigsFilePath));
             String contigLine;
             while ((contigLine = bufferedReader.readLine()) != null) {
-                String[] contigAndName = contigLine.split(",");
-                String contig = contigAndName[0];
-                String name = contigAndName[1];
+                String[] nameAndContig = contigLine.split(",");
+                String name = nameAndContig[0];
+                String contig = nameAndContig[1];
                 metaData.add(new VCFHeaderLine("contig", "<ID=" + name + ",accession=\"" + contig + "\">"));
             }
         } catch (IOException e) {

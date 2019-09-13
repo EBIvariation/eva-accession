@@ -85,7 +85,7 @@ public class ContigWriterTest {
 
         assertEquals(contigs.size(), numberOfLines(output));
 
-        List<String> expectedLines = Arrays.asList("CM0001.1,Chr1", "CM0002.1,Chr2", "CM0003.1,Chr3");
+        List<String> expectedLines = Arrays.asList("Chr1,CM0001.1", "Chr2,CM0002.1", "Chr3,CM0003.1");
         assertContigFileContent(output, expectedLines);
     }
 
@@ -123,7 +123,7 @@ public class ContigWriterTest {
 
         assertEquals(contigs.size(), numberOfLines(output));
 
-        List<String> expectedLines = Arrays.asList("NC0001.1,Chr1", "NC0002.1,Chr2", "CM0003.1,Chr3");
+        List<String> expectedLines = Arrays.asList("Chr1,NC0001.1", "Chr2,NC0002.1", "Chr3,CM0003.1");
         assertContigFileContent(output, expectedLines);
     }
 
