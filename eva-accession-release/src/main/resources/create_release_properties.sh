@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if (( $# != 9 )); then
+if (( $# != 12 )); then
 	echo  "This script creates a '.properties' file for the eva-accession-release pipeline, taking the properties from the import, and suggesting commands to run the whole release process for an assembly.
 This script needs the next parameters in order:
 - The path to the import properties file with information about the assembly to release
@@ -12,6 +12,9 @@ This script needs the next parameters in order:
 - The path to the vcf-validator executable
 - The path to the vcf-assembly-checker executable
 - The path to the sort_vcf script
+- The path to python
+- The path to mongo RS ID counts
+- The path to the validation script
 "
 
 else
@@ -24,6 +27,9 @@ else
 	VCF_VALIDATOR_PATH=$7
 	VCF_ASM_CHECKER_PATH=$8
 	SORT_SCRIPT_PATH=$9
+	PYTHON_PATH=${10}
+	VALIDATION_SCRIPT_PATH=${11}
+	UNIQUE_RS_IDS_MONGO=${12}
 
 	if [ ! -f ${IMPORT_FILE} ]; then
 		echo "The properties file ${IMPORT_FILE} doesn't exist! Stopping script"
@@ -103,6 +109,7 @@ bsub -J \${jobname}_current_vcf -w \${jobname} -o ${OUTPUT_FOLDER}current_vcf.lo
 bsub -J \${jobname}_merged_vcf -w \${jobname} -o ${OUTPUT_FOLDER}merged_vcf.log -e ${OUTPUT_FOLDER}merged_vcf.err \"${SORT_SCRIPT_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids_unsorted.vcf ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf; ${VCF_VALIDATOR_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -o ${OUTPUT_FOLDER}; ${VCF_ASM_CHECKER_PATH} -i ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf -f ${fasta} -a ${assembly_report_no_prefix} -o ${OUTPUT_FOLDER} -r text,summary ; ${BGZIP_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf\"
 bsub -J \${jobname}_tabix -w \"(\${jobname}_current_vcf && \${jobname}_merged_vcf)\" -o tabix.log -e tabix.err \"${TABIX_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz; ${TABIX_PATH}  ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz\"
 bsub -J \${jobname}_count -w \"(\${jobname}_txts && \${jobname}_current_vcf && \${jobname}_merged_vcf)\" -o count_ids.log -e count_ids.err \"echo '# Unique RS ID counts' > ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_current_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; ${COUNT_IDS_PATH} ${OUTPUT_FOLDER}${assemblyAccession}_merged_ids.vcf.gz >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_deprecated_ids.txt.gz | wc -l | sed 's/^/'${assemblyAccession}_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt; zcat ${OUTPUT_FOLDER}${assemblyAccession}_merged_deprecated_ids.txt.gz | cut -f 1 | uniq | wc -l | sed 's/^/'${assemblyAccession}_merged_deprecated_ids.txt.gz'\t/' >> ${OUTPUT_FOLDER}README_rs_ids_counts.txt\"
+bsub -J \${jobname}_qa_validation -w \${jobname}_count -o qa_validation.log -e qa_validation.err \"${PYTHON_PATH} ${VALIDATION_SCRIPT_PATH} -p ${OUTPUT_FILE} -m ${UNIQUE_RS_IDS_MONGO}\"
 " | tee release_commands_${assemblyAccession}.txt
 
 fi
