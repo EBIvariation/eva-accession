@@ -20,8 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
@@ -51,16 +49,18 @@ public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpCluster
     @Override
     public void write(List<? extends DbsnpClusteredVariantEntity> clusteredVariants) {
         try {
-            dbsnpClusteredVariantWriter.write(clusteredVariants);
+            if (!clusteredVariants.isEmpty()) {
+                dbsnpClusteredVariantWriter.write(clusteredVariants);
+            }
         } catch (BulkOperationException exception) {
-            List<String> ids = extractUniqueHashesForDuplicateKeyError(exception).collect(toList());
-            Query query = new Query();
-            query.addCriteria(Criteria.where("_id").in(ids));
-            List<DbsnpClusteredVariantEntity> entities = mongoTemplate.find(query, DbsnpClusteredVariantEntity.class);
-            List<Long> rsIDs = entities.stream()
-                .map(DbsnpClusteredVariantEntity::getAccession)
-                .collect(toList());
-            logger.error("Duplicate RS IDs: {}", rsIDs);
+            List<String> hashes = extractUniqueHashesForDuplicateKeyError(exception).collect(toList());
+            List<String> variantsThatFailedInsert =
+                    clusteredVariants
+                            .stream()
+                            .filter(v -> hashes.contains(v.getHashedMessage()))
+                            .map(v -> v.getAccession().toString())
+                            .collect(toList());
+            logger.error("Duplicate RS IDs: {}", variantsThatFailedInsert);
             logger.debug("Error trace", exception);
         }
     }
