@@ -70,7 +70,7 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     public void setUp() {
         importCounts = new ImportCounts();
         DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate,
-                                                                                             importCounts);
+                                                                                                  importCounts);
         variantEntity1 = buildClusteredVariantEntity(1L,
                                                      buildClusteredVariant("acsn1",
                                                                            "contig1",

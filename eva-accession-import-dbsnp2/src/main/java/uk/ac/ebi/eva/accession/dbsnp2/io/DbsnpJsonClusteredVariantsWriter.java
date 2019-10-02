@@ -18,7 +18,6 @@ package uk.ac.ebi.eva.accession.dbsnp2.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.BulkOperationException;
 import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
