@@ -63,6 +63,8 @@ public class ContigMapping {
      * - UCSC and assignedMolecule columns may appear as "na" (not available).
      * - assignedMolecule values may not be unique across rows. Keep only those that have "assembled-molecule" in the
      * Sequence-Role column.
+     * - with our custom assembly reports, sometimes the Genbank column is also not unique. Keep all the duplicated
+     * entries but when asked for a genbank, return the mapping where it's an "assembled-molecule".
      */
     private void fillContigConventionMaps(ContigSynonyms contigSynonyms) {
         normalizeNames(contigSynonyms);
@@ -79,7 +81,11 @@ public class ContigMapping {
             assignedMoleculeToSynonyms.put(contigSynonyms.getAssignedMolecule(), contigSynonyms);
         }
         if (contigSynonyms.getGenBank() != null) {
-            genBankToSynonyms.put(contigSynonyms.getGenBank(), contigSynonyms);
+            if (ASSEMBLED_MOLECULE.equals(contigSynonyms.getSequenceRole())) {
+                genBankToSynonyms.put(contigSynonyms.getGenBank(), contigSynonyms);
+            } else {
+                genBankToSynonyms.putIfAbsent(contigSynonyms.getGenBank(), contigSynonyms);
+            }
         }
         if (contigSynonyms.getRefSeq() != null) {
             refSeqToSynonyms.put(contigSynonyms.getRefSeq(), contigSynonyms);
