@@ -35,11 +35,19 @@ public class ContigMappingTest {
 
     private static final String SEQNAME_NON_ASSEMBLED = "MMCHR1_RANDOM_CTG1";
 
+    private static final String SEQNAME_OF_DUPLICATED_AND_ASSEMBLED_GENBANK = "alternate_chr6";
+
+    private static final String SEQNAME_OF_DUPLICATED_GENBANK = "7";
+
     private static final String ASSIGNED_MOLECULE_CONTIG = "1";
 
     private static final String GENBANK_CONTIG = "CM000994.2";
 
     private static final String GENBANK_WITHOUT_SYNONYM = "GL_without_synonym";
+
+    private static final String GENBANK_DUPLICATED_AND_ASSEMBLED = "CM000999.2";
+
+    private static final String GENBANK_DUPLICATED = "CM001000.2";
 
     private static final String REFSEQ_CONTIG = "NC_000067.6";
 
@@ -53,9 +61,13 @@ public class ContigMappingTest {
 
     private ContigMapping contigMapping;
 
-    private static final int TOTAL_ROWS = 24;
+    private static final int TOTAL_ROWS = 26;
 
-    private static final int NON_ASSEMBLED_MOLECULE_ROWS = 11;
+    private static final int NON_ASSEMBLED_MOLECULE_ROWS = 12;
+
+    private static final int DUPLICATED_ASSEMBLED_MOLECULE_ROWS = 1;
+
+    private static final int DUPLICATED_GENBANK = 2;
 
     private static final int MISSING_UCSC_ROWS = 1;
 
@@ -95,6 +107,17 @@ public class ContigMappingTest {
     }
 
     @Test
+    public void getSynonymsOfDuplicatedGenbank() {
+        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(GENBANK_DUPLICATED_AND_ASSEMBLED);
+        assertNotNull(contigSynonyms);
+        assertEquals(SEQNAME_OF_DUPLICATED_AND_ASSEMBLED_GENBANK, contigSynonyms.getSequenceName());
+
+        contigSynonyms = contigMapping.getContigSynonyms(GENBANK_DUPLICATED);
+        assertNotNull(contigSynonyms);
+        assertEquals(SEQNAME_OF_DUPLICATED_GENBANK, contigSynonyms.getSequenceName());
+    }
+
+    @Test
     public void getAssignedMoleculeReturnsNullForNonAssembledMolecules() {
         assertNull(contigMapping.getContigSynonyms(SEQNAME_NON_ASSEMBLED).getAssignedMolecule());
     }
@@ -112,8 +135,9 @@ public class ContigMappingTest {
     @Test
     public void checkAllEntriesWereLoaded() {
         assertEquals(TOTAL_ROWS, contigMapping.sequenceNameToSynonyms.size());
-        assertEquals(TOTAL_ROWS - NON_ASSEMBLED_MOLECULE_ROWS, contigMapping.assignedMoleculeToSynonyms.size());
-        assertEquals(TOTAL_ROWS, contigMapping.genBankToSynonyms.size());
+        assertEquals(TOTAL_ROWS - NON_ASSEMBLED_MOLECULE_ROWS - DUPLICATED_ASSEMBLED_MOLECULE_ROWS,
+                     contigMapping.assignedMoleculeToSynonyms.size());
+        assertEquals(TOTAL_ROWS - DUPLICATED_GENBANK, contigMapping.genBankToSynonyms.size());
         assertEquals(TOTAL_ROWS, contigMapping.refSeqToSynonyms.size());
         assertEquals(TOTAL_ROWS - MISSING_UCSC_ROWS, contigMapping.ucscToSynonyms.size());
     }
