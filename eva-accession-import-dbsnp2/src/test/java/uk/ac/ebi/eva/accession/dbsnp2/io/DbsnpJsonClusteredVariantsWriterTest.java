@@ -30,6 +30,7 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
@@ -68,12 +69,14 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     @Before
     public void setUp() {
         importCounts = new ImportCounts();
+        DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate,
+                                                                                                  importCounts);
         variantEntity1 = buildClusteredVariantEntity(1L,
                                                      buildClusteredVariant("acsn1",
                                                                            "contig1",
                                                                            1L,
                                                                            VariantType.SNV));
-        dbsnpJsonClusteredVariantsWriter = new DbsnpJsonClusteredVariantsWriter(mongoTemplate, importCounts);
+        dbsnpJsonClusteredVariantsWriter = new DbsnpJsonClusteredVariantsWriter(dbsnpClusteredVariantWriter);
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
     }
 

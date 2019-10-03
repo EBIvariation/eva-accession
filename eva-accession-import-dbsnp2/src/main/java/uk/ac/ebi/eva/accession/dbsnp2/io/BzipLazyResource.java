@@ -46,10 +46,10 @@ public class BzipLazyResource extends FileSystemResource {
     public InputStream getInputStream() throws IOException {
         BufferedInputStream bis = new BufferedInputStream(super.getInputStream());
         try {
-            return new CompressorStreamFactory().createCompressorInputStream(bis);
+            return new CompressorStreamFactory().createCompressorInputStream(CompressorStreamFactory.BZIP2, bis,
+                                                                             true);
         } catch (CompressorException compressorException) {
             throw new IOException("The input file is not compressed in bzip2 format");
         }
     }
 }
-

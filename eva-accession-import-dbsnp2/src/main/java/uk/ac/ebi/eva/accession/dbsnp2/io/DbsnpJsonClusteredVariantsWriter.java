@@ -19,16 +19,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
-import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 
 import java.util.List;
+import java.util.Set;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static uk.ac.ebi.eva.accession.core.utils.BulkOperationExceptionUtils.extractUniqueHashesForDuplicateKeyError;
 
 /**
@@ -41,26 +39,26 @@ public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpCluster
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
 
-    private MongoTemplate mongoTemplate;
-
-    public DbsnpJsonClusteredVariantsWriter(MongoTemplate mongoTemplate, ImportCounts importCounts) {
-        dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate, importCounts);
-        this.mongoTemplate = mongoTemplate;
+    public DbsnpJsonClusteredVariantsWriter(DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter) {
+        this.dbsnpClusteredVariantWriter = dbsnpClusteredVariantWriter;
     }
 
     @Override
     public void write(List<? extends DbsnpClusteredVariantEntity> clusteredVariants) {
         try {
-            dbsnpClusteredVariantWriter.write(clusteredVariants);
+            if (!clusteredVariants.isEmpty()) {
+                dbsnpClusteredVariantWriter.write(clusteredVariants);
+            }
+            else {
+                logger.warn("Could not find any clustered variants to write in the current chunk!");
+            }
         } catch (BulkOperationException exception) {
-            List<String> ids = extractUniqueHashesForDuplicateKeyError(exception).collect(toList());
-            Query query = new Query();
-            query.addCriteria(Criteria.where("_id").in(ids));
-            List<DbsnpClusteredVariantEntity> entities = mongoTemplate.find(query, DbsnpClusteredVariantEntity.class);
-            List<Long> rsIDs = entities.stream()
-                .map(DbsnpClusteredVariantEntity::getAccession)
-                .collect(toList());
-            logger.error("Duplicate RS IDs: {}", rsIDs);
+            Set<String> hashes = extractUniqueHashesForDuplicateKeyError(exception).collect(toSet());
+            List<String> variantsThatFailedInsert = clusteredVariants.stream()
+                                                                     .filter(v -> hashes.contains(v.getHashedMessage()))
+                                                                     .map(v -> v.getAccession().toString())
+                                                                     .collect(toList());
+            logger.error("Duplicate RS IDs: {}", variantsThatFailedInsert);
             logger.debug("Error trace", exception);
         }
     }
