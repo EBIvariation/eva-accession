@@ -173,11 +173,16 @@ public class CreateReleaseStepConfigurationTest {
 
     }
 
+    /**
+     * Variant rs8181 is an insertion and when retrieving the context nucleotide from the FASTA it brings a Y which is
+     * invalid in VCF. We have to make sure variants like that one are excluded before we write the VCF file.
+     */
     @Test
     public void excludeInvalidVariants() throws IOException {
         assertStepExecutesAndCompletes();
         File outputFile = getReleaseFile();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        assertEquals(0, grepFile(outputFile, ".*rs8181.*").size());
     }
 }

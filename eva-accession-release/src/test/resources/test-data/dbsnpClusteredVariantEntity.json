@@ -19,7 +19,7 @@
       "tax": 60711,
       "contig": "CM001954.1",
       "start": NumberLong(81),
-      "type": "SNV",
+      "type": "INS",
       "accession": NumberLong(8181),
       "version": 1,
       "createdDate": ISODate(
