@@ -41,6 +41,7 @@ import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -170,5 +171,13 @@ public class CreateReleaseStepConfigurationTest {
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + studyId + ".*");
         assertEquals(EXPECTED_LINES, dataLines.size());
 
+    }
+
+    @Test
+    public void excludeInvalidVariants() throws IOException {
+        assertStepExecutesAndCompletes();
+        File outputFile = getReleaseFile();
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
+        assertEquals(EXPECTED_LINES, numVariantsInRelease);
     }
 }

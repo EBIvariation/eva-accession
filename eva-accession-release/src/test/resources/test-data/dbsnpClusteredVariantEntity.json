@@ -14,6 +14,19 @@
       )
     },
     {
+      "_id": "F475F4F6657CF52CE8BF8416AA945EF669CBCCCC",
+      "asm": "GCA_000409795.2",
+      "tax": 60711,
+      "contig": "CM001954.1",
+      "start": NumberLong(81),
+      "type": "SNV",
+      "accession": NumberLong(8181),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-16T13:07:00Z"
+      )
+    },
+    {
       "_id" : "3D0AFF1E1CD40ED24279EF031D3E54B36D2A1111",
       "asm" : "GCA_000409795.2",
       "tax" : 60711,
