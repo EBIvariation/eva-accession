@@ -48,6 +48,7 @@ public class ReleaseProcessorConfiguration {
         compositeItemProcessor.setDelegates(Arrays.asList(new NamedVariantProcessor(),
                                                           new ExcludeInvalidVariantsProcessor(),
                                                           new ContextNucleotideAdditionProcessor(fastaReader),
+                                                          new ExcludeInvalidVariantsProcessor(),
                                                           new VariantToVariantContextProcessor(contigMapping)));
         return compositeItemProcessor;
     }
