@@ -25,9 +25,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantOperationWriter;
 import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.dbsnp2.io.DbsnpJsonClusteredVariantsWriter;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 
@@ -47,10 +50,16 @@ public class ImportDbsnpJsonVariantsWriterConfiguration {
 
     @Bean(name = DBSNP_JSON_VARIANT_WRITER)
     @StepScope
-    public ItemWriter<DbsnpClusteredVariantEntity> writer(InputParameters parameters) {
+    public ItemWriter<DbsnpClusteredVariantEntity> writer
+            (InputParameters parameters,
+             DbsnpClusteredVariantOperationRepository clusteredOperationRepository,
+             DbsnpClusteredVariantAccessioningRepository clusteredVariantRepository) {
         logger.info("Injecting dbsnpClusteredVariantWriter with parameters: {}", parameters);
         DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate,
                                                                                                   importCounts);
-        return new DbsnpJsonClusteredVariantsWriter(dbsnpClusteredVariantWriter);
+        DbsnpClusteredVariantOperationWriter dbsnpClusteredVariantOperationWriter =
+                new DbsnpClusteredVariantOperationWriter(mongoTemplate, importCounts);
+        return new DbsnpJsonClusteredVariantsWriter(dbsnpClusteredVariantWriter, dbsnpClusteredVariantOperationWriter,
+                                                    clusteredOperationRepository, clusteredVariantRepository);
     }
 }

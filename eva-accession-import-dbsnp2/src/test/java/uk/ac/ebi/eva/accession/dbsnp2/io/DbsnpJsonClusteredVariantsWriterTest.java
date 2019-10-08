@@ -30,9 +30,12 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantOperationWriter;
 import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -56,6 +59,12 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     private DbsnpJsonClusteredVariantsWriter dbsnpJsonClusteredVariantsWriter;
 
     @Autowired
+    private DbsnpClusteredVariantAccessioningRepository dbsnpClusteredVariantAccessioningRepository;
+
+    @Autowired
+    private DbsnpClusteredVariantOperationRepository dbsnpClusteredVariantOperationRepository;
+
+    @Autowired
     private MongoTemplate mongoTemplate;
 
     private ImportCounts importCounts;
@@ -71,23 +80,28 @@ public class DbsnpJsonClusteredVariantsWriterTest {
         importCounts = new ImportCounts();
         DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter = new DbsnpClusteredVariantWriter(mongoTemplate,
                                                                                                   importCounts);
+        DbsnpClusteredVariantOperationWriter dbsnpClusteredVariantOperationWriter =
+                new DbsnpClusteredVariantOperationWriter(mongoTemplate, importCounts);
         variantEntity1 = buildClusteredVariantEntity(1L,
                                                      buildClusteredVariant("acsn1",
                                                                            "contig1",
                                                                            1L,
                                                                            VariantType.SNV));
-        dbsnpJsonClusteredVariantsWriter = new DbsnpJsonClusteredVariantsWriter(dbsnpClusteredVariantWriter);
+        dbsnpJsonClusteredVariantsWriter =
+                new DbsnpJsonClusteredVariantsWriter(dbsnpClusteredVariantWriter, dbsnpClusteredVariantOperationWriter,
+                                                     dbsnpClusteredVariantOperationRepository,
+                                                     dbsnpClusteredVariantAccessioningRepository);
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
     }
 
     @Test
-    public void writeSingleVariant() {
+    public void writeSingleVariant() throws Exception {
         dbsnpJsonClusteredVariantsWriter.write(Collections.singletonList(variantEntity1));
         assertClusteredVariantStored(1, Collections.singletonList(variantEntity1));
     }
 
     @Test
-    public void writeMultipleVariantsWithDifferentContig() {
+    public void writeMultipleVariantsWithDifferentContig() throws Exception {
         variantEntity2 = buildClusteredVariantEntity(variantEntity1.getAccession(),
                                                      buildClusteredVariant(variantEntity1.getAssemblyAccession(),
                                                                            "contig2",
@@ -99,7 +113,7 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     }
 
     @Test
-    public void writeMultipleVariantsWithDifferentStart() {
+    public void writeMultipleVariantsWithDifferentStart() throws Exception {
         variantEntity2 = buildClusteredVariantEntity(variantEntity1.getAccession(),
                                                      buildClusteredVariant(variantEntity1.getAssemblyAccession(),
                                                                            variantEntity1.getContig(),
@@ -111,7 +125,7 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     }
 
     @Test
-    public void writeMultipleVariantsWithDifferentVariantType() {
+    public void writeMultipleVariantsWithDifferentVariantType() throws Exception {
         variantEntity2 = buildClusteredVariantEntity(variantEntity1.getAccession(),
                                                      buildClusteredVariant(variantEntity1.getAssemblyAccession(),
                                                                            variantEntity1.getContig(),
@@ -123,7 +137,7 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     }
 
     @Test
-    public void writeMultipleVariantsWithDifferentAssemblyAccession() {
+    public void writeMultipleVariantsWithDifferentAssemblyAccession() throws Exception {
         variantEntity2 = buildClusteredVariantEntity(variantEntity1.getAccession(),
                                                      buildClusteredVariant("acsn2",
                                                                            variantEntity1.getContig(),
@@ -135,7 +149,7 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     }
 
     @Test
-    public void writeMultipleVariantsWithDifferentRsIDWithSameClusteredVariant() {
+    public void writeMultipleVariantsWithDifferentRsIDWithSameClusteredVariant() throws Exception {
         variantEntity2 = buildClusteredVariantEntity(2L,
                                                      variantEntity1.getModel());
         List<DbsnpClusteredVariantEntity> clusteredVariantEntities = Arrays.asList(variantEntity1, variantEntity2);
@@ -144,7 +158,7 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     }
 
     @Test
-    public void writeDuplicateVariantShouldNotBeStored() {
+    public void writeDuplicateVariantShouldNotBeStored() throws Exception {
         List<DbsnpClusteredVariantEntity> clusteredVariantEntities = Arrays.asList(variantEntity1, variantEntity1);
         dbsnpJsonClusteredVariantsWriter.write(clusteredVariantEntities);
         assertClusteredVariantStored(1, clusteredVariantEntities);

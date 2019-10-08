@@ -16,7 +16,7 @@
  *
  */
 
-package uk.ac.ebi.eva.accession.dbsnp.io;
+package uk.ac.ebi.eva.accession.core.io;
 
 import com.mongodb.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
