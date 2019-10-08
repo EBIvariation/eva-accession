@@ -19,18 +19,26 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.junit.Test;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.time.LocalDateTime;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 
 public class ContigToGenbankReplacerProcessorTest {
 
     private ContigToGenbankReplacerProcessor processor;
+
+    private Function<IClusteredVariant, String> hashingFunction =
+            new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -100,6 +108,13 @@ public class ContigToGenbankReplacerProcessorTest {
         assertEquals("tstchr4", processor.process(variant).getContig());
     }
 
+    @Test
+    public void updatedHashedMessageAfterGenbankReplacement() throws Exception {
+        DbsnpClusteredVariantEntity variant = buildMockVariant("NC_000024.10");
+        assertEquals(new SHA1HashingFunction().apply("1_CM000686.2_1_SNV"),
+                     processor.process(variant).getHashedMessage());
+    }
+
     private DbsnpClusteredVariantEntity buildMockVariant(String originalChromosome) {
         ClusteredVariant newVariant = new ClusteredVariant("1",
                                                            9606,
@@ -108,8 +123,8 @@ public class ContigToGenbankReplacerProcessorTest {
                                                            VariantType.SNV,
                                                            Boolean.FALSE,
                                                            LocalDateTime.now());
-        return new DbsnpClusteredVariantEntity(1l,
-                                               "hashedMessage",
+        return new DbsnpClusteredVariantEntity(1L,
+                                               hashingFunction.apply(newVariant),
                                                newVariant,
                                                1);
     }
