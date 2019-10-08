@@ -109,9 +109,21 @@ public class ContigToGenbankReplacerProcessorTest {
     }
 
     @Test
-    public void updatedHashedMessageAfterGenbankReplacement() throws Exception {
+    public void updatedHashedMessageAfterContigReplacement() throws Exception {
         DbsnpClusteredVariantEntity variant = buildMockVariant("NC_000024.10");
         assertEquals(new SHA1HashingFunction().apply("1_CM000686.2_1_SNV"),
+                     processor.process(variant).getHashedMessage());
+
+        variant = buildMockVariant("chrY");
+        assertEquals(new SHA1HashingFunction().apply("1_CM000686.2_1_SNV"),
+                     processor.process(variant).getHashedMessage());
+
+        variant = buildMockVariant("chrUn_KI270752v1");
+        assertEquals(new SHA1HashingFunction().apply("1_KI270752.1_1_SNV"),
+                     processor.process(variant).getHashedMessage());
+
+        variant = buildMockVariant("tstchr2");
+        assertEquals(new SHA1HashingFunction().apply("1_tstchr2_1_SNV"),
                      processor.process(variant).getHashedMessage());
     }
 
