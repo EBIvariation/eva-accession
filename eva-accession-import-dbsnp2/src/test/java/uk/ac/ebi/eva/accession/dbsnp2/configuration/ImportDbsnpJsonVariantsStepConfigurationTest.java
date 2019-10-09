@@ -58,6 +58,6 @@ public class ImportDbsnpJsonVariantsStepConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(IMPORT_DBSNP_JSON_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-        assertEquals(25L, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
+        assertEquals(26L, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
     }
 }

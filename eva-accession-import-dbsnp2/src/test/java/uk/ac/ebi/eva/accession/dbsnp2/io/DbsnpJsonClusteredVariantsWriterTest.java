@@ -27,6 +27,7 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
@@ -35,6 +36,8 @@ import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
@@ -92,6 +95,7 @@ public class DbsnpJsonClusteredVariantsWriterTest {
                                                      dbsnpClusteredVariantOperationRepository,
                                                      dbsnpClusteredVariantAccessioningRepository);
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
     }
 
     @Test
@@ -152,9 +156,27 @@ public class DbsnpJsonClusteredVariantsWriterTest {
     public void writeMultipleVariantsWithDifferentRsIDWithSameClusteredVariant() throws Exception {
         variantEntity2 = buildClusteredVariantEntity(2L,
                                                      variantEntity1.getModel());
-        List<DbsnpClusteredVariantEntity> clusteredVariantEntities = Arrays.asList(variantEntity1, variantEntity2);
+        DbsnpClusteredVariantEntity variantEntity3 = buildClusteredVariantEntity(3L,
+                                                                                 variantEntity1.getModel());
+        List<DbsnpClusteredVariantEntity> clusteredVariantEntities = Arrays.asList(variantEntity1, variantEntity2,
+                                                                                   variantEntity3);
         dbsnpJsonClusteredVariantsWriter.write(clusteredVariantEntities);
         assertClusteredVariantStored(1, clusteredVariantEntities);
+
+        DbsnpClusteredVariantOperationEntity clusteredVariantOperationEntity1 =
+                new DbsnpClusteredVariantOperationEntity();
+        DbsnpClusteredVariantOperationEntity clusteredVariantOperationEntity2 =
+                new DbsnpClusteredVariantOperationEntity();
+        clusteredVariantOperationEntity1.fill(EventType.MERGED, variantEntity2.getAccession(),
+                                             variantEntity1.getAccession(),
+                                             "Identical clustered variant received multiple RS identifiers",
+                                             Arrays.asList(new DbsnpClusteredVariantInactiveEntity(variantEntity2)));
+        clusteredVariantOperationEntity2.fill(EventType.MERGED, variantEntity3.getAccession(),
+                                              variantEntity1.getAccession(),
+                                              "Identical clustered variant received multiple RS identifiers",
+                                              Arrays.asList(new DbsnpClusteredVariantInactiveEntity(variantEntity3)));
+        assertClusteredVariantOperationStored(2, Arrays.asList(clusteredVariantOperationEntity1,
+                                                               clusteredVariantOperationEntity2));
     }
 
     @Test
@@ -187,5 +209,24 @@ public class DbsnpJsonClusteredVariantsWriterTest {
         assertEquals(expectedVariants, importCounts.getClusteredVariantsWritten());
         clusteredVariantEntities.forEach(entity ->
             assertTrue(actualClusteredVariantEntities.contains(entity)));
+    }
+
+    private void assertClusteredVariantOperationStored
+            (int expectedVariants, List<DbsnpClusteredVariantOperationEntity> clusteredVariantOperationEntities) {
+        List<DbsnpClusteredVariantOperationEntity> actualClusteredVariantOperationEntities = mongoTemplate.find
+                (new Query(), DbsnpClusteredVariantOperationEntity.class);
+        assertEquals(expectedVariants, actualClusteredVariantOperationEntities.size());
+        assertEquals(expectedVariants, importCounts.getOperationsWritten());
+        clusteredVariantOperationEntities.forEach(
+                entity -> assertTrue(actualClusteredVariantOperationEntities.stream().filter(
+                        actual -> dbsnpClusteredVariantOperationEntitiesEqual(actual, entity)).count() >= 1));
+    }
+
+    private boolean dbsnpClusteredVariantOperationEntitiesEqual(DbsnpClusteredVariantOperationEntity entity1,
+                                                             DbsnpClusteredVariantOperationEntity entity2) {
+        return entity1.getAccession().equals(entity2.getAccession()) &&
+                entity1.getMergedInto().equals(entity2.getMergedInto()) &&
+                entity1.getInactiveObjects().containsAll(entity2.getInactiveObjects()) &&
+                entity1.getInactiveObjects().size() == entity2.getInactiveObjects().size();
     }
 }

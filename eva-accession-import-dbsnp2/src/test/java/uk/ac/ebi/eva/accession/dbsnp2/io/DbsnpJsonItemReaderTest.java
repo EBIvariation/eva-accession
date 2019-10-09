@@ -61,7 +61,7 @@ public class DbsnpJsonItemReaderTest {
             new File("src/test/resources/input-files/test-dbsnp.json.bz2")));
         reader.open(new ExecutionContext());
         List<JsonNode> variants = readAll(reader);
-        assertEquals(25, variants.size());
+        assertEquals(26, variants.size());
     }
 
     @Test
