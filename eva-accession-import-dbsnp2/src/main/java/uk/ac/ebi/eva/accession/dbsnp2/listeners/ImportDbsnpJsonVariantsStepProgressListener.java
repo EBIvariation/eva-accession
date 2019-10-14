@@ -46,6 +46,7 @@ public class ImportDbsnpJsonVariantsStepProgressListener extends GenericProgress
         ExecutionContext executionContext = stepExecution.getExecutionContext();
         if (executionContext.containsKey(ImportCounts.CLUSTERED_VARIANTS_WRITTEN)) {
             importCounts.setClusteredVariantsWritten(executionContext.getLong(ImportCounts.CLUSTERED_VARIANTS_WRITTEN));
+            importCounts.setOperationsWritten(executionContext.getLong(ImportCounts.OPERATIONS_WRITTEN));
         }
     }
 
@@ -61,9 +62,9 @@ public class ImportDbsnpJsonVariantsStepProgressListener extends GenericProgress
         ExitStatus status = super.afterStep(stepExecution);
         String stepName = stepExecution.getStepName();
         long numTotalItemsRead = stepExecution.getReadCount();
-        logger.info("Step {} finished: Items read = {}, rs written = {}",
+        logger.info("Step {} finished: Items read = {}, rs written = {}, operations written = {}",
             stepName, numTotalItemsRead,
-            importCounts.getClusteredVariantsWritten());
+            importCounts.getClusteredVariantsWritten(), importCounts.getOperationsWritten());
         // add import counts to execution context, so they can be retrieved later if the job is restarted
         ExecutionContext executionContext = stepExecution.getExecutionContext();
         addImportCountsToExecutionContext(executionContext);
@@ -72,5 +73,6 @@ public class ImportDbsnpJsonVariantsStepProgressListener extends GenericProgress
 
     private void addImportCountsToExecutionContext(ExecutionContext executionContext) {
         executionContext.putLong(ImportCounts.CLUSTERED_VARIANTS_WRITTEN, importCounts.getClusteredVariantsWritten());
+        executionContext.putLong(ImportCounts.OPERATIONS_WRITTEN, importCounts.getOperationsWritten());
     }
 }

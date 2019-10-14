@@ -83,7 +83,7 @@ public class JsonNodeToClusteredVariantProcessorTest {
     public void variantTypeSNV() {
         List<DbsnpClusteredVariantEntity> filteredClusteredVariants =
             getFilteredDbsnpClusteredVariantEntities(VariantType.SNV);
-        assertEquals(5, filteredClusteredVariants.size());
+        assertEquals(6, filteredClusteredVariants.size());
     }
 
     @Test
@@ -139,6 +139,24 @@ public class JsonNodeToClusteredVariantProcessorTest {
         reader.open(new ExecutionContext());
         JsonNode variant = reader.read();
         assertNull(processor.process(variant));
+    }
+
+
+    /**
+     * Variants in the dbSNP JSON where there are multiple assemblies in the array in the path:
+     * primary_snapshot_data -> placements_with_allele -> placement_annot -> seq_id_traits_by_assembly
+     * @see <a href="https://api.ncbi.nlm.nih.gov/variation/v0/refsnp/9743">RS ID example</a>
+     * @see <a href="https://ncbijira.ncbi.nlm.nih.gov/browse/VR-199">NCBI JIRA issue</a>
+     **/
+    @Test
+    public void variantsWithMultipleTopLevelAssembliesProcessed() throws Exception {
+        List<DbsnpClusteredVariantEntity> filteredClusteredVariants =
+                getFilteredDbsnpClusteredVariantEntities(VariantType.SNV);
+        assertEquals(1,
+                     filteredClusteredVariants.stream()
+                                              .filter(dbsnpClusteredVariantEntity ->
+                                                              dbsnpClusteredVariantEntity.getAccession().equals(9743L))
+                                              .count());
     }
 
     public List<DbsnpClusteredVariantEntity> getFilteredDbsnpClusteredVariantEntities(VariantType type) {

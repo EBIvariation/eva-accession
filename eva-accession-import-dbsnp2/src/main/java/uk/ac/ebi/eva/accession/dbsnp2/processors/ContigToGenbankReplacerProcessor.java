@@ -18,13 +18,18 @@ package uk.ac.ebi.eva.accession.dbsnp2.processors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Converts the contig to its GenBank synonym when possible. If the synonym can't be determined it keeps the contig as
@@ -63,8 +68,11 @@ public class ContigToGenbankReplacerProcessor
                                                                variant.getType(),
                                                                variant.isValidated(),
                                                                variant.getCreatedDate());
+
+            Function<IClusteredVariant, String> hashingFunction =
+                    new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
             return new DbsnpClusteredVariantEntity(variant.getAccession(),
-                                                   variant.getHashedMessage(),
+                                                   hashingFunction.apply(newVariant),
                                                    newVariant,
                                                    variant.getVersion());
         } else {

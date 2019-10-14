@@ -77,14 +77,18 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
             if(assemblyInfo.size() == 0 || !isPtlp) {
                 continue;
             }
-            String assemblyAccession = assemblyInfo.get(0).path("assembly_accession").asText();
+
+            boolean assemblyFound = false;
+            for (int i = 0; (i < assemblyInfo.size()) && !assemblyFound; i++) {
+                String assemblyAccession = assemblyInfo.get(i).path("assembly_accession").asText();
+                assemblyFound = refseqAssembly.equals(assemblyAccession);
+            }
+
             // Ignore variant if its assembly accession doesn't match the one supplied in input parameters
-            if(!refseqAssembly.equals(assemblyAccession)) {
-                logger.error("Variant with RS ID {} has a different assembly accession {}"
-                        + "than the RefSeq accession {} supplied in input parameters",
-                    jsonRootNode.path("refsnp_id").asText(),
-                    assemblyAccession,
-                    refseqAssembly);
+            if(!assemblyFound) {
+                logger.error("Variant with RS ID {} does not have any mappings for"
+                                     + " the RefSeq assembly {} supplied in the input parameters",
+                             jsonRootNode.path("refsnp_id").asText(), refseqAssembly);
                 return null;
             }
             JsonNode spdi = alleleInfo.path("alleles").get(0).path("allele").path("spdi");
