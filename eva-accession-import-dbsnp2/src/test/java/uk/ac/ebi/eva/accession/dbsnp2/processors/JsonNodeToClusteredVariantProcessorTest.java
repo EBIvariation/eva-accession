@@ -141,10 +141,14 @@ public class JsonNodeToClusteredVariantProcessorTest {
         assertNull(processor.process(variant));
     }
 
+
+    /**
+     * Variants in the dbSNP JSON where there are multiple assemblies in the array in the path:
+     * primary_snapshot_data -> placements_with_allele -> placement_annot -> seq_id_traits_by_assembly
+     * @see <a href="https://api.ncbi.nlm.nih.gov/variation/v0/refsnp/9743">RS ID example</a>
+     * @see <a href="https://ncbijira.ncbi.nlm.nih.gov/browse/VR-199">NCBI JIRA issue</a>
+     **/
     @Test
-    // Variants in the dbSNP JSON where there are multiple assemblies in the array in the path:
-    // primary_snapshot_data -> placements_with_allele -> placement_annot -> seq_id_traits_by_assembly
-    // See https://api.ncbi.nlm.nih.gov/variation/v0/refsnp/9743 and https://ncbijira.ncbi.nlm.nih.gov/browse/VR-199
     public void variantsWithMultipleTopLevelAssembliesProcessed() throws Exception {
         List<DbsnpClusteredVariantEntity> filteredClusteredVariants =
                 getFilteredDbsnpClusteredVariantEntities(VariantType.SNV);

@@ -110,21 +110,21 @@ public class ContigToGenbankReplacerProcessorTest {
 
     @Test
     public void updatedHashedMessageAfterContigReplacement() throws Exception {
-        DbsnpClusteredVariantEntity variant = buildMockVariant("NC_000024.10");
+        DbsnpClusteredVariantEntity processedVariant = processor.process(buildMockVariant("NC_000024.10"));
         assertEquals(new SHA1HashingFunction().apply("1_CM000686.2_1_SNV"),
-                     processor.process(variant).getHashedMessage());
+                     processedVariant.getHashedMessage());
 
-        variant = buildMockVariant("chrY");
+        processedVariant = processor.process(buildMockVariant("chrY"));
         assertEquals(new SHA1HashingFunction().apply("1_CM000686.2_1_SNV"),
-                     processor.process(variant).getHashedMessage());
+                     processedVariant.getHashedMessage());
 
-        variant = buildMockVariant("chrUn_KI270752v1");
+        processedVariant = processor.process(buildMockVariant("chrUn_KI270752v1"));
         assertEquals(new SHA1HashingFunction().apply("1_KI270752.1_1_SNV"),
-                     processor.process(variant).getHashedMessage());
+                     processedVariant.getHashedMessage());
 
-        variant = buildMockVariant("tstchr2");
+        processedVariant = processor.process(buildMockVariant("tstchr2"));
         assertEquals(new SHA1HashingFunction().apply("1_tstchr2_1_SNV"),
-                     processor.process(variant).getHashedMessage());
+                     processedVariant.getHashedMessage());
     }
 
     private DbsnpClusteredVariantEntity buildMockVariant(String originalChromosome) {
