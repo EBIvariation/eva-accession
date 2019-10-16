@@ -40,8 +40,10 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
+import uk.ac.ebi.eva.accession.ws.service.HumanService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDataset;
@@ -74,6 +76,8 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantsBeaconService beaconService;
 
+    private HumanService humanService;
+
     // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
     //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
     //  service directly, but at the moment, {@link ClusteredVariantAccessioningService} only deals with dbSNP variants
@@ -83,11 +87,14 @@ public class ClusteredVariantsRestController {
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
             DbsnpClusteredVariantInactiveService inactiveService,
-            ClusteredVariantsBeaconService beaconService) {
+            ClusteredVariantsBeaconService beaconService,
+            HumanService humanService
+    ) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.inactiveService = inactiveService;
         this.beaconService = beaconService;
+        this.humanService = humanService;
     }
 
     /**
@@ -250,6 +257,13 @@ public class ClusteredVariantsRestController {
         response.setAlleleRequest(request);
         response.setError(error);
         return response;
+    }
+
+    @GetMapping(value = "human/{identifier}", produces = "application/json")
+    public List<DbsnpClusteredVariantEntity> getHumanRs(
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
+                    required = true) Long identifier) throws AccessionMergedException, AccessionDoesNotExistException {
+        return humanService.getRs(identifier);
     }
 }
 

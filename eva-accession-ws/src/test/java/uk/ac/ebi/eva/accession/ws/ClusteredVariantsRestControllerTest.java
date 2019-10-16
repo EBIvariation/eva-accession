@@ -181,7 +181,7 @@ public class ClusteredVariantsRestControllerTest {
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
                .getClusteredVariantByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV);
         mockController = new ClusteredVariantsRestController(mockBasicRestController, mockService, inactiveService,
-                                                             mockBeaconService);
+                                                             mockBeaconService, null);
     }
 
     private void setupDbSnpClusteredVariants() {

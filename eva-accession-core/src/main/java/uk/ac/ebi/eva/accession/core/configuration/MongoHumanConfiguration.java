@@ -1,29 +1,13 @@
-/*
- * Copyright 2018 EMBL - European Bioinformatics Institute
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package uk.ac.ebi.eva.accession.core.configuration;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
@@ -33,40 +17,34 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.MongoDbFactory;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
-import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
-import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 import java.net.UnknownHostException;
 
 @Configuration
-@EnableMongoRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
-@EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
-@EnableMongoAuditing
+@EnableMongoRepositories(basePackages = "uk.ac.ebi.eva.accession.core.repositoryHuman", mongoTemplateRef = "humanMongoTemplate")
+@EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.repositoryHuman"})
 //@Import({MongoDataAutoConfiguration.class})
-public class MongoConfiguration {
+public class MongoHumanConfiguration {
 
     @Value("${mongodb.read-preference}")
     private String readPreference;
 
-    @Primary
-    @Bean("mongoProperties")
-    @ConfigurationProperties(prefix = "spring.data.mongodb")
+    @Bean(name = "humanMongoProperties")
+    @ConfigurationProperties(prefix = "human.mongodb")
     public MongoProperties mongoProperties() {
         return new MongoProperties();
     }
 
-    @Bean
-    public MongoClient mongoClient(@Qualifier("mongoProperties") MongoProperties properties, ObjectProvider<MongoClientOptions> options,
-                                   Environment environment) throws UnknownHostException {
+    @Bean("humanMongoClient")
+    public MongoClient mongoClient(@Qualifier("humanMongoProperties") MongoProperties properties, ObjectProvider<MongoClientOptions> options,
+                                        Environment environment) throws UnknownHostException {
         MongoClientOptions mongoClientOptions = options.getIfAvailable();
         MongoClientOptions.Builder mongoClientOptionsBuilder;
         if (mongoClientOptions != null) {
@@ -78,27 +56,22 @@ public class MongoConfiguration {
                                                       .writeConcern(WriteConcern.MAJORITY)
                                                       .build();
         return properties.createMongoClient(mongoClientOptions, environment);
+        //return new MongoClient(new ServerAddress("localhost", 27017));
+
     }
 
-    @Bean("primaryFactory")
-    public MongoDbFactory mongoDbFactory(@Qualifier("mongoProperties") MongoProperties properties,
+    @Bean("humanFactory")
+    public MongoDbFactory mongoDbFactory(@Qualifier("humanMongoProperties") MongoProperties properties,
                                          ObjectProvider<MongoClientOptions> options,
                                          Environment environment) throws UnknownHostException {
         return new SimpleMongoDbFactory(mongoClient(properties, options, environment), mongoProperties().getDatabase());
     }
 
-    @Bean("primaryConverter")
-    public MappingMongoConverter mappingMongoConverter(@Qualifier("mongoProperties") MongoProperties properties,
-                                                       ObjectProvider<MongoClientOptions> options,
-                                                       Environment environment) throws UnknownHostException {
-        return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)), new MongoMappingContext());
-    }
-
-    @Primary
-    @Bean
-    public MongoTemplate mongoTemplate(@Qualifier("primaryFactory") MongoDbFactory mongoDbFactory,
-                                       @Qualifier("primaryConverter") MappingMongoConverter converter) throws UnknownHostException {
+    @Bean(name = "humanMongoTemplate")
+    public MongoTemplate humanMongoTemplate(@Qualifier("humanFactory") MongoDbFactory mongoDbFactory,
+                                            MappingMongoConverter converter) throws UnknownHostException {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         return new MongoTemplate(mongoDbFactory, converter);
+        //return new MongoTemplate(new MongoClient(new ServerAddress("localhost", 27017)), "test");
     }
 }

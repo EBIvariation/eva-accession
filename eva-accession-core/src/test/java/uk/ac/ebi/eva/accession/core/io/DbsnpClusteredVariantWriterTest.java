@@ -35,6 +35,7 @@ import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.test.configuration.MongoTestConfiguration;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -52,7 +53,7 @@ import static uk.ac.ebi.eva.commons.core.models.VariantType.SNV;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:test-variants-writer.properties")
-@ContextConfiguration(classes = {MongoConfiguration.class})
+@ContextConfiguration(classes = {MongoTestConfiguration.class})
 public class DbsnpClusteredVariantWriterTest {
 
     private static final int TAXONOMY_1 = 3880;
