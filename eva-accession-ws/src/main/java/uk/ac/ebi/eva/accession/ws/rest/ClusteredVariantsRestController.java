@@ -40,13 +40,11 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.accession.ws.service.HumanService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
-import uk.ac.ebi.eva.commons.beacon.models.BeaconDataset;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconError;
 import uk.ac.ebi.eva.commons.beacon.models.Chromosome;
@@ -260,9 +258,9 @@ public class ClusteredVariantsRestController {
     }
 
     @GetMapping(value = "human/{identifier}", produces = "application/json")
-    public List<DbsnpClusteredVariantEntity> getHumanRs(
+    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getHumanRs(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                    required = true) Long identifier) throws AccessionMergedException, AccessionDoesNotExistException {
+                    required = true) Long identifier) throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         return humanService.getRs(identifier);
     }
 }

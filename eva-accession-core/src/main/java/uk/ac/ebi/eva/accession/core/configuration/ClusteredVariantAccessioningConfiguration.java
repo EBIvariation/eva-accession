@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
@@ -73,6 +74,7 @@ public class ClusteredVariantAccessioningConfiguration {
         return service.getBlockParameters(categoryId).getBlockStartValue();
     }
 
+    @Primary
     @Bean
     public ClusteredVariantAccessioningService clusteredVariantAccessioningService() {
         return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
@@ -90,6 +92,7 @@ public class ClusteredVariantAccessioningConfiguration {
                 (long[]) null);
     }
 
+    @Primary
     @Bean
     public DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
@@ -97,6 +100,7 @@ public class ClusteredVariantAccessioningConfiguration {
                                                       properties.getInstanceId(), service);
     }
 
+    @Primary
     @Bean
     public DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
         return new DbsnpClusteredVariantAccessioningDatabaseService(dbsnpRepository, dbsnpInactiveService);
