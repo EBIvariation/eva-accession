@@ -59,5 +59,4 @@ public class ClusteredHumanVariantAccessioningConfiguration {
     private DbsnpClusteredHumanVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
         return new DbsnpClusteredHumanVariantAccessioningDatabaseService(dbsnpHumanRepository, dbsnpInactiveService);
     }
-
 }

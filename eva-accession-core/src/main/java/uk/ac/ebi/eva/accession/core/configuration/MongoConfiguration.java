@@ -51,14 +51,14 @@ public class MongoConfiguration {
     private String readPreference;
 
     @Primary
-    @Bean("mongoProperties")
+    @Bean
     @ConfigurationProperties(prefix = "spring.data.mongodb")
     public MongoProperties mongoProperties() {
         return new MongoProperties();
     }
 
     @Bean
-    public MongoClient mongoClient(@Qualifier("mongoProperties") MongoProperties properties, ObjectProvider<MongoClientOptions> options,
+    public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
                                    Environment environment) throws UnknownHostException {
         MongoClientOptions mongoClientOptions = options.getIfAvailable();
         MongoClientOptions.Builder mongoClientOptionsBuilder;
@@ -74,14 +74,14 @@ public class MongoConfiguration {
     }
 
     @Bean("primaryFactory")
-    public MongoDbFactory mongoDbFactory(@Qualifier("mongoProperties") MongoProperties properties,
+    public MongoDbFactory mongoDbFactory(MongoProperties properties,
                                          ObjectProvider<MongoClientOptions> options,
                                          Environment environment) throws UnknownHostException {
         return new SimpleMongoDbFactory(mongoClient(properties, options, environment), mongoProperties().getDatabase());
     }
 
     @Bean
-    public MappingMongoConverter mappingMongoConverter(@Qualifier("mongoProperties") MongoProperties properties,
+    public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
                                                        ObjectProvider<MongoClientOptions> options,
                                                        Environment environment) throws UnknownHostException {
         return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
