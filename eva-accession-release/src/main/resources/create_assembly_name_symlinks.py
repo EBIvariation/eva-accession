@@ -44,9 +44,9 @@ def add_assembly_name_symlink_for_dir(assembly_accession_release_dir):
 
 
 @click.command()
-@click.argument("top_level_by_species_dir", nargs=1, type=click.Path(exists=True, resolve_path=True, readable=True))
-def main(top_level_by_species_dir):
-    for dirinfo in os.walk(top_level_by_species_dir):
+@click.argument("by_species_dir", nargs=1, type=click.Path(exists=True, resolve_path=True, readable=True))
+def main(by_species_dir):
+    for dirinfo in os.walk(by_species_dir):
         species_dir = dirinfo[0]
         for assembly_dir in glob.glob(species_dir + os.path.sep + "GCA_*"):
             add_assembly_name_symlink_for_dir(assembly_dir)

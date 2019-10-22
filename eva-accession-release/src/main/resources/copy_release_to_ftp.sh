@@ -19,7 +19,7 @@ set -eu -o pipefail
 
 # This is the brain-damaged way to get the directory of the currently executing script in bash
 # See https://stackoverflow.com/questions/59895/get-the-source-directory-of-a-bash-script-from-within-the-script-itself
-CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ASSEMBLIES="by_assembly"
 ALL_SPECIES_FOLDER="by_species"
 
@@ -234,5 +234,4 @@ done
 echo -e "\nFinished copying. Removing intermediate copy at ${INTERMEDIATE_FOLDER}"
 rm -rf ${INTERMEDIATE_FOLDER}
 
-cd "$CURR_DIR"
-become ftpadmin python3 ./create_assembly_name_symlinks.py  ${OUTPUT_FOLDER}/${ALL_SPECIES_FOLDER}
+become ftpadmin python3 "$SCRIPT_DIR/create_assembly_name_symlinks.py" ${OUTPUT_FOLDER}/${ALL_SPECIES_FOLDER}
