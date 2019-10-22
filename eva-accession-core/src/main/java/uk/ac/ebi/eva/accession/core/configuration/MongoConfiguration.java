@@ -17,22 +17,16 @@ package uk.ac.ebi.eva.accession.core.configuration;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.MongoDbFactory;
@@ -51,7 +45,6 @@ import java.net.UnknownHostException;
 @EnableMongoRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
 @EnableMongoAuditing
-//@Import({MongoDataAutoConfiguration.class})
 public class MongoConfiguration {
 
     @Value("${mongodb.read-preference}")
@@ -87,17 +80,18 @@ public class MongoConfiguration {
         return new SimpleMongoDbFactory(mongoClient(properties, options, environment), mongoProperties().getDatabase());
     }
 
-    @Bean("primaryConverter")
+    @Bean
     public MappingMongoConverter mappingMongoConverter(@Qualifier("mongoProperties") MongoProperties properties,
                                                        ObjectProvider<MongoClientOptions> options,
                                                        Environment environment) throws UnknownHostException {
-        return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)), new MongoMappingContext());
+        return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
+                                         new MongoMappingContext());
     }
 
     @Primary
     @Bean
     public MongoTemplate mongoTemplate(@Qualifier("primaryFactory") MongoDbFactory mongoDbFactory,
-                                       @Qualifier("primaryConverter") MappingMongoConverter converter) throws UnknownHostException {
+                                       MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         return new MongoTemplate(mongoDbFactory, converter);
     }

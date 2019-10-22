@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,13 +37,13 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
-import uk.ac.ebi.eva.accession.ws.service.HumanService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
@@ -74,7 +75,7 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantsBeaconService beaconService;
 
-    private HumanService humanService;
+    private ClusteredVariantAccessioningService humanService;
 
     // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
     //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
@@ -86,7 +87,7 @@ public class ClusteredVariantsRestController {
             SubmittedVariantAccessioningService submittedVariantsService,
             DbsnpClusteredVariantInactiveService inactiveService,
             ClusteredVariantsBeaconService beaconService,
-            HumanService humanService
+            @Qualifier("humanService") ClusteredVariantAccessioningService humanService
     ) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
@@ -109,11 +110,37 @@ public class ClusteredVariantsRestController {
                     required = true) Long identifier)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
-            return ResponseEntity.ok(Collections.singletonList(basicRestController.get(identifier)));
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+                    new ArrayList<>();
+            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
+            clusteredVariants.addAll(getHumanClusteredVariants(identifier));
+            if (clusteredVariants.isEmpty()) {
+                throw new AccessionDoesNotExistException(identifier);
+            }
+            return ResponseEntity.ok(clusteredVariants);
         } catch (AccessionDeprecatedException e) {
             // not done with an exception handler because the only way to get the accession parameter would be parsing
             // the exception message
             return ResponseEntity.status(HttpStatus.GONE).body(getDeprecatedClusteredVariant(identifier));
+        }
+    }
+
+    private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
+            Long identifier) throws AccessionDeprecatedException, AccessionMergedException {
+        try {
+            return Collections.singletonList(basicRestController.get(identifier));
+        } catch (AccessionDoesNotExistException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getHumanClusteredVariants(
+            Long identifier) throws AccessionMergedException, AccessionDeprecatedException {
+        try {
+            AccessionWrapper<IClusteredVariant, String, Long> wrapper = humanService.getByAccession(identifier);
+            return Collections.singletonList(new AccessionResponseDTO<>(wrapper, ClusteredVariant::new));
+        } catch (AccessionDoesNotExistException e) {
+            return Collections.emptyList();
         }
     }
 
@@ -255,13 +282,6 @@ public class ClusteredVariantsRestController {
         response.setAlleleRequest(request);
         response.setError(error);
         return response;
-    }
-
-    @GetMapping(value = "human/{identifier}", produces = "application/json")
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getHumanRs(
-            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                    required = true) Long identifier) throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        return humanService.getRs(identifier);
     }
 }
 
