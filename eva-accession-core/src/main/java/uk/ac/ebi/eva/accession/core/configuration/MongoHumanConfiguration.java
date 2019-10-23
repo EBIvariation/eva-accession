@@ -72,7 +72,7 @@ public class MongoHumanConfiguration {
     public MongoDbFactory mongoDbFactory(@Qualifier("humanMongoProperties") MongoProperties properties,
                                          ObjectProvider<MongoClientOptions> options,
                                          Environment environment) throws UnknownHostException {
-        return new SimpleMongoDbFactory(mongoClient(properties, options, environment), mongoProperties().getDatabase());
+        return new SimpleMongoDbFactory(mongoClient(properties, options, environment), properties.getDatabase());
     }
 
     @Bean(name = "humanMongoTemplate")

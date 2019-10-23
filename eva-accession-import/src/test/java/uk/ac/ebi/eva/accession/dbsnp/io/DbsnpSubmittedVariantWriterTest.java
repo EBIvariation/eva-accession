@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -46,6 +47,7 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
+@EnableAutoConfiguration
 @TestPropertySource("classpath:test-variants-writer.properties")
 @ContextConfiguration(classes = {MongoConfiguration.class})
 public class DbsnpSubmittedVariantWriterTest {

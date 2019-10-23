@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -47,6 +48,7 @@ import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredW
         .DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
 
 @RunWith(SpringRunner.class)
+@EnableAutoConfiguration
 @TestPropertySource("classpath:test-variants-writer.properties")
 @ContextConfiguration(classes = {MongoConfiguration.class})
 public class DbsnpClusteredVariantDeclusteredWriterTest {
