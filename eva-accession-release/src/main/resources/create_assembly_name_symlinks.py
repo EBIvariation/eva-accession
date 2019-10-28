@@ -31,7 +31,9 @@ def get_assembly_name_for_accession(assembly_accession):
 
 
 def make_valid_filename_without_spaces(file_name):
-    return "".join([char for char in file_name if char.isalnum() or char in (' ', '.', '_')]).rstrip().replace(" ", "_")
+    file_name_without_special_chars = "".join(
+        [char for char in file_name if char.isalnum() or char in (' ', '.', '_')]).rstrip()
+    return file_name_without_special_chars.replace(" ", "_")
 
 
 def add_assembly_name_symlink_for_dir(assembly_accession_release_dir):
