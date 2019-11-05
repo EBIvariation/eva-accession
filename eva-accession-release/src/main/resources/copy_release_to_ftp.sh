@@ -86,7 +86,7 @@ cp $INPUT_FOLDER/README_general_info.txt ${INTERMEDIATE_FOLDER}/
 cp $INPUT_FOLDER/species_name_mapping.tsv ${INTERMEDIATE_FOLDER}/
 
 # copy assembly folders
-for assembly in `ls $INPUT_FOLDER | grep GCA_`
+for assembly in `ls $INPUT_FOLDER | grep ^GCA_`
 do
   echo "Copying $assembly"
   mkdir ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
