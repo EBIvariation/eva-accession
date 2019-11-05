@@ -23,7 +23,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ASSEMBLIES="by_assembly"
 ALL_SPECIES_FOLDER="by_species"
 
-if [ $# -ne 5 ]
+if [ $# -ne 6 ]
 then
   echo -e "\nThis script copies the relevant files of all the species into the FTP folder for the EVA RS release."
   echo "The user needs to be able to run 'become ftpadmin' to run this script."
@@ -39,6 +39,7 @@ OUTPUT_FOLDER=$2
 INTERMEDIATE_FOLDER=$3
 UNMAPPED_VARIANTS_FOLDER=$4
 POSTGRES_CONNECTION=$5
+RELEASE_COLUMN=$6
 
 if [ ! -d ${OUTPUT_FOLDER} ]
 then
@@ -54,7 +55,7 @@ then
 fi
 
 # query postgres to get assembly-taxonomy mappings
-psql -A -t -F $'\t' ${POSTGRES_CONNECTION} -c "select distinct rs.assembly_accession, p.tax_id from dbsnp_ensembl_species.rs_release_progress rs join dbsnp_ensembl_species.import_progress p on rs.dbsnp_db_name = p.database_name where assembly_accession <> '' and release_2019_08 = 'done' order by assembly_accession, tax_id" -P pager=off > ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt
+psql -A -t -F $'\t' ${POSTGRES_CONNECTION} -c "select distinct rs.assembly_accession, p.tax_id from dbsnp_ensembl_species.rs_release_progress rs join dbsnp_ensembl_species.import_progress p on rs.dbsnp_db_name = p.database_name where assembly_accession <> '' and ${RELEASE_COLUMN} = 'done' order by assembly_accession, tax_id" -P pager=off > ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt
 
 echo -e "\nCopying to intermediate folder ${INTERMEDIATE_FOLDER}"
 # copy only relevant files. Any missing file will be listed in stderr. It's ok if some species don't have the *_issues.txt
@@ -73,7 +74,7 @@ do
   if [ -f ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}_unmapped_ids.txt.gz ]
   then
     cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/
-    md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt
+    md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/md5checksums.txt
     echo "# Unique RS ID counts" > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt
     zcat ${dbsnp_database_name}_unmapped_ids.txt.gz | tail -n +2 | cut -f 1 | sort -u | wc -l | sed 's/^/'${dbsnp_database_name}_unmapped_ids.txt.gz'\t/' >> ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt
   fi
@@ -117,7 +118,7 @@ do
       cd ${UNMAPPED_VARIANTS_FOLDER}
       cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
       species_folder=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1` || true
-      cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+      cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/md5checksums.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
       tail -n +2 ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/README_rs_ids_counts.txt || true
       cd -
     fi
