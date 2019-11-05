@@ -27,7 +27,7 @@ if [ $# -ne 6 ]
 then
   echo -e "\nThis script copies the relevant files of all the species into the FTP folder for the EVA RS release."
   echo "The user needs to be able to run 'become ftpadmin' to run this script."
-  echo -e "This script needs 5 parameters. 4 folders: input, output, intermediate, unmapped variants and the postgres connection"
+  echo -e "This script needs 6 parameters. 4 folders (input, output, intermediate, unmapped variants), the postgres connection and the release column"
   echo -e "Also, recommended to run in LSF, e.g:"
   echo -e "$ bsub -o copy_release.log -e copy_release.err $0 <input_folder> <output_folder> <intermediate_folder> <unmapped_variants_folder> <postgres_connection>\n"
   echo -e "Postgres connection should have this format: postgresql://DB_USER:DB_PWD@DB_HOST/DB_NAME"
