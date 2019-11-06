@@ -1,4 +1,4 @@
-Release 2019-08
+EVA RefSNP release 1
 
 Definitions
 ==================================
@@ -35,8 +35,25 @@ EVA RefSNP release
 
 The EVA RS release is a collection of files organized by species that list all
 the RS IDs for variants stored in the European Variation Archive (EVA,
-https://www.ebi.ac.uk/eva/). The species folders naming is listed in the file
-species_name_mapping.tsv in the top folder.
+https://www.ebi.ac.uk/eva/).
+
+
+Folder structure
+==================================
+
+The top folder contains folders for browsing the release files by species or by
+assembly accession.
+
+The species folders naming is listed in the file species_name_mapping.tsv in
+the top folder.
+
+In each species folder, there are links to the folders of the assemblies
+available for that species, both by assembly name (e.g. GRCm38.p4) and by
+assembly accession (e.g. GCA_000001635.6).
+
+
+Released files
+==================================
 
 Given a species (e.g. horse, GCA_000002305.1), the following set of files will
 be present in the RS release:
@@ -46,6 +63,9 @@ be present in the RS release:
 - GCA_000002305.1_merged_ids.vcf.gz
 - GCA_000002305.1_deprecated_ids.txt.gz
 - GCA_000002305.1_merged_deprecated_ids.txt.gz
+
+The "unmapped_ids" files is located in the species folder, while the others are
+located in the assembly folders.
 
 
 GCA_000002305.1_current_ids.vcf.gz
