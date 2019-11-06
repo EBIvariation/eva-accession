@@ -1,24 +1,28 @@
-EVA RefSNP RELEASE 2019-07 NOTES
-================================
+EVA RefSNP release 1
 
-1. DEFINITIONS
---------------
+Definitions
+==================================
 
-1.1. Accession
+Accession
+-----------------------------------------------------------------
 
 An accession is a unique and permanent identifier for an entity that enables
 cross resource references to submitted objects.
 
-1.2. Variant locus accessions
+
+Variant locus accessions
+-----------------------------------------------------------------
 
 SS or SubSnp represent an allele change in a genomic study. They are identified
 by the reference sequence, project/study, contig, start position, reference
-allele and alternate allele.
+allele, alternate allele.
 
 RS or RefSnp is a cluster of SS IDs. They are identified by reference sequence,
-contig, start position and variant class.
+contig, start position, variant class.
 
-1.3. Assembly accessions
+
+Assembly accessions
+-----------------------------------------------------------------
 
 An assembly accession starting with the three letters prefix GCA correspond to
 INSDC assemblies. The prefix is followed by an underscore, 9 digits and a
@@ -26,45 +30,46 @@ version is added at the end. For example, the assembly accession for the INSDC
 version of the public horse reference assembly (EquCab2.0) is GCA_000002305.1.
 
 
-2. EVA RefSNP RELEASE
----------------------
+EVA RefSNP release
+==================================
 
 The EVA RS release is a collection of files organized by species that list all
 the RS IDs for variants stored in the European Variation Archive (EVA,
-https://www.ebi.ac.uk/eva/). The species folders naming is listed in the file
-species_name_mapping.tsv in the top folder.
+https://www.ebi.ac.uk/eva/).
+
+
+Folder structure
+==================================
+
+The top folder contains folders for browsing the release files by species or by
+assembly accession.
+
+The species folders naming is listed in the file species_name_mapping.tsv in
+the top folder.
+
+In each species folder, there are links to the folders of the assemblies
+available for that species, both by assembly name (e.g. GRCm38.p4) and by
+assembly accession (e.g. GCA_000001635.6).
+
+
+Released files
+==================================
 
 Given a species (e.g. horse, GCA_000002305.1), the following set of files will
 be present in the RS release:
 
-- Current IDs (e.g. GCA_000002305.1_current_ids.vcf.gz)
-- Unmapped IDs (e.g. horse_9796_unmapped_ids.txt.gz)
-- Merged IDs (e.g. GCA_000002305.1_merged_ids.vcf.gz)
-- Deprecated IDs (e.g. GCA_000002305.1_deprecated_ids.txt.gz)
-- Merged then deprecated IDs (e.g. GCA_000002305.1_merged_deprecated_ids.txt.gz)
+- GCA_000002305.1_current_ids.vcf.gz
+- horse_9796_unmapped_ids.txt.gz
+- GCA_000002305.1_merged_ids.vcf.gz
+- GCA_000002305.1_deprecated_ids.txt.gz
+- GCA_000002305.1_merged_deprecated_ids.txt.gz
 
-The VCF files (containing current and merged variants) of this release can include the same
-RS ID in multiple lines because each line will report one alternate allele. Alleles are
-associated with SS IDs and one RS ID will group more than one SS ID for the following reasons:
-
-- By definition an RS ID is a cluster of SS IDs.
-ss1(A>C) -> rs1
-ss2(A>T) -> rs1
-
-- Multiallelic variants under the same SS IDs are linked to the same RS ID.
-ss1(A>C) -> rs1
-ss1(A>T) -> rs1
-
-- RS IDs can be mapped to multiple start positions in the same chromosome.
-ss1(A>C chr:1, start:1000) -> rs1 (chr:1, start:1000)
-ss2(A>T chr:1, start:2000) -> rs1 (chr:1, start:2000)
-
-- RS IDs can be mapped to multiple chromosomes
-ss1(A>C chr:1, start:1000) -> rs1 (chr:1, start:1000)
-ss3(A>T chr:2, start:2000) -> rs1 (chr:2, start:2000)
+The "unmapped_ids" files is located in the species folder, while the others are
+located in the assembly folders.
 
 
-2.1. Current IDs (e.g. GCA_000002305.1_current_ids.vcf.gz)
+GCA_000002305.1_current_ids.vcf.gz
+-----------------------------------------------------------------
 
 Contains the RS IDs which can be browsed from the EVA website
 (https://www.ebi.ac.uk/eva/) and web services
@@ -94,7 +99,8 @@ column, using the next keys:
 - VC: Variant class according to the Sequence Ontology.
 
 
-2.2. Unmapped IDs (e.g. horse_9796_unmapped_ids.txt.gz)
+horse_9796_unmapped_variant_report.txt.gz
+-----------------------------------------------------------------
 
 Contains RS IDs that couldn't be mapped against an assembly by dbSNP. Flanking
 sequences are provided when possible.
@@ -103,7 +109,8 @@ Columns SEQ3 and SEQ5 contain the actual sequence in 3' and 5' respectively for
 a particular SS ID as submitted originally to dbSNP.
 
 
-2.3. Merged IDs (e.g. GCA_000002305.1_merged_ids.vcf.gz)
+GCA_000002305.1_merged_ids.vcf.gz
+-----------------------------------------------------------------
 
 Contains RS IDs that should NOT be used because they have been merged into
 other active RS IDs that represent the same variants. The VCF contains the same INFO
@@ -112,7 +119,8 @@ attributes than the "current_ids" VCF plus the next one:
 - CURR: RS ID that currently represents the variant
 
 
-2.4. Deprecated IDs (e.g. GCA_000002305.1_deprecated_ids.txt.gz)
+GCA_000002305.1_deprecated_ids.txt.gz
+-----------------------------------------------------------------
 
 Contains a list of RS IDs that should NOT be used since these RS IDs were
 deprecated due to the following reason(s):
@@ -123,8 +131,55 @@ deprecated due to the following reason(s):
 - Other factors that prevent us from describing the variants with certainty
 
 
-2.5. Merged then deprecated IDs (e.g. GCA_000002305.1_merged_deprecated_ids.txt.gz)
+GCA_000002305.1_merged_deprecated_ids.txt.gz
+-----------------------------------------------------------------
 
 Contains RS IDs that should NOT be used because they have been merged into an
 RS ID that was deprecated later on. The deprecated RS ID is listed in the
 second column.
+
+
+Known issues
+==================================
+
+During the release process some issues were identified resulting in some species 
+being completely or partially excluded from this release. The EVA is working to 
+solve the issues so those species can be included in subsequent releases.
+
+Zebu_9915 (GCA_000247795.2)
+This species was completely excluded due to problems with RS IDs clustering SS IDs 
+that map to many different contigs/chromosomes
+
+The following species were completely excluded due to inconsistencies in the data:
+Date_palm_42345 (GCA_000413155.1) - Based on the data from dbSNP FTP, the 
+submission batches could not be definitively associated with the variant data
+Plasmodium_5833 (GCA_000002765.1) - Insufficient data from dbSNP FTP
+Trematode_6183 (GCA_000237925.2) - Insufficient data from dbSNP FTP
+
+The following species were completely excluded because an INSDC accessioned assembly 
+could not be identified for the variant mapping:
+Platypus_9258 (1303499 variants) - No equivalent INSDC accessioned assembly (GCA) for 
+https://www.ncbi.nlm.nih.gov/assembly/GCF_000002275.1/
+Nematode_6239 (190570 variants) - No equivalent INSDC accessioned assembly (GCA) for 
+https://www.ncbi.nlm.nih.gov/assembly/GCF_000002985.4/
+Opossum_13616 (1188264 variants) - No equivalent INSDC accessioned assembly (GCA) for 
+https://www.ncbi.nlm.nih.gov/assembly/GCF_000002295.2/
+Bison_9901 (6 variants), Cow_30522 (2307 variants) - Btau_4.1 assembly 
+(https://www.ncbi.nlm.nih.gov/assembly/GCF_000003205.2/) does not have equivalent INSDC 
+accessioned assembly. Note that Cow_9913 was imported successfully (103095390 variants)
+
+A very small percentage of variants for the following species were excluded because 
+an INSDC accessioned assembly could not be identified for the variant mapping:
+Mouse_10090 - MM_Celera assembly (0.01%) 
+(https://www.ncbi.nlm.nih.gov/assembly/GCF_000002165.2) does not have equivalent INSDC 
+accessioned assembly
+Chimpanzee_9598 - Pan_troglodytes-2.1 assembly (0.12%) 
+(https://www.ncbi.nlm.nih.gov/assembly/GCF_000001515.3) does not have equivalent INSDC 
+accessioned assembly
+Mosquito_7165 (0.5%)
+Based on the data from dbSNP FTP, reference assembly could not be determined for 
+variants in build 137
+Rat_10116 (1.67%)
+Based on the data from dbSNP FTP, reference assembly could not be determined for 
+variants in build 125, 126, 130 and 136
+
