@@ -23,13 +23,14 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ASSEMBLIES="by_assembly"
 ALL_SPECIES_FOLDER="by_species"
 
-if [ $# -ne 4 ]
+if [ $# -ne 6 ]
 then
   echo -e "\nThis script copies the relevant files of all the species into the FTP folder for the EVA RS release."
   echo "The user needs to be able to run 'become ftpadmin' to run this script."
-  echo -e "This script needs as parameter 4 folders: input, output, intermediate and unmapped variants."
+  echo -e "This script needs 6 parameters. 4 folders (input, output, intermediate, unmapped variants), the postgres connection and the release column"
   echo -e "Also, recommended to run in LSF, e.g:"
-  echo -e "$ bsub -o copy_release.log -e copy_release.err $0 <input_folder> <output_folder> <intermediate_folder> <unmapped_variants_folder>\n"
+  echo -e "$ bsub -o copy_release.log -e copy_release.err $0 <input_folder> <output_folder> <intermediate_folder> <unmapped_variants_folder> <postgres_connection>\n"
+  echo -e "Postgres connection should have this format: postgresql://DB_USER:DB_PWD@DB_HOST/DB_NAME"
   exit 1
 fi
 
@@ -37,6 +38,8 @@ INPUT_FOLDER=$1
 OUTPUT_FOLDER=$2
 INTERMEDIATE_FOLDER=$3
 UNMAPPED_VARIANTS_FOLDER=$4
+POSTGRES_CONNECTION=$5
+RELEASE_COLUMN=$6
 
 if [ ! -d ${OUTPUT_FOLDER} ]
 then
@@ -51,88 +54,8 @@ then
   exit 1
 fi
 
-# taken from vrnevadev:
-#
-# select distinct rs.assembly_accession, p.tax_id
-# from dbsnp_ensembl_species.rs_release_progress rs
-# join dbsnp_ensembl_species.import_progress p
-# on rs.dbsnp_db_name = p.database_name
-# where assembly_accession <> ''
-# order by assembly_accession, tax_id;
-echo "GCA_000001215.4	7227
-GCA_000001515.4	9598
-GCA_000001545.3	9601
-GCA_000001635.4	10090
-GCA_000001635.5	10090
-GCA_000001635.6	10090
-GCA_000001735.1	3702
-GCA_000001895.4	10116
-GCA_000002035.2	7955
-GCA_000002035.3	7955
-GCA_000002175.2	9598
-GCA_000002195.1	7460
-GCA_000002265.1	10116
-GCA_000002275.2	9258
-GCA_000002285.1	9615
-GCA_000002285.2	9615
-GCA_000002295.1	13616
-GCA_000002305.1	9796
-GCA_000002315.3	9031
-GCA_000002335.3	7070
-GCA_000002655.1	330879
-GCA_000002765.1	5833
-GCA_000002775.1	3694
-GCA_000002985.3	6239
-GCA_000003025.4	9823
-GCA_000003025.6	9823
-GCA_000003055.5	9913
-GCA_000003195.1	4558
-GCA_000003625.1	9986
-GCA_000003745.2	29760
-GCA_000004515.2	3847
-GCA_000004515.3	3847
-GCA_000004665.1	9483
-GCA_000005005.6	4577
-GCA_000005425.2	4530
-GCA_000005575.1	7165
-GCA_000146605.3	9103
-GCA_000146795.3	61853
-GCA_000148765.2	3750
-GCA_000151805.2	59729
-GCA_000151905.1	9593
-GCA_000181335.3	9685
-GCA_000188115.2	4081
-GCA_000188235.2	8128
-GCA_000219495.1	3880
-GCA_000224145.2	7719
-GCA_000233375.4	8030
-GCA_000237925.2	6183
-GCA_000247795.2	9915
-GCA_000247815.2	59894
-GCA_000298735.1	469796
-GCA_000298735.2	9940
-GCA_000309985.1	3711
-GCA_000317375.1	79684
-GCA_000317765.1	9923
-GCA_000317765.1	9925
-GCA_000331145.1	3827
-GCA_000355885.1	8839
-GCA_000364345.1	9541
-GCA_000372685.1	7994
-GCA_000409795.2	60711
-GCA_000413155.1	42345
-GCA_000442705.1	51953
-GCA_000686985.1	3708
-GCA_000695525.1	3712
-GCA_000710875.1	4072
-GCA_000772875.3	9544
-GCA_000966335.1	7950
-GCA_000987745.1	3635
-GCA_001433935.1	4530
-GCA_001465895.2	105023
-GCA_001522545.1	9157
-GCA_001577835.1	93934
-GCA_001625215.1	79200" > ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt
+# query postgres to get assembly-taxonomy mappings
+psql -A -t -F $'\t' ${POSTGRES_CONNECTION} -c "select distinct rs.assembly_accession, p.tax_id from dbsnp_ensembl_species.rs_release_progress rs join dbsnp_ensembl_species.import_progress p on rs.dbsnp_db_name = p.database_name where assembly_accession <> '' and ${RELEASE_COLUMN} = 'done' order by assembly_accession, tax_id" -P pager=off > ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt
 
 echo -e "\nCopying to intermediate folder ${INTERMEDIATE_FOLDER}"
 # copy only relevant files. Any missing file will be listed in stderr. It's ok if some species don't have the *_issues.txt
@@ -151,7 +74,7 @@ do
   if [ -f ${UNMAPPED_VARIANTS_FOLDER}/${dbsnp_database_name}_unmapped_ids.txt.gz ]
   then
     cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/
-    md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt
+    md5sum ${dbsnp_database_name}_unmapped_ids.txt.gz > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/md5checksums.txt
     echo "# Unique RS ID counts" > ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt
     zcat ${dbsnp_database_name}_unmapped_ids.txt.gz | tail -n +2 | cut -f 1 | sort -u | wc -l | sed 's/^/'${dbsnp_database_name}_unmapped_ids.txt.gz'\t/' >> ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt
   fi
@@ -163,7 +86,7 @@ cp $INPUT_FOLDER/README_general_info.txt ${INTERMEDIATE_FOLDER}/
 cp $INPUT_FOLDER/species_name_mapping.tsv ${INTERMEDIATE_FOLDER}/
 
 # copy assembly folders
-for assembly in `ls $INPUT_FOLDER | grep GCA_`
+for assembly in `ls $INPUT_FOLDER | grep ^GCA_`
 do
   echo "Copying $assembly"
   mkdir ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}
@@ -195,7 +118,7 @@ do
       cd ${UNMAPPED_VARIANTS_FOLDER}
       cp ${dbsnp_database_name}_unmapped_ids.txt.gz ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly} || true
       species_folder=`grep -w "${taxonomy}$" ${INPUT_FOLDER}/species_name_mapping.tsv | cut -f1` || true
-      cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/unmapped_md5checksum.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
+      cat ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/md5checksums.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/md5checksums.txt || true
       tail -n +2 ${INTERMEDIATE_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/README_unmapped_rs_ids_count.txt >> ${INTERMEDIATE_FOLDER}/${ASSEMBLIES}/${assembly}/README_rs_ids_counts.txt || true
       cd -
     fi
