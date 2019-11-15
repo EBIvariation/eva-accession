@@ -1,0 +1,14 @@
+{
+  "dbsnpClusteredVariantEntity": [
+    {
+      "_id" : "4CF3A89EACDBC6E1F0F630FD7B854B90BF07546E",
+      "asm" : "GCA_000001405.27",
+      "tax" : 9606,
+      "contig" : "CM000684.2",
+      "start" : 45565333,
+      "type" : "SNV",
+      "accession" : 1118,
+      "version" : 1
+    }
+  ]
+}

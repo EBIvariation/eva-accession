@@ -85,11 +85,10 @@ public class ClusteredVariantAccessioningConfiguration {
     public MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
         logger.debug("Using application properties: " + properties.toString());
-        return new MonotonicAccessionGenerator<>(
+        return new DbsnpMonotonicAccessionGenerator<>(
                 properties.getClustered().getCategoryId(),
                 properties.getInstanceId(),
-                service,
-                (long[]) null);
+                service);
     }
 
     @Primary

@@ -1,0 +1,23 @@
+{
+  "dbsnpClusteredVariantOperationEntity": [
+    {
+      "eventType" : "MERGED",
+      "accession" : 1475292486,
+      "mergeInto" : 777512306,
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_000001405.27",
+          "tax" : 9606,
+          "contig" : "CM000663.2",
+          "start" : 72348112,
+          "type" : "INDEL",
+          "validated" : false,
+          "hashedMessage" : "7F7EB1265B9B341EF59B2C3088543CC7E829696D",
+          "accession" : 1475292486,
+          "version" : 1
+        }
+      ]
+    }
+  ]
+}

@@ -81,6 +81,7 @@ public class MongoConfiguration {
     }
 
     @Bean
+    @Primary
     public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
                                                        ObjectProvider<MongoClientOptions> options,
                                                        Environment environment) throws UnknownHostException {

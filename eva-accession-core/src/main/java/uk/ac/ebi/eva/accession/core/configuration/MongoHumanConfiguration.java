@@ -29,10 +29,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 import java.net.UnknownHostException;
@@ -40,6 +43,7 @@ import java.net.UnknownHostException;
 @Configuration
 @EnableMongoRepositories(basePackages = "uk.ac.ebi.eva.accession.core.repositoryHuman", mongoTemplateRef = "humanMongoTemplate")
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.repositoryHuman"})
+@EnableMongoAuditing
 public class MongoHumanConfiguration {
 
     @Value("${mongodb.read-preference}")
@@ -75,9 +79,17 @@ public class MongoHumanConfiguration {
         return new SimpleMongoDbFactory(mongoClient(properties, options, environment), properties.getDatabase());
     }
 
+    @Bean("humanMappingConverter")
+    public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
+                                                       ObjectProvider<MongoClientOptions> options,
+                                                       Environment environment) throws UnknownHostException {
+        return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
+                new MongoMappingContext());
+    }
+
     @Bean(name = "humanMongoTemplate")
     public MongoTemplate humanMongoTemplate(@Qualifier("humanFactory") MongoDbFactory mongoDbFactory,
-                                            MappingMongoConverter converter) throws UnknownHostException {
+                                            @Qualifier("humanMappingConverter") MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         return new MongoTemplate(mongoDbFactory, converter);
     }
