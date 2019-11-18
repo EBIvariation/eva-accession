@@ -44,8 +44,7 @@ public class DbsnpClusteredHumanVariantAccessioningService {
         this.operationsService = operationsService;
     }
 
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAllByAccession(Long identifier)
-            throws AccessionDeprecatedException, AccessionMergedException {
+    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAllByAccession(Long identifier) {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
         clusteredVariants.addAll(getHumanClusteredVariants(identifier));

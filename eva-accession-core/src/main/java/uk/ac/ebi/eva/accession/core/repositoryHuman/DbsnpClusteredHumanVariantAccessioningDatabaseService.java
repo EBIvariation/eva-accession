@@ -41,4 +41,6 @@ public class DbsnpClusteredHumanVariantAccessioningDatabaseService
     public long[] getAccessionsInRanges(Collection<MonotonicRange> ranges) {
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
+
+    //TODO: findAllByAccession
 }
