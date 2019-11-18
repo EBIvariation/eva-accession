@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.core.configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,9 +59,6 @@ public class ClusteredVariantAccessioningConfiguration {
     private DbsnpClusteredVariantOperationRepository dbsnpOperationRepository;
 
     @Autowired
-    private DbsnpClusteredVariantInactiveService dbsnpInactiveService;
-
-    @Autowired
     private ApplicationProperties applicationProperties;
 
     @Autowired
@@ -74,8 +72,7 @@ public class ClusteredVariantAccessioningConfiguration {
         return service.getBlockParameters(categoryId).getBlockStartValue();
     }
 
-    @Primary
-    @Bean
+    @Bean("nonhumanActiveService")
     public ClusteredVariantAccessioningService clusteredVariantAccessioningService() {
         return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
                                                        dbsnpClusteredVariantAccessioningDatabaseService());
@@ -91,7 +88,6 @@ public class ClusteredVariantAccessioningConfiguration {
                 service);
     }
 
-    @Primary
     @Bean
     public DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
@@ -99,10 +95,10 @@ public class ClusteredVariantAccessioningConfiguration {
                                                       properties.getInstanceId(), service);
     }
 
-    @Primary
     @Bean
     public DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
-        return new DbsnpClusteredVariantAccessioningDatabaseService(dbsnpRepository, dbsnpInactiveService);
+        return new DbsnpClusteredVariantAccessioningDatabaseService(dbsnpRepository,
+                dbsnpClusteredVariantInactiveService());
     }
 
     @Bean
@@ -110,7 +106,7 @@ public class ClusteredVariantAccessioningConfiguration {
         return dbsnpOperationRepository;
     }
 
-    @Bean
+    @Bean("nonhumanInactiveService")
     public DbsnpClusteredVariantInactiveService dbsnpClusteredVariantInactiveService() {
         return new DbsnpClusteredVariantInactiveService(dbsnpOperationRepository,
                                                         DbsnpClusteredVariantInactiveEntity::new,

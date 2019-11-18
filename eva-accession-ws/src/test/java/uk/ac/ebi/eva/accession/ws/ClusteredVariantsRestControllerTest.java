@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
@@ -43,10 +44,21 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-import uk.ac.ebi.eva.accession.core.*;
+import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.persistence.*;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredHumanVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantMonotonicAccessioningService;
@@ -70,7 +82,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -111,6 +126,7 @@ public class ClusteredVariantsRestControllerTest {
     private ClusteredVariantsRestController controller;
 
     @Autowired
+    @Qualifier("nonhumanActiveService")
     private ClusteredVariantAccessioningService clusteredService;
 
     @Autowired

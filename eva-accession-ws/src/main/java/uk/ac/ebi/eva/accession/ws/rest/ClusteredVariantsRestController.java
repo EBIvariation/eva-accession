@@ -32,6 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
@@ -85,7 +86,7 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
-            DbsnpClusteredVariantInactiveService inactiveService,
+            @Qualifier("nonhumanInactiveService") DbsnpClusteredVariantInactiveService inactiveService,
             ClusteredVariantsBeaconService beaconService,
             @Qualifier("humanService") DbsnpClusteredHumanVariantAccessioningService humanService
     ) {
@@ -148,8 +149,8 @@ public class ClusteredVariantsRestController {
      */
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getDeprecatedClusteredVariant(
             Long identifier) {
-        IAccessionedObject<IClusteredVariant, ?, Long> accessionedObjectWrongType = inactiveService
-                .getLastEvent(identifier).getInactiveObjects().get(0);
+        IEvent<IClusteredVariant, Long> lastEvent = inactiveService.getLastEvent(identifier);
+        IAccessionedObject<IClusteredVariant, ?, Long> accessionedObjectWrongType = lastEvent.getInactiveObjects().get(0);
 
         IAccessionedObject<IClusteredVariant, String, Long> accessionedObject =
                 (IAccessionedObject<IClusteredVariant, String, Long>) accessionedObjectWrongType;

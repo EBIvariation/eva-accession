@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
@@ -69,7 +70,7 @@ public class ApplicationConfiguration {
 
     @Bean
     public BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicClusteredRestController(
-            ClusteredVariantAccessioningService service) {
+            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService service) {
         return new BasicRestController<>(service, ClusteredVariant::new);
     }
 

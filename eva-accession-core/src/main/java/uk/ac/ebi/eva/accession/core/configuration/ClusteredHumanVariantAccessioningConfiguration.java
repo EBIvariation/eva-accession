@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.core.configuration;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -51,9 +52,6 @@ public class ClusteredHumanVariantAccessioningConfiguration {
     @Autowired
     private ContiguousIdBlockService service;
 
-    @Autowired
-    private DbsnpClusteredVariantInactiveService dbsnpInactiveService;
-
     @Bean("humanActiveService")
     public ClusteredVariantAccessioningService dbsnpClusteredHumanActiveVariantAccessioningService() {
         return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
@@ -67,7 +65,8 @@ public class ClusteredHumanVariantAccessioningConfiguration {
     }
 
     private DbsnpClusteredHumanVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
-        return new DbsnpClusteredHumanVariantAccessioningDatabaseService(dbsnpHumanRepository, dbsnpInactiveService);
+        return new DbsnpClusteredHumanVariantAccessioningDatabaseService(dbsnpHumanRepository,
+                dbsnpClusteredVariantInactiveService());
     }
 
     @Bean("humanOperationsService")
@@ -86,7 +85,7 @@ public class ClusteredHumanVariantAccessioningConfiguration {
         return dbsnpClusteredHumanVariantOperationRepository;
     }
 
-    @Bean
+    @Bean("humanInactiveService")
     public DbsnpClusteredVariantInactiveService dbsnpClusteredVariantInactiveService() {
         return new DbsnpClusteredVariantInactiveService(dbsnpClusteredHumanVariantOperationRepository,
                 DbsnpClusteredVariantInactiveEntity::new,

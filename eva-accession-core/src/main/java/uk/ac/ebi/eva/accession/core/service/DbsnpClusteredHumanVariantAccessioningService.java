@@ -54,11 +54,11 @@ public class DbsnpClusteredHumanVariantAccessioningService {
     }
 
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getHumanClusteredVariants(
-            Long identifier) throws AccessionMergedException, AccessionDeprecatedException {
+            Long identifier) {
         try {
             AccessionWrapper<IClusteredVariant, String, Long> wrapper = humanService.getByAccession(identifier);
             return Collections.singletonList(new AccessionResponseDTO<>(wrapper, ClusteredVariant::new));
-        } catch (AccessionDoesNotExistException e) {
+        } catch (AccessionDoesNotExistException | AccessionMergedException | AccessionDeprecatedException e) {
             return Collections.emptyList();
         }
     }
