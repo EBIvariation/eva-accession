@@ -240,11 +240,12 @@ public class ClusteredVariantsRestControllerTest {
 
     private void setupDbSnpClusteredHumanVariants() {
         ClusteredVariant variant1 = new ClusteredVariant("GCA_000001405.27", 9606, "CM000684.2", 45565333L,
-                VariantType.SNV, false, LocalDateTime.of(2000, Month.SEPTEMBER, 19, 18, 2, 0));
+                                                         VariantType.SNV, false,
+                                                         LocalDateTime.of(2000, Month.SEPTEMBER, 19, 18, 2, 0));
 
-        ClusteredVariant variant2 = new ClusteredVariant("GCA_000001405.27", 9606, "CM000663.2",
-                DBSNP_CLUSTERED_VARIANT_ACCESSION_1, VariantType.SNV, false,
-                LocalDateTime.of(2000, Month.SEPTEMBER, 19, 18, 2, 0));
+        ClusteredVariant variant2 = new ClusteredVariant("GCA_000001405.27", 9606, "CM000663.2", 1234L,
+                                                         VariantType.SNV, false,
+                                                         LocalDateTime.of(2000, Month.SEPTEMBER, 19, 18, 2, 0));
 
         Function<IClusteredVariant, String> function =
                 new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
