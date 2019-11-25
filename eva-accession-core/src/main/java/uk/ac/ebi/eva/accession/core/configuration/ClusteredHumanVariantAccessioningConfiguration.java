@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.core.configuration;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -26,7 +25,6 @@ import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.repositoryHuman.DbsnpClusteredHumanVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.repositoryHuman.DbsnpClusteredHumanVariantOperationAccessioningService;

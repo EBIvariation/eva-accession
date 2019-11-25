@@ -116,8 +116,10 @@ public class ClusteredVariantsRestControllerTest {
     private static final int VERSION_1 = 1;
 
     private static final int VERSION_2 = 1;
-    public static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_1 = 1118L;
-    public static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2 = 1475292486L;
+
+    private static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_1 = 1118L;
+
+    private static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2 = 1475292486L;
 
     @Autowired
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
@@ -174,8 +176,6 @@ public class ClusteredVariantsRestControllerTest {
     private DbsnpClusteredVariantEntity clusteredHumanVariantEntity2;
 
     private DbsnpClusteredVariantEntity clusteredHumanVariantEntity3;
-
-    private DbsnpClusteredVariantOperationEntity clusteredVariantOperationEntity1;
 
     @Mock
     private BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> mockBasicRestController;
@@ -269,12 +269,14 @@ public class ClusteredVariantsRestControllerTest {
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2, function.apply(variant1), variant1);
         DbsnpClusteredVariantInactiveEntity inactiveEntity = new DbsnpClusteredVariantInactiveEntity(
                 clusteredHumanVariantEntity3);
-        clusteredVariantOperationEntity1 = new DbsnpClusteredVariantOperationEntity();
+        DbsnpClusteredVariantOperationEntity clusteredVariantOperationEntity1 =
+                new DbsnpClusteredVariantOperationEntity();
         clusteredVariantOperationEntity1.fill(EventType.MERGED, DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2, 777512306L,
                 "Identical clustered variant received multiple RS identifiers",
                 Collections.singletonList(inactiveEntity));
 
-        humanMongoTemplate.insert(Collections.singleton(clusteredVariantOperationEntity1), DbsnpClusteredVariantOperationEntity.class);
+        humanMongoTemplate.insert(Collections.singleton(clusteredVariantOperationEntity1),
+                DbsnpClusteredVariantOperationEntity.class);
     }
 
     private void setupDbsnpSubmittedVariants() {
