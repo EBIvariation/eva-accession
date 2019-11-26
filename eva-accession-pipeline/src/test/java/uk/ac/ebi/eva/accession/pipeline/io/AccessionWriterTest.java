@@ -24,7 +24,8 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -39,8 +40,8 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.io.FastaSequenceReader;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.steps.processors.VariantConverter;
-import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
@@ -66,8 +67,8 @@ import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.steps.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 @RunWith(SpringRunner.class)
-@DataJpaTest
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
+@EnableAutoConfiguration
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
@@ -116,6 +117,9 @@ public class AccessionWriterTest {
     @Autowired
     private SubmittedVariantAccessioningService service;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
     private ContigMapping contigMapping;
 
     @Rule
@@ -147,6 +151,7 @@ public class AccessionWriterTest {
         variantConverter = new VariantConverter("assembly", TAXONOMY, "project");
         accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter);
         accessionReportWriter.open(new ExecutionContext());
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     @Test

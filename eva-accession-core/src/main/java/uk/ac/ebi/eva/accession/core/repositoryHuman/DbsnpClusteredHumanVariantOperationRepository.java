@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.pipeline.test;
+package uk.ac.ebi.eva.accession.core.repositoryHuman;
 
-import com.github.fakemongo.Fongo;
-import com.mongodb.MongoClient;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 
-@Configuration
-public class MongoTestConfiguration {
-
-    @Bean
-    public MongoClient mongoClient() {
-        return new Fongo("defaultInstance").getMongo();
-    }
-
+public interface DbsnpClusteredHumanVariantOperationRepository extends IHistoryRepository<Long,
+        DbsnpClusteredVariantOperationEntity, String> {
 }

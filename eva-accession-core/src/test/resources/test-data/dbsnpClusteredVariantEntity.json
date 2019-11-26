@@ -1,0 +1,37 @@
+{
+  "dbsnpClusteredVariantEntity": [
+    {
+      "_id" : "4CF3A89EACDBC6E1F0F630FD7B854B90BF07546E",
+      "asm" : "GCA_000001405.27",
+      "tax" : 9606,
+      "contig" : "CM000684.2",
+      "start" : 45565333,
+      "type" : "SNV",
+      "accession" : 1118,
+      "version" : 1,
+      "createdDate" : ISODate("2000-09-19T17:02:00Z")
+    },
+    {
+      "_id" : "4C36A5275110E38991A2CA3F55E07A79C3CE4A88",
+      "asm" : "GCA_000001405.27",
+      "tax" : 9606,
+      "contig" : "CM000684.2",
+      "start" : 24526484,
+      "type" : "SNV",
+      "accession" : 1314,
+      "version" : 1,
+      "createdDate" : ISODate("2000-09-19T17:02:00Z")
+    },
+    {
+      "_id" : "4C36A5275110E38991A2CA3F55E07A79C3CE4A8A",
+      "asm" : "GCA_000001405.27",
+      "tax" : 9606,
+      "contig" : "CM000663.2",
+      "start" : 24526484,
+      "type" : "SNV",
+      "accession" : 1314,
+      "version" : 1,
+      "createdDate" : ISODate("2000-09-19T17:02:00Z")
+    }
+  ]
+}

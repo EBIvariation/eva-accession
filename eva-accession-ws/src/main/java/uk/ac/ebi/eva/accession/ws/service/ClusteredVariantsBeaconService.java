@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.ws.service;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
@@ -39,7 +40,8 @@ public class ClusteredVariantsBeaconService {
 
     private ClusteredVariantAccessioningService clusteredVariantService;
 
-    public ClusteredVariantsBeaconService(ClusteredVariantAccessioningService clusteredVariantAccessioningService) {
+    public ClusteredVariantsBeaconService(
+            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService clusteredVariantAccessioningService) {
         this.clusteredVariantService = clusteredVariantAccessioningService;
     }
 

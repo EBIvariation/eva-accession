@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
@@ -42,24 +41,24 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import java.net.UnknownHostException;
 
 @Configuration
-@EnableMongoRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
-@EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.persistence"})
+@EnableMongoRepositories(basePackages = "uk.ac.ebi.eva.accession.core.repositoryHuman", mongoTemplateRef = "humanMongoTemplate")
+@EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.repositoryHuman"})
 @EnableMongoAuditing
-public class MongoConfiguration {
+public class MongoHumanConfiguration {
 
     @Value("${mongodb.read-preference}")
     private String readPreference;
 
-    @Primary
-    @Bean
-    @ConfigurationProperties(prefix = "spring.data.mongodb")
+    @Bean(name = "humanMongoProperties")
+    @ConfigurationProperties(prefix = "human.mongodb")
     public MongoProperties mongoProperties() {
         return new MongoProperties();
     }
 
-    @Bean
-    public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
-                                   Environment environment) throws UnknownHostException {
+    @Bean("humanMongoClient")
+    public MongoClient mongoClient(@Qualifier("humanMongoProperties") MongoProperties properties,
+                                   ObjectProvider<MongoClientOptions> options, Environment environment)
+            throws UnknownHostException {
         MongoClientOptions mongoClientOptions = options.getIfAvailable();
         MongoClientOptions.Builder mongoClientOptionsBuilder;
         if (mongoClientOptions != null) {
@@ -73,26 +72,24 @@ public class MongoConfiguration {
         return properties.createMongoClient(mongoClientOptions, environment);
     }
 
-    @Bean("primaryFactory")
-    public MongoDbFactory mongoDbFactory(MongoProperties properties,
+    @Bean("humanFactory")
+    public MongoDbFactory mongoDbFactory(@Qualifier("humanMongoProperties") MongoProperties properties,
                                          ObjectProvider<MongoClientOptions> options,
                                          Environment environment) throws UnknownHostException {
         return new SimpleMongoDbFactory(mongoClient(properties, options, environment), properties.getDatabase());
     }
 
-    @Bean
-    @Primary
+    @Bean("humanMappingConverter")
     public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
                                                        ObjectProvider<MongoClientOptions> options,
                                                        Environment environment) throws UnknownHostException {
         return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
-                                         new MongoMappingContext());
+                new MongoMappingContext());
     }
 
-    @Primary
-    @Bean
-    public MongoTemplate mongoTemplate(@Qualifier("primaryFactory") MongoDbFactory mongoDbFactory,
-                                       MappingMongoConverter converter) {
+    @Bean(name = "humanMongoTemplate")
+    public MongoTemplate humanMongoTemplate(@Qualifier("humanFactory") MongoDbFactory mongoDbFactory,
+                                            @Qualifier("humanMappingConverter") MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         return new MongoTemplate(mongoDbFactory, converter);
     }

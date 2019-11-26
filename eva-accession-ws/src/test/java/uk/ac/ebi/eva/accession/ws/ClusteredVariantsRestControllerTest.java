@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
@@ -39,11 +40,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
@@ -54,11 +55,13 @@ import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningCo
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredHumanVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
@@ -72,6 +75,8 @@ import uk.ac.ebi.eva.commons.beacon.models.KeyValuePair;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -112,8 +117,15 @@ public class ClusteredVariantsRestControllerTest {
 
     private static final int VERSION_2 = 1;
 
+    private static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_1 = 1118L;
+
+    private static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2 = 1475292486L;
+
     @Autowired
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
+
+    @Autowired
+    private DbsnpClusteredHumanVariantAccessioningService dbsnpClusteredHumanVariantAccessioningService;
 
     @Autowired
     private DbsnpSubmittedVariantAccessioningRepository dbsnpSubmittedVariantRepository;
@@ -125,6 +137,7 @@ public class ClusteredVariantsRestControllerTest {
     private ClusteredVariantsRestController controller;
 
     @Autowired
+    @Qualifier("nonhumanActiveService")
     private ClusteredVariantAccessioningService clusteredService;
 
     @Autowired
@@ -132,6 +145,10 @@ public class ClusteredVariantsRestControllerTest {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    @Qualifier("humanMongoTemplate")
+    private MongoTemplate humanMongoTemplate;
 
     @Autowired
     private DbsnpClusteredVariantMonotonicAccessioningService dbsnpService;
@@ -154,11 +171,20 @@ public class ClusteredVariantsRestControllerTest {
 
     private DbsnpClusteredVariantEntity clusteredVariantEntity3;
 
+    private DbsnpClusteredVariantEntity clusteredHumanVariantEntity1;
+
+    private DbsnpClusteredVariantEntity clusteredHumanVariantEntity2;
+
+    private DbsnpClusteredVariantEntity clusteredHumanVariantEntity3;
+
     @Mock
     private BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> mockBasicRestController;
 
     @Mock
     private SubmittedVariantAccessioningService mockService;
+
+    @Mock
+    private DbsnpClusteredHumanVariantAccessioningService mockHumanService;
 
     @Mock
     private DbsnpClusteredVariantInactiveService inactiveService;
@@ -170,9 +196,13 @@ public class ClusteredVariantsRestControllerTest {
         submittedVariantRepository.deleteAll();
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+        humanMongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        humanMongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
         setupDbSnpClusteredVariants();
         setupDbsnpSubmittedVariants();
         setupEvaSubmittedVariants();
+        setupDbSnpClusteredHumanVariants();
+        setupDbSnpClusteredHumanOperations();
 
         ClusteredVariantsBeaconService mockBeaconService = Mockito.spy(
                 new ClusteredVariantsBeaconService(clusteredService));
@@ -181,7 +211,7 @@ public class ClusteredVariantsRestControllerTest {
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
                .getClusteredVariantByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV);
         mockController = new ClusteredVariantsRestController(mockBasicRestController, mockService, inactiveService,
-                                                             mockBeaconService);
+                                                             mockBeaconService, mockHumanService);
     }
 
     private void setupDbSnpClusteredVariants() {
@@ -206,6 +236,47 @@ public class ClusteredVariantsRestControllerTest {
         // In order to do so, replicate the structure of {@link SubmittedVariantsRestControllerTest}
         generatedAccessions = dbsnpRepository.save(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity2,
                                                                  clusteredVariantEntity3));
+    }
+
+    private void setupDbSnpClusteredHumanVariants() {
+        ClusteredVariant variant1 = new ClusteredVariant("GCA_000001405.27", 9606, "CM000684.2", 45565333L,
+                                                         VariantType.SNV, false,
+                                                         LocalDateTime.of(2000, Month.SEPTEMBER, 19, 18, 2, 0));
+
+        ClusteredVariant variant2 = new ClusteredVariant("GCA_000001405.27", 9606, "CM000663.2", 1234L,
+                                                         VariantType.SNV, false,
+                                                         LocalDateTime.of(2000, Month.SEPTEMBER, 19, 18, 2, 0));
+
+        Function<IClusteredVariant, String> function =
+                new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+
+        clusteredHumanVariantEntity1 = new DbsnpClusteredVariantEntity(
+                DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_1, function.apply(variant1), variant1);
+        clusteredHumanVariantEntity2 = new DbsnpClusteredVariantEntity(
+                DBSNP_CLUSTERED_VARIANT_ACCESSION_1, function.apply(variant2), variant2);
+        humanMongoTemplate.insert(Arrays.asList(clusteredHumanVariantEntity1, clusteredHumanVariantEntity2),
+                DbsnpClusteredVariantEntity.class);
+    }
+
+    private void setupDbSnpClusteredHumanOperations() {
+        ClusteredVariant variant1 = new ClusteredVariant("GCA_000001405.27", 9606, "CM000663.2", 72348112L,
+                VariantType.INDEL, false, LocalDateTime.of(2017, Month.NOVEMBER, 11, 9, 55, 0));
+
+        Function<IClusteredVariant, String> function =
+                new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+
+        clusteredHumanVariantEntity3 = new DbsnpClusteredVariantEntity(
+                DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2, function.apply(variant1), variant1);
+        DbsnpClusteredVariantInactiveEntity inactiveEntity = new DbsnpClusteredVariantInactiveEntity(
+                clusteredHumanVariantEntity3);
+        DbsnpClusteredVariantOperationEntity clusteredVariantOperationEntity1 =
+                new DbsnpClusteredVariantOperationEntity();
+        clusteredVariantOperationEntity1.fill(EventType.MERGED, DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2, 777512306L,
+                "Identical clustered variant received multiple RS identifiers",
+                Collections.singletonList(inactiveEntity));
+
+        humanMongoTemplate.insert(Collections.singleton(clusteredVariantOperationEntity1),
+                DbsnpClusteredVariantOperationEntity.class);
     }
 
     private void setupDbsnpSubmittedVariants() {
@@ -263,6 +334,8 @@ public class ClusteredVariantsRestControllerTest {
         submittedVariantRepository.deleteAll();
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+        humanMongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        humanMongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
     }
 
     @Test
@@ -277,6 +350,45 @@ public class ClusteredVariantsRestControllerTest {
                     getVariantsResponse.getBody();
             checkClusteredVariantsOutput(wsResponseBody, generatedAccession.getAccession());
         }
+    }
+
+    @Test
+    public void testGetHumanVariantsRestApi() {
+        String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_1;
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new ClusteredVariantType());
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> wsResponseBody =
+                getVariantsResponse.getBody();
+        assertVariantsAreContainedInControllerResponse(wsResponseBody,
+                Collections.singletonList(clusteredHumanVariantEntity1), ClusteredVariant::new);
+    }
+
+    @Test
+    public void testGetHumanVariantsInOperationsRestApi() {
+        String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2;
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
+                getVariantsResponse =
+                testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new ClusteredVariantType());
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> wsResponseBody =
+                getVariantsResponse.getBody();
+        assertVariantsAreContainedInControllerResponse(wsResponseBody,
+                Collections.singletonList(clusteredHumanVariantEntity3), ClusteredVariant::new);
+    }
+
+    @Test
+    public void testGetVariantsHumanAndNonHuman() {
+        String getVariantsUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
+                getVariantsResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null,
+                new ClusteredVariantType());
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> wsResponseBody =
+                getVariantsResponse.getBody();
+        assertVariantsAreContainedInControllerResponse(wsResponseBody, Arrays.asList(clusteredVariantEntity1,
+                clusteredHumanVariantEntity2), ClusteredVariant::new);
     }
 
     private static class ClusteredVariantType extends ParameterizedTypeReference<List<

@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.ws.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
@@ -40,11 +42,11 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredHumanVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
-import uk.ac.ebi.eva.commons.beacon.models.BeaconDataset;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconError;
 import uk.ac.ebi.eva.commons.beacon.models.Chromosome;
@@ -74,6 +76,8 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantsBeaconService beaconService;
 
+    private DbsnpClusteredHumanVariantAccessioningService humanService;
+
     // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
     //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
     //  service directly, but at the moment, {@link ClusteredVariantAccessioningService} only deals with dbSNP variants
@@ -82,12 +86,21 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
-            DbsnpClusteredVariantInactiveService inactiveService,
-            ClusteredVariantsBeaconService beaconService) {
+            @Qualifier("nonhumanInactiveService") DbsnpClusteredVariantInactiveService inactiveService,
+            ClusteredVariantsBeaconService beaconService,
+            @Qualifier("humanService") DbsnpClusteredHumanVariantAccessioningService humanService
+    ) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.inactiveService = inactiveService;
         this.beaconService = beaconService;
+        this.humanService = humanService;
+    }
+
+    @GetMapping(value = "/any/{identifier}", produces = "application/json")
+    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAnyHuman(
+            @PathVariable Long identifier) throws AccessionMergedException, AccessionDeprecatedException {
+        return humanService.getAllByAccession(identifier);
     }
 
     /**
@@ -104,11 +117,27 @@ public class ClusteredVariantsRestController {
                     required = true) Long identifier)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
-            return ResponseEntity.ok(Collections.singletonList(basicRestController.get(identifier)));
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+                    new ArrayList<>();
+            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
+            clusteredVariants.addAll(humanService.getAllByAccession(identifier));
+            if (clusteredVariants.isEmpty()) {
+                throw new AccessionDoesNotExistException(identifier);
+            }
+            return ResponseEntity.ok(clusteredVariants);
         } catch (AccessionDeprecatedException e) {
             // not done with an exception handler because the only way to get the accession parameter would be parsing
             // the exception message
             return ResponseEntity.status(HttpStatus.GONE).body(getDeprecatedClusteredVariant(identifier));
+        }
+    }
+
+    private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
+            Long identifier) throws AccessionDeprecatedException, AccessionMergedException {
+        try {
+            return Collections.singletonList(basicRestController.get(identifier));
+        } catch (AccessionDoesNotExistException e) {
+            return Collections.emptyList();
         }
     }
 
@@ -120,8 +149,8 @@ public class ClusteredVariantsRestController {
      */
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getDeprecatedClusteredVariant(
             Long identifier) {
-        IAccessionedObject<IClusteredVariant, ?, Long> accessionedObjectWrongType = inactiveService
-                .getLastEvent(identifier).getInactiveObjects().get(0);
+        IEvent<IClusteredVariant, Long> lastEvent = inactiveService.getLastEvent(identifier);
+        IAccessionedObject<IClusteredVariant, ?, Long> accessionedObjectWrongType = lastEvent.getInactiveObjects().get(0);
 
         IAccessionedObject<IClusteredVariant, String, Long> accessionedObject =
                 (IAccessionedObject<IClusteredVariant, String, Long>) accessionedObjectWrongType;

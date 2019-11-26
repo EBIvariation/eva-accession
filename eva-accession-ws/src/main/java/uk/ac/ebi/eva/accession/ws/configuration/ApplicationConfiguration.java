@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
@@ -45,6 +46,7 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.configuration.ClusteredHumanVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.ws.response.NonRedirectingClientHttpRequestFactory;
@@ -53,7 +55,8 @@ import java.util.List;
 
 @Configuration
 @EnableBasicRestControllerAdvice
-@Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
+@Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
+        ClusteredHumanVariantAccessioningConfiguration.class})
 @AutoConfigureAfter(HttpMessageConvertersAutoConfiguration.class)
 public class ApplicationConfiguration {
 
@@ -67,7 +70,7 @@ public class ApplicationConfiguration {
 
     @Bean
     public BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicClusteredRestController(
-            ClusteredVariantAccessioningService service) {
+            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService service) {
         return new BasicRestController<>(service, ClusteredVariant::new);
     }
 

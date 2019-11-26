@@ -17,6 +17,7 @@
 package uk.ac.ebi.eva.accession.pipeline.configuration.jobs;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
@@ -24,6 +25,7 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -31,10 +33,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.test.MongoTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import java.io.BufferedReader;
@@ -55,8 +57,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUB
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoTestConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-interval-test.properties")
 public class CreateSeveralIntervalsOfSubsnpAccessionsJobConfigurationTest {
 
@@ -71,6 +72,14 @@ public class CreateSeveralIntervalsOfSubsnpAccessionsJobConfigurationTest {
     @Autowired
     private InputParameters inputParameters;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    @Before
+    public void setUp() {
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+    }
+
     @After
     public void tearDown() throws Exception {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
@@ -78,6 +87,7 @@ public class CreateSeveralIntervalsOfSubsnpAccessionsJobConfigurationTest {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     @Test
