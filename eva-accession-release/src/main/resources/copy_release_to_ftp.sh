@@ -26,7 +26,7 @@ ALL_SPECIES_FOLDER="by_species"
 if [ $# -ne 6 ]
 then
   echo -e "\nThis script copies the relevant files of all the species into the FTP folder for the EVA RS release."
-  echo "The user needs to be able to run 'become ftpadmin' to run this script."
+  echo "The user needs to be able to run 'become ${FTP_USER}' to run this script."
   echo -e "This script needs 6 parameters. 4 folders (input, output, intermediate, unmapped variants), the postgres connection and the release column"
   echo -e "Also, recommended to run in LSF, e.g:"
   echo -e "$ bsub -o copy_release.log -e copy_release.err $0 <input_folder> <output_folder> <intermediate_folder> <unmapped_variants_folder> <postgres_connection>\n"
@@ -40,6 +40,7 @@ INTERMEDIATE_FOLDER=$3
 UNMAPPED_VARIANTS_FOLDER=$4
 POSTGRES_CONNECTION=$5
 RELEASE_COLUMN=$6
+FTP_USER=$7
 
 if [ ! -d ${OUTPUT_FOLDER} ]
 then
@@ -126,7 +127,7 @@ do
 done
 
 echo -e "\nCopying to FTP folder ${OUTPUT_FOLDER}"
-become ftpadmin rsync -va --exclude 'assembly_to_taxonomy_map.txt' ${INTERMEDIATE_FOLDER}/* ${OUTPUT_FOLDER}/
+become ${FTP_USER} rsync -va --exclude 'assembly_to_taxonomy_map.txt' ${INTERMEDIATE_FOLDER}/* ${OUTPUT_FOLDER}/
 
 # add symlinks to assemblies inside each species' folder
 cat ${INTERMEDIATE_FOLDER}/assembly_to_taxonomy_map.txt |
@@ -144,12 +145,12 @@ do
     # only put assembly subfolders for species whose assemblies are present
     if [ -d $assembly_folder ]
     then
-      become ftpadmin mkdir -p ${OUTPUT_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}
+      become ${FTP_USER} mkdir -p ${OUTPUT_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}
 
       symbolic_link_name=${OUTPUT_FOLDER}/${ALL_SPECIES_FOLDER}/${species_folder}/${assembly}
       # doesn't work! needs relative paths
-      #become ftpadmin ln -sfT ${assembly_folder} ${symbolic_link_name}
-      become ftpadmin ln -sfT ../../${ASSEMBLIES}/${assembly} ${symbolic_link_name}
+      #become ${FTP_USER} ln -sfT ${assembly_folder} ${symbolic_link_name}
+      become ${FTP_USER} ln -sfT ../../${ASSEMBLIES}/${assembly} ${symbolic_link_name}
     fi
   fi
 done
@@ -157,4 +158,4 @@ done
 echo -e "\nFinished copying. Removing intermediate copy at ${INTERMEDIATE_FOLDER}"
 rm -rf ${INTERMEDIATE_FOLDER}
 
-become ftpadmin python3 "$SCRIPT_DIR/create_assembly_name_symlinks.py" ${OUTPUT_FOLDER}/${ALL_SPECIES_FOLDER}
+become ${FTP_USER} python3 "$SCRIPT_DIR/create_assembly_name_symlinks.py" ${OUTPUT_FOLDER}/${ALL_SPECIES_FOLDER}
