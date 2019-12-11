@@ -188,17 +188,25 @@ public class ClusteredVariantsRestController {
             + "https://github.com/EBIvariation/eva-accession/wiki/Import-accessions-from-dbSNP#clustered-variant-refsnp"
             + "-or-rs")
     @GetMapping(produces = "application/json")
-    public ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getByIdFields(
+    public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getByIdFields(
             @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
             @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
                     String chromosome,
             @RequestParam(name = "start") long start,
             @RequestParam(name = "variantType") VariantType variantType) {
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+                new ArrayList<>();
+
         Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariant =
                 beaconService.getClusteredVariantByIdFields(assembly, chromosome, start, variantType);
-        return clusteredVariant.isPresent() ? ResponseEntity.ok(clusteredVariant.get()) : ResponseEntity.notFound()
-                                                                                                        .build();
+        clusteredVariant.ifPresent(clusteredVariants::add);
+
+        Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> humanClusteredVariant =
+                humanService.getByIdFields(assembly, chromosome, start, variantType);
+        humanClusteredVariant.ifPresent(clusteredVariants::addAll);
+
+        return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
     }
 
     @ApiOperation(value = "Find if a clustered variant (RS) with the given identifying fields exists in our database",

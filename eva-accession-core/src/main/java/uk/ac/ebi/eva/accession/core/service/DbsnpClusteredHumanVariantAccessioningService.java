@@ -22,14 +22,18 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.repositoryHuman.DbsnpClusteredHumanVariantOperationAccessioningService;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class DbsnpClusteredHumanVariantAccessioningService {
@@ -38,13 +42,15 @@ public class DbsnpClusteredHumanVariantAccessioningService {
 
     private final DbsnpClusteredHumanVariantOperationAccessioningService operationsService;
 
-    public DbsnpClusteredHumanVariantAccessioningService(@Qualifier("humanActiveService") ClusteredVariantAccessioningService humanService,
-                                                         @Qualifier("humanOperationsService") DbsnpClusteredHumanVariantOperationAccessioningService operationsService) {
+    public DbsnpClusteredHumanVariantAccessioningService(
+            @Qualifier("humanActiveService") ClusteredVariantAccessioningService humanService,
+            @Qualifier("humanOperationsService") DbsnpClusteredHumanVariantOperationAccessioningService operationsService) {
         this.humanService = humanService;
         this.operationsService = operationsService;
     }
 
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAllByAccession(Long identifier) {
+    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAllByAccession(
+            Long identifier) {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
         clusteredVariants.addAll(getHumanClusteredVariants(identifier));
@@ -60,5 +66,28 @@ public class DbsnpClusteredHumanVariantAccessioningService {
         } catch (AccessionDoesNotExistException | AccessionMergedException | AccessionDeprecatedException e) {
             return Collections.emptyList();
         }
+    }
+
+    public Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getByIdFields(
+            String assembly, String contig, long start, VariantType type) {
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+                new ArrayList();
+
+        IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, contig, start, type, false,
+                                                                          null);
+
+        List<AccessionWrapper<IClusteredVariant, String, Long>> activeClusteredVariantWrappers =
+                humanService.get(Collections.singletonList(clusteredVariantToSearch));
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> activeClusteredVariants =
+                activeClusteredVariantWrappers.stream()
+                                              .map(v -> new AccessionResponseDTO<>(v, ClusteredVariant::new))
+                                              .collect(Collectors.toList());
+        clusteredVariants.addAll(activeClusteredVariants);
+
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> activeClusteredVariantsInOperations =
+                operationsService.getOriginalVariant(clusteredVariantToSearch);
+        clusteredVariants.addAll(activeClusteredVariantsInOperations);
+
+        return clusteredVariants.isEmpty() ? Optional.empty() : Optional.of(clusteredVariants);
     }
 }

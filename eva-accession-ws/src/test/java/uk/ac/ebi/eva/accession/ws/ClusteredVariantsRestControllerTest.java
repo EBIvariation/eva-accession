@@ -811,19 +811,19 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void findByIdFields() {
-        ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
                                          clusteredVariantEntity1.getStart(),
                                          clusteredVariantEntity1.getType());
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        assertEquals(clusteredVariantEntity1.getAccession(), getVariantsResponse.getBody().getAccession());
+        assertEquals(clusteredVariantEntity1.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
     }
 
     @Test
     public void findByIdFieldsClusteredVariantDoesntExists() {
-        ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
                                          123,
