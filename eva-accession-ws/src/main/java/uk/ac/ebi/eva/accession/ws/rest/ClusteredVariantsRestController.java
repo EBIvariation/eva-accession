@@ -97,12 +97,6 @@ public class ClusteredVariantsRestController {
         this.humanService = humanService;
     }
 
-    @GetMapping(value = "/any/{identifier}", produces = "application/json")
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAnyHuman(
-            @PathVariable Long identifier) throws AccessionMergedException, AccessionDeprecatedException {
-        return humanService.getAllByAccession(identifier);
-    }
-
     /**
      * In case the RS is not active and was merged into several other active RSs, an exception AccessionMergedException
      * will be thrown and a redirection to an active RS will be done by {@link EvaControllerAdvice}. Although it is
