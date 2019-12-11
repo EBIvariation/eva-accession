@@ -822,6 +822,32 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
+    public void findByIdFieldsHumanVariant() {
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
+                controller.getByIdFields(clusteredHumanVariantEntity1.getAssemblyAccession(),
+                                         clusteredHumanVariantEntity1.getContig(),
+                                         clusteredHumanVariantEntity1.getStart(),
+                                         clusteredHumanVariantEntity1.getType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(clusteredHumanVariantEntity1.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
+    }
+
+    @Test
+    public void findByIdFieldsHumanVariantInOperations() {
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
+                controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
+                                         clusteredHumanVariantEntity3.getContig(),
+                                         clusteredHumanVariantEntity3.getStart(),
+                                         clusteredHumanVariantEntity3.getType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(clusteredHumanVariantEntity3.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
+    }
+
+
+
+    @Test
     public void findByIdFieldsClusteredVariantDoesntExists() {
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
