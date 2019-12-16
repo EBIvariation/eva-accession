@@ -28,6 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -35,8 +36,11 @@ import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+
+import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
 
 import java.net.UnknownHostException;
 
@@ -45,6 +49,8 @@ import java.net.UnknownHostException;
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.repositoryHuman"})
 @EnableMongoAuditing
 public class MongoHumanConfiguration {
+
+    private static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
 
     @Value("${mongodb.read-preference}")
     private String readPreference;
@@ -84,13 +90,16 @@ public class MongoHumanConfiguration {
                                                        ObjectProvider<MongoClientOptions> options,
                                                        Environment environment) throws UnknownHostException {
         return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
-                new MongoMappingContext());
+                                         new MongoMappingContext());
     }
 
     @Bean(name = "humanMongoTemplate")
     public MongoTemplate humanMongoTemplate(@Qualifier("humanFactory") MongoDbFactory mongoDbFactory,
                                             @Qualifier("humanMappingConverter") MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
-        return new MongoTemplate(mongoDbFactory, converter);
+        MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, converter);
+        mongoTemplate.indexOps(DbsnpClusteredVariantOperationEntity.class).ensureIndex(
+                new Index().on(INACTIVE_OBJECTS_HASHED_MESSAGE, Sort.Direction.ASC).background());
+        return mongoTemplate;
     }
 }
