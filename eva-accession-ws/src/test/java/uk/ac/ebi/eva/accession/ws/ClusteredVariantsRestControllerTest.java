@@ -54,6 +54,7 @@ import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
@@ -95,7 +96,7 @@ import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({SubmittedVariantAccessioningConfiguration.class})
+@Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class ClusteredVariantsRestControllerTest {
 
@@ -127,7 +128,7 @@ public class ClusteredVariantsRestControllerTest {
 
     private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
-    public static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
+    private static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
 
     @Autowired
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
@@ -340,10 +341,10 @@ public class ClusteredVariantsRestControllerTest {
         dbsnpRepository.deleteAll();
         dbsnpSubmittedVariantRepository.deleteAll();
         submittedVariantRepository.deleteAll();
-        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
-        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
-        humanMongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
-        humanMongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
     }
 
     @Test
