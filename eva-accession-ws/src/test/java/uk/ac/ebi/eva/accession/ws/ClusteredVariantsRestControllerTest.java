@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.eva.accession.ws;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,13 +47,13 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.configuration.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
@@ -93,7 +95,7 @@ import static org.junit.Assert.assertNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class ClusteredVariantsRestControllerTest {
 
@@ -120,6 +122,12 @@ public class ClusteredVariantsRestControllerTest {
     private static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_1 = 1118L;
 
     private static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_HUMAN_2 = 1475292486L;
+
+    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
+
+    private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
+
+    public static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
 
     @Autowired
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
@@ -194,10 +202,10 @@ public class ClusteredVariantsRestControllerTest {
         dbsnpRepository.deleteAll();
         dbsnpSubmittedVariantRepository.deleteAll();
         submittedVariantRepository.deleteAll();
-        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
-        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
-        humanMongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
-        humanMongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
         setupDbSnpClusteredVariants();
         setupDbsnpSubmittedVariants();
         setupEvaSubmittedVariants();
@@ -336,6 +344,22 @@ public class ClusteredVariantsRestControllerTest {
         mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
         humanMongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
         humanMongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+    }
+
+    @Test
+    public void checkIndexInactiveObjectHashedMessageOnlyInHumanDB() {
+        assertFalse(isIndexInCollection(mongoTemplate, DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
+                                        INACTIVE_OBJECTS_HASHED_MESSAGE));
+
+        assertTrue(isIndexInCollection(humanMongoTemplate, DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
+                                       INACTIVE_OBJECTS_HASHED_MESSAGE));
+    }
+
+    private boolean isIndexInCollection(MongoTemplate template, String collection, String indexName) {
+        List<DBObject> operationCollectionIndexes = template.getCollection(collection).getIndexInfo();
+        List<DBObject> matchingIndexes = operationCollectionIndexes.stream().filter(i -> i.get("name").toString().
+                contains(indexName)).collect(Collectors.toList());
+        return !matchingIndexes.isEmpty();
     }
 
     @Test
@@ -806,7 +830,7 @@ public class ClusteredVariantsRestControllerTest {
 
         assertEquals(HttpStatus.NOT_FOUND, getVariantsResponse.getStatusCode());
     }
-    
+
     @Test(expected = RuntimeException.class)
     public void getByIdFieldstError500() {
         String assemblyId = "GCA_ERROR";
