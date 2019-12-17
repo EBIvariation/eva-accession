@@ -177,7 +177,7 @@ public class ClusteredVariantsRestController {
                     String assembly,
             @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
                     String chromosome,
-            @RequestParam(name = "start") long start,
+            @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType) {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
@@ -202,7 +202,7 @@ public class ClusteredVariantsRestController {
                     String assembly,
             @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
                     String chromosome,
-            @RequestParam(name = "start") long start,
+            @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType,
             @RequestParam(name = "includeDatasetReponses", required = false)
                     boolean includeDatasetReponses,
