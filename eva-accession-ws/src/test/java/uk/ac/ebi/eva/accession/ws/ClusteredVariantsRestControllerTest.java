@@ -845,7 +845,16 @@ public class ClusteredVariantsRestControllerTest {
         assertEquals(clusteredHumanVariantEntity3.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
     }
 
+    @Test
+    public void findByIdFieldsHumanVariantDoesntExists() {
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
+                controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
+                                         clusteredHumanVariantEntity3.getContig(),
+                                         1L,
+                                         clusteredHumanVariantEntity3.getType());
 
+        assertEquals(HttpStatus.NOT_FOUND, getVariantsResponse.getStatusCode());
+    }
 
     @Test
     public void findByIdFieldsClusteredVariantDoesntExists() {
