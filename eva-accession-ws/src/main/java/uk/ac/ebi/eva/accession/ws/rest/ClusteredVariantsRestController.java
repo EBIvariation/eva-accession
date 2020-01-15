@@ -38,6 +38,7 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.SubmittedVariant;
@@ -68,6 +69,8 @@ public class ClusteredVariantsRestController {
 
     private DbsnpClusteredHumanVariantAccessioningService humanService;
 
+    private ClusteredVariantAccessioningService nonHumanActiveService;
+
     // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
     //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
     //  service directly, but at the moment, {@link ClusteredVariantAccessioningService} only deals with dbSNP variants
@@ -76,15 +79,17 @@ public class ClusteredVariantsRestController {
     public ClusteredVariantsRestController(
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
-            @Qualifier("nonhumanInactiveService") DbsnpClusteredVariantInactiveService inactiveService,
             ClusteredVariantsBeaconService beaconService,
-            @Qualifier("humanService") DbsnpClusteredHumanVariantAccessioningService humanService
+            @Qualifier("humanService") DbsnpClusteredHumanVariantAccessioningService humanService,
+            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService,
+            @Qualifier("nonhumanInactiveService") DbsnpClusteredVariantInactiveService inactiveService
     ) {
         this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
-        this.inactiveService = inactiveService;
         this.beaconService = beaconService;
         this.humanService = humanService;
+        this.nonHumanActiveService = nonHumanActiveService;
+        this.inactiveService = inactiveService;
     }
 
     /**
@@ -183,7 +188,7 @@ public class ClusteredVariantsRestController {
                 new ArrayList<>();
 
         Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariant =
-                beaconService.getClusteredVariantByIdFields(assembly, chromosome, start, variantType);
+                nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
         clusteredVariant.ifPresent(clusteredVariants::add);
 
         Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> humanClusteredVariant =

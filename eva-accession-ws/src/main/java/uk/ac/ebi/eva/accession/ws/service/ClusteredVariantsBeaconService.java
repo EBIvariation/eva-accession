@@ -86,7 +86,7 @@ public class ClusteredVariantsBeaconService {
                                                                      long start, VariantType variantType,
                                                                      boolean includeDatasetResponses) {
         Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> variant =
-                getClusteredVariantByIdFields(referenceGenome, chromosome, start, variantType);
+                clusteredVariantService.getByIdFields(referenceGenome, chromosome, start, variantType);
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
         if (variant.isPresent() && includeDatasetResponses) {
             String identifier = variant.get().getAccession().toString();
@@ -213,16 +213,5 @@ public class ClusteredVariantsBeaconService {
         response.setAlleleRequest(request);
         response.setError(error);
         return response;
-    }
-
-    public Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getClusteredVariantByIdFields(
-            String assembly, String contig, long start, VariantType type) {
-
-        IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
-        List<AccessionWrapper<IClusteredVariant, String, Long>> variants = clusteredVariantService
-                .get(Collections.singletonList(clusteredVariant));
-
-        return variants.isEmpty() ? Optional.empty() : Optional.of(new AccessionResponseDTO<>(variants.get(0),
-                                                                                              ClusteredVariant::new));
     }
 }
