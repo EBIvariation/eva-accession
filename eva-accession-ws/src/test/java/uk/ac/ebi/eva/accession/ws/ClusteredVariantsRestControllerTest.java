@@ -214,13 +214,12 @@ public class ClusteredVariantsRestControllerTest {
         setupDbSnpClusteredHumanOperations();
 
         ClusteredVariantsBeaconService mockBeaconService = Mockito.spy(
-                new ClusteredVariantsBeaconService(clusteredService));
+                new ClusteredVariantsBeaconService(clusteredService, mockHumanService, mockService));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
                .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, false);
-        Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
-               .getClusteredVariantByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV);
-        mockController = new ClusteredVariantsRestController(mockBasicRestController, mockService, inactiveService,
-                                                             mockBeaconService, mockHumanService);
+        mockController = new ClusteredVariantsRestController(mockBasicRestController, mockService, mockBeaconService,
+                                                             mockHumanService, clusteredService, inactiveService
+        );
     }
 
     private void setupDbSnpClusteredVariants() {
@@ -811,19 +810,54 @@ public class ClusteredVariantsRestControllerTest {
 
     @Test
     public void findByIdFields() {
-        ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
                                          clusteredVariantEntity1.getStart(),
                                          clusteredVariantEntity1.getType());
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        assertEquals(clusteredVariantEntity1.getAccession(), getVariantsResponse.getBody().getAccession());
+        assertEquals(clusteredVariantEntity1.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
+    }
+
+    @Test
+    public void findByIdFieldsHumanVariant() {
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
+                controller.getByIdFields(clusteredHumanVariantEntity1.getAssemblyAccession(),
+                                         clusteredHumanVariantEntity1.getContig(),
+                                         clusteredHumanVariantEntity1.getStart(),
+                                         clusteredHumanVariantEntity1.getType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(clusteredHumanVariantEntity1.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
+    }
+
+    @Test
+    public void findByIdFieldsHumanVariantInOperations() {
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
+                controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
+                                         clusteredHumanVariantEntity3.getContig(),
+                                         clusteredHumanVariantEntity3.getStart(),
+                                         clusteredHumanVariantEntity3.getType());
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(clusteredHumanVariantEntity3.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
+    }
+
+    @Test
+    public void findByIdFieldsHumanVariantDoesntExists() {
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
+                controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
+                                         clusteredHumanVariantEntity3.getContig(),
+                                         1L,
+                                         clusteredHumanVariantEntity3.getType());
+
+        assertEquals(HttpStatus.NOT_FOUND, getVariantsResponse.getStatusCode());
     }
 
     @Test
     public void findByIdFieldsClusteredVariantDoesntExists() {
-        ResponseEntity<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
                                          123,

@@ -16,8 +16,13 @@
 package uk.ac.ebi.eva.accession.core.repositoryHuman;
 
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
+
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+
+import java.util.List;
 
 public interface DbsnpClusteredHumanVariantOperationRepository extends IHistoryRepository<Long,
         DbsnpClusteredVariantOperationEntity, String> {
+
+    List<DbsnpClusteredVariantOperationEntity> findAllByInactiveObjects_HashedMessage(String hash);
 }

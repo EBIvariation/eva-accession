@@ -16,18 +16,25 @@
 package uk.ac.ebi.eva.accession.core.repositoryHuman;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+
 import uk.ac.ebi.eva.accession.core.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public class DbsnpClusteredHumanVariantOperationAccessioningService {
 
     private final DbsnpClusteredHumanVariantOperationRepository operationAccessionRepository;
+
+    private static Function<IClusteredVariant, String> hashingFunctionClustered =
+            new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
     public DbsnpClusteredHumanVariantOperationAccessioningService(DbsnpClusteredHumanVariantOperationRepository operationAccessionRepository) {
         this.operationAccessionRepository = operationAccessionRepository;
@@ -35,18 +42,29 @@ public class DbsnpClusteredHumanVariantOperationAccessioningService {
 
     public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getByAccession(Long identifier) {
         List<DbsnpClusteredVariantOperationEntity> operations = operationAccessionRepository.findAllByAccession(identifier);
+        return getAccessionResponseDTOS(operations);
+    }
 
+    private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAccessionResponseDTOS(
+            List<DbsnpClusteredVariantOperationEntity> operations) {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
         for (DbsnpClusteredVariantOperationEntity operation : operations) {
             List<DbsnpClusteredVariantInactiveEntity> inactiveEntities = operation.getInactiveObjects();
             for (DbsnpClusteredVariantInactiveEntity inactiveEntity : inactiveEntities) {
                 AccessionWrapper<IClusteredVariant, String, Long> wrapper =
-                        new AccessionWrapper(identifier, operation.getId(), inactiveEntity.getModel());
+                        new AccessionWrapper<>(operation.getAccession(), operation.getId(), inactiveEntity.getModel());
                 clusteredVariants.add(new AccessionResponseDTO<>(wrapper, ClusteredVariant::new));
             }
         }
-
         return clusteredVariants;
+    }
+
+    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getOriginalVariant(
+            IClusteredVariant clusteredVariant) {
+        String hash =  hashingFunctionClustered.apply(clusteredVariant);
+        List<DbsnpClusteredVariantOperationEntity> clusteredVariants = operationAccessionRepository.
+                findAllByInactiveObjects_HashedMessage(hash);
+        return getAccessionResponseDTOS(clusteredVariants);
     }
 }
