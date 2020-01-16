@@ -53,7 +53,7 @@ public class DbsnpClusteredHumanVariantOperationAccessioningService {
             List<DbsnpClusteredVariantInactiveEntity> inactiveEntities = operation.getInactiveObjects();
             for (DbsnpClusteredVariantInactiveEntity inactiveEntity : inactiveEntities) {
                 AccessionWrapper<IClusteredVariant, String, Long> wrapper =
-                        new AccessionWrapper(operation.getAccession(), operation.getId(), inactiveEntity.getModel());
+                        new AccessionWrapper<>(operation.getAccession(), operation.getId(), inactiveEntity.getModel());
                 clusteredVariants.add(new AccessionResponseDTO<>(wrapper, ClusteredVariant::new));
             }
         }

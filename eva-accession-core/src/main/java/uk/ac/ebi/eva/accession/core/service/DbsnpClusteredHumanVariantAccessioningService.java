@@ -71,7 +71,7 @@ public class DbsnpClusteredHumanVariantAccessioningService {
     public Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getByIdFields(
             String assembly, String contig, long start, VariantType type) {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
-                new ArrayList();
+                new ArrayList<>();
 
         IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, contig, start, type, false,
                                                                           null);
@@ -90,4 +90,5 @@ public class DbsnpClusteredHumanVariantAccessioningService {
 
         return clusteredVariants.isEmpty() ? Optional.empty() : Optional.of(clusteredVariants);
     }
+
 }
