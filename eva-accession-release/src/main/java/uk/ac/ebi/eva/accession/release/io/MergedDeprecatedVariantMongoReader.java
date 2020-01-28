@@ -37,8 +37,8 @@ import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 
 import java.util.Arrays;
 import java.util.Collections;

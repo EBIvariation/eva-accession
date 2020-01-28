@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.dbsnp2.configuration;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.dbsnp2.listeners.ImportDbsnpJsonVariantsStepProgressListener;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 

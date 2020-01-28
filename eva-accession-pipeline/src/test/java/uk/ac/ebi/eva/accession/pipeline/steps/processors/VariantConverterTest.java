@@ -20,8 +20,8 @@ package uk.ac.ebi.eva.accession.pipeline.steps.processors;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static org.junit.Assert.assertEquals;

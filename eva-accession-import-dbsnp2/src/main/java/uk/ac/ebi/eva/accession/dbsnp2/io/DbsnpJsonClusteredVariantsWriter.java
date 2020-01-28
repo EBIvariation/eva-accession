@@ -21,14 +21,14 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
-import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantWriter;
-import uk.ac.ebi.eva.accession.core.io.DbsnpClusteredVariantOperationWriter;
-import uk.ac.ebi.eva.accession.core.io.MergeOperationBuilder;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.batch.io.DbsnpClusteredVariantWriter;
+import uk.ac.ebi.eva.accession.core.batch.io.DbsnpClusteredVariantOperationWriter;
+import uk.ac.ebi.eva.accession.core.batch.io.MergeOperationBuilder;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantOperationRepository;
 
 import java.util.Arrays;
 import java.util.List;

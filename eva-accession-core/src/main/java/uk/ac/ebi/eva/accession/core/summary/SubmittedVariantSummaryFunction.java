@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core.summary;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 
 import java.util.function.Function;
 

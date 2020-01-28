@@ -19,7 +19,7 @@ import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.deprecate.listeners.DeprecationStepProgressListener;
 
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATION_PROGRESS_LISTENER;

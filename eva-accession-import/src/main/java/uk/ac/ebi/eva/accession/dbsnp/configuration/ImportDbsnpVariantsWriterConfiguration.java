@@ -23,12 +23,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationRepository;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.dbsnp.io.DbsnpVariantsWriter;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 

@@ -20,11 +20,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 
 import java.util.HashSet;
 import java.util.List;
@@ -76,7 +76,7 @@ public class SubmittedVariantRenormalizationProcessor implements
      * 10: "" > "AGG" (desired representation). For deletions the explanation is the same.
      *
      * For the needed change,
-     * @see SubmittedVariantRenormalizationProcessor#renormalize(uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity)
+     * @see SubmittedVariantRenormalizationProcessor#renormalize(DbsnpSubmittedVariantEntity)
      * @see SubmittedVariantRenormalizationProcessor#renormalizeAllele(java.lang.String)
      */
     private boolean isAmbiguous(ISubmittedVariant variant) {

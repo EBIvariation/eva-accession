@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core.contig;
 
-import uk.ac.ebi.eva.accession.core.io.AssemblyReportReader;
+import uk.ac.ebi.eva.accession.core.batch.io.AssemblyReportReader;
 
 import java.util.HashMap;
 import java.util.List;

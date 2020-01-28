@@ -17,7 +17,7 @@ package uk.ac.ebi.eva.accession.pipeline.steps.tasklets.reportCheck;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 import java.util.Comparator;
