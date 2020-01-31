@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.deprecate.configuration;
+package uk.ac.ebi.eva.accession.deprecate.configuration.steps;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
@@ -49,18 +49,16 @@ import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECAT
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/dbsnpClusteredVariantEntityDeclustered.json"})
-@TestPropertySource("classpath:application_species_subset.properties")
-public class DeprecateSubsetClusteredVariantsStepConfigurationTest {
+@TestPropertySource("classpath:application.properties")
+public class DeprecateClusteredVariantsStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
     private static final String DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED = "dbsnpClusteredVariantEntityDeclustered";
 
-    private static final long EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED = 8;
+    private static final long EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED = 4;
 
-    // from those listed in assemblyAccession (in the properties file), only GCA_000000003.1 is not present in
-    // dbsnpSubmittedVariantEntity
-    private static final long EXPECTED_OPERATIONS = 1;
+    private static final long EXPECTED_OPERATIONS = 5;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -96,10 +94,10 @@ public class DeprecateSubsetClusteredVariantsStepConfigurationTest {
         assertStepExecutesAndCompletes();
         assertEquals(EXPECTED_VARIANTS_TO_BE_NOT_FULLY_DECLUSTERED,
                      mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY_DECLUSTERED).count());
-        assertOperations();
+        assertNumDeprecatedOperations();
     }
 
-    private void assertOperations() {
+    private void assertNumDeprecatedOperations() {
         List<DbsnpClusteredVariantOperationEntity> operations = mongoTemplate
                 .find(new Query(), DbsnpClusteredVariantOperationEntity.class);
         assertEquals(EXPECTED_OPERATIONS, operations.size());

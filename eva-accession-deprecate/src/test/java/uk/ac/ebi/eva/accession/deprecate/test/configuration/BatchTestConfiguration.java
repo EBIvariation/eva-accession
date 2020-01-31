@@ -21,13 +21,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecableClusteredVariantsReaderConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecateClusteredVariantsJobConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecateClusteredVariantsStepConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.configuration.DeprecationWriterConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.batch.io.DeprecableClusteredVariantsReaderConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.batch.jobs.DeprecateClusteredVariantsJobConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.batch.steps.DeprecateClusteredVariantsStepConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.batch.io.DeprecationWriterConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.configuration.InputParametersConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.configuration.ListenerConfiguration;
+import uk.ac.ebi.eva.accession.deprecate.configuration.batch.listeners.ListenerConfiguration;
 
 @EnableAutoConfiguration
 @Import({MongoConfiguration.class,

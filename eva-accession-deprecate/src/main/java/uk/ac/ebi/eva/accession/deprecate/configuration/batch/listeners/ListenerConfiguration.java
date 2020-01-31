@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.deprecate.configuration;
+package uk.ac.ebi.eva.accession.deprecate.configuration.batch.listeners;
 
-import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.io.DeprecationWriter;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.deprecate.batch.listeners.DeprecationStepProgressListener;
 
-import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATION_WRITER;
+import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATION_PROGRESS_LISTENER;
 
 @Configuration
-@Import({MongoConfiguration.class})
-public class DeprecationWriterConfiguration {
+public class ListenerConfiguration {
 
-    @Bean(DEPRECATION_WRITER)
-    @StepScope
-    DeprecationWriter deprecationWriter(MongoTemplate mongoTemplate) {
-        return new DeprecationWriter(mongoTemplate);
+    @Bean(DEPRECATION_PROGRESS_LISTENER)
+    public StepListenerSupport<DbsnpClusteredVariantEntity, DbsnpClusteredVariantEntity> deprecationProgressListener() {
+        return new DeprecationStepProgressListener();
     }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.deprecate.configuration;
+package uk.ac.ebi.eva.accession.deprecate.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;

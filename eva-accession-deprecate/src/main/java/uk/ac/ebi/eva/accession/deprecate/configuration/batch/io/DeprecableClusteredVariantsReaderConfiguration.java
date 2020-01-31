@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.deprecate.configuration;
+package uk.ac.ebi.eva.accession.deprecate.configuration.batch.io;
 
 import com.mongodb.MongoClient;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.deprecate.io.DeprecableClusteredVariantsReader;
+import uk.ac.ebi.eva.accession.deprecate.batch.io.DeprecableClusteredVariantsReader;
 import uk.ac.ebi.eva.accession.deprecate.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECABLE_CLUSTERED_VARIANTS_READER;
