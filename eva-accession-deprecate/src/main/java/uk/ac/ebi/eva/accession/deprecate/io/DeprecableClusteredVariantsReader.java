@@ -33,7 +33,7 @@ import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -19,8 +19,8 @@ package uk.ac.ebi.eva.accession.pipeline.steps.processors;
 
 import org.springframework.core.convert.converter.Converter;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 
 public class VariantConverter implements Converter<IVariant, ISubmittedVariant> {

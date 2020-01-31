@@ -34,8 +34,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
-import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 

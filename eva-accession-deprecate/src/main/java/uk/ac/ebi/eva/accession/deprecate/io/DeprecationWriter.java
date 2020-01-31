@@ -27,9 +27,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantInactiveEntity;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;

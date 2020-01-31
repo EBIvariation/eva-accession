@@ -24,8 +24,8 @@ import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.listeners.ImportCounts;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
 
 import java.util.List;
 

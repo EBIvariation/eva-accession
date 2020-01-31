@@ -28,10 +28,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-import uk.ac.ebi.eva.accession.core.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 

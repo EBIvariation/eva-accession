@@ -20,9 +20,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;

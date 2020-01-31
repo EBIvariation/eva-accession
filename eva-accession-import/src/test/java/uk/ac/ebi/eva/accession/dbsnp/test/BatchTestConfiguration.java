@@ -25,7 +25,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.test.configuration.DbsnpTestDataSource;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp.configuration.ImportDbsnpVariantsJobConfiguration;

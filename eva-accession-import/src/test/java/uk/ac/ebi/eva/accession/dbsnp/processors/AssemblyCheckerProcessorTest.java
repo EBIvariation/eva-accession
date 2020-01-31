@@ -20,7 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantType;
 import uk.ac.ebi.eva.accession.dbsnp.model.Orientation;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;

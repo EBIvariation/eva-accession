@@ -20,8 +20,8 @@ package uk.ac.ebi.eva.accession.core.summary;
 import org.junit.Before;
 import org.junit.Test;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 
 import java.time.LocalDateTime;
 import java.time.Month;

@@ -19,7 +19,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 
 import java.io.File;
 import java.io.FileWriter;

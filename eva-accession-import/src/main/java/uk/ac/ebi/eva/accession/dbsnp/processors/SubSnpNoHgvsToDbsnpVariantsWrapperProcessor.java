@@ -18,13 +18,13 @@ package uk.ac.ebi.eva.accession.dbsnp.processors;
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.core.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.dbsnp.model.SubSnpNoHgvs;
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
 import uk.ac.ebi.eva.accession.dbsnp.persistence.ProjectAccessionMapping;
 import uk.ac.ebi.eva.commons.core.models.Region;

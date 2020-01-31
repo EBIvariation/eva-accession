@@ -23,12 +23,12 @@ import org.springframework.stereotype.Service;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
-import uk.ac.ebi.eva.accession.core.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.DbsnpClusteredHumanVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.DbsnpClusteredHumanVariantAccessioningService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;

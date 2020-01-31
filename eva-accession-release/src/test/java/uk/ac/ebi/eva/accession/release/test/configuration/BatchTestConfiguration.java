@@ -21,7 +21,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
-import uk.ac.ebi.eva.accession.core.configuration.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.AccessionReleaseJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;

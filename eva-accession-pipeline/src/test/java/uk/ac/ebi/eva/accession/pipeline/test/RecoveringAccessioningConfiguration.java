@@ -25,13 +25,13 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessio
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 
-import uk.ac.ebi.eva.accession.core.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.core.persistence.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.service.SubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import static uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsRecoveringStateJobConfigurationTest.UNCOMMITTED_ACCESSION;

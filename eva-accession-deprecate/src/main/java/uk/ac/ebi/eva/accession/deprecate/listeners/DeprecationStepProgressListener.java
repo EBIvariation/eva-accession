@@ -22,7 +22,7 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.batch.core.scope.context.ChunkContext;
 
-import uk.ac.ebi.eva.accession.core.persistence.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 
 public class DeprecationStepProgressListener extends StepListenerSupport<DbsnpClusteredVariantEntity, DbsnpClusteredVariantEntity> {
 
