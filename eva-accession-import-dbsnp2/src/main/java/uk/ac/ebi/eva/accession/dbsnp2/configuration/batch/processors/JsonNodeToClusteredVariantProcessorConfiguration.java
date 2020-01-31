@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.configuration;
+package uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.processors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
@@ -25,8 +25,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.dbsnp2.processors.ContigToGenbankReplacerProcessor;
-import uk.ac.ebi.eva.accession.dbsnp2.processors.JsonNodeToClusteredVariantProcessor;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.processors.ContigToGenbankReplacerProcessor;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.processors.JsonNodeToClusteredVariantProcessor;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 
 import java.util.Arrays;

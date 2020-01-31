@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.configuration;
+package uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.listeners;
 
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
-import uk.ac.ebi.eva.accession.dbsnp2.listeners.ImportDbsnpJsonVariantsStepProgressListener;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.listeners.ImportDbsnpJsonVariantsStepProgressListener;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.IMPORT_DBSNP_JSON_VARIANTS_PROGRESS_LISTENER;

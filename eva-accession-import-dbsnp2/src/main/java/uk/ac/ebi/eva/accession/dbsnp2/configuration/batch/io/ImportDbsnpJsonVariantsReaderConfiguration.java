@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.configuration;
+package uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.io;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -22,8 +22,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
-import uk.ac.ebi.eva.accession.dbsnp2.io.BzipLazyResource;
-import uk.ac.ebi.eva.accession.dbsnp2.io.JsonNodeLineMapper;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.io.BzipLazyResource;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.io.JsonNodeLineMapper;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 import java.io.File;
 

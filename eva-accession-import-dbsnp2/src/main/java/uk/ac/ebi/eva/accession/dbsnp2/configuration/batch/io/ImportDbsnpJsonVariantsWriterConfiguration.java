@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.configuration;
+package uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import uk.ac.ebi.eva.accession.core.batch.listeners.ImportCounts;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantOperationRepository;
-import uk.ac.ebi.eva.accession.dbsnp2.io.DbsnpJsonClusteredVariantsWriter;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.io.DbsnpJsonClusteredVariantsWriter;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.dbsnp2.configuration.BeanNames.DBSNP_JSON_VARIANT_WRITER;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.processors;
+package uk.ac.ebi.eva.accession.dbsnp2.batch.processors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
@@ -32,8 +32,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.dbsnp2.io.BzipLazyResource;
-import uk.ac.ebi.eva.accession.dbsnp2.io.JsonNodeLineMapper;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.io.BzipLazyResource;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.io.JsonNodeLineMapper;
+import uk.ac.ebi.eva.accession.dbsnp2.batch.processors.JsonNodeToClusteredVariantProcessor;
 import uk.ac.ebi.eva.accession.dbsnp2.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp2.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.core.models.VariantType;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.listeners;
+package uk.ac.ebi.eva.accession.dbsnp2.batch.listeners;
 
 import org.codehaus.jackson.JsonNode;
 import org.slf4j.Logger;

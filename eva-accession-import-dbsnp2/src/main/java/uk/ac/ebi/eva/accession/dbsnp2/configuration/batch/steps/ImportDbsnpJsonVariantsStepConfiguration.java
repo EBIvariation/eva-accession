@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.dbsnp2.configuration;
+package uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.steps;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.batch.core.Step;
