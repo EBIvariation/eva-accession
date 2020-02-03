@@ -85,8 +85,8 @@ public class ContigWriterTest {
 
         assertEquals(contigs.size(), numberOfLines(output));
 
-        List<String> expectedLines = Arrays.asList("CM0001.1,Chr1", "CM0002.1,Chr2", "CM0003.1,Chr3");
-        assertContigFileContent(output, expectedLines);
+        List<String> expectedLinesSorted = Arrays.asList("Chr1,CM0001.1", "Chr2,CM0002.1", "Chr3,CM0003.1");
+        assertContigFileContentAndOrder(output, expectedLinesSorted);
     }
 
     private long numberOfLines(File file) throws IOException {
@@ -94,11 +94,13 @@ public class ContigWriterTest {
         return br.lines().count();
     }
 
-    private void assertContigFileContent(File file, List<String> expectedLines) throws IOException {
+    private void assertContigFileContentAndOrder(File file, List<String> expectedLines) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(file));
+        int index = 0;
         String line;
         while ((line = br.readLine()) != null) {
-            assertTrue(expectedLines.contains(line));
+            assertEquals(expectedLines.get(index), line);
+            index++;
         }
     }
 
@@ -117,14 +119,14 @@ public class ContigWriterTest {
         ContigWriter contigWriter = new ContigWriter(output, contigMapping);
 
         contigWriter.open(null);
-        List<String> contigs = Arrays.asList(REFSEQ_ACCESSION_1, REFSEQ_ACCESSION_2, GENBANK_ACCESSION_3);
+        List<String> contigs = Arrays.asList(REFSEQ_ACCESSION_2, GENBANK_ACCESSION_3, REFSEQ_ACCESSION_1);
         contigWriter.write(contigs);
         contigWriter.close();
 
         assertEquals(contigs.size(), numberOfLines(output));
 
-        List<String> expectedLines = Arrays.asList("NC0001.1,Chr1", "NC0002.1,Chr2", "CM0003.1,Chr3");
-        assertContigFileContent(output, expectedLines);
+        List<String> expectedLinesSorted = Arrays.asList("Chr1,NC0001.1", "Chr2,NC0002.1", "Chr3,CM0003.1");
+        assertContigFileContentAndOrder(output, expectedLinesSorted);
     }
 
     /**

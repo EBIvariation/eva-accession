@@ -23,9 +23,11 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.List;
@@ -69,6 +71,30 @@ public class ContigWriter implements ItemStreamWriter<String> {
     @Override
     public void close() throws ItemStreamException {
         printWriter.close();
+        sortContigFile();
+    }
+
+    private void sortContigFile() {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{"sort", this.output.getAbsolutePath()});
+            int exitCode = process.waitFor();
+
+            if (exitCode != 0) {
+                throw new ItemStreamException(
+                        "Trying to sort the contig list, the 'sort' command returned exit code'" + exitCode + "'.");
+            }
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            PrintWriter printWriter2 = new PrintWriter(new FileWriter(this.output));
+            while ((line = br.readLine()) != null) {
+                printWriter2.println(line);
+            }
+            printWriter2.close();
+
+        } catch (IOException | InterruptedException e) {
+            throw new ItemStreamException("Failed sorting contig list. ", e);
+        }
     }
 
     @Override
@@ -85,7 +111,7 @@ public class ContigWriter implements ItemStreamWriter<String> {
                 throw new IllegalArgumentException("Could not find the corresponding sequence name for contig " + contig);
             }
 
-            printWriter.println(contig + "," + sequenceName);
+            printWriter.println(sequenceName + "," + contig);
         }
     }
 
