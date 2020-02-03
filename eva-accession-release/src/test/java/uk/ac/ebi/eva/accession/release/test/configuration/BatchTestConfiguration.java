@@ -22,10 +22,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.AccessionReleaseJobConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.AccessionReleaseJobConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.IllegalStartSkipPolicyConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.policies.IllegalStartSkipPolicyConfiguration;
 
 @EnableAutoConfiguration
 @Import({MongoConfiguration.class,
