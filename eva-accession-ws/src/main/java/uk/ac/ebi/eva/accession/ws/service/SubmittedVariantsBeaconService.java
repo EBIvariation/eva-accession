@@ -35,14 +35,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public class BeaconService {
+public class SubmittedVariantsBeaconService {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
     private Function<ISubmittedVariant, String> hashingFunction =
             new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
-    public BeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService) {
+    public SubmittedVariantsBeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService) {
         this.submittedVariantsService = submittedVariantAccessioningService;
     }
 

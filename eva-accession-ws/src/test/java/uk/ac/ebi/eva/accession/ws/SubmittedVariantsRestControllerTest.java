@@ -58,7 +58,7 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariant
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
-import uk.ac.ebi.eva.accession.ws.service.BeaconService;
+import uk.ac.ebi.eva.accession.ws.service.SubmittedVariantsBeaconService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
@@ -133,11 +133,12 @@ public class SubmittedVariantsRestControllerTest {
         variant3 = new SubmittedVariant("ASMACC02", 1102, "PROJACC03", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2, variant3));
 
-        BeaconService mockBeaconService = Mockito.spy(new BeaconService(service));
-        Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService).queryBeacon(null, "alt", "ref",
-                                                                                                    "CHROM1", 1, "ref",
-                                                                                                    false);
-        mockController = new SubmittedVariantsRestController(mockBasicRestController, mockService, mockBeaconService);
+        SubmittedVariantsBeaconService mockSubmittedVariantsBeaconService = Mockito.spy(new SubmittedVariantsBeaconService(service));
+        Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockSubmittedVariantsBeaconService).queryBeacon(null, "alt", "ref",
+                                                                                                                            "CHROM1", 1, "ref",
+                                                                                                                            false);
+        mockController = new SubmittedVariantsRestController(mockBasicRestController, mockService,
+                                                             mockSubmittedVariantsBeaconService);
     }
 
     @After
