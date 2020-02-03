@@ -104,7 +104,7 @@ mongodb.read-preference=primaryPreferred
 spring.main.web-environment=false
 
 logging.level.uk.ac.ebi.eva.accession.dbsnp=DEBUG
-logging.level.uk.ac.ebi.eva.accession.dbsnp.listeners=INFO
+logging.level.uk.ac.ebi.eva.accession.dbsnp.batch.listeners=INFO
 logging.level.org.springframework.jdbc.datasource=DEBUG
 """
     properties_filename = "{}_b{}.properties".format(args.assembly_accession, args.build)

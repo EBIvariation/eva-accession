@@ -26,7 +26,7 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.dbsnp.persistence.DbsnpVariantsWrapper;
+import uk.ac.ebi.eva.accession.dbsnp.model.DbsnpVariantsWrapper;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
-import static uk.ac.ebi.eva.accession.dbsnp.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
+import static uk.ac.ebi.eva.accession.dbsnp.batch.io.DbsnpClusteredVariantDeclusteredWriter.DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME;
 
 public class VariantAssertions {
 

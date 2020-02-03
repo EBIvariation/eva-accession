@@ -29,7 +29,7 @@ import static org.springframework.util.StringUtils.hasText;
  * (usual chromosome names) is identical to the GenBank accessions.
  *
  * We don't expect this to happen, but (at the time of writing)
- * {@link uk.ac.ebi.eva.accession.dbsnp.processors.ContigReplacerProcessor} will replace the chromosome with the
+ * {@link uk.ac.ebi.eva.accession.dbsnp.batch.processors.ContigReplacerProcessor} will replace the chromosome with the
  * GenBank accession if the 'forceImport' is set.
  *
  * Note that this doesn't apply if RefSeq is not available ("CM123.1 <> na") because then it's clear that the chromosome
