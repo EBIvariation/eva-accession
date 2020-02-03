@@ -27,23 +27,23 @@ import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.DbsnpClusteredHumanVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.DbsnpClusteredHumanVariantOperationAccessioningService;
-import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.DbsnpClusteredHumanVariantOperationRepository;
-import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.DbsnpHumanClusteredVariantAccessionRepository;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.DbsnpClusteredHumanVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantOperationAccessioningService;
+import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantAccessionRepository;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 
 @Configuration
 @EnableSpringDataContiguousIdService
-@Import({MongoHumanConfiguration.class})
-public class ClusteredHumanVariantAccessioningConfiguration {
+@Import({HumanMongoConfiguration.class})
+public class HumanClusteredVariantAccessioningConfiguration {
 
     @Autowired
-    private DbsnpHumanClusteredVariantAccessionRepository dbsnpHumanRepository;
+    private HumanDbsnpClusteredVariantAccessionRepository humanDbsnpRepository;
 
     @Autowired
-    private DbsnpClusteredHumanVariantOperationRepository dbsnpClusteredHumanVariantOperationRepository;
+    private HumanDbsnpClusteredVariantOperationRepository humanDbsnpClusteredVariantOperationRepository;
 
     @Autowired
     private ApplicationProperties applicationProperties;
@@ -52,7 +52,7 @@ public class ClusteredHumanVariantAccessioningConfiguration {
     private ContiguousIdBlockService service;
 
     @Bean("humanActiveService")
-    public ClusteredVariantAccessioningService dbsnpClusteredHumanActiveVariantAccessioningService() {
+    public ClusteredVariantAccessioningService humanDbsnpClusteredActiveVariantAccessioningService() {
         return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
                                                        dbsnpClusteredVariantAccessioningDatabaseService());
     }
@@ -63,31 +63,31 @@ public class ClusteredHumanVariantAccessioningConfiguration {
                                                       properties.getInstanceId(), service);
     }
 
-    private DbsnpClusteredHumanVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
-        return new DbsnpClusteredHumanVariantAccessioningDatabaseService(dbsnpHumanRepository,
-                dbsnpClusteredVariantInactiveService());
+    private HumanDbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
+        return new HumanDbsnpClusteredVariantAccessioningDatabaseService(humanDbsnpRepository,
+                                                                         dbsnpClusteredVariantInactiveService());
     }
 
     @Bean("humanOperationsService")
-    public DbsnpClusteredHumanVariantOperationAccessioningService dbsnpClusteredHumanVariantOperationAccessioningService() {
-        return new DbsnpClusteredHumanVariantOperationAccessioningService(dbsnpClusteredHumanVariantOperationRepository);
+    public HumanDbsnpClusteredVariantOperationAccessioningService humanDbsnpClusteredVariantOperationAccessioningService() {
+        return new HumanDbsnpClusteredVariantOperationAccessioningService(humanDbsnpClusteredVariantOperationRepository);
     }
 
     @Bean("humanService")
-    public DbsnpClusteredHumanVariantAccessioningService dbsnpClusteredHumanVariantAccessioningService() {
-        return new DbsnpClusteredHumanVariantAccessioningService(dbsnpClusteredHumanActiveVariantAccessioningService(),
-                dbsnpClusteredHumanVariantOperationAccessioningService());
+    public HumanDbsnpClusteredVariantAccessioningService humanDbsnpClusteredVariantAccessioningService() {
+        return new HumanDbsnpClusteredVariantAccessioningService(humanDbsnpClusteredActiveVariantAccessioningService(),
+                                                                 humanDbsnpClusteredVariantOperationAccessioningService());
     }
 
     @Bean
-    public DbsnpClusteredHumanVariantOperationRepository dbsnpClusteredVariantOperationRepository() {
-        return dbsnpClusteredHumanVariantOperationRepository;
+    public HumanDbsnpClusteredVariantOperationRepository dbsnpClusteredVariantOperationRepository() {
+        return humanDbsnpClusteredVariantOperationRepository;
     }
 
     @Bean("humanInactiveService")
     public DbsnpClusteredVariantInactiveService dbsnpClusteredVariantInactiveService() {
-        return new DbsnpClusteredVariantInactiveService(dbsnpClusteredHumanVariantOperationRepository,
-                DbsnpClusteredVariantInactiveEntity::new,
-                DbsnpClusteredVariantOperationEntity::new);
+        return new DbsnpClusteredVariantInactiveService(humanDbsnpClusteredVariantOperationRepository,
+                                                        DbsnpClusteredVariantInactiveEntity::new,
+                                                        DbsnpClusteredVariantOperationEntity::new);
     }
 }

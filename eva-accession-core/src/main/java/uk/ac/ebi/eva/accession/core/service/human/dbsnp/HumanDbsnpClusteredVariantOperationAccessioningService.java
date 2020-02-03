@@ -23,21 +23,22 @@ import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.DbsnpClusteredHumanVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class DbsnpClusteredHumanVariantOperationAccessioningService {
+public class HumanDbsnpClusteredVariantOperationAccessioningService {
 
-    private final DbsnpClusteredHumanVariantOperationRepository operationAccessionRepository;
+    private final HumanDbsnpClusteredVariantOperationRepository operationAccessionRepository;
 
     private static Function<IClusteredVariant, String> hashingFunctionClustered =
             new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
-    public DbsnpClusteredHumanVariantOperationAccessioningService(DbsnpClusteredHumanVariantOperationRepository operationAccessionRepository) {
+    public HumanDbsnpClusteredVariantOperationAccessioningService(
+            HumanDbsnpClusteredVariantOperationRepository operationAccessionRepository) {
         this.operationAccessionRepository = operationAccessionRepository;
     }
 

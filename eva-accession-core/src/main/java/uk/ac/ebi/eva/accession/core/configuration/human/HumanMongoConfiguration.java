@@ -48,7 +48,7 @@ import java.net.UnknownHostException;
 @EnableMongoRepositories(basePackages = "uk.ac.ebi.eva.accession.core.repository.human.dbsnp", mongoTemplateRef = "humanMongoTemplate")
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.repositoryHuman"})
 @EnableMongoAuditing
-public class MongoHumanConfiguration {
+public class HumanMongoConfiguration {
 
     private static final String INACTIVE_OBJECTS_HASHED_MESSAGE = "inactiveObjects.hashedMessage";
 

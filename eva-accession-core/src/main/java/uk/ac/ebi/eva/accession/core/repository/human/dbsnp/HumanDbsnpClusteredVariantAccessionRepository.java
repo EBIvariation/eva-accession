@@ -21,6 +21,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedO
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 
 @Repository
-public interface DbsnpHumanClusteredVariantAccessionRepository extends
+public interface HumanDbsnpClusteredVariantAccessionRepository extends
         IAccessionedObjectRepository<DbsnpClusteredVariantEntity, Long> {
 }

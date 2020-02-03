@@ -35,15 +35,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class DbsnpClusteredHumanVariantAccessioningService {
+public class HumanDbsnpClusteredVariantAccessioningService {
 
     private final ClusteredVariantAccessioningService humanService;
 
-    private final DbsnpClusteredHumanVariantOperationAccessioningService operationsService;
+    private final HumanDbsnpClusteredVariantOperationAccessioningService operationsService;
 
-    public DbsnpClusteredHumanVariantAccessioningService(
+    public HumanDbsnpClusteredVariantAccessioningService(
             @Qualifier("humanActiveService") ClusteredVariantAccessioningService humanService,
-            @Qualifier("humanOperationsService") DbsnpClusteredHumanVariantOperationAccessioningService operationsService) {
+            @Qualifier("humanOperationsService") HumanDbsnpClusteredVariantOperationAccessioningService operationsService) {
         this.humanService = humanService;
         this.operationsService = operationsService;
     }

@@ -23,16 +23,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.human.ClusteredHumanVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.human.MongoHumanConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.human.HumanClusteredVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.human.HumanMongoConfiguration;
 
 @Configuration
 @EntityScan(basePackages = {"uk.ac.ebi.eva.accession.core.repository.human"})
 @EnableMongoRepositories(basePackages = "uk.ac.ebi.eva.accession.core.repository.human", mongoTemplateRef = "humanMongoTemplate")
-@Import({MongoHumanConfiguration.class,
-        ClusteredHumanVariantAccessioningConfiguration.class,
+@Import({HumanMongoConfiguration.class,
+        HumanClusteredVariantAccessioningConfiguration.class,
         ApplicationPropertiesConfiguration.class
         })
-@EnableConfigurationProperties(MongoHumanConfiguration.class)
+@EnableConfigurationProperties(HumanMongoConfiguration.class)
 public class MongoHumanTestConfiguration {
 }

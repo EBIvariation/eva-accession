@@ -21,7 +21,7 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 
 import java.util.List;
 
-public interface DbsnpClusteredHumanVariantOperationRepository extends IHistoryRepository<Long,
+public interface HumanDbsnpClusteredVariantOperationRepository extends IHistoryRepository<Long,
         DbsnpClusteredVariantOperationEntity, String> {
 
     List<DbsnpClusteredVariantOperationEntity> findAllByInactiveObjects_HashedMessage(String hash);
