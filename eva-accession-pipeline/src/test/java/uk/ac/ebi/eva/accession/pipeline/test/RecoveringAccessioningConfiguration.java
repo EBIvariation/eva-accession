@@ -34,7 +34,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsRecoveringStateJobConfigurationTest.UNCOMMITTED_ACCESSION;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsRecoveringStateJobConfigurationTest.UNCOMMITTED_ACCESSION;
 
 /**
  * This configuration class has the single purpose of having loaded in MongoDB an object *before* the

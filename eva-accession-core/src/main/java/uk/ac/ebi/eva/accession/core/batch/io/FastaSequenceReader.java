@@ -66,7 +66,7 @@ public class FastaSequenceReader {
     /**
      * Require the fasta to be uncompressed. Htsjdk seems to support reading and indexing compressed fastas, but for
      * some reason, when asked for a reference, it returns \0 at every position. this test shows the error:
-     * uk.ac.ebi.eva.accession.pipeline.io.FastaSequenceReaderTest#htsDoesNotSupportCompressedFastas()
+     * uk.ac.ebi.eva.accession.pipeline.batch.io.FastaSequenceReaderTest#htsDoesNotSupportCompressedFastas()
      */
     private void checkFastaIsUncompressed(Path fastaPath) throws IOException {
         if (FileUtils.isGzip(fastaPath.toFile())) {

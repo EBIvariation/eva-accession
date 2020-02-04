@@ -25,15 +25,15 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import uk.ac.ebi.eva.accession.pipeline.configuration.AccessionWriterConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.InvalidVariantSkipPolicyConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.VariantProcessorConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.CreateSubsnpAccessionsJobConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.BuildReportStepConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CheckSubsnpAccessionsStepConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.jobs.steps.CreateSubsnpAccessionsStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.InvalidVariantSkipPolicyConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CheckSubsnpAccessionsStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
 
 import javax.sql.DataSource;
 

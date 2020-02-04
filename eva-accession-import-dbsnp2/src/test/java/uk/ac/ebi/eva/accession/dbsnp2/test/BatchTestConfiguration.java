@@ -26,15 +26,15 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonFlowConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsJobConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsReaderConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsStepConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ImportDbsnpJsonVariantsWriterConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.flow.ImportDbsnpJsonFlowConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.jobs.ImportDbsnpJsonVariantsJobConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.io.ImportDbsnpJsonVariantsReaderConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.steps.ImportDbsnpJsonVariantsStepConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.io.ImportDbsnpJsonVariantsWriterConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.configuration.InputParametersConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.JsonNodeToClusteredVariantProcessorConfiguration;
-import uk.ac.ebi.eva.accession.dbsnp2.configuration.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.processors.JsonNodeToClusteredVariantProcessorConfiguration;
+import uk.ac.ebi.eva.accession.dbsnp2.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.dbsnp2.runner.DbsnpJsonImportVariantsJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
