@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.core.service.nonhuman.eva;
+package uk.ac.ebi.eva.accession.core.service;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
