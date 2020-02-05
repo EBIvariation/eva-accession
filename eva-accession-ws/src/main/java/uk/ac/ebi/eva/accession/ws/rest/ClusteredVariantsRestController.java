@@ -109,7 +109,9 @@ public class ClusteredVariantsRestController {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                     new ArrayList<>();
             clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
-            clusteredVariants.addAll(humanService.getAllByAccession(identifier));
+            clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDto)
+                                                 .collect(Collectors.toList()));
+
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
             }
@@ -191,9 +193,10 @@ public class ClusteredVariantsRestController {
                 nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
         clusteredVariantWrapper.ifPresent(wrapper -> clusteredVariants.add(toDto(wrapper)));
 
-        Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> humanClusteredVariant =
+        Optional<List<AccessionWrapper<IClusteredVariant, String, Long>>> humanClusteredVariants =
                 humanService.getByIdFields(assembly, chromosome, start, variantType);
-        humanClusteredVariant.ifPresent(clusteredVariants::addAll);
+        humanClusteredVariants.ifPresent(wrappers -> clusteredVariants.addAll(
+                wrappers.stream().map(this::toDto).collect(Collectors.toList())));
 
         return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
     }
@@ -225,7 +228,8 @@ public class ClusteredVariantsRestController {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
             return beaconService.getBeaconResponseObjectWithError(chromosome, start, assembly, variantType,
-                                                                  responseStatus,"Unexpected Error: " + ex.getMessage());
+                                                                  responseStatus,
+                                                                  "Unexpected Error: " + ex.getMessage());
         }
     }
 }

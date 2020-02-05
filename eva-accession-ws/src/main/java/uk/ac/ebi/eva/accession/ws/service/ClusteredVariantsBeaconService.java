@@ -155,7 +155,7 @@ public class ClusteredVariantsBeaconService {
     private BeaconAlleleResponse queryBeaconClusteredVariantHuman(String referenceGenome, String chromosome,
                                                                   long start, VariantType variantType,
                                                                   boolean includeDatasetResponses) {
-        Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> variant =
+        Optional<List<AccessionWrapper<IClusteredVariant, String, Long>>> variant =
                 humanService.getByIdFields(referenceGenome, chromosome, start, variantType);
         List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponsesHuman = new ArrayList<>();
         if (variant.isPresent() && includeDatasetResponses) {
