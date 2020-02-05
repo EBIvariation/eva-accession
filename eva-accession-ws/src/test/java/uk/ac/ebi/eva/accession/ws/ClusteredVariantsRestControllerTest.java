@@ -49,11 +49,11 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
@@ -64,7 +64,7 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVari
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.DbsnpClusteredHumanVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
@@ -134,7 +134,7 @@ public class ClusteredVariantsRestControllerTest {
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
 
     @Autowired
-    private DbsnpClusteredHumanVariantAccessioningService dbsnpClusteredHumanVariantAccessioningService;
+    private HumanDbsnpClusteredVariantAccessioningService humanDbsnpClusteredVariantAccessioningService;
 
     @Autowired
     private DbsnpSubmittedVariantAccessioningRepository dbsnpSubmittedVariantRepository;
@@ -193,7 +193,7 @@ public class ClusteredVariantsRestControllerTest {
     private SubmittedVariantAccessioningService mockService;
 
     @Mock
-    private DbsnpClusteredHumanVariantAccessioningService mockHumanService;
+    private HumanDbsnpClusteredVariantAccessioningService mockHumanService;
 
     @Mock
     private DbsnpClusteredVariantInactiveService inactiveService;

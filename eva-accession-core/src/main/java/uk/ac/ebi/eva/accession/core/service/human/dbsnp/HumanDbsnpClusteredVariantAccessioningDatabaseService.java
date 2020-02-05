@@ -20,16 +20,16 @@ import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonot
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.DbsnpHumanClusteredVariantAccessionRepository;
+import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantAccessionRepository;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 
 import java.util.Collection;
 
-public class DbsnpClusteredHumanVariantAccessioningDatabaseService
+public class HumanDbsnpClusteredVariantAccessioningDatabaseService
         extends BasicSpringDataRepositoryMonotonicDatabaseService<IClusteredVariant, DbsnpClusteredVariantEntity> {
 
-    public DbsnpClusteredHumanVariantAccessioningDatabaseService(
-            DbsnpHumanClusteredVariantAccessionRepository repository,
+    public HumanDbsnpClusteredVariantAccessioningDatabaseService(
+            HumanDbsnpClusteredVariantAccessionRepository repository,
             DbsnpClusteredVariantInactiveService inactiveService) {
         super(repository,
               accessionWrapper -> new DbsnpClusteredVariantEntity(accessionWrapper.getAccession(),

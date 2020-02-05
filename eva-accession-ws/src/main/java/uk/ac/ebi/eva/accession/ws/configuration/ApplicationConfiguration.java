@@ -38,12 +38,12 @@ import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableBasicRestControlle
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.configuration.human.ClusteredHumanVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.configuration.human.HumanClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.ws.response.NonRedirectingClientHttpRequestFactory;
@@ -53,7 +53,7 @@ import java.util.List;
 @Configuration
 @EnableBasicRestControllerAdvice
 @Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        ClusteredHumanVariantAccessioningConfiguration.class})
+        HumanClusteredVariantAccessioningConfiguration.class})
 @AutoConfigureAfter(HttpMessageConvertersAutoConfiguration.class)
 public class ApplicationConfiguration {
 

@@ -25,7 +25,7 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
@@ -35,14 +35,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public class BeaconService {
+public class SubmittedVariantsBeaconService {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
     private Function<ISubmittedVariant, String> hashingFunction =
             new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
-    public BeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService) {
+    public SubmittedVariantsBeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService) {
         this.submittedVariantsService = submittedVariantAccessioningService;
     }
 

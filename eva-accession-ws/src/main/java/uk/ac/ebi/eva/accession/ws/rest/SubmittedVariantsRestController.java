@@ -35,11 +35,11 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconError;
-import uk.ac.ebi.eva.accession.ws.service.BeaconService;
+import uk.ac.ebi.eva.accession.ws.service.SubmittedVariantsBeaconService;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -53,16 +53,16 @@ public class SubmittedVariantsRestController {
 
     private final BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController;
 
-    private BeaconService beaconService;
+    private SubmittedVariantsBeaconService submittedVariantsBeaconService;
 
     private SubmittedVariantAccessioningService service;
 
     public SubmittedVariantsRestController(
             BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController,
-            SubmittedVariantAccessioningService service, BeaconService beaconService) {
+            SubmittedVariantAccessioningService service, SubmittedVariantsBeaconService submittedVariantsBeaconService) {
         this.basicRestController = basicRestController;
         this.service = service;
-        this.beaconService = beaconService;
+        this.submittedVariantsBeaconService = submittedVariantsBeaconService;
     }
 
     /**
@@ -117,8 +117,8 @@ public class SubmittedVariantsRestController {
                                                     "Please provide a positive number as start position");
         }
         try {
-            return beaconService.queryBeacon(studies, alternate, reference, chromosome, start,
-                                             assembly, false);
+            return submittedVariantsBeaconService.queryBeacon(studies, alternate, reference, chromosome, start,
+                                                              assembly, false);
         }
         catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
@@ -152,7 +152,8 @@ public class SubmittedVariantsRestController {
             @RequestParam(name="referenceBases") String reference,
             @RequestParam(name="alternateBases") String alternate) {
         try {
-            return ResponseEntity.ok(beaconService.getVariantByIdFields(assembly, chromosome, studies, start, reference,
+            return ResponseEntity.ok(
+                    submittedVariantsBeaconService.getVariantByIdFields(assembly, chromosome, studies, start, reference,
                                                                         alternate));
         }
         catch (Exception e) {

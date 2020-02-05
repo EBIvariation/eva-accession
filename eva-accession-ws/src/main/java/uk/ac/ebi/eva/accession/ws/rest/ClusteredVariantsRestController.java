@@ -38,12 +38,12 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.DbsnpClusteredHumanVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
@@ -67,7 +67,7 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantsBeaconService beaconService;
 
-    private DbsnpClusteredHumanVariantAccessioningService humanService;
+    private HumanDbsnpClusteredVariantAccessioningService humanService;
 
     private ClusteredVariantAccessioningService nonHumanActiveService;
 
@@ -80,7 +80,7 @@ public class ClusteredVariantsRestController {
             BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
             ClusteredVariantsBeaconService beaconService,
-            @Qualifier("humanService") DbsnpClusteredHumanVariantAccessioningService humanService,
+            @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
             @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService,
             @Qualifier("nonhumanInactiveService") DbsnpClusteredVariantInactiveService inactiveService
     ) {

@@ -32,7 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningRepository;

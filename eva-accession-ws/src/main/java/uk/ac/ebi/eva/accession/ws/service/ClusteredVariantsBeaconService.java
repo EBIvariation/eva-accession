@@ -24,11 +24,11 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.DbsnpClusteredHumanVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
@@ -56,13 +56,13 @@ public class ClusteredVariantsBeaconService {
 
     private ClusteredVariantAccessioningService clusteredVariantService;
 
-    private DbsnpClusteredHumanVariantAccessioningService humanService;
+    private HumanDbsnpClusteredVariantAccessioningService humanService;
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
     public ClusteredVariantsBeaconService(
             @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService clusteredVariantAccessioningService,
-            @Qualifier("humanService") DbsnpClusteredHumanVariantAccessioningService humanService,
+            @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
             SubmittedVariantAccessioningService submittedVariantsService) {
         this.clusteredVariantService = clusteredVariantAccessioningService;
         this.humanService = humanService;

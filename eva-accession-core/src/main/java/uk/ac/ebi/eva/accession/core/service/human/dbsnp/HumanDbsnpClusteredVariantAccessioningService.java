@@ -24,7 +24,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
@@ -35,15 +35,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class DbsnpClusteredHumanVariantAccessioningService {
+public class HumanDbsnpClusteredVariantAccessioningService {
 
     private final ClusteredVariantAccessioningService humanService;
 
-    private final DbsnpClusteredHumanVariantOperationAccessioningService operationsService;
+    private final HumanDbsnpClusteredVariantOperationAccessioningService operationsService;
 
-    public DbsnpClusteredHumanVariantAccessioningService(
+    public HumanDbsnpClusteredVariantAccessioningService(
             @Qualifier("humanActiveService") ClusteredVariantAccessioningService humanService,
-            @Qualifier("humanOperationsService") DbsnpClusteredHumanVariantOperationAccessioningService operationsService) {
+            @Qualifier("humanOperationsService") HumanDbsnpClusteredVariantOperationAccessioningService operationsService) {
         this.humanService = humanService;
         this.operationsService = operationsService;
     }

@@ -48,7 +48,7 @@ import static org.junit.Assert.assertEquals;
 @TestPropertySource("classpath:ss-accession-test.properties")
 @UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json", "/test-data/dbsnpClusteredVariantOperationEntity.json"})
 @ContextConfiguration(classes = {MongoHumanTestConfiguration.class})
-public class DbsnpClusteredHumanVariantAccessioningServiceTest {
+public class HumanDbsnpClusteredVariantAccessioningServiceTest {
 
     private static final Long HUMAN_ACTIVE_RS_ID_1 = 1118L;
 
@@ -64,7 +64,7 @@ public class DbsnpClusteredHumanVariantAccessioningServiceTest {
 
     @Autowired
     @Qualifier("humanService")
-    private DbsnpClusteredHumanVariantAccessioningService humanService;
+    private HumanDbsnpClusteredVariantAccessioningService humanService;
 
     //Required by nosql-unit
     @Autowired
