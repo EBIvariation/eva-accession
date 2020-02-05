@@ -187,15 +187,20 @@ public class ClusteredVariantsRestController {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
 
-        Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariant =
+        Optional<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariantWrapper =
                 nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
-        clusteredVariant.ifPresent(clusteredVariants::add);
+        clusteredVariantWrapper.ifPresent(wrapper -> clusteredVariants.add(toDto(wrapper)));
 
         Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> humanClusteredVariant =
                 humanService.getByIdFields(assembly, chromosome, start, variantType);
         humanClusteredVariant.ifPresent(clusteredVariants::addAll);
 
         return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
+    }
+
+    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDto(
+            AccessionWrapper<IClusteredVariant, String, Long> clusteredVariantWrapper) {
+        return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }
 
     @ApiOperation(value = "Find if a clustered variant (RS) with the given identifying fields exists in our database",

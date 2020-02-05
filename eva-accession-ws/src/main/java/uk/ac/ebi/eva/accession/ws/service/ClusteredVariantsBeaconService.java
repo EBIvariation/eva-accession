@@ -85,15 +85,22 @@ public class ClusteredVariantsBeaconService {
     private BeaconAlleleResponse queryBeaconClusteredVariantNonHuman(String referenceGenome, String chromosome,
                                                                      long start, VariantType variantType,
                                                                      boolean includeDatasetResponses) {
-        Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> variant =
+        Optional<AccessionWrapper<IClusteredVariant, String, Long>> variantWrapper =
                 clusteredVariantService.getByIdFields(referenceGenome, chromosome, start, variantType);
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
-        if (variant.isPresent() && includeDatasetResponses) {
-            String identifier = variant.get().getAccession().toString();
+        if (variantWrapper.isPresent() && includeDatasetResponses) {
+            AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> variant =
+                    toDto(variantWrapper.get());
+            String identifier = variant.getAccession().toString();
             datasetAlleleResponses = getBeaconDatasetAlleleResponses(identifier);
         }
-        return buildResponse(referenceGenome, chromosome, start, variantType, variant.isPresent(),
+        return buildResponse(referenceGenome, chromosome, start, variantType, variantWrapper.isPresent(),
                              datasetAlleleResponses);
+    }
+
+    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDto(
+            AccessionWrapper<IClusteredVariant, String, Long> clusteredVariantWrapper) {
+        return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }
 
     private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(String clusteredVariantAccession) {
