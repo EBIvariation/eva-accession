@@ -193,10 +193,9 @@ public class ClusteredVariantsRestController {
                 nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
         clusteredVariantWrapper.map(this::toDTO).ifPresent(clusteredVariants::add);
 
-        Optional<List<AccessionWrapper<IClusteredVariant, String, Long>>> humanClusteredVariants =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
                 humanService.getByIdFields(assembly, chromosome, start, variantType);
-        humanClusteredVariants.ifPresent(
-                wrappers -> wrappers.stream().map(this::toDTO).forEach(clusteredVariants::add));
+        humanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
         return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
     }

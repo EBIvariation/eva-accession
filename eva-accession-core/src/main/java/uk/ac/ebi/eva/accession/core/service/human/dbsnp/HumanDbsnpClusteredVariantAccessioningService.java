@@ -62,7 +62,7 @@ public class HumanDbsnpClusteredVariantAccessioningService {
         }
     }
 
-    public Optional<List<AccessionWrapper<IClusteredVariant, String, Long>>> getByIdFields(
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
             String assembly, String contig, long start, VariantType type) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
 
@@ -77,7 +77,7 @@ public class HumanDbsnpClusteredVariantAccessioningService {
                 operationsService.getOriginalVariant(clusteredVariantToSearch);
         clusteredVariants.addAll(activeClusteredVariantsInOperations);
 
-        return clusteredVariants.isEmpty() ? Optional.empty() : Optional.of(clusteredVariants);
+        return clusteredVariants;
     }
 
 }
