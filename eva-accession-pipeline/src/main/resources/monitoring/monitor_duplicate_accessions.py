@@ -38,15 +38,14 @@ def export_mongo_accessions(mongo_connection_properties, collection_name, export
                             export_command)
 
 
-def notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename, email_recipients):
-    logger.error("DUPLICATE ACCESSIONS found!!! in the {0} collection in the {1} database at {2}..."
-                 .format(collection_name, mongo_connection_properties["mongo_db"],
-                         mongo_connection_properties["mongo_host"]))
-    email_message = "Subject: DUPLICATE ACCESSIONS!!! in the {0} collection in the {1} database at {2}\n\n" \
-                    "Please see {3} for the list of duplicates.".format(collection_name,
-                                                                        mongo_connection_properties["mongo_db"],
-                                                                        mongo_connection_properties["mongo_host"],
-                                                                        duplicates_output_filename)
+def notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename,
+                    number_of_duplicate_accessions, email_recipients):
+    error_message = "{0} DUPLICATE ACCESSIONS !!! in the {1} collection in the {2} database at {3}"\
+                    .format(number_of_duplicate_accessions, collection_name, mongo_connection_properties["mongo_db"],
+                            mongo_connection_properties["mongo_host"])
+    logger.error(error_message)
+    email_message = "Subject: {0}\n\n" \
+                    "Please see {1} for the list of duplicates.".format(error_message, duplicates_output_filename)
     smtplib.SMTP('localhost').sendmail(getpass.getuser(), email_recipients, email_message)
 
 
@@ -54,10 +53,11 @@ def report_duplicates_in_exported_accessions_file(mongo_connection_properties, c
                                                   duplicates_output_filename, email_recipients):
     run_command_with_output("Exporting duplicates to {0}...".format(duplicates_output_filename),
                             'uniq -d "{0}" > {1}'.format(export_output_filename, duplicates_output_filename))
-    output = run_command_with_output("Find duplicate accessions in the exported file...",
-                                     'wc -l < "{0}"'.format(duplicates_output_filename))
-    if int(output) > 0:
-        notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename, email_recipients)
+    number_of_duplicate_accessions = run_command_with_output("Find duplicate accessions in the exported file...",
+                                                             'wc -l < "{0}"'.format(duplicates_output_filename))
+    if int(number_of_duplicate_accessions) > 0:
+        notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename,
+                        number_of_duplicate_accessions, email_recipients)
         return 1
     else:
         logger.info("NO duplicate accessions were found in the {0} collection in the {1} database at {2}..."
