@@ -55,7 +55,7 @@ def report_duplicates_in_exported_accessions_file(mongo_connection_properties, c
     run_command_with_output("Exporting duplicates to {0}...".format(duplicates_output_filename),
                             'uniq -d "{0}" > {1}'.format(export_output_filename, duplicates_output_filename))
     output = run_command_with_output("Find duplicate accessions in the exported file...",
-                                     'wc -l "{0}"'.format(duplicates_output_filename))
+                                     'wc -l < "{0}"'.format(duplicates_output_filename))
     if int(output) > 0:
         notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename, email_recipients)
         return 1
