@@ -21,18 +21,16 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class HumanDbsnpClusteredVariantAccessioningService {
@@ -48,46 +46,38 @@ public class HumanDbsnpClusteredVariantAccessioningService {
         this.operationsService = operationsService;
     }
 
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAllByAccession(
-            Long identifier) {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
-                new ArrayList<>();
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier) {
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
         clusteredVariants.addAll(getHumanClusteredVariants(identifier));
         clusteredVariants.addAll(operationsService.getByAccession(identifier));
         return clusteredVariants;
     }
 
-    private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getHumanClusteredVariants(
-            Long identifier) {
+    private List<AccessionWrapper<IClusteredVariant, String, Long>> getHumanClusteredVariants(Long identifier) {
         try {
             AccessionWrapper<IClusteredVariant, String, Long> wrapper = humanService.getByAccession(identifier);
-            return Collections.singletonList(new AccessionResponseDTO<>(wrapper, ClusteredVariant::new));
+            return Collections.singletonList(wrapper);
         } catch (AccessionDoesNotExistException | AccessionMergedException | AccessionDeprecatedException e) {
             return Collections.emptyList();
         }
     }
 
-    public Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getByIdFields(
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
             String assembly, String contig, long start, VariantType type) {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
-                new ArrayList<>();
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
 
         IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, contig, start, type, false,
                                                                           null);
 
         List<AccessionWrapper<IClusteredVariant, String, Long>> activeClusteredVariantWrappers =
                 humanService.get(Collections.singletonList(clusteredVariantToSearch));
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> activeClusteredVariants =
-                activeClusteredVariantWrappers.stream()
-                                              .map(v -> new AccessionResponseDTO<>(v, ClusteredVariant::new))
-                                              .collect(Collectors.toList());
-        clusteredVariants.addAll(activeClusteredVariants);
+        clusteredVariants.addAll(activeClusteredVariantWrappers);
 
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> activeClusteredVariantsInOperations =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> activeClusteredVariantsInOperations =
                 operationsService.getOriginalVariant(clusteredVariantToSearch);
         clusteredVariants.addAll(activeClusteredVariantsInOperations);
 
-        return clusteredVariants.isEmpty() ? Optional.empty() : Optional.of(clusteredVariants);
+        return clusteredVariants;
     }
 
 }

@@ -24,11 +24,11 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
@@ -85,15 +85,22 @@ public class ClusteredVariantsBeaconService {
     private BeaconAlleleResponse queryBeaconClusteredVariantNonHuman(String referenceGenome, String chromosome,
                                                                      long start, VariantType variantType,
                                                                      boolean includeDatasetResponses) {
-        Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> variant =
+        Optional<AccessionWrapper<IClusteredVariant, String, Long>> variantWrapper =
                 clusteredVariantService.getByIdFields(referenceGenome, chromosome, start, variantType);
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
-        if (variant.isPresent() && includeDatasetResponses) {
-            String identifier = variant.get().getAccession().toString();
+        if (variantWrapper.isPresent() && includeDatasetResponses) {
+            AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> variant =
+                    toDTO(variantWrapper.get());
+            String identifier = variant.getAccession().toString();
             datasetAlleleResponses = getBeaconDatasetAlleleResponses(identifier);
         }
-        return buildResponse(referenceGenome, chromosome, start, variantType, variant.isPresent(),
+        return buildResponse(referenceGenome, chromosome, start, variantType, variantWrapper.isPresent(),
                              datasetAlleleResponses);
+    }
+
+    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDTO(
+            AccessionWrapper<IClusteredVariant, String, Long> clusteredVariantWrapper) {
+        return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }
 
     private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(String clusteredVariantAccession) {
@@ -148,14 +155,14 @@ public class ClusteredVariantsBeaconService {
     private BeaconAlleleResponse queryBeaconClusteredVariantHuman(String referenceGenome, String chromosome,
                                                                   long start, VariantType variantType,
                                                                   boolean includeDatasetResponses) {
-        Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> variant =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> variant =
                 humanService.getByIdFields(referenceGenome, chromosome, start, variantType);
         List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponsesHuman = new ArrayList<>();
-        if (variant.isPresent() && includeDatasetResponses) {
-            String identifier = variant.get().get(0).getAccession().toString();
+        if (!variant.isEmpty() && includeDatasetResponses) {
+            String identifier = variant.get(0).getAccession().toString();
             getBeaconDatasetAlleleResponsesHuman = getBeaconDatasetAlleleResponsesHuman(identifier);
         }
-        return buildResponse(referenceGenome, chromosome, start, variantType, variant.isPresent(),
+        return buildResponse(referenceGenome, chromosome, start, variantType, !variant.isEmpty(),
                              getBeaconDatasetAlleleResponsesHuman);
     }
 

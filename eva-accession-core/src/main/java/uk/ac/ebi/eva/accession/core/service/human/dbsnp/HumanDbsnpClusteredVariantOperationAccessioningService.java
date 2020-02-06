@@ -17,9 +17,7 @@ package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
-import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
@@ -42,31 +40,30 @@ public class HumanDbsnpClusteredVariantOperationAccessioningService {
         this.operationAccessionRepository = operationAccessionRepository;
     }
 
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getByAccession(Long identifier) {
+    List<AccessionWrapper<IClusteredVariant, String, Long>> getByAccession(Long identifier) {
         List<DbsnpClusteredVariantOperationEntity> operations = operationAccessionRepository.findAllByAccession(identifier);
-        return getAccessionResponseDTOS(operations);
+        return getAccessionWrappers(operations);
     }
 
-    private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getAccessionResponseDTOS(
+    private List<AccessionWrapper<IClusteredVariant, String, Long>> getAccessionWrappers(
             List<DbsnpClusteredVariantOperationEntity> operations) {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
-                new ArrayList<>();
+        List<AccessionWrapper<IClusteredVariant, String, Long>> wrappers = new ArrayList<>();
         for (DbsnpClusteredVariantOperationEntity operation : operations) {
             List<DbsnpClusteredVariantInactiveEntity> inactiveEntities = operation.getInactiveObjects();
             for (DbsnpClusteredVariantInactiveEntity inactiveEntity : inactiveEntities) {
                 AccessionWrapper<IClusteredVariant, String, Long> wrapper =
                         new AccessionWrapper<>(operation.getAccession(), operation.getId(), inactiveEntity.getModel());
-                clusteredVariants.add(new AccessionResponseDTO<>(wrapper, ClusteredVariant::new));
+                wrappers.add(wrapper);
             }
         }
-        return clusteredVariants;
+        return wrappers;
     }
 
-    public List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getOriginalVariant(
+    List<AccessionWrapper<IClusteredVariant, String, Long>> getOriginalVariant(
             IClusteredVariant clusteredVariant) {
         String hash =  hashingFunctionClustered.apply(clusteredVariant);
         List<DbsnpClusteredVariantOperationEntity> clusteredVariants = operationAccessionRepository.
                 findAllByInactiveObjects_HashedMessage(hash);
-        return getAccessionResponseDTOS(clusteredVariants);
+        return getAccessionWrappers(clusteredVariants);
     }
 }

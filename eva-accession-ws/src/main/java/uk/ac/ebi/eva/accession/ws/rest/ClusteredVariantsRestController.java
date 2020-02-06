@@ -38,12 +38,12 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
@@ -109,7 +109,9 @@ public class ClusteredVariantsRestController {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                     new ArrayList<>();
             clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
-            clusteredVariants.addAll(humanService.getAllByAccession(identifier));
+            clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
+                                                 .collect(Collectors.toList()));
+
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
             }
@@ -187,15 +189,20 @@ public class ClusteredVariantsRestController {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
 
-        Optional<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariant =
+        Optional<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariantWrapper =
                 nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
-        clusteredVariant.ifPresent(clusteredVariants::add);
+        clusteredVariantWrapper.map(this::toDTO).ifPresent(clusteredVariants::add);
 
-        Optional<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> humanClusteredVariant =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
                 humanService.getByIdFields(assembly, chromosome, start, variantType);
-        humanClusteredVariant.ifPresent(clusteredVariants::addAll);
+        humanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
         return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
+    }
+
+    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDTO(
+            AccessionWrapper<IClusteredVariant, String, Long> clusteredVariantWrapper) {
+        return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }
 
     @ApiOperation(value = "Find if a clustered variant (RS) with the given identifying fields exists in our database",
@@ -220,7 +227,8 @@ public class ClusteredVariantsRestController {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
             return beaconService.getBeaconResponseObjectWithError(chromosome, start, assembly, variantType,
-                                                                  responseStatus,"Unexpected Error: " + ex.getMessage());
+                                                                  responseStatus,
+                                                                  "Unexpected Error: " + ex.getMessage());
         }
     }
 }

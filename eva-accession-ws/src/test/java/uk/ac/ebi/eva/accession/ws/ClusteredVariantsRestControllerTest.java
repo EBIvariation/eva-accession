@@ -217,6 +217,8 @@ public class ClusteredVariantsRestControllerTest {
                 new ClusteredVariantsBeaconService(clusteredService, mockHumanService, mockService));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
                .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, false);
+        Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockHumanService)
+               .getByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV);
         mockController = new ClusteredVariantsRestController(mockBasicRestController, mockService, mockBeaconService,
                                                              mockHumanService, clusteredService, inactiveService
         );

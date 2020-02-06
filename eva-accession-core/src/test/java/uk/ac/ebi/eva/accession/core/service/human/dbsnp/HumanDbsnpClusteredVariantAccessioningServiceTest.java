@@ -29,7 +29,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.test.configuration.human.MongoHumanTestConfiguration;
@@ -76,33 +77,33 @@ public class HumanDbsnpClusteredVariantAccessioningServiceTest {
 
     @Test
     public void getHumanActiveVariant() {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
                 humanService.getAllByAccession(HUMAN_ACTIVE_RS_ID_1);
         assertEquals(1, clusteredVariants.size());
-        ClusteredVariant clusteredVariant = clusteredVariants.get(0).getData();
+        IClusteredVariant clusteredVariant = clusteredVariants.get(0).getData();
         assertEquals(CLUSTERED_VARIANT_EXPECTED_1, clusteredVariant);
     }
 
     @Test
     @Ignore("humanService.getAllByAccession is not returning multiple variants yet")
     public void getHumanActiveMultipleVariants() {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
                 humanService.getAllByAccession(HUMAN_ACTIVE_RS_ID_2);
         assertEquals(2, clusteredVariants.size());
     }
 
     @Test
     public void getHumanActiveVariantInOperations() {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
                 humanService.getAllByAccession(HUMAN_ACTIVE_IN_OPERATIONS_RS_ID);
         assertEquals(1, clusteredVariants.size());
-        ClusteredVariant clusteredVariant = clusteredVariants.get(0).getData();
+        IClusteredVariant clusteredVariant = clusteredVariants.get(0).getData();
         assertEquals(CLUSTERED_VARIANT_EXPECTED_2, clusteredVariant);
     }
 
     @Test
     public void nonExistingHumanVariant() {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
                 humanService.getAllByAccession(1L);
         assertEquals(0, clusteredVariants.size());
         assertEquals(Collections.EMPTY_LIST, clusteredVariants);
