@@ -16,12 +16,14 @@
 
 import click
 from datetime import datetime
+import getpass
+import smtplib
 from __init__ import *
 
 
 def export_mongo_accessions(mongo_connection_properties, collection_name, export_output_filename):
     export_command = 'mongoexport --host {0} --port {1} --db {2} --username {3} --password {4} ' \
-                     '--authenticationDatabase={5} --collection {6} --type=csv --fields _id -o "{7}" '\
+                     '--authenticationDatabase={5} --collection {6} --type=csv --fields accession -o "{7}" '\
                     .format(mongo_connection_properties["mongo_host"],
                             mongo_connection_properties["mongo_port"],
                             mongo_connection_properties["mongo_db"],
@@ -29,52 +31,73 @@ def export_mongo_accessions(mongo_connection_properties, collection_name, export
                             mongo_connection_properties["mongo_password"],
                             mongo_connection_properties["mongo_auth_db"],
                             collection_name,
-                            export_output_filename) + " --sort '{_id: 1}'"
+                            export_output_filename) + " --sort '{accession: 1}'"
     run_command_with_output("Exporting accessions in the {0} collection in the {1} database at {2}..."
                             .format(collection_name, mongo_connection_properties["mongo_db"],
                                     mongo_connection_properties["mongo_host"]),
                             export_command)
 
 
-def check_duplicate_accessions_in_mongo(pipeline_properties_file, ids_export_output_dir, collection_name):
-    mongo_connection_properties = get_mongo_connection_details_from_properties_file(pipeline_properties_file)
-    logger.info("Checking duplicate accessions in the {0} collection in the {1} database at {2}..."
-                .format(collection_name, mongo_connection_properties["mongo_db"],
-                        mongo_connection_properties["mongo_host"]))
+def notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename, email_recipients):
+    logger.error("DUPLICATE ACCESSIONS found!!! in the {0} collection in the {1} database at {2}..."
+                 .format(collection_name, mongo_connection_properties["mongo_db"],
+                         mongo_connection_properties["mongo_host"]))
+    email_message = "Subject: DUPLICATE ACCESSIONS!!! in the {0} collection in the {1} at {2}\n\n" \
+                    "Please see {3} for the list of duplicates.".format(collection_name,
+                                                                        mongo_connection_properties["mongo_db"],
+                                                                        mongo_connection_properties["mongo_host"],
+                                                                        duplicates_output_filename)
+    smtplib.SMTP('localhost').sendmail(getpass.getuser(), email_recipients, email_message)
 
-    export_output_filename = os.path.sep.join([ids_export_output_dir,
-                                              "ids_in_{0}_{1}_at_{2}_as_of_{3}.csv"
-                                              .format(mongo_connection_properties["mongo_db"], collection_name,
-                                                      mongo_connection_properties["mongo_host"],
-                                                      datetime.today().strftime('%Y%m%d%H%M%S'))])
-    export_mongo_accessions(mongo_connection_properties, collection_name, export_output_filename)
-    output = run_command_with_output("Checking for duplicate accessions in the exported file...",
-                                     'uniq -d "{0}" | wc -l'.format(export_output_filename))
 
+def report_duplicates_in_exported_accessions_file(mongo_connection_properties, collection_name, export_output_filename,
+                                                  duplicates_output_filename, email_recipients):
+    run_command_with_output("Exporting duplicates to {0}...".format(duplicates_output_filename),
+                            'uniq -d "{0}" > {1}'.format(export_output_filename, duplicates_output_filename))
+    output = run_command_with_output("Find duplicate accessions in the exported file...",
+                                     'wc -l "{0}"'.format(duplicates_output_filename))
     if int(output) > 0:
-        logger.error("Duplicate accessions found in the {0} collection in the {1} database at {2}..."
-                     .format(collection_name, mongo_connection_properties["mongo_db"],
-                             mongo_connection_properties["mongo_host"]))
+        notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename, email_recipients)
         return 1
     else:
         logger.info("NO duplicate accessions were found in the {0} collection in the {1} database at {2}..."
                     .format(collection_name, mongo_connection_properties["mongo_db"],
                             mongo_connection_properties["mongo_host"]))
-        run_command_with_output("Compressing accessions file {0}...".format(export_output_filename),
-                                'gzip "{0}"'.format(export_output_filename))
         return 0
 
 
+def report_duplicate_accessions_in_mongo(pipeline_properties_file, accessions_export_output_dir,
+                                         collection_name, email_recipients):
+    mongo_connection_properties = get_mongo_connection_details_from_properties_file(pipeline_properties_file)
+    export_output_filename = os.path.sep.join([accessions_export_output_dir,
+                                               "accessions_in_{0}_{1}_at_{2}_as_of_{3}.csv"
+                                              .format(mongo_connection_properties["mongo_db"], collection_name,
+                                                      mongo_connection_properties["mongo_host"],
+                                                      datetime.today().strftime('%Y%m%d%H%M%S'))])
+    duplicates_output_filename = export_output_filename.replace("accessions_in", "duplicate_accessions_in")
+
+    logger.info("Checking duplicate accessions in the {0} collection in the {1} database at {2}..."
+                .format(collection_name, mongo_connection_properties["mongo_db"],
+                        mongo_connection_properties["mongo_host"]))
+
+    export_mongo_accessions(mongo_connection_properties, collection_name, export_output_filename)
+
+    return report_duplicates_in_exported_accessions_file(mongo_connection_properties, collection_name,
+                                                         export_output_filename, duplicates_output_filename,
+                                                         email_recipients)
+
+
 @click.option("-p", "--pipeline-properties-file", required=True)
-@click.option("-o", "--ids-export-output-dir", required=True)
+@click.option("-o", "--accessions-export-output-dir", required=True)
+@click.option("-e", "--email-recipients", multiple=True, required=True)
 @click.argument("collection-names", nargs=-1, required=True)
 @click.command()
-def main(pipeline_properties_file, ids_export_output_dir, collection_names):
-    exit_code = 1
+def main(pipeline_properties_file, accessions_export_output_dir,  email_recipients, collection_names):
+    exit_code = 0
     for collection_name in collection_names:
-        exit_code = exit_code and \
-                    check_duplicate_accessions_in_mongo(pipeline_properties_file, ids_export_output_dir,
-                                                        collection_name)
+        exit_code = exit_code or \
+                    report_duplicate_accessions_in_mongo(pipeline_properties_file, accessions_export_output_dir,
+                                                         collection_name, email_recipients)
     sys.exit(exit_code)
 
 
