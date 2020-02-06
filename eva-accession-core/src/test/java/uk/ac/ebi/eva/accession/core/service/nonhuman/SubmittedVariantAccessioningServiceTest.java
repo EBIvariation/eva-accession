@@ -50,7 +50,6 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
