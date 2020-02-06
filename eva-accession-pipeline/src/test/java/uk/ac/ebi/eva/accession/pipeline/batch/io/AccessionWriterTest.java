@@ -303,7 +303,9 @@ public class AccessionWriterTest {
         accessions.add(new AccessionWrapper<>(EXPECTED_ACCESSION, "hashedMessage", secondVariant));
 
         thrown.expect(IllegalStateException.class);
-        accessionWriter.checkCountsMatch(variants, accessions);
+        accessionWriter.checkCountsMatch(variants,
+                                         GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                                 accessions));
     }
 
     @Test

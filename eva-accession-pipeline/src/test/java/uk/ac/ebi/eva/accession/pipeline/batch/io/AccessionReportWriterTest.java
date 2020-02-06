@@ -155,7 +155,9 @@ public class AccessionReportWriterTest {
                                                                                 contigMapping,
                                                                                 ContigNaming.NO_REPLACEMENT);
         accessionReportWriter.open(executionContext);
-        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
+        accessionReportWriter.write(Collections.singletonList(variant),
+                                    GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                            Collections.singletonList(accessionWrapper)));
 
 
         assertEquals(String.join("\t", CONTIG_1, Integer.toString(denormalizedStart), ACCESSION_PREFIX + ACCESSION,
@@ -220,7 +222,9 @@ public class AccessionReportWriterTest {
                                                                                 contigMapping,
                                                                                 ContigNaming.NO_REPLACEMENT);
         accessionReportWriter.open(executionContext);
-        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
+        accessionReportWriter.write(Collections.singletonList(variant),
+                                    GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                            Collections.singletonList(accessionWrapper)));
         accessionReportWriter.close();
 
         // second writer
@@ -231,7 +235,9 @@ public class AccessionReportWriterTest {
         submittedVariant.setStart(start2);
 
         resumingWriter.open(executionContext);
-        resumingWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
+        resumingWriter.write(Collections.singletonList(variant),
+                             GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                     Collections.singletonList(accessionWrapper)));
         resumingWriter.close();
     }
 
@@ -282,10 +288,12 @@ public class AccessionReportWriterTest {
         AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper = new AccessionWrapper<>(ACCESSION, "hash-1",
                                                                                                     submittedVariant);
 
-        AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader, contigMapping,
-                                                          requestedReplacement);
+        AccessionReportWriter accessionReportWriter = new AccessionReportWriter(output, fastaSequenceReader,
+                                                                                contigMapping, requestedReplacement);
         accessionReportWriter.open(new ExecutionContext());
-        accessionReportWriter.write(Collections.singletonList(variant), Collections.singletonList(accessionWrapper));
+        accessionReportWriter.write(Collections.singletonList(variant),
+                                    GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                            Collections.singletonList(accessionWrapper)));
 
         assertEquals(replacementContig, getFirstVariantLine(variantsOutput).split("\t")[CHROMOSOME_COLUMN_VCF]);
     }

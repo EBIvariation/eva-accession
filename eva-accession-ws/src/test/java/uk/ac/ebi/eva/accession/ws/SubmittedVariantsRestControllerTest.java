@@ -41,6 +41,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
@@ -111,7 +112,7 @@ public class SubmittedVariantsRestControllerTest {
     @Mock
     private SubmittedVariantAccessioningService mockService;
 
-    private List<AccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
+    private List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
     private SubmittedVariant variant1;
 
@@ -359,7 +360,7 @@ public class SubmittedVariantsRestControllerTest {
                                                          CLUSTERED_VARIANT);
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
                                                          CLUSTERED_VARIANT);
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
+        List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
                 Arrays.asList(variant1, variant2));
 
         Long outdatedAccession = accessions.get(0).getAccession();

@@ -28,11 +28,13 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantMonotonicAccessioningService;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +59,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     @Override
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getOrCreate(
+    public List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> getOrCreate(
             List<? extends ISubmittedVariant> variants)
             throws AccessionCouldNotBeGeneratedException {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> dbsnpVariants = accessioningServiceDbsnp.get(variants);
@@ -65,11 +67,24 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         if (variantsNotInDbsnp.isEmpty()) {
             // check this special case because mongo bulk inserts don't allow inserting empty lists
             // (accession-commons BasicMongoDbAccessionedCustomRepositoryImpl.insert would need to change)
-            return dbsnpVariants;
+            return dbsnpVariants.stream().map(d -> new GetOrCreateAccessionWrapper<>
+                    (d.getAccession(),
+                     d.getHash(),
+                     d.getData(), false)).collect(Collectors.toList());
         } else {
-            List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = accessioningService.getOrCreate(
-                    variantsNotInDbsnp);
-            return joinLists(submittedVariants, dbsnpVariants);
+            List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = new ArrayList<>();
+            accessioningService.getOrCreate(variantsNotInDbsnp)
+                               .forEach(getOrCreateAccessionWrapperObj -> submittedVariants.add(
+                                       new AccessionWrapper<ISubmittedVariant, String, Long>
+                                               (getOrCreateAccessionWrapperObj.getAccession(),
+                                                getOrCreateAccessionWrapperObj.getHash(),
+                                                getOrCreateAccessionWrapperObj.getData())));
+            return joinLists(submittedVariants, dbsnpVariants)
+                    .stream()
+                    .map(d -> new GetOrCreateAccessionWrapper<>
+                            (d.getAccession(),
+                             d.getHash(),
+                             d.getData(), false)).collect(Collectors.toList());
         }
     }
 
