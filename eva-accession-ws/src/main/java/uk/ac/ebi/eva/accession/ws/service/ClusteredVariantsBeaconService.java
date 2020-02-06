@@ -90,7 +90,7 @@ public class ClusteredVariantsBeaconService {
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
         if (variantWrapper.isPresent() && includeDatasetResponses) {
             AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> variant =
-                    toDto(variantWrapper.get());
+                    toDTO(variantWrapper.get());
             String identifier = variant.getAccession().toString();
             datasetAlleleResponses = getBeaconDatasetAlleleResponses(identifier);
         }
@@ -98,7 +98,7 @@ public class ClusteredVariantsBeaconService {
                              datasetAlleleResponses);
     }
 
-    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDto(
+    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDTO(
             AccessionWrapper<IClusteredVariant, String, Long> clusteredVariantWrapper) {
         return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }

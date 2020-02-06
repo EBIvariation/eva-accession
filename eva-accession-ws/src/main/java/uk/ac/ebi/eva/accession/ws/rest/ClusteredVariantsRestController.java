@@ -109,7 +109,7 @@ public class ClusteredVariantsRestController {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                     new ArrayList<>();
             clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
-            clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDto)
+            clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
                                                  .collect(Collectors.toList()));
 
             if (clusteredVariants.isEmpty()) {
@@ -191,17 +191,17 @@ public class ClusteredVariantsRestController {
 
         Optional<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariantWrapper =
                 nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
-        clusteredVariantWrapper.ifPresent(wrapper -> clusteredVariants.add(toDto(wrapper)));
+        clusteredVariantWrapper.ifPresent(wrapper -> clusteredVariants.add(toDTO(wrapper)));
 
         Optional<List<AccessionWrapper<IClusteredVariant, String, Long>>> humanClusteredVariants =
                 humanService.getByIdFields(assembly, chromosome, start, variantType);
         humanClusteredVariants.ifPresent(wrappers -> clusteredVariants.addAll(
-                wrappers.stream().map(this::toDto).collect(Collectors.toList())));
+                wrappers.stream().map(this::toDTO).collect(Collectors.toList())));
 
         return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
     }
 
-    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDto(
+    private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDTO(
             AccessionWrapper<IClusteredVariant, String, Long> clusteredVariantWrapper) {
         return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }
