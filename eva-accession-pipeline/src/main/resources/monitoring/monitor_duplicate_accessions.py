@@ -42,7 +42,7 @@ def notify_by_email(mongo_connection_properties, collection_name, duplicates_out
     logger.error("DUPLICATE ACCESSIONS found!!! in the {0} collection in the {1} database at {2}..."
                  .format(collection_name, mongo_connection_properties["mongo_db"],
                          mongo_connection_properties["mongo_host"]))
-    email_message = "Subject: DUPLICATE ACCESSIONS!!! in the {0} collection in the {1} at {2}\n\n" \
+    email_message = "Subject: DUPLICATE ACCESSIONS!!! in the {0} collection in the {1} database at {2}\n\n" \
                     "Please see {3} for the list of duplicates.".format(collection_name,
                                                                         mongo_connection_properties["mongo_db"],
                                                                         mongo_connection_properties["mongo_host"],
