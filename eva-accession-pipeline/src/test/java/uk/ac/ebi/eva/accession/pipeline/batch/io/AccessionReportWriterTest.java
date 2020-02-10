@@ -23,6 +23,7 @@ import org.junit.rules.TemporaryFolder;
 import org.springframework.batch.item.ExecutionContext;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
+import uk.ac.ebi.eva.accession.core.service.GetOrCreateAccessionWrapperCreator;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
