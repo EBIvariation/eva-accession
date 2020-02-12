@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
@@ -202,7 +203,7 @@ public class AccessionReportWriter {
     }
 
     public void write(List<? extends IVariant> originalVariantsWithInsdcContigs,
-                      List<AccessionWrapper<ISubmittedVariant, String, Long>> accessionedVariants) throws IOException {
+                      List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessionedVariants) throws IOException {
         if (variantsWriter == null) {
             throw new IOException("The file " + variantsOutput + " was not opened properly. Hint: Check that the code "
                                   + "called " + this.getClass().getSimpleName() + "::open");

@@ -21,6 +21,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
@@ -53,13 +54,13 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
     public void write(List<? extends IVariant> variants) throws Exception {
         List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
                                                             .collect(Collectors.toList());
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants);
+        List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants);
         accessionReportWriter.write(variants, accessions);
         checkCountsMatch(submittedVariants, accessions);
     }
 
     void checkCountsMatch(List<? extends ISubmittedVariant> variants,
-                          List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
+                          List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions) {
         if (variants.size() != accessions.size()) {
             Set<ISubmittedVariant> accessionedVariants = accessions.stream()
                                                                    .map(AccessionWrapper::getData)

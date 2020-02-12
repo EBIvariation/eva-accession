@@ -40,12 +40,12 @@
             <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
                 <artifactId>accession-commons-mongodb</artifactId>
-                <version>0.6.2</version>
+                <version>0.6.4</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
                 <artifactId>accession-commons-monotonic-generator-jpa</artifactId>
-                <version>0.6.2</version>
+                <version>0.6.4</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>

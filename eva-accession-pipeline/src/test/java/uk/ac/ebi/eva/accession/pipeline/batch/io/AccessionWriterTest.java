@@ -32,6 +32,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
+import uk.ac.ebi.eva.accession.core.service.GetOrCreateAccessionWrapperCreator;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
@@ -303,7 +304,9 @@ public class AccessionWriterTest {
         accessions.add(new AccessionWrapper<>(EXPECTED_ACCESSION, "hashedMessage", secondVariant));
 
         thrown.expect(IllegalStateException.class);
-        accessionWriter.checkCountsMatch(variants, accessions);
+        accessionWriter.checkCountsMatch(variants,
+                                         GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                                 accessions));
     }
 
     @Test
