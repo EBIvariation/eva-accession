@@ -1,0 +1,12 @@
+stages:
+    - test
+
+test:
+    image: maven:3.6.3-jdk-8
+    stage: test
+    script:
+        - mvn test
+    artifacts:
+        reports:
+            junit:
+                - "eva-accession-ws/target/surefire-reports/TEST-*.xml"
