@@ -1,5 +1,6 @@
 stages:
     - test
+    - package
 
 image: maven:3.6.3-jdk-8
 
@@ -9,4 +10,20 @@ services:
 test:
     stage: test
     script:
-        - mvn test -pl 'eva-accession-core'
+        - mvn clean test -pl 'eva-accession-core,eva-accession-ws'
+    environment:
+        name: test-env
+    only:
+        - feature/gitlab
+
+package:
+    stage: package
+    script:
+        - mvn package -pl 'eva-accession-core,eva-accession-ws' -DskipTests
+    artifacts:
+        paths:
+            - eva-accession-ws/target/eva*war
+    environment:
+        name: test-env
+    only:
+        - feature/gitlab
