@@ -23,8 +23,7 @@ from __init__ import *
 
 def export_mongo_accessions(mongo_connection_properties, collection_name, export_output_filename):
     export_command = 'mongoexport --host {0} --port {1} --db {2} --username {3} --password {4} ' \
-                     '--authenticationDatabase={5} --collection {6} --type=csv --fields accession -o "{7}" ' \
-                     '--sort \'{{accession: 1}}\''\
+                     '--authenticationDatabase={5} --collection {6} --type=csv --fields accession -o "{7}" 2>&1' \
                     .format(mongo_connection_properties["mongo_host"],
                             mongo_connection_properties["mongo_port"],
                             mongo_connection_properties["mongo_db"],
@@ -52,8 +51,11 @@ def notify_by_email(mongo_connection_properties, collection_name, duplicates_out
 
 def report_duplicates_in_exported_accessions_file(mongo_connection_properties, collection_name, export_output_filename,
                                                   duplicates_output_filename, email_recipients):
+    sorted_export_output_filename = export_output_filename.replace(".csv", "_sorted.csv")
+    run_command_with_output("Sorting {0}...".format(duplicates_output_filename),
+                            'sort -S 4G -o "{0}" "{1}"'.format(sorted_export_output_filename, export_output_filename))
     run_command_with_output("Exporting duplicates to {0}...".format(duplicates_output_filename),
-                            'uniq -d "{0}" > {1}'.format(export_output_filename, duplicates_output_filename))
+                            'uniq -d "{0}" > {1}'.format(sorted_export_output_filename, duplicates_output_filename))
     number_of_duplicate_accessions = run_command_with_output("Find duplicate accessions in the exported file...",
                                                              'wc -l < "{0}"'.format(duplicates_output_filename))
     if int(number_of_duplicate_accessions) > 0:

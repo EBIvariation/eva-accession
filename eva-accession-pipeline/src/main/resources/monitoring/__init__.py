@@ -60,11 +60,15 @@ def run_command_with_output(command_description, command):
 
     with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True,
                           shell=True) as process:
-        for line in process.stdout:
+        for line in iter(process.stdout.readline, ''):
+            line = str(line).rstrip()
+            logger.info(line)
             process_output += line
-        errors = os.linesep.join(process.stderr.readlines())
+        for line in iter(process.stderr.readline, ''):
+            line = str(line).rstrip()
+            logger.error(line)
     if process.returncode != 0:
-        logger.error(command_description + " failed!" + os.linesep + errors)
+        logger.error(command_description + " failed! Refer to the error messages for details.")
         raise subprocess.CalledProcessError(process.returncode, process.args)
     else:
         logger.info(command_description + " - completed successfully")
