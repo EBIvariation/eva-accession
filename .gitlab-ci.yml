@@ -10,7 +10,7 @@ services:
 test:
     stage: test
     script:
-        - mvn clean test -pl 'eva-accession-core,eva-accession-ws'
+        - mvn clean test -pl 'eva-accession-core,eva-accession-ws' -Deva.mongo.host.test=mongo
     environment:
         name: test-env
     only:
