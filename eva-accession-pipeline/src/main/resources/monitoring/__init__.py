@@ -52,7 +52,7 @@ def get_mongo_connection_details_from_properties_file(properties_file):
     return mongo_connection_properties
 
 
-def run_command_with_output(command_description, command):
+def run_command_with_output(command_description, command, return_process_output=False):
     process_output = ""
 
     logger.info("Starting process: " + command_description)
@@ -63,7 +63,8 @@ def run_command_with_output(command_description, command):
         for line in iter(process.stdout.readline, ''):
             line = str(line).rstrip()
             logger.info(line)
-            process_output += line
+            if return_process_output:
+                process_output += line
         for line in iter(process.stderr.readline, ''):
             line = str(line).rstrip()
             logger.error(line)
@@ -72,7 +73,8 @@ def run_command_with_output(command_description, command):
         raise subprocess.CalledProcessError(process.returncode, process.args)
     else:
         logger.info(command_description + " - completed successfully")
-    return process_output
+    if return_process_output:
+        return process_output
 
 
 logger = init_logger()
