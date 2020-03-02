@@ -20,16 +20,22 @@ test:
     only:
         - feature/gitlab
 
-package:
+# Not executed, parent job definition for package
+.package:
     stage: package
     script:
-        - mvn package -pl 'eva-accession-core,eva-accession-ws' -DskipTests
+        - mvn package -pl 'eva-accession-core,eva-accession-ws' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
         - cp eva-accession-ws/target/eva*.war $ARTIFACT_PATH
     artifacts:
         paths:
             - $ARTIFACT_PATH
-    environment:
-        name: test-env
+    only:
+        - feature/gitlab
+
+package-internal:
+    extends: .package
+    variables:
+        MAVEN_PROFILE: internal
     only:
         - feature/gitlab
 
@@ -38,11 +44,10 @@ package:
     stage: deploy
     script:
         - apk add --update curl
-        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva" | grep "OK - Deployed application"
+        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva-1822" | grep "OK - Deployed application"
 
 deploy-tomcat-internal:
-    extends:
-        - .deploy
+    extends: .deploy
     variables:
         TOMCAT_USER: $TOMCAT_INTERNAL_USER
         TOMCAT_PASSWORD: $TOMCAT_INTERNAL_PASSWORD
