@@ -18,6 +18,7 @@
         <module>eva-accession-release</module>
         <module>eva-accession-deprecate</module>
         <module>eva-accession-import-dbsnp2</module>
+        <module>eva-accession-cluster</module>
     </modules>
 
     <properties>
