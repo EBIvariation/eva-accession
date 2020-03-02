@@ -53,7 +53,9 @@ def report_duplicates_in_exported_accessions_file(mongo_connection_properties, c
                                                   duplicates_output_filename, email_recipients):
     sorted_export_output_filename = export_output_filename.replace(".csv", "_sorted.csv")
     run_command_with_output("Sorting {0}...".format(duplicates_output_filename),
-                            'sort -S 4G -o "{0}" "{1}"'.format(sorted_export_output_filename, export_output_filename))
+                            'sort -S 4G -T {0} -o "{1}" "{2}"'
+                            .format(os.path.dirname(export_output_filename), sorted_export_output_filename,
+                                    export_output_filename))
     run_command_with_output("Exporting duplicates to {0}...".format(duplicates_output_filename),
                             'uniq -d "{0}" > {1}'.format(sorted_export_output_filename, duplicates_output_filename))
     number_of_duplicate_accessions = run_command_with_output("Find duplicate accessions in the exported file...",
