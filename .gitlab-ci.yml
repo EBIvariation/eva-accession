@@ -1,11 +1,15 @@
 stages:
     - test
     - package
+    - deploy
 
-image: maven:3.6.3-jdk-8
+image: maven:3.6.1-jdk-8-alpine
 
 services:
     - mongo:3.2.17
+
+variables:
+    ARTIFACT_PATH: eva-accession-ws/target/eva-1822.war
 
 test:
     stage: test
@@ -20,10 +24,28 @@ package:
     stage: package
     script:
         - mvn package -pl 'eva-accession-core,eva-accession-ws' -DskipTests
+        - cp eva-accession-ws/target/eva*.war $ARTIFACT_PATH
     artifacts:
         paths:
-            - eva-accession-ws/target/eva*war
+            - $ARTIFACT_PATH
     environment:
         name: test-env
+    only:
+        - feature/gitlab
+
+# Not executed, parent job definition for Tomcat deployments
+.deploy:
+    stage: deploy
+    script:
+        - apk add --update curl
+        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva" | grep "OK - Deployed application"
+
+deploy-tomcat-internal:
+    extends:
+        - .deploy
+    variables:
+        TOMCAT_USER: $TOMCAT_INTERNAL_USER
+        TOMCAT_PASSWORD: $TOMCAT_INTERNAL_PASSWORD
+        TOMCAT_HOST: $TOMCAT_INTERNAL_HOST
     only:
         - feature/gitlab
