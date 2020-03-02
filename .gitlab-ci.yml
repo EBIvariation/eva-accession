@@ -9,7 +9,7 @@ services:
     - mongo:3.2.17
 
 variables:
-    ARTIFACT_PATH: eva-accession-ws/target/eva-1822.war
+    ARTIFACT_PATH: eva-accession-ws/target/eva-$ENVIRONMENT_NAME.war
 
 test:
     stage: test
@@ -36,6 +36,15 @@ package-internal:
     extends: .package
     variables:
         MAVEN_PROFILE: internal
+        ENVIRONMENT_NAME: internal
+    only:
+        - feature/gitlab
+
+package-development:
+    extends: .package
+    variables:
+        MAVEN_PROFILE: development
+        ENVIRONMENT_NAME: development
     only:
         - feature/gitlab
 
@@ -52,5 +61,14 @@ deploy-tomcat-internal:
         TOMCAT_USER: $TOMCAT_INTERNAL_USER
         TOMCAT_PASSWORD: $TOMCAT_INTERNAL_PASSWORD
         TOMCAT_HOST: $TOMCAT_INTERNAL_HOST
+    only:
+        - feature/gitlab
+
+deploy-tomcat-development:
+    extends: .deploy
+    variables:
+        TOMCAT_USER: $TOMCAT_DEVELOPMENT_USER
+        TOMCAT_PASSWORD: $TOMCAT_DEVELOPMENT_PASSWORD
+        TOMCAT_HOST: $TOMCAT_DEVELOPMENT_HOST
     only:
         - feature/gitlab
