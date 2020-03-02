@@ -23,6 +23,10 @@ test:
 # Not executed, parent job definition for package
 .package:
     stage: package
+    environment:
+        name: $ENVIRONMENT_NAME
+    variables:
+        ARTIFACT_PATH: eva-accession-ws/target/eva-$ENVIRONMENT_NAME.war
     script:
         - mvn package -pl 'eva-accession-core,eva-accession-ws' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
         - cp eva-accession-ws/target/eva*.war $ARTIFACT_PATH
@@ -35,22 +39,26 @@ test:
 package-internal:
     extends: .package
     variables:
-        MAVEN_PROFILE: internal
         ENVIRONMENT_NAME: internal
+        MAVEN_PROFILE: internal
     only:
         - feature/gitlab
 
 package-development:
     extends: .package
     variables:
-        MAVEN_PROFILE: development
         ENVIRONMENT_NAME: development
+        MAVEN_PROFILE: development
     only:
         - feature/gitlab
 
 # Not executed, parent job definition for Tomcat deployments
 .deploy:
     stage: deploy
+    environment:
+        name: $ENVIRONMENT_NAME
+    variables:
+        ARTIFACT_PATH: eva-accession-ws/target/eva-$ENVIRONMENT_NAME.war
     script:
         - apk add --update curl
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva-1822" | grep "OK - Deployed application"
@@ -58,6 +66,7 @@ package-development:
 deploy-tomcat-internal:
     extends: .deploy
     variables:
+        ENVIRONMENT_NAME: internal
         TOMCAT_USER: $TOMCAT_INTERNAL_USER
         TOMCAT_PASSWORD: $TOMCAT_INTERNAL_PASSWORD
         TOMCAT_HOST: $TOMCAT_INTERNAL_HOST
@@ -67,6 +76,7 @@ deploy-tomcat-internal:
 deploy-tomcat-development:
     extends: .deploy
     variables:
+        ENVIRONMENT_NAME: development
         TOMCAT_USER: $TOMCAT_DEVELOPMENT_USER
         TOMCAT_PASSWORD: $TOMCAT_DEVELOPMENT_PASSWORD
         TOMCAT_HOST: $TOMCAT_DEVELOPMENT_HOST
