@@ -3,11 +3,6 @@ stages:
     - package
     - deploy
 
-image: maven:3.6.1-jdk-8-alpine
-
-services:
-    - mongo:3.2.17
-
 variables:
     ARTIFACT_PATH: eva-accession-ws/target/eva-$ENVIRONMENT_NAME.war
 
@@ -16,6 +11,9 @@ before_script:
 
 test:
     stage: test
+    image: maven:3.6.1-jdk-8-alpine
+    services:
+        - mongo:3.2.17
     script:
         - mvn clean test -pl 'eva-accession-core,eva-accession-ws' -Deva.mongo.host.test=mongo
     environment:
@@ -26,10 +24,9 @@ test:
 # Not executed, parent job definition for package
 .package:
     stage: package
+    image: maven:3.6.1-jdk-8-alpine
     environment:
         name: $ENVIRONMENT_NAME
-    variables:
-        ARTIFACT_PATH: eva-accession-ws/target/eva-$ENVIRONMENT_NAME.war
     script:
         - mvn package -pl 'eva-accession-core,eva-accession-ws' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
         - cp eva-accession-ws/target/eva*.war $ARTIFACT_PATH
@@ -66,13 +63,12 @@ package-production:
 # Not executed, parent job definition for Tomcat deployments
 .deploy:
     stage: deploy
+    image: alpine:3.9.5
     environment:
         name: $ENVIRONMENT_NAME
-    variables:
-        ARTIFACT_PATH: eva-accession-ws/target/eva-$ENVIRONMENT_NAME.war
     script:
         - apk add --update curl
-        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva-1822&version=$DATETIME" | grep "OK - Deployed application"
+        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers/EVA-1822&version=$DATETIME" | grep "OK - Deployed application"
 
 deploy-tomcat-internal:
     extends: .deploy
