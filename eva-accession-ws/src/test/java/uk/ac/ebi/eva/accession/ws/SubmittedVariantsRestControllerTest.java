@@ -65,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -502,5 +503,26 @@ public class SubmittedVariantsRestControllerTest {
         assertEquals(1, response.getBody().size());
         assertEquals(variant1, response.getBody().get(0).getData());
         assertCreatedDateNotNull(response.getBody());
+    }
+
+    @Test
+    public void testGetNonExistentDbsnpSubmittedVariant()
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        List<Long> generatedAccessionNumbers =
+                generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toList());
+        Long minAccession = Collections.min(generatedAccessionNumbers);
+        Long maxAccession = Collections.max(generatedAccessionNumbers);
+
+        String getVariantUrl = URL + ("" + (maxAccession + 1));
+        // when
+        ResponseEntity<String> response = testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, String.class);
+        // then
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+
+        getVariantUrl = URL + ("" + (minAccession - 1));
+        // when
+        response = testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, String.class);
+        // then
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 }
