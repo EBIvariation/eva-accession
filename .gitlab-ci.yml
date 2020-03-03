@@ -52,6 +52,14 @@ package-development:
     only:
         - feature/gitlab
 
+package-production:
+    extends: .package
+    variables:
+        ENVIRONMENT_NAME: production
+        MAVEN_PROFILE: production
+    only:
+        - feature/gitlab
+
 # Not executed, parent job definition for Tomcat deployments
 .deploy:
     stage: deploy
@@ -82,3 +90,14 @@ deploy-tomcat-development:
         TOMCAT_HOST: $TOMCAT_DEVELOPMENT_HOST
     only:
         - feature/gitlab
+
+deploy-tomcat-production:
+    extends: .deploy
+    variables:
+        ENVIRONMENT_NAME: production
+        TOMCAT_USER: $TOMCAT_PRODUCTION_USER
+        TOMCAT_PASSWORD: $TOMCAT_PRODUCTION_PASSWORD
+        TOMCAT_HOST: $TOMCAT_PRODUCTION_HOST
+    only:
+        - feature/gitlab
+    when: manual
