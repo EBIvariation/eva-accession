@@ -19,7 +19,8 @@ test:
     environment:
         name: test-env
     only:
-        - feature/gitlab
+        - master
+        - tags
 
 # Not executed, parent job definition for package
 .package:
@@ -33,8 +34,6 @@ test:
     artifacts:
         paths:
             - $ARTIFACT_PATH
-    only:
-        - feature/gitlab
 
 package-internal:
     extends: .package
@@ -42,7 +41,7 @@ package-internal:
         ENVIRONMENT_NAME: internal
         MAVEN_PROFILE: internal
     only:
-        - feature/gitlab
+        - master
 
 package-development:
     extends: .package
@@ -50,7 +49,7 @@ package-development:
         ENVIRONMENT_NAME: development
         MAVEN_PROFILE: development
     only:
-        - feature/gitlab
+        - master
 
 package-production:
     extends: .package
@@ -58,7 +57,7 @@ package-production:
         ENVIRONMENT_NAME: production
         MAVEN_PROFILE: production
     only:
-        - feature/gitlab
+        - tags
 
 # Not executed, parent job definition for Tomcat deployments
 .deploy:
@@ -68,7 +67,7 @@ package-production:
         name: $ENVIRONMENT_NAME
     script:
         - apk add --update curl
-        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers/EVA-1822&version=$DATETIME" | grep "OK - Deployed application"
+        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
 
 deploy-tomcat-internal:
     extends: .deploy
@@ -80,7 +79,7 @@ deploy-tomcat-internal:
     dependencies:
         - package-internal
     only:
-        - feature/gitlab
+        - master
 
 deploy-tomcat-development:
     extends: .deploy
@@ -92,10 +91,11 @@ deploy-tomcat-development:
     dependencies:
         - package-development
     only:
-        - feature/gitlab
+        - master
 
 deploy-tomcat-production:
     extends: .deploy
+    when: manual
     variables:
         ENVIRONMENT_NAME: production
         TOMCAT_USER: $TOMCAT_PRODUCTION_USER
@@ -104,11 +104,11 @@ deploy-tomcat-production:
     dependencies:
         - package-production
     only:
-        - feature/gitlab
-    when: manual
+        - tags
 
 deploy-tomcat-production-fallback:
     extends: .deploy
+    when: manual
     variables:
         ENVIRONMENT_NAME: production
         TOMCAT_USER: $TOMCAT_PRODUCTION_FALLBACK_USER
@@ -117,5 +117,4 @@ deploy-tomcat-production-fallback:
     dependencies:
         - package-production
     only:
-        - feature/gitlab
-    when: manual
+        - tags
