@@ -52,7 +52,7 @@ def get_mongo_connection_details_from_properties_file(properties_file):
     return mongo_connection_properties
 
 
-def run_command_with_output(command_description, command):
+def run_command_with_output(command_description, command, return_process_output=False):
     process_output = ""
 
     logger.info("Starting process: " + command_description)
@@ -60,15 +60,21 @@ def run_command_with_output(command_description, command):
 
     with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, universal_newlines=True,
                           shell=True) as process:
-        for line in process.stdout:
-            process_output += line
-        errors = os.linesep.join(process.stderr.readlines())
+        for line in iter(process.stdout.readline, ''):
+            line = str(line).rstrip()
+            logger.info(line)
+            if return_process_output:
+                process_output += line
+        for line in iter(process.stderr.readline, ''):
+            line = str(line).rstrip()
+            logger.error(line)
     if process.returncode != 0:
-        logger.error(command_description + " failed!" + os.linesep + errors)
+        logger.error(command_description + " failed! Refer to the error messages for details.")
         raise subprocess.CalledProcessError(process.returncode, process.args)
     else:
         logger.info(command_description + " - completed successfully")
-    return process_output
+    if return_process_output:
+        return process_output
 
 
 logger = init_logger()
