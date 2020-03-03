@@ -78,6 +78,8 @@ deploy-tomcat-internal:
         TOMCAT_USER: $TOMCAT_INTERNAL_USER
         TOMCAT_PASSWORD: $TOMCAT_INTERNAL_PASSWORD
         TOMCAT_HOST: $TOMCAT_INTERNAL_HOST
+    dependencies:
+        - package-internal
     only:
         - feature/gitlab
 
@@ -88,6 +90,8 @@ deploy-tomcat-development:
         TOMCAT_USER: $TOMCAT_DEVELOPMENT_USER
         TOMCAT_PASSWORD: $TOMCAT_DEVELOPMENT_PASSWORD
         TOMCAT_HOST: $TOMCAT_DEVELOPMENT_HOST
+    dependencies:
+        - package-development
     only:
         - feature/gitlab
 
@@ -98,6 +102,21 @@ deploy-tomcat-production:
         TOMCAT_USER: $TOMCAT_PRODUCTION_USER
         TOMCAT_PASSWORD: $TOMCAT_PRODUCTION_PASSWORD
         TOMCAT_HOST: $TOMCAT_PRODUCTION_HOST
+    dependencies:
+        - package-production
+    only:
+        - feature/gitlab
+    when: manual
+
+deploy-tomcat-production-fallback:
+    extends: .deploy
+    variables:
+        ENVIRONMENT_NAME: production
+        TOMCAT_USER: $TOMCAT_PRODUCTION_FALLBACK_USER
+        TOMCAT_PASSWORD: $TOMCAT_PRODUCTION_FALLBACK_PASSWORD
+        TOMCAT_HOST: $TOMCAT_PRODUCTION_FALLBACK_HOST
+    dependencies:
+        - package-production
     only:
         - feature/gitlab
     when: manual
