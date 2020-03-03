@@ -15,7 +15,7 @@ test:
     services:
         - mongo:3.2.17
     script:
-        - mvn clean test -pl 'eva-accession-core,eva-accession-ws' -Deva.mongo.host.test=mongo
+        - mvn clean test --projects 'eva-accession-core,eva-accession-ws' -Deva.mongo.host.test=mongo
     environment:
         name: test-env
     only:
@@ -29,7 +29,7 @@ test:
     environment:
         name: $ENVIRONMENT_NAME
     script:
-        - mvn package -pl 'eva-accession-core,eva-accession-ws' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
+        - mvn package --projects 'eva-accession-core,eva-accession-ws' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
         - cp eva-accession-ws/target/eva*.war $ARTIFACT_PATH
     artifacts:
         paths:
