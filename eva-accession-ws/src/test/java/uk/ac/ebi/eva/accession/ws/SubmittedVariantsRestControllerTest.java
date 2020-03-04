@@ -65,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -502,5 +503,35 @@ public class SubmittedVariantsRestControllerTest {
         assertEquals(1, response.getBody().size());
         assertEquals(variant1, response.getBody().get(0).getData());
         assertCreatedDateNotNull(response.getBody());
+    }
+
+    @Test
+    public void testGetNonExistentSubmittedVariant() {
+        List<Long> generatedAccessionNumbers =
+                generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toList());
+        Long maxAccession = Collections.max(generatedAccessionNumbers);
+
+        // First non-existent accession greater than the minimum accession of 5 billion for submittedVariants
+        // to exercise non-existence for SubmittedVariant (range >=5B)
+        String getVariantUrl = URL + Long.toString(maxAccession + 1);
+        // when
+        ResponseEntity<String> response = testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, String.class);
+        // then
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    public void testGetNonExistentDbsnpSubmittedVariant() {
+        List<Long> generatedAccessionNumbers =
+                generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toList());
+        Long minAccession = Collections.min(generatedAccessionNumbers);
+
+        // An accession less than the minimum for submittedVariants (5 billion)
+        // to exercise non-existence for DbsnpSubmittedVariant (range 1-5B)
+        String getVariantUrl = URL + Long.toString(minAccession - 1);
+        // when
+        ResponseEntity<String> response = testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, String.class);
+        // then
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 }
