@@ -67,7 +67,7 @@ public class ClusteredVariantAccessioningConfiguration {
     private String categoryId;
 
     @Bean
-    public Long accessioningMonotonicInitSs() {
+    public Long accessioningMonotonicInitRs() {
         return service.getBlockParameters(categoryId).getBlockStartValue();
     }
 

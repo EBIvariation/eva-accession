@@ -506,21 +506,31 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetNonExistentDbsnpSubmittedVariant() {
+    public void testGetNonExistentSubmittedVariant() {
         List<Long> generatedAccessionNumbers =
                 generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toList());
-        Long minAccession = Collections.min(generatedAccessionNumbers);
         Long maxAccession = Collections.max(generatedAccessionNumbers);
 
-        String getVariantUrl = URL + ("" + (maxAccession + 1));
+        // First non-existent accession greater than the minimum accession of 5 billion for submittedVariants
+        // to exercise non-existence for SubmittedVariant (range >=5B)
+        String getVariantUrl = URL + Long.toString(maxAccession + 1);
         // when
         ResponseEntity<String> response = testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, String.class);
         // then
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
 
-        getVariantUrl = URL + ("" + (minAccession - 1));
+    @Test
+    public void testGetNonExistentDbsnpSubmittedVariant() {
+        List<Long> generatedAccessionNumbers =
+                generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toList());
+        Long minAccession = Collections.min(generatedAccessionNumbers);
+
+        // An accession less than the minimum for submittedVariants (5 billion)
+        // to exercise non-existence for DbsnpSubmittedVariant (range 1-5B)
+        String getVariantUrl = URL + Long.toString(minAccession - 1);
         // when
-        response = testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, String.class);
+        ResponseEntity<String> response = testRestTemplate.exchange(getVariantUrl, HttpMethod.GET, null, String.class);
         // then
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }

@@ -118,8 +118,7 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
             throw new AccessionMergedException(accession.toString(), mergedEvent.get().getMergedInto().toString());
         } else if (events.stream().map(IEvent::getEventType).anyMatch(EventType.DEPRECATED::equals)) {
             throw new AccessionDeprecatedException(accession.toString());
-        }
-        else {
+        } else {
             throw new AccessionDoesNotExistException(accession.toString());
         }
     }
