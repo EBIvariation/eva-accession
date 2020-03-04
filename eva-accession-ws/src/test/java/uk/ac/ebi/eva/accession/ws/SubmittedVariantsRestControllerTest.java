@@ -506,8 +506,7 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testGetNonExistentDbsnpSubmittedVariant()
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+    public void testGetNonExistentDbsnpSubmittedVariant() {
         List<Long> generatedAccessionNumbers =
                 generatedAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toList());
         Long minAccession = Collections.min(generatedAccessionNumbers);
