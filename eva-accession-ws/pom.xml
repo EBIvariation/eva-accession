@@ -75,6 +75,18 @@
                 </executions>
             </plugin>
         </plugins>
+
+        <testResources>
+            <testResource>
+                <directory>src/test/resources/</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+
     </build>
+
+    <properties>
+        <eva.mongo.host.test>localhost</eva.mongo.host.test>
+    </properties>
 
 </project>
