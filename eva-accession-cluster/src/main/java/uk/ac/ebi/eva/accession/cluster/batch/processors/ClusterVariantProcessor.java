@@ -15,6 +15,76 @@
  */
 package uk.ac.ebi.eva.accession.cluster.batch.processors;
 
-public class ClusterVariantProcessor {
+import org.springframework.batch.item.ItemProcessor;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+public class ClusterVariantProcessor implements ItemProcessor<List<SubmittedVariant>, List<SubmittedVariant>> {
+
+    private List<Long> accessions;
+
+    private Iterator<Long> iterator;
+
+    private Map<String, Long> assignedAccessions;
+
+    private Function<IClusteredVariant, String> hashingFunction;
+
+    ClusterVariantProcessor() {
+        initializeAccessions();
+        this.iterator = this.accessions.iterator();
+        this.assignedAccessions = new HashMap<>();
+        hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+    }
+
+    private void initializeAccessions() {
+        this.accessions = new ArrayList<>();
+        long firstAccession = 1L;
+        long lastAccession = 10L;
+        for (long i = firstAccession; i <= lastAccession; i++) {
+            accessions.add(i);
+        }
+    }
+
+    @Override
+    public List<SubmittedVariant> process(List<SubmittedVariant> submittedVariants) {
+        for (SubmittedVariant submittedVariant : submittedVariants) {
+            ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariant.getProjectAccession(),
+                                                                     submittedVariant.getTaxonomyAccession(),
+                                                                     submittedVariant.getContig(),
+                                                                     submittedVariant.getStart(),
+                                                                     getVariantType(
+                                                                             submittedVariant.getReferenceAllele(),
+                                                                             submittedVariant.getAlternateAllele()),
+                                                                     submittedVariant.isValidated(),
+                                                                     submittedVariant.getCreatedDate());
+            String hash = hashingFunction.apply(clusteredVariant);
+            if (assignedAccessions.containsKey(hash)) {
+                Long existingClusteredVariantAccession = assignedAccessions.get(hash);
+                submittedVariant.setClusteredVariantAccession(existingClusteredVariantAccession);
+            } else {
+                Long generatedClusteredVariantAccession = iterator.next();
+                submittedVariant.setClusteredVariantAccession(generatedClusteredVariantAccession);
+                assignedAccessions.putIfAbsent(hash, generatedClusteredVariantAccession);
+            }
+        }
+        return submittedVariants;
+    }
+
+    private VariantType getVariantType(String reference, String alternate) {
+        VariantType variantType = VariantClassifier.getVariantClassification(reference, alternate, 0);
+        return variantType;
+    }
 }
