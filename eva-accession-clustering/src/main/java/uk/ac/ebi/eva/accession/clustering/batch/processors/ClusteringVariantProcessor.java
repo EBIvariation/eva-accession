@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.cluster.batch.processors;
+package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class ClusterVariantProcessor implements ItemProcessor<List<SubmittedVariant>, List<SubmittedVariant>> {
+public class ClusteringVariantProcessor implements ItemProcessor<List<SubmittedVariant>, List<SubmittedVariant>> {
 
     private List<Long> accessions;
 
@@ -42,7 +42,7 @@ public class ClusterVariantProcessor implements ItemProcessor<List<SubmittedVari
 
     private Function<IClusteredVariant, String> hashingFunction;
 
-    ClusterVariantProcessor() {
+    ClusteringVariantProcessor() {
         initializeAccessions();
         this.iterator = this.accessions.iterator();
         this.assignedAccessions = new HashMap<>();

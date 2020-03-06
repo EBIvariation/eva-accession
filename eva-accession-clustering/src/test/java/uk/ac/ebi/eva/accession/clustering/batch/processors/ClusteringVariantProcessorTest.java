@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.cluster.batch.processors;
+package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,20 +25,20 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class ClusterVariantProcessorTest {
+public class ClusteringVariantProcessorTest {
 
-    private ClusterVariantProcessor clusterVariantProcessor;
+    private ClusteringVariantProcessor clusteringVariantProcessor;
 
     @Before
     public void setUp() {
-        clusterVariantProcessor = new ClusterVariantProcessor();
+        clusteringVariantProcessor = new ClusteringVariantProcessor();
     }
 
     @Test
     public void processor() {
         List<SubmittedVariant> submittedVariants = createSubmittedVariants();
         long numberOfSubmittedVariants = submittedVariants.size();
-        List<SubmittedVariant> clusteredSubmittedVariants = clusterVariantProcessor.process(submittedVariants);
+        List<SubmittedVariant> clusteredSubmittedVariants = clusteringVariantProcessor.process(submittedVariants);
 
         long numberOfAccessionAssigned = clusteredSubmittedVariants
                 .stream().map(SubmittedVariant::getClusteredVariantAccession).distinct().count();

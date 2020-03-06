@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>eva-accession-cluster</artifactId>
+    <artifactId>eva-accession-clustering</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
