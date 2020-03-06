@@ -17,7 +17,6 @@ package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.junit.Before;
 import org.junit.Test;
-
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 
 import java.util.ArrayList;

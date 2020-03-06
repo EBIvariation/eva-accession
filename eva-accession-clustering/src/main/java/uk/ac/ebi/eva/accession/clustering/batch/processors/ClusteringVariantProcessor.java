@@ -17,7 +17,6 @@ package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
@@ -42,7 +41,7 @@ public class ClusteringVariantProcessor implements ItemProcessor<List<SubmittedV
 
     private Function<IClusteredVariant, String> hashingFunction;
 
-    ClusteringVariantProcessor() {
+    public ClusteringVariantProcessor() {
         initializeAccessions();
         this.iterator = this.accessions.iterator();
         this.assignedAccessions = new HashMap<>();

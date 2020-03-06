@@ -1,0 +1,56 @@
+/*
+ * Copyright 2020 EMBL - European Bioinformatics Institute
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package uk.ac.ebi.eva.accession.clustering.configuration.batch.processors;
+
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.support.CompositeItemProcessor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import uk.ac.ebi.eva.accession.clustering.batch.processors.ClusteringVariantProcessor;
+import uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantProcessor;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_PROCESSOR;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.COMPOSITE_PROCESSOR;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR;
+
+@Configuration
+public class ClusteringVariantProcessorConfiguration {
+
+    @Bean(VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR)
+    public VariantToSubmittedVariantProcessor variantToSubmittedVariantProcessor() {
+        return new VariantToSubmittedVariantProcessor();
+    }
+
+    @Bean(CLUSTERING_PROCESSOR)
+    public ClusteringVariantProcessor clusteringVariantProcessor() {
+        return new ClusteringVariantProcessor();
+    }
+
+    @Bean(COMPOSITE_PROCESSOR)
+    public ItemProcessor<List<Variant>, List<SubmittedVariant>> compositeProcessor(
+            VariantToSubmittedVariantProcessor variantToSubmittedVariantProcessor,
+            ClusteringVariantProcessor clusteringVariantProcessor) {
+        CompositeItemProcessor<List<Variant>, List<SubmittedVariant>> compositeProcessor =
+                new CompositeItemProcessor<>();
+        compositeProcessor.setDelegates(Arrays.asList(variantToSubmittedVariantProcessor, clusteringVariantProcessor));
+        return compositeProcessor;
+    }
+}
