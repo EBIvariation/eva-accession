@@ -32,34 +32,32 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import java.util.List;
-
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_SUBMITTED_VARIANTS_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.COMPOSITE_PROCESSOR;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VCF_READER;
 
 @Configuration
 @EnableBatchProcessing
 public class ClusteringVariantStepConfiguration {
 
     @Autowired
-    @Qualifier(CLUSTERING_READER)
-    private ItemReader<List<Variant>> vcfReader;
+    @Qualifier(VCF_READER)
+    private ItemReader<Variant> vcfReader;
 
     @Autowired
-    @Qualifier(COMPOSITE_PROCESSOR)
-    private ItemProcessor<List<Variant>, List<SubmittedVariantEntity>> compositeProcessor;
+    @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR)
+    private ItemProcessor<Variant, SubmittedVariantEntity> compositeProcessor;
 
     @Autowired
     @Qualifier(CLUSTERED_SUBMITTED_VARIANTS_WRITER)
-    private ItemWriter<List<SubmittedVariantEntity>> submittedVariantWriter;
+    private ItemWriter<SubmittedVariantEntity> submittedVariantWriter;
 
     @Bean(CLUSTERING_STEP)
     public Step clusteringVariantsStep(StepBuilderFactory stepBuilderFactory,
                                        SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_STEP)
-                .<List<Variant>, List<SubmittedVariantEntity>>chunk(chunkSizeCompletionPolicy)
+                .<Variant, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(vcfReader)
                 .processor(compositeProcessor)
                 .writer(submittedVariantWriter)

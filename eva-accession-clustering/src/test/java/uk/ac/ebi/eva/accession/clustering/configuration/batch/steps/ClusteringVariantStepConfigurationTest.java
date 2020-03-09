@@ -18,8 +18,10 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.steps;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,12 +42,17 @@ import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringVariantStepConfigurationTest {
+
+    private static final String TEST_DB = "test-db";
+
+    private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -62,12 +69,7 @@ public class ClusteringVariantStepConfigurationTest {
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName("test-db").build());
-
-    @Before
-    public void setUp() {
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
-    }
+            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @After
     public void tearDown() {
@@ -77,8 +79,36 @@ public class ClusteringVariantStepConfigurationTest {
     @Test
     @DirtiesContext
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
-    public void test() {
+    public void step() {
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
+        assertTrue(allNotClustered());
+
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(CLUSTERING_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
+        assertTrue(allClustered());
+    }
+
+    private boolean allClustered() {
+        DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
+        DBCursor dbObjects = collection.find();
+        for (DBObject dbObject : dbObjects) {
+            if (dbObject.get("rs") == null){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean allNotClustered() {
+        DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
+        DBCursor dbObjects = collection.find();
+        for (DBObject dbObject : dbObjects) {
+            if (dbObject.get("rs") != null){
+                return false;
+            }
+        }
+        return true;
     }
 }

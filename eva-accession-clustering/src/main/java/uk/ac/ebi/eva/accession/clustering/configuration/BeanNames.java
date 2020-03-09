@@ -17,13 +17,9 @@ package uk.ac.ebi.eva.accession.clustering.configuration;
 
 public class BeanNames {
 
-    public static final String CLUSTERING_READER = "CLUSTERING_READER";
-
-    public static final String CLUSTERING_PROCESSOR = "CLUSTERING_PROCESSOR";
+    public static final String VCF_READER = "VCF_READER";
 
     public static final String VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR = "VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR";
-
-    public static final String COMPOSITE_PROCESSOR = "COMPOSITE_PROCESSOR";
 
     public static final String CLUSTERED_SUBMITTED_VARIANTS_WRITER = "CLUSTERED_SUBMITTED_VARIANTS_WRITER";
 

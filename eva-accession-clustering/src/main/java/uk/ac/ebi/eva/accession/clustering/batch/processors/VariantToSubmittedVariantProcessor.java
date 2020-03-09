@@ -24,32 +24,29 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
 
-public class VariantToSubmittedVariantProcessor implements ItemProcessor<List<Variant>, List<SubmittedVariantEntity>> {
+public class VariantToSubmittedVariantProcessor implements ItemProcessor<Variant, SubmittedVariantEntity> {
+
+    private long submittedVariantAccession;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
     public VariantToSubmittedVariantProcessor() {
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        //To simulate the VcfReader is reading the ID column
+        submittedVariantAccession = 1000;
     }
 
     @Override
-    public List<SubmittedVariantEntity> process(List<Variant> variants) {
-        List<SubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
-        long submittedVariantAccession = 1000;
-        for (Variant variant : variants) {
-            SubmittedVariant submittedVariant = new SubmittedVariant(variant.getReference(), 0, "",
-                    variant.getChromosome(), variant.getStart(), variant.getReference(), variant.getAlternate(), null);
+    public SubmittedVariantEntity process(Variant variant) {
+        SubmittedVariant submittedVariant = new SubmittedVariant(variant.getReference(), 0, "",
+                variant.getChromosome(), variant.getStart(), variant.getReference(), variant.getAlternate(), null);
 
-            String hash = hashingFunction.apply(submittedVariant);
-            SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(submittedVariantAccession, hash,
-                                                                                       submittedVariant, 1);
-            submittedVariantEntities.add(submittedVariantEntity);
-            submittedVariantAccession++;
-        }
-        return submittedVariantEntities;
+        String hash = hashingFunction.apply(submittedVariant);
+        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(submittedVariantAccession, hash,
+                                                                                   submittedVariant, 1);
+        submittedVariantAccession++;
+        return submittedVariantEntity;
     }
 }

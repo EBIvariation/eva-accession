@@ -15,20 +15,25 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
 import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
+import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.File;
 import java.io.IOException;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VCF_READER;
 
 @Configuration
 @Import(InputParametersConfiguration.class)
@@ -37,7 +42,13 @@ public class VcfReaderConfiguration {
     @Autowired
     private InputParameters inputParameters;
 
-    @Bean(CLUSTERING_READER)
+    @Bean(VCF_READER)
+    @StepScope
+    public ItemStreamReader<Variant> unwindingReader(VcfReader vcfReader) {
+        return new UnwindingItemStreamReader<>(vcfReader);
+    }
+
+    @Bean
     public VcfReader vcfReader() throws IOException {
 //        String fileId = inputParameters.getProjectAccession();
 //        String studyId = inputParameters.getProjectAccession();
