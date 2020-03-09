@@ -19,11 +19,12 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.List;
 
-public class SubmittedVariantWriter implements ItemWriter<List<SubmittedVariant>> {
+public class SubmittedVariantWriter implements ItemWriter<List<SubmittedVariantEntity>> {
 
     private MongoTemplate mongoTemplate;
 
@@ -32,10 +33,10 @@ public class SubmittedVariantWriter implements ItemWriter<List<SubmittedVariant>
     }
 
     @Override
-    public void write(List<? extends List<SubmittedVariant>> clusteredSubmittedVariants) throws Exception {
+    public void write(List<? extends List<SubmittedVariantEntity>> clusteredSubmittedVariants) throws Exception {
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                    SubmittedVariant.class);
+                    SubmittedVariantEntity.class);
             bulkOperations.insert(clusteredSubmittedVariants.get(0));
             bulkOperations.execute();
         } catch (BulkOperationException e) {

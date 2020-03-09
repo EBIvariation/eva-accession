@@ -16,22 +16,40 @@
 package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.springframework.batch.item.ItemProcessor;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
-public class VariantToSubmittedVariantProcessor implements ItemProcessor<List<Variant>, List<SubmittedVariant>> {
+public class VariantToSubmittedVariantProcessor implements ItemProcessor<List<Variant>, List<SubmittedVariantEntity>> {
+
+    private Function<ISubmittedVariant, String> hashingFunction;
+
+    public VariantToSubmittedVariantProcessor() {
+        hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+    }
 
     @Override
-    public List<SubmittedVariant> process(List<Variant> variants) {
-        List<SubmittedVariant> submittedVariants = new ArrayList<>();
+    public List<SubmittedVariantEntity> process(List<Variant> variants) {
+        List<SubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
+        long submittedVariantAccession = 1000;
         for (Variant variant : variants) {
             SubmittedVariant submittedVariant = new SubmittedVariant(variant.getReference(), 0, "",
                     variant.getChromosome(), variant.getStart(), variant.getReference(), variant.getAlternate(), null);
-            submittedVariants.add(submittedVariant);
+
+            String hash = hashingFunction.apply(submittedVariant);
+            SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(submittedVariantAccession, hash,
+                                                                                       submittedVariant, 1);
+            submittedVariantEntities.add(submittedVariantEntity);
+            submittedVariantAccession++;
         }
-        return submittedVariants;
+        return submittedVariantEntities;
     }
 }

@@ -17,10 +17,22 @@ package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import org.springframework.batch.item.ExecutionContext;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
+import uk.ac.ebi.eva.commons.core.models.Aggregation;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+
+import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 
@@ -28,19 +40,22 @@ public class ClusteringVariantProcessorTest {
 
     private ClusteringVariantProcessor clusteringVariantProcessor;
 
+    private Function<ISubmittedVariant, String> hashingFunction;
+
     @Before
     public void setUp() {
         clusteringVariantProcessor = new ClusteringVariantProcessor();
+        hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @Test
     public void processor() {
-        List<SubmittedVariant> submittedVariants = createSubmittedVariants();
+        List<SubmittedVariantEntity> submittedVariants = createSubmittedVariantEntities();
         long numberOfSubmittedVariants = submittedVariants.size();
-        List<SubmittedVariant> clusteredSubmittedVariants = clusteringVariantProcessor.process(submittedVariants);
+        List<SubmittedVariantEntity> clusteredSubmittedVariants = clusteringVariantProcessor.process(submittedVariants);
 
         long numberOfAccessionAssigned = clusteredSubmittedVariants
-                .stream().map(SubmittedVariant::getClusteredVariantAccession).distinct().count();
+                .stream().map(SubmittedVariantEntity::getClusteredVariantAccession).distinct().count();
         assertEquals(4, numberOfAccessionAssigned);
 
         long numberOfClusteredSubmittedVariants = clusteredSubmittedVariants
@@ -48,27 +63,38 @@ public class ClusteringVariantProcessorTest {
         assertEquals(numberOfSubmittedVariants, numberOfClusteredSubmittedVariants);
     }
 
-    private List<SubmittedVariant> createSubmittedVariants() {
-        List<SubmittedVariant> submittedVariants = new ArrayList<>();
+    private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
+        List<SubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
         SubmittedVariant submittedVariant1 = createSubmittedVariant("assembly1", 1000, "project1", "contig1", 1000L,
                                                                     "T", "A");
+        SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(submittedVariant1);
         //Different alleles
         SubmittedVariant submittedVariant2 = createSubmittedVariant("assembly1", 1000, "project1", "contig1", 1000L,
                                                                     "T", "G");
+        SubmittedVariantEntity submittedVariantEntity2 = createSubmittedVariantEntity(submittedVariant2);
         //Same assembly, contig, start but different type
         SubmittedVariant submittedVariantINS = createSubmittedVariant("assembly1", 1000, "project1", "contig1", 1000L,
                                                                       "", "T");
+        SubmittedVariantEntity submittedVariantEntityINS = createSubmittedVariantEntity(submittedVariantINS);
         SubmittedVariant submittedVariantDEL = createSubmittedVariant("assembly1", 1000, "project1", "contig1", 1000L,
                                                                       "A", "");
+        SubmittedVariantEntity submittedVariantEntityDEL = createSubmittedVariantEntity(submittedVariantDEL);
         //Different assembly, contig and start
         SubmittedVariant submittedVariant3 = createSubmittedVariant("assembly3", 3000, "project3", "contig3", 3000L,
                                                                     "C", "G");
-        submittedVariants.add(submittedVariant1);
-        submittedVariants.add(submittedVariant2);
-        submittedVariants.add(submittedVariantINS);
-        submittedVariants.add(submittedVariantDEL);
-        submittedVariants.add(submittedVariant3);
-        return submittedVariants;
+        SubmittedVariantEntity submittedVariantEntity3 = createSubmittedVariantEntity(submittedVariant3);
+        submittedVariantEntities.add(submittedVariantEntity1);
+        submittedVariantEntities.add(submittedVariantEntity2);
+        submittedVariantEntities.add(submittedVariantEntityINS);
+        submittedVariantEntities.add(submittedVariantEntityDEL);
+        submittedVariantEntities.add(submittedVariantEntity3);
+        return submittedVariantEntities;
+    }
+
+    private SubmittedVariantEntity createSubmittedVariantEntity(SubmittedVariant submittedVariant) {
+        String hash1 = hashingFunction.apply(submittedVariant);
+        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(1L, hash1, submittedVariant, 1);
+        return submittedVariantEntity;
     }
 
     private SubmittedVariant createSubmittedVariant(String referenceSequenceAccession, int taxonomyAccession,
@@ -76,5 +102,15 @@ public class ClusteringVariantProcessorTest {
                                                     String referenceAllele, String alternateAllele) {
         return new SubmittedVariant(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
                                     referenceAllele, alternateAllele, null, false, false, false, true, null);
+    }
+
+    @Test
+    public void reader() throws Exception {
+        URI vcfUri = ClusteringVariantProcessorTest.class.getResource("/input-files/vcf/aggregated_accessioned.vcf.gz").toURI();
+        File vcfFile = new File(vcfUri);
+        AggregatedVcfReader vcfReader = new AggregatedVcfReader("fileId", "studyId", Aggregation.BASIC, null, vcfFile);
+        vcfReader.open(new ExecutionContext());
+        List<Variant> read = vcfReader.read();
+        vcfReader.close();
     }
 }

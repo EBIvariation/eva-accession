@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.clustering.batch.processors.ClusteringVariantProcessor;
 import uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantProcessor;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.Arrays;
@@ -45,10 +46,10 @@ public class ClusteringVariantProcessorConfiguration {
     }
 
     @Bean(COMPOSITE_PROCESSOR)
-    public ItemProcessor<List<Variant>, List<SubmittedVariant>> compositeProcessor(
+    public ItemProcessor<List<Variant>, List<SubmittedVariantEntity>> compositeProcessor(
             VariantToSubmittedVariantProcessor variantToSubmittedVariantProcessor,
             ClusteringVariantProcessor clusteringVariantProcessor) {
-        CompositeItemProcessor<List<Variant>, List<SubmittedVariant>> compositeProcessor =
+        CompositeItemProcessor<List<Variant>, List<SubmittedVariantEntity>> compositeProcessor =
                 new CompositeItemProcessor<>();
         compositeProcessor.setDelegates(Arrays.asList(variantToSubmittedVariantProcessor, clusteringVariantProcessor));
         return compositeProcessor;

@@ -17,9 +17,10 @@ package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class ClusteringVariantProcessor implements ItemProcessor<List<SubmittedVariant>, List<SubmittedVariant>> {
+public class ClusteringVariantProcessor implements ItemProcessor<List<SubmittedVariantEntity>, List<SubmittedVariantEntity>> {
 
     private List<Long> accessions;
 
@@ -58,28 +59,28 @@ public class ClusteringVariantProcessor implements ItemProcessor<List<SubmittedV
     }
 
     @Override
-    public List<SubmittedVariant> process(List<SubmittedVariant> submittedVariants) {
-        for (SubmittedVariant submittedVariant : submittedVariants) {
-            ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariant.getProjectAccession(),
-                                                                     submittedVariant.getTaxonomyAccession(),
-                                                                     submittedVariant.getContig(),
-                                                                     submittedVariant.getStart(),
+    public List<SubmittedVariantEntity> process(List<SubmittedVariantEntity> submittedVariantEntities) {
+        for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
+            ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariantEntity.getProjectAccession(),
+                                                                     submittedVariantEntity.getTaxonomyAccession(),
+                                                                     submittedVariantEntity.getContig(),
+                                                                     submittedVariantEntity.getStart(),
                                                                      getVariantType(
-                                                                             submittedVariant.getReferenceAllele(),
-                                                                             submittedVariant.getAlternateAllele()),
-                                                                     submittedVariant.isValidated(),
-                                                                     submittedVariant.getCreatedDate());
+                                                                             submittedVariantEntity.getReferenceAllele(),
+                                                                             submittedVariantEntity.getAlternateAllele()),
+                                                                     submittedVariantEntity.isValidated(),
+                                                                     submittedVariantEntity.getCreatedDate());
             String hash = hashingFunction.apply(clusteredVariant);
             if (assignedAccessions.containsKey(hash)) {
                 Long existingClusteredVariantAccession = assignedAccessions.get(hash);
-                submittedVariant.setClusteredVariantAccession(existingClusteredVariantAccession);
+                submittedVariantEntity.setClusteredVariantAccession(existingClusteredVariantAccession);
             } else {
                 Long generatedClusteredVariantAccession = iterator.next();
-                submittedVariant.setClusteredVariantAccession(generatedClusteredVariantAccession);
+                submittedVariantEntity.setClusteredVariantAccession(generatedClusteredVariantAccession);
                 assignedAccessions.putIfAbsent(hash, generatedClusteredVariantAccession);
             }
         }
-        return submittedVariants;
+        return submittedVariantEntities;
     }
 
     private VariantType getVariantType(String reference, String alternate) {

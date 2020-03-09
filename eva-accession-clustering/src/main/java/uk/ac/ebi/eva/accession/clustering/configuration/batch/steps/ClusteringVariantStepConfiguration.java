@@ -28,12 +28,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.List;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_SUBMITTED_VARIANTS_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.COMPOSITE_PROCESSOR;
 
 @Configuration
 @EnableBatchProcessing
@@ -45,17 +49,17 @@ public class ClusteringVariantStepConfiguration {
 
     @Autowired
     @Qualifier(COMPOSITE_PROCESSOR)
-    private ItemProcessor<List<Variant>, List<SubmittedVariant>> compositeProcessor;
+    private ItemProcessor<List<Variant>, List<SubmittedVariantEntity>> compositeProcessor;
 
     @Autowired
     @Qualifier(CLUSTERED_SUBMITTED_VARIANTS_WRITER)
-    private ItemWriter<List<SubmittedVariant>> submittedVariantWriter;
+    private ItemWriter<List<SubmittedVariantEntity>> submittedVariantWriter;
 
     @Bean(CLUSTERING_STEP)
     public Step clusteringVariantsStep(StepBuilderFactory stepBuilderFactory,
                                        SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_STEP)
-                .<List<Variant>, List<SubmittedVariant>>chunk(chunkSizeCompletionPolicy)
+                .<List<Variant>, List<SubmittedVariantEntity>>chunk(chunkSizeCompletionPolicy)
                 .reader(vcfReader)
                 .processor(compositeProcessor)
                 .writer(submittedVariantWriter)
