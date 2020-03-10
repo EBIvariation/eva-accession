@@ -39,6 +39,7 @@ import java.util.function.Function;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
+import static uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantProcessor.REFERENCE_SEQUENCE_ACCESSION;
 
 public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity> {
 
@@ -65,8 +66,8 @@ public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity
 
     private void initializeAccessions() {
         this.accessions = new ArrayList<>();
-        long firstAccession = 1L;
-        long lastAccession = 10L;
+        long firstAccession = 1000L;
+        long lastAccession = 1010L;
         for (long i = firstAccession; i <= lastAccession; i++) {
             accessions.add(i);
         }
@@ -94,22 +95,13 @@ public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity
     }
 
     /**
-     * RS accession are generates if they don't exits (based on hash)
+     * RS accession are generated if they don't exits (based on hash)
      * mongoAssignedAccessions: simulate the mongo DB
      * assignedAccessions: is the cache to keep track of the accessions used in the current chunk
      */
     private void getOrCreate(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
         for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
-            ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariantEntity.getProjectAccession(),
-                                                                     submittedVariantEntity.getTaxonomyAccession(),
-                                                                     submittedVariantEntity.getContig(),
-                                                                     submittedVariantEntity.getStart(),
-                                                                     getVariantType(
-                                                                             submittedVariantEntity.getReferenceAllele(),
-                                                                             submittedVariantEntity.getAlternateAllele()),
-                                                                     submittedVariantEntity.isValidated(),
-                                                                     submittedVariantEntity.getCreatedDate());
-            String hash = hashingFunction.apply(clusteredVariant);
+            String hash = getClusteredVariantHash(submittedVariantEntity);
             if (!mongoAssignedAccessions.containsKey(hash)) {
                 Long generatedClusteredVariantAccession = iterator.next();
                 mongoAssignedAccessions.put(hash, generatedClusteredVariantAccession);
@@ -120,8 +112,8 @@ public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity
         }
     }
 
-    private Long getRs(SubmittedVariantEntity submittedVariantEntity) {
-        ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariantEntity.getProjectAccession(),
+    private String getClusteredVariantHash(SubmittedVariantEntity submittedVariantEntity) {
+        ClusteredVariant clusteredVariant = new ClusteredVariant(REFERENCE_SEQUENCE_ACCESSION,
                                                                  submittedVariantEntity.getTaxonomyAccession(),
                                                                  submittedVariantEntity.getContig(),
                                                                  submittedVariantEntity.getStart(),
@@ -131,6 +123,11 @@ public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity
                                                                  submittedVariantEntity.isValidated(),
                                                                  submittedVariantEntity.getCreatedDate());
         String hash = hashingFunction.apply(clusteredVariant);
+        return hash;
+    }
+
+    private Long getRs(SubmittedVariantEntity submittedVariantEntity) {
+        String hash = getClusteredVariantHash(submittedVariantEntity);
         return assignedAccessions.get(hash);
     }
 
