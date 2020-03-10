@@ -15,7 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
-import org.springframework.batch.item.ItemProcessor;
+import org.junit.Before;
+import org.junit.Test;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -26,30 +27,31 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.function.Function;
 
-public class VariantToSubmittedVariantProcessor implements ItemProcessor<Variant, SubmittedVariantEntity> {
+import static org.junit.Assert.assertEquals;
 
-    private String assemblyAccession;
+public class VariantToSubmittedVariantEntityProcessorTest {
 
-    private long submittedVariantAccession;
+    private static final String ASSEMBLY_ACCESSION = "GCA_000000001.1";
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantProcessor(String assemblyAccession) {
-        this.assemblyAccession = assemblyAccession;
+    private VariantToSubmittedVariantEntityProcessor processor;
+
+    @Before
+    public void setUp() {
+        processor = new VariantToSubmittedVariantEntityProcessor(ASSEMBLY_ACCESSION);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
-        //To simulate the VcfReader is reading the ID column
-        submittedVariantAccession = 1000;
     }
 
-    @Override
-    public SubmittedVariantEntity process(Variant variant) {
-        SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, "",
-                variant.getChromosome(), variant.getStart(), variant.getReference(), variant.getAlternate(), null);
+    @Test
+    public void process() {
+        Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
+        SubmittedVariantEntity processedVariant = processor.process(variant);
 
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, 0, "", "1", 1000L, "A", "T", null);
         String hash = hashingFunction.apply(submittedVariant);
-        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(submittedVariantAccession, hash,
-                                                                                   submittedVariant, 1);
-        submittedVariantAccession++;
-        return submittedVariantEntity;
+        SubmittedVariantEntity expectedSubmittedVariantEntity = new SubmittedVariantEntity(1L, hash, submittedVariant, 1);
+
+        assertEquals(expectedSubmittedVariantEntity, processedVariant);
     }
 }

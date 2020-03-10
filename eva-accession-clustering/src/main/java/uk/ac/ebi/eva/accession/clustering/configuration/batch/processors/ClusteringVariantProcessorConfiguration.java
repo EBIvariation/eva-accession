@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantProcessor;
+import uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantEntityProcessor;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR;
@@ -31,7 +31,7 @@ public class ClusteringVariantProcessorConfiguration {
     InputParameters inputParameters;
 
     @Bean(VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR)
-    public VariantToSubmittedVariantProcessor variantToSubmittedVariantProcessor() {
-        return new VariantToSubmittedVariantProcessor(inputParameters.getAssemblyAccession());
+    public VariantToSubmittedVariantEntityProcessor variantToSubmittedVariantProcessor() {
+        return new VariantToSubmittedVariantEntityProcessor(inputParameters.getAssemblyAccession());
     }
 }
