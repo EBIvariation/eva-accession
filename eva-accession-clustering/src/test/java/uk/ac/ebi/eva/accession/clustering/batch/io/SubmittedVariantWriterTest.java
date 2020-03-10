@@ -34,6 +34,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantProcessor.REFERENCE_SEQUENCE_ACCESSION;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
@@ -54,6 +54,9 @@ import static uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmi
 public class SubmittedVariantWriterTest {
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
+
+    @Autowired
+    InputParameters inputParameters;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -72,7 +75,7 @@ public class SubmittedVariantWriterTest {
 
     @Before
     public void setUp() {
-        submittedVariantWriter = new SubmittedVariantWriter(mongoTemplate);
+        submittedVariantWriter = new SubmittedVariantWriter(inputParameters.getAssemblyAccession(), mongoTemplate);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -91,23 +94,23 @@ public class SubmittedVariantWriterTest {
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
         List<SubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
-        SubmittedVariant submittedVariant1 = createSubmittedVariant(REFERENCE_SEQUENCE_ACCESSION, 1000, "", "1", 1000L,
-                                                                    "T", "A");
+        SubmittedVariant submittedVariant1 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000, "",
+                                                                    "1", 1000L, "T", "A");
         SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(1L, submittedVariant1);
         //Different alleles
-        SubmittedVariant submittedVariant2 = createSubmittedVariant(REFERENCE_SEQUENCE_ACCESSION, 1000, "", "1", 1000L,
-                                                                    "T", "G");
+        SubmittedVariant submittedVariant2 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000, "",
+                                                                    "1", 1000L, "T", "G");
         SubmittedVariantEntity submittedVariantEntity2 = createSubmittedVariantEntity(2L, submittedVariant2);
         //Same assembly, contig, start but different type
-        SubmittedVariant submittedVariantINS = createSubmittedVariant(REFERENCE_SEQUENCE_ACCESSION, 1000, "", "1", 1000L,
-                                                                      "", "A");
+        SubmittedVariant submittedVariantINS = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000, "",
+                                                                      "1", 1000L, "", "A");
         SubmittedVariantEntity submittedVariantEntityINS = createSubmittedVariantEntity(3L, submittedVariantINS);
-        SubmittedVariant submittedVariantDEL = createSubmittedVariant(REFERENCE_SEQUENCE_ACCESSION, 1000, "", "1", 1000L,
-                                                                      "T", "");
+        SubmittedVariant submittedVariantDEL = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000, "",
+                                                                      "1", 1000L, "T", "");
         SubmittedVariantEntity submittedVariantEntityDEL = createSubmittedVariantEntity(4L, submittedVariantDEL);
         //Different assembly, contig and start
-        SubmittedVariant submittedVariant3 = createSubmittedVariant(REFERENCE_SEQUENCE_ACCESSION, 3000, "", "1", 3000L,
-                                                                    "C", "G");
+        SubmittedVariant submittedVariant3 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 3000, "",
+                                                                    "1", 3000L, "C", "G");
         SubmittedVariantEntity submittedVariantEntity3 = createSubmittedVariantEntity(5L, submittedVariant3);
         submittedVariantEntities.add(submittedVariantEntity1);
         submittedVariantEntities.add(submittedVariantEntity2);

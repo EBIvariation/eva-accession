@@ -39,9 +39,10 @@ import java.util.function.Function;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
-import static uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantProcessor.REFERENCE_SEQUENCE_ACCESSION;
 
 public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity> {
+
+    private String assemblyAccession;
 
     private MongoTemplate mongoTemplate;
 
@@ -55,7 +56,8 @@ public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity
 
     private Map<String, Long> mongoAssignedAccessions;
 
-    public SubmittedVariantWriter(MongoTemplate mongoTemplate) {
+    public SubmittedVariantWriter(String assemblyAccession, MongoTemplate mongoTemplate) {
+        this.assemblyAccession = assemblyAccession;
         this.mongoTemplate = mongoTemplate;
         hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         initializeAccessions();
@@ -113,7 +115,7 @@ public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity
     }
 
     private String getClusteredVariantHash(SubmittedVariantEntity submittedVariantEntity) {
-        ClusteredVariant clusteredVariant = new ClusteredVariant(REFERENCE_SEQUENCE_ACCESSION,
+        ClusteredVariant clusteredVariant = new ClusteredVariant(assemblyAccession,
                                                                  submittedVariantEntity.getTaxonomyAccession(),
                                                                  submittedVariantEntity.getContig(),
                                                                  submittedVariantEntity.getStart(),

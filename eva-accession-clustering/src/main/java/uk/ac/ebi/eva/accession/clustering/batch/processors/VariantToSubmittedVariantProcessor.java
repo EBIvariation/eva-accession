@@ -28,13 +28,14 @@ import java.util.function.Function;
 
 public class VariantToSubmittedVariantProcessor implements ItemProcessor<Variant, SubmittedVariantEntity> {
 
-    public static final String REFERENCE_SEQUENCE_ACCESSION = "GCA_000000001.1";
+    private String assemblyAccession;
 
     private long submittedVariantAccession;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantProcessor() {
+    public VariantToSubmittedVariantProcessor(String assemblyAccession) {
+        this.assemblyAccession = assemblyAccession;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         //To simulate the VcfReader is reading the ID column
         submittedVariantAccession = 1000;
@@ -42,7 +43,7 @@ public class VariantToSubmittedVariantProcessor implements ItemProcessor<Variant
 
     @Override
     public SubmittedVariantEntity process(Variant variant) {
-        SubmittedVariant submittedVariant = new SubmittedVariant(REFERENCE_SEQUENCE_ACCESSION, 0, "",
+        SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, "",
                 variant.getChromosome(), variant.getStart(), variant.getReference(), variant.getAlternate(), null);
 
         String hash = hashingFunction.apply(submittedVariant);

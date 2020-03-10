@@ -19,6 +19,10 @@ public class InputParameters {
 
     private String vcf;
 
+    private String projectAccession;
+
+    private String assemblyAccession;
+
     private int chunkSize;
 
     public String getVcf() {
@@ -27,6 +31,22 @@ public class InputParameters {
 
     public void setVcf(String vcf) {
         this.vcf = vcf;
+    }
+
+    public String getProjectAccession() {
+        return projectAccession;
+    }
+
+    public void setProjectAccession(String projectAccession) {
+        this.projectAccession = projectAccession;
+    }
+
+    public String getAssemblyAccession() {
+        return assemblyAccession;
+    }
+
+    public void setAssemblyAccession(String assemblyAccession) {
+        this.assemblyAccession = assemblyAccession;
     }
 
     public int getChunkSize() {

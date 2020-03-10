@@ -50,10 +50,8 @@ public class VcfReaderConfiguration {
 
     @Bean
     public VcfReader vcfReader() throws IOException {
-//        String fileId = inputParameters.getProjectAccession();
-//        String studyId = inputParameters.getProjectAccession();
-        String fileId = "file";
-        String studyId = "study";
+        String fileId = inputParameters.getProjectAccession();
+        String studyId = inputParameters.getProjectAccession();
         File vcfFile = new File(inputParameters.getVcf());
         return new AggregatedVcfReader(fileId, studyId, Aggregation.BASIC, null, vcfFile);
     }
