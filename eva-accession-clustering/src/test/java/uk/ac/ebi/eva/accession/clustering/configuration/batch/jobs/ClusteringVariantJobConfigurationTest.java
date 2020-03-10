@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.clustering.configuration.batch.steps;
+package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -40,14 +36,18 @@ import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfigurat
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
-public class ClusteringVariantStepConfigurationTest {
+public class ClusteringVariantJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
@@ -73,38 +73,16 @@ public class ClusteringVariantStepConfigurationTest {
     }
 
     @Test
-    @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
-    public void step() {
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
-        assertTrue(allNotClustered());
-
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CLUSTERING_STEP);
+    public void job() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+        List<String> expectedSteps = Collections.singletonList(CLUSTERING_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
-        assertTrue(allClustered());
     }
 
-    private boolean allClustered() {
-        DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
-        DBCursor dbObjects = collection.find();
-        for (DBObject dbObject : dbObjects) {
-            if (dbObject.get("rs") == null){
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean allNotClustered() {
-        DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
-        DBCursor dbObjects = collection.find();
-        for (DBObject dbObject : dbObjects) {
-            if (dbObject.get("rs") != null){
-                return false;
-            }
-        }
-        return true;
+    private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
+        Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
+        List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
+        assertEquals(expectedSteps, steps);
     }
 }
