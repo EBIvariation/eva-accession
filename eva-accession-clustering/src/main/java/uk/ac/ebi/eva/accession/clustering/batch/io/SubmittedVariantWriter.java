@@ -40,6 +40,22 @@ import java.util.function.Function;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
+/**
+ * assignedAccessions: Accessions assigned by the getOrCreate method in the current chunk
+ *
+ * Will be removed when the Accessioning Service is implemented:
+ * - accessions: Accessions that can be assigned during the process
+ * - iterator: Iterator to get new accessions from the accessions list
+ * - mongoAssignedAccessions: Accessions that have been assigned and are stored in mongo (simulating the mongo DB)
+ *
+ * This writer has two parts:
+ * 1. Use getOrCreate method to obtain the RS accession for a Submitted Variant. If the hash has an RS id already
+ * assigned during the current chunk it will be in assignedAccessions map and the mongo DB (mongoAssignedAccessions)
+ * don't need to be queried
+ * 2. Update the Submitted Variant to include the RS id. The assignedAccessions map is used instead of
+ * mongoAssignedAccessions
+ *
+ */
 public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private String assemblyAccession;

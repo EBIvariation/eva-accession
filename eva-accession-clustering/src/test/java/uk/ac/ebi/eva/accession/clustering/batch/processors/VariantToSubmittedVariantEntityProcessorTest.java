@@ -50,8 +50,10 @@ public class VariantToSubmittedVariantEntityProcessorTest {
 
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, 0, "", "1", 1000L, "A", "T", null);
         String hash = hashingFunction.apply(submittedVariant);
-        SubmittedVariantEntity expectedSubmittedVariantEntity = new SubmittedVariantEntity(1L, hash, submittedVariant, 1);
+        SubmittedVariantEntity expectedSubmittedVariantEntity = new SubmittedVariantEntity(1000L, hash,
+                                                                                           submittedVariant, 1);
 
         assertEquals(expectedSubmittedVariantEntity, processedVariant);
+        assertEquals(expectedSubmittedVariantEntity.getAccession(), processedVariant.getAccession());
     }
 }
