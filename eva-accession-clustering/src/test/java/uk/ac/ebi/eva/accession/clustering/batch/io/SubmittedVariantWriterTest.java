@@ -43,6 +43,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -90,6 +91,7 @@ public class SubmittedVariantWriterTest {
         List<SubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities();
         submittedVariantWriter.write(submittedVariantEntities);
         assertTrue(allClustered());
+        assertTrue(checkClusteredVariantsAccession());
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
@@ -138,6 +140,19 @@ public class SubmittedVariantWriterTest {
         DBCursor dbObjects = collection.find();
         for (DBObject dbObject : dbObjects) {
             if (dbObject.get("rs") == null){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean checkClusteredVariantsAccession() {
+        List<Long> expectedClusteredVariantAccessions = Arrays.asList(1000L, 1000L, 1001L, 1002L, 1003L);
+        DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
+        DBCursor dbObjects = collection.find();
+        for (Long accession : expectedClusteredVariantAccessions) {
+            Long mongoClusteredVariantAccession = (Long)dbObjects.next().get("rs");
+            if (!accession.equals(mongoClusteredVariantAccession)){
                 return false;
             }
         }
