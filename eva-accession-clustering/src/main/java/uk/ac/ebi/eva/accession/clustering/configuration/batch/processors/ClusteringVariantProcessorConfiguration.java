@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantEntityProcessor;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR;
 
 @Configuration
 public class ClusteringVariantProcessorConfiguration {
@@ -30,7 +30,7 @@ public class ClusteringVariantProcessorConfiguration {
     @Autowired
     InputParameters inputParameters;
 
-    @Bean(VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR)
+    @Bean(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR)
     public VariantToSubmittedVariantEntityProcessor variantToSubmittedVariantProcessor() {
         return new VariantToSubmittedVariantEntityProcessor(inputParameters.getAssemblyAccession());
     }

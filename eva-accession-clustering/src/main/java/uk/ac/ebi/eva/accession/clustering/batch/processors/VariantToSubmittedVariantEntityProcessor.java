@@ -37,6 +37,7 @@ public class VariantToSubmittedVariantEntityProcessor implements ItemProcessor<V
     public VariantToSubmittedVariantEntityProcessor(String assemblyAccession) {
         this.assemblyAccession = assemblyAccession;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        //TODO: Implement VcfReader that includes ID column @see <a href="https://www.ebi.ac.uk/panda/jira/browse/EVA-1898">EVA-1898</a>
         //To simulate the VcfReader is reading the ID column
         submittedVariantAccession = 1000;
     }

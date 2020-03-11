@@ -19,9 +19,10 @@ public class BeanNames {
 
     public static final String VCF_READER = "VCF_READER";
 
-    public static final String VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR = "VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR";
+    public static final String VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR =
+            "VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR";
 
-    public static final String CLUSTERED_SUBMITTED_VARIANTS_WRITER = "CLUSTERED_SUBMITTED_VARIANTS_WRITER";
+    public static final String CLUSTERING_WRITER = "CLUSTERING_WRITER";
 
     public static final String CLUSTERING_STEP = "CLUSTERING_STEP";
 

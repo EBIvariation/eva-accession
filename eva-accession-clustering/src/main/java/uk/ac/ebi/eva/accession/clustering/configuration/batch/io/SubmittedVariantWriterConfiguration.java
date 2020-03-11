@@ -20,11 +20,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import uk.ac.ebi.eva.accession.clustering.batch.io.SubmittedVariantWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_SUBMITTED_VARIANTS_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
 
 @Configuration
 @Import({MongoConfiguration.class})
@@ -33,8 +33,8 @@ public class SubmittedVariantWriterConfiguration {
     @Autowired
     InputParameters inputParameters;
 
-    @Bean(CLUSTERED_SUBMITTED_VARIANTS_WRITER)
-    public SubmittedVariantWriter submittedVariantWriter(MongoTemplate mongoTemplate) {
-        return new SubmittedVariantWriter(inputParameters.getAssemblyAccession(), mongoTemplate);
+    @Bean(CLUSTERING_WRITER)
+    public ClusteringWriter submittedVariantWriter(MongoTemplate mongoTemplate) {
+        return new ClusteringWriter(inputParameters.getAssemblyAccession(), mongoTemplate);
     }
 }

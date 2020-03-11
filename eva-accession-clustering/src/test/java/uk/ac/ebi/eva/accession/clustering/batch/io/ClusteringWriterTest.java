@@ -52,7 +52,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
-public class SubmittedVariantWriterTest {
+public class ClusteringWriterTest {
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
@@ -66,7 +66,7 @@ public class SubmittedVariantWriterTest {
     @Autowired
     private ApplicationContext applicationContext;
 
-    private SubmittedVariantWriter submittedVariantWriter;
+    private ClusteringWriter clusteringWriter;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
@@ -76,7 +76,7 @@ public class SubmittedVariantWriterTest {
 
     @Before
     public void setUp() {
-        submittedVariantWriter = new SubmittedVariantWriter(inputParameters.getAssemblyAccession(), mongoTemplate);
+        clusteringWriter = new ClusteringWriter(inputParameters.getAssemblyAccession(), mongoTemplate);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -89,7 +89,7 @@ public class SubmittedVariantWriterTest {
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
     public void writer() throws Exception {
         List<SubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities();
-        submittedVariantWriter.write(submittedVariantEntities);
+        clusteringWriter.write(submittedVariantEntities);
         assertTrue(allClustered());
         assertTrue(checkClusteredVariantsAccession());
     }

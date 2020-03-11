@@ -32,9 +32,9 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_SUBMITTED_VARIANTS_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VCF_READER;
 
 @Configuration
@@ -46,11 +46,11 @@ public class ClusteringVariantStepConfiguration {
     private ItemReader<Variant> vcfReader;
 
     @Autowired
-    @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_PROCESSOR)
+    @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR)
     private ItemProcessor<Variant, SubmittedVariantEntity> compositeProcessor;
 
     @Autowired
-    @Qualifier(CLUSTERED_SUBMITTED_VARIANTS_WRITER)
+    @Qualifier(CLUSTERING_WRITER)
     private ItemWriter<SubmittedVariantEntity> submittedVariantWriter;
 
     @Bean(CLUSTERING_STEP)

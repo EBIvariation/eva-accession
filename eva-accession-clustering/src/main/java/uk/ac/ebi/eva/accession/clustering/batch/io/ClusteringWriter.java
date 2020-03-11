@@ -43,6 +43,7 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 /**
  * assignedAccessions: Accessions assigned by the getOrCreate method in the current chunk
  *
+ * TODO: Implement Accessioning Service @see <a href="https://www.ebi.ac.uk/panda/jira/browse/EVA-1897">EVA-1897</a>
  * Will be removed when the Accessioning Service is implemented:
  * - accessions: Accessions that can be assigned during the process
  * - iterator: Iterator to get new accessions from the accessions list
@@ -56,7 +57,7 @@ import static org.springframework.data.mongodb.core.query.Query.query;
  * mongoAssignedAccessions
  *
  */
-public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity> {
+public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private String assemblyAccession;
 
@@ -72,7 +73,7 @@ public class SubmittedVariantWriter implements ItemWriter<SubmittedVariantEntity
 
     private Map<String, Long> mongoAssignedAccessions;
 
-    public SubmittedVariantWriter(String assemblyAccession, MongoTemplate mongoTemplate) {
+    public ClusteringWriter(String assemblyAccession, MongoTemplate mongoTemplate) {
         this.assemblyAccession = assemblyAccession;
         this.mongoTemplate = mongoTemplate;
         hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
