@@ -25,13 +25,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.SubmittedVariantWriterConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringVariantJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.ClusteringVariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringVariantStepConfiguration;
-import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.sql.DataSource;
 
@@ -40,7 +39,7 @@ import javax.sql.DataSource;
         ClusteringVariantStepConfiguration.class,
         VcfReaderConfiguration.class,
         ClusteringVariantProcessorConfiguration.class,
-        SubmittedVariantWriterConfiguration.class,
+        ClusteringWriterConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class})
 public class BatchTestConfiguration {
 

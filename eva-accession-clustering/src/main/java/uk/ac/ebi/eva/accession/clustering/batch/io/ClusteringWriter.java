@@ -21,41 +21,30 @@ import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
 /**
- * assignedAccessions: Accessions assigned by the getOrCreate method in the current chunk
- *
- * TODO: Implement Accessioning Service @see <a href="https://www.ebi.ac.uk/panda/jira/browse/EVA-1897">EVA-1897</a>
- * Will be removed when the Accessioning Service is implemented:
- * - accessions: Accessions that can be assigned during the process
- * - iterator: Iterator to get new accessions from the accessions list
- * - mongoAssignedAccessions: Accessions that have been assigned and are stored in mongo (simulating the mongo DB)
- *
  * This writer has two parts:
- * 1. Use getOrCreate method to obtain the RS accession for a Submitted Variant. If the hash has an RS id already
- * assigned during the current chunk it will be in assignedAccessions map and the mongo DB (mongoAssignedAccessions)
- * don't need to be queried
- * 2. Update the Submitted Variant to include the RS id. The assignedAccessions map is used instead of
- * mongoAssignedAccessions
- *
+ * 1. Use the accessioning service to generate new RS IDs or get existing ones
+ * 2. Update the submitted variants to include the "rs" field with the generated/retrieved accessions
  */
 public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
@@ -63,48 +52,34 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private MongoTemplate mongoTemplate;
 
+    private ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService;
+
     private Function<IClusteredVariant, String> hashingFunction;
-
-    private List<Long> accessions;
-
-    private Iterator<Long> iterator;
 
     private Map<String, Long> assignedAccessions;
 
-    private Map<String, Long> mongoAssignedAccessions;
-
-    public ClusteringWriter(String assemblyAccession, MongoTemplate mongoTemplate) {
+    public ClusteringWriter(String assemblyAccession, MongoTemplate mongoTemplate,
+                            ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService) {
         this.assemblyAccession = assemblyAccession;
         this.mongoTemplate = mongoTemplate;
+        this.clusteredVariantMonotonicAccessioningService = clusteredVariantMonotonicAccessioningService;
         hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
-        initializeAccessions();
-        this.iterator = this.accessions.iterator();
         this.assignedAccessions = new HashMap<>();
-        this.mongoAssignedAccessions = new HashMap<>();
-    }
-
-    private void initializeAccessions() {
-        this.accessions = new ArrayList<>();
-        long firstAccession = 1000L;
-        long lastAccession = 1010L;
-        for (long i = firstAccession; i <= lastAccession; i++) {
-            accessions.add(i);
-        }
     }
 
     @Override
-    public void write(List<? extends SubmittedVariantEntity> clusteredSubmittedVariants) throws Exception {
+    public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities) throws Exception {
         try {
             assignedAccessions.clear();
-            //Write new Clustered Variants in Mongo and get existing ones (Done by accessioning service)
-            getOrCreate(clusteredSubmittedVariants);
-            //Update Submitted Variants "rs" field
+            //Write new Clustered Variants in mongo and get existing ones
+            getOrCreate(submittedVariantEntities);
+            //Update submitted variants "rs" field
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                                   SubmittedVariantEntity.class);
-            for (SubmittedVariantEntity submittedVariantEntity : clusteredSubmittedVariants) {
+            for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
                 Query query = query(where("_id").is(submittedVariantEntity.getId()));
                 Update update = new Update();
-                update.set("rs", getRs(submittedVariantEntity));
+                update.set("rs", getClusteredVariantAccession(submittedVariantEntity));
                 bulkOperations.updateOne(query, update);
             }
             bulkOperations.execute();
@@ -113,25 +88,16 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    /**
-     * RS accession are generated if they don't exits (based on hash)
-     * mongoAssignedAccessions: simulate the mongo DB
-     * assignedAccessions: is the cache to keep track of the accessions used in the current chunk
-     */
-    private void getOrCreate(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
-        for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
-            String hash = getClusteredVariantHash(submittedVariantEntity);
-            if (!mongoAssignedAccessions.containsKey(hash)) {
-                Long generatedClusteredVariantAccession = iterator.next();
-                mongoAssignedAccessions.put(hash, generatedClusteredVariantAccession);
-                assignedAccessions.put(hash, generatedClusteredVariantAccession);
-            } else {
-                assignedAccessions.put(hash, mongoAssignedAccessions.get(hash));
-            }
-        }
+    private void getOrCreate(List<? extends SubmittedVariantEntity> submittedVariantEntities) throws AccessionCouldNotBeGeneratedException {
+        List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
+                                                                           .map(this::toClusteredVariant)
+                                                                           .collect(Collectors.toList());
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
+                clusteredVariantMonotonicAccessioningService.getOrCreate(clusteredVariants);
+        accessionWrappers.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
     }
 
-    private String getClusteredVariantHash(SubmittedVariantEntity submittedVariantEntity) {
+    private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
         ClusteredVariant clusteredVariant = new ClusteredVariant(assemblyAccession,
                                                                  submittedVariantEntity.getTaxonomyAccession(),
                                                                  submittedVariantEntity.getContig(),
@@ -141,17 +107,22 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                                                          submittedVariantEntity.getAlternateAllele()),
                                                                  submittedVariantEntity.isValidated(),
                                                                  submittedVariantEntity.getCreatedDate());
-        String hash = hashingFunction.apply(clusteredVariant);
-        return hash;
-    }
-
-    private Long getRs(SubmittedVariantEntity submittedVariantEntity) {
-        String hash = getClusteredVariantHash(submittedVariantEntity);
-        return assignedAccessions.get(hash);
+        return clusteredVariant;
     }
 
     private VariantType getVariantType(String reference, String alternate) {
         VariantType variantType = VariantClassifier.getVariantClassification(reference, alternate, 0);
         return variantType;
+    }
+
+    private Long getClusteredVariantAccession(SubmittedVariantEntity submittedVariantEntity) {
+        String hash = getClusteredVariantHash(submittedVariantEntity);
+        return assignedAccessions.get(hash);
+    }
+
+    private String getClusteredVariantHash(SubmittedVariantEntity submittedVariantEntity) {
+        ClusteredVariant clusteredVariant = toClusteredVariant(submittedVariantEntity);
+        String hash = hashingFunction.apply(clusteredVariant);
+        return hash;
     }
 }

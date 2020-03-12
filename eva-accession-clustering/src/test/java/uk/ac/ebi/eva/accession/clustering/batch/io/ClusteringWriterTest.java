@@ -27,6 +27,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
@@ -37,30 +38,42 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {BatchTestConfiguration.class})
+@EnableAutoConfiguration
+@ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringWriterTest {
+
+    private static final String TEST_DB = "test-db";
+
+    private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
     @Autowired
-    InputParameters inputParameters;
+    private InputParameters inputParameters;
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService;
 
     //Required by nosql-unit
     @Autowired
@@ -72,11 +85,12 @@ public class ClusteringWriterTest {
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName("test-db").build());
+            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @Before
     public void setUp() {
-        clusteringWriter = new ClusteringWriter(inputParameters.getAssemblyAccession(), mongoTemplate);
+        clusteringWriter = new ClusteringWriter(inputParameters.getAssemblyAccession(), mongoTemplate,
+                                                clusteredVariantMonotonicAccessioningService);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -90,8 +104,8 @@ public class ClusteringWriterTest {
     public void writer() throws Exception {
         List<SubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities();
         clusteringWriter.write(submittedVariantEntities);
-        assertTrue(allClustered());
-        assertTrue(checkClusteredVariantsAccession());
+        assertClusteredVariantsCreated();
+        assertSubmittedVariantsUpdated();
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
@@ -135,24 +149,37 @@ public class ClusteringWriterTest {
                                     referenceAllele, alternateAllele, null);
     }
 
-    private boolean allClustered() {
+    private void assertClusteredVariantsCreated() {
+        DBCollection collection = mongoTemplate.getCollection(CLUSTERED_VARIANT_COLLECTION);
+        assertEquals(4, collection.count());
+        List<Long> expectedAccessions = Arrays.asList(3000000000L, 3000000001L, 3000000002L, 3000000003L);
+        assertGeneratedAccessions(CLUSTERED_VARIANT_COLLECTION, "accession", expectedAccessions);
+    }
+
+    private void assertGeneratedAccessions(String collectionName, String accessionField,
+                                           List<Long> expectedAccessions) {
+        List<Long> generatedAccessions = new ArrayList<>();
+        DBCollection collection = mongoTemplate.getCollection(collectionName);
+        DBCursor dbObjects = collection.find();
+        for (DBObject dbObject : dbObjects) {
+            Long accessionId = (Long) dbObject.get(accessionField);
+            generatedAccessions.add(accessionId);
+        }
+        Collections.sort(generatedAccessions);
+        assertEquals(expectedAccessions, generatedAccessions);
+    }
+
+    private void assertSubmittedVariantsUpdated() {
+        assertTrue(allSubmittedVariantsClustered());
+        List<Long> expectedAccessions = Arrays.asList(3000000000L, 3000000000L, 3000000001L, 3000000002L, 3000000003L);
+        assertGeneratedAccessions(SUBMITTED_VARIANT_COLLECTION, "rs", expectedAccessions);
+    }
+
+    private boolean allSubmittedVariantsClustered() {
         DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
         DBCursor dbObjects = collection.find();
         for (DBObject dbObject : dbObjects) {
             if (dbObject.get("rs") == null){
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean checkClusteredVariantsAccession() {
-        List<Long> expectedClusteredVariantAccessions = Arrays.asList(1000L, 1000L, 1001L, 1002L, 1003L);
-        DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
-        DBCursor dbObjects = collection.find();
-        for (Long accession : expectedClusteredVariantAccessions) {
-            Long mongoClusteredVariantAccession = (Long)dbObjects.next().get("rs");
-            if (!accession.equals(mongoClusteredVariantAccession)){
                 return false;
             }
         }
