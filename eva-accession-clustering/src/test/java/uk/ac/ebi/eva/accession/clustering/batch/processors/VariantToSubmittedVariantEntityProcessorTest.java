@@ -57,9 +57,7 @@ public class VariantToSubmittedVariantEntityProcessorTest {
                                                                                            hash, submittedVariant, 1);
 
         Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
-        String id = "ss" + SUBMITTED_VARIANT_ACCESSION;
-        variant.setIds(Collections.singleton(id));
-        variant.setMainId(id);
+        variant.setMainId("ss" + SUBMITTED_VARIANT_ACCESSION);
 
         // when
         SubmittedVariantEntity processedVariant = processor.process(variant);
@@ -70,7 +68,7 @@ public class VariantToSubmittedVariantEntityProcessorTest {
     }
 
     @Test
-    public void failIfSsidIsMissing() {
+    public void ssidMissing() {
         Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
         assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
