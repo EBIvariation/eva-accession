@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class VariantToSubmittedVariantEntityProcessorTest {
@@ -71,11 +72,6 @@ public class VariantToSubmittedVariantEntityProcessorTest {
     @Test
     public void failIfSsidIsMissing() {
         Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
-        try {
-            processor.process(variant);
-            fail("Processor should have thrown an exception because the variants lacks an SS ID");
-        } catch (IllegalArgumentException e) {
-            ; // ok
-        }
+        assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
 }
