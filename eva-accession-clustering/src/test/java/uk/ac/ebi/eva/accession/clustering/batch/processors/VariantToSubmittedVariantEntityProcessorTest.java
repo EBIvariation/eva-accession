@@ -25,13 +25,17 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import java.util.Collections;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class VariantToSubmittedVariantEntityProcessorTest {
 
     private static final String ASSEMBLY_ACCESSION = "GCA_000000001.1";
+
+    private static final long SUBMITTED_VARIANT_ACCESSION = 1000L;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
@@ -45,15 +49,33 @@ public class VariantToSubmittedVariantEntityProcessorTest {
 
     @Test
     public void process() {
-        Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
-        SubmittedVariantEntity processedVariant = processor.process(variant);
-
+        // given
         SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, 0, "", "1", 1000L, "A", "T", null);
         String hash = hashingFunction.apply(submittedVariant);
-        SubmittedVariantEntity expectedSubmittedVariantEntity = new SubmittedVariantEntity(1000L, hash,
-                                                                                           submittedVariant, 1);
+        SubmittedVariantEntity expectedSubmittedVariantEntity = new SubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION,
+                                                                                           hash, submittedVariant, 1);
 
+        Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
+        String id = "ss" + SUBMITTED_VARIANT_ACCESSION;
+        variant.setIds(Collections.singleton(id));
+        variant.setMainId(id);
+
+        // when
+        SubmittedVariantEntity processedVariant = processor.process(variant);
+
+        // then
         assertEquals(expectedSubmittedVariantEntity, processedVariant);
         assertEquals(expectedSubmittedVariantEntity.getAccession(), processedVariant.getAccession());
+    }
+
+    @Test
+    public void failIfSsidIsMissing() {
+        Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
+        try {
+            processor.process(variant);
+            fail("Processor should have thrown an exception because the variants lacks an SS ID");
+        } catch (IllegalArgumentException e) {
+            ; // ok
+        }
     }
 }

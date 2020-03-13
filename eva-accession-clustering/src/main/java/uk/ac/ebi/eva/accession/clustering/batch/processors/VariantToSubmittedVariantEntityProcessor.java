@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.processors;
 
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -30,27 +31,26 @@ public class VariantToSubmittedVariantEntityProcessor implements ItemProcessor<V
 
     private String assemblyAccession;
 
-    private long submittedVariantAccession;
-
     private Function<ISubmittedVariant, String> hashingFunction;
 
     public VariantToSubmittedVariantEntityProcessor(String assemblyAccession) {
         this.assemblyAccession = assemblyAccession;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
-        //TODO: Implement VcfReader that includes ID column @see <a href="https://www.ebi.ac.uk/panda/jira/browse/EVA-1898">EVA-1898</a>
-        //To simulate the VcfReader is reading the ID column
-        submittedVariantAccession = 1000;
     }
 
     @Override
     public SubmittedVariantEntity process(Variant variant) {
+        Assert.isTrue(variant.getMainId() != null && variant.getMainId().matches("ss[0-9]+"),
+                      "The variants should have an SS ID as main ID: " + variant.toString());
+        long accession = Long.parseLong(variant.getMainId().substring(2));
+
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, "",
                 variant.getChromosome(), variant.getStart(), variant.getReference(), variant.getAlternate(), null);
 
         String hash = hashingFunction.apply(submittedVariant);
-        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(submittedVariantAccession, hash,
+
+        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(accession, hash,
                                                                                    submittedVariant, 1);
-        submittedVariantAccession++;
         return submittedVariantEntity;
     }
 }
