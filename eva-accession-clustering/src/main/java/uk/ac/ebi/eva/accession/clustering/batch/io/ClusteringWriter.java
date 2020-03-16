@@ -72,7 +72,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         try {
             assignedAccessions.clear();
             //Write new Clustered Variants in mongo and get existing ones
-            getOrCreate(submittedVariantEntities);
+            getOrCreateClusteredVariantAccessions(submittedVariantEntities);
             //Update submitted variants "rs" field
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                                   SubmittedVariantEntity.class);
@@ -88,7 +88,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    private void getOrCreate(List<? extends SubmittedVariantEntity> submittedVariantEntities) throws AccessionCouldNotBeGeneratedException {
+    private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
+            throws AccessionCouldNotBeGeneratedException {
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
                                                                            .map(this::toClusteredVariant)
                                                                            .collect(Collectors.toList());
