@@ -15,7 +15,6 @@
  * limitations under the License.
  *
  */
-
 package uk.ac.ebi.eva.accession.core.model.eva;
 
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -31,6 +30,7 @@ import java.time.LocalDateTime;
 
 @Document
 public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVariant, Long> implements IClusteredVariant {
+
 
     @Indexed(background = true)
     @Field("asm")
@@ -163,5 +163,4 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
                 + ", validated=" + validated
                 + '}';
     }
-
 }

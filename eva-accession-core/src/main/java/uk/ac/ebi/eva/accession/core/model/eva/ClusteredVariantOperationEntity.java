@@ -18,10 +18,11 @@
 
 package uk.ac.ebi.eva.accession.core.model.eva;
 
+import org.springframework.data.mongodb.core.mapping.Document;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 
+@Document
 public class ClusteredVariantOperationEntity extends EventDocument<IClusteredVariant, Long,
         ClusteredVariantInactiveEntity> {
 
