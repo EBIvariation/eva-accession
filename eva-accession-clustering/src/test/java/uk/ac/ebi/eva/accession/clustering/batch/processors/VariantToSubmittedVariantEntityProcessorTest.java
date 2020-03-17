@@ -68,7 +68,7 @@ public class VariantToSubmittedVariantEntityProcessorTest {
     }
 
     @Test
-    public void ssidMissing() {
+    public void ssIdMissing() {
         Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
         assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
