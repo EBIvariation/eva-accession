@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2020 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.core.model.dbsnp;
 
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+package uk.ac.ebi.eva.accession.core.repository.nonhuman.eva;
 
-public class DbsnpClusteredVariantInactiveEntity extends ClusteredVariantInactiveEntity {
+import org.springframework.stereotype.Repository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
 
-    public DbsnpClusteredVariantInactiveEntity() {
-        super();
-    }
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 
-    public DbsnpClusteredVariantInactiveEntity(DbsnpClusteredVariantEntity dbsnpClusteredVariantEntity) {
-        super(dbsnpClusteredVariantEntity);
-    }
+@Repository
+public interface ClusteredVariantAccessioningRepository extends
+        IAccessionedObjectRepository<ClusteredVariantEntity, Long> {
 }

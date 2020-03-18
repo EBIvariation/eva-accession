@@ -26,18 +26,30 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
-import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantOperationRepository;
-import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningDatabaseService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -52,7 +64,13 @@ public class ClusteredVariantAccessioningConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantAccessioningConfiguration.class);
 
     @Autowired
+    private ClusteredVariantAccessioningRepository repository;
+
+    @Autowired
     private DbsnpClusteredVariantAccessioningRepository dbsnpRepository;
+
+    @Autowired
+    private ClusteredVariantOperationRepository operationRepository;
 
     @Autowired
     private DbsnpClusteredVariantOperationRepository dbsnpOperationRepository;
@@ -61,18 +79,26 @@ public class ClusteredVariantAccessioningConfiguration {
     private ApplicationProperties applicationProperties;
 
     @Autowired
-    private ContiguousIdBlockService service;
+    private ContiguousIdBlockService blockService;
 
     @Value("${accessioning.clustered.categoryId}")
     private String categoryId;
 
     @Bean
     public Long accessioningMonotonicInitRs() {
-        return service.getBlockParameters(categoryId).getBlockStartValue();
+        return blockService.getBlockParameters(categoryId).getBlockStartValue();
+    }
+
+    @Bean
+    public ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService() {
+        return new ClusteredVariantMonotonicAccessioningService(clusteredVariantAccessionGenerator(),
+                                                                clusteredVariantAccessioningDatabaseService(),
+                                                                new ClusteredVariantSummaryFunction(),
+                                                                new SHA1HashingFunction());
     }
 
     @Bean("nonhumanActiveService")
-    public ClusteredVariantAccessioningService clusteredVariantAccessioningService() {
+    public ClusteredVariantAccessioningService dnsnpClusteredVariantAccessioningService() {
         return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
                                                        dbsnpClusteredVariantAccessioningDatabaseService());
     }
@@ -81,28 +107,45 @@ public class ClusteredVariantAccessioningConfiguration {
     public MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
         logger.debug("Using application properties: " + properties.toString());
-        return new DbsnpMonotonicAccessionGenerator<>(
+        return new MonotonicAccessionGenerator<>(
                 properties.getClustered().getCategoryId(),
                 properties.getInstanceId(),
-                service);
+                blockService,
+                clusteredVariantAccessioningDatabaseService());
     }
 
     @Bean
     public DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
         return new DbsnpMonotonicAccessionGenerator<>(properties.getClustered().getCategoryId(),
-                                                      properties.getInstanceId(), service);
+                                                      properties.getInstanceId(), blockService);
+    }
+
+    @Bean
+    public ClusteredVariantAccessioningDatabaseService clusteredVariantAccessioningDatabaseService() {
+        return new ClusteredVariantAccessioningDatabaseService(repository, clusteredVariantInactiveService());
     }
 
     @Bean
     public DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
         return new DbsnpClusteredVariantAccessioningDatabaseService(dbsnpRepository,
-                dbsnpClusteredVariantInactiveService());
+                                                                    dbsnpClusteredVariantInactiveService());
+    }
+
+    @Bean
+    public ClusteredVariantOperationRepository clusteredVariantOperationRepository() {
+        return operationRepository;
     }
 
     @Bean
     public DbsnpClusteredVariantOperationRepository dbsnpClusteredVariantOperationRepository() {
         return dbsnpOperationRepository;
+    }
+
+    @Bean
+    public ClusteredVariantInactiveService clusteredVariantInactiveService() {
+        return new ClusteredVariantInactiveService(operationRepository, ClusteredVariantInactiveEntity::new,
+                                                   ClusteredVariantOperationEntity::new);
     }
 
     @Bean("nonhumanInactiveService")
@@ -111,5 +154,4 @@ public class ClusteredVariantAccessioningConfiguration {
                                                         DbsnpClusteredVariantInactiveEntity::new,
                                                         DbsnpClusteredVariantOperationEntity::new);
     }
-
 }
