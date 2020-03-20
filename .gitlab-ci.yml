@@ -4,7 +4,8 @@ stages:
     - deploy
 
 variables:
-    ARTIFACT_PATH: eva-accession-ws/target/eva-$ENVIRONMENT_NAME.war
+    WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
+    CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
 
 before_script:
     - export DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
@@ -29,11 +30,12 @@ test:
     environment:
         name: $ENVIRONMENT_NAME
     script:
-        - mvn package --projects 'eva-accession-core,eva-accession-ws' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
-        - cp eva-accession-ws/target/eva*.war $ARTIFACT_PATH
+        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
+        - cp eva-accession-ws/target/eva*.war $WS_ARTIFACT_PATH
     artifacts:
         paths:
-            - $ARTIFACT_PATH
+            - $WS_ARTIFACT_PATH
+            - $CLUSTERING_ARTIFACT_PATH
 
 package-internal:
     extends: .package
@@ -59,18 +61,18 @@ package-production:
     only:
         - tags
 
-# Not executed, parent job definition for Tomcat deployments
-.deploy:
+# Not executed, parent job definition for deployments
+.deploy-tomcat:
     stage: deploy
     image: alpine:3.9.5
     environment:
         name: $ENVIRONMENT_NAME
     script:
         - apk add --update curl
-        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
+        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
 
 deploy-tomcat-internal:
-    extends: .deploy
+    extends: .deploy-tomcat
     variables:
         ENVIRONMENT_NAME: internal
         TOMCAT_USER: $TOMCAT_INTERNAL_USER
@@ -82,7 +84,7 @@ deploy-tomcat-internal:
         - master
 
 deploy-tomcat-development:
-    extends: .deploy
+    extends: .deploy-tomcat
     variables:
         ENVIRONMENT_NAME: development
         TOMCAT_USER: $TOMCAT_DEVELOPMENT_USER
@@ -94,7 +96,7 @@ deploy-tomcat-development:
         - master
 
 deploy-tomcat-production:
-    extends: .deploy
+    extends: .deploy-tomcat
     when: manual
     variables:
         ENVIRONMENT_NAME: production
@@ -107,13 +109,51 @@ deploy-tomcat-production:
         - tags
 
 deploy-tomcat-production-fallback:
-    extends: .deploy
+    extends: .deploy-tomcat
     when: manual
     variables:
         ENVIRONMENT_NAME: production
         TOMCAT_USER: $TOMCAT_PRODUCTION_FALLBACK_USER
         TOMCAT_PASSWORD: $TOMCAT_PRODUCTION_FALLBACK_PASSWORD
         TOMCAT_HOST: $TOMCAT_PRODUCTION_FALLBACK_HOST
+    dependencies:
+        - package-production
+    only:
+        - tags
+
+# Not executed, parent job definition for deployments of jar files
+.deploy-jar:
+    stage: deploy
+    image: alpine:3.9.5
+    environment:
+        name: $ENVIRONMENT_NAME
+    script:
+        # Start ssh-agent and set identity then copy the Jar file and create a symlink
+        # See https://docs.gitlab.com/ee/ci/ssh_keys/
+        - apk add --update openssh-client
+        - eval "$(ssh-agent)"
+        - echo "$EVA_ETL_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        - TMP_NAME=$(basename $(ls $CLUSTERING_ARTIFACT_PATH))
+        - CLUSTERING_ARTIFACT_NAME=${TMP_NAME%%.jar}-${ENVIRONMENT_NAME}.jar
+        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CLUSTERING_ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE}:${CLUSTERING_PATH}/${CLUSTERING_ARTIFACT_NAME}
+        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE} "ln -fns ${CLUSTERING_PATH}/${CLUSTERING_ARTIFACT_NAME} ${CLUSTERING_PATH}/eva-accession-clustering.jar"
+
+deploy-jar-development:
+    extends: .deploy-jar
+    variables:
+        ENVIRONMENT_NAME: development
+        CLUSTERING_PATH: $CLUSTERING_DEVELOPMENT_PATH
+    dependencies:
+        - package-development
+    only:
+        - master
+
+deploy-jar-production:
+    extends: .deploy-jar
+    when: manual
+    variables:
+        ENVIRONMENT_NAME: production
+        CLUSTERING_PATH: $CLUSTERING_PRODUCTION_PATH
     dependencies:
         - package-production
     only:
