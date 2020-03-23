@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -24,7 +23,6 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
@@ -33,15 +31,10 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 @Import({ClusteredVariantAccessioningConfiguration.class, MongoConfiguration.class})
 public class ClusteringWriterConfiguration {
 
-    @Autowired
-    InputParameters inputParameters;
-
-    @Autowired
-    ClusteredVariantMonotonicAccessioningService clusteredVariantAccessioningService;
-
     @Bean(CLUSTERING_WRITER)
-    public ClusteringWriter submittedVariantWriter(MongoTemplate mongoTemplate) {
+    public ClusteringWriter clusteringWriter(MongoTemplate mongoTemplate, InputParameters inputParameters,
+                                             ClusteredVariantMonotonicAccessioningService accessioningService) {
         return new ClusteringWriter(inputParameters.getAssemblyAccession(), mongoTemplate,
-                                    clusteredVariantAccessioningService);
+                                    accessioningService);
     }
 }

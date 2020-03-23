@@ -20,46 +20,40 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VCF_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONGO_READER;
 
 @Configuration
 @EnableBatchProcessing
-public class ClusteringVariantStepConfiguration {
+public class ClusteringFromMongoStepConfiguration {
 
-    @Autowired
-    @Qualifier(VCF_READER)
-    private ItemReader<Variant> vcfReader;
+    private ItemStreamReader<SubmittedVariantEntity> mongoReader;
 
-    @Autowired
-    @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR)
-    private ItemProcessor<Variant, SubmittedVariantEntity> compositeProcessor;
-
-    @Autowired
-    @Qualifier(CLUSTERING_WRITER)
     private ItemWriter<SubmittedVariantEntity> submittedVariantWriter;
 
-    @Bean(CLUSTERING_STEP)
-    public Step clusteringVariantsStep(StepBuilderFactory stepBuilderFactory,
-                                       SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(CLUSTERING_STEP)
-                .<Variant, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
-                .reader(vcfReader)
-                .processor(compositeProcessor)
+    public ClusteringFromMongoStepConfiguration(
+            @Qualifier(MONGO_READER)ItemStreamReader<SubmittedVariantEntity> mongoReader,
+            @Qualifier(CLUSTERING_WRITER)ItemWriter<SubmittedVariantEntity> submittedVariantWriter) {
+        this.mongoReader = mongoReader;
+        this.submittedVariantWriter = submittedVariantWriter;
+    }
+
+    @Bean(CLUSTERING_FROM_MONGO_STEP)
+    public Step clusteringVariantStepMongReader(StepBuilderFactory stepBuilderFactory,
+                                                SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(CLUSTERING_FROM_MONGO_STEP)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+                .reader(mongoReader)
                 .writer(submittedVariantWriter)
                 .build();
         return step;

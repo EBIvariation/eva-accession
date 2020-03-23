@@ -25,20 +25,22 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 
 @Configuration
 @EnableBatchProcessing
-public class ClusteringVariantJobConfiguration {
+public class ClusteringFromVcfJobConfiguration {
 
-    @Autowired
-    @Qualifier(CLUSTERING_STEP)
-    public Step clusteringStep;
+    private Step clusteringStep;
 
-    @Bean(CLUSTERING_JOB)
-    public Job ClusteringVariantJobConfiguration(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(CLUSTERING_JOB)
+    public ClusteringFromVcfJobConfiguration( @Qualifier(CLUSTERING_FROM_VCF_STEP)Step clusteringStep) {
+        this.clusteringStep = clusteringStep;
+    }
+
+    @Bean(CLUSTERING_FROM_VCF_JOB)
+    public Job ClusteringFromVcfJob(JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get(CLUSTERING_FROM_VCF_JOB)
                 .incrementer(new RunIdIncrementer())
                 .start(clusteringStep)
                 .build();

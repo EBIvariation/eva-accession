@@ -16,21 +16,26 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
 import com.mongodb.MongoClient;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
+import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONGO_READER;
+
 @Configuration
-@Import({MongoConfiguration.class})
+@Import({MongoConfiguration.class, InputParametersConfiguration.class})
 public class ClusteringMongoReaderConfiguration {
 
-    @Bean
-    ClusteringMongoReader clusteringMongoReader(MongoClient mongoClient, MongoProperties mongoProperties,
+    @Bean(MONGO_READER)
+    @StepScope
+    public ClusteringMongoReader clusteringMongoReader(MongoClient mongoClient, MongoProperties mongoProperties,
                                                 MongoTemplate mongoTemplate, InputParameters parameters) {
         if (parameters.getAssemblyAccession() == null || parameters.getAssemblyAccession().isEmpty()) {
             throw new IllegalArgumentException("Please provide an assembly");
