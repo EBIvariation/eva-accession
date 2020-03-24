@@ -61,7 +61,8 @@ public class CoordinatesVcfFactory extends VariantVcfFactory {
         return variants;
     }
 
-    private Set<String> getIds(String[] fields) {
+    @Override
+    protected Set<String> getIds(String[] fields) {
         String[] idsSplit = fields[2].split(";");
         Set<String> ids;
         if (idsSplit.length == 1 && ".".equals(idsSplit[0])) {
