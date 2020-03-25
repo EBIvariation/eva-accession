@@ -20,7 +20,6 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,14 +31,9 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 @EnableBatchProcessing
 public class ClusteringFromMongoJobConfiguration {
 
-    private Step clusteringFromMongoStep;
-
-    public ClusteringFromMongoJobConfiguration(@Qualifier(CLUSTERING_FROM_MONGO_STEP)Step clusteringFromMongoStep) {
-        this.clusteringFromMongoStep = clusteringFromMongoStep;
-    }
-
     @Bean(CLUSTERING_FROM_MONGO_JOB)
-    public Job ClusteringFromMongoJob(JobBuilderFactory jobBuilderFactory) {
+    public Job clusteringFromMongoJob(@Qualifier(CLUSTERING_FROM_MONGO_STEP) Step clusteringFromMongoStep,
+                                      JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
                 .incrementer(new RunIdIncrementer())
                 .start(clusteringFromMongoStep)

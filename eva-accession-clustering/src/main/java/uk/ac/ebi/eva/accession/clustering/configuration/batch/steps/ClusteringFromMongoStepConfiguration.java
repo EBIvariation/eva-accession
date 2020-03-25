@@ -23,7 +23,6 @@ import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,20 +36,12 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONGO_R
 @EnableBatchProcessing
 public class ClusteringFromMongoStepConfiguration {
 
-    private ItemStreamReader<SubmittedVariantEntity> mongoReader;
-
-    private ItemWriter<SubmittedVariantEntity> submittedVariantWriter;
-
-    public ClusteringFromMongoStepConfiguration(
-            @Qualifier(MONGO_READER)ItemStreamReader<SubmittedVariantEntity> mongoReader,
-            @Qualifier(CLUSTERING_WRITER)ItemWriter<SubmittedVariantEntity> submittedVariantWriter) {
-        this.mongoReader = mongoReader;
-        this.submittedVariantWriter = submittedVariantWriter;
-    }
-
     @Bean(CLUSTERING_FROM_MONGO_STEP)
-    public Step clusteringVariantStepMongReader(StepBuilderFactory stepBuilderFactory,
-                                                SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+    public Step clusteringVariantStepMongReader(
+            @Qualifier(MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
+            @Qualifier(CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_FROM_MONGO_STEP)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(mongoReader)

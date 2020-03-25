@@ -20,7 +20,6 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,14 +31,9 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 @EnableBatchProcessing
 public class ClusteringFromVcfJobConfiguration {
 
-    private Step clusteringStep;
-
-    public ClusteringFromVcfJobConfiguration( @Qualifier(CLUSTERING_FROM_VCF_STEP)Step clusteringStep) {
-        this.clusteringStep = clusteringStep;
-    }
-
     @Bean(CLUSTERING_FROM_VCF_JOB)
-    public Job ClusteringFromVcfJob(JobBuilderFactory jobBuilderFactory) {
+    public Job ClusteringFromVcfJob(@Qualifier(CLUSTERING_FROM_VCF_STEP) Step clusteringStep,
+                                    JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CLUSTERING_FROM_VCF_JOB)
                 .incrementer(new RunIdIncrementer())
                 .start(clusteringStep)

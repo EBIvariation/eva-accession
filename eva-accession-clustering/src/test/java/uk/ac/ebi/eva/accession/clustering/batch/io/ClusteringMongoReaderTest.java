@@ -92,8 +92,8 @@ public class ClusteringMongoReaderTest {
 
     @Test
     public void readNotClusteredSubmittedVariants() {
-        List<SubmittedVariantEntity> variants = readIntoList();
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).count());
+        List<SubmittedVariantEntity> variants = readIntoList();
         assertEquals(5, variants.size());
         assertFalse(variants.stream().anyMatch(x -> x.getId().equals(CLUSTERED_SUBMITTED_VARIANT_ID)));
         assertTrue(variants.stream().anyMatch(x -> x.getId().equals(NOT_CLUSTERED_SUBMITTED_VARIANT_ID)));

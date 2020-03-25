@@ -39,24 +39,13 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VCF_REA
 @EnableBatchProcessing
 public class ClusteringFromVcfStepConfiguration {
 
-    private ItemReader<Variant> vcfReader;
-
-    private ItemProcessor<Variant, SubmittedVariantEntity> processor;
-
-    private ItemWriter<SubmittedVariantEntity> submittedVariantWriter;
-
-    public ClusteringFromVcfStepConfiguration(
-            @Qualifier(VCF_READER)ItemReader<Variant> vcfReader,
-            @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR)ItemProcessor<Variant, SubmittedVariantEntity> processor,
-            @Qualifier(CLUSTERING_WRITER)ItemWriter<SubmittedVariantEntity> submittedVariantWriter) {
-        this.vcfReader = vcfReader;
-        this.processor = processor;
-        this.submittedVariantWriter = submittedVariantWriter;
-    }
-
     @Bean(CLUSTERING_FROM_VCF_STEP)
-    public Step clusteringVariantsStep(StepBuilderFactory stepBuilderFactory,
-                                       SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+    public Step clusteringVariantsStep(
+            @Qualifier(VCF_READER) ItemReader<Variant> vcfReader,
+            @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR) ItemProcessor<Variant, SubmittedVariantEntity> processor,
+            @Qualifier(CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_FROM_VCF_STEP)
                 .<Variant, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(vcfReader)
