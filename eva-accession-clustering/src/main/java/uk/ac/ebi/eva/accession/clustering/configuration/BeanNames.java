@@ -19,13 +19,19 @@ public class BeanNames {
 
     public static final String VCF_READER = "VCF_READER";
 
+    public static final String MONGO_READER = "MONGO_READER";
+
     public static final String VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR =
             "VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR";
 
     public static final String CLUSTERING_WRITER = "CLUSTERING_WRITER";
 
-    public static final String CLUSTERING_STEP = "CLUSTERING_STEP";
+    public static final String CLUSTERING_FROM_VCF_STEP = "CLUSTERING_FROM_VCF_STEP";
 
-    public static final String CLUSTERING_JOB = "CLUSTERING_JOB";
+    public static final String CLUSTERING_FROM_MONGO_STEP = "CLUSTERING_FROM_MONGO_STEP";
+
+    public static final String CLUSTERING_FROM_VCF_JOB = "CLUSTERING_FROM_VCF_JOB";
+
+    public static final String CLUSTERING_FROM_MONGO_JOB = "CLUSTERING_FROM_MONGO_JOB";
 
 }

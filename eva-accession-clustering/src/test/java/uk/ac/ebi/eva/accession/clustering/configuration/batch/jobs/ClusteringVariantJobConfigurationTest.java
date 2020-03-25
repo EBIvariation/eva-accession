@@ -15,10 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
@@ -26,15 +22,11 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
-import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,40 +34,36 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringVariantJobConfigurationTest {
 
-    private static final String TEST_DB = "test-db";
-
-    private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
+    @Autowired
+    @Qualifier(JOB_LAUNCHER_FROM_VCF)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromVcf;
 
     @Autowired
-    private JobLauncherTestUtils jobLauncherTestUtils;
+    @Qualifier(JOB_LAUNCHER_FROM_MONGO)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
-    //Required by nosql-unit
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
-            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    @After
-    public void tearDown() {
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+    @Test
+    public void jobFromVcf() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchJob();
+        List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_VCF_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     @Test
-    public void job() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-        List<String> expectedSteps = Collections.singletonList(CLUSTERING_STEP);
+    public void jobFromMongo() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
+        List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_MONGO_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }

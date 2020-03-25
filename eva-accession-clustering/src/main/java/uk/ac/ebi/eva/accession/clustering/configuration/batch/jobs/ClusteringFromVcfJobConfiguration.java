@@ -20,25 +20,21 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 
 @Configuration
 @EnableBatchProcessing
-public class ClusteringVariantJobConfiguration {
+public class ClusteringFromVcfJobConfiguration {
 
-    @Autowired
-    @Qualifier(CLUSTERING_STEP)
-    public Step clusteringStep;
-
-    @Bean(CLUSTERING_JOB)
-    public Job ClusteringVariantJobConfiguration(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(CLUSTERING_JOB)
+    @Bean(CLUSTERING_FROM_VCF_JOB)
+    public Job ClusteringFromVcfJob(@Qualifier(CLUSTERING_FROM_VCF_STEP) Step clusteringStep,
+                                    JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get(CLUSTERING_FROM_VCF_JOB)
                 .incrementer(new RunIdIncrementer())
                 .start(clusteringStep)
                 .build();

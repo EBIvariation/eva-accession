@@ -1,0 +1,77 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id": "0993FBC8C6D0A20D35B0A6DA755663B3C849676D",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "T",
+      "alt": "A",
+      "accession": NumberLong(1),
+      "version": 1
+    },
+    {
+      "_id": "6EE63124DFD82B0C941E34B40A3342757174F77B",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "T",
+      "alt": "G",
+      "accession": NumberLong(2),
+      "version": 1
+    },
+    {
+      "_id": "F033E9F5E8E1B53321C6932DEF78136B22E058CC",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "",
+      "alt": "A",
+      "accession": NumberLong(3),
+      "version": 1
+    },
+    {
+      "_id": "08D31D2BD7F6A13CDEC0E0931A13DA1599CCA07E",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "T",
+      "alt": "",
+      "accession": NumberLong(4),
+      "version": 1
+    },
+    {
+      "_id": "4C1C9CE98428A4F0A6033237BA00C31E33B540DC",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "",
+      "contig": "1",
+      "start": NumberLong(3000),
+      "ref": "C",
+      "alt": "G",
+      "accession": NumberLong(5),
+      "version": 1
+    },
+    {
+      "_id": "4C1C9CE98428A4F0A6033237BA00C31E33B540D0",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "",
+      "contig": "2",
+      "start": NumberLong(3000),
+      "ref": "T",
+      "alt": "G",
+      "accession": NumberLong(5),
+      "version": 1,
+      "rs": NumberLong(1)
+    }
+  ]
+}

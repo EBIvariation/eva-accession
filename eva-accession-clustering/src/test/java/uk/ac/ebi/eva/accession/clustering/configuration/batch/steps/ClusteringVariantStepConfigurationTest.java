@@ -29,6 +29,7 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
@@ -46,11 +47,15 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
+@UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
 public class ClusteringVariantStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
@@ -60,7 +65,12 @@ public class ClusteringVariantStepConfigurationTest {
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
     @Autowired
-    private JobLauncherTestUtils jobLauncherTestUtils;
+    @Qualifier(JOB_LAUNCHER_FROM_VCF)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromVcf;
+
+    @Autowired
+    @Qualifier(JOB_LAUNCHER_FROM_MONGO)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -80,12 +90,25 @@ public class ClusteringVariantStepConfigurationTest {
 
     @Test
     @DirtiesContext
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
-    public void step() {
+    public void stepFromVcf() {
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
         assertTrue(allSubmittedVariantsNotClustered());
 
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(CLUSTERING_STEP);
+        JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchStep(CLUSTERING_FROM_VCF_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
+        assertClusteredVariantsCreated();
+        assertSubmittedVariantsUpdated();
+    }
+
+    @Test
+    @DirtiesContext
+    public void stepFromMongo() {
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
+        assertTrue(allSubmittedVariantsNotClustered());
+
+        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_FROM_MONGO_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
