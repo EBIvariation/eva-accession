@@ -18,7 +18,7 @@
 package uk.ac.ebi.eva.accession.ws;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -81,10 +81,12 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -207,10 +209,10 @@ public class ClusteredVariantsRestControllerTest {
         dbsnpRepository.deleteAll();
         dbsnpSubmittedVariantRepository.deleteAll();
         submittedVariantRepository.deleteAll();
-        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
-        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
-        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
-        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).deleteMany(new BasicDBObject());
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).deleteMany(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).deleteMany(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).deleteMany(new BasicDBObject());
         setupDbSnpClusteredVariants();
         setupDbsnpSubmittedVariants();
         setupEvaSubmittedVariants();
@@ -248,8 +250,8 @@ public class ClusteredVariantsRestControllerTest {
         // No new dbSNP accessions can be generated, so the variants can only be stored directly using a repository
         // TODO When the support for new EVA accessions is implemented, this could be changed
         // In order to do so, replicate the structure of {@link SubmittedVariantsRestControllerTest}
-        generatedAccessions = dbsnpRepository.save(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity2,
-                                                                 clusteredVariantEntity3));
+        generatedAccessions = dbsnpRepository.saveAll(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity2,
+                                                                    clusteredVariantEntity3));
     }
 
     private void setupDbSnpClusteredHumanVariants() {
@@ -314,7 +316,7 @@ public class ClusteredVariantsRestControllerTest {
                                                 submittedVariantSummaryFunction.apply(submittedVariant2),
                                                 submittedVariant2, VERSION_1);
 
-        dbsnpSubmittedVariantRepository.save(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2));
+        dbsnpSubmittedVariantRepository.saveAll(Arrays.asList(submittedVariantEntity1, submittedVariantEntity2));
     }
 
     private void setupEvaSubmittedVariants() {
@@ -338,7 +340,7 @@ public class ClusteredVariantsRestControllerTest {
                                            submittedVariantSummaryFunction.apply(submittedVariant4),
                                            submittedVariant4, VERSION_2);
 
-        submittedVariantRepository.save(Arrays.asList(evaSubmittedVariantEntity3, evaSubmittedVariantEntity4));
+        submittedVariantRepository.saveAll(Arrays.asList(evaSubmittedVariantEntity3, evaSubmittedVariantEntity4));
     }
 
     @After
@@ -346,10 +348,10 @@ public class ClusteredVariantsRestControllerTest {
         dbsnpRepository.deleteAll();
         dbsnpSubmittedVariantRepository.deleteAll();
         submittedVariantRepository.deleteAll();
-        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
-        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
-        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).remove(new BasicDBObject());
-        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).remove(new BasicDBObject());
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).deleteMany(new BasicDBObject());
+        mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).deleteMany(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_ENTITY).deleteMany(new BasicDBObject());
+        humanMongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY).deleteMany(new BasicDBObject());
     }
 
     @Test
@@ -362,9 +364,11 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private boolean isIndexInCollection(MongoTemplate template, String collection, String indexName) {
-        List<DBObject> operationCollectionIndexes = template.getCollection(collection).getIndexInfo();
-        List<DBObject> matchingIndexes = operationCollectionIndexes.stream().filter(i -> i.get("name").toString().
-                contains(indexName)).collect(Collectors.toList());
+        List<String> indexNames = new ArrayList<>();
+        template.getCollection(collection).listIndexes().forEach(
+                (Consumer<Document>) d -> indexNames.add(d.get("name").toString()));
+        List<String> matchingIndexes = indexNames.stream().filter(name -> name.contains(indexName)).collect(
+                Collectors.toList());
         return !matchingIndexes.isEmpty();
     }
 
@@ -764,7 +768,7 @@ public class ClusteredVariantsRestControllerTest {
         modifiedVariant.setTaxonomyAccession(modifiedVariant.getTaxonomyAccession() + 1);
         DbsnpClusteredVariantEntity clusteredVariantEntityCopy = new DbsnpClusteredVariantEntity(
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_1, clusteredVariantEntity1.getHashedMessage(), modifiedVariant);
-        dbsnpRepository.save(Arrays.asList(clusteredVariantEntityCopy));
+        dbsnpRepository.saveAll(Arrays.asList(clusteredVariantEntityCopy));
         clusteredService.deprecate(DBSNP_CLUSTERED_VARIANT_ACCESSION_1, "deprecated again");
 
         String getVariantUrl = URL + DBSNP_CLUSTERED_VARIANT_ACCESSION_1;

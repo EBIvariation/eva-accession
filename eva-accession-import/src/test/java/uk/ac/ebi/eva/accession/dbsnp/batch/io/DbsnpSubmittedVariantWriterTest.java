@@ -22,7 +22,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.data.mongodb.BulkOperationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -130,7 +130,7 @@ public class DbsnpSubmittedVariantWriterTest {
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION_2, hashingFunction.apply(submittedVariant2), submittedVariant2, 1);
 
-        thrown.expect(BulkOperationException.class);
+        thrown.expect(DuplicateKeyException.class);
         try {
             dbsnpSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant));
         } finally {
@@ -147,7 +147,7 @@ public class DbsnpSubmittedVariantWriterTest {
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant, 1);
 
-        thrown.expect(BulkOperationException.class);
+        thrown.expect(DuplicateKeyException.class);
         try {
             dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));
         } finally {

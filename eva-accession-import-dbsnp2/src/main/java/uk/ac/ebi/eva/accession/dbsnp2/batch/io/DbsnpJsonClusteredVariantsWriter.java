@@ -15,10 +15,11 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp2.batch.io;
 
+import com.mongodb.MongoBulkWriteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.data.mongodb.BulkOperationException;
+import org.springframework.dao.DuplicateKeyException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.core.batch.io.DbsnpClusteredVariantWriter;
@@ -68,10 +69,11 @@ public class DbsnpJsonClusteredVariantsWriter implements ItemWriter<DbsnpCluster
             else {
                 logger.warn("Could not find any clustered variants to write in the current chunk!");
             }
-        } catch (BulkOperationException exception) {
+        } catch (DuplicateKeyException exception) {
+            MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
             List<DbsnpClusteredVariantOperationEntity> mergeClusteredOperations =
                     clusteredOperationBuilder.buildMergeOperationsFromException(
-                            (List<DbsnpClusteredVariantEntity>) clusteredVariants, exception);
+                            (List<DbsnpClusteredVariantEntity>) clusteredVariants, writeException);
             if (!mergeClusteredOperations.isEmpty()) {
                 dbsnpClusteredVariantOperationWriter.write(mergeClusteredOperations);
             }

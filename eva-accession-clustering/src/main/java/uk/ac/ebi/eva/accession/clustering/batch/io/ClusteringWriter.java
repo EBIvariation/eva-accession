@@ -16,7 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.data.mongodb.BulkOperationException;
+import com.mongodb.MongoBulkWriteException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -83,7 +83,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 bulkOperations.updateOne(query, update);
             }
             bulkOperations.execute();
-        } catch (BulkOperationException e) {
+        } catch (MongoBulkWriteException e) {
             throw e;
         }
     }

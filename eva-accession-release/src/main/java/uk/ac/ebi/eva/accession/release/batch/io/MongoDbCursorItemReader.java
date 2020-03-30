@@ -180,7 +180,9 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
             mongoQuery.withHint(hint);
         }
 
-        mongoQuery.with(sort);
+        if (sort != null) {
+            mongoQuery.with(sort);
+        }
 
         logger.info("Issuing MongoDB query: {}", mongoQuery);
 

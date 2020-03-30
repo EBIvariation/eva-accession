@@ -23,6 +23,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.mongo.MongoClientFactory;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -75,7 +76,7 @@ public class HumanMongoConfiguration {
         mongoClientOptions = mongoClientOptionsBuilder.readPreference(ReadPreference.valueOf(readPreference))
                                                       .writeConcern(WriteConcern.MAJORITY)
                                                       .build();
-        return properties.createMongoClient(mongoClientOptions, environment);
+        return new MongoClientFactory(properties, environment).createMongoClient(mongoClientOptions);
     }
 
     @Bean("humanFactory")

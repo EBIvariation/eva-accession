@@ -16,12 +16,10 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.BulkOperationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
@@ -70,9 +68,6 @@ public class DbsnpClusteredVariantWriterTest {
     private static final String CONTIG = "contig";
 
     private static final LocalDateTime CREATED_DATE = LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0);
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     private DbsnpClusteredVariantWriter dbsnpClusteredVariantWriter;
 
@@ -137,7 +132,7 @@ public class DbsnpClusteredVariantWriterTest {
         assertEquals(CREATED_DATE, storedVariants.get(0).getModel().getCreatedDate());
     }
 
-    @Test(expected = BulkOperationException.class)
+    @Test(expected = DuplicateKeyException.class)
     public void exceptionThrownOnDuplicateIdenticalVariant() {
         dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1));
     }
