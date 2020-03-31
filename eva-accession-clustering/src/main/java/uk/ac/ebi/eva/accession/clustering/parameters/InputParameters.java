@@ -73,6 +73,8 @@ public class InputParameters {
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("assemblyAccession", assemblyAccession)
+                .addString("projectAccession", projectAccession)
+                .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
     }
