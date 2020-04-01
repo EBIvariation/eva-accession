@@ -43,6 +43,7 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static uk.ac.ebi.eva.commons.core.models.VariantType.INDEL;
@@ -132,9 +133,10 @@ public class DbsnpClusteredVariantWriterTest {
         assertEquals(CREATED_DATE, storedVariants.get(0).getModel().getCreatedDate());
     }
 
-    @Test(expected = DuplicateKeyException.class)
+    @Test
     public void exceptionThrownOnDuplicateIdenticalVariant() {
-        dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1));
+        assertThrows(DuplicateKeyException.class, () ->
+                dbsnpClusteredVariantWriter.write(Arrays.asList(variantEntity1, variantEntity1)));
     }
 
     @Test

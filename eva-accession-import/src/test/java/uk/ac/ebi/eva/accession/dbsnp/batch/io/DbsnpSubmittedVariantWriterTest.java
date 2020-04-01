@@ -16,9 +16,7 @@
 package uk.ac.ebi.eva.accession.dbsnp.batch.io;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -45,6 +43,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration
@@ -79,9 +78,6 @@ public class DbsnpSubmittedVariantWriterTest {
     private MongoTemplate mongoTemplate;
 
     private Function<ISubmittedVariant, String> hashingFunction;
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     private ImportCounts importCounts;
 
@@ -130,9 +126,9 @@ public class DbsnpSubmittedVariantWriterTest {
         DbsnpSubmittedVariantEntity secondVariant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION_2, hashingFunction.apply(submittedVariant2), submittedVariant2, 1);
 
-        thrown.expect(DuplicateKeyException.class);
         try {
-            dbsnpSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant));
+            assertThrows(DuplicateKeyException.class, () ->
+                    dbsnpSubmittedVariantWriter.write(Arrays.asList(firstVariant, secondVariant)));
         } finally {
             assertEquals(1, importCounts.getSubmittedVariantsWritten());
         }
@@ -147,9 +143,9 @@ public class DbsnpSubmittedVariantWriterTest {
         DbsnpSubmittedVariantEntity variant = new DbsnpSubmittedVariantEntity(
                 EXPECTED_ACCESSION, hashingFunction.apply(submittedVariant), submittedVariant, 1);
 
-        thrown.expect(DuplicateKeyException.class);
         try {
-            dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant));
+            assertThrows(DuplicateKeyException.class, () ->
+                    dbsnpSubmittedVariantWriter.write(Arrays.asList(variant, variant)));
         } finally {
             assertEquals(1, importCounts.getSubmittedVariantsWritten());
         }
