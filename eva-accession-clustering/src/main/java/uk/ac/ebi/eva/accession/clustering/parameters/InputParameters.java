@@ -15,6 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.clustering.parameters;
 
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+
 public class InputParameters {
 
     private String vcf;
@@ -24,6 +27,8 @@ public class InputParameters {
     private String assemblyAccession;
 
     private int chunkSize;
+
+    private boolean forceRestart;
 
     public String getVcf() {
         return vcf;
@@ -55,5 +60,22 @@ public class InputParameters {
 
     public void setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
+    }
+
+    public boolean isForceRestart() {
+        return forceRestart;
+    }
+
+    public void setForceRestart(boolean forceRestart) {
+        this.forceRestart = forceRestart;
+    }
+
+    public JobParameters toJobParameters() {
+        return new JobParametersBuilder()
+                .addString("assemblyAccession", assemblyAccession)
+                .addString("projectAccession", projectAccession)
+                .addString("vcf", vcf)
+                .addLong("chunkSize", (long) chunkSize, false)
+                .toJobParameters();
     }
 }
