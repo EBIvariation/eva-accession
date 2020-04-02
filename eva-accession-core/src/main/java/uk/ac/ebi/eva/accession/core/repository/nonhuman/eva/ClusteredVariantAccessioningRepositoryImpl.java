@@ -18,15 +18,38 @@
 
 package uk.ac.ebi.eva.accession.core.repository.nonhuman.eva;
 
+import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository.BasicMongoDbAccessionedCustomRepositoryImpl;
 
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class ClusteredVariantAccessioningRepositoryImpl
         extends BasicMongoDbAccessionedCustomRepositoryImpl<Long, ClusteredVariantEntity> {
 
+    private MongoOperations mongoOperations;
+
     public ClusteredVariantAccessioningRepositoryImpl(MongoTemplate mongoTemplate) {
         super(ClusteredVariantEntity.class, mongoTemplate);
+        mongoOperations = mongoTemplate;
+    }
+
+    public List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start,
+                                                                                                    Long end) {
+        Criteria criteria = new Criteria();
+        return mongoOperations.find(Query.query(criteria.andOperator(Criteria.where("accession").gte(start),
+                                                                     Criteria.where("accession").lte(end))),
+                                    ClusteredVariantEntity.class)
+                              .stream()
+                              .map(AccessionedDocument::getAccession)
+                              .map(accession -> (AccessionProjection<Long>) () -> accession)
+                              .collect(Collectors.toList());
     }
 }
