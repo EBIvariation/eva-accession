@@ -15,11 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.deprecate.batch.io;
 
-import com.mongodb.BulkWriteResult;
+import com.mongodb.MongoBulkWriteException;
+import com.mongodb.bulk.BulkWriteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.data.mongodb.BulkOperationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -60,14 +61,15 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
             insertDeprecateOperation(deprecableClusteredVariants);
             removeDeprecableClusteredVariantsDeprecated(deprecableClusteredVariants);
             removeDeprecableClusteredVariants(deprecableClusteredVariants);
-        } catch (BulkOperationException e) {
-            BulkWriteResult bulkWriteResult = e.getResult();
+        } catch (DuplicateKeyException exception) {
+            MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
+            BulkWriteResult bulkWriteResult = writeException.getWriteResult();
             logger.error("Deprecation writer failed. chunk size: {}, written operations: {}, removed rs ids: {}",
                          deprecableClusteredVariants.size(), bulkWriteResult.getInsertedCount(),
-                         bulkWriteResult.getRemovedCount());
+                         bulkWriteResult.getDeletedCount());
             logger.error(
                     "RS IDs present in this failed chunk: [" + getAccessionsString(deprecableClusteredVariants) + "]");
-            throw e;
+            throw exception;
         }
     }
 

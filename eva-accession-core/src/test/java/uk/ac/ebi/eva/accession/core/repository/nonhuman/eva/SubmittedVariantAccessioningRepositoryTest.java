@@ -99,7 +99,7 @@ public class SubmittedVariantAccessioningRepositoryTest {
                 new SubmittedVariantEntity(firstAccession, "hash-1", submittedVariant, 1),
                 new SubmittedVariantEntity(secondAccession, "hash-2", newSubmittedVariant, 1));
 
-        repository.save(variants);
+        repository.saveAll(variants);
 
         assertAccessionsEquals(Arrays.asList(firstAccession),
                                repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(1000L, 1000L));

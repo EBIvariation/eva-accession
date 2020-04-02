@@ -17,13 +17,19 @@ package uk.ac.ebi.eva.accession.dbsnp.runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.Entity;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
+import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobParametersNotFoundException;
+import org.springframework.batch.core.launch.NoSuchJobException;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRepository;
@@ -45,6 +51,8 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
 
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 @Component
 public class DbsnpImportVariantsJobLauncherCommandLineRunner extends JobLauncherCommandLineRunner implements
@@ -58,12 +66,16 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunner extends JobLauncher
 
     public static final int EXIT_WITH_ERRORS = 1;
 
+    private final JobExplorer jobExplorer;
+
     @Value("${" + SPRING_BATCH_JOB_NAME_PROPERTY + ":#{null}}")
     private String jobName;
 
     private Collection<Job> jobs;
 
     private JobRepository jobRepository;
+
+    private String RUN_ID_PARAMETER_NAME = "run.id";
 
     @Autowired
     private JobExecutionApplicationListener jobExecutionApplicationListener;
@@ -75,7 +87,8 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunner extends JobLauncher
 
     public DbsnpImportVariantsJobLauncherCommandLineRunner(JobLauncher jobLauncher, JobExplorer jobExplorer,
                                                            JobRepository jobRepository) {
-        super(jobLauncher, jobExplorer);
+        super(jobLauncher, jobExplorer, jobRepository);
+        this.jobExplorer = jobExplorer;
         this.jobRepository = jobRepository;
     }
 
@@ -107,11 +120,13 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunner extends JobLauncher
 
             // TODO: different jobs can have different parameters
             JobParameters jobParameters = inputParameters.toJobParameters();
-
             JobStatusManager.checkIfJobNameHasBeenDefined(jobName);
             JobStatusManager.checkIfPropertiesHaveBeenProvided(jobParameters);
             if (inputParameters.isForceRestart()) {
                 markPreviousJobAsFailed(jobParameters);
+            }
+            else {
+                jobParameters = addRunIDToJobParameters(jobParameters);
             }
             launchJob(jobParameters);
         } catch (NoJobToExecuteException | NoParametersHaveBeenPassedException | NoPreviousJobExecutionException
@@ -123,10 +138,47 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunner extends JobLauncher
 
     }
 
+    private JobParameters addRunIDToJobParameters(JobParameters jobParameters) {
+        JobExecution lastJobExecution = getLastJobExecution();
+        if (lastJobExecution != null) {
+            Long runIdParameterFromLastExecution = lastJobExecution.getJobParameters()
+                                                                           .getLong(RUN_ID_PARAMETER_NAME);
+            if (runIdParameterFromLastExecution != 0 && lastJobExecution.getStatus() == BatchStatus.FAILED) {
+                // Spring Batch 4 uses all job parameters (including run.id) to detect previous instances of a job - see https://github.com/spring-projects/spring-boot/blob/86fb39d5c5f474fe3544159270d4c4e2d01d43ef/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/batch/JobLauncherCommandLineRunner.java#L222
+                // as opposed to Spring 3 which uses only job name - see https://github.com/spring-projects/spring-boot/blob/541890f0e003a6e346f2234102c97105ab1292ee/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/batch/JobLauncherCommandLineRunner.java#L131
+                // Therefore, run.id needs to be supplied for failed jobs in order for the job to be detected and resumed - see https://stackoverflow.com/a/59198742/2601814
+                return new JobParametersBuilder(jobParameters)
+                        .addLong(RUN_ID_PARAMETER_NAME, runIdParameterFromLastExecution).toJobParameters();
+            }
+        }
+
+        return jobParameters;
+    }
+
+    private JobExecution getLastJobExecution () {
+        int previousJobInstanceCount = getPreviousJobInstanceCount();
+        List<JobInstance> jobInstanceList = jobExplorer.getJobInstances(jobName, 0, previousJobInstanceCount);
+        if (!jobInstanceList.isEmpty()) {
+            return jobExplorer.getJobExecutions(jobInstanceList.get(0)).stream()
+                              .max(Comparator.comparingLong(Entity::getId)).get();
+        }
+        return null;
+    }
+    
+    private int getPreviousJobInstanceCount() {
+        try {
+            return jobExplorer.getJobInstanceCount(jobName);
+        }
+        catch (NoSuchJobException ex) {
+            return 0;
+        }        
+    }
+
     private void launchJob(JobParameters jobParameters) throws JobExecutionException, UnknownJobException {
         for (Job job : this.jobs) {
             // TODO is PatternMatchUtils necessary because the jobs discovered by Spring include package name? if not, remove it
             if (PatternMatchUtils.simpleMatch(jobName, job.getName())) {
+
                 execute(job, jobParameters);
                 return;
             }

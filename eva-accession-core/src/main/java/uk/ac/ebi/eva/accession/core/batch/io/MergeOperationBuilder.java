@@ -1,6 +1,6 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
-import org.springframework.data.mongodb.BulkOperationException;
+import com.mongodb.MongoBulkWriteException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
@@ -10,30 +10,31 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepos
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static uk.ac.ebi.eva.accession.core.exceptions.BulkOperationExceptionUtils.extractUniqueHashesForDuplicateKeyError;
+import static uk.ac.ebi.eva.accession.core.exceptions.MongoBulkWriteExceptionUtils.extractUniqueHashesForDuplicateKeyError;
 
 public class MergeOperationBuilder<ENTITY extends AccessionedDocument<?, Long>,
         OPERATION_ENTITY extends EventDocument<?, Long, ?>> {
 
     private IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository;
 
-    private Function<String, ENTITY> findOneVariantEntityById;
+    private Function<String, Optional<ENTITY>> findOneVariantEntityById;
 
     private BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory;
 
     public MergeOperationBuilder(IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository,
                                  IAccessionedObjectRepository<ENTITY, Long> variantRepository,
                                  BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory) {
-        this(operationRepository, variantRepository::findOne, mergeOperationFactory);
+        this(operationRepository, variantRepository::findById, mergeOperationFactory);
     }
 
     public MergeOperationBuilder(IHistoryRepository<Long, OPERATION_ENTITY, String> operationRepository,
-                          Function<String, ENTITY> findOneVariantEntityById,
+                          Function<String, Optional<ENTITY>> findOneVariantEntityById,
                           BiFunction<ENTITY, ENTITY, OPERATION_ENTITY> mergeOperationFactory) {
         this.operationRepository = operationRepository;
         this.findOneVariantEntityById = findOneVariantEntityById;
@@ -41,18 +42,18 @@ public class MergeOperationBuilder<ENTITY extends AccessionedDocument<?, Long>,
     }
 
     public List<OPERATION_ENTITY> buildMergeOperationsFromException(List<ENTITY> variants,
-                                                             BulkOperationException exception) {
+                                                                    MongoBulkWriteException exception) {
         List<OPERATION_ENTITY> operations = new ArrayList<>();
         checkForNulls(variants);
         extractUniqueHashesForDuplicateKeyError(exception)
                 .forEach(hash -> {
-                    ENTITY mergedInto = findOneVariantEntityById.apply(hash);
-                    if (mergedInto == null) {
+                    Optional<ENTITY> mergedInto = findOneVariantEntityById.apply(hash);
+                    if (!mergedInto.isPresent()) {
                         throwMongoConsistencyException(variants, hash);
                     }
                     List<OPERATION_ENTITY> merges = buildMergeOperations(variants,
                                                                          hash,
-                                                                         mergedInto);
+                                                                         mergedInto.get());
 
                     operations.addAll(merges);
                 });

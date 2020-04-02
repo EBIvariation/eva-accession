@@ -23,14 +23,16 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.autoconfigure.web.HttpMessageConverters;
-import org.springframework.boot.autoconfigure.web.HttpMessageConvertersAutoConfiguration;
-import org.springframework.boot.autoconfigure.web.WebClientAutoConfiguration;
+import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
+import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -48,7 +50,7 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAcces
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.ws.response.NonRedirectingClientHttpRequestFactory;
 
-import java.util.List;
+import java.util.function.Supplier;
 
 @Configuration
 @EnableBasicRestControllerAdvice
@@ -95,13 +97,15 @@ public class ApplicationConfiguration {
     @Bean
     public RestTemplateBuilder restTemplateBuilder(
             ObjectProvider<HttpMessageConverters> messageConverters,
-            ObjectProvider<List<RestTemplateCustomizer>> restTemplateCustomizers) {
-        WebClientAutoConfiguration.RestTemplateConfiguration restTemplateConfiguration =
-                new WebClientAutoConfiguration.RestTemplateConfiguration(
+            ObjectProvider<RestTemplateCustomizer> restTemplateCustomizers) {
+
+        RestTemplateAutoConfiguration restTemplateConfiguration =
+                new RestTemplateAutoConfiguration(
                         messageConverters, restTemplateCustomizers);
         RestTemplateBuilder builder = restTemplateConfiguration.restTemplateBuilder();
 
-        builder = builder.requestFactory(new NonRedirectingClientHttpRequestFactory());
+        Supplier<ClientHttpRequestFactory> supplier = NonRedirectingClientHttpRequestFactory::new;
+        builder = builder.requestFactory(supplier);
 
         return builder;
     }

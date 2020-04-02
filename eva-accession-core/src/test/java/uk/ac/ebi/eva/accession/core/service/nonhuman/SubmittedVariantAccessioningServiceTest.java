@@ -19,7 +19,8 @@ import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.DBObject;
+import com.mongodb.client.MongoCursor;
+import org.bson.Document;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,6 +58,7 @@ import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -438,11 +440,13 @@ public class SubmittedVariantAccessioningServiceTest {
 
         service.getOrCreate(Collections.singletonList(submittedVariant));
 
-        List<DBObject> submittedVariantEntities = mongoDbFactory.getDb()
-                                                                .getCollection("submittedVariantEntity")
-                                                                .find()
-                                                                .toArray();
-        assertEquals(1, submittedVariantEntities.size());
+
+        List<Document> submittedVariantEntities  = new ArrayList<>();
+        MongoCursor<Document> submittedVariantEntitiesCursor = mongoDbFactory.getDb()
+                                                                             .getCollection("submittedVariantEntity")
+                                                                             .find().iterator();
+
+        submittedVariantEntitiesCursor.forEachRemaining(submittedVariantEntities::add);
         assertEquals(NOT_DEFAULT_SUPPORTED_BY_EVIDENCE, submittedVariantEntities.get(0).get("evidence"));
         assertEquals(null, submittedVariantEntities.get(0).get("asmMatch"));
         assertEquals(null, submittedVariantEntities.get(0).get("allelesMatch"));

@@ -15,10 +15,11 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.batch.io;
 
+import com.mongodb.MongoBulkWriteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.data.mongodb.BulkOperationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.util.Pair;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
@@ -96,9 +97,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                 clusteredOperationRepository, clusteredVariantRepository, this::buildClusteredMergeOperation);
         this.declusteredOperationBuilder = new MergeOperationBuilder<>(
                 clusteredOperationRepository,
-                id -> mongoTemplate.findById(id,
-                                             DbsnpClusteredVariantEntity.class,
-                                             DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME),
+                id -> java.util.Optional.ofNullable(
+                        mongoTemplate.findById(id, DbsnpClusteredVariantEntity.class,
+                                               DBSNP_CLUSTERED_VARIANT_DECLUSTERED_COLLECTION_NAME)),
                 this::buildClusteredMergeOperation);
     }
 
@@ -167,9 +168,10 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                 dbsnpClusteredVariantDeclusteredWriter.write(clusteredVariantsDeclustered);
             }
             return Collections.emptyList();
-        } catch (BulkOperationException exception) {
+        } catch (DuplicateKeyException exception) {
+            MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
             return declusteredOperationBuilder.buildMergeOperationsFromException(clusteredVariantsDeclustered,
-                                                                                 exception);
+                                                                                 writeException);
         }
     }
 
@@ -181,8 +183,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
                 dbsnpClusteredVariantWriter.write(clusteredVariants);
             }
             return Collections.emptyList();
-        } catch (BulkOperationException exception) {
-            return clusteredOperationBuilder.buildMergeOperationsFromException(clusteredVariants, exception);
+        } catch (DuplicateKeyException exception) {
+            MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
+            return clusteredOperationBuilder.buildMergeOperationsFromException(clusteredVariants, writeException);
         }
     }
 
@@ -334,8 +337,9 @@ public class DbsnpVariantsWriter implements ItemWriter<DbsnpVariantsWrapper> {
         try {
             dbsnpSubmittedVariantWriter.write(submittedVariants);
             return Collections.emptyList();
-        } catch (BulkOperationException exception) {
-            return submittedOperationBuilder.buildMergeOperationsFromException(submittedVariants, exception);
+        } catch (DuplicateKeyException exception) {
+            MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
+            return submittedOperationBuilder.buildMergeOperationsFromException(submittedVariants, writeException);
         }
     }
 

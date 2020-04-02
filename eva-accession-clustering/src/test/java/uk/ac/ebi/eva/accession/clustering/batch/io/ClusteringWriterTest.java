@@ -18,9 +18,9 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -150,8 +150,8 @@ public class ClusteringWriterTest {
     }
 
     private void assertClusteredVariantsCreated() {
-        DBCollection collection = mongoTemplate.getCollection(CLUSTERED_VARIANT_COLLECTION);
-        assertEquals(4, collection.count());
+        MongoCollection<Document> collection = mongoTemplate.getCollection(CLUSTERED_VARIANT_COLLECTION);
+        assertEquals(4, collection.countDocuments());
         List<Long> expectedAccessions = Arrays.asList(3000000000L, 3000000001L, 3000000002L, 3000000003L);
         assertGeneratedAccessions(CLUSTERED_VARIANT_COLLECTION, "accession", expectedAccessions);
     }
@@ -159,10 +159,10 @@ public class ClusteringWriterTest {
     private void assertGeneratedAccessions(String collectionName, String accessionField,
                                            List<Long> expectedAccessions) {
         List<Long> generatedAccessions = new ArrayList<>();
-        DBCollection collection = mongoTemplate.getCollection(collectionName);
-        DBCursor dbObjects = collection.find();
-        for (DBObject dbObject : dbObjects) {
-            Long accessionId = (Long) dbObject.get(accessionField);
+        MongoCollection<Document> collection = mongoTemplate.getCollection(collectionName);
+        FindIterable<Document> dbObjects = collection.find();
+        for (Document document : dbObjects) {
+            Long accessionId = (Long) document.get(accessionField);
             generatedAccessions.add(accessionId);
         }
         Collections.sort(generatedAccessions);
@@ -176,10 +176,10 @@ public class ClusteringWriterTest {
     }
 
     private boolean allSubmittedVariantsClustered() {
-        DBCollection collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
-        DBCursor dbObjects = collection.find();
-        for (DBObject dbObject : dbObjects) {
-            if (dbObject.get("rs") == null){
+        MongoCollection<Document> collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
+        FindIterable<Document> documents = collection.find();
+        for (Document document : documents) {
+            if (document.get("rs") == null){
                 return false;
             }
         }

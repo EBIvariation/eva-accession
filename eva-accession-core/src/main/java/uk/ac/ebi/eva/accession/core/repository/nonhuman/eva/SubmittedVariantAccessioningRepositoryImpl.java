@@ -40,8 +40,10 @@ public class SubmittedVariantAccessioningRepositoryImpl
         mongoOperations = mongoTemplate;
     }
 
-    List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end) {
-        return mongoOperations.find(Query.query(Criteria.where("accession").gte(start).lte(end)),
+    public List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end) {
+        Criteria criteria = new Criteria();
+        return mongoOperations.find(Query.query(criteria.andOperator(Criteria.where("accession").gte(start),
+                                                                     Criteria.where("accession").lte(end))),
                                     SubmittedVariantEntity.class)
                               .stream()
                               .map(AccessionedDocument::getAccession)

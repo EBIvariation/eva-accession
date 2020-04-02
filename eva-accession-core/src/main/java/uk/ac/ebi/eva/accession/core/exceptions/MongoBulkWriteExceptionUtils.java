@@ -15,18 +15,18 @@
  */
 package uk.ac.ebi.eva.accession.core.exceptions;
 
-import com.mongodb.BulkWriteError;
 import com.mongodb.ErrorCategory;
-import org.springframework.data.mongodb.BulkOperationException;
+import com.mongodb.MongoBulkWriteException;
+import com.mongodb.bulk.BulkWriteError;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * Common utility class to assist in handling Mongo DB BulkOperationException
+ * Common utility class to assist in handling Mongo DB MongoBulkWriteException
  */
-public class BulkOperationExceptionUtils {
+public class MongoBulkWriteExceptionUtils {
 
     private static final String DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME = "IDKEY";
 
@@ -35,10 +35,10 @@ public class BulkOperationExceptionUtils {
 
     private static final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(DUPLICATE_KEY_ERROR_MESSAGE_REGEX);
 
-    public static Stream<String> extractUniqueHashesForDuplicateKeyError(BulkOperationException exception) {
-        return exception.getErrors()
+    public static Stream<String> extractUniqueHashesForDuplicateKeyError(MongoBulkWriteException exception) {
+        return exception.getWriteErrors()
                         .stream()
-                        .filter(BulkOperationExceptionUtils::isDuplicateKeyError)
+                        .filter(MongoBulkWriteExceptionUtils::isDuplicateKeyError)
                         .map(error -> {
                             Matcher matcher = DUPLICATE_KEY_PATTERN.matcher(error.getMessage());
                             if (matcher.find()) {

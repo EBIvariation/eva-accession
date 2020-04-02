@@ -18,9 +18,10 @@
 
 package uk.ac.ebi.eva.accession.core.batch.io;
 
-import com.mongodb.BulkWriteResult;
+import com.mongodb.MongoBulkWriteException;
+import com.mongodb.bulk.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.data.mongodb.BulkOperationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -49,10 +50,11 @@ public class DbsnpClusteredVariantOperationWriter implements ItemWriter<DbsnpClu
             bulkOperations.insert(importedClusteredVariantsOperations);
             bulkOperations.execute();
             importCounts.addOperationsWritten(importedClusteredVariantsOperations.size());
-        } catch (BulkOperationException e) {
-            BulkWriteResult bulkWriteResult = e.getResult();
+        } catch (DuplicateKeyException exception) {
+            MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
+            BulkWriteResult bulkWriteResult = writeException.getWriteResult();
             importCounts.addOperationsWritten(bulkWriteResult.getInsertedCount());
-            throw e;
+            throw exception;
         }
     }
 }
