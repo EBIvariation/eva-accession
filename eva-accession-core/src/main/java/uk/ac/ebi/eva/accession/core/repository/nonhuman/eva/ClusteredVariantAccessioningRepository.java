@@ -19,11 +19,16 @@
 package uk.ac.ebi.eva.accession.core.repository.nonhuman.eva;
 
 import org.springframework.stereotype.Repository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
 
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 
+import java.util.List;
+
 @Repository
 public interface ClusteredVariantAccessioningRepository extends
         IAccessionedObjectRepository<ClusteredVariantEntity, Long> {
+
+    List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end);
 }
