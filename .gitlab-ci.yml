@@ -31,7 +31,7 @@ test:
     environment:
         name: $ENVIRONMENT_NAME
     script:
-        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests
+        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests -Dtimestamp=`date +%s`
         - cp eva-accession-ws/target/eva*.war $WS_ARTIFACT_PATH
     artifacts:
         paths:
