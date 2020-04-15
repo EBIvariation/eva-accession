@@ -72,7 +72,7 @@ package-production:
     script:
         - apk add --update curl
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
-        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep "/eva/webservices/identifiers:.*:eva#webservices#identifiers##$DATETIME" | exit 1
+        - if (( $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep "/eva/webservices/identifiers:.*:eva#webservices#identifiers##$DATETIME" ) == 0 )) ; then exit 1; fi
 
 deploy-tomcat-internal:
     extends: .deploy-tomcat
