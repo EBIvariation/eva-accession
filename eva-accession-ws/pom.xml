@@ -83,10 +83,19 @@
             </testResource>
         </testResources>
 
+        <resources>
+            <resource>
+                <directory>src/main/resources/</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
     </build>
 
     <properties>
         <eva.mongo.host.test>localhost</eva.mongo.host.test>
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
     </properties>
 
 </project>
