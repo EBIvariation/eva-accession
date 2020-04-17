@@ -56,6 +56,9 @@ public class CoordinatesVcfFactory extends VariantVcfFactory {
             Variant variant = new Variant(chromosome, keyFields.getStart(), keyFields.getEnd(),
                                           keyFields.getReference(), keyFields.getAlternate());
             variant.setIds(ids);
+            if (ids.size() > 0) {
+                variant.setMainId(ids.iterator().next());
+            }
             variants.add(variant);
         }
         return variants;
