@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck;
+package uk.ac.ebi.eva.accession.core.batch.io;
 
 import org.springframework.batch.item.file.LineMapper;
 
