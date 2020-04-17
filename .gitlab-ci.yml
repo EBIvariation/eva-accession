@@ -67,8 +67,7 @@ package-production:
 # Not executed, parent job definition for deployments
 .deploy-tomcat:
     stage: deploy
-#    image: alpine:3.9.5docker pull ubuntu:18.04
-    image: ubuntu:18.04
+    image: alpine:3.9.5
     environment:
         name: $ENVIRONMENT_NAME
     script:
