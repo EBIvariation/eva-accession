@@ -75,8 +75,7 @@ package-production:
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list"
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep "/eva/webservices/identifiers:.*:eva#webservices#identifiers##$DATETIME"
-        - if [ $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep -c "/eva/webservices/identifiers:.*:eva#webservices#identifiers##$DATETIME" ) == 0 ]; then exit 1; else exit 2; fi
-#        - if (( $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep -c "/eva/webservices/identifiers:running:.*:eva#webservices#identifiers##$DATETIME" ) == 0 )) ; then exit 1; fi
+        - if [ $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep -c "/eva/webservices/identifiers:running:.*:eva#webservices#identifiers##$DATETIME" ) == 0 ]; then exit 1; fi
 
 deploy-tomcat-internal:
     extends: .deploy-tomcat
