@@ -48,8 +48,6 @@ public class VcfReaderConfiguration {
 
     @Bean
     public VcfReader vcfReader(InputParameters inputParameters) throws IOException {
-        String fileId = inputParameters.getProjectAccession();
-        String studyId = inputParameters.getProjectAccession();
         File vcfFile = new File(inputParameters.getVcf());
         CoordinatesVcfLineMapper lineMapper = new CoordinatesVcfLineMapper();
         return new VcfReader(lineMapper, vcfFile);

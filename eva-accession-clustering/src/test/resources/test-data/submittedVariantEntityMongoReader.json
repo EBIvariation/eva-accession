@@ -1,10 +1,10 @@
 {
   "submittedVariantEntity": [
     {
-      "_id": "0993FBC8C6D0A20D35B0A6DA755663B3C849676D",
+      "_id": "BAE8C696D28B3173552AF2A5692FE29E65A18024",
       "seq": "GCA_000000001.1",
       "tax": 1000,
-      "study": "",
+      "study": "projectId_1",
       "contig": "1",
       "start": NumberLong(1000),
       "ref": "T",
@@ -13,10 +13,10 @@
       "version": 1
     },
     {
-      "_id": "6EE63124DFD82B0C941E34B40A3342757174F77B",
+      "_id": "FEC73A53FE19D6E331EC0AF31068B2F028BF47D2",
       "seq": "GCA_000000001.1",
       "tax": 1000,
-      "study": "",
+      "study": "projectId_1",
       "contig": "1",
       "start": NumberLong(1000),
       "ref": "T",
@@ -25,10 +25,10 @@
       "version": 1
     },
     {
-      "_id": "F033E9F5E8E1B53321C6932DEF78136B22E058CC",
+      "_id": "C444812E92547CFADB70787FCE0DAFED9720F602",
       "seq": "GCA_000000001.1",
       "tax": 1000,
-      "study": "",
+      "study": "projectId_1",
       "contig": "1",
       "start": NumberLong(1000),
       "ref": "",
@@ -37,10 +37,10 @@
       "version": 1
     },
     {
-      "_id": "08D31D2BD7F6A13CDEC0E0931A13DA1599CCA07E",
+      "_id": "9CE1B7834D34F546333CD632CB2FE65B8D997685",
       "seq": "GCA_000000001.1",
       "tax": 1000,
-      "study": "",
+      "study": "projectId_1",
       "contig": "1",
       "start": NumberLong(1000),
       "ref": "T",
@@ -49,10 +49,10 @@
       "version": 1
     },
     {
-      "_id": "4C1C9CE98428A4F0A6033237BA00C31E33B540DC",
+      "_id": "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB",
       "seq": "GCA_000000001.1",
       "tax": 3000,
-      "study": "",
+      "study": "projectId_1",
       "contig": "1",
       "start": NumberLong(3000),
       "ref": "C",
@@ -61,10 +61,10 @@
       "version": 1
     },
     {
-      "_id": "4C1C9CE98428A4F0A6033237BA00C31E33B540D0",
+      "_id": "C195245DADAA13BB00474F66A57A21718B332B5A",
       "seq": "GCA_000000001.1",
       "tax": 3000,
-      "study": "",
+      "study": "projectId_1",
       "contig": "2",
       "start": NumberLong(3000),
       "ref": "T",

@@ -31,10 +31,13 @@ public class VariantToSubmittedVariantEntityProcessor implements ItemProcessor<V
 
     private String assemblyAccession;
 
+    private String projectId;
+
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantEntityProcessor(String assemblyAccession) {
+    public VariantToSubmittedVariantEntityProcessor(String assemblyAccession, String projectId) {
         this.assemblyAccession = assemblyAccession;
+        this.projectId = projectId;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 

@@ -57,9 +57,11 @@ public class ClusteringMongoReaderTest {
 
     private static final String SUBMITTED_VARIANT_ENTITY = "submittedVariantEntity";
 
-    private static final String CLUSTERED_SUBMITTED_VARIANT_ID = "4C1C9CE98428A4F0A6033237BA00C31E33B540D0";
+    // from the json input data. the hash can be computed in bash too:
+    // echo -n "GCA_000000001.1_projectId_1_2_3000_T_G" | sha1sum | awk '{ print toupper($1) }'
+    private static final String CLUSTERED_SUBMITTED_VARIANT_ID = "C195245DADAA13BB00474F66A57A21718B332B5A";
 
-    private static final String NOT_CLUSTERED_SUBMITTED_VARIANT_ID = "0993FBC8C6D0A20D35B0A6DA755663B3C849676D";
+    private static final String NOT_CLUSTERED_SUBMITTED_VARIANT_ID = "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB";
 
     private ClusteringMongoReader reader;
 
@@ -92,7 +94,7 @@ public class ClusteringMongoReaderTest {
 
     @Test
     public void readNotClusteredSubmittedVariants() {
-        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).count());
+        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList();
         assertEquals(5, variants.size());
         assertFalse(variants.stream().anyMatch(x -> x.getId().equals(CLUSTERED_SUBMITTED_VARIANT_ID)));
