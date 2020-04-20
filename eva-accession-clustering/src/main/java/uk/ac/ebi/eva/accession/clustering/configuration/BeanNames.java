@@ -26,6 +26,8 @@ public class BeanNames {
 
     public static final String CLUSTERING_WRITER = "CLUSTERING_WRITER";
 
+    public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
+
     public static final String CLUSTERING_FROM_VCF_STEP = "CLUSTERING_FROM_VCF_STEP";
 
     public static final String CLUSTERING_FROM_MONGO_STEP = "CLUSTERING_FROM_MONGO_STEP";
