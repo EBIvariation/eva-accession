@@ -77,14 +77,14 @@ package-production:
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers/EVA-1915&version=$DATETIME" | grep "OK - Deployed application"
 #        - if [ $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep -c "/eva/webservices/identifiers:running:.*:eva#webservices#identifiers#EVA-1915##$DATETIME" ) == 0 ]; then exit 1; fi
 #        - for attempt in {1..10}; do if [ $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep -c "/eva/webservices/identifiers:running:.*:eva#webservices#identifiers#EVA-1915##$DATETIME" ) > 0 ]; then exit 0; fi; sleep 30; done; echo "application failed to start in Tomcat server"
-        - >
-            for attempt in {1..10}; do
-              if [ $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep -c "/eva/webservices/identifiers:running:.*:eva#webservices#identifiers#EVA-1915##$DATETIME" ) > 0 ];
-                then exit 0;
-              fi;
-              sleep 30;
-            done;
-            echo "application failed to start in Tomcat server"
+#        - >
+#            for attempt in {1..10}; do
+#              if [ $( curl -u $TOMCAT_USER:$TOMCAT_PASSWORD "http://$TOMCAT_HOST/manager/text/list" | grep -c "/eva/webservices/identifiers:running:.*:eva#webservices#identifiers#EVA-1915##$DATETIME" ) > 0 ];
+#                then exit 0;
+#              fi;
+#              sleep 30;
+#            done;
+#            echo "application failed to start in Tomcat server"
 
 deploy-tomcat-internal:
     extends: .deploy-tomcat
