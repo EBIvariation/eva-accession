@@ -44,6 +44,7 @@ package-internal:
         MAVEN_PROFILE: internal
     only:
         - master
+        - feature/before-spring-boot-2
 
 package-development:
     extends: .package
@@ -52,7 +53,6 @@ package-development:
         MAVEN_PROFILE: development
     only:
         - master
-        - feature/before-spring-boot-2
 
 package-production:
     extends: .package
@@ -83,6 +83,7 @@ deploy-tomcat-internal:
         - package-internal
     only:
         - master
+        - feature/before-spring-boot-2
 
 deploy-tomcat-development:
     extends: .deploy-tomcat
@@ -95,7 +96,6 @@ deploy-tomcat-development:
         - package-development
     only:
         - master
-        - feature/before-spring-boot-2
 
 deploy-tomcat-production:
     extends: .deploy-tomcat
