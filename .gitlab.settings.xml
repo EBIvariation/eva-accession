@@ -5,7 +5,7 @@
             <properties>
                 <eva.mongo.host>${env.MONGO_HOST_DEVELOPMENT}</eva.mongo.host>
                 <eva.mongo.user>${env.MONGO_USER_DEVELOPMENT}</eva.mongo.user>
-                <eva.mongo.passwd.url>${env.MONGO_PASSWORD_DEVELOPMENT}</eva.mongo.passwd.url>
+                <eva.mongo.passwd.url-encoded>${env.MONGO_PASSWORD_DEVELOPMENT}</eva.mongo.passwd.url-encoded>
                 <eva.mongo.read-preference>${env.MONGO_READ_PREFERENCE}</eva.mongo.read-preference>
                 <eva.accession.mongo.database>${env.MONGO_COLLECTION_ACCESSION}</eva.accession.mongo.database>
                 <eva.accession.mongo.human.database>${env.MONGO_COLLECTION_ACCESSION_HUMAN}</eva.accession.mongo.human.database>
@@ -16,7 +16,7 @@
             <properties>
                 <eva.mongo.host>${env.MONGO_HOST_PRODUCTION}</eva.mongo.host>
                 <eva.mongo.user>${env.MONGO_USER_PRODUCTION}</eva.mongo.user>
-                <eva.mongo.passwd.url-encoded>${env.MONGO_PASSWORD_PRODUCTION_URL_ENCODED}</eva.mongo.passwd.url-encoded>
+                <eva.mongo.passwd>${env.MONGO_PASSWORD_PRODUCTION_URL_ENCODED}</eva.mongo.passwd>
                 <eva.mongo.read-preference>${env.MONGO_READ_PREFERENCE}</eva.mongo.read-preference>
                 <eva.accession.mongo.database>${env.MONGO_COLLECTION_ACCESSION}</eva.accession.mongo.database>
                 <eva.accession.mongo.human.database>${env.MONGO_COLLECTION_ACCESSION_HUMAN}</eva.accession.mongo.human.database>
