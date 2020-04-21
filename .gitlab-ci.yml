@@ -52,6 +52,7 @@ package-development:
         MAVEN_PROFILE: development
     only:
         - master
+        - feature/before-spring-boot-2
 
 package-production:
     extends: .package
@@ -69,7 +70,7 @@ package-production:
         name: $ENVIRONMENT_NAME
     script:
         - apk add --update curl
-        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
+        - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers/EVA-1915&version=$DATETIME" | grep "OK - Deployed application"
 
 deploy-tomcat-internal:
     extends: .deploy-tomcat
@@ -94,6 +95,7 @@ deploy-tomcat-development:
         - package-development
     only:
         - master
+        - feature/before-spring-boot-2
 
 deploy-tomcat-production:
     extends: .deploy-tomcat
