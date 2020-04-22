@@ -27,10 +27,10 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
-import uk.ac.ebi.eva.accession.core.batch.io.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
+import uk.ac.ebi.eva.commons.batch.io.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
