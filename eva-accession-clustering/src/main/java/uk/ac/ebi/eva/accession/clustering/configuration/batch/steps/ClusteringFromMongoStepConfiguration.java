@@ -39,7 +39,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRES
 public class ClusteringFromMongoStepConfiguration {
 
     @Bean(CLUSTERING_FROM_MONGO_STEP)
-    public Step clusteringVariantStepMongReader(
+    public Step clusteringVariantStepMongoReader(
             @Qualifier(MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
             @Qualifier(CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,

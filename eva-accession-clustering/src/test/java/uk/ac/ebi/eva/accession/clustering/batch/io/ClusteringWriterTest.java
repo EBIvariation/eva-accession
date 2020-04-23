@@ -66,7 +66,7 @@ public class ClusteringWriterTest {
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
-    private static final String PROJECT_ID = "projectId_1";
+    private static final String PROJECT_ACCESSION = "projectId_1";
 
     @Autowired
     private InputParameters inputParameters;
@@ -113,22 +113,22 @@ public class ClusteringWriterTest {
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
         List<SubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
         SubmittedVariant submittedVariant1 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                    PROJECT_ID, "1", 1000L, "T", "A");
+                                                                    PROJECT_ACCESSION, "1", 1000L, "T", "A");
         SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(1L, submittedVariant1);
         //Different alleles
         SubmittedVariant submittedVariant2 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                    PROJECT_ID, "1", 1000L, "T", "G");
+                                                                    PROJECT_ACCESSION, "1", 1000L, "T", "G");
         SubmittedVariantEntity submittedVariantEntity2 = createSubmittedVariantEntity(2L, submittedVariant2);
         //Same assembly, contig, start but different type
         SubmittedVariant submittedVariantINS = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                      PROJECT_ID, "1", 1000L, "", "A");
+                                                                      PROJECT_ACCESSION, "1", 1000L, "", "A");
         SubmittedVariantEntity submittedVariantEntityINS = createSubmittedVariantEntity(3L, submittedVariantINS);
         SubmittedVariant submittedVariantDEL = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
-                                                                      PROJECT_ID, "1", 1000L, "T", "");
+                                                                      PROJECT_ACCESSION, "1", 1000L, "T", "");
         SubmittedVariantEntity submittedVariantEntityDEL = createSubmittedVariantEntity(4L, submittedVariantDEL);
         //Different assembly, contig and start
         SubmittedVariant submittedVariant3 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 3000,
-                                                                    PROJECT_ID, "1", 3000L, "C", "G");
+                                                                    PROJECT_ACCESSION, "1", 3000L, "C", "G");
         SubmittedVariantEntity submittedVariantEntity3 = createSubmittedVariantEntity(5L, submittedVariant3);
         submittedVariantEntities.add(submittedVariantEntity1);
         submittedVariantEntities.add(submittedVariantEntity2);
