@@ -30,7 +30,7 @@ public class InputParameters {
 
     private int taxonomyAccession;
 
-    private Long buildNumber;
+    private String buildNumber;
 
     private int chunkSize;
 
@@ -47,7 +47,7 @@ public class InputParameters {
                 .addString("assemblyAccession", assemblyAccession)
                 .addString("assemblyName", assemblyName)
                 .addString("assemblyReportUrl", assemblyReportUrl)
-                .addLong("buildNumber", buildNumber)
+                .addString("buildNumber", buildNumber)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .addLong("pageSize", (long) pageSize, false)
                 .toJobParameters();
@@ -117,11 +117,11 @@ public class InputParameters {
         this.assemblyName = assemblyName;
     }
 
-    public Long getBuildNumber() {
+    public String getBuildNumber() {
         return buildNumber;
     }
 
-    public void setBuildNumber(Long buildNumber) {
+    public void setBuildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
     }
 

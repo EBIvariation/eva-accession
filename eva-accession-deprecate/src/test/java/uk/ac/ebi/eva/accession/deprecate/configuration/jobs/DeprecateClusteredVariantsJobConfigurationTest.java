@@ -23,15 +23,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
+import uk.ac.ebi.eva.accession.deprecate.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.deprecate.test.rule.FixSpringMongoDbRule;
@@ -42,6 +47,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_CLUSTERED_VARIANTS_JOB;
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_CLUSTERED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
@@ -57,6 +64,12 @@ public class DeprecateClusteredVariantsJobConfigurationTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
+
+    @Autowired
+    private JobExplorer jobExplorer;
+
+    @Autowired
+    private InputParameters parameters;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -89,4 +102,54 @@ public class DeprecateClusteredVariantsJobConfigurationTest {
         List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
     }
+
+    @Test
+    @DirtiesContext
+    public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+
+        List<String> expectedSteps = Collections.singletonList(DEPRECATE_CLUSTERED_VARIANTS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        long instanceIdFirstJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_CLUSTERED_VARIANTS_JOB,
+                                                                             jobExplorer,
+                                                                             jobExecution.getJobParameters())
+                                                        .getJobInstance().getInstanceId();
+
+        jobExecution = jobLauncherTestUtils.launchJob();
+        expectedSteps = Collections.singletonList(DEPRECATE_CLUSTERED_VARIANTS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        long instanceIdSecondJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_CLUSTERED_VARIANTS_JOB,
+                                                                              jobExplorer,
+                                                                              jobExecution.getJobParameters())
+                                                         .getJobInstance().getInstanceId();
+        assertNotEquals(instanceIdSecondJob, instanceIdFirstJob);
+    }
+
+    @Test
+    @DirtiesContext
+    public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob();
+
+        List<String> expectedSteps = Collections.singletonList(DEPRECATE_CLUSTERED_VARIANTS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        long instanceIdFirstJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_CLUSTERED_VARIANTS_JOB,
+                                                                             jobExplorer,
+                                                                             jobExecution.getJobParameters())
+                                                        .getJobInstance().getInstanceId();
+
+        jobExecution = jobLauncherTestUtils.launchJob();
+        expectedSteps = Collections.singletonList(DEPRECATE_CLUSTERED_VARIANTS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        long instanceIdSecondJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_CLUSTERED_VARIANTS_JOB,
+                                                                              jobExplorer,
+                                                                              jobExecution.getJobParameters())
+                                                         .getJobInstance().getInstanceId();
+        assertNotEquals(instanceIdSecondJob, instanceIdFirstJob);
+    }
+
+    // This pipeline is idempotent so there is no need for tests to check job resumption
 }

@@ -34,6 +34,8 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAcc
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CheckSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
+import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.sql.DataSource;
 
@@ -42,7 +44,8 @@ import javax.sql.DataSource;
          CreateSubsnpAccessionsStepConfiguration.class, CheckSubsnpAccessionsStepConfiguration.class,
          VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
          BuildReportStepConfiguration.class,
-         ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class})
+         ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
+        EvaAccessionJobLauncherCommandLineRunner.class})
 public class BatchTestConfiguration {
 
     @Autowired
@@ -62,4 +65,8 @@ public class BatchTestConfiguration {
         return new JobLauncherTestUtils();
     }
 
+    @Bean
+    public JobExecutionApplicationListener jobExecutionApplicationListener() {
+        return new JobExecutionApplicationListener();
+    }
 }

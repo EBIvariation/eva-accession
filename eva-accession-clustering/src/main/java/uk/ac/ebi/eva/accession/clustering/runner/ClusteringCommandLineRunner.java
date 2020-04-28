@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.clustering.runner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -37,6 +38,7 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Component;
 import org.springframework.util.PatternMatchUtils;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.commons.batch.exception.NoJobToExecuteException;
 import uk.ac.ebi.eva.commons.batch.exception.NoParametersHaveBeenPassedException;
 import uk.ac.ebi.eva.commons.batch.exception.NoPreviousJobExecutionException;
@@ -65,6 +67,8 @@ public class ClusteringCommandLineRunner extends JobLauncherCommandLineRunner im
 
     private JobRepository jobRepository;
 
+    private final JobExplorer jobExplorer;
+
     @Autowired
     private JobExecutionApplicationListener jobExecutionApplicationListener;
 
@@ -75,7 +79,8 @@ public class ClusteringCommandLineRunner extends JobLauncherCommandLineRunner im
 
     public ClusteringCommandLineRunner(JobLauncher jobLauncher, JobExplorer jobExplorer,
                                        JobRepository jobRepository) {
-        super(jobLauncher, jobExplorer);
+        super(jobLauncher, jobExplorer, jobRepository);
+        this.jobExplorer = jobExplorer;
         this.jobRepository = jobRepository;
     }
 
@@ -110,7 +115,13 @@ public class ClusteringCommandLineRunner extends JobLauncherCommandLineRunner im
             JobStatusManager.checkIfJobNameHasBeenDefined(jobName);
             JobStatusManager.checkIfPropertiesHaveBeenProvided(jobParameters);
             if (inputParameters.isForceRestart()) {
-                markPreviousJobAsFailed(jobParameters);
+                JobExecution previousJobExecution = CommandLineRunnerUtils.getLastJobExecution(jobName, jobExplorer,
+                                                                                               jobParameters);
+                markPreviousJobAsFailed(
+                        previousJobExecution != null ? previousJobExecution.getJobParameters() : jobParameters);
+            }
+            else {
+                jobParameters = CommandLineRunnerUtils.addRunIDToJobParameters(jobName, jobExplorer, jobParameters);
             }
             launchJob(jobParameters);
         } catch (NoJobToExecuteException | NoParametersHaveBeenPassedException | NoPreviousJobExecutionException

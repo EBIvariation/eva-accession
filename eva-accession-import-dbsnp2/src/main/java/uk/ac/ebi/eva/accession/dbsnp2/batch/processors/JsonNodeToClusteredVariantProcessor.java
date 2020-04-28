@@ -53,7 +53,7 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
      * @return dbsnpClusteredVariantEntity
      */
     public DbsnpClusteredVariantEntity process(JsonNode jsonRootNode) {
-        long accession = jsonRootNode.path("refsnp_id").asLong();
+        long accession = Long.parseLong(jsonRootNode.path("refsnp_id").asText());
         ClusteredVariant clusteredVariant = parseJsonNodeToClusteredVariant(jsonRootNode);
         if(clusteredVariant == null) {
             return null;

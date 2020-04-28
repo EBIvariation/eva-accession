@@ -48,7 +48,7 @@ public class VariantProcessorConfiguration {
             InputParameters inputParameters,
             ContigToGenbankReplacerProcessor contigToGenbankReplacerProcessor,
             ExcludeStructuralVariantsProcessor excludeStructuralVariantsProcessor) {
-        logger.info("Injecting dbsnpVariantProcessor with parameters: {}", inputParameters);
+        logger.info("Injecting VariantProcessor with parameters: {}", inputParameters);
         CompositeItemProcessor<IVariant, IVariant> compositeProcessor = new CompositeItemProcessor<>();
         compositeProcessor.setDelegates(Arrays.asList(excludeStructuralVariantsProcessor,
                                                       contigToGenbankReplacerProcessor));

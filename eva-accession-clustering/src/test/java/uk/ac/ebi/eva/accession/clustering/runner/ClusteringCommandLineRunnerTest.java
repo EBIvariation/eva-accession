@@ -17,34 +17,49 @@
 package uk.ac.ebi.eva.accession.clustering.runner;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
-import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
+import uk.ac.ebi.eva.commons.batch.io.VcfReader;
+import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import javax.sql.DataSource;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.runner.RunnerTestConfiguration.TEST_JOB_NAME;
-import static uk.ac.ebi.eva.accession.clustering.runner.RunnerTestConfiguration.TEST_STEP_1_NAME;
-import static uk.ac.ebi.eva.accession.clustering.runner.RunnerTestConfiguration.TEST_STEP_2_NAME;
+import static org.junit.Assert.assertNotEquals;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes={RunnerTestConfiguration.class})
+@ContextConfiguration(classes={BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringCommandLineRunnerTest {
 
@@ -63,12 +78,42 @@ public class ClusteringCommandLineRunnerTest {
     @Autowired
     private ClusteringCommandLineRunner runner;
 
+    @Autowired
+    private VcfReader vcfReader;
+
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
+    private static String originalVcfInputFilePath;
+
+    private static String originalVcfContent;
+
+    private static File tempVcfInputFileToTestFailingJobs;
+
+    private boolean originalInputParametersCaptured = false;
+
+    @BeforeClass
+    public static void initializeTempFile() throws Exception {
+        tempVcfInputFileToTestFailingJobs = File.createTempFile("resumeFailingJob", ".vcf.gz");
+    }
+
+    @AfterClass
+    public static void deleteTempFile() throws Exception {
+        tempVcfInputFileToTestFailingJobs.delete();
+    }
+
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
+        if (!originalInputParametersCaptured) {
+            originalVcfInputFilePath = inputParameters.getVcf();
+            originalVcfContent = getOriginalVcfContent(originalVcfInputFilePath);
+            writeToTempVCFFile(originalVcfContent);
+            originalInputParametersCaptured = true;
+        }
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
-        runner.setJobNames(TEST_JOB_NAME);
+        runner.setJobNames(CLUSTERING_FROM_VCF_JOB);
+        jobRepositoryTestUtils.removeJobExecutions();
+        inputParameters.setForceRestart(false);
+        useOriginalVcfFile();
     }
 
     @After
@@ -98,40 +143,56 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
-    public void forceRestartForJobThatIsAlreadyInTheRepository() throws Exception {
-        long jobId = createStartedJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
-        long step1Id = addStepToJobExecution(jobId, TEST_STEP_1_NAME, BatchStatus.COMPLETED);
-        long step2Id = addStepToJobExecution(jobId, TEST_STEP_2_NAME, BatchStatus.STARTED);
+    @DirtiesContext
+    public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
         inputParameters.setForceRestart(true);
         runner.run();
-
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-        assertEquals(BatchStatus.FAILED, jobExplorer.getStepExecution(jobId, step1Id).getStatus());
-        assertEquals(BatchStatus.FAILED, jobExplorer.getStepExecution(jobId, step2Id).getStatus());
-        assertEquals(BatchStatus.FAILED, jobExplorer.getJobExecution(jobId).getStatus());
-        JobExecution lastJobExecution = jobRepository.getLastJobExecution(TEST_JOB_NAME,
-                inputParameters.toJobParameters());
-        assertEquals(BatchStatus.COMPLETED, lastJobExecution.getStatus());
-        assertTrue(lastJobExecution.getStepExecutions().stream()
-                .allMatch(s -> s.getStatus().equals(BatchStatus.COMPLETED)));
     }
 
     @Test
-    public void runJobThatIsAlreadyInTheRepositoryWithoutForcingRestart() throws Exception {
-        long jobId = createStartedJobExecution(TEST_JOB_NAME, inputParameters.toJobParameters());
-        long stepId = addStepToJobExecution(jobId, TEST_STEP_1_NAME, BatchStatus.STARTED);
+    @DirtiesContext
+    public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
+        useTempVcfFile();
+        injectErrorIntoTempVcf();
+        JobInstance failingJobInstance = runJobAandCheckResults();
 
-        inputParameters.setForceRestart(false);
+        inputParameters.setForceRestart(true);
+        remediateTempVcfError();
+        runJobBAndCheckRestart(failingJobInstance);
+    }
+
+    private JobInstance runJobAandCheckResults() throws Exception {
         runner.run();
-
         assertEquals(ClusteringCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-        assertEquals(BatchStatus.STARTED, jobExplorer.getStepExecution(jobId, stepId).getStatus());
-        assertEquals(BatchStatus.STARTED, jobExplorer.getJobExecution(jobId).getStatus());
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
+                                                                                    jobExplorer,
+                                                                                    inputParameters.toJobParameters())
+                                                               .getJobInstance();
+        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
+                                                                         CLUSTERING_FROM_VCF_STEP);
+        //Ensure that only the first batch was written (batch size is 2 and error was at line#4)
+        assertEquals(inputParameters.getChunkSize(), stepExecution.getWriteCount());
+
+        return currentJobInstance;
+    }
+
+    private void runJobBAndCheckRestart(JobInstance failingJobInstance) throws Exception {
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
+                                                                                    jobExplorer,
+                                                                                    inputParameters.toJobParameters())
+                                                               .getJobInstance();
+        assertNotEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
     }
 
     @Test
-    public void forceRestartButNoJobInTheRepository() throws JobExecutionException {
+    @DirtiesContext
+    public void forceRestartButNoJobInTheRepository() throws Exception {
         inputParameters.setForceRestart(true);
         assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
         runner.run();
@@ -139,21 +200,113 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(ClusteringCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
     }
 
-    private long createStartedJobExecution(String jobName, JobParameters jobParameters) throws Exception {
-        JobExecution jobExecution = jobRepository.createJobExecution(jobName, jobParameters);
-        jobExecution.setStatus(BatchStatus.STARTED);
-        jobRepository.update(jobExecution);
-        return jobExecution.getId();
+    @Test
+    @DirtiesContext
+    public void resumeFailingJobFromCorrectChunk() throws Exception {
+        // Jobs A, B, C are run chronological order; A and C have SAME parameters;
+        // A is the job that is run after VCF fault injection (as part of the runTestWithFaultInjection method),
+        // therefore should fail.
+        // B is a job run with the original VCF without any faults (run separately), therefore should succeed.
+        // C is a job with the same parameters as A run after VCF fault remediation (as part of the
+        // runTestWithFaultInjection method), therefore should resume A and succeed.
+
+        useTempVcfFile();
+        injectErrorIntoTempVcf();
+        JobInstance failingJobInstance = runJobAandCheckResults();
+
+        runJobBAndCheckResults();
+
+        remediateTempVcfError();
+        runJobCAndCheckResumption(failingJobInstance);
     }
 
-    private long addStepToJobExecution(long jobExecutionId, String stepName, BatchStatus stepStatus) {
-        JobExecution jobExecution = jobExplorer.getJobExecution(jobExecutionId);
-        StepExecution stepExecution = jobExecution.createStepExecution(stepName);
-        jobRepository.add(stepExecution);
-        long stepId = stepExecution.getId();
-        stepExecution.setStatus(stepStatus);
-        jobRepository.update(stepExecution);
-        return stepId;
+    private void runJobBAndCheckResults() throws Exception {
+        useOriginalVcfFile();
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        //Restore state so that Job C can continue running after fault remediation
+        useTempVcfFile();
     }
 
+    private void runJobCAndCheckResumption(JobInstance failingJobInstance) throws Exception {
+        runner.run();
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_VCF_JOB,
+                                                                                    jobExplorer,
+                                                                                    inputParameters.toJobParameters())
+                                                               .getJobInstance();
+        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
+                                                                         CLUSTERING_FROM_VCF_STEP);
+        // Did we resume the previous failed job instance?
+        assertEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
+
+        int numberOfLinesInVcf = getNumberOfLinesInVcfString(originalVcfContent);
+        // Test resumption point - did we pick up where we left off?
+        // Ensure all the batches other than the first batch were processed
+        assertEquals(numberOfLinesInVcf - inputParameters.getChunkSize(), stepExecution.getWriteCount());
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    private void injectErrorIntoTempVcf() throws Exception {
+        String modifiedVcfContent = originalVcfContent.replace("ss4", "4ss--jibberish");
+        // Inject error in the VCF file to cause processing to stop at variant#4
+        writeToTempVCFFile(modifiedVcfContent);
+    }
+
+    private void remediateTempVcfError() throws Exception {
+        writeToTempVCFFile(originalVcfContent);
+    }
+
+    private void useOriginalVcfFile() throws Exception {
+        inputParameters.setVcf(originalVcfInputFilePath);
+        vcfReader.setResource(FileUtils.getResource(new File(originalVcfInputFilePath)));
+    }
+
+    private void useTempVcfFile() throws Exception {
+        // The following does not actually change the wiring of the vcfReader since the wiring happens before the tests
+        // This setVcf is only to facilitate identifying jobs in the job repo by parameter
+        // (those that use original vs temp VCF)
+        inputParameters.setVcf(tempVcfInputFileToTestFailingJobs.getAbsolutePath());
+        /*
+             * Change the auto-wired VCF for VCFReader at runtime
+             * Rationale:
+             *  1) Why not use two test configurations, one for a VCF that fails validation and another for a VCF
+             *  that won't and test resumption?
+             *     Beginning Spring Boot 2, job resumption can only happen when input parameters to the restarted job
+             *     is the same as the failed job.
+             *     Therefore, a test to check resumption cannot have two different config files with different
+             *     parameters.vcf.
+             *     This test therefore creates a dynamic VCF and injects errors at runtime to the VCF thus preserving
+             *     the VCF parameter but changing the VCF content.
+             *  2) Why not artificially inject a VcfReader exception?
+             *     This will preclude us from verifying job resumption from a precise line in the VCF.
+         */
+        vcfReader.setResource(FileUtils.getResource(tempVcfInputFileToTestFailingJobs));
+    }
+
+    private void writeToTempVCFFile(String modifiedVCFContent) throws IOException {
+        FileOutputStream outputStream = new FileOutputStream(tempVcfInputFileToTestFailingJobs.getAbsolutePath());
+        GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
+        gzipOutputStream.write(modifiedVCFContent.getBytes(StandardCharsets.UTF_8));
+        gzipOutputStream.close();
+    }
+
+    private String getOriginalVcfContent(String inputVcfPath) throws Exception {
+        StringBuilder originalVCFContent = new StringBuilder();
+
+        GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(inputVcfPath));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(gzipInputStream));
+
+        String read;
+        while ((read = reader.readLine()) != null) {
+            originalVCFContent.append(read).append(System.lineSeparator());
+        }
+        return originalVCFContent.toString();
+    }
+
+    private int getNumberOfLinesInVcfString(String vcfString) {
+        return (int) Arrays.stream(vcfString.split(System.lineSeparator()))
+                           .filter(line -> !line.startsWith("#"))
+                           .count();
+    }
 }

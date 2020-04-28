@@ -37,7 +37,7 @@ public class SubSnpNoHgvsContigAndChromosomeReader extends JdbcCursorItemReader<
 
     private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsContigAndChromosomeReader.class);
 
-    public SubSnpNoHgvsContigAndChromosomeReader(String assembly, Long buildNumber, DataSource dataSource,
+    public SubSnpNoHgvsContigAndChromosomeReader(String assembly, String buildNumber, DataSource dataSource,
                                                  int pageSize) throws Exception {
         setDataSource(dataSource);
         setSql(buildSql(assembly, buildNumber));
@@ -45,7 +45,7 @@ public class SubSnpNoHgvsContigAndChromosomeReader extends JdbcCursorItemReader<
         setFetchSize(pageSize);
     }
 
-    private String buildSql(String assembly, Long buildNumber) {
+    private String buildSql(String assembly, String buildNumber) {
         String tableName = getTableName(assembly, buildNumber);
         logger.debug("querying table {} for assembly {}", tableName, assembly);
         String sql = "SELECT DISTINCT " + CONTIG_NAME_COLUMN
@@ -55,7 +55,7 @@ public class SubSnpNoHgvsContigAndChromosomeReader extends JdbcCursorItemReader<
         return sql;
     }
 
-    private String getTableName(String assembly, Long buildNumber) {
+    private String getTableName(String assembly, String buildNumber) {
         if (buildNumber == null) {
             return "dbsnp_variant_load_nohgvslink_" + hash(assembly);
         } else {

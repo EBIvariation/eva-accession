@@ -71,7 +71,7 @@ public class SubSnpNoHgvsReaderTest {
 
     @Test
     public void readTurkeyPreviousBuildVariants() throws Exception {
-        reader = buildReader(CHICKEN_ASSEMBLY_4, 145L, PAGE_SIZE);
+        reader = buildReader(CHICKEN_ASSEMBLY_4, "145", PAGE_SIZE);
         List<SubSnpNoHgvs> variants = readAll(reader);
         assertEquals(3, variants.size());
     }
@@ -86,7 +86,7 @@ public class SubSnpNoHgvsReaderTest {
         return buildReader(assembly, null, pageSize);
     }
 
-    private SubSnpNoHgvsReader buildReader(String assembly, Long buildNumber, int pageSize) throws Exception {
+    private SubSnpNoHgvsReader buildReader(String assembly, String buildNumber, int pageSize) throws Exception {
         SubSnpNoHgvsReader fieldsReader = new SubSnpNoHgvsReader(assembly, buildNumber, dbsnpDataSource.getDatasource(), pageSize);
         fieldsReader.afterPropertiesSet();
         ExecutionContext executionContext = new ExecutionContext();
