@@ -9,9 +9,7 @@ variables:
     MAVEN_SETTINGS: maven-settings.xml
     URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
     MEDIA_TYPE: application/vnd.github.raw
-
-before_script:
-    - export DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
+    VARIABLES_FILE: variables.txt
 
 test:
     stage: test
@@ -26,6 +24,7 @@ test:
     only:
         - master
         - tags
+        - feature/use-maven-settings-config-file
 
 # Not executed, parent job definition for package
 .package:
@@ -34,11 +33,12 @@ test:
     environment:
         name: $ENVIRONMENT_NAME
     before_script:
+        - DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
+        - echo "export DATETIME=$DATETIME" > $VARIABLES_FILE
         - apk add --update curl
         - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $URL_MAVEN_SETTINGS > $MAVEN_SETTINGS
     script:
-#        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests -Dtimestamp="$DATETIME"
-        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp="$DATETIME"
+        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
         - cp eva-accession-ws/target/eva*.war $WS_ARTIFACT_PATH
     after_script:
         - rm $MAVEN_SETTINGS
@@ -46,6 +46,7 @@ test:
         paths:
             - $WS_ARTIFACT_PATH
             - $CLUSTERING_ARTIFACT_PATH
+            - $VARIABLES_FILE
 
 package-internal:
     extends: .package
@@ -63,6 +64,7 @@ package-development:
         MAVEN_PROFILE: development
     only:
         - master
+        - feature/use-maven-settings-config-file
 
 package-production:
     extends: .package
@@ -79,6 +81,7 @@ package-production:
     environment:
         name: $ENVIRONMENT_NAME
     script:
+        - source $VARIABLES_FILE
         - apk add --update curl
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
 
@@ -106,6 +109,7 @@ deploy-tomcat-development:
         - package-development
     only:
         - master
+        - feature/use-maven-settings-config-file
 
 deploy-tomcat-production:
     extends: .deploy-tomcat
