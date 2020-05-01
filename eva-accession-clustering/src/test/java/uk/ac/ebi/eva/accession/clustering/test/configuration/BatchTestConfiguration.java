@@ -55,7 +55,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
         ClusteringVariantProcessorConfiguration.class,
         ClusteringWriterConfiguration.class,
         ListenersConfiguration.class,
-        ClusteringCommandLineRunner.class})
+        ClusteringCommandLineRunner.class,
+        ChunkSizeCompletionPolicyConfiguration.class})
 public class BatchTestConfiguration {
 
     public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";
