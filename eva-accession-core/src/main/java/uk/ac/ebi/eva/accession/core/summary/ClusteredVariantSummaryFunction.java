@@ -21,6 +21,15 @@ import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 
 import java.util.function.Function;
 
+/**
+ * Creates a string representation from the identifying fields of a ClusteredVariant.
+ *
+ * This class will usually be used together with {@link uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction}
+ * to create a {@link uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService}.
+ *
+ * Using this summary class and the hashing one is equivalent to the next bash command (replacing the variables):
+ * echo -n "assembly_contig_start_type" | sha1sum | awk '{ print toupper($1) }'
+ */
 public class ClusteredVariantSummaryFunction implements Function<IClusteredVariant, String> {
 
     @Override

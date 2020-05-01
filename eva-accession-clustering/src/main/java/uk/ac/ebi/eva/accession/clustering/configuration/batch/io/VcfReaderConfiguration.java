@@ -25,6 +25,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfigura
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
+import uk.ac.ebi.eva.commons.batch.io.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
@@ -47,11 +48,8 @@ public class VcfReaderConfiguration {
 
     @Bean
     public VcfReader vcfReader(InputParameters inputParameters) throws IOException {
-        String fileId = inputParameters.getProjectAccession();
-        String studyId = inputParameters.getProjectAccession();
         File vcfFile = new File(inputParameters.getVcf());
-        AggregatedVcfLineMapper lineMapper = new AggregatedVcfLineMapper(fileId, studyId, Aggregation.BASIC, null);
-        lineMapper.setIncludeIds(true);
+        CoordinatesVcfLineMapper lineMapper = new CoordinatesVcfLineMapper();
         return new VcfReader(lineMapper, vcfFile);
     }
 }

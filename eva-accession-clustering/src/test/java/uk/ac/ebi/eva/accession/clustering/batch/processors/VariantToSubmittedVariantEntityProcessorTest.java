@@ -36,6 +36,8 @@ public class VariantToSubmittedVariantEntityProcessorTest {
 
     private static final String ASSEMBLY_ACCESSION = "GCA_000000001.1";
 
+    private static final String PROJECT_ACCESSION = "PROJECT_ACCESSION";
+
     private static final long SUBMITTED_VARIANT_ACCESSION = 1000L;
 
     private Function<ISubmittedVariant, String> hashingFunction;
@@ -44,14 +46,15 @@ public class VariantToSubmittedVariantEntityProcessorTest {
 
     @Before
     public void setUp() {
-        processor = new VariantToSubmittedVariantEntityProcessor(ASSEMBLY_ACCESSION);
+        processor = new VariantToSubmittedVariantEntityProcessor(ASSEMBLY_ACCESSION, PROJECT_ACCESSION);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @Test
     public void process() {
         // given
-        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, 0, "", "1", 1000L, "A", "T", null);
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, 0, PROJECT_ACCESSION, "1", 1000L,
+                                                                 "A", "T", null);
         String hash = hashingFunction.apply(submittedVariant);
         SubmittedVariantEntity expectedSubmittedVariantEntity = new SubmittedVariantEntity(SUBMITTED_VARIANT_ACCESSION,
                                                                                            hash, submittedVariant, 1);
@@ -65,6 +68,7 @@ public class VariantToSubmittedVariantEntityProcessorTest {
         // then
         assertEquals(expectedSubmittedVariantEntity, processedVariant);
         assertEquals(expectedSubmittedVariantEntity.getAccession(), processedVariant.getAccession());
+        assertEquals(expectedSubmittedVariantEntity.getHashedMessage(), processedVariant.getHashedMessage());
     }
 
     @Test

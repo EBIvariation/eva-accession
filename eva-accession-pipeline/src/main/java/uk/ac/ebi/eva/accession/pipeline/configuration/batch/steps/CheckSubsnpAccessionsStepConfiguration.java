@@ -28,8 +28,8 @@ import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck.ReportCheckTasklet;
+import uk.ac.ebi.eva.commons.batch.io.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;

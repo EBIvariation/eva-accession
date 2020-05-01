@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
+import com.mongodb.Mongo;
 import org.springframework.batch.item.ItemWriter;
 import com.mongodb.MongoBulkWriteException;
 import org.springframework.data.mongodb.core.BulkOperations;
@@ -68,24 +69,21 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     @Override
-    public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities) throws Exception {
-        try {
-            assignedAccessions.clear();
-            //Write new Clustered Variants in mongo and get existing ones
-            getOrCreateClusteredVariantAccessions(submittedVariantEntities);
-            //Update submitted variants "rs" field
-            BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  SubmittedVariantEntity.class);
-            for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
-                Query query = query(where("_id").is(submittedVariantEntity.getId()));
-                Update update = new Update();
-                update.set("rs", getClusteredVariantAccession(submittedVariantEntity));
-                bulkOperations.updateOne(query, update);
-            }
-            bulkOperations.execute();
-        } catch (MongoBulkWriteException e) {
-            throw e;
+    public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities)
+            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
+        assignedAccessions.clear();
+        //Write new Clustered Variants in mongo and get existing ones
+        getOrCreateClusteredVariantAccessions(submittedVariantEntities);
+        //Update submitted variants "rs" field
+        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                              SubmittedVariantEntity.class);
+        for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
+            Query query = query(where("_id").is(submittedVariantEntity.getId()));
+            Update update = new Update();
+            update.set("rs", getClusteredVariantAccession(submittedVariantEntity));
+            bulkOperations.updateOne(query, update);
         }
+        bulkOperations.execute();
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)

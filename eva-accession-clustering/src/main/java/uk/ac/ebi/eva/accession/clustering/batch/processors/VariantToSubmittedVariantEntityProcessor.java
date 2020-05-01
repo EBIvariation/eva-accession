@@ -31,10 +31,13 @@ public class VariantToSubmittedVariantEntityProcessor implements ItemProcessor<V
 
     private String assemblyAccession;
 
+    private String projectAccession;
+
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantEntityProcessor(String assemblyAccession) {
+    public VariantToSubmittedVariantEntityProcessor(String assemblyAccession, String projectAccession) {
         this.assemblyAccession = assemblyAccession;
+        this.projectAccession = projectAccession;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -44,8 +47,9 @@ public class VariantToSubmittedVariantEntityProcessor implements ItemProcessor<V
                       "The variants should have an SS ID as main ID: " + variant.toString());
         long accession = Long.parseLong(variant.getMainId().substring(2));
 
-        SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, "",
-                variant.getChromosome(), variant.getStart(), variant.getReference(), variant.getAlternate(), null);
+        SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, projectAccession,
+                                                                 variant.getChromosome(), variant.getStart(),
+                                                                 variant.getReference(), variant.getAlternate(), null);
 
         String hash = hashingFunction.apply(submittedVariant);
 
