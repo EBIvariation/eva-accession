@@ -51,7 +51,6 @@ package-internal:
         MAVEN_PROFILE: internal
     only:
         - master
-        - feature/use-maven-settings-config-file
 
 package-development:
     extends: .package
@@ -91,7 +90,6 @@ deploy-tomcat-internal:
         - package-internal
     only:
         - master
-        - feature/use-maven-settings-config-file
 
 deploy-tomcat-development:
     extends: .deploy-tomcat
