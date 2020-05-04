@@ -9,7 +9,6 @@ variables:
     MAVEN_SETTINGS: maven-settings.xml
     URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
     MEDIA_TYPE: application/vnd.github.raw
-    VARIABLES_FILE: variables.txt
 
 test:
     stage: test
@@ -33,7 +32,6 @@ test:
         name: $ENVIRONMENT_NAME
     before_script:
         - DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
-        - echo "export DATETIME=$DATETIME" > $VARIABLES_FILE
         - apk add --update curl
         - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $URL_MAVEN_SETTINGS > $MAVEN_SETTINGS
     script:
@@ -45,7 +43,6 @@ test:
         paths:
             - $WS_ARTIFACT_PATH
             - $CLUSTERING_ARTIFACT_PATH
-            - $VARIABLES_FILE
 
 package-internal:
     extends: .package
@@ -54,6 +51,7 @@ package-internal:
         MAVEN_PROFILE: internal
     only:
         - master
+        - feature/use-maven-settings-config-file
 
 package-development:
     extends: .package
@@ -78,7 +76,7 @@ package-production:
     environment:
         name: $ENVIRONMENT_NAME
     script:
-        - source $VARIABLES_FILE
+        - DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
         - apk add --update curl
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
 
@@ -93,6 +91,7 @@ deploy-tomcat-internal:
         - package-internal
     only:
         - master
+        - feature/use-maven-settings-config-file
 
 deploy-tomcat-development:
     extends: .deploy-tomcat
