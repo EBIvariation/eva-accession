@@ -24,7 +24,6 @@ test:
     only:
         - master
         - tags
-        - feature/use-maven-settings-config-file
 
 # Not executed, parent job definition for package
 .package:
@@ -55,7 +54,6 @@ package-internal:
         MAVEN_PROFILE: internal
     only:
         - master
-        - feature/use-maven-settings-config-file
 
 package-development:
     extends: .package
@@ -64,7 +62,6 @@ package-development:
         MAVEN_PROFILE: development
     only:
         - master
-        - feature/use-maven-settings-config-file
 
 package-production:
     extends: .package
@@ -96,7 +93,6 @@ deploy-tomcat-internal:
         - package-internal
     only:
         - master
-        - feature/use-maven-settings-config-file
 
 deploy-tomcat-development:
     extends: .deploy-tomcat
@@ -109,7 +105,6 @@ deploy-tomcat-development:
         - package-development
     only:
         - master
-        - feature/use-maven-settings-config-file
 
 deploy-tomcat-production:
     extends: .deploy-tomcat
