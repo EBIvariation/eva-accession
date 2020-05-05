@@ -44,7 +44,7 @@ public class SubSnpNoHgvsContigAndChromosomeReaderTest {
 
     private static final String CHICKEN_ASSEMBLY_4 = "Gallus_gallus-4.0";
 
-    private static final long BUILD_NUMBER = 145L;
+    private static final String BUILD_NUMBER = "145";
 
     private static final int PAGE_SIZE = 10;
 
@@ -90,7 +90,7 @@ public class SubSnpNoHgvsContigAndChromosomeReaderTest {
         return buildReader(assembly, null, pageSize);
     }
 
-    private SubSnpNoHgvsContigAndChromosomeReader buildReader(String assembly, Long buildNumber, int pageSize) throws Exception {
+    private SubSnpNoHgvsContigAndChromosomeReader buildReader(String assembly, String buildNumber, int pageSize) throws Exception {
         SubSnpNoHgvsContigAndChromosomeReader fieldsReader = new SubSnpNoHgvsContigAndChromosomeReader(assembly, buildNumber, dbsnpDataSource.getDatasource(), pageSize);
         fieldsReader.afterPropertiesSet();
         ExecutionContext executionContext = new ExecutionContext();

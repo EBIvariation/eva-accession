@@ -102,6 +102,7 @@ public class ReportCheckTasklet implements Tasklet {
         }
 
         logStatus(stepContribution);
+        reportBufferHelper.getReader().close();
 
         return RepeatStatus.FINISHED;
     }

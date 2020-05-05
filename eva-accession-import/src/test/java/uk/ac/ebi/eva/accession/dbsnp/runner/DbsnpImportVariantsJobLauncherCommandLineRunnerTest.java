@@ -15,30 +15,47 @@
  */
 package uk.ac.ebi.eva.accession.dbsnp.runner;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.batch.core.JobInstance;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
+import org.springframework.batch.test.context.SpringBatchTest;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.accession.dbsnp.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.dbsnp.test.BatchTestConfiguration;
 
 import javax.sql.DataSource;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_JOB;
+import static uk.ac.ebi.eva.accession.dbsnp.configuration.BeanNames.IMPORT_DBSNP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:validate-contigs-fail.properties")
-public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
+public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest implements ApplicationContextAware {
 
     @Autowired
     private InputParameters inputParameters;
@@ -57,10 +74,19 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
 
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
+    private ApplicationContext applicationContext;
+
     @Before
     public void setUp() throws Exception {
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
+        jobRepositoryTestUtils.removeJobExecutions();
         runner.setJobNames(IMPORT_DBSNP_VARIANTS_JOB);
+        inputParameters.setForceRestart(false);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jobRepositoryTestUtils.removeJobExecutions();
     }
 
     @Test
@@ -81,6 +107,38 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
 
     @Test
     @DirtiesContext
+    public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
+        inputParameters.setForceImport(true);
+        runner.run();
+        long instanceIdAfterFirstSuccessfulJob = jobExplorer.getJobInstances(IMPORT_DBSNP_VARIANTS_JOB, 0, 1).get(0)
+                                                            .getInstanceId();
+        assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        // We need to do this to prevent the cached reader bean (which was closed after the first run) from being reused
+        resetBean("fastaSynonymSequenceReader");
+        runner.run();
+        long instanceIdAfterSecondSuccessfulJob = jobExplorer.getJobInstances(IMPORT_DBSNP_VARIANTS_JOB, 0, 1).get(0)
+                                                             .getInstanceId();
+        assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        assertNotEquals(instanceIdAfterFirstSuccessfulJob, instanceIdAfterSecondSuccessfulJob);
+    }
+
+    // See https://stackoverflow.com/a/54356616
+    private void resetBean(String beanName) {
+        GenericApplicationContext genericApplicationContext = (GenericApplicationContext) applicationContext;
+        BeanDefinition bd = genericApplicationContext.getBeanDefinition(beanName);
+        genericApplicationContext.removeBeanDefinition(beanName);
+        genericApplicationContext.registerBeanDefinition(beanName, bd);
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext)
+            throws BeansException {
+        this.applicationContext = applicationContext;
+    }
+
+    @Test
+    @DirtiesContext
     public void resumeFailingJob() throws Exception {
         inputParameters.setForceImport(false);
         runner.run();
@@ -95,5 +153,34 @@ public class DbsnpImportVariantsJobLauncherCommandLineRunnerTest {
 
         assertEquals(instanceIdAfterFailingJob, instanceIdAfterSuccessfulJob);
         assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    @DirtiesContext
+    public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
+        JobInstance failingJobInstance = runJobAandCheckResults();
+        inputParameters.setForceRestart(true);
+        inputParameters.setForceImport(true);
+        runJobBAndCheckRestart(failingJobInstance);
+    }
+
+    private JobInstance runJobAandCheckResults() throws Exception {
+        runner.run();
+        assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
+
+        return CommandLineRunnerUtils.getLastJobExecution(IMPORT_DBSNP_VARIANTS_JOB,
+                                                          jobExplorer,
+                                                          inputParameters.toJobParameters())
+                                     .getJobInstance();
+    }
+
+    private void runJobBAndCheckRestart(JobInstance failingJobInstance) throws Exception {
+        runner.run();
+        assertEquals(DbsnpImportVariantsJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(IMPORT_DBSNP_VARIANTS_JOB,
+                                                                                    jobExplorer,
+                                                                                    inputParameters.toJobParameters())
+                                                               .getJobInstance();
+        assertNotEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
     }
 }

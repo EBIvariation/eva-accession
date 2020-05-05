@@ -37,6 +37,8 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSize
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.ClusteringVariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromMongoStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromVcfStepConfiguration;
+import uk.ac.ebi.eva.accession.clustering.runner.ClusteringCommandLineRunner;
+import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.sql.DataSource;
 
@@ -52,8 +54,9 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
         ClusteringMongoReaderConfiguration.class,
         ClusteringVariantProcessorConfiguration.class,
         ClusteringWriterConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class,
-        ListenersConfiguration.class})
+        ListenersConfiguration.class,
+        ClusteringCommandLineRunner.class,
+        ChunkSizeCompletionPolicyConfiguration.class})
 public class BatchTestConfiguration {
 
     public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";
@@ -94,5 +97,10 @@ public class BatchTestConfiguration {
                 super.setJob(job);
             }
         };
+    }
+
+    @Bean
+    public JobExecutionApplicationListener jobExecutionApplicationListener() {
+        return new JobExecutionApplicationListener();
     }
 }

@@ -20,9 +20,11 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.springframework.core.io.FileSystemResource;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * There's no way to read a compressed file with Spring classes.
@@ -50,6 +52,16 @@ public class BzipLazyResource extends FileSystemResource {
                                                                              true);
         } catch (CompressorException compressorException) {
             throw new IOException("The input file is not compressed in bzip2 format");
+        }
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        BufferedOutputStream bos = new BufferedOutputStream(super.getOutputStream());
+        try {
+            return new CompressorStreamFactory().createCompressorOutputStream(CompressorStreamFactory.BZIP2, bos);
+        } catch (CompressorException compressorException) {
+            throw new IOException(compressorException.getMessage());
         }
     }
 }

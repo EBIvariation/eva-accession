@@ -54,7 +54,7 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
 
     private static final Logger logger = LoggerFactory.getLogger(SubSnpNoHgvsReader.class);
 
-    public SubSnpNoHgvsReader(String assembly, Long buildNumber, DataSource dataSource, int pageSize) throws Exception {
+    public SubSnpNoHgvsReader(String assembly, String buildNumber, DataSource dataSource, int pageSize) throws Exception {
         setDataSource(dataSource);
         setSql(buildSql(assembly, buildNumber));
         setRowMapper(new SubSnpNoHgvsRowMapper(assembly));
@@ -71,7 +71,7 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
         super.openCursor(connection);
     }
 
-    private String buildSql(String assembly, Long buildNumber) {
+    private String buildSql(String assembly, String buildNumber) {
         String tableName = getTableName(assembly, buildNumber);
         logger.debug("querying table {} for assembly {}", tableName, assembly);
         String sql =
@@ -103,7 +103,7 @@ public class SubSnpNoHgvsReader extends JdbcCursorItemReader<SubSnpNoHgvs> {
         return sql;
     }
 
-    private String getTableName(String assembly, Long buildNumber) {
+    private String getTableName(String assembly, String buildNumber) {
         if (buildNumber == null) {
             return "dbsnp_variant_load_nohgvslink_" + hash(assembly);
         } else {
