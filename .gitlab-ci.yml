@@ -6,9 +6,9 @@ stages:
 variables:
     WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
     CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
-
-before_script:
-    - export DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
+    MAVEN_SETTINGS: maven-settings.xml
+    URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
+    MEDIA_TYPE: application/vnd.github.raw
 
 test:
     stage: test
@@ -30,9 +30,15 @@ test:
     image: maven:3.6.1-jdk-8-alpine
     environment:
         name: $ENVIRONMENT_NAME
+    before_script:
+        - DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
+        - apk add --update curl
+        - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $URL_MAVEN_SETTINGS > $MAVEN_SETTINGS
     script:
-        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings .gitlab.settings.xml -P $MAVEN_PROFILE -DskipTests -Dtimestamp="$DATETIME"
+        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering ' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
         - cp eva-accession-ws/target/eva*.war $WS_ARTIFACT_PATH
+    after_script:
+        - rm $MAVEN_SETTINGS
     artifacts:
         paths:
             - $WS_ARTIFACT_PATH
@@ -69,6 +75,7 @@ package-production:
     environment:
         name: $ENVIRONMENT_NAME
     script:
+        - DATETIME=$(date +%Y-%m-%dT%H-%M-%S)
         - apk add --update curl
         - curl -u $TOMCAT_USER:$TOMCAT_PASSWORD -T "$WS_ARTIFACT_PATH" "http://$TOMCAT_HOST/manager/text/deploy?update=true&path=/eva/webservices/identifiers&version=$DATETIME" | grep "OK - Deployed application"
 
