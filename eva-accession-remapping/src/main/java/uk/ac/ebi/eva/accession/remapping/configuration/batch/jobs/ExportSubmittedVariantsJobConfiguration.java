@@ -41,8 +41,10 @@ public class ExportSubmittedVariantsJobConfiguration {
     @Bean(EXPORT_SUBMITTED_VARIANTS_JOB)
     public Job accessionReleaseJob(
             JobBuilderFactory jobBuilderFactory,
-            @Autowired @Qualifier(EXPORT_EVA_SUBMITTED_VARIANTS_STEP) Step exportEvaSubmittedVariantsStep,
-            @Autowired @Qualifier(EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP) Step exportDbsnpSubmittedVariantsStep) {
+            @Autowired @Qualifier(EXPORT_EVA_SUBMITTED_VARIANTS_STEP) Step exportEvaSubmittedVariantsStep
+//            ,
+//            @Autowired @Qualifier(EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP) Step exportDbsnpSubmittedVariantsStep
+    ) {
         return jobBuilderFactory.get(EXPORT_SUBMITTED_VARIANTS_JOB)
                                 .incrementer(new RunIdIncrementer())
                                 .start(exportEvaSubmittedVariantsStep)
