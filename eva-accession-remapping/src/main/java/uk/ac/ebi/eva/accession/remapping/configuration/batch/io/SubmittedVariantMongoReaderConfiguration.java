@@ -16,12 +16,9 @@
 
 package uk.ac.ebi.eva.accession.remapping.configuration.batch.io;
 
-import com.mongodb.MongoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.item.ItemStreamReader;
-import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -31,8 +28,6 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.remapping.batch.io.DbsnpSubmittedVariantMongoReader;
 import uk.ac.ebi.eva.accession.remapping.batch.io.EvaSubmittedVariantMongoReader;
 import uk.ac.ebi.eva.accession.remapping.parameters.InputParameters;
-import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
-import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.DBSNP_SUBMITTED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EVA_SUBMITTED_VARIANT_READER;

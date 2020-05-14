@@ -17,13 +17,13 @@ package uk.ac.ebi.eva.accession.remapping.batch.io;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 
-public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<SubmittedVariantEntity> {
+public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<DbsnpSubmittedVariantEntity> {
 
     public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate) {
         setTemplate(mongoTemplate);
-        setTargetType(SubmittedVariantEntity.class);
+        setTargetType(DbsnpSubmittedVariantEntity.class);
 
         //TODO jmmut: allow using Query instead of String to state the query
         setQuery(String.format("{ \"seq\" : \"%s\" }", assemblyAccession));

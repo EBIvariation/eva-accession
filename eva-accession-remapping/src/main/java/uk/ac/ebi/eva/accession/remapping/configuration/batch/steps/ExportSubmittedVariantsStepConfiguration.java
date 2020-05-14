@@ -31,10 +31,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.remapping.batch.policies.IllegalStartSkipPolicy;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.io.SubmittedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.io.VariantContextWriterConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.listeners.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.remapping.configuration.batch.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EVA_SUBMITTED_VARIANT_READER;
@@ -46,22 +48,23 @@ import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EVA_SUBM
 
 @Configuration
 @Import({SubmittedVariantMongoReaderConfiguration.class,
-         VariantContextWriterConfiguration.class,
-         ListenersConfiguration.class})
+        ReleaseProcessorConfiguration.class,
+        VariantContextWriterConfiguration.class,
+        ListenersConfiguration.class})
 public class ExportSubmittedVariantsStepConfiguration {
 
     @Bean(EXPORT_EVA_SUBMITTED_VARIANTS_STEP)
     public Step exportEvaSubmittedVariantsStep(
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
-            @Autowired @Qualifier(EVA_SUBMITTED_VARIANT_READER) ItemReader<SubmittedVariant> variantReader,
-            @Autowired @Qualifier(SUBMITTED_VARIANT_PROCESSOR) ItemProcessor<SubmittedVariant, VariantContext> variantProcessor,
+            @Autowired @Qualifier(EVA_SUBMITTED_VARIANT_READER) ItemReader<SubmittedVariantEntity> variantReader,
+            @Autowired @Qualifier(SUBMITTED_VARIANT_PROCESSOR) ItemProcessor<SubmittedVariantEntity, VariantContext> variantProcessor,
             @Autowired @Qualifier(EVA_SUBMITTED_VARIANT_WRITER) ItemStreamWriter<VariantContext> accessionWriter,
             @Autowired @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             @Autowired @Qualifier(EXCLUDE_VARIANTS_LISTENER) StepExecutionListener excludeVariantsListener,
             @Autowired IllegalStartSkipPolicy illegalStartSkipPolicy) {
         TaskletStep step = stepBuilderFactory.get(EXPORT_EVA_SUBMITTED_VARIANTS_STEP)
-                .<SubmittedVariant, VariantContext>chunk(chunkSizeCompletionPolicy)
+                .<SubmittedVariantEntity, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)
