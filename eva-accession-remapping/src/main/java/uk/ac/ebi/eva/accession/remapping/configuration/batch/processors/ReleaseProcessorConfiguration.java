@@ -1,0 +1,67 @@
+/*
+ * Copyright 2018 EMBL - European Bioinformatics Institute
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.ac.ebi.eva.accession.remapping.configuration.batch.processors;
+
+import htsjdk.variant.variantcontext.VariantContext;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.support.CompositeItemProcessor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.remapping.batch.processors.ContextNucleotideAdditionProcessor;
+import uk.ac.ebi.eva.accession.remapping.batch.processors.SubmittedVariantToVariantContextProcessor;
+import uk.ac.ebi.eva.accession.remapping.parameters.InputParameters;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+
+import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.SUBMITTED_VARIANT_PROCESSOR;
+
+@Configuration
+public class ReleaseProcessorConfiguration {
+
+    @Bean(SUBMITTED_VARIANT_PROCESSOR)
+    public ItemProcessor<SubmittedVariantEntity, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader,
+                                                                                  ContigMapping contigMapping) {
+        CompositeItemProcessor<SubmittedVariantEntity, VariantContext> compositeItemProcessor =
+                new CompositeItemProcessor<>();
+
+        compositeItemProcessor.setDelegates(Arrays.asList(
+//                new ExcludeInvalidVariantsProcessor(),// TODO jmmut uncomment this
+                new ContextNucleotideAdditionProcessor(fastaReader),
+                new SubmittedVariantToVariantContextProcessor(contigMapping)));
+        return compositeItemProcessor;
+    }
+
+    @Bean
+    FastaSynonymSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping, InputParameters parameters)
+            throws IOException {
+        Path referenceFastaFile = Paths.get(parameters.getFasta());
+        return new FastaSynonymSequenceReader(contigMapping, referenceFastaFile);
+    }
+
+    @Bean
+    ContigMapping contigMapping(InputParameters parameters) throws Exception {
+        return new ContigMapping(parameters.getAssemblyReportUrl());
+    }
+
+}
