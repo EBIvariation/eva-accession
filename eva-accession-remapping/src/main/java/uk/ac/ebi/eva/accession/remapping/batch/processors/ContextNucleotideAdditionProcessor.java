@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
@@ -42,9 +43,9 @@ public class ContextNucleotideAdditionProcessor
 
     private static Pattern alphaRegExPattern = Pattern.compile("[A-Z]*");
 
-    private FastaSynonymSequenceReader fastaSequenceReader;
+    private FastaSequenceReader fastaSequenceReader;
 
-    public ContextNucleotideAdditionProcessor(FastaSynonymSequenceReader fastaReader) {
+    public ContextNucleotideAdditionProcessor(FastaSequenceReader fastaReader) {
         this.fastaSequenceReader = fastaReader;
     }
 

@@ -22,6 +22,7 @@ import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
@@ -40,7 +41,7 @@ import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.SUBMITTE
 public class ReleaseProcessorConfiguration {
 
     @Bean(SUBMITTED_VARIANT_PROCESSOR)
-    public ItemProcessor<SubmittedVariantEntity, VariantContext> releaseProcessor(FastaSynonymSequenceReader fastaReader,
+    public ItemProcessor<SubmittedVariantEntity, VariantContext> releaseProcessor(FastaSequenceReader fastaReader,
                                                                                   ContigMapping contigMapping) {
         CompositeItemProcessor<SubmittedVariantEntity, VariantContext> compositeItemProcessor =
                 new CompositeItemProcessor<>();
@@ -53,15 +54,19 @@ public class ReleaseProcessorConfiguration {
     }
 
     @Bean
-    FastaSynonymSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping, InputParameters parameters)
+    FastaSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping, InputParameters parameters)
             throws IOException {
-        Path referenceFastaFile = Paths.get(parameters.getFasta());
-        return new FastaSynonymSequenceReader(contigMapping, referenceFastaFile);
+        if (parameters.getAssemblyReportUrl().isEmpty()) {
+            return new FastaSequenceReader(Paths.get(parameters.getFasta()));
+        } else {
+            Path referenceFastaFile = Paths.get(parameters.getFasta());
+            return new FastaSynonymSequenceReader(contigMapping, referenceFastaFile);
+        }
     }
 
-    @Bean
-    ContigMapping contigMapping(InputParameters parameters) throws Exception {
-        return new ContigMapping(parameters.getAssemblyReportUrl());
-    }
+//    @Bean
+//    ContigMapping contigMapping(InputParameters parameters) throws Exception {
+//        return new ContigMapping(parameters.getAssemblyReportUrl());
+//    }
 
 }
