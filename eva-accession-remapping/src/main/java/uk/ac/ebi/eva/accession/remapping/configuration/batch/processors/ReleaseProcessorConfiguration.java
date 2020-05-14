@@ -41,25 +41,25 @@ import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.SUBMITTE
 public class ReleaseProcessorConfiguration {
 
     @Bean(SUBMITTED_VARIANT_PROCESSOR)
-    public ItemProcessor<SubmittedVariantEntity, VariantContext> releaseProcessor(FastaSequenceReader fastaReader,
-                                                                                  ContigMapping contigMapping) {
+    public ItemProcessor<SubmittedVariantEntity, VariantContext> releaseProcessor(FastaSequenceReader fastaReader) {
         CompositeItemProcessor<SubmittedVariantEntity, VariantContext> compositeItemProcessor =
                 new CompositeItemProcessor<>();
 
         compositeItemProcessor.setDelegates(Arrays.asList(
 //                new ExcludeInvalidVariantsProcessor(),// TODO jmmut uncomment this
                 new ContextNucleotideAdditionProcessor(fastaReader),
-                new SubmittedVariantToVariantContextProcessor(contigMapping)));
+                new SubmittedVariantToVariantContextProcessor(null)));
         return compositeItemProcessor;
     }
 
     @Bean
-    FastaSequenceReader fastaSynonymSequenceReader(ContigMapping contigMapping, InputParameters parameters)
-            throws IOException {
+    FastaSequenceReader fastaSynonymSequenceReader(InputParameters parameters)
+            throws Exception {
         if (parameters.getAssemblyReportUrl().isEmpty()) {
             return new FastaSequenceReader(Paths.get(parameters.getFasta()));
         } else {
             Path referenceFastaFile = Paths.get(parameters.getFasta());
+            ContigMapping contigMapping = new ContigMapping(parameters.getAssemblyReportUrl());
             return new FastaSynonymSequenceReader(contigMapping, referenceFastaFile);
         }
     }
