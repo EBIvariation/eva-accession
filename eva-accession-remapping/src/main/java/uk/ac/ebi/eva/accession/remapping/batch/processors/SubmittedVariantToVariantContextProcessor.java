@@ -86,7 +86,9 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
 
     private Map<String, String> getAttributes(SubmittedVariantEntity variant) {
         Map<String, String> attributes = new HashMap<>();
-        attributes.put(RS_KEY, RS_PREFIX + variant.getClusteredVariantAccession());
+        if (variant.getClusteredVariantAccession() != null) {
+            attributes.put(RS_KEY, RS_PREFIX + variant.getClusteredVariantAccession());
+        }
         return attributes;
     }
 

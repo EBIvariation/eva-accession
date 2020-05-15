@@ -79,7 +79,7 @@ public class ContextNucleotideAdditionProcessor
         }
         if (variantType.equals(VariantType.SEQUENCE_ALTERATION)) {
             // TODO jmmut: does the accessioning service contain named variants? or did we clean them all during the import?
-            throw new UnsupportedOperationException("handling named variants is not implemented");
+            throw new UnsupportedOperationException("handling named variants is not implemented: ");
 //            return renormalizeNamedVariant(variant, oldStart, contig, oldReference, oldAlternate);
         } else if (Arrays.asList(VariantType.INS, VariantType.DEL, VariantType.INDEL).contains(variantType)) {
             return renormalizeIndel(variant, oldStart, contig, oldReference, oldAlternate);
