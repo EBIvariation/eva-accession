@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -32,7 +33,7 @@ import java.util.regex.Pattern;
  * VCF format only accepts reference and alternate alleles formed by A, C, G, T or N letters in upper or lower case.
  * If one of the alleles has a different character, this processor will return null so that variant can be ignored.
  */
-public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, Variant> {
+public class ExcludeInvalidVariantsProcessor implements ItemProcessor<SubmittedVariantEntity, SubmittedVariantEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcludeInvalidVariantsProcessor.class);
 
@@ -40,20 +41,13 @@ public class ExcludeInvalidVariantsProcessor implements ItemProcessor<Variant, V
 
     private static final Pattern ALLELES_PATTERN = Pattern.compile(ALLELES_REGEX);
 
-    static final String REFERENCE_AND_ALTERNATE_ALLELES_CANNOT_BE_EMPTY =
-            "Neither the reference nor the alternate allele should be empty.";
-
     @Override
-    public Variant process(Variant variant) throws Exception {
-        if (variant.getType() == VariantType.SEQUENCE_ALTERATION) {
-            return variant;
-        }
-
-        Matcher matcher = ALLELES_PATTERN.matcher(variant.getReference() + variant.getAlternate());
+    public SubmittedVariantEntity process(SubmittedVariantEntity variant) throws Exception {
+        Matcher matcher = ALLELES_PATTERN.matcher(variant.getReferenceAllele() + variant.getAlternateAllele());
         if(matcher.matches()) {
             return variant;
         }
-        logger.warn("Variant {} excluded (it has non-nucleotide letters and it's not a named variant)", variant);
+        logger.warn("Variant {} excluded (it has non-nucleotide letters)", variant);
         return null;
     }
 }

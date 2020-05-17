@@ -30,14 +30,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.remapping.batch.policies.IllegalStartSkipPolicy;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.io.SubmittedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.io.VariantContextWriterConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.listeners.ListenersConfiguration;
-import uk.ac.ebi.eva.accession.remapping.configuration.batch.processors.ReleaseProcessorConfiguration;
-import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.accession.remapping.configuration.batch.processors.SubmittedVariantsProcessorConfiguration;
 
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EVA_SUBMITTED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
@@ -48,7 +46,7 @@ import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EVA_SUBM
 
 @Configuration
 @Import({SubmittedVariantMongoReaderConfiguration.class,
-        ReleaseProcessorConfiguration.class,
+        SubmittedVariantsProcessorConfiguration.class,
         VariantContextWriterConfiguration.class,
         ListenersConfiguration.class})
 public class ExportSubmittedVariantsStepConfiguration {

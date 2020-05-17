@@ -30,7 +30,6 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
     }
 
     /* TODO jmmut: allow requesting a list of studies
-
     public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, List<String> studies) {
         ...
     }

@@ -33,10 +33,10 @@ import java.util.stream.Collectors;
 import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.RS_KEY;
 
 /**
- * Converts an IVariant to a VariantContext.
+ * Converts an SubmittedVariantEntity to a VariantContext.
  *
  * The latter can be serialized using HTSJDK. This processor requires any to-be-serialized property to be set in the
- * IVariant already, such as the alleles.
+ * SubmittedVariantEntity already, such as the alleles.
  */
 public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<SubmittedVariantEntity, VariantContext> {
 
@@ -44,12 +44,9 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
 
     public static final String SS_PREFIX = "ss";
 
-    private final ContigMapping contigMapping;
-
     private final VariantContextBuilder variantContextBuilder;
 
-    public SubmittedVariantToVariantContextProcessor(ContigMapping contigMapping) {
-        this.contigMapping = contigMapping;
+    public SubmittedVariantToVariantContextProcessor() {
         this.variantContextBuilder = new VariantContextBuilder();
     }
 
@@ -60,9 +57,6 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
                     "VCF specification and HTSJDK forbid empty alleles. Illegal variant: " + variant);
         }
         String[] allelesArray = getAllelesArray(variant);
-
-        // TODO: contig accessions or sequence names?
-//        String sequenceName = getSequenceName(variant.getContig());
         String sequenceName = variant.getContig();
 
         VariantContext variantContext = variantContextBuilder
@@ -70,18 +64,13 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
                 .start(variant.getStart())
                 .stop(getVariantContextStop(variant))
                 .id(SS_PREFIX + variant.getAccession())
-//                .source(variant.getMainId())
+//                .source(variant.getMainId())  // TODO jmmut: what is the source? it looks a different thing than the ID
                 .alleles(allelesArray)
                 .attributes(getAttributes(variant))
                 .unfiltered()
                 .make();
 
         return variantContext;
-    }
-
-    private String getSequenceName(String contig) {
-        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
-        return contigMapping.getContigSynonym(contig, contigSynonyms, ContigNaming.SEQUENCE_NAME);
     }
 
     private Map<String, String> getAttributes(SubmittedVariantEntity variant) {

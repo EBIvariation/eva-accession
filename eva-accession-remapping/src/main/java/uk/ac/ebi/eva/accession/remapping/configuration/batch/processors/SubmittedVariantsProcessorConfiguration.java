@@ -27,10 +27,10 @@ import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.remapping.batch.processors.ContextNucleotideAdditionProcessor;
+import uk.ac.ebi.eva.accession.remapping.batch.processors.ExcludeInvalidVariantsProcessor;
 import uk.ac.ebi.eva.accession.remapping.batch.processors.SubmittedVariantToVariantContextProcessor;
 import uk.ac.ebi.eva.accession.remapping.parameters.InputParameters;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -38,22 +38,23 @@ import java.util.Arrays;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.SUBMITTED_VARIANT_PROCESSOR;
 
 @Configuration
-public class ReleaseProcessorConfiguration {
+public class SubmittedVariantsProcessorConfiguration {
 
     @Bean(SUBMITTED_VARIANT_PROCESSOR)
-    public ItemProcessor<SubmittedVariantEntity, VariantContext> releaseProcessor(FastaSequenceReader fastaReader) {
+    public ItemProcessor<SubmittedVariantEntity, VariantContext> submittedVariantProcessor(FastaSequenceReader fastaReader) {
         CompositeItemProcessor<SubmittedVariantEntity, VariantContext> compositeItemProcessor =
                 new CompositeItemProcessor<>();
 
         compositeItemProcessor.setDelegates(Arrays.asList(
-//                new ExcludeInvalidVariantsProcessor(),// TODO jmmut uncomment this
+                new ExcludeInvalidVariantsProcessor(),
                 new ContextNucleotideAdditionProcessor(fastaReader),
-                new SubmittedVariantToVariantContextProcessor(null)));
+                new SubmittedVariantToVariantContextProcessor()));
+
         return compositeItemProcessor;
     }
 
     @Bean
-    FastaSequenceReader fastaSynonymSequenceReader(InputParameters parameters)
+    FastaSequenceReader fastaSequenceReader(InputParameters parameters)
             throws Exception {
         if (parameters.getAssemblyReportUrl().isEmpty()) {
             return new FastaSequenceReader(Paths.get(parameters.getFasta()));
