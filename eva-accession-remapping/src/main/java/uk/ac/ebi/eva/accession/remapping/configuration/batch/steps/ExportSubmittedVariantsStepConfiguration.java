@@ -37,8 +37,10 @@ import uk.ac.ebi.eva.accession.remapping.configuration.batch.io.VariantContextWr
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.processors.SubmittedVariantsProcessorConfiguration;
 
+import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.DBSNP_SUBMITTED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EVA_SUBMITTED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
+import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.EXPORT_EVA_SUBMITTED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.SUBMITTED_VARIANT_PROCESSOR;
@@ -66,13 +68,34 @@ public class ExportSubmittedVariantsStepConfiguration {
                 .reader(variantReader)
                 .processor(variantProcessor)
                 .writer(accessionWriter)
-//                .faultTolerant()
-//                .skipPolicy(illegalStartSkipPolicy)  // TODO jmmut exclude potentially invalid variants?
-//                .listener(excludeVariantsListener)
+                .faultTolerant()
+                .skipPolicy(illegalStartSkipPolicy)
+                .listener(excludeVariantsListener)
                 .listener(progressListener)
                 .build();
         return step;
     }
 
-    // TODO jmmut: dbsnp step
+    @Bean(EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP)
+    public Step exportDbsnpSubmittedVariantsStep(
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            @Autowired @Qualifier(DBSNP_SUBMITTED_VARIANT_READER) ItemReader<SubmittedVariantEntity> variantReader,
+            @Autowired @Qualifier(SUBMITTED_VARIANT_PROCESSOR) ItemProcessor<SubmittedVariantEntity, VariantContext> variantProcessor,
+            @Autowired @Qualifier(EVA_SUBMITTED_VARIANT_WRITER) ItemStreamWriter<VariantContext> accessionWriter,
+            @Autowired @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            @Autowired @Qualifier(EXCLUDE_VARIANTS_LISTENER) StepExecutionListener excludeVariantsListener,
+            @Autowired IllegalStartSkipPolicy illegalStartSkipPolicy) {
+        TaskletStep step = stepBuilderFactory.get(EXPORT_DBSNP_SUBMITTED_VARIANTS_STEP)
+                .<SubmittedVariantEntity, VariantContext>chunk(chunkSizeCompletionPolicy)
+                .reader(variantReader)
+                .processor(variantProcessor)
+                .writer(accessionWriter)
+                .faultTolerant()
+                .skipPolicy(illegalStartSkipPolicy)
+                .listener(excludeVariantsListener)
+                .listener(progressListener)
+                .build();
+        return step;
+    }
 }
