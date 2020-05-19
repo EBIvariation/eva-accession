@@ -48,6 +48,7 @@ public class SubmittedVariantsProcessorConfiguration {
         compositeItemProcessor.setDelegates(Arrays.asList(
                 new ExcludeInvalidVariantsProcessor(),
                 new ContextNucleotideAdditionProcessor(fastaReader),
+                new ExcludeInvalidVariantsProcessor(),  // exclude again in case a IUPAC code is added as context base
                 new SubmittedVariantToVariantContextProcessor()));
 
         return compositeItemProcessor;

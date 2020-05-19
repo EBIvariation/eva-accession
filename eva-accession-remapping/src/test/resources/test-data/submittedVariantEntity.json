@@ -1,0 +1,20 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750F88D",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(5),
+      "ref": "G",
+      "alt": "A",
+      "rs": NumberLong(869808637),
+      "accession": NumberLong(5000000000),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    }
+  ]
+}
