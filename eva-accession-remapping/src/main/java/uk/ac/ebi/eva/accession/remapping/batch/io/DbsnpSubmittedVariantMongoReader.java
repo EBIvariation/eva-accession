@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.remapping.batch.io;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 
 public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<DbsnpSubmittedVariantEntity> {

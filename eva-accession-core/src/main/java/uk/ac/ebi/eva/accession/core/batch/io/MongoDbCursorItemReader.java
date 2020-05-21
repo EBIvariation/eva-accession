@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.remapping.batch.io;
+package uk.ac.ebi.eva.accession.core.batch.io;
 
 import com.mongodb.util.JSON;
 import org.slf4j.Logger;
@@ -75,6 +75,8 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 
     private CloseableIterator<? extends T> cursor;
 
+    private Query mongoQuery;
+
     public MongoDbCursorItemReader() {
         super();
         setName(ClassUtils.getShortName(MongoDbCursorItemReader.class));
@@ -101,6 +103,18 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
      */
     public void setQuery(String query) {
         this.query = query;
+    }
+
+    /**
+     * A Spring Data Query.
+     * @param query
+     */
+    public void setQuery(Query query) {
+        if (this.query != null) {
+            throw new IllegalArgumentException(
+                    "Only one type of query should be provided (either a String or a Query)");
+        }
+        this.mongoQuery = query;
     }
 
     /**
@@ -165,15 +179,13 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 
     @Override
     protected void doOpen() throws Exception {
-
-        String populatedQuery = replacePlaceholders(query, parameterValues);
-
-        Query mongoQuery = null;
-
-        if(StringUtils.hasText(fields)) {
-            mongoQuery = new BasicQuery(populatedQuery, fields);
-        } else {
-            mongoQuery = new BasicQuery(populatedQuery);
+        if (mongoQuery == null) {
+            String populatedQuery = replacePlaceholders(query, parameterValues);
+            if (StringUtils.hasText(fields)) {
+                mongoQuery = new BasicQuery(populatedQuery, fields);
+            } else {
+                mongoQuery = new BasicQuery(populatedQuery);
+            }
         }
 
         if(StringUtils.hasText(hint)) {

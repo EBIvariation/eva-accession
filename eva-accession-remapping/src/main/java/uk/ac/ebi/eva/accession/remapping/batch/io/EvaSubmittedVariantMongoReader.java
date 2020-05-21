@@ -16,8 +16,12 @@
 package uk.ac.ebi.eva.accession.remapping.batch.io;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+
+import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<SubmittedVariantEntity> {
 
@@ -25,8 +29,7 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
         setTemplate(mongoTemplate);
         setTargetType(SubmittedVariantEntity.class);
 
-        //TODO jmmut: allow using Query instead of String to state the query
-        setQuery(String.format("{ \"seq\" : \"%s\" }", assemblyAccession));
+        setQuery(new Query(where("seq").is(assemblyAccession)));
     }
 
     /* TODO jmmut: allow requesting a list of studies
