@@ -27,16 +27,21 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<DbsnpSubmittedVariantEntity> {
 
+    public static final String REFERENCE_SEQUENCE_FIELD = "seq";
+
+    public static final String PROJECT_KEY = "study";
+
     public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate) {
         setTemplate(mongoTemplate);
         setTargetType(DbsnpSubmittedVariantEntity.class);
-        setQuery(new Query(where("seq").is(assemblyAccession)));
+        setQuery(new Query(where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession)));
     }
 
-    public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, List<String> studies) {
+    public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
+                                            List<String> studies) {
         setTemplate(mongoTemplate);
         setTargetType(DbsnpSubmittedVariantEntity.class);
-        setQuery(new Query(where("seq").is(assemblyAccession).and("study").in(studies)));
+        setQuery(new Query(where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession).and(PROJECT_KEY).in(studies)));
     }
 
 }
