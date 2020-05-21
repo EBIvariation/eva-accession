@@ -219,7 +219,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
     public void afterPropertiesSet() throws Exception {
         Assert.state(template != null, "An implementation of MongoOperations is required.");
         Assert.state(type != null, "A type to convert the input into is required.");
-        Assert.state(query != null, "A query is required.");
+        Assert.state(query != null || mongoQuery != null, "A query is required.");
     }
 
     // Copied from StringBasedMongoQuery...is there a place where this type of logic is already exposed?

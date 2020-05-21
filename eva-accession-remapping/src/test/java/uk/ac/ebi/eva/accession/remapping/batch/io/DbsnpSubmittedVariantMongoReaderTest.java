@@ -39,6 +39,8 @@ import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.remapping.test.configuration.MongoTestConfiguration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -88,6 +90,24 @@ public class DbsnpSubmittedVariantMongoReaderTest {
         for (DbsnpSubmittedVariantEntity variant : variants) {
             assertEquals(ASSEMBLY, variant.getReferenceSequenceAccession());
         }
+    }
+
+    @Test
+    public void queryByStudy() throws Exception {
+        DbsnpSubmittedVariantMongoReader reader = new DbsnpSubmittedVariantMongoReader(
+                ASSEMBLY, mongoTemplate, Arrays.asList("PRJEB7923", "PRJEB7929"));
+        reader.open(new ExecutionContext());
+        List<DbsnpSubmittedVariantEntity> variants = readIntoList(reader);
+        assertEquals(5, variants.size());
+    }
+    @Test
+    public void queryByMissingStudy() throws Exception {
+        DbsnpSubmittedVariantMongoReader reader = new DbsnpSubmittedVariantMongoReader(
+                ASSEMBLY, mongoTemplate, Collections.singletonList("inexistent_PRJEB"));
+
+        reader.open(new ExecutionContext());
+        List<DbsnpSubmittedVariantEntity> variants = readIntoList(reader);
+        assertEquals(0, variants.size());
     }
 
     private <T> List<T> readIntoList(ItemReader<T> reader) throws Exception {

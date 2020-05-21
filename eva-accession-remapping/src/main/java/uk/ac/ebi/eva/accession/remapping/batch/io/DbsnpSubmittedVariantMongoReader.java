@@ -16,24 +16,27 @@
 package uk.ac.ebi.eva.accession.remapping.batch.io;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 
 import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+
+import java.util.List;
+
+import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<DbsnpSubmittedVariantEntity> {
 
     public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate) {
         setTemplate(mongoTemplate);
         setTargetType(DbsnpSubmittedVariantEntity.class);
-
-        //TODO jmmut: allow using Query instead of String to state the query
-        setQuery(String.format("{ \"seq\" : \"%s\" }", assemblyAccession));
+        setQuery(new Query(where("seq").is(assemblyAccession)));
     }
 
-    /* TODO jmmut: allow requesting a list of studies
-    public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, List<String> studies) {
-        ...
+    public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, List<String> studies) {
+        setTemplate(mongoTemplate);
+        setTargetType(DbsnpSubmittedVariantEntity.class);
+        setQuery(new Query(where("seq").is(assemblyAccession).and("study").in(studies)));
     }
-     */
 
 }

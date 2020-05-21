@@ -46,7 +46,7 @@ public class ExportSubmittedVariantsJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES_DBSNP = 4;
+    private static final long EXPECTED_LINES_DBSNP = 3;
 
     private static final long EXPECTED_LINES_EVA = 1;
 

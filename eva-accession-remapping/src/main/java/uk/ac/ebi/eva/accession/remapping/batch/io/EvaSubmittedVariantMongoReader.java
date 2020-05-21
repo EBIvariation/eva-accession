@@ -21,6 +21,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
+import java.util.List;
+
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<SubmittedVariantEntity> {
@@ -28,14 +30,13 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
     public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate) {
         setTemplate(mongoTemplate);
         setTargetType(SubmittedVariantEntity.class);
-
         setQuery(new Query(where("seq").is(assemblyAccession)));
     }
 
-    /* TODO jmmut: allow requesting a list of studies
     public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, List<String> studies) {
-        ...
+        setTemplate(mongoTemplate);
+        setTargetType(SubmittedVariantEntity.class);
+        setQuery(new Query(where("seq").is(assemblyAccession).and("study").in(studies)));
     }
-     */
 
 }
