@@ -74,9 +74,29 @@ public class VariantContextWriterTest {
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertEquals("RS=rs" + rsId, columns[VCF_INFO_COLUMN]);
+            assertInfo(rsId, columns[VCF_INFO_COLUMN]);
         });
         assertEquals(1, variantCount);
+    }
+
+    private void assertInfo(Long rsId, String infoColumn) {
+        String[] infos = infoColumn.split(";");
+        if (rsId != null) {
+            assertEquals(2, infos.length);
+            String project, rs;
+            if (infos[0].startsWith("RS=")) {
+                project = infos[1];
+                rs = infos[0];
+            } else {
+                project = infos[0];
+                rs = infos[1];
+            }
+            assertEquals("RS=rs" + rsId, rs);
+            assertTrue(project.startsWith("PROJECT="));
+        } else {
+            assertEquals(1, infos.length);
+            assertTrue(infos[0].startsWith("PROJECT="));
+        }
     }
 
     @Test
@@ -86,7 +106,7 @@ public class VariantContextWriterTest {
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertEquals(".", columns[VCF_INFO_COLUMN]);
+            assertInfo(null, columns[VCF_INFO_COLUMN]);
         });
         assertEquals(1, variantCount);
     }

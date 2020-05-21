@@ -43,6 +43,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     public static final String RS_KEY = "RS";
 
+    public static final String PROJECT_KEY = "PROJECT";
+
     private final File output;
 
     private final String referenceAssembly;
@@ -76,6 +78,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         metaData.add(new VCFHeaderLine("reference", getReferenceAssemblyLine()));
         metaData.add(new VCFInfoHeaderLine(RS_KEY, 1, VCFHeaderLineType.String,
                                            "RS ID where this SS ID is clustered"));
+        metaData.add(new VCFInfoHeaderLine(PROJECT_KEY, 1, VCFHeaderLineType.String,
+                                           "PROJECT ID associated with this SS ID"));
         return metaData;
     }
 

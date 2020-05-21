@@ -20,9 +20,6 @@ import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.VariantContextBuilder;
 import org.springframework.batch.item.ItemProcessor;
 
-import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
-import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.HashMap;
@@ -31,6 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.RS_KEY;
+import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.PROJECT_KEY;
 
 /**
  * Converts an SubmittedVariantEntity to a VariantContext.
@@ -78,6 +76,7 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
         if (variant.getClusteredVariantAccession() != null) {
             attributes.put(RS_KEY, RS_PREFIX + variant.getClusteredVariantAccession());
         }
+        attributes.put(PROJECT_KEY, variant.getProjectAccession());
         return attributes;
     }
 
