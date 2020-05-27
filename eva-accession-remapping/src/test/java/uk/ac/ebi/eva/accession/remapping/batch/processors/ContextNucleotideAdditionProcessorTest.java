@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2020 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,24 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.eva.accession.release.batch.processors;
+package uk.ac.ebi.eva.accession.remapping.batch.processors;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
-import uk.ac.ebi.eva.commons.core.models.IVariant;
-import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class ContextNucleotideAdditionProcessorTest {
@@ -70,136 +69,119 @@ public class ContextNucleotideAdditionProcessorTest {
 
     @Test
     public void testNonEmptyAlleles() throws Exception {
-        Variant variant = new Variant(CONTIG, 1, 1, "T", "C");
-        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
+        SubmittedVariantEntity variant = createVariant(CONTIG, 1, "T", "C");
+        SubmittedVariantEntity processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(1, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("C", processedVariant.getAlternate());
+        assertEquals("T", processedVariant.getReferenceAllele());
+        assertEquals("C", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 2, 2, "G", "A");
+        variant = createVariant(CONTIG, 2, "G", "A");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(2, processedVariant.getStart());
-        assertEquals(2, processedVariant.getEnd());
-        assertEquals("G", processedVariant.getReference());
-        assertEquals("A", processedVariant.getAlternate());
+        assertEquals("G", processedVariant.getReferenceAllele());
+        assertEquals("A", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 2, 3, "G", "AC");
+        variant = createVariant(CONTIG, 2, "G", "AC");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(2, processedVariant.getStart());
-        assertEquals(3, processedVariant.getEnd());
-        assertEquals("G", processedVariant.getReference());
-        assertEquals("AC", processedVariant.getAlternate());
+        assertEquals("G", processedVariant.getReferenceAllele());
+        assertEquals("AC", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 2, 3, "AC", "G");
+        variant = createVariant(CONTIG, 2, "AC", "G");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(2, processedVariant.getStart());
-        assertEquals(3, processedVariant.getEnd());
-        assertEquals("AC", processedVariant.getReference());
-        assertEquals("G", processedVariant.getAlternate());
+        assertEquals("AC", processedVariant.getReferenceAllele());
+        assertEquals("G", processedVariant.getAlternateAllele());
     }
 
+    private SubmittedVariantEntity createVariant(String chromosome, long start, String reference,
+                                                 String alternate) {
+        return new SubmittedVariantEntity(1L, "hash", "GCA_x", 9999, "project", chromosome, start, reference, alternate,
+                                          100L, false, false, false, false, 1);
+    }
     @Test
     public void testINDELStartPos1() throws Exception {
-        Variant variant = new Variant(CONTIG, 1, 1, "", "A");
-        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
+        SubmittedVariantEntity variant = createVariant(CONTIG, 1, "", "A");
+        SubmittedVariantEntity processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(2, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("AT", processedVariant.getAlternate());
+        assertEquals("T", processedVariant.getReferenceAllele());
+        assertEquals("AT", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 1, 1, "T", "");
+        variant = createVariant(CONTIG, 1, "T", "");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(2, processedVariant.getEnd());
-        assertEquals("TG", processedVariant.getReference());
-        assertEquals("G", processedVariant.getAlternate());
+        assertEquals("TG", processedVariant.getReferenceAllele());
+        assertEquals("G", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 1, 2, "", "CA");
+        variant = createVariant(CONTIG, 1, "", "CA");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(3, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("CAT", processedVariant.getAlternate());
+        assertEquals("T", processedVariant.getReferenceAllele());
+        assertEquals("CAT", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 1, 2, "TG", "");
+        variant = createVariant(CONTIG, 1, "TG", "");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(3, processedVariant.getEnd());
-        assertEquals("TGC", processedVariant.getReference());
-        assertEquals("C", processedVariant.getAlternate());
+        assertEquals("TGC", processedVariant.getReferenceAllele());
+        assertEquals("C", processedVariant.getAlternateAllele());
     }
 
     @Test
     public void testINDELStartPosNot1() throws Exception {
-        Variant variant = new Variant(CONTIG, 2, 2, "", "A");
-        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
+        SubmittedVariantEntity variant = createVariant(CONTIG, 2, "", "A");
+        SubmittedVariantEntity processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(2, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("TA", processedVariant.getAlternate());
+        assertEquals("T", processedVariant.getReferenceAllele());
+        assertEquals("TA", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 2, 2, "G", "");
+        variant = createVariant(CONTIG, 2, "G", "");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(2, processedVariant.getEnd());
-        assertEquals("TG", processedVariant.getReference());
-        assertEquals("T", processedVariant.getAlternate());
+        assertEquals("TG", processedVariant.getReferenceAllele());
+        assertEquals("T", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 2, 3, "", "CA");
+        variant = createVariant(CONTIG, 2, "", "CA");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(3, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("TCA", processedVariant.getAlternate());
+        assertEquals("T", processedVariant.getReferenceAllele());
+        assertEquals("TCA", processedVariant.getAlternateAllele());
 
-        variant = new Variant(CONTIG, 2, 3, "GC", "");
+        variant = createVariant(CONTIG, 2, "GC", "");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(1, processedVariant.getStart());
-        assertEquals(3, processedVariant.getEnd());
-        assertEquals("TGC", processedVariant.getReference());
-        assertEquals("T", processedVariant.getAlternate());
+        assertEquals("TGC", processedVariant.getReferenceAllele());
+        assertEquals("T", processedVariant.getAlternateAllele());
     }
 
     @Test
-    public void testNamedVariants() throws Exception {
-        Variant variant = new Variant(CONTIG, 2, 2, "", "<100_BP_insertion>");
-        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
-        assertEquals(1, processedVariant.getStart());
-        assertEquals(1, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
+    public void testNamedVariants() {
+        SubmittedVariantEntity variant1 = createVariant(CONTIG, 2, "", "(100_BP_insertion)");
+        assertThrows(IllegalStateException.class, () -> contextNucleotideAdditionProcessor.process(variant1));
 
-        variant = new Variant(CONTIG, 2, 2, "A", "<100_BP_insertion>");
-        processedVariant = contextNucleotideAdditionProcessor.process(variant);
-        assertEquals(2, processedVariant.getStart());
-        assertEquals(2, processedVariant.getEnd());
-        assertEquals("A", processedVariant.getReference());
-        assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
+        SubmittedVariantEntity variant2 = createVariant(CONTIG, 2, "A", "(100_BP_insertion)");
+        assertThrows(IllegalStateException.class, () -> contextNucleotideAdditionProcessor.process(variant2));
     }
 
-    @Test(expected = PositionOutsideOfContigException.class)
-    public void testStartPositionGreaterThanChromosomeEnd() throws Exception {
-        Variant variant1 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
-        String rs1000 = "rs1000";
-        variant1.setMainId(rs1000);
-        variant1.setIds(Collections.singleton(rs1000));
-        contextNucleotideAdditionProcessor.process(variant1);
+    @Test
+    public void testStartPositionGreaterThanChromosomeEnd() {
+        SubmittedVariantEntity variant1 = createVariant(CONTIG, START_OUTSIDE_CHOMOSOME, "", "A");
+        assertThrows(PositionOutsideOfContigException.class, () -> {
+            contextNucleotideAdditionProcessor.process(variant1);
+        });
     }
 
     @Test
     public void addContextBaseUsingSynonymContig() throws Exception {
-        Variant variant = new Variant(SCAFFOLD, 7, 8, "", "A");
-        IVariant processedVariant = contextNucleotideAdditionProcessor.process(variant);
+        SubmittedVariantEntity variant = createVariant(SCAFFOLD, 7, "", "A");
+        SubmittedVariantEntity processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(6, processedVariant.getStart());
-        assertEquals(7, processedVariant.getEnd());
-        assertEquals("T", processedVariant.getReference());
-        assertEquals("TA", processedVariant.getAlternate());
+        assertEquals("T", processedVariant.getReferenceAllele());
+        assertEquals("TA", processedVariant.getAlternateAllele());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void contigNotFound() throws Exception {
-        Variant variant1 = new Variant(MISSING_IN_FASTA, 10, 10, "", "A");
+        SubmittedVariantEntity variant1 = createVariant(MISSING_IN_FASTA, 10, "", "A");
         try {
             contextNucleotideAdditionProcessor.process(variant1);
         } catch (PositionOutsideOfContigException wrongException) {

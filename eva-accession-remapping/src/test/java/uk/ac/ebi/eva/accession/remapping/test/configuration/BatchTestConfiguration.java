@@ -25,7 +25,7 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.jobs.ExportSubmittedVariantsJobConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.policies.PoliciesConfiguration;
-import uk.ac.ebi.eva.accession.remapping.runner.AccessionReleaseJobLauncherCommandLineRunner;
+import uk.ac.ebi.eva.accession.remapping.runner.AccessionRemappingJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 @EnableAutoConfiguration
@@ -33,7 +33,7 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
          InputParametersConfiguration.class,
          ExportSubmittedVariantsJobConfiguration.class,
          PoliciesConfiguration.class,
-         AccessionReleaseJobLauncherCommandLineRunner.class
+         AccessionRemappingJobLauncherCommandLineRunner.class
 })
 public class BatchTestConfiguration {
 

@@ -76,7 +76,7 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
         if (variant.getClusteredVariantAccession() != null) {
             attributes.put(RS_KEY, RS_PREFIX + variant.getClusteredVariantAccession());
         }
-        attributes.put(PROJECT_KEY, variant.getProjectAccession());
+        attributes.put(PROJECT_KEY, replaceInvalidCharacters(variant.getProjectAccession()));
         return attributes;
     }
 
@@ -84,12 +84,12 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
      * In VCF, in the INFO column, keys and values can not have spaces, commas, semicolons or equal signs. Specially
      * the study IDs from dbSNP are likely to contain some of those letters.
      *
-     * TODO jmmut: use percentage encoding?
+     * See section 1.2 of VCFv4.3 (https://samtools.github.io/hts-specs/VCFv4.3.pdf)
      */
-    private List<String> replaceInvalidCharacters(List<String> infoValues) {
-        return infoValues.stream()
-                         .map(s -> s.replaceAll("[ ,;=]", "_"))
-                         .collect(Collectors.toList());
+    private String replaceInvalidCharacters(String infoValues) {
+        return infoValues.replaceAll("[,]", "%2C")
+                         .replaceAll("[;]", "%3B")
+                         .replaceAll("[=]", "%3D");
     }
 
     private String[] getAllelesArray(SubmittedVariantEntity variant) {

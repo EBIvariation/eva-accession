@@ -23,8 +23,6 @@ import java.util.List;
 
 public class InputParameters {
 
-    // TODO jmmut: list of studies? with the possibility of exporting all the studies?
-
     private String assemblyAccession;
 
     private String fasta;
