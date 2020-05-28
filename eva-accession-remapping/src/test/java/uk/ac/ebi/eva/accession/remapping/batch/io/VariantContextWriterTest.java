@@ -212,4 +212,16 @@ public class VariantContextWriterTest {
         assertEquals(4, variantCount);
     }
 
+    @Test
+    public void writeProjectWithSpecialCharacters() throws Exception {
+        File outputFolder = temporaryFolder.newFolder();
+        String specialProject = "a%weird=project;with,special characters";
+        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", null, specialProject));
+
+        long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
+            assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
+            assertInfo(null, "a%25weird%3Dproject%3Bwith%2Cspecial characters", columns[VCF_INFO_COLUMN]);
+        });
+        assertEquals(1, variantCount);
+    }
 }
