@@ -87,7 +87,8 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
      * See section 1.2 of VCFv4.3 (https://samtools.github.io/hts-specs/VCFv4.3.pdf)
      */
     private String replaceInvalidCharacters(String infoValues) {
-        return infoValues.replaceAll("[,]", "%2C")
+        return infoValues.replaceAll("[%]", "%25")
+                         .replaceAll("[,]", "%2C")
                          .replaceAll("[;]", "%3B")
                          .replaceAll("[=]", "%3D");
     }
