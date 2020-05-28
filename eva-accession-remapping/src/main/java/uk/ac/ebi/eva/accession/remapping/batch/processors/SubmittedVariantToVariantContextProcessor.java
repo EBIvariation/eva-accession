@@ -62,7 +62,6 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
                 .start(variant.getStart())
                 .stop(getVariantContextStop(variant))
                 .id(SS_PREFIX + variant.getAccession())
-//                .source(variant.getMainId())  // TODO jmmut: what is the source? it looks a different thing than the ID
                 .alleles(allelesArray)
                 .attributes(getAttributes(variant))
                 .unfiltered()
