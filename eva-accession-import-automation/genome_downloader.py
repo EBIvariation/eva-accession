@@ -45,20 +45,6 @@ def download_assembly_report(assembly_accession, directory_path):
     return assembly_report_path
 
 
-def get_sequence_from_ena(accession, fasta_path, written_contigs):
-    url = 'https://www.ebi.ac.uk/ena/browser/api/fasta/' + accession
-    try:
-        with urllib.request.urlopen(url) as response:
-            data = get_and_process_sequence(response)
-            if is_sequence_valid(data):
-                logger.error('FASTA sequence not available for' + accession)
-            else:
-                contatenate_sequence_to_fasta(fasta_path, data)
-                written_contigs.append(accession)
-    except urllib.error.HTTPError as error:
-        logger.error(accession + " downloaded and added to FASTA file")
-
-
 def get_sequence_from_ncbi(accession, fasta_path, eutils_api_key, written_contigs):
     url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=' + accession + \
            '&rettype=fasta&retmode=text&api_key=' + eutils_api_key + '&tool=eva&email=eva-dev@ebi.ac.uk'
@@ -111,7 +97,6 @@ def build_fasta_from_assembly_report(assembly_accession, assembly_report_datafra
             logger.info('Accession ' + accession + ' already in the FASTA file, don\'t need to be downloaded')
             continue
 
-        # get_sequence_from_ena(genbank_accession, fasta_path, written_contigs)
         get_sequence_from_ncbi(accession, fasta_path, eutils_api_key, written_contigs)
 
 
