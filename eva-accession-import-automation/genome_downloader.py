@@ -89,7 +89,6 @@ def get_sequence_from_ncbi(accession, fasta_path, eutils_api_key):
     urllib.request.urlretrieve(url, sequence_tmp_path)
     with open(sequence_tmp_path) as sequence:
         first_line = sequence.readline()
-        re.sub(r'\s*ENA\|.*\|', '', first_line)
         second_line = sequence.readline()
         if not second_line:
             logger.info('FASTA sequence not available for ' + accession)
