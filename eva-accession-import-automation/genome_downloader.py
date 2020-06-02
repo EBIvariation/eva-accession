@@ -42,13 +42,12 @@ def clear_file_content(path):
 
 def get_written_contigs(fasta_path):
     try:
+        written_contigs = []
+        match = re.compile(r'>(.*?)\s')
         with open(fasta_path, 'r') as file:
-            data = file.read()
-            match = re.compile(r'>(.*?)\s')
-            written_contigs = match.findall(data)
-            if written_contigs is None:
-                written_contigs = []
-            return written_contigs
+            for line in file:
+                written_contigs.extend(match.findall(line))
+        return written_contigs
     except FileNotFoundError:
         logger.info('FASTA file does not exists, starting from scratch')
         return []
