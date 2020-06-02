@@ -61,7 +61,7 @@
   
   
 ## Genome downloader
-This script can be used to download the assembly report and FASTA file of a given assembly accession (GCA/GFC).
+This script can be used to download the assembly report and FASTA file of a given assembly accession (GCA/GCF).
 In order to run the script one should provide:
 * Assembly accession
 * Output directory or eva root directory (at least one must be provided)
