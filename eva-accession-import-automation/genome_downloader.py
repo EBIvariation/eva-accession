@@ -30,7 +30,7 @@ def build_fasta_from_assembly_report(assembly_report_path, assembly_accession, e
         clear_file_content(fasta_path)
     written_contigs = get_written_contigs(fasta_path)
     for chunk in pandas.read_csv(assembly_report_path, skiprows=get_header_line_index(assembly_report_path),
-                                 dtype=str, sep='\t', chunksize=2):
+                                 dtype=str, sep='\t', chunksize=100):
         new_contigs_in_chunk = process_chunk(chunk, written_contigs, eutils_api_key, fasta_path)
         written_contigs.extend(new_contigs_in_chunk)
 
@@ -85,27 +85,27 @@ def get_sequence_from_ncbi(accession, fasta_path, eutils_api_key):
     url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=' + accession + \
            '&rettype=fasta&retmode=text&api_key=' + eutils_api_key + '&tool=eva&email=eva-dev@ebi.ac.uk'
     logger.info('Downloading ' + accession)
-    with urllib.request.urlopen(url) as response:
-        data = get_and_process_sequence(response)
-        is_sequence_empty = re.match(r'^>.*\n[ACGTN]+', data) is None
-        if is_sequence_empty:
+    sequence_tmp_path = os.path.dirname(fasta_path) + '/' + accession
+    urllib.request.urlretrieve(url, sequence_tmp_path)
+    with open(sequence_tmp_path) as sequence:
+        first_line = sequence.readline()
+        re.sub(r'\s*ENA\|.*\|', '', first_line)
+        second_line = sequence.readline()
+        if not second_line:
             logger.info('FASTA sequence not available for ' + accession)
+            os.remove(sequence_tmp_path)
         else:
-            contatenate_sequence_to_fasta(fasta_path, data)
-            logger.info(accession + " downloaded and added to FASTA file")
+            contatenate_sequence_to_fasta(fasta_path, sequence_tmp_path)
+            logger.info(accession + " downloaded and added to FASTA sequence")
+            os.remove(sequence_tmp_path)
             return accession
 
 
-def get_and_process_sequence(response):
-    retrieved_data = response.read().decode('utf-8')
-    # Delete accession prefixes
-    processed_data = re.sub(r'\s*ENA\|.*\|', '', retrieved_data)
-    return processed_data
-
-
-def contatenate_sequence_to_fasta(fasta_path, data):
-    with open(fasta_path, 'a+') as file:
-        file.write(str(data))
+def contatenate_sequence_to_fasta(fasta_path, sequence_path):
+    with open(fasta_path, 'a+') as fasta:
+        with open(sequence_path) as sequence:
+            for line in sequence:
+                fasta.write(line)
 
 
 @retry(tries=3)
