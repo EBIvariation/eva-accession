@@ -80,7 +80,7 @@ def process_chunk(assembly_report_dataframe, written_contigs, eutils_api_key, fa
     return new_contigs
 
 
-@retry(tries=3)
+@retry(tries=4, delay=2, backoff=1.2, jitter=(1, 3))
 def get_sequence_from_ncbi(accession, fasta_path, eutils_api_key):
     url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=' + accession + \
            '&rettype=fasta&retmode=text&api_key=' + eutils_api_key + '&tool=eva&email=eva-dev@ebi.ac.uk'
@@ -107,7 +107,7 @@ def contatenate_sequence_to_fasta(fasta_path, sequence_path):
                 fasta.write(line)
 
 
-@retry(tries=3)
+@retry(tries=4, delay=2, backoff=1.2, jitter=(1, 3))
 def download_assembly_report(assembly_accession, directory_path):
     assembly_report_url = get_assembly_report_url(assembly_accession)
     assembly_report_path = directory_path + os.path.basename(assembly_report_url)
