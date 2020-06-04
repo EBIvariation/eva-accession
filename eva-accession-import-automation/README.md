@@ -58,3 +58,30 @@
     ```bash
     python generate_properties.py -b 150 -a GCA_000001735.1 -r GCF_000001735.3_TAIR10_assembly_report_CUSTOM.txt  -f /path/to/fasta.fa  -d meadata_db_name -u metadata_db_user -h metadata_db_host   -H job_tracker_host -D job_tracker_db  --mongo-acc-db mongo_accessioning_db --mongo-auth-db mongo_auth_db --mongo-user mongo_user --mongo-password mongo_password  --mongo-host mongo_host --mongo-port mongo_port -s arabidopsis_3702
     ```
+  
+  
+## Genome downloader
+This script can be used to download the assembly report and FASTA file of a given assembly accession (GCA/GCF).
+In order to run the script one should provide:
+* Assembly accession
+* Output directory or eva root directory (at least one must be provided)
+* eutils API key
+* (optional) Flag to indicate if download is starting from scratch or is using an existing FASTA
+
+The eva root directory and eutils API key should be provided via the private configuration file. If `output directory` is provided it will be used, otherwise the path (eva_root_dir) specified in the config file will be used.
+
+* Example
+    ```bash
+    python genome_downloader.py -a GCA_000002285.2 -o /path/output -p path/to/private-config.json
+    ```
+    * Private configuration file example
+    ```json
+    {
+      "eva_root_dir" : "/dir/for/eva",
+      "eutils_api_key": "abcde"
+    }
+    ```
+ * Get help
+    ```bash
+    python genome_downloader.py --help
+    ```
