@@ -30,17 +30,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import uk.ac.ebi.eva.accession.release.batch.policies.IllegalStartSkipPolicy;
-import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.batch.processors.ReleaseProcessorConfiguration;
+import uk.ac.ebi.eva.accession.core.batch.policies.IllegalStartSkipPolicy;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.AccessionedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.VariantContextWriterConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSIONED_VARIANT_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
 

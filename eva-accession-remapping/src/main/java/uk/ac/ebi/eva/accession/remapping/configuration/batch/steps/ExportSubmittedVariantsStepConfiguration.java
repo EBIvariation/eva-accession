@@ -32,10 +32,11 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.remapping.batch.policies.IllegalStartSkipPolicy;
+import uk.ac.ebi.eva.accession.core.batch.policies.IllegalStartSkipPolicy;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.io.SubmittedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.io.VariantContextWriterConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.listeners.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.remapping.configuration.batch.policies.PoliciesConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.processors.SubmittedVariantsProcessorConfiguration;
 
 import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.DBSNP_SUBMITTED_VARIANT_READER;
@@ -52,7 +53,8 @@ import static uk.ac.ebi.eva.accession.remapping.configuration.BeanNames.SUBMITTE
 @Import({SubmittedVariantMongoReaderConfiguration.class,
         SubmittedVariantsProcessorConfiguration.class,
         VariantContextWriterConfiguration.class,
-        ListenersConfiguration.class})
+        ListenersConfiguration.class,
+        PoliciesConfiguration.class})
 public class ExportSubmittedVariantsStepConfiguration {
 
     @Bean(EXPORT_EVA_SUBMITTED_VARIANTS_STEP)

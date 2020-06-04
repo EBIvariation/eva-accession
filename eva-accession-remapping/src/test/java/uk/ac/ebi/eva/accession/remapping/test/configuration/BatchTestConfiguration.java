@@ -24,18 +24,16 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.remapping.configuration.batch.jobs.ExportSubmittedVariantsJobConfiguration;
-import uk.ac.ebi.eva.accession.remapping.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.remapping.configuration.batch.policies.IllegalStartSkipPolicyConfiguration;
-import uk.ac.ebi.eva.accession.remapping.runner.AccessionReleaseJobLauncherCommandLineRunner;
+import uk.ac.ebi.eva.accession.remapping.configuration.batch.policies.PoliciesConfiguration;
+import uk.ac.ebi.eva.accession.remapping.runner.AccessionRemappingJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 @EnableAutoConfiguration
 @Import({MongoConfiguration.class,
          InputParametersConfiguration.class,
          ExportSubmittedVariantsJobConfiguration.class,
-         ChunkSizeCompletionPolicyConfiguration.class,
-         IllegalStartSkipPolicyConfiguration.class,
-         AccessionReleaseJobLauncherCommandLineRunner.class
+         PoliciesConfiguration.class,
+         AccessionRemappingJobLauncherCommandLineRunner.class
 })
 public class BatchTestConfiguration {
 

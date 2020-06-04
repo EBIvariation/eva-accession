@@ -19,9 +19,9 @@ package uk.ac.ebi.eva.accession.remapping.parameters;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 
-public class InputParameters {
+import java.util.List;
 
-    // TODO jmmut: list of studies? with the possibility of exporting all the studies?
+public class InputParameters {
 
     private String assemblyAccession;
 
@@ -30,6 +30,8 @@ public class InputParameters {
     private String assemblyReportUrl;
 
     private String outputFolder;
+
+    private List<String> projects;
 
     private boolean forceRestart;
 
@@ -41,6 +43,7 @@ public class InputParameters {
                 .addString("fasta", fasta)
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addString("outputFolder", outputFolder)
+                .addString("projects", String.join(",", projects))
                 .toJobParameters();
     }
 
@@ -92,4 +95,11 @@ public class InputParameters {
         this.chunkSize = chunkSize;
     }
 
+    public List<String> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<String> projects) {
+        this.projects = projects;
+    }
 }

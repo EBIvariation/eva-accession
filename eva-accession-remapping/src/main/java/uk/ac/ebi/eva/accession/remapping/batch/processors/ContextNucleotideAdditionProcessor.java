@@ -23,13 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
-import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.exceptions.PositionOutsideOfContigException;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.commons.core.models.IVariant;
-import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
-import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -75,18 +71,29 @@ public class ContextNucleotideAdditionProcessor
         try {
             variantType = getVariantType(oldReference, oldAlternate);
         } catch (Exception e) {
-            throw new IllegalArgumentException("can not compute the VariantType of variant " + variant, e);
+            throw new IllegalStateException(
+                    "Variant with strange alleles should have been filtered out by a previous processor.", e);
         }
-        if (variantType.equals(VariantType.SEQUENCE_ALTERATION)) {
-            // TODO jmmut: does the accessioning service contain named variants? or did we clean them all during the import?
-            throw new UnsupportedOperationException("handling named variants is not implemented: ");
-//            return renormalizeNamedVariant(variant, oldStart, contig, oldReference, oldAlternate);
-        } else if (Arrays.asList(VariantType.INS, VariantType.DEL, VariantType.INDEL).contains(variantType)) {
+        if (shouldBeRenormalized(variantType)) {
             return renormalizeIndel(variant, oldStart, contig, oldReference, oldAlternate);
         }
         return variant;
     }
 
+    /**
+     * Note that we don't consider VariantType.INDEL should be renormalized because we only want to avoid empty alleles.
+     * An INDEL won't have any empty alleles and thus can be perfectly represented in VCF.
+     * See 1.6.1.4 of VCFv4.3 (https://samtools.github.io/hts-specs/VCFv4.3.pdf)
+     */
+    private boolean shouldBeRenormalized(VariantType variantType) {
+        return Arrays.asList(VariantType.INS, VariantType.DEL).contains(variantType);
+    }
+
+    /**
+     * This function is enough for this scope but is incomplete for broader scopes!
+     * It doesn't try to classify according to all the types (e.g. it misses SEQUENCE_VARIATION) and instead
+     * it throws exceptions.
+     */
     private VariantType getVariantType(String reference, String alternate) {
         String ref = reference.trim().toUpperCase();
         String alt = alternate.trim().toUpperCase();
@@ -112,7 +119,8 @@ public class ContextNucleotideAdditionProcessor
         }
 
         throw new IllegalArgumentException(
-                String.format("Cannot determine the type of the Variant with Reference: %s and Alternate: %s",
+                String.format("The VariantType of a Variant (with Reference: %s and Alternate: %s) is not one of "
+                                      + "SNV, MNV, INS, DEL or INDEL.",
                               reference, alternate));
     }
 

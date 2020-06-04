@@ -16,23 +16,32 @@
 package uk.ac.ebi.eva.accession.remapping.batch.io;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
+import java.util.List;
+
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+
 public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<SubmittedVariantEntity> {
+
+    public static final String REFERENCE_SEQUENCE_FIELD = "seq";
+
+    public static final String PROJECT_KEY = "study";
 
     public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate) {
         setTemplate(mongoTemplate);
         setTargetType(SubmittedVariantEntity.class);
-
-        //TODO jmmut: allow using Query instead of String to state the query
-        setQuery(String.format("{ \"seq\" : \"%s\" }", assemblyAccession));
+        setQuery(new Query(where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession)));
     }
 
-    /* TODO jmmut: allow requesting a list of studies
-    public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, List<String> studies) {
-        ...
+    public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
+                                          List<String> projects) {
+        setTemplate(mongoTemplate);
+        setTargetType(SubmittedVariantEntity.class);
+        setQuery(new Query(where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession).and(PROJECT_KEY).in(projects)));
     }
-     */
 
 }

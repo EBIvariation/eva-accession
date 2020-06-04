@@ -1,6 +1,5 @@
 /*
- *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 package uk.ac.ebi.eva.accession.remapping.configuration.batch.policies;
 
@@ -22,14 +20,20 @@ import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import uk.ac.ebi.eva.accession.core.batch.policies.IllegalStartSkipPolicy;
 import uk.ac.ebi.eva.accession.remapping.parameters.InputParameters;
 
 @Configuration
-public class ChunkSizeCompletionPolicyConfiguration {
+public class PoliciesConfiguration {
 
     @Bean
     @StepScope
     public SimpleCompletionPolicy chunkSizecompletionPolicy(InputParameters inputParameters) {
         return new SimpleCompletionPolicy(inputParameters.getChunkSize());
+    }
+
+    @Bean
+    public IllegalStartSkipPolicy invalidStartSkipPolicy() {
+        return new IllegalStartSkipPolicy();
     }
 }

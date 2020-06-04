@@ -49,10 +49,10 @@ import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
 import java.util.Collection;
 
 @Component
-public class AccessionReleaseJobLauncherCommandLineRunner extends JobLauncherCommandLineRunner implements
+public class AccessionRemappingJobLauncherCommandLineRunner extends JobLauncherCommandLineRunner implements
         ApplicationEventPublisherAware, ExitCodeGenerator {
 
-    private static final Logger logger = LoggerFactory.getLogger(AccessionReleaseJobLauncherCommandLineRunner.class);
+    private static final Logger logger = LoggerFactory.getLogger(AccessionRemappingJobLauncherCommandLineRunner.class);
 
     public static final String SPRING_BATCH_JOB_NAME_PROPERTY = "spring.batch.job.names";
 
@@ -78,8 +78,8 @@ public class AccessionReleaseJobLauncherCommandLineRunner extends JobLauncherCom
 
     private boolean abnormalExit;
 
-    public AccessionReleaseJobLauncherCommandLineRunner(JobLauncher jobLauncher, JobExplorer jobExplorer,
-                                                        JobRepository jobRepository) {
+    public AccessionRemappingJobLauncherCommandLineRunner(JobLauncher jobLauncher, JobExplorer jobExplorer,
+                                                          JobRepository jobRepository) {
         super(jobLauncher, jobExplorer, jobRepository);
         this.jobExplorer = jobExplorer;
         this.jobRepository = jobRepository;

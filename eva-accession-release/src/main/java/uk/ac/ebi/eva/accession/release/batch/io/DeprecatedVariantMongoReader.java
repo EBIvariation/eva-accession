@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.release.batch.io;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 
 public class DeprecatedVariantMongoReader extends MongoDbCursorItemReader<DbsnpClusteredVariantOperationEntity> {

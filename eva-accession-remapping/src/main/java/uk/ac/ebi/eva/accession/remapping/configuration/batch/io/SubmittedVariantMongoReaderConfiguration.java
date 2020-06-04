@@ -43,7 +43,12 @@ public class SubmittedVariantMongoReaderConfiguration {
     EvaSubmittedVariantMongoReader evaSubmittedVariantMongoReader(InputParameters parameters,
                                                                   MongoTemplate mongoTemplate) {
         logger.info("Injecting EvaSubmittedVariantMongoReader with parameters: {}", parameters);
-        return new EvaSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
+        if (parameters.getProjects() == null || parameters.getProjects().isEmpty()) {
+            return new EvaSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
+        } else {
+            return new EvaSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate,
+                                                      parameters.getProjects());
+        }
     }
 
     @Bean(DBSNP_SUBMITTED_VARIANT_READER)
@@ -51,6 +56,11 @@ public class SubmittedVariantMongoReaderConfiguration {
     DbsnpSubmittedVariantMongoReader dbsnpSubmittedVariantMongoReader(InputParameters parameters,
                                                                       MongoTemplate mongoTemplate) {
         logger.info("Injecting DbsnpSubmittedVariantMongoReader with parameters: {}", parameters);
-        return new DbsnpSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
+        if (parameters.getProjects() == null || parameters.getProjects().isEmpty()) {
+            return new DbsnpSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
+        } else {
+            return new DbsnpSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate,
+                                                        parameters.getProjects());
+        }
     }
 }
