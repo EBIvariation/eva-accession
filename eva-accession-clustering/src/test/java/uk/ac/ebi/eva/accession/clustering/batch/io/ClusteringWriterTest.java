@@ -30,9 +30,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
@@ -41,6 +43,7 @@ import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
@@ -49,7 +52,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -99,6 +104,7 @@ public class ClusteringWriterTest {
     @After
     public void tearDown() {
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(ClusteredVariantEntity.class);
     }
 
     @Test
@@ -186,5 +192,29 @@ public class ClusteringWriterTest {
             }
         }
         return true;
+    }
+
+    @Test
+    public void reuseClusteredAccessionIfPresent() throws AccessionCouldNotBeGeneratedException {
+        long existingRs = 30L;
+        String asm1 = "asm1";
+        String asm2 = "asm2";
+        BiFunction<String, Long, SubmittedVariantEntity> createSve = (asm, rs) -> {
+            SubmittedVariant submittedClustered = new SubmittedVariant(asm, 1000, "project", "1", 1000L, "T", "A", rs);
+            String hash1 = hashingFunction.apply(submittedClustered);
+            return new SubmittedVariantEntity(50L, hash1, submittedClustered, 1);
+        };
+
+        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+
+        // given a submitted variant that already has an RS=rs30
+        SubmittedVariantEntity sveClustered = createSve.apply(asm1, existingRs);
+        clusteringWriter.write(Collections.singletonList(sveClustered));
+        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+
+        // given a different submitted variant without an assigned RS (rs=null)
+        SubmittedVariantEntity sveNonClustered = createSve.apply(asm2, null);
+        clusteringWriter.write(Collections.singletonList(sveNonClustered));
+        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
     }
 }

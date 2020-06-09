@@ -77,23 +77,37 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         //Update submitted variants "rs" field
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               SubmittedVariantEntity.class);
+        long numUpdates = 0;
         for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
+            if (submittedVariantEntity.getClusteredVariantAccession() != null) {
+                // no need to update the rs of a submitted variant that already has an rs, at least in the basic case.
+                // TODO take into account merges and splits
+                continue;
+            }
             Query query = query(where("_id").is(submittedVariantEntity.getId()));
             Update update = new Update();
             update.set("rs", getClusteredVariantAccession(submittedVariantEntity));
             bulkOperations.updateOne(query, update);
+            ++numUpdates;
         }
-        bulkOperations.execute();
+        if (numUpdates > 0) {
+            bulkOperations.execute();
+        }
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws AccessionCouldNotBeGeneratedException {
-        List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
-                                                                           .map(this::toClusteredVariant)
-                                                                           .collect(Collectors.toList());
-        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
-                clusteredVariantMonotonicAccessioningService.getOrCreate(clusteredVariants);
-        accessionWrappers.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+
+        List<ClusteredVariant> clusteredVariants =
+                submittedVariantEntities.stream()
+                                        .filter(sve -> sve.getClusteredVariantAccession() == null)
+                                        .map(this::toClusteredVariant)
+                                        .collect(Collectors.toList());
+        if (!clusteredVariants.isEmpty()) {
+            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
+                    clusteredVariantMonotonicAccessioningService.getOrCreate(clusteredVariants);
+            accessionWrappers.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+        }
     }
 
     private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
