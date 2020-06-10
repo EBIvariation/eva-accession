@@ -141,6 +141,10 @@ public class SubmittedVariantAccessioningServiceTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    @Autowired
+    private MongoDbFactory mongoDbFactory;
+
+
     @Before
     public void setUp() {
         submittedVariant = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319, "C", "T",
@@ -162,9 +166,6 @@ public class SubmittedVariantAccessioningServiceTest {
                                                         "C", "TCTC", CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                         DEFAULT_ASSEMBLY_MATCH, true, DEFAULT_VALIDATED, null);
     }
-
-    @Autowired
-    private MongoDbFactory mongoDbFactory;
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
