@@ -64,13 +64,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAccessionEqual;
+import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAssemblyAccessionEqual;
+import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertClusteredVariantAccessionEqual;
+import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertReferenceSequenceAccessionEqual;
 
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration
@@ -294,14 +295,7 @@ public class ClusteringWriterTest {
         String asm1 = "asm1";
         String asm2 = "asm2";
 
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantOperationEntity.class));
+        assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
         mongoTemplate.insert(createClusteredVariantEntity(asm1, rs1));
 
@@ -311,58 +305,26 @@ public class ClusteringWriterTest {
         // ss1 in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, rs1, ss1));
 
-        // ss2 in the new assembly, will change its RS when we realise rs1 and rs2 should be merged
+        // ss2 in the new assembly, will change its RS to rs1 when we realise rs1 and rs2 should be merged
         // because they both map to the same position in asm2
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, rs2, ss2));
 
-
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
-        assertEquals(2, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
-        assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantOperationEntity.class));
+        assertDatabaseCounts(0, 0, 2, 2, 0, 0, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, rs1, ss1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
-        assertEquals(2, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
-        assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantOperationEntity.class));
-        assertEquals(1, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
-        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantOperationEntity.class));
+        assertDatabaseCounts(0, 0, 2, 2, 0, 0, 1, 1);
 
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
-        assertEquals(submittedVariants.stream().map(v -> v.getClusteredVariantAccession()).distinct(), Stream.of(rs1));
-        assertEquals(submittedVariants.stream().map(v -> v.getReferenceSequenceAccession()).collect(Collectors.toSet()),
-                     Sets.newTreeSet(asm1, asm2));
-
-        assertEquals(submittedVariants.stream().map(v -> v.getClusteredVariantAccession()).collect(Collectors.toSet()),
-                     Sets.newTreeSet(rs1));
-        assertEquals(submittedVariants.stream().map(v -> v.getReferenceSequenceAccession()).collect(Collectors.toSet()),
-                     Sets.newTreeSet(asm1, asm2));
-
-        assertEquals(distinct(submittedVariants, v -> v.getClusteredVariantAccession()), Sets.newTreeSet(rs1));
-        assertEquals(distinct(submittedVariants, v -> v.getReferenceSequenceAccession()), Sets.newTreeSet(asm1, asm2));
+        assertClusteredVariantAccessionEqual(Sets.newTreeSet(rs1), submittedVariants);
+        assertReferenceSequenceAccessionEqual(Sets.newTreeSet(asm1, asm2), submittedVariants);
 
         List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        assertEquals(clusteredVariants.stream().map(v -> v.getAccession()).distinct(), Stream.of(rs1));
-        assertEquals(clusteredVariants.stream().map(v -> v.getAssemblyAccession()).collect(Collectors.toSet()),
-                     Sets.newTreeSet(asm1, asm2));
-        assertEquals(clusteredVariants.stream().map(v -> v.getAccession()).collect(Collectors.toSet()),
-                     Sets.newTreeSet(rs1));
-        assertEquals(clusteredVariants.stream().map(v -> v.getAssemblyAccession()).collect(Collectors.toSet()),
-                     Sets.newTreeSet(asm1, asm2));
-
-        assertEquals(distinct(clusteredVariants, v -> v.getAccession()), Sets.newTreeSet(rs1));
-        assertEquals(distinct(clusteredVariants, v -> v.getAssemblyAccession()), Sets.newTreeSet(asm1, asm2));
+        assertAccessionEqual(Sets.newTreeSet(rs1), clusteredVariants);
+        assertAssemblyAccessionEqual(Sets.newTreeSet(asm1, asm2), clusteredVariants);
 
         ClusteredVariantOperationEntity clusteredOp =
                 mongoTemplate.findOne(new Query(), ClusteredVariantOperationEntity.class);
@@ -376,7 +338,15 @@ public class ClusteringWriterTest {
         assertEquals(ss2, submittedOp.getAccession());
     }
 
-    private <T, R> Set<R> distinct(List<? extends T> elements, Function<T, R> method) {
-        return elements.stream().map(method).collect(Collectors.toSet());
+    private void assertDatabaseCounts(int dbsnpSve, int dbsnpCve, int sve, int cve, int dbsnpSvOperation, int dbsnpCvOperation,
+                                      int svOperation, int cvOperation) {
+        assertEquals(dbsnpSve, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
+        assertEquals(dbsnpCve, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
+        assertEquals(sve, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
+        assertEquals(cve, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(dbsnpSvOperation, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
+        assertEquals(dbsnpCvOperation, mongoTemplate.count(new Query(), DbsnpClusteredVariantOperationEntity.class));
+        assertEquals(svOperation, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
+        assertEquals(cvOperation, mongoTemplate.count(new Query(), ClusteredVariantOperationEntity.class));
     }
 }
