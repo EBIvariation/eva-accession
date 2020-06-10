@@ -32,12 +32,14 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -55,6 +57,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
@@ -96,6 +99,9 @@ public class ClusteringWriterTest {
     @Autowired
     private ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService;
 
+    @Autowired
+    private ContiguousIdBlockRepository contiguousIdBlockRepository;
+
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
@@ -124,10 +130,15 @@ public class ClusteringWriterTest {
         mongoTemplate.dropCollection(ClusteredVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
         mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
+        mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
+        mongoTemplate.dropCollection(ClusteredVariantOperationEntity.class);
+        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
+        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
     }
 
     @Test
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
+    @DirtiesContext
     public void writer() throws Exception {
         List<SubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities();
         clusteringWriter.write(submittedVariantEntities);
@@ -214,6 +225,7 @@ public class ClusteringWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void reuse_clustered_accession_if_provided() throws AccessionCouldNotBeGeneratedException {
         long existingRs = 30L;
         String asm1 = "asm1";
@@ -249,6 +261,7 @@ public class ClusteringWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void reuse_dbsnp_clustered_accession_when_clustering_an_eva_submitted_variant() throws Exception {
         // given
         Long rs1 = 30L;
@@ -286,6 +299,7 @@ public class ClusteringWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void merge_clustered_accession() throws Exception {
         // given
         Long ss1 = 50L;
