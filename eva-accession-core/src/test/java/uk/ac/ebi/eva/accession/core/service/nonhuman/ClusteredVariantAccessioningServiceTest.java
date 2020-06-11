@@ -33,7 +33,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrappe
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
