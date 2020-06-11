@@ -19,14 +19,20 @@
 package uk.ac.ebi.eva.accession.core.service.nonhuman.eva;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 
+import java.util.List;
 import java.util.function.Function;
 
 public class ClusteredVariantMonotonicAccessioningService
         extends BasicAccessioningService<IClusteredVariant, String, Long> {
+
+    private final ClusteredVariantAccessioningDatabaseService dbService;
+
+    private final Function<IClusteredVariant, String> hashingFunction;
 
     public ClusteredVariantMonotonicAccessioningService(
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
@@ -34,5 +40,11 @@ public class ClusteredVariantMonotonicAccessioningService
             Function<IClusteredVariant, String> summaryFunction,
             Function<String, String> hashingFunction) {
         super(accessionGenerator, dbService, summaryFunction, hashingFunction);
+        this.dbService = dbService;
+        this.hashingFunction = summaryFunction.andThen(hashingFunction);
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {
+        return dbService.findAllByHash(hashes);
     }
 }

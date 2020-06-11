@@ -53,6 +53,7 @@ public class ClusteredVariantAccessioningServiceTest {
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
+
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName("clustered-variants-test").build());
@@ -67,8 +68,10 @@ public class ClusteredVariantAccessioningServiceTest {
                 new ClusteredVariant("assembly", 1111, "contig_1", 100, VariantType.SNV, false, null),
                 new ClusteredVariant("assembly", 1111, "contig_1", 200, VariantType.SNV, false, null));
 
-        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> generatedAccessions = service.getOrCreate(variants);
-        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> retrievedAccessions = service.getOrCreate(variants);
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> generatedAccessions =
+                service.getOrCreate(variants);
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> retrievedAccessions =
+                service.getOrCreate(variants);
 
         assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
     }
