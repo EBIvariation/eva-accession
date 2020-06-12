@@ -15,9 +15,8 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
-import com.mongodb.Mongo;
-import org.springframework.batch.item.ItemWriter;
 import com.mongodb.MongoBulkWriteException;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -25,10 +24,11 @@ import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -49,19 +49,16 @@ import static org.springframework.data.mongodb.core.query.Query.query;
  */
 public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
-    private String assemblyAccession;
-
     private MongoTemplate mongoTemplate;
 
-    private ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService;
+    private ClusteredVariantAccessioningService clusteredVariantMonotonicAccessioningService;
 
     private Function<IClusteredVariant, String> hashingFunction;
 
     private Map<String, Long> assignedAccessions;
 
-    public ClusteringWriter(String assemblyAccession, MongoTemplate mongoTemplate,
-                            ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService) {
-        this.assemblyAccession = assemblyAccession;
+    public ClusteringWriter(MongoTemplate mongoTemplate,
+                            ClusteredVariantAccessioningService clusteredVariantMonotonicAccessioningService) {
         this.mongoTemplate = mongoTemplate;
         this.clusteredVariantMonotonicAccessioningService = clusteredVariantMonotonicAccessioningService;
         hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -111,7 +108,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
-        ClusteredVariant clusteredVariant = new ClusteredVariant(assemblyAccession,
+        ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariantEntity.getReferenceSequenceAccession(),
                                                                  submittedVariantEntity.getTaxonomyAccession(),
                                                                  submittedVariantEntity.getContig(),
                                                                  submittedVariantEntity.getStart(),
