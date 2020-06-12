@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
@@ -24,7 +25,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
@@ -34,12 +35,12 @@ import java.util.List;
 @Service
 public class HumanDbsnpClusteredVariantAccessioningService {
 
-    private final ClusteredVariantAccessioningService humanService;
+    private final DbsnpClusteredVariantMonotonicAccessioningService humanService;
 
     private final HumanDbsnpClusteredVariantOperationAccessioningService operationsService;
 
     public HumanDbsnpClusteredVariantAccessioningService(
-            @Qualifier("humanActiveService") ClusteredVariantAccessioningService humanService,
+            @Qualifier("humanActiveService") DbsnpClusteredVariantMonotonicAccessioningService humanService,
             @Qualifier("humanOperationsService") HumanDbsnpClusteredVariantOperationAccessioningService operationsService) {
         this.humanService = humanService;
         this.operationsService = operationsService;

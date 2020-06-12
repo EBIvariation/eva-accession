@@ -166,6 +166,7 @@ public class ClusteredVariantsRestControllerTest {
     private MongoTemplate humanMongoTemplate;
 
     @Autowired
+    @Qualifier("dbsnpClusteredService")
     private DbsnpClusteredVariantMonotonicAccessioningService dbsnpService;
 
     private ClusteredVariantsRestController mockController;

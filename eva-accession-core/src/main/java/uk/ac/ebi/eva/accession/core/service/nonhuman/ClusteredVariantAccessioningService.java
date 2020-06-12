@@ -30,13 +30,17 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -137,6 +141,19 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
         } else {
             return accessioningServiceDbsnp.getByAccessionAndVersion(accession, version);
         }
+    }
+
+    /**
+     * TODO: return a list
+     */
+    public Optional<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
+            String assembly, String contig, long start, VariantType type) {
+
+        IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
+        List<AccessionWrapper<IClusteredVariant, String, Long>> variants = this.get(
+                Collections.singletonList(clusteredVariant));
+
+        return variants.isEmpty() ? Optional.empty() : Optional.of(variants.get(0));
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHashedMessageIn(List<String> hashes) {

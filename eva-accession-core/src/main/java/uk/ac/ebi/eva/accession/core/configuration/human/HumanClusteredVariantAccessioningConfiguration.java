@@ -20,19 +20,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguousIdService;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
+import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningDatabaseService;
-import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantOperationAccessioningService;
-import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantAccessionRepository;
+import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantOperationAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 @Configuration
 @EnableSpringDataContiguousIdService
@@ -52,9 +55,11 @@ public class HumanClusteredVariantAccessioningConfiguration {
     private ContiguousIdBlockService service;
 
     @Bean("humanActiveService")
-    public ClusteredVariantAccessioningService humanDbsnpClusteredActiveVariantAccessioningService() {
-        return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
-                                                       dbsnpClusteredVariantAccessioningDatabaseService());
+    public DbsnpClusteredVariantMonotonicAccessioningService humanDbsnpClusteredActiveVariantAccessioningService() {
+        return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
+                                                                     humanDbsnpClusteredVariantAccessioningDatabaseService(),
+                                                                     new ClusteredVariantSummaryFunction(),
+                                                                     new SHA1HashingFunction());
     }
 
     private DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {
@@ -63,7 +68,7 @@ public class HumanClusteredVariantAccessioningConfiguration {
                                                       properties.getInstanceId(), service);
     }
 
-    private HumanDbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
+    private HumanDbsnpClusteredVariantAccessioningDatabaseService humanDbsnpClusteredVariantAccessioningDatabaseService() {
         return new HumanDbsnpClusteredVariantAccessioningDatabaseService(humanDbsnpRepository,
                                                                          dbsnpClusteredVariantInactiveService());
     }

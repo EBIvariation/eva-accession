@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 
@@ -27,13 +28,13 @@ import java.util.function.Function;
 public class DbsnpClusteredVariantMonotonicAccessioningService
         extends BasicAccessioningService<IClusteredVariant, String, Long> {
 
-    private final DbsnpClusteredVariantAccessioningDatabaseService dbService;
+    private final DatabaseService<IClusteredVariant, String, Long> dbService;
 
     private final Function<IClusteredVariant, String> hashingFunction;
 
     public DbsnpClusteredVariantMonotonicAccessioningService(
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
-            DbsnpClusteredVariantAccessioningDatabaseService dbService,
+            DatabaseService<IClusteredVariant, String, Long> dbService,
             Function<IClusteredVariant, String> summaryFunction,
             Function<String, String> hashingFunction) {
         super(accessionGenerator, dbService, summaryFunction, hashingFunction);

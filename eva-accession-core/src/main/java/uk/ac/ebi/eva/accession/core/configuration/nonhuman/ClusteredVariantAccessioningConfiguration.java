@@ -44,6 +44,7 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOper
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
@@ -87,6 +88,13 @@ public class ClusteredVariantAccessioningConfiguration {
         return blockService.getBlockParameters(categoryId).getBlockStartValue();
     }
 
+    @Bean("nonhumanActiveService")
+    public ClusteredVariantAccessioningService clusteredVariantAccessioningService() {
+        return new ClusteredVariantAccessioningService(clusteredVariantMonotonicAccessioningService(),
+                                                       dbsnpClusteredVariantMonotonicAccessioningService(),
+                                                       accessioningMonotonicInitRs());
+    }
+
     @Bean
     public ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService() {
         return new ClusteredVariantMonotonicAccessioningService(clusteredVariantAccessionGenerator(),
@@ -95,10 +103,12 @@ public class ClusteredVariantAccessioningConfiguration {
                                                                 new SHA1HashingFunction());
     }
 
-    @Bean("nonhumanActiveService")
-    public ClusteredVariantAccessioningService dnsnpClusteredVariantAccessioningService() {
-        return new ClusteredVariantAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
-                                                       dbsnpClusteredVariantAccessioningDatabaseService());
+    @Bean
+    public DbsnpClusteredVariantMonotonicAccessioningService dbsnpClusteredVariantMonotonicAccessioningService() {
+        return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
+                                                                     dbsnpClusteredVariantAccessioningDatabaseService(),
+                                                                     new ClusteredVariantSummaryFunction(),
+                                                                     new SHA1HashingFunction());
     }
 
     @Bean

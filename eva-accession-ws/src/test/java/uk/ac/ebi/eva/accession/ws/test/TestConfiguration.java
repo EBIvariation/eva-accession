@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.ws.test;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -43,6 +44,7 @@ public class TestConfiguration {
     }
 
     @Bean
+    @Qualifier("dbsnpClusteredService")
     public DbsnpClusteredVariantMonotonicAccessioningService dbsnpClusteredService(
             DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator,
             DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService) {
