@@ -22,6 +22,9 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
@@ -51,23 +54,24 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private MongoTemplate mongoTemplate;
 
-    private ClusteredVariantAccessioningService clusteredVariantMonotonicAccessioningService;
+    private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     private Function<IClusteredVariant, String> hashingFunction;
 
     private Map<String, Long> assignedAccessions;
 
     public ClusteringWriter(MongoTemplate mongoTemplate,
-                            ClusteredVariantAccessioningService clusteredVariantMonotonicAccessioningService) {
+                            ClusteredVariantAccessioningService clusteredVariantAccessioningService) {
         this.mongoTemplate = mongoTemplate;
-        this.clusteredVariantMonotonicAccessioningService = clusteredVariantMonotonicAccessioningService;
-        hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
+        this.hashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.assignedAccessions = new HashMap<>();
     }
 
     @Override
     public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
+            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, AccessionMergedException,
+            AccessionDoesNotExistException, AccessionDeprecatedException {
         assignedAccessions.clear();
         //Write new Clustered Variants in mongo and get existing ones
         getOrCreateClusteredVariantAccessions(submittedVariantEntities);
@@ -77,8 +81,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         long numUpdates = 0;
         for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
             if (submittedVariantEntity.getClusteredVariantAccession() != null) {
-                // no need to update the rs of a submitted variant that already has an rs, at least in the basic case.
-                // TODO take into account merges and splits
+                // no need to update the rs of a submitted variant that already has the correct rs
                 continue;
             }
             Query query = query(where("_id").is(submittedVariantEntity.getId()));
@@ -93,17 +96,28 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws AccessionCouldNotBeGeneratedException {
-
+            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
+            AccessionDeprecatedException {
         List<ClusteredVariant> clusteredVariants =
                 submittedVariantEntities.stream()
-                                        .filter(sve -> sve.getClusteredVariantAccession() == null)
                                         .map(this::toClusteredVariant)
                                         .collect(Collectors.toList());
         if (!clusteredVariants.isEmpty()) {
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
-                    clusteredVariantMonotonicAccessioningService.getOrCreate(clusteredVariants);
+                    clusteredVariantAccessioningService.getOrCreate(clusteredVariants);
             accessionWrappers.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+        }
+        for (SubmittedVariantEntity submittedVariant : submittedVariantEntities) {
+            if (submittedVariant.getClusteredVariantAccession() != null) {
+                String hash = hashingFunction.apply(toClusteredVariant(submittedVariant));
+                if (!submittedVariant.getClusteredVariantAccession().equals(assignedAccessions.get(hash))) {
+                    clusteredVariantAccessioningService.merge(
+                            submittedVariant.getClusteredVariantAccession(),
+                            assignedAccessions.get(hash),
+                            "Clustering pipeline detected that these clustered variants were the same.");
+                    // TODO: update SS
+                }
+            }
         }
     }
 

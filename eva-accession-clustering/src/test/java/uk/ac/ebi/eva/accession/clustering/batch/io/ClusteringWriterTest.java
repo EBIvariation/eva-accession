@@ -37,6 +37,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
@@ -225,26 +228,28 @@ public class ClusteringWriterTest {
 
     @Test
     @DirtiesContext
-    public void reuse_clustered_accession_if_provided() throws AccessionCouldNotBeGeneratedException {
+    public void reuse_clustered_accession_if_provided() throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         long existingRs = 30L;
         String asm1 = "asm1";
         String asm2 = "asm2";
 
-        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        ClusteredVariantEntity cve1 = createClusteredVariantEntity(asm1, existingRs);
+        mongoTemplate.insert(cve1);
+        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         // given a submitted variant that already has an RS=rs30
         SubmittedVariantEntity sveClustered = createSubmittedVariantEntity(asm1, existingRs, 50L);
         clusteringWriter.write(Collections.singletonList(sveClustered));
-        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         // given a different submitted variant without an assigned RS (rs=null)
         SubmittedVariantEntity sveNonClustered = createSubmittedVariantEntity(asm2, null, 51L);
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
-        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         // given the same submitted variant without an assigned RS (rs=null), getOrCreate should not create another RS
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
-        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -299,12 +304,32 @@ public class ClusteringWriterTest {
 
     @Test
     @DirtiesContext
-    public void merge_clustered_accession() throws Exception {
+    public void merge_eva_clustered_accession() throws Exception {
+        Long rs1 = 3000000000L;
+        Long rs2 = 3100000000L;
+        merge_clustered_accession(rs1, rs2);
+    }
+
+    @Test
+    @DirtiesContext
+    public void merge_dbsnp_clustered_accession() throws Exception {
+        Long rs1 = 30L;
+        Long rs2 = 31L;
+        merge_clustered_accession(rs1, rs2);
+    }
+
+    @Test
+    @DirtiesContext
+    public void merge_eva_into_dbsnp_clustered_accession() throws Exception {
+        Long rs1 = 3000000000L;
+        Long rs2 = 31L;
+        merge_clustered_accession(rs1, rs2);
+    }
+
+    public void merge_clustered_accession(Long rs1, Long rs2) throws Exception {
         // given
         Long ss1 = 50L;
         Long ss2 = 51L;
-        Long rs1 = 30L;
-        Long rs2 = 31L;
         String asm1 = "asm1";
         String asm2 = "asm2";
 
