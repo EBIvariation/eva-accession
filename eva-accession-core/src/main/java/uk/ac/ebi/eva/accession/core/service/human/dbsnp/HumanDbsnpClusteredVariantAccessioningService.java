@@ -35,12 +35,12 @@ import java.util.List;
 @Service
 public class HumanDbsnpClusteredVariantAccessioningService {
 
-    private final DbsnpClusteredVariantMonotonicAccessioningService humanService;
+    private final HumanDbsnpClusteredVariantMonotonicAccessioningService humanService;
 
     private final HumanDbsnpClusteredVariantOperationAccessioningService operationsService;
 
     public HumanDbsnpClusteredVariantAccessioningService(
-            @Qualifier("humanActiveService") DbsnpClusteredVariantMonotonicAccessioningService humanService,
+            @Qualifier("humanActiveService") HumanDbsnpClusteredVariantMonotonicAccessioningService humanService,
             @Qualifier("humanOperationsService") HumanDbsnpClusteredVariantOperationAccessioningService operationsService) {
         this.humanService = humanService;
         this.operationsService = operationsService;

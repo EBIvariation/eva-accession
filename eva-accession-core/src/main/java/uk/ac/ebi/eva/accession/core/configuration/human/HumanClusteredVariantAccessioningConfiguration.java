@@ -32,6 +32,7 @@ import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVa
 import uk.ac.ebi.eva.accession.core.repository.human.dbsnp.HumanDbsnpClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantOperationAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
@@ -55,11 +56,12 @@ public class HumanClusteredVariantAccessioningConfiguration {
     private ContiguousIdBlockService service;
 
     @Bean("humanActiveService")
-    public DbsnpClusteredVariantMonotonicAccessioningService humanDbsnpClusteredActiveVariantAccessioningService() {
-        return new DbsnpClusteredVariantMonotonicAccessioningService(dbsnpClusteredVariantAccessionGenerator(),
-                                                                     humanDbsnpClusteredVariantAccessioningDatabaseService(),
-                                                                     new ClusteredVariantSummaryFunction(),
-                                                                     new SHA1HashingFunction());
+    public HumanDbsnpClusteredVariantMonotonicAccessioningService humanDbsnpClusteredActiveVariantAccessioningService() {
+        return new HumanDbsnpClusteredVariantMonotonicAccessioningService(
+                dbsnpClusteredVariantAccessionGenerator(),
+                humanDbsnpClusteredVariantAccessioningDatabaseService(),
+                new ClusteredVariantSummaryFunction(),
+                new SHA1HashingFunction());
     }
 
     private DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {

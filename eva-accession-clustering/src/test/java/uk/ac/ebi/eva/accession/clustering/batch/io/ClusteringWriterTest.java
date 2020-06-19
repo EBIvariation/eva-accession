@@ -92,6 +92,12 @@ public class ClusteringWriterTest {
 
     private static final String PROJECT_ACCESSION = "projectId_1";
 
+    public static final String CLUSTERED_VARIANT_ENTITY = "clusteredVariantEntity";
+
+    public static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
+
+    public static final long EVA_CLUSTERED_VARIANT_RANGE_START = 3000000000L;
+
     @Autowired
     private InputParameters inputParameters;
 
@@ -264,6 +270,12 @@ public class ClusteringWriterTest {
         return new ClusteredVariantEntity(rs, cvHash, cv, 1);
     }
 
+    private DbsnpClusteredVariantEntity createDbsnpClusteredVariantEntity(String assembly, Long rs) {
+        ClusteredVariant cv = new ClusteredVariant(assembly, 1000, "1", 100L, VariantType.SNV, false, null);
+        String cvHash = clusteredHashingFunction.apply(cv);
+        return new DbsnpClusteredVariantEntity(rs, cvHash, cv, 1);
+    }
+
     @Test
     @DirtiesContext
     public void reuse_dbsnp_clustered_accession_when_clustering_an_eva_submitted_variant() throws Exception {
@@ -312,6 +324,14 @@ public class ClusteringWriterTest {
 
     @Test
     @DirtiesContext
+    public void merge_eva_clustered_accession_reversed() throws Exception {
+        Long rs1 = 3100000000L;
+        Long rs2 = 3000000000L;
+        merge_clustered_accession(rs1, rs2);
+    }
+
+    @Test
+    @DirtiesContext
     public void merge_dbsnp_clustered_accession() throws Exception {
         Long rs1 = 30L;
         Long rs2 = 31L;
@@ -335,10 +355,10 @@ public class ClusteringWriterTest {
 
         assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
-        mongoTemplate.insert(createClusteredVariantEntity(asm1, rs1));
+        mongoTemplate.insert(createClusteredVariantEntity(asm1, rs1), getClusteredTable(rs1));
 
         // rs2 will be merged into rs1, but the document will be kept to describe how rs1 maps into this second assembly
-        mongoTemplate.insert(createClusteredVariantEntity(asm2, rs2));
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, rs2), getClusteredTable(rs2));
 
         // ss1 in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, rs1, ss1));
@@ -347,14 +367,16 @@ public class ClusteringWriterTest {
         // because they both map to the same position in asm2
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, rs2, ss2));
 
-        assertDatabaseCounts(0, 0, 2, 2, 0, 0, 0, 0);
+        int cve = (isEvaClusteredVariant(rs1) ? 1 : 0) + (isEvaClusteredVariant(rs2) ? 1 : 0);
+        int dbsnpCve = (isEvaClusteredVariant(rs1) ? 0 : 1) + (isEvaClusteredVariant(rs2) ? 0 : 1);
+        assertDatabaseCounts(0, dbsnpCve, 2, cve, 0, 0, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, rs1, ss1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
-        assertDatabaseCounts(0, 0, 2, 2, 0, 0, 1, 1);
+        assertDatabaseCounts(0, dbsnpCve, 2, cve, 0, 0, 1, 1);
 
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
         assertClusteredVariantAccessionEqual(Sets.newTreeSet(rs1), submittedVariants);
@@ -374,6 +396,14 @@ public class ClusteringWriterTest {
                 mongoTemplate.findOne(new Query(), SubmittedVariantOperationEntity.class);
         assertEquals(EventType.UPDATED, submittedOp.getEventType());
         assertEquals(ss2, submittedOp.getAccession());
+    }
+
+    private String getClusteredTable(Long rs1) {
+        return isEvaClusteredVariant(rs1) ? CLUSTERED_VARIANT_ENTITY : DBSNP_CLUSTERED_VARIANT_ENTITY;
+    }
+
+    private boolean isEvaClusteredVariant(Long rs1) {
+        return rs1 >= EVA_CLUSTERED_VARIANT_RANGE_START;
     }
 
     private void assertDatabaseCounts(int dbsnpSve, int dbsnpCve, int sve, int cve, int dbsnpSvOperation, int dbsnpCvOperation,

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp;
+package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
@@ -28,16 +28,16 @@ import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import java.util.List;
 import java.util.function.Function;
 
-public class DbsnpClusteredVariantMonotonicAccessioningService
+public class HumanDbsnpClusteredVariantMonotonicAccessioningService
         extends BasicAccessioningService<IClusteredVariant, String, Long> {
 
-    private final DbsnpClusteredVariantAccessioningDatabaseService dbService;
+    private final DatabaseService<IClusteredVariant, String, Long> dbService;
 
     private final Function<IClusteredVariant, String> hashingFunction;
 
-    public DbsnpClusteredVariantMonotonicAccessioningService(
+    public HumanDbsnpClusteredVariantMonotonicAccessioningService(
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
-            DbsnpClusteredVariantAccessioningDatabaseService dbService,
+            HumanDbsnpClusteredVariantAccessioningDatabaseService dbService,
             Function<IClusteredVariant, String> summaryFunction,
             Function<String, String> hashingFunction) {
         super(accessionGenerator, dbService, summaryFunction, hashingFunction);
@@ -52,10 +52,5 @@ public class DbsnpClusteredVariantMonotonicAccessioningService
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {
         return dbService.findAllByHash(hashes);
-    }
-
-    public void mergeKeepingEntries(Long accessionOrigin, Long mergeInto, String reason)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        dbService.mergeKeepingEntries(accessionOrigin, mergeInto, reason);
     }
 }

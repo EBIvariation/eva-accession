@@ -209,6 +209,18 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
         }
     }
 
+    public void mergeKeepingEntries(Long accessionOrigin, Long mergeInto, String reason)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        if (accessionOrigin >= accessioningMonotonicInitRs && mergeInto >= accessioningMonotonicInitRs) {
+            accessioningService.mergeKeepingEntries(accessionOrigin, mergeInto, reason);
+        } else if (accessionOrigin < accessioningMonotonicInitRs && mergeInto < accessioningMonotonicInitRs) {
+            accessioningServiceDbsnp.mergeKeepingEntries(accessionOrigin, mergeInto, reason);
+        } else {
+            throw new UnsupportedOperationException(
+                    "Unimplemented: Can't merge a clustered variant with a dbSNP clustered variant");
+        }
+    }
+
     public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {
         throw new UnsupportedOperationException("TODO: This should be implemented, but I forgot to.");
 //        if (accession >= accessioningMonotonicInitRs) {
@@ -217,4 +229,5 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
 //            return accessioningServiceDbsnp.getLastInactive(accession);
 //        }
     }
+
 }
