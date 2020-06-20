@@ -26,11 +26,11 @@ import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonot
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningRepository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DbsnpClusteredVariantAccessioningDatabaseService
         extends BasicSpringDataRepositoryMonotonicDatabaseService<IClusteredVariant, DbsnpClusteredVariantEntity> {
@@ -61,6 +61,15 @@ public class DbsnpClusteredVariantAccessioningDatabaseService
         List<DbsnpClusteredVariantEntity> toMerge = this.getAllByAccession(accessionOrigin);
         this.getAllByAccession(mergeInto); // trigger checks for inactive object
         inactiveService.merge(accessionOrigin, mergeInto, toMerge, reason);
+
+        List<DbsnpClusteredVariantEntity> updated = toMerge.stream()
+                                                      .map(e -> new DbsnpClusteredVariantEntity(
+                                                              mergeInto,
+                                                              e.getHashedMessage(),
+                                                              e.getModel()))
+                                                      .collect(Collectors.toList());
+        repository.deleteAll(toMerge);
+        repository.saveAll(updated);
     }
 
     public List<DbsnpClusteredVariantEntity> getAllByAccession(Long accession)

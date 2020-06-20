@@ -30,7 +30,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ClusteredVariantAccessioningDatabaseService extends
@@ -52,32 +51,15 @@ public class ClusteredVariantAccessioningDatabaseService extends
         this.inactiveService = inactiveService;
     }
 
-    public void mergeKeepingEntries(Long accessionOrigin, Long mergeInto, String reason)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        List<ClusteredVariantEntity> toMerge = this.getAllByAccession(accessionOrigin);
-        this.getAllByAccession(mergeInto); // trigger checks for inactive object
-        inactiveService.merge(accessionOrigin, mergeInto, toMerge, reason);
-
-        List<ClusteredVariantEntity> updated = toMerge.stream()
-                                                      .map(createUpdatingEntity(mergeInto))
-                                                      .collect(Collectors.toList());
-        repository.saveAll(updated);
-    }
-
-    private Function<ClusteredVariantEntity, ClusteredVariantEntity> createUpdatingEntity(Long mergeInto) {
-        return (ClusteredVariantEntity clusteredVariantEntity) -> new UpdatedClusteredVariantEntity(
-                mergeInto,
-                clusteredVariantEntity.getHashedMessage(),
-                clusteredVariantEntity.getModel());
-    }
 
     /**
-     * Without this custom inheritance, repository.save will insert a document, instead of updating it, failing with
-     * a _id collision.
+     * Note that at the end of this method we delete and insert instead of just updating the rs accession.
      *
-     * jmmut: my understanding is that spring-data-mongo expects the entity to know if it is new or not,
-     * which is used to decide if it has to be inserted as new document or update an existing document. There's no
-     * other "update" method in CrudRepository than "save".
+     * This is because there is no "update" method in the CrudRepository; only "save", which will call
+     * ClusteredVariantEntity#isNew() to decide whether to insert a new document or update an existing one. With the
+     * current code, a repositoyr.save() would fail with an _id collision because isNew() is hardcoded to true. Trying
+     * to make that work involves non-trivial code, like created another class that inherits and overrides
+     * {@link ClusteredVariantEntity#isNew()}.
      *
      * @see SimpleMongoRepository#save(java.lang.Object)
      *
@@ -88,22 +70,23 @@ public class ClusteredVariantAccessioningDatabaseService extends
      * DatabaseService, etc.). We only have repositories here, which could be configured in different ways that we don't
      * know here.
      *
-     * Another option would be to issue a delete and then an insert but that's being wasteful because of a limitation
-     * of spring-data-mongo, which I think is unacceptable. I haven't profiled this, though; I could be wrong.
-     *
-     * The final option would be to extract the "mergeKeepingEntries" out of the DatabaseService. After all, we need
+     * Another option would be to extract the "mergeKeepingEntries" out of the DatabaseService. After all, we need
      * to provide this merging mechanism across dbsnp and EVA.
      */
-    private static class UpdatedClusteredVariantEntity extends ClusteredVariantEntity {
+    public void mergeKeepingEntries(Long accessionOrigin, Long mergeInto, String reason)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        List<ClusteredVariantEntity> toMerge = this.getAllByAccession(accessionOrigin);
+        this.getAllByAccession(mergeInto); // trigger checks for inactive object
+        inactiveService.merge(accessionOrigin, mergeInto, toMerge, reason);
 
-        public UpdatedClusteredVariantEntity(Long accession, String hashedMessage, IClusteredVariant model) {
-            super(accession, hashedMessage, model);
-        }
-
-        @Override
-        public boolean isNew() {
-            return false;
-        }
+        List<ClusteredVariantEntity> updated = toMerge.stream()
+                                                      .map(e -> new ClusteredVariantEntity(
+                                                              mergeInto,
+                                                              e.getHashedMessage(),
+                                                              e.getModel()))
+                                                      .collect(Collectors.toList());
+        repository.deleteAll(toMerge);
+        repository.saveAll(updated);
     }
 
     public List<ClusteredVariantEntity> getAllByAccession(Long accession)

@@ -319,7 +319,10 @@ public class ClusteringWriterTest {
     public void merge_eva_clustered_accession() throws Exception {
         Long rs1 = 3000000000L;
         Long rs2 = 3100000000L;
-        merge_clustered_accession(rs1, rs2);
+        long ss1 = 50L;
+        long ss2 = 51L;
+        merge_clustered_accession(rs1, rs2, ss1, ss2, 0, 2, 0, 1);
+        assertMergedInto(rs1, rs2, ss2);
     }
 
     @Test
@@ -327,7 +330,10 @@ public class ClusteringWriterTest {
     public void merge_eva_clustered_accession_reversed() throws Exception {
         Long rs1 = 3100000000L;
         Long rs2 = 3000000000L;
-        merge_clustered_accession(rs1, rs2);
+        long ss1 = 50L;
+        long ss2 = 51L;
+        merge_clustered_accession(rs1, rs2, ss1, ss2, 0, 2, 0, 1);
+        assertMergedInto(rs2, rs1, ss1);
     }
 
     @Test
@@ -335,7 +341,10 @@ public class ClusteringWriterTest {
     public void merge_dbsnp_clustered_accession() throws Exception {
         Long rs1 = 30L;
         Long rs2 = 31L;
-        merge_clustered_accession(rs1, rs2);
+        long ss1 = 50L;
+        long ss2 = 51L;
+        merge_clustered_accession(rs1, rs2, ss1, ss2, 2, 0, 1, 0);
+        assertMergedInto(rs1, rs2, ss2);
     }
 
     @Test
@@ -343,16 +352,20 @@ public class ClusteringWriterTest {
     public void merge_eva_into_dbsnp_clustered_accession() throws Exception {
         Long rs1 = 3000000000L;
         Long rs2 = 31L;
-        merge_clustered_accession(rs1, rs2);
+        long ss1 = 50L;
+        long ss2 = 51L;
+        merge_clustered_accession(rs1, rs2, ss1, ss2, 1, 1, 0, 1);
+        assertMergedInto(rs1, rs2, ss2);
     }
 
-    public void merge_clustered_accession(Long rs1, Long rs2) throws Exception {
+    public void merge_clustered_accession(Long rs1, Long rs2,
+                                          long ss1, Long ss2, int expectedDbsnpCve,
+                                          int expectedCve,
+                                          int expectedDbsnpCvOperations, int expectedCvOperations)
+            throws Exception {
         // given
-        Long ss1 = 50L;
-        Long ss2 = 51L;
         String asm1 = "asm1";
         String asm2 = "asm2";
-
         assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
         mongoTemplate.insert(createClusteredVariantEntity(asm1, rs1), getClusteredTable(rs1));
@@ -367,35 +380,39 @@ public class ClusteringWriterTest {
         // because they both map to the same position in asm2
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, rs2, ss2));
 
-        int cve = (isEvaClusteredVariant(rs1) ? 1 : 0) + (isEvaClusteredVariant(rs2) ? 1 : 0);
-        int dbsnpCve = (isEvaClusteredVariant(rs1) ? 0 : 1) + (isEvaClusteredVariant(rs2) ? 0 : 1);
-        assertDatabaseCounts(0, dbsnpCve, 2, cve, 0, 0, 0, 0);
+        assertDatabaseCounts(0, expectedDbsnpCve, 2, expectedCve, 0, 0, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, rs1, ss1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
-        assertDatabaseCounts(0, dbsnpCve, 2, cve, 0, 0, 1, 1);
+        assertDatabaseCounts(0, expectedDbsnpCve, 2, expectedCve, 0, expectedDbsnpCvOperations, 1, expectedCvOperations);
 
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
-        assertClusteredVariantAccessionEqual(Sets.newTreeSet(rs1), submittedVariants);
         assertReferenceSequenceAccessionEqual(Sets.newTreeSet(asm1, asm2), submittedVariants);
 
         List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        assertAccessionEqual(Sets.newTreeSet(rs1), clusteredVariants);
         assertAssemblyAccessionEqual(Sets.newTreeSet(asm1, asm2), clusteredVariants);
+    }
+
+    private void assertMergedInto(Long mergedInto, Long originalAccession, Long updatedSubmittedVariant) {
+        List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
+        assertClusteredVariantAccessionEqual(Sets.newTreeSet(mergedInto), submittedVariants);
+
+        List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
+        assertAccessionEqual(Sets.newTreeSet(mergedInto), clusteredVariants);
 
         ClusteredVariantOperationEntity clusteredOp =
                 mongoTemplate.findOne(new Query(), ClusteredVariantOperationEntity.class);
         assertEquals(EventType.MERGED, clusteredOp.getEventType());
-        assertEquals(rs2, clusteredOp.getAccession());
-        assertEquals(rs1, clusteredOp.getMergedInto());
+        assertEquals(originalAccession, clusteredOp.getAccession());
+        assertEquals(mergedInto, clusteredOp.getMergedInto());
 
         SubmittedVariantOperationEntity submittedOp =
                 mongoTemplate.findOne(new Query(), SubmittedVariantOperationEntity.class);
         assertEquals(EventType.UPDATED, submittedOp.getEventType());
-        assertEquals(ss2, submittedOp.getAccession());
+        assertEquals(updatedSubmittedVariant, submittedOp.getAccession());
     }
 
     private String getClusteredTable(Long rs1) {
