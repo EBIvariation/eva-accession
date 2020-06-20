@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -28,10 +29,14 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -67,12 +72,17 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private Map<String, Long> assignedAccessions;
 
+    private Long accessioningMonotonicInitSs;
+
     public ClusteringWriter(MongoTemplate mongoTemplate,
-                            ClusteredVariantAccessioningService clusteredVariantAccessioningService) {
+                            ClusteredVariantAccessioningService clusteredVariantAccessioningService,
+                            Long accessioningMonotonicInitSs) {
         this.mongoTemplate = mongoTemplate;
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.assignedAccessions = new HashMap<>();
+        Assert.notNull(accessioningMonotonicInitSs, "accessioningMonotonicInitSs must not be null. Check autowiring.");
+        this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
     }
 
     @Override
@@ -117,25 +127,39 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
         Priority prioritised = prioritise(providedAccession, accessionInDatabase);
         clusteredService.mergeKeepingEntries(prioritised.accessionToBeMerged, prioritised.accessionToKeep,
-                                             "Clustering pipeline detected that these clustered variants were the same.");
+                                             "Clustering pipeline detected that these clustered variants were the same."
+        );
 
         // TODO: if there are several ss or rs in the same assembly, don't merge anything
         Query query = query(where("rs").is(prioritised.accessionToBeMerged));
-        List<SubmittedVariantEntity> svToUpdate = mongoTemplate.find(query, SubmittedVariantEntity.class);
+        List<? extends SubmittedVariantEntity> svToUpdate =
+                mongoTemplate.find(query, getSubmittedVariantCollection(submittedVariant));
 
         Update update = new Update();
         update.set("rs", prioritised.accessionToKeep);
-        mongoTemplate.updateMulti(query, update, SubmittedVariantEntity.class);
+        mongoTemplate.updateMulti(query, update, getSubmittedVariantCollection(submittedVariant));
 
         if (!svToUpdate.isEmpty()) {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  SubmittedVariantOperationEntity.class);
+                                                                  getSubmittedOperationCollection(submittedVariant));
             for (SubmittedVariantEntity submittedVariantEntity : svToUpdate) {
                 bulkOperations.insert(buildOperation(submittedVariantEntity, prioritised.accessionToKeep));
             }
 
             bulkOperations.execute();
         }
+    }
+
+    private Class<? extends SubmittedVariantEntity> getSubmittedVariantCollection(
+            SubmittedVariantEntity submittedVariant) {
+        return submittedVariant.getAccession() >= accessioningMonotonicInitSs?
+                SubmittedVariantEntity.class : DbsnpSubmittedVariantEntity.class;
+    }
+
+    private Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+    getSubmittedOperationCollection(SubmittedVariantEntity submittedVariant) {
+        return submittedVariant.getAccession() >= accessioningMonotonicInitSs?
+                SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class;
     }
 
 //    private <SVE extends SubmittedVariantInactiveEntity, OPERATION extends EventDocument<ISubmittedVariant, Long, SVE>>

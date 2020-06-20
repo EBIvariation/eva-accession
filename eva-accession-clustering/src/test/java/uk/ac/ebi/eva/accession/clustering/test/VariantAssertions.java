@@ -27,19 +27,20 @@ import static org.junit.Assert.assertEquals;
 
 public class VariantAssertions {
 
-    public static void assertAccessionEqual(Set<Long> expected, List<ClusteredVariantEntity> clusteredVariants) {
+    public static void assertAccessionEqual(Set<Long> expected,
+                                            List<? extends ClusteredVariantEntity> clusteredVariants) {
         assertEquals(expected,
                      clusteredVariants.stream().map(v -> v.getAccession()).collect(Collectors.toSet()));
     }
 
     public static void assertAssemblyAccessionEqual(TreeSet<String> expected,
-                                                    List<ClusteredVariantEntity> clusteredVariants) {
+                                                    List<? extends ClusteredVariantEntity> clusteredVariants) {
         assertEquals(expected,
                      clusteredVariants.stream().map(v -> v.getAssemblyAccession()).collect(Collectors.toSet()));
     }
 
     public static void assertReferenceSequenceAccessionEqual(TreeSet<String> expected,
-                                                       List<SubmittedVariantEntity> submittedVariants) {
+                                                             List<? extends SubmittedVariantEntity> submittedVariants) {
         assertEquals(expected,
                      submittedVariants.stream()
                                       .map(v -> v.getReferenceSequenceAccession())
@@ -47,7 +48,7 @@ public class VariantAssertions {
     }
 
     public static void assertClusteredVariantAccessionEqual(TreeSet<Long> expected,
-                                                      List<SubmittedVariantEntity> submittedVariants) {
+                                                            List<? extends SubmittedVariantEntity> submittedVariants) {
         assertEquals(expected,
                      submittedVariants.stream().map(v -> v.getClusteredVariantAccession()).collect(Collectors.toSet()));
     }
