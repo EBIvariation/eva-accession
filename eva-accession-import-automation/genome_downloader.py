@@ -104,7 +104,9 @@ def contatenate_sequence_to_fasta(fasta_path, sequence_path):
     with open(fasta_path, 'a+') as fasta:
         with open(sequence_path) as sequence:
             for line in sequence:
-                fasta.write(line)
+                # Check that the line is not empty
+                if line.strip():
+                    fasta.write(line)
 
 
 @retry(tries=4, delay=2, backoff=1.2, jitter=(1, 3))
