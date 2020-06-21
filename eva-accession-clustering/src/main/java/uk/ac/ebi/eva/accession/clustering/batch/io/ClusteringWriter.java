@@ -101,10 +101,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
             AccessionDeprecatedException {
-        List<ClusteredVariant> clusteredVariants =
-                submittedVariantEntities.stream()
-                                        .map(this::toClusteredVariant)
-                                        .collect(Collectors.toList());
+        List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
+                                                                           .map(this::toClusteredVariant)
+                                                                           .collect(Collectors.toList());
         if (!clusteredVariants.isEmpty()) {
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
                     clusteredService.getOrCreate(clusteredVariants);
@@ -152,32 +151,19 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private Class<? extends SubmittedVariantEntity> getSubmittedVariantCollection(
             SubmittedVariantEntity submittedVariant) {
-        return submittedVariant.getAccession() >= accessioningMonotonicInitSs?
+        return isEvaSubmittedVariant(submittedVariant) ?
                 SubmittedVariantEntity.class : DbsnpSubmittedVariantEntity.class;
+    }
+
+    private boolean isEvaSubmittedVariant(SubmittedVariantEntity submittedVariant) {
+        return submittedVariant.getAccession() >= accessioningMonotonicInitSs;
     }
 
     private Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
     getSubmittedOperationCollection(SubmittedVariantEntity submittedVariant) {
-        return submittedVariant.getAccession() >= accessioningMonotonicInitSs?
+        return isEvaSubmittedVariant(submittedVariant) ?
                 SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class;
     }
-
-//    private <SVE extends SubmittedVariantInactiveEntity, OPERATION extends EventDocument<ISubmittedVariant, Long, SVE>>
-//    OPERATION buildOperation(OPERATION operation,
-//                             SubmittedVariantEntity originalSubmittedVariant,
-//                             Long clusteredVariantMergedInto,
-//                             SVE inactiveEntity) {
-//
-//        Long originalClusteredVariant = originalSubmittedVariant.getClusteredVariantAccession();
-//        String reason = "Original rs" + originalClusteredVariant + " was merged into rs" + clusteredVariantMergedInto + ".";
-//
-//        Long accession = originalSubmittedVariant.getAccession();
-//
-//        // Note the next null in accessionIdDestiny. We are not merging the submitted variant into
-//        // clusteredVariantMergedInto. We are updating the submitted variant, changing its rs field
-//        operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
-//        return operation;
-//    }
 
     private SubmittedVariantOperationEntity buildOperation(SubmittedVariantEntity originalSubmittedVariant,
                                                            Long clusteredVariantMergedInto) {
@@ -224,7 +210,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private void updateSubmittedVariants(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               SubmittedVariantEntity.class);
+        BulkOperations dbsnpBulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                                   DbsnpSubmittedVariantEntity.class);
         long numUpdates = 0;
+        long numDbsnpUpdates = 0;
         for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
             if (submittedVariantEntity.getClusteredVariantAccession() != null) {
                 // no need to update the rs of a submitted variant that already has the correct rs
@@ -233,11 +222,19 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             Query query = query(where("_id").is(submittedVariantEntity.getId()));
             Update update = new Update();
             update.set("rs", getClusteredVariantAccession(submittedVariantEntity));
-            bulkOperations.updateOne(query, update);
-            ++numUpdates;
+            if (isEvaSubmittedVariant(submittedVariantEntity)) {
+                bulkOperations.updateOne(query, update);
+                ++numUpdates;
+            } else {
+                dbsnpBulkOperations.updateOne(query, update);
+                ++numDbsnpUpdates;
+            }
         }
         if (numUpdates > 0) {
             bulkOperations.execute();
+        }
+        if (numDbsnpUpdates > 0) {
+            dbsnpBulkOperations.execute();
         }
     }
 
