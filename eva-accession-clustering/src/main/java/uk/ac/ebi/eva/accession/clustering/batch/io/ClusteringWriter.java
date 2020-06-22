@@ -34,9 +34,13 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocu
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -54,6 +58,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
+import static org.springframework.data.mongodb.core.query.Update.*;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergingPolicy.Priority;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergingPolicy.prioritise;
 
@@ -74,15 +79,19 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private Long accessioningMonotonicInitSs;
 
+    private Long accessioningMonotonicInitRs;
+
     public ClusteringWriter(MongoTemplate mongoTemplate,
                             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
-                            Long accessioningMonotonicInitSs) {
+                            Long accessioningMonotonicInitSs,
+                            Long accessioningMonotonicInitRs) {
         this.mongoTemplate = mongoTemplate;
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.assignedAccessions = new HashMap<>();
         Assert.notNull(accessioningMonotonicInitSs, "accessioningMonotonicInitSs must not be null. Check autowiring.");
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
+        this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
     }
 
     @Override
@@ -125,24 +134,51 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
 
         Priority prioritised = prioritise(providedAccession, accessionInDatabase);
-        clusteredService.mergeKeepingEntries(prioritised.accessionToBeMerged, prioritised.accessionToKeep,
-                                             "Clustering pipeline detected that these clustered variants were the same."
-        );
+        assignedAccessions.put(hash, prioritised.accessionToKeep);
+//        clusteredService.mergeKeepingEntries(prioritised.accessionToBeMerged, prioritised.accessionToKeep,
+//                                             "Clustering pipeline detected that these clustered variants were the same."
+//        );
 
+        // write operations for clustered variant being merged
+        Query queryClustered = query(where("accession").is(prioritised.accessionToBeMerged));
+        List<? extends ClusteredVariantEntity> cvToMerge =
+                mongoTemplate.find(queryClustered, getClusteredVariantCollection(prioritised.accessionToBeMerged));
+        List<ClusteredVariantOperationEntity> operations =
+                cvToMerge.stream()
+                         .map(c -> buildClusteredOperation(c, prioritised.accessionToKeep))
+                         .collect(Collectors.toList());
+        mongoTemplate.insert(operations, getClusteredOperationCollection(prioritised.accessionToBeMerged));
+
+        mongoTemplate.updateMulti(queryClustered, update("accession", prioritised.accessionToKeep),
+                                  getClusteredVariantCollection(prioritised.accessionToBeMerged));
+
+        // update submitted variants linked to the clustered variant we just merged
         // TODO: if there are several ss or rs in the same assembly, don't merge anything
-        Query query = query(where("rs").is(prioritised.accessionToBeMerged));
+        updateSubmittedVariants(submittedVariant, prioritised, SubmittedVariantEntity.class,
+                                SubmittedVariantOperationEntity.class);
+        updateSubmittedVariants(submittedVariant, prioritised, DbsnpSubmittedVariantEntity.class,
+                                DbsnpSubmittedVariantOperationEntity.class);
+    }
+
+    private void updateSubmittedVariants(
+            SubmittedVariantEntity submittedVariant,
+            Priority prioritised,
+            Class<? extends SubmittedVariantEntity> submittedVariantCollection,
+            Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                    submittedOperationCollection) {
+        Query querySubmitted = query(where("rs").is(prioritised.accessionToBeMerged));
         List<? extends SubmittedVariantEntity> svToUpdate =
-                mongoTemplate.find(query, getSubmittedVariantCollection(submittedVariant));
+                mongoTemplate.find(querySubmitted, submittedVariantCollection);
 
         Update update = new Update();
         update.set("rs", prioritised.accessionToKeep);
-        mongoTemplate.updateMulti(query, update, getSubmittedVariantCollection(submittedVariant));
+        mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
 
         if (!svToUpdate.isEmpty()) {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  getSubmittedOperationCollection(submittedVariant));
+                                                                  submittedOperationCollection);
             for (SubmittedVariantEntity submittedVariantEntity : svToUpdate) {
-                bulkOperations.insert(buildOperation(submittedVariantEntity, prioritised.accessionToKeep));
+                bulkOperations.insert(buildSubmittedOperation(submittedVariantEntity, prioritised.accessionToKeep));
             }
 
             bulkOperations.execute();
@@ -165,8 +201,22 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class;
     }
 
-    private SubmittedVariantOperationEntity buildOperation(SubmittedVariantEntity originalSubmittedVariant,
-                                                           Long clusteredVariantMergedInto) {
+    private Class<? extends ClusteredVariantEntity> getClusteredVariantCollection(Long accession) {
+        return isEvaClusteredAccession(accession) ? ClusteredVariantEntity.class : DbsnpClusteredVariantEntity.class;
+    }
+
+    private boolean isEvaClusteredAccession(Long accession) {
+        return accession >= accessioningMonotonicInitRs;
+    }
+
+    private Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+    getClusteredOperationCollection(Long accession) {
+        return isEvaClusteredAccession(accession) ?
+                ClusteredVariantOperationEntity.class : DbsnpClusteredVariantOperationEntity.class;
+    }
+
+    private SubmittedVariantOperationEntity buildSubmittedOperation(SubmittedVariantEntity originalSubmittedVariant,
+                                                                    Long clusteredVariantMergedInto) {
         SubmittedVariantInactiveEntity inactiveEntity = new SubmittedVariantInactiveEntity(originalSubmittedVariant);
 
         Long originalClusteredVariant = originalSubmittedVariant.getClusteredVariantAccession();
@@ -178,6 +228,19 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         // Note the next null in accessionIdDestiny. We are not merging the submitted variant into
         // anything. We are updating the submitted variant, changing its rs field
         operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
+        return operation;
+    }
+
+    private ClusteredVariantOperationEntity buildClusteredOperation(ClusteredVariantEntity originalClusteredVariant,
+                                                                    Long clusteredVariantMergedInto) {
+        ClusteredVariantInactiveEntity inactiveEntity = new ClusteredVariantInactiveEntity(originalClusteredVariant);
+
+        Long originalAccession = originalClusteredVariant.getAccession();
+        String reason = "Original rs" + originalAccession + " was merged into rs" + clusteredVariantMergedInto + ".";
+
+        ClusteredVariantOperationEntity operation = new ClusteredVariantOperationEntity();
+        operation.fill(EventType.MERGED, originalAccession, clusteredVariantMergedInto, reason,
+                       Collections.singletonList(inactiveEntity));
         return operation;
     }
 

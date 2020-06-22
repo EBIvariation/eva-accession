@@ -34,7 +34,9 @@ public class ClusteringWriterConfiguration {
     @Bean(CLUSTERING_WRITER)
     public ClusteringWriter clusteringWriter(MongoTemplate mongoTemplate,
                                              ClusteredVariantAccessioningService accessioningService,
-                                             Long accessioningMonotonicInitSs) {
-        return new ClusteringWriter(mongoTemplate, accessioningService, accessioningMonotonicInitSs);
+                                             Long accessioningMonotonicInitSs,
+                                             Long accessioningMonotonicInitRs) {
+        return new ClusteringWriter(mongoTemplate, accessioningService, accessioningMonotonicInitSs,
+                                    accessioningMonotonicInitRs);
     }
 }

@@ -82,6 +82,8 @@ public class ReuseAccessionClusteringWriterTest {
 
     private static final String TEST_DB = "test-db";
 
+    public static final long EVA_CLUSTERED_VARIANT_RANGE_START = 3000000000L;
+
     public static final long EVA_SUBMITTED_VARIANT_RANGE_START = 5000000000L;
 
     @Autowired
@@ -113,7 +115,7 @@ public class ReuseAccessionClusteringWriterTest {
     @Before
     public void setUp() {
         clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                                                EVA_SUBMITTED_VARIANT_RANGE_START);
+                                                EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
