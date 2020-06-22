@@ -23,9 +23,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -53,12 +50,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
-import static org.springframework.data.mongodb.core.query.Update.*;
+import static org.springframework.data.mongodb.core.query.Update.update;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergingPolicy.Priority;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergingPolicy.prioritise;
 
@@ -96,8 +94,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     @Override
     public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, AccessionMergedException,
-            AccessionDoesNotExistException, AccessionDeprecatedException {
+            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         assignedAccessions.clear();
 
         //Write new Clustered Variants in mongo and get existing ones
@@ -108,8 +105,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDoesNotExistException,
-            AccessionDeprecatedException {
+            throws AccessionCouldNotBeGeneratedException {
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
                                                                            .map(this::toClusteredVariant)
                                                                            .collect(Collectors.toList());
@@ -123,26 +119,32 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 String hash = clusteredHashingFunction.apply(toClusteredVariant(submittedVariant));
                 Long accessionInDatabase = assignedAccessions.get(hash);
                 if (!submittedVariant.getClusteredVariantAccession().equals(accessionInDatabase)) {
-                    merge(submittedVariant, submittedVariant.getClusteredVariantAccession(), hash, accessionInDatabase);
+                    merge(submittedVariant.getClusteredVariantAccession(), hash, accessionInDatabase);
                 }
             }
         }
     }
 
-    private void merge(SubmittedVariantEntity submittedVariant,
-                       Long providedAccession, String hash, Long accessionInDatabase)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-
+    private void merge(Long providedAccession, String hash, Long accessionInDatabase) {
         Priority prioritised = prioritise(providedAccession, accessionInDatabase);
-        assignedAccessions.put(hash, prioritised.accessionToKeep);
-//        clusteredService.mergeKeepingEntries(prioritised.accessionToBeMerged, prioritised.accessionToKeep,
-//                                             "Clustering pipeline detected that these clustered variants were the same."
-//        );
 
         // write operations for clustered variant being merged
         Query queryClustered = query(where("accession").is(prioritised.accessionToBeMerged));
         List<? extends ClusteredVariantEntity> cvToMerge =
                 mongoTemplate.find(queryClustered, getClusteredVariantCollection(prioritised.accessionToBeMerged));
+
+        List<? extends ClusteredVariantEntity> cvToKeep =
+                mongoTemplate.find(query(where("accession").is(prioritised.accessionToKeep)),
+                                   getClusteredVariantCollection(prioritised.accessionToKeep));
+
+        Set<String> assemblies = cvToMerge.stream().map(c -> c.getAssemblyAccession()).collect(Collectors.toSet());
+        Set<String> assembliesToKeep = cvToKeep.stream().map(c -> c.getAssemblyAccession()).collect(Collectors.toSet());
+        if (assemblies.size() < cvToMerge.size() || assembliesToKeep.size() < cvToKeep.size()) {
+            // multimap! an RS maps to several locus in the same assembly. Agreed on EVA-2003 to not merge these cases.
+            return;
+        }
+        assignedAccessions.put(hash, prioritised.accessionToKeep);
+
         List<ClusteredVariantOperationEntity> operations =
                 cvToMerge.stream()
                          .map(c -> buildClusteredOperation(c, prioritised.accessionToKeep))
@@ -152,16 +154,15 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.updateMulti(queryClustered, update("accession", prioritised.accessionToKeep),
                                   getClusteredVariantCollection(prioritised.accessionToBeMerged));
 
-        // update submitted variants linked to the clustered variant we just merged
+        // Update submitted variants linked to the clustered variant we just merged.
+        // This has to happen for both EVA and dbsnp SS because previous cross merges might have happened.
         // TODO: if there are several ss or rs in the same assembly, don't merge anything
-        updateSubmittedVariants(submittedVariant, prioritised, SubmittedVariantEntity.class,
-                                SubmittedVariantOperationEntity.class);
-        updateSubmittedVariants(submittedVariant, prioritised, DbsnpSubmittedVariantEntity.class,
+        updateSubmittedVariants(prioritised, SubmittedVariantEntity.class, SubmittedVariantOperationEntity.class);
+        updateSubmittedVariants(prioritised, DbsnpSubmittedVariantEntity.class,
                                 DbsnpSubmittedVariantOperationEntity.class);
     }
 
     private void updateSubmittedVariants(
-            SubmittedVariantEntity submittedVariant,
             Priority prioritised,
             Class<? extends SubmittedVariantEntity> submittedVariantCollection,
             Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
@@ -185,20 +186,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    private Class<? extends SubmittedVariantEntity> getSubmittedVariantCollection(
-            SubmittedVariantEntity submittedVariant) {
-        return isEvaSubmittedVariant(submittedVariant) ?
-                SubmittedVariantEntity.class : DbsnpSubmittedVariantEntity.class;
-    }
-
     private boolean isEvaSubmittedVariant(SubmittedVariantEntity submittedVariant) {
         return submittedVariant.getAccession() >= accessioningMonotonicInitSs;
-    }
-
-    private Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
-    getSubmittedOperationCollection(SubmittedVariantEntity submittedVariant) {
-        return isEvaSubmittedVariant(submittedVariant) ?
-                SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class;
     }
 
     private Class<? extends ClusteredVariantEntity> getClusteredVariantCollection(Long accession) {
