@@ -9,7 +9,7 @@
       "start": NumberLong(1000),
       "ref": "T",
       "alt": "A",
-      "accession": NumberLong(1),
+      "accession": NumberLong(5000000001),
       "version": 1
     },
     {
@@ -21,7 +21,7 @@
       "start": NumberLong(1000),
       "ref": "T",
       "alt": "G",
-      "accession": NumberLong(2),
+      "accession": NumberLong(5000000002),
       "version": 1
     },
     {
@@ -33,7 +33,7 @@
       "start": NumberLong(1000),
       "ref": "",
       "alt": "A",
-      "accession": NumberLong(3),
+      "accession": NumberLong(5000000003),
       "version": 1
     },
     {
@@ -45,7 +45,7 @@
       "start": NumberLong(1000),
       "ref": "T",
       "alt": "",
-      "accession": NumberLong(4),
+      "accession": NumberLong(5000000004),
       "version": 1
     },
     {
@@ -57,7 +57,7 @@
       "start": NumberLong(3000),
       "ref": "C",
       "alt": "G",
-      "accession": NumberLong(5),
+      "accession": NumberLong(5000000005),
       "version": 1
     }
   ]

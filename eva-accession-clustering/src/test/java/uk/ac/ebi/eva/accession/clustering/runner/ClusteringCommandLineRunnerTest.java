@@ -248,7 +248,7 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     private void injectErrorIntoTempVcf() throws Exception {
-        String modifiedVcfContent = originalVcfContent.replace("ss4", "4ss--jibberish");
+        String modifiedVcfContent = originalVcfContent.replace("ss5000000004", "4ss--jibberish");
         // Inject error in the VCF file to cause processing to stop at variant#4
         writeToTempVCFFile(modifiedVcfContent);
     }
