@@ -56,22 +56,6 @@ public class DbsnpClusteredVariantAccessioningDatabaseService
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
-    public void mergeKeepingEntries(Long accessionOrigin, Long mergeInto, String reason)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        List<DbsnpClusteredVariantEntity> toMerge = this.getAllByAccession(accessionOrigin);
-        this.getAllByAccession(mergeInto); // trigger checks for inactive object
-        inactiveService.merge(accessionOrigin, mergeInto, toMerge, reason);
-
-        List<DbsnpClusteredVariantEntity> updated = toMerge.stream()
-                                                      .map(e -> new DbsnpClusteredVariantEntity(
-                                                              mergeInto,
-                                                              e.getHashedMessage(),
-                                                              e.getModel()))
-                                                      .collect(Collectors.toList());
-        repository.deleteAll(toMerge);
-        repository.saveAll(updated);
-    }
-
     public List<DbsnpClusteredVariantEntity> getAllByAccession(Long accession)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         List<DbsnpClusteredVariantEntity> entities = this.repository.findByAccession(accession);
@@ -94,7 +78,8 @@ public class DbsnpClusteredVariantAccessioningDatabaseService
         switch(eventType) {
             case MERGED:
                 throw new AccessionMergedException(accession.toString(),
-                                                   this.inactiveService.getLastEvent(accession).getMergedInto().toString());
+                                                   this.inactiveService.getLastEvent(accession)
+                                                                       .getMergedInto().toString());
             case DEPRECATED:
                 throw new AccessionDeprecatedException(accession.toString());
             default:

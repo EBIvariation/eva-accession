@@ -51,44 +51,6 @@ public class ClusteredVariantAccessioningDatabaseService extends
         this.inactiveService = inactiveService;
     }
 
-
-    /**
-     * Note that at the end of this method we delete and insert instead of just updating the rs accession.
-     *
-     * This is because there is no "update" method in the CrudRepository; only "save", which will call
-     * ClusteredVariantEntity#isNew() to decide whether to insert a new document or update an existing one. With the
-     * current code, a repositoyr.save() would fail with an _id collision because isNew() is hardcoded to true. Trying
-     * to make that work involves non-trivial code, like created another class that inherits and overrides
-     * {@link ClusteredVariantEntity#isNew()}.
-     *
-     * @see SimpleMongoRepository#save(java.lang.Object)
-     *
-     * Other alternatives which (at the moment of writing) seem worse than the current implementation:
-     *
-     * We could bypass this repository limitation by using a mongoTemplate and using the "update" method (which is
-     * what we need) but that defeats the purpose of the accession-commons class design (AccessioningService,
-     * DatabaseService, etc.). We only have repositories here, which could be configured in different ways that we don't
-     * know here.
-     *
-     * Another option would be to extract the "mergeKeepingEntries" out of the DatabaseService. After all, we need
-     * to provide this merging mechanism across dbsnp and EVA.
-     */
-    public void mergeKeepingEntries(Long accessionOrigin, Long mergeInto, String reason)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        List<ClusteredVariantEntity> toMerge = this.getAllByAccession(accessionOrigin);
-        this.getAllByAccession(mergeInto); // trigger checks for inactive object
-        inactiveService.merge(accessionOrigin, mergeInto, toMerge, reason);
-
-        List<ClusteredVariantEntity> updated = toMerge.stream()
-                                                      .map(e -> new ClusteredVariantEntity(
-                                                              mergeInto,
-                                                              e.getHashedMessage(),
-                                                              e.getModel()))
-                                                      .collect(Collectors.toList());
-        repository.deleteAll(toMerge);
-        repository.saveAll(updated);
-    }
-
     public List<ClusteredVariantEntity> getAllByAccession(Long accession)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         List<ClusteredVariantEntity> entities = this.repository.findByAccession(accession);
@@ -109,14 +71,14 @@ public class ClusteredVariantAccessioningDatabaseService extends
                 new AccessionDoesNotExistException(accession.toString())
         );
         switch(eventType) {
-        case MERGED:
-            throw new AccessionMergedException(accession.toString(),
-                                               this.inactiveService.getLastEvent(accession).getMergedInto().toString());
-        case DEPRECATED:
-            throw new AccessionDeprecatedException(accession.toString());
-        default:
+            case MERGED:
+                throw new AccessionMergedException(accession.toString(),
+                                                   this.inactiveService.getLastEvent(accession)
+                                                                       .getMergedInto().toString());
+            case DEPRECATED:
+                throw new AccessionDeprecatedException(accession.toString());
+            default:
         }
     }
-
 
 }

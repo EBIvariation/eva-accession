@@ -50,9 +50,4 @@ public class ClusteredVariantMonotonicAccessioningService
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {
         return dbService.findAllByHash(hashes);
     }
-
-    public void mergeKeepingEntries(Long accessionOrigin, Long mergeInto, String reason)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        dbService.mergeKeepingEntries(accessionOrigin, mergeInto, reason);
-    }
 }
