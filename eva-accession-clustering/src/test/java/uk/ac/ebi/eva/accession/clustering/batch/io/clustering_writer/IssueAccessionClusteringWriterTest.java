@@ -127,14 +127,7 @@ public class IssueAccessionClusteringWriterTest {
 
     @After
     public void tearDown() {
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
-        mongoTemplate.dropCollection(ClusteredVariantEntity.class);
-        mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
-        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
-        mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
-        mongoTemplate.dropCollection(ClusteredVariantOperationEntity.class);
-        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
-        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+        mongoTemplate.getDb().drop();
     }
 
     @Test

@@ -129,6 +129,7 @@ public class MergeAccessionClusteringWriterTest {
 
     @Before
     public void setUp() {
+        mongoTemplate.getDb().drop();
         clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
                                                 EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -137,14 +138,7 @@ public class MergeAccessionClusteringWriterTest {
 
     @After
     public void tearDown() {
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
-        mongoTemplate.dropCollection(ClusteredVariantEntity.class);
-        mongoTemplate.dropCollection(DbsnpSubmittedVariantEntity.class);
-        mongoTemplate.dropCollection(DbsnpClusteredVariantEntity.class);
-        mongoTemplate.dropCollection(SubmittedVariantOperationEntity.class);
-        mongoTemplate.dropCollection(ClusteredVariantOperationEntity.class);
-        mongoTemplate.dropCollection(DbsnpSubmittedVariantOperationEntity.class);
-        mongoTemplate.dropCollection(DbsnpClusteredVariantOperationEntity.class);
+        mongoTemplate.getDb().drop();
     }
 
     @Test
