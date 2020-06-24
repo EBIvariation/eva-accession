@@ -148,7 +148,7 @@ public class ReuseAccessionClusteringWriterTest {
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
-        // given the same submitted variant without an assigned RS (rs=null), getOrCreate should not create another RS
+        // for the same submitted variant without an assigned RS (rs=null), getOrCreate should not create another RS
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
     }

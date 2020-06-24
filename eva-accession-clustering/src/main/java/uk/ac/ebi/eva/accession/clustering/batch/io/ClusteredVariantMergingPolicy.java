@@ -6,8 +6,8 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 public class ClusteredVariantMergingPolicy {
 
     public static class Priority {
-        public Long accessionToKeep;
-        public Long accessionToBeMerged;
+        public final Long accessionToKeep;
+        public final Long accessionToBeMerged;
 
         public Priority(Long accessionToKeep, Long accessionToBeMerged) {
             this.accessionToKeep = accessionToKeep;

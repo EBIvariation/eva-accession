@@ -17,10 +17,7 @@ package uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer;
 
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import org.assertj.core.util.Sets;
-import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,6 +32,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
@@ -66,9 +64,12 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAssemblyAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertClusteredVariantAccessionEqual;
@@ -231,13 +232,7 @@ public class MergeAccessionClusteringWriterTest {
                              expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
 
 
-        List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
-        submittedVariants.addAll(mongoTemplate.findAll(DbsnpSubmittedVariantEntity.class));
-        assertReferenceSequenceAccessionEqual(Sets.newTreeSet(asm1, asm2), submittedVariants);
-
-        List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        clusteredVariants.addAll(mongoTemplate.findAll(DbsnpClusteredVariantEntity.class));
-        assertAssemblyAccessionEqual(Sets.newTreeSet(asm1, asm2), clusteredVariants);
+        assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
 
     private ClusteredVariantEntity createClusteredVariantEntity(String assembly, Long rs) {
@@ -284,7 +279,7 @@ public class MergeAccessionClusteringWriterTest {
         assertEquals(expectedSvOperations, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
     }
 
-    private void assertMergedInto(Long mergedInto, Long originalAccession, Long updatedSubmittedVariant) {
+    private void assertMergedInto(Long mergedInto, Long originalAccession, Long... updatedSubmittedVariant) {
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
         submittedVariants.addAll(mongoTemplate.findAll(DbsnpSubmittedVariantEntity.class));
         assertClusteredVariantAccessionEqual(Sets.newTreeSet(mergedInto), submittedVariants);
@@ -303,42 +298,27 @@ public class MergeAccessionClusteringWriterTest {
         assertEquals(mergedInto, clusteredOp.getMergedInto());
 
 
-        EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity> submittedOp =
-                mongoTemplate.findOne(new Query(), SubmittedVariantOperationEntity.class);
-        if (submittedOp == null) {
-            submittedOp = mongoTemplate.findOne(new Query(), DbsnpSubmittedVariantOperationEntity.class);
+        List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> submittedOps =
+                mongoTemplate.findAll(SubmittedVariantOperationEntity.class);
+        if (submittedOps.isEmpty()) {
+            submittedOps = mongoTemplate.findAll(DbsnpSubmittedVariantOperationEntity.class);
         }
-        assertEquals(EventType.UPDATED, submittedOp.getEventType());
-        assertEquals(updatedSubmittedVariant, submittedOp.getAccession());
+        assertTrue(submittedOps.stream().map(EventDocument::getEventType).allMatch(EventType.UPDATED::equals));
+        assertEquals(Sets.newTreeSet(updatedSubmittedVariant), submittedOps.stream()
+                                                                           .map(EventDocument::getAccession)
+                                                                           .collect(Collectors.toSet()));
     }
 
     @Test
-    @DirtiesContext
-    public void mergeMultimap(
-            /*
-                              Long rs1, Long rs2, Long ssToRemap, Long ss2,
-                                        int expectedDbsnpCve, int expectedCve,
-                                        int expectedDbsnpCvOperations, int expectedCvOperations,
-                                        int expectedDbsnpSve, int expectedSve,
-                                        int expectedDbsnpSvOperations, int expectedSvOperations
-                                        */
-    )
-            throws Exception {
+    public void do_not_merge_into_remapped_multimap_variants() throws Exception {
         // given
         Long rs1 = 3000000000L;
         Long rs2 = 3100000000L;
         Long ssToRemap = 5000000000L;
         Long ss2 = 5100000000L;
+        Long ss3 = 5200000000L;
         String asm1 = "asm1";
         String asm2 = "asm2";
-        int expectedDbsnpCve = 0;
-        int expectedCve = 3;
-        int expectedDbsnpCvOperations = 0;
-        int expectedCvOperations = 0;
-        int expectedDbsnpSve = 0;
-        int expectedSve = 2;
-        int expectedDbsnpSvOperations = 0;
-        int expectedSvOperations = 0;
         assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
         // clustered variant that maps in several locus of the same assembly
@@ -347,6 +327,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3), getSubmittedTable(ssToRemap));
 
         // clustered variant that will trigger collision
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 100L, rs2), getClusteredTable(rs2));
@@ -355,25 +336,159 @@ public class MergeAccessionClusteringWriterTest {
         // eligible for merging
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2), getSubmittedTable(ss2));
 
-        assertDatabaseCounts(expectedDbsnpCve, expectedCve, 0, 0,
-                             expectedDbsnpSve, expectedSve, 0, 0);
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
-        assertDatabaseCounts(expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations, expectedCvOperations,
-                             expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
 
+        assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
+    }
 
+    @Test
+    public void do_not_merge_multimap_variants_into_remapped_variants() throws Exception {
+        // given
+        Long rs1 = 3000000000L;
+        Long rs2 = 3100000000L;
+        Long ssToRemap = 5000000000L;
+        Long ss2 = 5100000000L;
+        Long ss3 = 5200000000L;
+        String asm1 = "asm1";
+        String asm2 = "asm2";
+        assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
+
+        // clustered variant that maps in several locus of the same assembly
+        mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
+
+        // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+
+        // clustered variant that will trigger collision
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2), getClusteredTable(rs2));
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, 300L, rs2), getClusteredTable(rs2));
+
+        // ss2 in the new assembly, won't change its RS to rs1 because rs1 maps to several locus and thus is not
+        // eligible for merging
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 300L, rs2, ss3), getSubmittedTable(ss2));
+
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        // when
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        clusteringWriter.write(Collections.singletonList(sve1Remapped));
+
+        // then
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
+    }
+
+    @Test
+    @DirtiesContext
+    public void merge_into_remapped_multimap_variants_if_single_mapping_per_assembly()
+            throws AccessionCouldNotBeGeneratedException {
+        // given
+        Long rs1 = 3000000000L;
+        Long rs2 = 3100000000L;
+        Long ssToRemap = 5000000000L;
+        Long ss2 = 5100000000L;
+        Long ss3 = 5200000000L;
+        String asm1 = "asm1";
+        String asm2 = "asm2";
+        String asm3 = "asm3";
+        assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
+
+        // clustered variant that maps in several locus of the same assembly
+        mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
+        mongoTemplate.insert(createClusteredVariantEntity(asm3, 300L, rs1), getClusteredTable(rs2));
+
+        // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs1, ss3), getSubmittedTable(ss3));
+
+        // clustered variant that will trigger collision
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2), getClusteredTable(rs2));
+
+        // ss2 in the new assembly, won't change its RS to rs1 because rs1 maps to several locus and thus is not
+        // eligible for merging
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
+
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        // when
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        clusteringWriter.write(Collections.singletonList(sve1Remapped));
+
+        // then
+        assertDatabaseCounts(0, 3, 0, 1,
+                             0, 3, 0, 1);
+
+        assertAssembliesPresent(Sets.newTreeSet(asm1, asm2, asm3));
+        assertMergedInto(rs1, rs2, ss2);
+    }
+
+    @Test
+    @DirtiesContext
+    public void merge_multimap_variants_into_remapped_variants_if_single_mapping_per_assembly()
+            throws AccessionCouldNotBeGeneratedException {
+        // given
+        Long rs1 = 3000000000L;
+        Long rs2 = 3100000000L;
+        Long ssToRemap = 5000000000L;
+        Long ss2 = 5100000000L;
+        Long ss3 = 5200000000L;
+        String asm1 = "asm1";
+        String asm2 = "asm2";
+        String asm3 = "asm3";
+        assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
+
+        // clustered variant that maps in several locus of the same assembly
+        mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
+
+        // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+
+        // clustered variant that will trigger collision
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2), getClusteredTable(rs2));
+        mongoTemplate.insert(createClusteredVariantEntity(asm3, 300L, rs2), getClusteredTable(rs2));
+
+        // ss2 in the new assembly, won't change its RS to rs1 because rs1 maps to several locus and thus is not
+        // eligible for merging
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs2, ss3), getSubmittedTable(ss3));
+
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        // when
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        clusteringWriter.write(Collections.singletonList(sve1Remapped));
+
+        // then
+        assertDatabaseCounts(0, 3, 0, 2,
+                             0, 3, 0, 2);
+
+        assertAssembliesPresent(Sets.newTreeSet(asm1, asm2, asm3));
+        assertMergedInto(rs1, rs2, ss2, ss3);
+    }
+
+    private void assertAssembliesPresent(TreeSet<String> expectedAssemblies) {
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
         submittedVariants.addAll(mongoTemplate.findAll(DbsnpSubmittedVariantEntity.class));
-        assertReferenceSequenceAccessionEqual(Sets.newTreeSet(asm1, asm2), submittedVariants);
+        assertReferenceSequenceAccessionEqual(expectedAssemblies, submittedVariants);
 
         List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
         clusteredVariants.addAll(mongoTemplate.findAll(DbsnpClusteredVariantEntity.class));
-        assertAssemblyAccessionEqual(Sets.newTreeSet(asm1, asm2), clusteredVariants);
+        assertAssemblyAccessionEqual(expectedAssemblies, clusteredVariants);
     }
 
     private ClusteredVariantEntity createClusteredVariantEntity(String assembly, Long start, Long rs) {
@@ -387,5 +502,4 @@ public class MergeAccessionClusteringWriterTest {
         String hash1 = hashingFunction.apply(submittedClustered);
         return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1);
     }
-
 }
