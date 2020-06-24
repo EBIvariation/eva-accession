@@ -244,13 +244,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
 
         if (!svToUpdate.isEmpty()) {
-            BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                  submittedOperationCollection);
-            for (SubmittedVariantEntity submittedVariantEntity : svToUpdate) {
-                bulkOperations.insert(buildSubmittedOperation(submittedVariantEntity, prioritised.accessionToKeep));
-            }
-
-            bulkOperations.execute();
+            List<SubmittedVariantOperationEntity> operations =
+                    svToUpdate.stream()
+                              .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
+                              .collect(Collectors.toList());
+            mongoTemplate.insert(operations, submittedOperationCollection);
         }
     }
 
