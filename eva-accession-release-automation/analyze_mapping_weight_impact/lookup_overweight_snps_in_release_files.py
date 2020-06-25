@@ -111,14 +111,14 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
                     [rs_release_base_folder, associated_GCA_assembly,
                      "{0}_{1}.txt.gz".format(associated_GCA_assembly,
                                              release_file_suffix)])
-                command_to_lookup_overweight_snps_in_release_file = [
+                command_to_lookup_overweight_snps_in_release_file = \
                     'bash -c ' \
                     '"comm -12 ' \
                     '<(zcat \\"{0}\\" | cut -f1 | sort | uniq) ' \
                     '\\"{1}\\" ' \
                     '1> \\"{2}\\""'.format(release_file_to_lookup_against,
                                            exported_file_with_overweight_snps,
-                                           lookup_result_file)]
+                                           lookup_result_file)
                 run_command_with_output(
                     "Overweight SNP impact in {0} {1} for the {2} build {3} assembly"
                         .format(species_name, release_file_suffix, dbsnp_build,
