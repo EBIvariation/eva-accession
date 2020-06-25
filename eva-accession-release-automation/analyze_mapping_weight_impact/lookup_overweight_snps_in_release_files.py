@@ -86,7 +86,7 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
                     , command_to_lookup_overweight_snps_in_release_file
                     , return_process_output=True)
                 if release_file_suffix == "merged_ids":
-                    lookup_result_file = os.path.sep.join([export_dir,
+                    lookup_result_file_for_merge_id_targets = os.path.sep.join([export_dir,
                                                            os.path.splitext(
                                                                os.path.basename(exported_file_with_overweight_snps))[0]
                                                            + "_in_merge_target_ids.txt".format(release_file_suffix)]
@@ -98,7 +98,8 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
                                      '<(zcat \\"{0}\\" | grep -v ^# | grep -o -E "CURR=rs[0-9]+" | cut -d= -f2 | sort | uniq) ' \
                                      '\\"{1}\\" ' \
                                      '1> \\"{2}\\""'\
-                        .format(release_file_to_lookup_against, exported_file_with_overweight_snps, lookup_result_file)
+                        .format(release_file_to_lookup_against, exported_file_with_overweight_snps,
+                                lookup_result_file_for_merge_id_targets)
                     run_command_with_output(
                         "Overweight SNP impact in {0} {1} for the {2} build {3} assembly"
                             .format(species_name, release_file_suffix, dbsnp_build,
