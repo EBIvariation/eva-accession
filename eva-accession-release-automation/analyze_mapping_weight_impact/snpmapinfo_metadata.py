@@ -23,7 +23,7 @@ def get_build_version_from_file_name(file_name):
 def lookup_GCA_assembly(species_name, snpmapinfo_table_name, asm, metadata_connection_handle):
     query = "select assembly_accession from dbsnp_ensembl_species.EVA2015_snpmapinfo_asm_lookup " \
             "where database_name = '{0}' and snpmapinfo_table_name = '{1}' and assembly = '{2}' " \
-            "and assembly_accession <> 'unresolved'"\
+            "and assembly_accession <> 'unresolved' and assembly_accession is not null"\
         .format(species_name, snpmapinfo_table_name, asm)
     results = get_all_results_for_query(metadata_connection_handle, query)
     if len(results) == 0:
