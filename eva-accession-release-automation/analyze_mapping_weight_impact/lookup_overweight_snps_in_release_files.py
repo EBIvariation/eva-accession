@@ -37,8 +37,12 @@ def export_snpmapinfo_for_species(species_info, metadata_connection_handle, expo
                     specific_query = weight_criteria_query + " and asm_acc = '{0}' and asm_version = '{1}'"\
                         .format(asm.split(".")[0], asm.split(".")[1])
                 specific_query = specific_query.format(species_name, snpmapinfo_table_name) + " order by 1"
-                associated_GCA_assembly = lookup_GCA_assembly(species_name, snpmapinfo_table_name, asm,
-                                                              metadata_connection_handle)
+                try:
+                    associated_GCA_assembly = lookup_GCA_assembly(species_name, snpmapinfo_table_name, asm,
+                                                                  metadata_connection_handle)
+                except Exception as e:
+                    logger.error(e)
+                    continue
                 output_file_name = os.path.sep.join([export_dir,
                                                      "{0}_{1}_{2}_overweight_snps.csv".format(species_name,
                                                                                               snpmapinfo_table_name,
