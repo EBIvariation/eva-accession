@@ -27,8 +27,8 @@ def get_species_info(metadata_connection_handle, dbsnp_species_name="all"):
                              "dbsnp_ensembl_species.import_progress a " \
                              "join dbsnp_ensembl_species.dbsnp_build_instance b " \
                                 "on b.dbsnp_build = a.ebi_pg_dbsnp_build "
-    get_species_info_query += ("" if dbsnp_species_name == "all"
-                               else "where database_name = '{0}' ".format(dbsnp_species_name))
+    if dbsnp_species_name != "all":
+        get_species_info_query += "where database_name = '{0}' ".format(dbsnp_species_name)
     get_species_info_query += "order by database_name"
 
     pg_cursor = get_result_cursor(metadata_connection_handle, get_species_info_query)

@@ -30,11 +30,11 @@ def get_unimported_snpmapinfo_files_for_species(species_info, dbsnp_data_source_
     # NOTE: Assumption using the glob pattern: all the SNPMapInfo tables start are in the format b{build}_SNPMapInfo.gz.
     # Verified with the command below:
     # find $DBSNP_DATA_SOURCE_BASE/build* -iname '*snpmapinfo*.gz' 2> /dev/null | cut -d/ -f10 | cut -d_ -f1 | sort | uniq
-    glob_pattern = os.path.sep.join([dbsnp_data_source_base, "build_" + species_info["dbsnp_build"],
+    glob_pattern = os.path.join(dbsnp_data_source_base, "build_" + species_info["dbsnp_build"],
                                      species_info["database_name"], "data",
                                      "b*{0}*.gz".format(
                                          "".join(["[{0}{1}]".format(char, char.upper()) for char in "snpmapinfo"]))
-                                     ])
+                                )
     # Get all the SNPMapInfo files for all the builds in a given species from the dbSNP SQL dump directory
     snpmapinfo_all_files_for_species = glob.glob(glob_pattern)
     for snpmapinfo_file_name in snpmapinfo_all_files_for_species:

@@ -32,8 +32,9 @@ def lookup_GCA_assembly(species_name, snpmapinfo_table_name, asm, metadata_conne
     return results[0][0]
 
 
-# Overweight SNPs - SNPs with mapping weight > 3
-def get_distinct_asm_with_overweight_snps_in_snpmapinfo_table(snpmapinfo_table_name, species_info):
+# Overweight SNPs - SNPs with mapping weight > threshold
+def get_distinct_asm_with_overweight_snps_in_snpmapinfo_table(snpmapinfo_table_name, species_info,
+                                                              weight_threshold=1):
     with get_db_conn_for_species(species_info) as species_db_connection_handle:
         asm_columns = get_snpmapinfo_asm_columns(species_info, snpmapinfo_table_name)
         if "asm_acc" in asm_columns:
@@ -43,7 +44,7 @@ def get_distinct_asm_with_overweight_snps_in_snpmapinfo_table(snpmapinfo_table_n
         else:
             distinct_asm_query = "select distinct assembly from dbsnp_{0}.{1}"
             type_of_asm = "assembly_name"
-        distinct_asm_query += " where weight > 3 and assembly is not null order by 1"
+        distinct_asm_query += " where weight > {0} and assembly is not null order by 1".format(weight_threshold)
         results = get_all_results_for_query(species_db_connection_handle,
                                             distinct_asm_query.format(species_info["database_name"],
                                                                       snpmapinfo_table_name))

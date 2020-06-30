@@ -18,11 +18,12 @@ import click
 from snpmapinfo_metadata import *
 
 
-def export_snpmapinfo_for_species(species_info, metadata_connection_handle, export_dir):
+def export_snpmapinfo_for_species(species_info, metadata_connection_handle, mapping_weight_threshold, export_dir):
     exported_filenames_and_assemblies = []
     species_name = species_info["database_name"]
 
-    weight_criteria_query = "select 'rs'||trim(cast(snp_id as text)) from dbsnp_{0}.{1} where weight > 3"
+    weight_criteria_query = "select 'rs'||trim(cast(snp_id as text)) from dbsnp_{0}.{1} where weight > " + \
+                            str(mapping_weight_threshold)
     copy_statement = "COPY ({0}) TO STDOUT WITH CSV"
 
     with get_db_conn_for_species(species_info) as species_db_connection_handle:
@@ -43,17 +44,18 @@ def export_snpmapinfo_for_species(species_info, metadata_connection_handle, expo
                 except Exception as e:
                     logger.error(e)
                     continue
-                output_file_name = os.path.sep.join([export_dir,
-                                                     "{0}_{1}_{2}_overweight_snps.csv".format(species_name,
-                                                                                              snpmapinfo_table_name,
-                                                                                              associated_GCA_assembly)])
+                output_file_name = os.path.join(export_dir,
+                                                    "{0}_{1}_{2}_overweight_snps.csv".format(species_name,
+                                                                                             snpmapinfo_table_name,
+                                                                                             associated_GCA_assembly)
+                                                    )
                 with open(output_file_name, 'w') \
                         as output_file_handle:
                     get_result_cursor(species_db_connection_handle, specific_query)\
                         .copy_expert(copy_statement.format(specific_query), output_file_handle)
-                    exported_filenames_and_assemblies += [(output_file_name
-                                                           , get_build_version_from_file_name(snpmapinfo_table_name)
-                                                           , associated_GCA_assembly)]
+                    exported_filenames_and_assemblies.append((output_file_name
+                                                              , get_build_version_from_file_name(snpmapinfo_table_name)
+                                                              , associated_GCA_assembly))
 
     return exported_filenames_and_assemblies
 
@@ -65,16 +67,16 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
         if os.stat(exported_file_with_overweight_snps).st_size == 0:
             continue
         for release_file_suffix in release_file_suffixes:
-            lookup_result_file = os.path.sep.join([export_dir,
-                                                   os.path.splitext(
-                                                       os.path.basename(exported_file_with_overweight_snps))[0]
-                                                   + "_in_{0}.txt".format(release_file_suffix)]
-                                                  )
+            lookup_result_file = os.path.join(export_dir,
+                                              os.path.splitext(
+                                                  os.path.basename(exported_file_with_overweight_snps))[0] +
+                                                        "_in_{0}.txt".format(release_file_suffix)
+                                              )
 
-            release_file_to_lookup_against = os.path.sep.join(
-                [rs_release_base_folder, associated_GCA_assembly,
-                 "{0}_{1}.vcf.gz".format(associated_GCA_assembly,
-                                         release_file_suffix)])
+            release_file_to_lookup_against = os.path.join(
+                rs_release_base_folder, associated_GCA_assembly,
+                "{0}_{1}.vcf.gz".format(associated_GCA_assembly,
+                                        release_file_suffix))
 
             command_to_lookup_overweight_snps_in_release_file = 'bash -c ' \
                                                                 '"comm -12 ' \
@@ -90,11 +92,11 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
                     , command_to_lookup_overweight_snps_in_release_file
                     , return_process_output=True)
                 if release_file_suffix == "merged_ids":
-                    lookup_result_file_for_merge_id_targets = os.path.sep.join([export_dir,
-                                                           os.path.splitext(
-                                                               os.path.basename(exported_file_with_overweight_snps))[0]
-                                                           + "_in_merge_target_ids.txt".format(release_file_suffix)]
-                                                          )
+                    lookup_result_file_for_merge_id_targets = os.path.join(
+                        export_dir,
+                        os.path.splitext(os.path.basename(exported_file_with_overweight_snps))[0] +
+                        "_in_merge_target_ids.txt".format(release_file_suffix)
+                    )
                     # Merged ID release files have the merge target RS IDs in the INFO column with CURR= prefix
                     # Check if overweight SNPs appear in this column
                     command_to_lookup_overweight_snps_in_merge_target = 'bash -c ' \
@@ -111,10 +113,10 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
                         , command_to_lookup_overweight_snps_in_merge_target
                         , return_process_output=True)
             elif release_file_suffix in ["deprecated_ids", "merged_deprecated_ids"]:
-                release_file_to_lookup_against = os.path.sep.join(
-                    [rs_release_base_folder, associated_GCA_assembly,
-                     "{0}_{1}.txt.gz".format(associated_GCA_assembly,
-                                             release_file_suffix)])
+                release_file_to_lookup_against = os.path.join(
+                    rs_release_base_folder, associated_GCA_assembly,
+                    "{0}_{1}.txt.gz".format(associated_GCA_assembly,
+                                            release_file_suffix))
                 command_to_lookup_overweight_snps_in_release_file = \
                     'bash -c ' \
                     '"comm -12 ' \
@@ -132,12 +134,13 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
 
 
 def lookup_overweight_snps_in_release_files(metadata_db_name, metadata_db_user, metadata_db_host, species_name,
-                                            export_dir, rs_release_base_folder):
+                                            mapping_weight_threshold, export_dir, rs_release_base_folder):
     with get_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host) as metadata_connection_handle:
         for species_info in get_species_info(metadata_connection_handle, species_name):
             try:
-                exported_filenames_and_assemblies = export_snpmapinfo_for_species(species_info, metadata_connection_handle,
-                                                                                  export_dir)
+                exported_filenames_and_assemblies = export_snpmapinfo_for_species(species_info,
+                                                                                  metadata_connection_handle,
+                                                                                  mapping_weight_threshold, export_dir)
                 create_lookup_result_file(species_info["database_name"], rs_release_base_folder, export_dir,
                                           exported_filenames_and_assemblies)
             except Exception as e:
@@ -149,12 +152,14 @@ def lookup_overweight_snps_in_release_files(metadata_db_name, metadata_db_user, 
 @click.option("--metadata-db-user", required=True)
 @click.option("--metadata-db-host", required=True)
 @click.option("--species-name", default="all", required=False)
+@click.option("--mapping-weight-threshold", default=1, required=False)
 @click.option("--export-dir", required=True)
 @click.option("--rs-release-base-folder", required=True)
 @click.command()
-def main(metadata_db_name, metadata_db_user, metadata_db_host, species_name, export_dir, rs_release_base_folder):
+def main(metadata_db_name, metadata_db_user, metadata_db_host, species_name, mapping_weight_threshold, export_dir,
+         rs_release_base_folder):
     lookup_overweight_snps_in_release_files(metadata_db_name, metadata_db_user, metadata_db_host, species_name,
-                                            export_dir, rs_release_base_folder)
+                                            mapping_weight_threshold, export_dir, rs_release_base_folder)
 
 
 if __name__ == '__main__':
