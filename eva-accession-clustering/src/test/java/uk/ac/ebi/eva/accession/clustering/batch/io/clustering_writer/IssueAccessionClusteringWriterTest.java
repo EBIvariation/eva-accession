@@ -45,14 +45,7 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAcces
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;

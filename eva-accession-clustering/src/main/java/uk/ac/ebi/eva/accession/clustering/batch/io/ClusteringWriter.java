@@ -50,7 +50,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -105,7 +104,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         getOrCreateClusteredVariantAccessions(submittedVariantEntities);
 
         // Update submitted variants "rs" field
-        updateSubmittedVariants(submittedVariantEntities);
+        clusterSubmittedVariants(submittedVariantEntities);
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
@@ -118,15 +117,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                     clusteredService.getOrCreate(clusteredVariants);
             accessionWrappers.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
         }
-        for (SubmittedVariantEntity submittedVariant : submittedVariantEntities) {
-            if (submittedVariant.getClusteredVariantAccession() != null) {
-                String hash = clusteredHashingFunction.apply(toClusteredVariant(submittedVariant));
-                Long accessionInDatabase = assignedAccessions.get(hash);
-                if (!submittedVariant.getClusteredVariantAccession().equals(accessionInDatabase)) {
-                    merge(submittedVariant.getClusteredVariantAccession(), hash, accessionInDatabase);
-                }
-            }
-        }
+        checkForMerges(submittedVariantEntities);
     }
 
     private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
@@ -148,18 +139,30 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return variantType;
     }
 
+    private void checkForMerges(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
+        for (SubmittedVariantEntity submittedVariant : submittedVariantEntities) {
+            if (submittedVariant.getClusteredVariantAccession() != null) {
+                String hash = clusteredHashingFunction.apply(toClusteredVariant(submittedVariant));
+                Long accessionInDatabase = assignedAccessions.get(hash);
+                if (!submittedVariant.getClusteredVariantAccession().equals(accessionInDatabase)) {
+                    merge(submittedVariant.getClusteredVariantAccession(), hash, accessionInDatabase);
+                }
+            }
+        }
+    }
+
     private void merge(Long providedAccession, String hash, Long accessionInDatabase) {
         Priority prioritised = prioritise(providedAccession, accessionInDatabase);
 
         Query queryClustered = query(where(ACCESSION_KEY).is(prioritised.accessionToBeMerged));
-        List<? extends ClusteredVariantEntity> cvToMerge =
+        List<? extends ClusteredVariantEntity> clusteredVariantToMerge =
                 mongoTemplate.find(queryClustered, getClusteredVariantCollection(prioritised.accessionToBeMerged));
 
-        List<? extends ClusteredVariantEntity> cvToKeep =
+        List<? extends ClusteredVariantEntity> clusteredVariantToKeep =
                 mongoTemplate.find(query(where(ACCESSION_KEY).is(prioritised.accessionToKeep)),
                                    getClusteredVariantCollection(prioritised.accessionToKeep));
 
-        if (isMultimap(cvToMerge) || isMultimap(cvToKeep)) {
+        if (isMultimap(clusteredVariantToMerge) || isMultimap(clusteredVariantToKeep)) {
             // multimap! don't merge. see isMultimap() below for more details
             return;
         }
@@ -168,9 +171,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
         // write operations for clustered variant being merged
         List<ClusteredVariantOperationEntity> operations =
-                cvToMerge.stream()
-                         .map(c -> buildClusteredOperation(c, prioritised.accessionToKeep))
-                         .collect(Collectors.toList());
+                clusteredVariantToMerge.stream()
+                                       .map(c -> buildClusteredOperation(c, prioritised.accessionToKeep))
+                                       .collect(Collectors.toList());
         mongoTemplate.insert(operations, getClusteredOperationCollection(prioritised.accessionToBeMerged));
 
         mongoTemplate.updateMulti(queryClustered, update(ACCESSION_KEY, prioritised.accessionToKeep),
@@ -226,9 +229,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     /**
      * This function updates the clustered variant accession (rs) of submitted variants when the rs makes a
      * collision with another rs and they have to be merged.
-     *
-     * Note there is a similar scenario that is handled in another function: when a clustered variant accession (rs)
-     * has to be set to submitted variants that were not clustered in any rs.
      */
     private void updateSubmittedVariants(
             Priority prioritised,
@@ -270,12 +270,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     /**
      * This function assigns a clustered variant accession (rs) to the submitted variants that didn't have any.
-     *
-     * Note that there's a similar scenario that is handled in another function: in case that the rs that should be
-     * assigned to a submitted variant makes a collision with another rs
-     * and they get merged, the submitted variants whose rs was merged need to be updated too.
      */
-    private void updateSubmittedVariants(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
+    private void clusterSubmittedVariants(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               SubmittedVariantEntity.class);
         BulkOperations dbsnpBulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
