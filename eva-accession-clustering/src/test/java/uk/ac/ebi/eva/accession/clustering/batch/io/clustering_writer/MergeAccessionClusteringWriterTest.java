@@ -321,19 +321,54 @@ public class MergeAccessionClusteringWriterTest {
         String asm2 = "asm2";
         assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
-        // clustered variant that maps in several locus of the same assembly
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 200L, rs1), getClusteredTable(rs1));
 
-        // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3), getSubmittedTable(ssToRemap));
 
-        // clustered variant that will trigger collision
+
+        // NOTE: rs2 won't be merged into rs1 because rs1 is multimap
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 100L, rs2), getClusteredTable(rs2));
 
-        // ss2 in the new assembly, won't change its RS to rs1 because rs1 maps to several locus and thus is not
-        // eligible for merging
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2), getSubmittedTable(ss2));
+
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        // when
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap);
+        clusteringWriter.write(Collections.singletonList(sve1Remapped));
+
+        // then
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
+    }
+
+    @Test
+    public void do_not_merge_remapped_multimap_variants() throws Exception {
+        // given
+        Long rs1 = 3100000000L;
+        Long rs2 = 3000000000L;
+        Long ssToRemap = 5500000000L;
+        Long ss2 = 5100000000L;
+        Long ss3 = 5200000000L;
+        String asm1 = "asm1";
+        String asm2 = "asm2";
+        assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
+
+        // NOTE: rs1 won't be merged into rs2 because rs1 is multimap
+        mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
+        mongoTemplate.insert(createClusteredVariantEntity(asm1, 200L, rs1), getClusteredTable(rs1));
+
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3), getSubmittedTable(ssToRemap));
+
+
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, 100L, rs2), getClusteredTable(rs2));
+
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2), getSubmittedTable(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
@@ -362,18 +397,53 @@ public class MergeAccessionClusteringWriterTest {
         String asm2 = "asm2";
         assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
-        // clustered variant that maps in several locus of the same assembly
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
 
-        // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
 
-        // clustered variant that will trigger collision
+
+        // NOTE: rs2 won't be merged into rs1 because rs2 is multimap
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2), getClusteredTable(rs2));
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 300L, rs2), getClusteredTable(rs2));
 
-        // ss2 in the new assembly, won't change its RS to rs1 because rs1 maps to several locus and thus is not
-        // eligible for merging
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 300L, rs2, ss3), getSubmittedTable(ss2));
+
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        // when
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        clusteringWriter.write(Collections.singletonList(sve1Remapped));
+
+        // then
+        assertDatabaseCounts(0, 3, 0, 0,
+                             0, 3, 0, 0);
+
+        assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
+    }
+
+    @Test
+    public void do_not_merge_remapped_variant_into_multimap_variants() throws Exception {
+        // given
+        Long rs1 = 3100000000L;
+        Long rs2 = 3000000000L;
+        Long ssToRemap = 5500000000L;
+        Long ss2 = 5100000000L;
+        Long ss3 = 5200000000L;
+        String asm1 = "asm1";
+        String asm2 = "asm2";
+        assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
+
+        // NOTE rs1 won't be merged into rs2 because rs2 is multimap
+        mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
+
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+
+
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2), getClusteredTable(rs2));
+        mongoTemplate.insert(createClusteredVariantEntity(asm2, 300L, rs2), getClusteredTable(rs2));
+
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 300L, rs2, ss3), getSubmittedTable(ss2));
 
@@ -406,19 +476,16 @@ public class MergeAccessionClusteringWriterTest {
         String asm3 = "asm3";
         assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
-        // clustered variant that maps in several locus of the same assembly
+        // NOTE: merging into rs1 here is allowed because rs1 maps once in asm1 and once in asm3
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
         mongoTemplate.insert(createClusteredVariantEntity(asm3, 300L, rs1), getClusteredTable(rs2));
 
-        // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
         mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs1, ss3), getSubmittedTable(ss3));
 
-        // clustered variant that will trigger collision
+
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2), getClusteredTable(rs2));
 
-        // ss2 in the new assembly, won't change its RS to rs1 because rs1 maps to several locus and thus is not
-        // eligible for merging
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
@@ -451,18 +518,15 @@ public class MergeAccessionClusteringWriterTest {
         String asm3 = "asm3";
         assertDatabaseCounts(0, 0, 0, 0, 0, 0, 0, 0);
 
-        // clustered variant that maps in several locus of the same assembly
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1), getClusteredTable(rs1));
 
-        // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
         mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
 
-        // clustered variant that will trigger collision
+
+        // NOTE: merging into rs1 here is allowed because rs2 maps once in asm2 and once in asm3
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2), getClusteredTable(rs2));
         mongoTemplate.insert(createClusteredVariantEntity(asm3, 300L, rs2), getClusteredTable(rs2));
 
-        // ss2 in the new assembly, won't change its RS to rs1 because rs1 maps to several locus and thus is not
-        // eligible for merging
         mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
         mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs2, ss3), getSubmittedTable(ss3));
 
