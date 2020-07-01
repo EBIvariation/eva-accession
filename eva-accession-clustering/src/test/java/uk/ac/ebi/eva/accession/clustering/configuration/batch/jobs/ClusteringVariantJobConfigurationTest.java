@@ -23,6 +23,7 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -53,6 +54,7 @@ public class ClusteringVariantJobConfigurationTest {
     private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
 
     @Test
+    @DirtiesContext
     public void jobFromVcf() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchJob();
         List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_VCF_STEP);
@@ -61,6 +63,7 @@ public class ClusteringVariantJobConfigurationTest {
     }
 
     @Test
+    @DirtiesContext
     public void jobFromMongo() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
         List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_MONGO_STEP);

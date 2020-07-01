@@ -18,11 +18,19 @@
 
 package uk.ac.ebi.eva.accession.core.service.nonhuman.eva;
 
+import org.springframework.data.mongodb.repository.support.SimpleMongoRepository;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ClusteredVariantAccessioningDatabaseService extends
         BasicSpringDataRepositoryMonotonicDatabaseService<IClusteredVariant, ClusteredVariantEntity> {
@@ -41,6 +49,36 @@ public class ClusteredVariantAccessioningDatabaseService extends
               inactiveService);
         this.repository = repository;
         this.inactiveService = inactiveService;
+    }
+
+    public List<ClusteredVariantEntity> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        List<ClusteredVariantEntity> entities = this.repository.findByAccession(accession);
+        this.checkAccessionIsActive(entities, accession);
+        return entities;
+    }
+
+    private void checkAccessionIsActive(List<ClusteredVariantEntity> entities, Long accession)
+            throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
+        if (entities == null || entities.isEmpty()) {
+            this.checkAccessionNotMergedOrDeprecated(accession);
+        }
+    }
+
+    private void checkAccessionNotMergedOrDeprecated(Long accession)
+            throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
+        EventType eventType = this.inactiveService.getLastEventType(accession).orElseThrow(() ->
+                new AccessionDoesNotExistException(accession.toString())
+        );
+        switch(eventType) {
+            case MERGED:
+                throw new AccessionMergedException(accession.toString(),
+                                                   this.inactiveService.getLastEvent(accession)
+                                                                       .getMergedInto().toString());
+            case DEPRECATED:
+                throw new AccessionDeprecatedException(accession.toString());
+            default:
+        }
     }
 
 }

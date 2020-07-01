@@ -1,6 +1,5 @@
 /*
- *
- * Copyright 2020 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-
-package uk.ac.ebi.eva.accession.core.service.nonhuman.eva;
+package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
@@ -30,21 +28,26 @@ import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import java.util.List;
 import java.util.function.Function;
 
-public class ClusteredVariantMonotonicAccessioningService
+public class HumanDbsnpClusteredVariantMonotonicAccessioningService
         extends BasicAccessioningService<IClusteredVariant, String, Long> {
 
-    private final ClusteredVariantAccessioningDatabaseService dbService;
+    private final DatabaseService<IClusteredVariant, String, Long> dbService;
 
     private final Function<IClusteredVariant, String> hashingFunction;
 
-    public ClusteredVariantMonotonicAccessioningService(
+    public HumanDbsnpClusteredVariantMonotonicAccessioningService(
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
-            ClusteredVariantAccessioningDatabaseService dbService,
+            HumanDbsnpClusteredVariantAccessioningDatabaseService dbService,
             Function<IClusteredVariant, String> summaryFunction,
             Function<String, String> hashingFunction) {
         super(accessionGenerator, dbService, summaryFunction, hashingFunction);
+
         this.dbService = dbService;
         this.hashingFunction = summaryFunction.andThen(hashingFunction);
+    }
+
+    public String getHash(IClusteredVariant variant) {
+        return this.hashingFunction.apply(variant);
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {

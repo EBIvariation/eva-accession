@@ -36,6 +36,12 @@ public class VariantToSubmittedVariantEntityProcessor implements ItemProcessor<V
     private Function<ISubmittedVariant, String> hashingFunction;
 
     public VariantToSubmittedVariantEntityProcessor(String assemblyAccession, String projectAccession) {
+        if (assemblyAccession == null) {
+            throw new IllegalArgumentException("assembly accession must be provided when reading from a VCF");
+        }
+        if (projectAccession == null) {
+            throw new IllegalArgumentException("project accession must be provided when reading from a VCF");
+        }
         this.assemblyAccession = assemblyAccession;
         this.projectAccession = projectAccession;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());

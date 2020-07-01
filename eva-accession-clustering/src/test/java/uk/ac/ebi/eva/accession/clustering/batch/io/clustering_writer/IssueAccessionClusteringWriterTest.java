@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.clustering.batch.io;
+package uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
@@ -30,19 +30,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 
+import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.ArrayList;
@@ -54,11 +59,18 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+/**
+ * This class handles the simplest scenarios of ClusteringWriter.
+ *
+ * The scenarios tested here are those about issuing new clustered variant accessions (RSs). No reusing existing RSs,
+ * no RSs provided with the submitted variant being clustered, no RS merging. Other test classes in this folder take
+ * care of those scenarios.
+ */
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
-public class ClusteringWriterTest {
+public class IssueAccessionClusteringWriterTest {
 
     private static final String TEST_DB = "test-db";
 
@@ -68,6 +80,10 @@ public class ClusteringWriterTest {
 
     private static final String PROJECT_ACCESSION = "projectId_1";
 
+    public static final long EVA_CLUSTERED_VARIANT_RANGE_START = 3000000000L;
+
+    public static final long EVA_SUBMITTED_VARIANT_RANGE_START = 5000000000L;
+
     @Autowired
     private InputParameters inputParameters;
 
@@ -75,7 +91,10 @@ public class ClusteringWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private ClusteredVariantMonotonicAccessioningService clusteredVariantMonotonicAccessioningService;
+    private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
+
+    @Autowired
+    private ContiguousIdBlockRepository contiguousIdBlockRepository;
 
     //Required by nosql-unit
     @Autowired
@@ -85,24 +104,28 @@ public class ClusteringWriterTest {
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
+    private Function<IClusteredVariant, String> clusteredHashingFunction;
+
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @Before
     public void setUp() {
-        clusteringWriter = new ClusteringWriter(inputParameters.getAssemblyAccession(), mongoTemplate,
-                                                clusteredVariantMonotonicAccessioningService);
+        clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
+                                                EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @After
     public void tearDown() {
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        mongoTemplate.getDb().drop();
     }
 
     @Test
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
+    @DirtiesContext
     public void writer() throws Exception {
         List<SubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities();
         clusteringWriter.write(submittedVariantEntities);
@@ -114,22 +137,22 @@ public class ClusteringWriterTest {
         List<SubmittedVariantEntity> submittedVariantEntities = new ArrayList<>();
         SubmittedVariant submittedVariant1 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
                                                                     PROJECT_ACCESSION, "1", 1000L, "T", "A");
-        SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(1L, submittedVariant1);
+        SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(5000000001L, submittedVariant1);
         //Different alleles
         SubmittedVariant submittedVariant2 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
                                                                     PROJECT_ACCESSION, "1", 1000L, "T", "G");
-        SubmittedVariantEntity submittedVariantEntity2 = createSubmittedVariantEntity(2L, submittedVariant2);
+        SubmittedVariantEntity submittedVariantEntity2 = createSubmittedVariantEntity(5000000002L, submittedVariant2);
         //Same assembly, contig, start but different type
         SubmittedVariant submittedVariantINS = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
                                                                       PROJECT_ACCESSION, "1", 1000L, "", "A");
-        SubmittedVariantEntity submittedVariantEntityINS = createSubmittedVariantEntity(3L, submittedVariantINS);
+        SubmittedVariantEntity submittedVariantEntityINS = createSubmittedVariantEntity(5000000003L, submittedVariantINS);
         SubmittedVariant submittedVariantDEL = createSubmittedVariant(inputParameters.getAssemblyAccession(), 1000,
                                                                       PROJECT_ACCESSION, "1", 1000L, "T", "");
-        SubmittedVariantEntity submittedVariantEntityDEL = createSubmittedVariantEntity(4L, submittedVariantDEL);
+        SubmittedVariantEntity submittedVariantEntityDEL = createSubmittedVariantEntity(5000000004L, submittedVariantDEL);
         //Different assembly, contig and start
         SubmittedVariant submittedVariant3 = createSubmittedVariant(inputParameters.getAssemblyAccession(), 3000,
                                                                     PROJECT_ACCESSION, "1", 3000L, "C", "G");
-        SubmittedVariantEntity submittedVariantEntity3 = createSubmittedVariantEntity(5L, submittedVariant3);
+        SubmittedVariantEntity submittedVariantEntity3 = createSubmittedVariantEntity(5000000005L, submittedVariant3);
         submittedVariantEntities.add(submittedVariantEntity1);
         submittedVariantEntities.add(submittedVariantEntity2);
         submittedVariantEntities.add(submittedVariantEntityINS);

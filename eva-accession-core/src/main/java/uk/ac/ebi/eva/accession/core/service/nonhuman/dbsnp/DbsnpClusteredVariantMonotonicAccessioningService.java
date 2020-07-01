@@ -16,14 +16,24 @@
 package uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 
+import java.util.List;
 import java.util.function.Function;
 
 public class DbsnpClusteredVariantMonotonicAccessioningService
         extends BasicAccessioningService<IClusteredVariant, String, Long> {
+
+    private final DbsnpClusteredVariantAccessioningDatabaseService dbService;
+
+    private final Function<IClusteredVariant, String> hashingFunction;
 
     public DbsnpClusteredVariantMonotonicAccessioningService(
             MonotonicAccessionGenerator<IClusteredVariant> accessionGenerator,
@@ -31,5 +41,16 @@ public class DbsnpClusteredVariantMonotonicAccessioningService
             Function<IClusteredVariant, String> summaryFunction,
             Function<String, String> hashingFunction) {
         super(accessionGenerator, dbService, summaryFunction, hashingFunction);
+
+        this.dbService = dbService;
+        this.hashingFunction = summaryFunction.andThen(hashingFunction);
+    }
+
+    public String getHash(IClusteredVariant variant) {
+        return this.hashingFunction.apply(variant);
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {
+        return dbService.findAllByHash(hashes);
     }
 }
