@@ -16,7 +16,10 @@
 # This script creates a look up table that maps the GCF assembly (or) assembly name in the SNPMapInfo tables
 # to the correct GCA accession
 import click
+
+from pg_query_utils import execute_query, get_pg_connection_handle
 from snpmapinfo_metadata import *
+from __init__ import *
 
 
 def create_asm_lookup_table(metadata_connection_handle, asm_lookup_table_name):
@@ -42,7 +45,7 @@ def resolve_asm_to_GCA_accession(asm, type_of_asm):
 
 
 def construct_asm_lookup_table(metadata_db_name, metadata_db_user, metadata_db_host):
-    with get_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host) as metadata_connection_handle:
+    with get_pg_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host) as metadata_connection_handle:
         asm_lookup_table_name = "dbsnp_ensembl_species.EVA2015_snpmapinfo_asm_lookup"
         create_asm_lookup_table(metadata_connection_handle, asm_lookup_table_name)
         for species_info in get_species_info(metadata_connection_handle):

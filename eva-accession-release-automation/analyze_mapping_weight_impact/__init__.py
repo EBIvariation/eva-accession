@@ -14,7 +14,6 @@
 
 import http
 import logging
-import psycopg2
 import requests
 import sys
 import subprocess
@@ -64,27 +63,6 @@ def init_logger():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(levelname)s %(message)s')
     result_logger = logging.getLogger(__name__)
     return result_logger
-
-
-def get_all_results_for_query(pg_conn, query):
-    with get_result_cursor(pg_conn, query) as pg_cursor:
-        results = pg_cursor.fetchall()
-    return results
-
-
-def execute_query(pg_conn, query):
-    with get_result_cursor(pg_conn, query) as pg_cursor:
-        pg_conn.commit()
-
-
-def get_result_cursor(pg_conn, query):
-    pg_cursor = pg_conn.cursor()
-    pg_cursor.execute(query)
-    return pg_cursor
-
-
-def get_connection_handle(dbname, user, host):
-    return psycopg2.connect("dbname='{0}' user='{1}' host='{2}'".format(dbname, user, host))
 
 
 def run_command_with_output(command_description, command, return_process_output=False):

@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __init__ import *
+import psycopg2
+from pg_query_utils import get_all_results_for_query, get_result_cursor
 
 
 def get_db_conn_for_species(species_db_info):

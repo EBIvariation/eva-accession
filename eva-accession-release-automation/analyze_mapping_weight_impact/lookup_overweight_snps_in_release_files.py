@@ -15,7 +15,10 @@
 # This script looks up the impact of overweight SNPs
 
 import click
+
+from pg_query_utils import get_pg_connection_handle
 from snpmapinfo_metadata import *
+from __init__ import *
 
 
 def export_snpmapinfo_for_species(species_info, metadata_connection_handle, mapping_weight_threshold, export_dir):
@@ -135,7 +138,7 @@ def create_lookup_result_file(species_name, rs_release_base_folder, export_dir, 
 
 def lookup_overweight_snps_in_release_files(metadata_db_name, metadata_db_user, metadata_db_host, species_name,
                                             mapping_weight_threshold, export_dir, rs_release_base_folder):
-    with get_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host) as metadata_connection_handle:
+    with get_pg_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host) as metadata_connection_handle:
         for species_info in get_species_info(metadata_connection_handle, species_name):
             try:
                 exported_filenames_and_assemblies = export_snpmapinfo_for_species(species_info,
