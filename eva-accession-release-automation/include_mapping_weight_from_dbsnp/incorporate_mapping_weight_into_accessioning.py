@@ -64,6 +64,7 @@ def get_collection_update_statements(collection_name, collection_handle, assembl
                                      rs_accession_attribute_name, snp_id,
                                      mapping_weight_attribute_path, weight) -> list:
     update_statements = []
+    # We have to get _id because updates cannot be issued to a sharded collection without the shard key (_id)
     for document in collection_handle.find({assembly_attribute_name: GCA_accession,
                                             rs_accession_attribute_name: snp_id}):
         filter_criteria = {"_id": document["_id"]}
