@@ -50,7 +50,7 @@ public class VariantToSubmittedVariantEntityProcessor implements ItemProcessor<V
         Assert.isTrue(variant.getMainId() != null && variant.getMainId().matches("ss[0-9]+"),
                       "All variants should have an SS ID as main ID: variant without ID: " + variant.toString());
         Assert.isTrue(variant.getSourceEntries().size() == 1,
-                      "All variants should have just 1 source entry (each variant should come from a single VCF). " +
+                      "All variants should have exactly 1 source entry (each variant should come from a single VCF). " +
                               "SourceEntries found: [" + variant.getSourceEntries().stream()
                                                                 .map(e -> e.getAttributes().toString())
                                                                 .collect(Collectors.joining(", ")) + "]"

@@ -36,14 +36,22 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -63,6 +71,8 @@ public class ClusteringVariantStepConfigurationTest {
     private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
+
+    public static final String ASSEMBLY = "GCA_000000001.1";
 
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_VCF)
@@ -91,28 +101,38 @@ public class ClusteringVariantStepConfigurationTest {
     @Test
     @DirtiesContext
     public void stepFromVcf() {
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        insertClusteredVariant();
+        assertEquals(1, mongoTemplate.getCollection(CLUSTERED_VARIANT_COLLECTION).countDocuments());
         assertTrue(allSubmittedVariantsNotClustered());
 
         JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchStep(CLUSTERING_FROM_VCF_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
-        assertClusteredVariantsCreated();
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertClusteredVariantsCreated(Arrays.asList(30L, 3000000000L, 3000000001L, 3000000002L));
         assertSubmittedVariantsUpdated();
+    }
+
+    private void insertClusteredVariant() {
+        ClusteredVariant variant = new ClusteredVariant(ASSEMBLY, 9999, "1", 3000, VariantType.SNV, false, null);
+        Function<IClusteredVariant, String> summaryFunction = new ClusteredVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        ClusteredVariantEntity entity = new ClusteredVariantEntity(30L, summaryFunction.apply(variant), variant);
+        mongoTemplate.insert(entity, CLUSTERED_VARIANT_COLLECTION);
     }
 
     @Test
     @DirtiesContext
     public void stepFromMongo() {
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertTrue(allSubmittedVariantsNotClustered());
 
         JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_FROM_MONGO_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).count());
-        assertClusteredVariantsCreated();
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertClusteredVariantsCreated(Arrays.asList(3000000000L, 3000000001L, 3000000002L, 3000000003L));
         assertSubmittedVariantsUpdated();
     }
 
@@ -127,10 +147,9 @@ public class ClusteringVariantStepConfigurationTest {
         return true;
     }
 
-    private void assertClusteredVariantsCreated() {
+    private void assertClusteredVariantsCreated(List<Long> expectedAccessions) {
         MongoCollection<Document> collection = mongoTemplate.getCollection(CLUSTERED_VARIANT_COLLECTION);
-        assertEquals(4, collection.countDocuments());
-        List<Long> expectedAccessions = Arrays.asList(3000000000L, 3000000001L, 3000000002L, 3000000003L);
+        assertEquals(expectedAccessions.size(), collection.countDocuments());
         assertGeneratedAccessions(CLUSTERED_VARIANT_COLLECTION, "accession", expectedAccessions);
     }
 
