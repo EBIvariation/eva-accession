@@ -22,6 +22,7 @@ import org.springframework.batch.item.ItemStreamReader;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
+import uk.ac.ebi.eva.commons.core.models.AbstractVariant;
 import uk.ac.ebi.eva.commons.core.models.AbstractVariantSourceEntry;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -37,8 +38,10 @@ import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.PROJECT_KEY;
 import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.RS_KEY;
@@ -73,7 +76,17 @@ public class VcfReaderTest {
     }
 
     @Test
-    public void readingProjectAttribute() throws Exception {
+    public void readId() throws Exception {
+        ItemStreamReader<Variant> variantStreamReader = createReader();
+        List<Variant> variants = consumeReader(variantStreamReader);
+        assertEquals(5, variants.size());
+        List<String> ids = variants.stream().map(AbstractVariant::getMainId).collect(toList());
+        assertThat(ids, not(empty()));
+        assertThat(ids, everyItem(startsWith("ss")));
+    }
+
+    @Test
+    public void readProjectAttribute() throws Exception {
         ItemStreamReader<Variant> variantStreamReader = createReader();
         List<Variant> variants = consumeReader(variantStreamReader);
         assertEquals(5, variants.size());
@@ -83,13 +96,13 @@ public class VcfReaderTest {
     }
 
     @Test
-    public void readingRsAttribute() throws Exception {
+    public void readRsAttribute() throws Exception {
         ItemStreamReader<Variant> variantStreamReader = createReader();
         List<Variant> variants = consumeReader(variantStreamReader);
         assertEquals(5, variants.size());
         List<Map<? extends String, ? extends String>> attributes = getSingleSourceAttributes(variants);
         assertThat(attributes, not(empty()));
-        assertThat(attributes, everyItem(hasEntry(is(RS_KEY), anything())));
+        assertThat(attributes, hasItem(hasEntry(is(RS_KEY), anything())));
     }
 
     private List<Map<? extends String, ? extends String>> getSingleSourceAttributes(List<Variant> variants) {
