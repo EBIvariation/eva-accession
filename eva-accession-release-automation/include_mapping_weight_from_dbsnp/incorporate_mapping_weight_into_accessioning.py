@@ -111,9 +111,8 @@ def incorporate_mapping_weight_for_assembly(accessioning_mongo_handle: pymongo.M
             for result in cursor:
                 snp_id, weight = result[0], result[1]
                 for collection_name, collection_attributes in collections_to_update.items():
-                    collection_update_statements = collection_attributes["update_statements"]
                     collection_handle = accessioning_database_handle[collection_name]
-                    collection_update_statements.extend(
+                    collection_attributes["update_statements"].extend(
                         get_collection_update_statements(
                             collection_name,
                             collection_handle,
@@ -121,9 +120,10 @@ def incorporate_mapping_weight_for_assembly(accessioning_mongo_handle: pymongo.M
                             collection_attributes["rs_accession_attribute_name"], snp_id,
                             collection_attributes["mapping_weight_attribute_path"], weight)
                     )
-                    if bulk_update(collection_handle, collection_update_statements):
-                        collection_update_statements = []
-                    collections_to_update[collection_name]["update_statements"] = collection_update_statements
+                    if bulk_update(collection_handle, collection_attributes["update_statements"]):
+                        # Reset the list of update statements for this collection after a successful bulk update
+                        collections_to_update[collection_name]["update_statements"] = []
+
     # Perform any residual updates
     for collection_name, collection_attributes in collections_to_update.items():
         update_statements = collection_attributes["update_statements"]
