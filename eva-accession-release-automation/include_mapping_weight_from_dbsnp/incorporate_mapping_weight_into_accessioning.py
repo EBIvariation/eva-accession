@@ -25,22 +25,22 @@ eva_accession_database = "eva_accession_sharded"
 collections_to_update = {"dbsnpClusteredVariantEntity":
                              {"assembly_attribute_name": "asm",
                               "rs_accession_attribute_name": "accession",
-                              "mapping_weight_attribute_path": "map_wt",
+                              "mapping_weight_attribute_path": "mapWeight",
                               "update_statements": []},
                          "dbsnpClusteredVariantOperationEntity":
                              {"assembly_attribute_name": "inactiveObjects.asm",
                               "rs_accession_attribute_name": "accession",
-                              "mapping_weight_attribute_path": "inactiveObjects.$.map_wt",
+                              "mapping_weight_attribute_path": "inactiveObjects.$.mapWeight",
                               "update_statements": []},
                          "dbsnpSubmittedVariantEntity":
                              {"assembly_attribute_name": "seq",
                               "rs_accession_attribute_name": "rs",
-                              "mapping_weight_attribute_path": "map_wt",
+                              "mapping_weight_attribute_path": "mapWeight",
                               "update_statements": []},
                          "dbsnpSubmittedVariantOperationEntity":
                              {"assembly_attribute_name": "inactiveObjects.seq",
                               "rs_accession_attribute_name": "inactiveObjects.rs",
-                              "mapping_weight_attribute_path": "inactiveObjects.$.map_wt",
+                              "mapping_weight_attribute_path": "inactiveObjects.$.mapWeight",
                               "update_statements": []}
                          }
 
