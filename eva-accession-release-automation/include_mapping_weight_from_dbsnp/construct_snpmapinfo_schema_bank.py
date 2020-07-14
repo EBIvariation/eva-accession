@@ -27,8 +27,8 @@
 import click
 
 from pg_query_utils import get_pg_connection_handle
-from snpmapinfo_metadata import *
-from __init__ import *
+from dbsnp_mirror_metadata import get_db_conn_for_species, get_all_results_for_query, get_dbsnp_mirror_db_info
+from __init__ import run_command_with_output
 
 
 # For a given build (ex: dbsnp_129), add the SNPMapInfo schemas in that build to the schema bank
