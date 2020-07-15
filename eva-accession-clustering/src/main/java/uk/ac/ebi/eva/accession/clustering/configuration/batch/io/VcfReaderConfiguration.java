@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.clustering.batch.io.deleteme.*;
+import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
