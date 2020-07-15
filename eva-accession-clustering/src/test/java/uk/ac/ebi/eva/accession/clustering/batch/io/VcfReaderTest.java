@@ -48,7 +48,7 @@ import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.RS
 
 public class VcfReaderTest {
 
-    public static final String PROJECT = "PRJ_1";
+    public static final String PROJECT = "projectId_1";
 
     @Test
     public void simpleReading() throws Exception {

@@ -70,6 +70,8 @@ public class ClusteringVariantStepConfigurationTest {
 
     private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
 
+    private static final String DBSNP_CLUSTERED_VARIANT_COLLECTION = "dbsnpClusteredVariantEntity";
+
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
     public static final String ASSEMBLY = "GCA_000000001.1";
@@ -98,20 +100,31 @@ public class ClusteringVariantStepConfigurationTest {
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
+    /**
+     * Note how this test generates 1 less clusteredVariantAccession than the stepFromMongo test, because
+     * the VCF here already provides a dbsnp RS for one submitted variant.
+     *
+     * Note also how we are not checking that all the variants end up clustered because it's assumed that
+     * the SS already links to the dbsnp RS (although it's not in the DB test data). The assumption will hold in real
+     * data because if it linked to another RS, then it would be merged (see tests in
+     * MergeAccessionClusteringWriterTest), and if it didn't link to any RS, then it should not
+     * be updated because it hasn't been provided as input to the clustering pipeline.
+     */
     @Test
     @DirtiesContext
     public void stepFromVcf() {
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         insertClusteredVariant();
-        assertEquals(1, mongoTemplate.getCollection(CLUSTERED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(1, mongoTemplate.getCollection(DBSNP_CLUSTERED_VARIANT_COLLECTION).countDocuments());
         assertTrue(allSubmittedVariantsNotClustered());
 
         JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchStep(CLUSTERING_FROM_VCF_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
-        assertClusteredVariantsCreated(Arrays.asList(30L, 3000000000L, 3000000001L, 3000000002L));
-        assertSubmittedVariantsUpdated();
+        assertClusteredVariantsCreated(Arrays.asList(3000000000L, 3000000001L, 3000000002L));
+        assertGeneratedAccessions(SUBMITTED_VARIANT_COLLECTION, "rs",
+                                  Arrays.asList(-1L, 3000000000L, 3000000000L, 3000000001L, 3000000002L));
     }
 
     private void insertClusteredVariant() {
@@ -119,7 +132,7 @@ public class ClusteringVariantStepConfigurationTest {
         Function<IClusteredVariant, String> summaryFunction = new ClusteredVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
         ClusteredVariantEntity entity = new ClusteredVariantEntity(30L, summaryFunction.apply(variant), variant);
-        mongoTemplate.insert(entity, CLUSTERED_VARIANT_COLLECTION);
+        mongoTemplate.insert(entity, DBSNP_CLUSTERED_VARIANT_COLLECTION);
     }
 
     @Test
@@ -160,7 +173,7 @@ public class ClusteringVariantStepConfigurationTest {
         FindIterable<Document> documents = collection.find();
         for (Document document : documents) {
             Long accessionId = (Long) document.get(accessionField);
-            generatedAccessions.add(accessionId);
+            generatedAccessions.add(accessionId == null? -1 : accessionId);
         }
         Collections.sort(generatedAccessions);
         assertEquals(expectedAccessions, generatedAccessions);

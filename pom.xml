@@ -25,6 +25,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.13</junit.version>
+        <variation-commons-version>0.7.4</variation-commons-version>
     </properties>
 
     <parent>
@@ -53,17 +54,17 @@
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>variation-commons-core</artifactId>
-                <version>0.7.3</version>
+                <version>${variation-commons-version}</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>variation-commons-batch</artifactId>
-                <version>0.7.3</version>
+                <version>${variation-commons-version}</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>variation-commons-beacon</artifactId>
-                <version>0.7.3</version>
+                <version>${variation-commons-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.postgresql</groupId>
