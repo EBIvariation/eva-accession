@@ -14,10 +14,20 @@
 
 import os
 from dbsnp_mirror_metadata import *
+from pg_query_utils import get_all_results_for_query
+from __init__ import *
 
 
 def get_build_version_from_file_name(file_name):
     return os.path.basename(file_name).split("_")[0].lower()
+
+
+def get_snpmapinfo_tables_with_GCA_assembly(metadata_connection_handle, GCA_assembly_accession):
+    query = "select database_name, snpmapinfo_table_name, assembly from " \
+            "dbsnp_ensembl_species.EVA2015_snpmapinfo_asm_lookup " \
+            "where assembly_accession = '{0}'".format(GCA_assembly_accession)
+    return [(result[0], result[1], result[2])
+            for result in get_all_results_for_query(metadata_connection_handle, query)]
 
 
 def lookup_GCA_assembly(species_name, snpmapinfo_table_name, asm, metadata_connection_handle):

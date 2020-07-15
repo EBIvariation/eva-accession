@@ -19,7 +19,10 @@
 import click
 import glob
 import gzip
+
+from pg_query_utils import get_pg_connection_handle
 from snpmapinfo_metadata import *
+from __init__ import *
 
 
 # dbsnp_data_source_base: NFS path to the root directory where dbSNP SQL dumps are stored
@@ -96,7 +99,7 @@ def import_unimported_snpmapinfo_tables_for_species(species_info, metadata_conne
 
 
 def import_missing_snpmapinfo_tables(metadata_db_name, metadata_db_user, metadata_db_host, dbsnp_data_source_base):
-    metadata_connection_handle = get_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host)
+    metadata_connection_handle = get_pg_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host)
     for species_info in get_species_info(metadata_connection_handle):
         logger.info("Detecting unimported tables for species: " + species_info["database_name"])
         import_unimported_snpmapinfo_tables_for_species(species_info, metadata_connection_handle,

@@ -24,8 +24,11 @@
 # | apple_3750    | b149_snpmapinfo       | snp_type\nsnp_id\nweight     |                 3 |
 # +---------------+-----------------------+------------------------------+-------------------+
 
-from snpmapinfo_metadata import *
 import click
+
+from pg_query_utils import get_pg_connection_handle
+from dbsnp_mirror_metadata import get_db_conn_for_species, get_all_results_for_query, get_dbsnp_mirror_db_info
+from __init__ import run_command_with_output
 
 
 # For a given build (ex: dbsnp_129), add the SNPMapInfo schemas in that build to the schema bank
@@ -75,7 +78,7 @@ def insert_into_snpmapinfo_schema_bank(snpmapinfo_table_schema, snpmapinfo_table
 
 
 def construct_snpmapinfo_schema_bank(metadata_db_name, metadata_db_user, metadata_db_host):
-    with get_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host) as metadata_connection_handle:
+    with get_pg_connection_handle(metadata_db_name, metadata_db_user, metadata_db_host) as metadata_connection_handle:
         for dbsnp_mirror_info in get_dbsnp_mirror_db_info(metadata_db_name, metadata_db_user, metadata_db_host):
             add_snpmapinfo_schemas_in_build_to_schema_bank(dbsnp_mirror_info, metadata_connection_handle)
 
