@@ -405,6 +405,23 @@
       "accession" : NumberLong(1122557780),
       "version" : 1,
       "createdDate" : ISODate("2014-07-29T22:13:00.000Z")
+    },
+    {
+      "_id": "7A4304A9E9AE320D0E28FCC9E23EF1E605ACA444",
+      "seq": "GCA_000409795.2",
+      "tax" : 60711,
+      "study": "PRJEB7923",
+      "contig" : "CM001954.1",
+      "start" : NumberLong(42),
+      "ref" : "C",
+      "alt" : "T",
+      "rs" : NumberLong(55555),
+      "evidence" : false,
+      "validated" : false,
+      "accession" : NumberLong(55556),
+      "version" : 1,
+      "createdDate" : ISODate("2017-09-20T08:25:00Z"),
+      "mapWeight": 2
     }
   ]
 }

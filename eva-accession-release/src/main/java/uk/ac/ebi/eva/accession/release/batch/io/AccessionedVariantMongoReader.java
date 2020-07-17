@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
@@ -64,9 +65,10 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
     List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
+        Bson singlemap = Aggregates.match(Filters.not(exists(WEIGHT_FIELD)));
         Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
-        List<Bson> aggregation = Arrays.asList(match, sort, lookup);
+        List<Bson> aggregation = Arrays.asList(match, sort, singlemap, lookup);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }

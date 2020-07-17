@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.release.batch.io.ContigWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.MergedVariantContextWriter;
+import uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
@@ -28,6 +29,7 @@ import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import java.nio.file.Path;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
 
 @Configuration
@@ -49,6 +51,15 @@ public class VariantContextWriterConfiguration {
         String mergedContigsFilePath = ContigWriter.getMergedContigsFilePath(reportPath.toFile().getParent(),
                                                                              parameters.getAssemblyAccession());
         return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession(), mergedContigsFilePath);
+    }
+
+    @Bean(MULTIMAP_RELEASE_WRITER)
+    public MultimapVariantContextWriter multimapVariantContextWriter(InputParameters parameters) {
+        Path reportPath = ReportPathResolver.getMultimapIdsReportPath(parameters.getOutputFolder(),
+                                                                      parameters.getAssemblyAccession());
+        String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
+                                                                             parameters.getAssemblyAccession());
+        return new MultimapVariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
     }
 
 }

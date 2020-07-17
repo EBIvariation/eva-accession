@@ -26,6 +26,8 @@ public class BeanNames {
     public static final String RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP =
             "RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP";
 
+    public static final String RELEASE_MULTIMAP_VARIANTS_STEP = "RELEASE_MULTIMAP_VARIANTS_STEP";
+
     public static final String RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP = "RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP";
 
     public static final String ACCESSIONED_VARIANT_READER = "ACCESSIONED_VARIANT_READER";
@@ -36,11 +38,15 @@ public class BeanNames {
 
     public static final String MERGED_DEPRECATED_VARIANT_READER = "MERGED_DEPRECATED_VARIANT_READER";
 
+    public static final String MULTIMAP_VARIANT_READER = "MULTIMAP_VARIANT_READER";
+
     public static final String RELEASE_PROCESSOR = "RELEASE_PROCESSOR";
 
     public static final String RELEASE_WRITER = "RELEASE_WRITER";
 
     public static final String MERGED_RELEASE_WRITER = "MERGED_RELEASE_WRITER";
+
+    public static final String MULTIMAP_RELEASE_WRITER = "MULTIMAP_RELEASE_WRITER";
 
     public static final String MERGED_DEPRECATED_RELEASE_WRITER = "MERGED_DEPRECATED_RELEASE_WRITER";
 

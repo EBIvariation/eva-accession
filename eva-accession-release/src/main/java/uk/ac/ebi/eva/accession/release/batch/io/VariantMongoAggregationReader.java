@@ -55,6 +55,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     public static final String MERGED_INTO_KEY = "CURR";
 
+    public static final String WEIGHT_KEY = "WEIGHT";
+
     protected static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
 
     protected static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
@@ -88,6 +90,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
     protected static final String ALLELES_MATCH_FIELD = "allelesMatch";
 
     protected static final String SUPPORTED_BY_EVIDENCE_FIELD = "evidence";
+
+    protected static final String WEIGHT_FIELD = "mapWeight";
 
     private static final String RS_PREFIX = "rs";
 
