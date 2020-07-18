@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
@@ -30,6 +31,7 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVari
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class DbsnpClusteredVariantAccessioningDatabaseService
@@ -56,11 +58,15 @@ public class DbsnpClusteredVariantAccessioningDatabaseService
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
-    public List<DbsnpClusteredVariantEntity> getAllByAccession(Long accession)
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         List<DbsnpClusteredVariantEntity> entities = this.repository.findByAccession(accession);
         this.checkAccessionIsActive(entities, accession);
-        return entities;
+        return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
+    }
+
+    private AccessionWrapper<IClusteredVariant, String, Long> toModelWrapper(DbsnpClusteredVariantEntity entity) {
+        return new AccessionWrapper(entity.getAccession(), entity.getHashedMessage(), entity.getModel(), entity.getVersion());
     }
 
     private void checkAccessionIsActive(List<DbsnpClusteredVariantEntity> entities, Long accession)

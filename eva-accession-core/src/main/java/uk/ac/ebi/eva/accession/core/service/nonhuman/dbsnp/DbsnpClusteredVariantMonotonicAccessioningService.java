@@ -24,6 +24,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 
 import java.util.List;
 import java.util.function.Function;
@@ -52,5 +54,10 @@ public class DbsnpClusteredVariantMonotonicAccessioningService
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {
         return dbService.findAllByHash(hashes);
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return dbService.getAllByAccession(accession);
     }
 }

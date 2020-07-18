@@ -31,6 +31,7 @@ import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonot
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningRepository;
 
 import java.util.ArrayList;
@@ -161,5 +162,12 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
         IAccessionedObject<ISubmittedVariant, ?, Long> inactiveObject = inactiveObjects.get(inactiveObjects.size() - 1);
         return new AccessionWrapper<>(accession, (String) inactiveObject.getHashedMessage(), inactiveObject.getModel(),
                                       inactiveObject.getVersion());
+    }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        List<DbsnpSubmittedVariantEntity> entities = this.repository.findByAccession(accession);
+        this.checkAccessionIsActive(entities, accession);
+        return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
     }
 }

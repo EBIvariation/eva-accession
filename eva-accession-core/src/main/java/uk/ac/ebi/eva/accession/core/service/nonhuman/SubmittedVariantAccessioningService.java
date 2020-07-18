@@ -128,6 +128,15 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         }
     }
 
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        if (accession >= accessioningMonotonicInitSs) {
+            return accessioningService.getAllByAccession(accession);
+        } else {
+            return accessioningServiceDbsnp.getAllByAccession(accession);
+        }
+    }
+
     @Override
     public AccessionWrapper<ISubmittedVariant, String, Long> getByAccessionAndVersion(Long accession, int version)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {

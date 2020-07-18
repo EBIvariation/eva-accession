@@ -16,6 +16,9 @@
 package uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 
@@ -56,5 +59,10 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
 
     public String getHash(ISubmittedVariant message) {
         return this.hashingFunction.apply(message);
+    }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return dbService.getAllByAccession(accession);
     }
 }

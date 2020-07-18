@@ -110,7 +110,7 @@ public class ClusteredVariantsRestController {
                     new ArrayList<>();
             clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
             clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
-                                                 .collect(Collectors.toList()));
+                    .collect(Collectors.toList()));
 
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
@@ -126,7 +126,8 @@ public class ClusteredVariantsRestController {
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
             Long identifier) throws AccessionDeprecatedException, AccessionMergedException {
         try {
-            return Collections.singletonList(basicRestController.get(identifier));
+            return nonHumanActiveService.getAllByAccession(identifier).stream().map(this::toDTO)
+                    .collect(Collectors.toList());
         } catch (AccessionDoesNotExistException e) {
             return Collections.emptyList();
         }

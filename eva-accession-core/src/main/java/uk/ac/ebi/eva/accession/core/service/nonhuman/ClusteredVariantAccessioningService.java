@@ -32,6 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrappe
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -129,6 +130,15 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
             return accessioningService.getByAccession(accession);
         } else {
             return accessioningServiceDbsnp.getByAccession(accession);
+        }
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        if (accession >= accessioningMonotonicInitRs) {
+            return accessioningService.getAllByAccession(accession);
+        } else {
+            return accessioningServiceDbsnp.getAllByAccession(accession);
         }
     }
 

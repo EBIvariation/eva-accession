@@ -119,4 +119,10 @@ public class ClusteredVariantAccessioningServiceTest {
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpClusteredVariantOperationEntity.class));
     }
+
+    @UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json"})
+    @Test
+    public void getAllByAccession() throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        assertEquals(2, service.getAllByAccession(1314L).size());
+    }
 }
