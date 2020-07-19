@@ -26,4 +26,18 @@ import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 public class DbsnpSubmittedVariantOperationEntity extends EventDocument<ISubmittedVariant, Long,
         DbsnpSubmittedVariantInactiveEntity> {
 
+
+    @Override
+    public String toString() {
+        return "DbsnpSubmittedVariantOperationEntity{"
+                + "id='" + getId() + '\''
+                + ", eventType=" + getEventType()
+                + ", accession=" + getAccession()
+                + ", mergedInto=" + getMergedInto()
+                + ", reason='" + getReason() + '\''
+                + ", createdDate=" + getCreatedDate()
+                + ", inactiveObjects=" + getInactiveObjects()
+                + '}';
+    }
+
 }

@@ -78,6 +78,8 @@ public class IssueAccessionClusteringWriterTest {
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
+    private static final String SUBMITTED_VARIANT_OPERATION_COLLECTION = "submittedVariantOperationEntity";
+
     private static final String PROJECT_ACCESSION = "projectId_1";
 
     public static final long EVA_CLUSTERED_VARIANT_RANGE_START = 3000000000L;
@@ -131,6 +133,7 @@ public class IssueAccessionClusteringWriterTest {
         clusteringWriter.write(submittedVariantEntities);
         assertClusteredVariantsCreated();
         assertSubmittedVariantsUpdated();
+        assertSubmittedVariantsOperationInserted();
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
@@ -209,5 +212,12 @@ public class IssueAccessionClusteringWriterTest {
             }
         }
         return true;
+    }
+
+    private void assertSubmittedVariantsOperationInserted(){
+        MongoCollection<Document> collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_OPERATION_COLLECTION);
+        assertEquals(5, collection.countDocuments());
+        List<Long> expectedAccessions = Arrays.asList(5000000001L, 5000000002L, 5000000003L, 5000000004L, 5000000005L);
+        assertGeneratedAccessions(SUBMITTED_VARIANT_OPERATION_COLLECTION, "accession", expectedAccessions);
     }
 }

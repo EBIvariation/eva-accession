@@ -49,8 +49,10 @@ import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
@@ -191,6 +193,8 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
         assertEquals(1, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
+        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
 
         // when
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
@@ -200,8 +204,14 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
         assertEquals(1, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(1, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
+        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
+
         SubmittedVariantEntity afterClustering = mongoTemplate.findOne(new Query(), SubmittedVariantEntity.class);
         assertEquals(rs1, afterClustering.getClusteredVariantAccession());
+        SubmittedVariantOperationEntity afterClusteringOperation = mongoTemplate.findOne(
+                new Query(), SubmittedVariantOperationEntity.class);
+        assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
     }
 
     @Test
@@ -224,6 +234,8 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
+        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
 
         // when
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
@@ -233,7 +245,13 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
+        assertEquals(1, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
+
         SubmittedVariantEntity afterClustering = mongoTemplate.findOne(new Query(), DbsnpSubmittedVariantEntity.class);
         assertEquals(rs1, afterClustering.getClusteredVariantAccession());
+        DbsnpSubmittedVariantOperationEntity afterClusteringOperation = mongoTemplate.findOne(
+                new Query(), DbsnpSubmittedVariantOperationEntity.class);
+        assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
     }
 }
