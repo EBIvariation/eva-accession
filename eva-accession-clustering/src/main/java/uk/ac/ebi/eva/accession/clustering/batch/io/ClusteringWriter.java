@@ -276,6 +276,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                                               SubmittedVariantEntity.class);
         BulkOperations dbsnpBulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                                    DbsnpSubmittedVariantEntity.class);
+        BulkOperations bulkHistoryOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                SubmittedVariantOperationEntity.class);
+        BulkOperations dbsnpBulkHistoryOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                DbsnpSubmittedVariantOperationEntity.class);
         long numUpdates = 0;
         long numDbsnpUpdates = 0;
         for (SubmittedVariantEntity submittedVariantEntity : submittedVariantEntities) {
@@ -283,22 +287,41 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 // no need to update the rs of a submitted variant that already has the correct rs
                 continue;
             }
-            Query query = query(where("_id").is(submittedVariantEntity.getId()));
-            Update update = new Update();
-            update.set(RS_KEY, getClusteredVariantAccession(submittedVariantEntity));
+
+            long rsid = getClusteredVariantAccession(submittedVariantEntity);
+            // Query to update the RSid in submittedVariantEntity
+            Query updateRsQuery = query(where("_id").is(submittedVariantEntity.getId()));
+            Update updateRsUpdate = new Update();
+            updateRsUpdate.set(RS_KEY, rsid);
+
+            // Query to create the update operation history
+            SubmittedVariantOperationEntity updateOperation = new SubmittedVariantOperationEntity();
+            SubmittedVariantInactiveEntity inactiveEntity = new SubmittedVariantInactiveEntity(submittedVariantEntity);
+            updateOperation.fill(
+                    EventType.UPDATED,
+                    submittedVariantEntity.getAccession(),
+                    null,
+                    "Clustering submitted variant " + submittedVariantEntity.getAccession() + " with rs" + rsid,
+                    Collections.singletonList(inactiveEntity)
+            );
+
             if (isEvaSubmittedVariant(submittedVariantEntity)) {
-                bulkOperations.updateOne(query, update);
+                bulkOperations.updateOne(updateRsQuery, updateRsUpdate);
+                bulkHistoryOperations.insert(updateOperation);
                 ++numUpdates;
             } else {
-                dbsnpBulkOperations.updateOne(query, update);
+                dbsnpBulkOperations.updateOne(updateRsQuery, updateRsUpdate);
+                dbsnpBulkHistoryOperations.insert(updateOperation);
                 ++numDbsnpUpdates;
             }
         }
         if (numUpdates > 0) {
             bulkOperations.execute();
+            bulkHistoryOperations.execute();
         }
         if (numDbsnpUpdates > 0) {
             dbsnpBulkOperations.execute();
+            dbsnpBulkHistoryOperations.execute();
         }
     }
 

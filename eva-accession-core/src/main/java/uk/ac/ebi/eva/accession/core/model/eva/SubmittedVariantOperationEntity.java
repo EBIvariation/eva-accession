@@ -25,4 +25,17 @@ import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 @Document
 public class SubmittedVariantOperationEntity extends EventDocument<ISubmittedVariant, Long,
         SubmittedVariantInactiveEntity> {
+
+    @Override
+    public String toString() {
+        return "ClusteredVariantOperationEntity{"
+                + "id='" + getId() + '\''
+                + ", eventType=" + getEventType()
+                + ", accession=" + getAccession()
+                + ", mergedInto=" + getMergedInto()
+                + ", reason='" + getReason() + '\''
+                + ", createdDate=" + getCreatedDate()
+                + ", inactiveObjects=" + getInactiveObjects()
+                + '}';
+    }
 }

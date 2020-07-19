@@ -141,10 +141,10 @@ public class DeprecationWriter implements ItemWriter<DbsnpClusteredVariantEntity
         return deprecableClusteredVariants.stream().map(AccessionedDocument::getAccession).collect(Collectors.toList());
     }
 
-    private void insertDeprecateOperation(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVatiants) {
+    private void insertDeprecateOperation(List<? extends DbsnpClusteredVariantEntity> deprecableClusteredVariants) {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                               DbsnpClusteredVariantOperationEntity.class);
-        bulkOperations.insert(createOperations(deprecableClusteredVatiants));
+        bulkOperations.insert(createOperations(deprecableClusteredVariants));
         bulkOperations.execute();
     }
 
