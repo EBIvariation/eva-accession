@@ -88,6 +88,11 @@ public class ContigMongoReader implements ItemStreamReader<String> {
                                      buildAggregationForMergedContigs(assemblyAccession));
     }
 
+    public static ContigMongoReader multimapContigReader(String assemblyAccession, MongoClient mongoClient,
+                                                         String database) {
+        throw new UnsupportedOperationException("not implemented yet");
+    }
+
     private ContigMongoReader(String assemblyAccession, MongoClient mongoClient, String database, String collection,
                               List<Bson> aggregation) {
         this.assemblyAccession = assemblyAccession;

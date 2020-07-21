@@ -88,4 +88,16 @@ public class ContigMongoReaderTest {
         }
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1", "CM001941.2")), new HashSet<>(contigs));
     }
+
+    @Test
+    public void basicMultimapContigsRead() {
+        ContigMongoReader reader = ContigMongoReader.multimapContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
+        reader.open(new ExecutionContext());
+        String contig;
+        List<String> contigs = new ArrayList<>();
+        while ((contig = reader.read()) != null) {
+            contigs.add(contig);
+        }
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1")), new HashSet<>(contigs));
+    }
 }

@@ -57,7 +57,7 @@ public class VariantContextWriterConfiguration {
     public MultimapVariantContextWriter multimapVariantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getMultimapIdsReportPath(parameters.getOutputFolder(),
                                                                       parameters.getAssemblyAccession());
-        String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
+        String activeContigsFilePath = ContigWriter.getMultimapContigsFilePath(reportPath.toFile().getParent(),
                                                                              parameters.getAssemblyAccession());
         return new MultimapVariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
     }

@@ -60,6 +60,8 @@ public class BeanNames {
 
     public static final String LIST_MERGED_CONTIGS_STEP = "LIST_MERGED_CONTIGS_STEP";
 
+    public static final String LIST_MULTIMAP_CONTIGS_STEP = "LIST_MERGED_CONTIGS_STEP";
+
     public static final String ACTIVE_CONTIG_READER = "ACTIVE_CONTIG_READER";
 
     public static final String MERGED_CONTIG_READER = "MERGED_CONTIG_READER";
