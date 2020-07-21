@@ -28,10 +28,8 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.services.InactiveAccessionService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningRepository;
 
 import java.util.ArrayList;
@@ -68,13 +66,6 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
             List<Long> clusteredVariantIds) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> wrappedAccessions = new ArrayList<>();
         repository.findByClusteredVariantAccessionIn(clusteredVariantIds).iterator().forEachRemaining(
-                entity -> wrappedAccessions.add(toModelWrapper(entity)));
-        return wrappedAccessions;
-    }
-
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> findByHashedMessageIn(List<String> hashes) {
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> wrappedAccessions = new ArrayList<>();
-        repository.findByHashedMessageIn(hashes).iterator().forEachRemaining(
                 entity -> wrappedAccessions.add(toModelWrapper(entity)));
         return wrappedAccessions;
     }

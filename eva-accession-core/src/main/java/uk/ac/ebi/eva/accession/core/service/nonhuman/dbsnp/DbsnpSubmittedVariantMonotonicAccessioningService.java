@@ -21,7 +21,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 
 import java.util.List;
@@ -47,10 +46,6 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
             List<Long> clusteredVariantAccessions) {
         return dbService.findByClusteredVariantAccessionIn(clusteredVariantAccessions);
-    }
-
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByHash(List<String> hashes) {
-        return dbService.findByHashedMessageIn(hashes);
     }
 
     public AccessionWrapper<ISubmittedVariant, String, Long> getLastInactive(Long accession) {

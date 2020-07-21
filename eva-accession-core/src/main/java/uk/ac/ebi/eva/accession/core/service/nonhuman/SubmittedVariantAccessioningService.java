@@ -29,13 +29,12 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsExcep
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantMonotonicAccessioningService;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -114,6 +113,15 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         return joinLists(accessioningService.get(variants), accessioningServiceDbsnp.get(variants));
     }
 
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByIdFields(
+            String assembly, String contig, List<String> studies, long start, String reference, String alternate) {
+        List<SubmittedVariant> submittedVariants = studies.stream()
+                .map(study -> new SubmittedVariant(assembly, 0, study, contig, start, reference, alternate, null))
+                .collect(Collectors.toList());
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> variants = this.get(submittedVariants);
+        return variants;
+    }
+
     /**
      * TODO: conceptually, for variants imported from dbSNP, a single accession could return several documents.
      * For now, just comply with the accession-commons interface, but this should be changed in the future.
@@ -151,15 +159,6 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
             List<Long> clusteredVariantAccessions) {
         return joinLists(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
                          accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions));
-    }
-
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByHashedMessageIn(List<String> hashes) {
-        return joinLists(
-                hashes.stream().flatMap(hash -> accessioningService.getByHash(Collections.singletonList(hash)).stream())
-                      .collect(Collectors.toList()),
-                hashes.stream().flatMap(
-                        hash -> accessioningServiceDbsnp.getByHash(Collections.singletonList(hash)).stream())
-                      .collect(Collectors.toList()));
     }
 
     @Override

@@ -20,27 +20,20 @@ package uk.ac.ebi.eva.accession.ws.service;
 
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class SubmittedVariantsBeaconService {
 
     private SubmittedVariantAccessioningService submittedVariantsService;
-
-    private Function<ISubmittedVariant, String> hashingFunction =
-            new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
     public SubmittedVariantsBeaconService(SubmittedVariantAccessioningService submittedVariantAccessioningService) {
         this.submittedVariantsService = submittedVariantAccessioningService;
@@ -63,14 +56,8 @@ public class SubmittedVariantsBeaconService {
 
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantByIdFields(
             String assembly, String contig, List<String> studies, long start, String reference, String alternate) {
-
-        List<String> hashes = studies.stream().map(study -> hashingFunction
-                .apply(new SubmittedVariant(assembly, 0, study, contig, start, reference, alternate, null)))
-                .collect(Collectors.toList());
-
         List<AccessionWrapper<ISubmittedVariant, String, Long>> variants = submittedVariantsService
-                .getByHashedMessageIn(hashes);
-
+                .getAllByIdFields(assembly, contig, studies, start, reference, alternate);
         return variants.stream()
                        .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
                        .collect(Collectors.toList());
