@@ -55,16 +55,12 @@ import java.util.stream.Collectors;
 @Api(tags = {"Submitted variants"})
 public class SubmittedVariantsRestController {
 
-    private final BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController;
-
     private SubmittedVariantsBeaconService submittedVariantsBeaconService;
 
     private SubmittedVariantAccessioningService service;
 
     public SubmittedVariantsRestController(
-            BasicRestController<SubmittedVariant, ISubmittedVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService service, SubmittedVariantsBeaconService submittedVariantsBeaconService) {
-        this.basicRestController = basicRestController;
         this.service = service;
         this.submittedVariantsBeaconService = submittedVariantsBeaconService;
     }
@@ -81,7 +77,7 @@ public class SubmittedVariantsRestController {
     public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a submitted variant, e.g.: 5000000000",
                                     required = true) Long identifier)
-            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+            throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             return ResponseEntity.ok(service.getAllByAccession(identifier).stream().map(this::toDTO).collect(Collectors.toList()));
         } catch (AccessionDeprecatedException e) {

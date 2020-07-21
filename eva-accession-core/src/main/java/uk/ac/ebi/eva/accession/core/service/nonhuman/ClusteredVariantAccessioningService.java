@@ -213,12 +213,11 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
     }
 
     public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {
-        throw new UnsupportedOperationException("TODO: This should be implemented, but I forgot to.");
-//        if (accession >= accessioningMonotonicInitRs) {
-//            return accessioningService.getLastInactive(accession);
-//        } else {
-//            return accessioningServiceDbsnp.getLastInactive(accession);
-//        }
+        if (accession >= accessioningMonotonicInitRs) {
+            return accessioningService.getLastInactive(accession);
+        } else {
+            return accessioningServiceDbsnp.getLastInactive(accession);
+        }
     }
 
 }

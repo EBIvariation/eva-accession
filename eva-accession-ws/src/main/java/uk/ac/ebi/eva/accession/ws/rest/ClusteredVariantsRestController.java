@@ -59,8 +59,6 @@ import java.util.stream.Collectors;
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
 
-    private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
-
     private SubmittedVariantAccessioningService submittedVariantsService;
 
     private ClusteredVariantsBeaconService beaconService;
@@ -69,25 +67,16 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantAccessioningService nonHumanActiveService;
 
-    // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
-    //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
-    //  service directly, but at the moment, {@link ClusteredVariantAccessioningService} only deals with dbSNP variants
-    private DbsnpClusteredVariantInactiveService inactiveService;
-
     public ClusteredVariantsRestController(
-            BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
             ClusteredVariantsBeaconService beaconService,
             @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
-            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService,
-            @Qualifier("nonhumanInactiveService") DbsnpClusteredVariantInactiveService inactiveService
+            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService
     ) {
-        this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.beaconService = beaconService;
         this.humanService = humanService;
         this.nonHumanActiveService = nonHumanActiveService;
-        this.inactiveService = inactiveService;
     }
 
     /**
@@ -139,17 +128,7 @@ public class ClusteredVariantsRestController {
      */
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getDeprecatedClusteredVariant(
             Long identifier) {
-        IEvent<IClusteredVariant, Long> lastEvent = inactiveService.getLastEvent(identifier);
-        IAccessionedObject<IClusteredVariant, ?, Long> accessionedObjectWrongType = lastEvent.getInactiveObjects().get(0);
-
-        IAccessionedObject<IClusteredVariant, String, Long> accessionedObject =
-                (IAccessionedObject<IClusteredVariant, String, Long>) accessionedObjectWrongType;
-
-        return Collections.singletonList(
-                new AccessionResponseDTO<>(
-                        new AccessionWrapper<>(identifier,
-                                               accessionedObject.getHashedMessage(),
-                                               accessionedObject.getModel()),
+        return Collections.singletonList(new AccessionResponseDTO<>(nonHumanActiveService.getLastInactive(identifier),
                         ClusteredVariant::new));
     }
 
@@ -163,7 +142,7 @@ public class ClusteredVariantsRestController {
                     required = true) Long identifier)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
-        basicRestController.get(identifier);
+        nonHumanActiveService.getAllByAccession(identifier);
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
                 submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier));

@@ -60,4 +60,8 @@ public class DbsnpClusteredVariantMonotonicAccessioningService
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         return dbService.getAllByAccession(accession);
     }
+
+    public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {
+        return dbService.getLastInactive(accession);
+    }
 }

@@ -24,9 +24,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 
 import java.util.List;
 import java.util.function.Function;
@@ -55,5 +54,9 @@ public class ClusteredVariantMonotonicAccessioningService
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession) throws AccessionMergedException,
             AccessionDoesNotExistException, AccessionDeprecatedException {
         return dbService.getAllByAccession(accession);
+    }
+
+    public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {
+        return dbService.getLastInactive(accession);
     }
 }

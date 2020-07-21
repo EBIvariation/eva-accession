@@ -24,9 +24,13 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.services.InactiveAccessionService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
@@ -85,6 +89,19 @@ public class ClusteredVariantAccessioningDatabaseService extends
                 throw new AccessionDeprecatedException(accession.toString());
             default:
         }
+    }
+
+    public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {
+        IEvent<IClusteredVariant, Long> lastEvent = ((InactiveAccessionService<IClusteredVariant, Long, ?>) inactiveService)
+                .getLastEvent(accession);
+        List<? extends IAccessionedObject<IClusteredVariant, ?, Long>> inactiveObjects = lastEvent.getInactiveObjects();
+        if (inactiveObjects.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Accession " + accession + " is not inactive (not present in the operations collection");
+        }
+        IAccessionedObject<IClusteredVariant, ?, Long> inactiveObject = inactiveObjects.get(inactiveObjects.size() - 1);
+        return new AccessionWrapper<>(accession, (String) inactiveObject.getHashedMessage(), inactiveObject.getModel(),
+                inactiveObject.getVersion());
     }
 
 }
