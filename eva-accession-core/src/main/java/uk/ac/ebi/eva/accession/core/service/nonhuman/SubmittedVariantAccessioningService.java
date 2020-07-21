@@ -123,8 +123,9 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     /**
-     * TODO: conceptually, for variants imported from dbSNP, a single accession could return several documents.
-     * For now, just comply with the accession-commons interface, but this should be changed in the future.
+     * Conceptually, for variants imported from dbSNP, a single accession could return several documents.
+     * This method is implemented to comply with the accession-commons interface, but will only return one variant,
+     * to get all the variants use {@link #getAllByAccession}.
      */
     @Override
     public AccessionWrapper<ISubmittedVariant, String, Long> getByAccession(Long accession)

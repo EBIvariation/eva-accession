@@ -29,10 +29,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsExcep
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
-
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -40,7 +38,6 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -119,9 +116,10 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
     }
 
     /**
-     * TODO: conceptually, for remapped variants or variants imported from dbSNP, a single accession could
-     * return several documents.
-     * For now, just comply with the accession-commons interface, but this should be changed in the future.
+     * Conceptually, for remapped variants or variants imported from dbSNP, a single accession could return several
+     * documents.
+     * This method is implemented to comply with the accession-commons interface but will only return one variant,
+     * to get all the variants use {@link #getAllByAccession}.
      */
     @Override
     public AccessionWrapper<IClusteredVariant, String, Long> getByAccession(Long accession)
@@ -152,17 +150,12 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
         }
     }
 
-    /**
-     * TODO: return a list
-     */
-    public Optional<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
             String assembly, String contig, long start, VariantType type) {
-
         IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
         List<AccessionWrapper<IClusteredVariant, String, Long>> variants = this.get(
                 Collections.singletonList(clusteredVariant));
-
-        return variants.isEmpty() ? Optional.empty() : Optional.of(variants.get(0));
+        return variants;
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHashedMessageIn(List<String> hashes) {

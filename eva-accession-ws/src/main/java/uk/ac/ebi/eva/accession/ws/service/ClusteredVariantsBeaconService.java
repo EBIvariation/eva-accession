@@ -22,12 +22,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
@@ -44,8 +43,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ClusteredVariantsBeaconService {
@@ -85,17 +84,17 @@ public class ClusteredVariantsBeaconService {
     private BeaconAlleleResponse queryBeaconClusteredVariantNonHuman(String referenceGenome, String chromosome,
                                                                      long start, VariantType variantType,
                                                                      boolean includeDatasetResponses) {
-        Optional<AccessionWrapper<IClusteredVariant, String, Long>> variantWrapper =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> variants =
                 clusteredVariantService.getByIdFields(referenceGenome, chromosome, start, variantType);
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
-        if (variantWrapper.isPresent() && includeDatasetResponses) {
-            AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> variant =
-                    toDTO(variantWrapper.get());
-            String identifier = variant.getAccession().toString();
-            datasetAlleleResponses = getBeaconDatasetAlleleResponses(identifier);
+        boolean isVariantExists = !variants.isEmpty();
+        if (isVariantExists && includeDatasetResponses) {
+            List<Long> identifiers = variants.stream().map(this::toDTO).map(AccessionResponseDTO::getAccession)
+                    .collect(Collectors.toList());
+            datasetAlleleResponses = getBeaconDatasetAlleleResponses(identifiers);
         }
-        return buildResponse(referenceGenome, chromosome, start, variantType, variantWrapper.isPresent(),
-                             datasetAlleleResponses);
+
+        return buildResponse(referenceGenome, chromosome, start, variantType, isVariantExists, datasetAlleleResponses);
     }
 
     private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDTO(
@@ -103,10 +102,9 @@ public class ClusteredVariantsBeaconService {
         return new AccessionResponseDTO<>(clusteredVariantWrapper, ClusteredVariant::new);
     }
 
-    private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(String clusteredVariantAccession) {
+    private List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponses(List<Long> clusteredVariantAccession) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
-                submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(
-                        Long.parseLong(clusteredVariantAccession)));
+                submittedVariantsService.getByClusteredVariantAccessionIn(clusteredVariantAccession);
 
         Map<String, Set<String>> projects = new HashMap<>();
         submittedVariants.forEach(variant -> {
@@ -120,7 +118,9 @@ public class ClusteredVariantsBeaconService {
             BeaconDatasetAlleleResponse datasetAlleleResponse = new BeaconDatasetAlleleResponse();
             datasetAlleleResponse.setDatasetId(project);
 
-            KeyValuePair rs = new KeyValuePair().key("RS ID").value("rs" + clusteredVariantAccession);
+            String rsValue = clusteredVariantAccession.stream().map(Object::toString)
+                    .collect(Collectors.joining(",", "rs", ""));
+            KeyValuePair rs = new KeyValuePair().key("RS ID").value(rsValue);
             KeyValuePair ss = new KeyValuePair().key("SS IDs").value(String.join(",", ids));
             List<KeyValuePair> info = new ArrayList<>(Arrays.asList(rs, ss));
             datasetAlleleResponse.setInfo(info);

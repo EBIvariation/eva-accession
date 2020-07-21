@@ -36,13 +36,12 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
@@ -53,7 +52,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -190,9 +188,9 @@ public class ClusteredVariantsRestController {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
 
-        Optional<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariantWrapper =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
                 nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
-        clusteredVariantWrapper.map(this::toDTO).ifPresent(clusteredVariants::add);
+        nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
         List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
                 humanService.getByIdFields(assembly, chromosome, start, variantType);
