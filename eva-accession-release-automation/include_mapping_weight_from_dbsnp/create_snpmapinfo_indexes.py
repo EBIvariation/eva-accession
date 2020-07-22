@@ -14,8 +14,10 @@
 
 import click
 
-from pg_query_utils import *
-from snpmapinfo_metadata import *
+from ebi_eva_common_pyutils.pg_utils import get_pg_connection_handle, create_index_on_table, vacuum_analyze_table
+from include_mapping_weight_from_dbsnp.snpmapinfo_metadata import get_snpmapinfo_asm_columns, \
+    get_snpmapinfo_table_names_for_species
+from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_species_info, get_db_conn_for_species
 
 
 def create_snpmapinfo_indexes(metadata_db_name, metadata_db_user, metadata_db_host):

@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pymongo
-from urllib.parse import quote_plus
+import logging
+import sys
 
 
-def get_mongo_connection_handle(username: str, password: str, host: str,
-                                port: int = 27017, authentication_database: str = "admin") -> pymongo.MongoClient:
-    mongo_connection_uri = "mongodb://{0}:{1}@{2}:{3}/{4}".format(username, quote_plus(password), host,
-                                                                  port, authentication_database)
-    return pymongo.MongoClient(mongo_connection_uri)
+def init_logger():
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(levelname)s %(message)s')
+    result_logger = logging.getLogger(__name__)
+    return result_logger
+
+
+logger = init_logger()

@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-import sys
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
 
-def init_logger():
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(asctime)-15s %(levelname)s %(message)s')
-    result_logger = logging.getLogger(__name__)
-    return result_logger
-
-
-logger = init_logger()
+def get_assemblies_to_import_for_dbsnp_species(metadata_connection_handle, dbsnp_species_taxonomy, release_version):
+    query = "select distinct assembly_accession from dbsnp_ensembl_species.release_assemblies " \
+            "where release_version='{0}' " \
+            "and data_source='dbSNP' and tax_id='{1}'".format(release_version, dbsnp_species_taxonomy)
+    results = get_all_results_for_query(metadata_connection_handle, query)
+    if len(results) > 0:
+        return [result[0] for result in results]
+    return []
