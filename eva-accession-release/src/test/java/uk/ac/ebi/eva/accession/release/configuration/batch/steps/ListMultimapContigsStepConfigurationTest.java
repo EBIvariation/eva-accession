@@ -78,14 +78,14 @@ public class ListMultimapContigsStepConfigurationTest {
     @Before
     public void setUp() throws Exception {
         new File(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                          inputParameters.getAssemblyAccession()))
+                                            inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
     @After
     public void tearDown() throws Exception {
         new File(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                          inputParameters.getAssemblyAccession()))
+                                            inputParameters.getAssemblyAccession()))
                 .delete();
     }
     @Test
@@ -102,7 +102,7 @@ public class ListMultimapContigsStepConfigurationTest {
 
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1,CAE13")),
                      setOfLines(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                                         inputParameters.getAssemblyAccession())));
+                                                           inputParameters.getAssemblyAccession())));
     }
 
     private Set<String> setOfLines(String path) throws IOException {

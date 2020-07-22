@@ -25,10 +25,12 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import java.io.File;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.batch.io.ContigWriter.getActiveContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.batch.io.ContigWriter.getMergedContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.batch.io.ContigWriter.getMultimapContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_CONTIG_WRITER;
 
 @Configuration
 public class ContigWriterConfiguration {
@@ -47,6 +49,13 @@ public class ContigWriterConfiguration {
     public ContigWriter mergedContigWriter(InputParameters inputParameters) {
         return new ContigWriter(new File(getMergedContigsFilePath(inputParameters.getOutputFolder(),
                                                                   inputParameters.getAssemblyAccession())),
+                                contigMapping);
+    }
+
+    @Bean(MULTIMAP_CONTIG_WRITER)
+    public ContigWriter multimapContigWriter(InputParameters inputParameters) {
+        return new ContigWriter(new File(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
+                                                                    inputParameters.getAssemblyAccession())),
                                 contigMapping);
     }
 }

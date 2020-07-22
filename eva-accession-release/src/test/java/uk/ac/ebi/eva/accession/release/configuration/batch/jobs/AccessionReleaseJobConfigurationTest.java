@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
@@ -100,6 +101,7 @@ public class AccessionReleaseJobConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Arrays.asList(LIST_ACTIVE_CONTIGS_STEP, LIST_MERGED_CONTIGS_STEP,
+                                                   LIST_MULTIMAP_CONTIGS_STEP,
                                                    RELEASE_MAPPED_ACTIVE_VARIANTS_STEP,
                                                    RELEASE_MAPPED_MERGED_VARIANTS_STEP,
                                                    RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP,

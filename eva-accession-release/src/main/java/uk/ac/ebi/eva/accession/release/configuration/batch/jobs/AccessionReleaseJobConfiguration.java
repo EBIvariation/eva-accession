@@ -37,6 +37,7 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ListContigsStep
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
@@ -60,6 +61,11 @@ public class AccessionReleaseJobConfiguration {
     @Autowired
     @Qualifier(LIST_MERGED_CONTIGS_STEP)
     private Step listMergedContigsStep;
+
+
+    @Autowired
+    @Qualifier(LIST_MULTIMAP_CONTIGS_STEP)
+    private Step listMultimapContigsStep;
 
     @Autowired
     @Qualifier(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
@@ -87,6 +93,7 @@ public class AccessionReleaseJobConfiguration {
                                 .incrementer(new RunIdIncrementer())
                                 .start(listActiveContigsStep)
                                 .next(listMergedContigsStep)
+                                .next(listMultimapContigsStep)
                                 .next(createReleaseStep)
                                 .next(createMergedReleaseStep)
                                 .next(createDeprecatedReleaseStep)
