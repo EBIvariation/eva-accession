@@ -275,6 +275,34 @@
       "version" : 1,
       "createdDate" : ISODate("2017-09-20T08:25:00Z"),
       "mapWeight": 2
+    },
+    {
+      "_id": "F475F4F6657CF52CE8BF8416AA945EF669CBDDDD",
+      "asm": "GCA_000409795.2",
+      "tax": 60711,
+      "contig": "CM001954.1",
+      "start": NumberLong(161),
+      "type": "INS",
+      "accession": NumberLong(8182),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-16T13:07:00Z"
+      ),
+      "mapWeight": 2
+    },
+    {
+      "_id": "F475F4F6657CF52CE8BF8416AA945EF669CBEEEE",
+      "asm": "GCA_000409795.2",
+      "tax": 60711,
+      "contig": "CM001954.1",
+      "start": NumberLong(241),
+      "type": "INS",
+      "accession": NumberLong(8182),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-16T13:07:00Z"
+      ),
+      "mapWeight": 2
     }
   ]
 }

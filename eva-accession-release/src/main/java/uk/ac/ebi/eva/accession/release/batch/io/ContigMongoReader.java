@@ -38,8 +38,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import java.util.Arrays;
 import java.util.List;
 
-import static uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader.MAP_WEIGHT_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader.NON_SINGLE_LOCATION_MAPPING;
+import static uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader.MAPPING_WEIGHT_FIELD;
 
 public class ContigMongoReader implements ItemStreamReader<String> {
 
@@ -147,7 +147,7 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static List<Bson> buildAggregationForMultimapContigs(String assemblyAccession) {
         Bson match = Aggregates.match(Filters.and(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
-                                                  Filters.gte(MAP_WEIGHT_KEY, NON_SINGLE_LOCATION_MAPPING)));
+                                                  Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
         Bson uniqueContigs = Aggregates.group(ACTIVE_CONTIG_KEY);
         List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
         logger.info("Issuing aggregation: {}", aggregation);

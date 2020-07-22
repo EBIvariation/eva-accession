@@ -41,6 +41,7 @@ import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoRe
 import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.MergedVariantMongoReader.MERGED_INTO_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
 
 /**
  * Converts an IVariant to a VariantContext.
@@ -96,6 +97,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 case VARIANT_CLASS_KEY:
                 case STUDY_ID_KEY:
                 case MERGED_INTO_KEY:
+                case MAPPING_WEIGHT_KEY:
                     attributes.put(attribute.getKey(),
                                    toUniqueConcatenation(replaceInvalidCharacters(attribute.getValue())));
                     break;

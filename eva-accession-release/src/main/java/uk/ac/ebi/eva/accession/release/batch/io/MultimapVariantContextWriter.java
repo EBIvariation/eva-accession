@@ -22,9 +22,12 @@ import htsjdk.variant.vcf.VCFInfoHeaderLine;
 import java.nio.file.Path;
 import java.util.Set;
 
-import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.WEIGHT_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
 
 public class MultimapVariantContextWriter extends VariantContextWriter {
+
+    public static final String DBSNP_MAP_WEIGHT_DEFINITION_URL =
+            "https://www.ncbi.nlm.nih.gov/books/NBK44455/#Build.your_descriptions_of_mapweight_in";
 
     public MultimapVariantContextWriter(Path outputPath, String referenceAssembly, String multimapContigsFilePath) {
         super(outputPath, referenceAssembly, multimapContigsFilePath);
@@ -33,8 +36,9 @@ public class MultimapVariantContextWriter extends VariantContextWriter {
     @Override
     protected Set<VCFHeaderLine> buildHeaderLines() {
         Set<VCFHeaderLine> vcfHeaderLines = super.buildHeaderLines();
-        vcfHeaderLines.add(new VCFInfoHeaderLine(WEIGHT_KEY, 1, VCFHeaderLineType.Integer,
-                                                 "TODO definition of mapping weight (count per chr or per asm?)"));
+        vcfHeaderLines.add(new VCFInfoHeaderLine(MAPPING_WEIGHT_KEY, 1, VCFHeaderLineType.Integer,
+                                                 "mapping weight as defined by dbSNP for database tables at " +
+                                                         DBSNP_MAP_WEIGHT_DEFINITION_URL));
         return vcfHeaderLines;
     }
 

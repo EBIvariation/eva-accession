@@ -52,7 +52,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MULTIMAP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
@@ -128,6 +128,10 @@ public class CreateMultimapReleaseStepConfigurationTest {
                                                      "^##INFO=<ID=" + STUDY_ID_KEY + ".*$");
         assertEquals(1, metadataStudyIdLines.size());
 
+        List<String> metadataWeightLines = grepFile(getReleaseFile(),
+                                                     "^##INFO=<ID=" + MAPPING_WEIGHT_KEY + ".*$");
+        assertEquals(1, metadataWeightLines.size());
+
         List<String> headerLines = grepFile(getReleaseFile(),
                                             "^#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO$");
         assertEquals(1, headerLines.size());
@@ -164,17 +168,19 @@ public class CreateMultimapReleaseStepConfigurationTest {
         String dataLinesDoNotStartWithHash = "^[^#]";
         String variantClass = VARIANT_CLASS_KEY + "=SO:[0-9]+";
         String studyId = STUDY_ID_KEY + "=[a-zA-Z0-9,]+";
+        String mapWeight = MAPPING_WEIGHT_KEY + "=[0-9]+";
 
         List<String> dataLines;
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + variantClass + ".*");
         assertEquals(EXPECTED_LINES, dataLines.size());
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + studyId + ".*");
         assertEquals(EXPECTED_LINES, dataLines.size());
-
+        dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + mapWeight + ".*");
+        assertEquals(EXPECTED_LINES, dataLines.size());
     }
 
     /**
-     * Variant rs8181 is an insertion and when retrieving the context nucleotide from the FASTA it brings a Y which is
+     * Variant rs8182 is an insertion and when retrieving the context nucleotide from the FASTA it brings a Y which is
      * invalid in VCF. We have to make sure variants like that one are excluded before we write the VCF file.
      */
     @Test
@@ -183,6 +189,6 @@ public class CreateMultimapReleaseStepConfigurationTest {
         File outputFile = getReleaseFile();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
-        assertEquals(0, grepFile(outputFile, ".*rs8181.*").size());
+        assertEquals(0, grepFile(outputFile, ".*rs8182.*").size());
     }
 }

@@ -65,7 +65,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
     List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
-        Bson singlemap = Aggregates.match(Filters.not(exists(WEIGHT_FIELD)));
+        Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
         Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         List<Bson> aggregation = Arrays.asList(match, sort, singlemap, lookup);
