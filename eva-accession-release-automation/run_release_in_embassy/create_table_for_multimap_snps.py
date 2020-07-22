@@ -46,6 +46,9 @@ def create_multimap_snp_table_and_indices(metadata_connection_handle, dbsnp_spec
                                       [column])
                 vacuum_analyze_table(species_connection_handle, "dbsnp_" + dbsnp_species_name, multimap_snp_table_name,
                                      [column])
+                execute_query(species_connection_handle,
+                              "grant select on dbsnp_{0}.{1} to dbsnp_ro".format(dbsnp_species_name,
+                                                                                 multimap_snp_table_name))
 
 
 def create_table_for_multimap_snps(metadata_db_name, metadata_db_user, metadata_db_host, dbsnp_species_name):
