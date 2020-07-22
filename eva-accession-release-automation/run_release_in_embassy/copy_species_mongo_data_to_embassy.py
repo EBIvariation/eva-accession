@@ -95,15 +95,15 @@ def copy_species_mongo_data_to_embassy(private_config_xml_file, assemblies, temp
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
-@click.option("--assemblies", help="ex:  GCA_000003055.3 GCA_000003055.5", multiple=True,  required=True)
+@click.option("--assembly", "-a", help="ex: -a GCA_000003055.3 -a GCA_000003055.5", multiple=True,  required=True)
 @click.option("--tempmongo-instance", help="ex: tempmongo-1", required=True)
 @click.option("--collections-to-copy", default=None,
               help="ex: dbsnpSubmittedVariantEntity dbsnpSubmittedVariantOperationEntity", multiple=True,
               required=False)
 @click.option("--dump-dir", help="ex: /path/to/dump", required=True)
 @click.command()
-def main(private_config_xml_file, assemblies, tempmongo_instance, collections_to_copy, dump_dir):
-    copy_species_mongo_data_to_embassy(private_config_xml_file, assemblies, tempmongo_instance,
+def main(private_config_xml_file, assembly, tempmongo_instance, collections_to_copy, dump_dir):
+    copy_species_mongo_data_to_embassy(private_config_xml_file, assembly, tempmongo_instance,
                                        collections_to_copy, dump_dir)
 
 
