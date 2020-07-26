@@ -36,12 +36,6 @@
             <artifactId>nosqlunit-mongodb</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>uk.ac.ebi.eva</groupId>
-            <artifactId>eva-accession-remapping</artifactId>
-            <version>0.4.3-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
     <build>
