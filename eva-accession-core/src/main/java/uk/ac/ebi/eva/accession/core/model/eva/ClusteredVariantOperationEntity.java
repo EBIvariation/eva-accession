@@ -22,9 +22,17 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 
+import java.time.LocalDateTime;
+
 @Document
 public class ClusteredVariantOperationEntity extends EventDocument<IClusteredVariant, Long,
         ClusteredVariantInactiveEntity> {
+
+    public ClusteredVariantOperationEntity() {
+        super();
+        //Set the created date to assure is is assigned when performing bulk operations
+        setCreatedDate(LocalDateTime.now());
+    }
 
     @Override
     public String toString() {

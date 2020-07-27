@@ -37,7 +37,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -69,6 +68,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAssemblyAccessionEqual;
@@ -296,7 +296,7 @@ public class MergeAccessionClusteringWriterTest {
         assertEquals(EventType.MERGED, clusteredOp.getEventType());
         assertEquals(originalAccession, clusteredOp.getAccession());
         assertEquals(mergedInto, clusteredOp.getMergedInto());
-
+        assertNotNull(clusteredOp.getCreatedDate());
 
         List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> submittedOps =
                 mongoTemplate.findAll(SubmittedVariantOperationEntity.class);

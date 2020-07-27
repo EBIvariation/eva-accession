@@ -19,13 +19,19 @@ package uk.ac.ebi.eva.accession.core.model.dbsnp;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+
+import java.time.LocalDateTime;
 
 @Document
 public class DbsnpSubmittedVariantOperationEntity extends EventDocument<ISubmittedVariant, Long,
         DbsnpSubmittedVariantInactiveEntity> {
 
+    public DbsnpSubmittedVariantOperationEntity() {
+        super();
+        //Set the created date to assure is is assigned when performing bulk operations
+        setCreatedDate(LocalDateTime.now());
+    }
 
     @Override
     public String toString() {
