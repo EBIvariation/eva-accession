@@ -158,15 +158,6 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
         return variants;
     }
 
-    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHashedMessageIn(List<String> hashes) {
-        return joinLists(
-                hashes.stream().flatMap(hash -> accessioningService.getByHash(Collections.singletonList(hash)).stream())
-                      .collect(Collectors.toList()),
-                hashes.stream().flatMap(
-                        hash -> accessioningServiceDbsnp.getByHash(Collections.singletonList(hash)).stream())
-                      .collect(Collectors.toList()));
-    }
-
     @Override
     public AccessionVersionsWrapper<IClusteredVariant, String, Long> update(Long accession, int version,
                                                                             IClusteredVariant iClusteredVariant)
