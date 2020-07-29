@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.bulk.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -198,6 +199,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * In EVA-2003 we decided not to merge any RS ID that maps to several places in the same assembly
      * (mapping weight > 1) as this might be a signal of a low quality variant, and merging other "real" variants
      * in the same RS would just make things more complicated.
+     *
+     * Note that for submitted variants the test is not this simple, as 1:1000:A:T and 1:1000:A:G can be present in the
+     * same assembly and still not classify as multimap.
      */
     private boolean isMultimap(List<? extends ClusteredVariantEntity> clusteredVariantLoci) {
         int assembliesCount = clusteredVariantLoci.stream()

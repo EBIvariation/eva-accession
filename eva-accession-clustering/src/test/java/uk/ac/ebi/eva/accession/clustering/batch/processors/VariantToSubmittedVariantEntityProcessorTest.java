@@ -23,9 +23,10 @@ import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
-import java.util.Collections;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
@@ -46,7 +47,7 @@ public class VariantToSubmittedVariantEntityProcessorTest {
 
     @Before
     public void setUp() {
-        processor = new VariantToSubmittedVariantEntityProcessor(ASSEMBLY_ACCESSION, PROJECT_ACCESSION);
+        processor = new VariantToSubmittedVariantEntityProcessor(ASSEMBLY_ACCESSION);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -61,6 +62,9 @@ public class VariantToSubmittedVariantEntityProcessorTest {
 
         Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
         variant.setMainId("ss" + SUBMITTED_VARIANT_ACCESSION);
+        VariantSourceEntry sourceEntry = new VariantSourceEntry("fileId", "studyId");
+        sourceEntry.addAttribute(VariantContextWriter.PROJECT_KEY, PROJECT_ACCESSION);
+        variant.addSourceEntry(sourceEntry);
 
         // when
         SubmittedVariantEntity processedVariant = processor.process(variant);
@@ -74,6 +78,47 @@ public class VariantToSubmittedVariantEntityProcessorTest {
     @Test
     public void ssIdMissing() {
         Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
+        assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
+    }
+
+    @Test
+    public void projectIsKept() {
+        Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
+        variant.setMainId("ss" + SUBMITTED_VARIANT_ACCESSION);
+        VariantSourceEntry sourceEntry = new VariantSourceEntry("fileId", "studyId");
+        sourceEntry.addAttribute(VariantContextWriter.PROJECT_KEY, PROJECT_ACCESSION);
+        variant.addSourceEntry(sourceEntry);
+
+        SubmittedVariantEntity processed = processor.process(variant);
+
+        assertEquals(PROJECT_ACCESSION, processed.getProjectAccession());
+    }
+
+    @Test
+    public void rsIsKept() {
+        Long rs = 30L;
+        Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
+        variant.setMainId("ss" + SUBMITTED_VARIANT_ACCESSION);
+        VariantSourceEntry sourceEntry = new VariantSourceEntry("fileId", "studyId");
+        sourceEntry.addAttribute("RS", "rs" + rs.toString());
+        sourceEntry.addAttribute(VariantContextWriter.PROJECT_KEY, PROJECT_ACCESSION);
+        variant.addSourceEntry(sourceEntry);
+
+        SubmittedVariantEntity processed = processor.process(variant);
+
+        assertEquals(rs, processed.getClusteredVariantAccession());
+    }
+
+    @Test
+    public void tooManySourceEntries() {
+        Variant variant = new Variant("1", 1000L, 1000L, "A", "T");
+        variant.setMainId("ss" + SUBMITTED_VARIANT_ACCESSION);
+        VariantSourceEntry sourceEntry = new VariantSourceEntry("fileId", "studyId");
+        sourceEntry.addAttribute(VariantContextWriter.PROJECT_KEY, PROJECT_ACCESSION);
+        variant.addSourceEntry(sourceEntry);
+        sourceEntry.setFileId("file2");
+        variant.addSourceEntry(sourceEntry);
+
         assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
 }

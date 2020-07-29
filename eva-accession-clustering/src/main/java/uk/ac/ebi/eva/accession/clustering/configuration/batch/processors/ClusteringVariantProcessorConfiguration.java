@@ -27,7 +27,7 @@ public class ClusteringVariantProcessorConfiguration {
 
     @Bean(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR)
     public VariantToSubmittedVariantEntityProcessor variantToSubmittedVariantProcessor(InputParameters inputParameters) {
-        return new VariantToSubmittedVariantEntityProcessor(inputParameters.getAssemblyAccession(),
-                                                            inputParameters.getProjectAccession());
+        return new VariantToSubmittedVariantEntityProcessor(inputParameters.getAssemblyAccession()
+        );
     }
 }
