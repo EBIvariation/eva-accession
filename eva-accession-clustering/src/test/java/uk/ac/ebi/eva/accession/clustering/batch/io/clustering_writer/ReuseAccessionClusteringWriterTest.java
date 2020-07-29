@@ -37,7 +37,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -62,6 +61,8 @@ import java.util.Collections;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 /**
  * This class handles some scenarios of ClusteringWriter where an existing RS is reused.
@@ -178,6 +179,7 @@ public class ReuseAccessionClusteringWriterTest {
     public void reuse_dbsnp_clustered_accession_when_clustering_an_eva_submitted_variant() throws Exception {
         // given
         Long rs1 = 30L;
+        long ss = 5100000000L;
 
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
@@ -186,7 +188,7 @@ public class ReuseAccessionClusteringWriterTest {
 
         mongoTemplate.insert(createDbsnpClusteredVariantEntity("asm1", rs1));
 
-        SubmittedVariantEntity sveNonClustered = createSubmittedVariantEntity("asm1", null, 5100000000L);
+        SubmittedVariantEntity sveNonClustered = createSubmittedVariantEntity("asm1", null, ss);
         mongoTemplate.insert(sveNonClustered);
 
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
@@ -207,6 +209,10 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(1, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
 
+        SubmittedVariantOperationEntity operation = mongoTemplate.findOne(new Query(where("accession").is(ss)),
+                SubmittedVariantOperationEntity.class);
+        assertNotNull(operation.getCreatedDate());
+
         SubmittedVariantEntity afterClustering = mongoTemplate.findOne(new Query(), SubmittedVariantEntity.class);
         assertEquals(rs1, afterClustering.getClusteredVariantAccession());
         SubmittedVariantOperationEntity afterClusteringOperation = mongoTemplate.findOne(
@@ -219,6 +225,7 @@ public class ReuseAccessionClusteringWriterTest {
     public void reuse_eva_clustered_accession_when_clustering_a_dbsnp_submitted_variant() throws Exception {
         // given
         Long rs1 = 3000000000L;
+        long ss = 51L;
 
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
@@ -227,7 +234,7 @@ public class ReuseAccessionClusteringWriterTest {
 
         mongoTemplate.insert(createClusteredVariantEntity("asm1", rs1));
 
-        SubmittedVariantEntity sveNonClustered = createDbsnpSubmittedVariantEntity("asm1", null, 51L);
+        SubmittedVariantEntity sveNonClustered = createDbsnpSubmittedVariantEntity("asm1", null, ss);
         mongoTemplate.insert(sveNonClustered);
 
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
@@ -247,6 +254,10 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
+
+        DbsnpSubmittedVariantOperationEntity operation = mongoTemplate.findOne(new Query(where("accession").is(ss)),
+                DbsnpSubmittedVariantOperationEntity.class);
+        assertNotNull(operation.getCreatedDate());
 
         SubmittedVariantEntity afterClustering = mongoTemplate.findOne(new Query(), DbsnpSubmittedVariantEntity.class);
         assertEquals(rs1, afterClustering.getClusteredVariantAccession());
