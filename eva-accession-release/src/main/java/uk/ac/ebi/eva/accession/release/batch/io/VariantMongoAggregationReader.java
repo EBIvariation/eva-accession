@@ -55,7 +55,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     public static final String MERGED_INTO_KEY = "CURR";
 
-    public static final String MAPPING_WEIGHT_KEY = "WEIGHT";
+    public static final String MAPPING_WEIGHT_KEY = "MAP_WEIGHT";
 
     protected static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
 
