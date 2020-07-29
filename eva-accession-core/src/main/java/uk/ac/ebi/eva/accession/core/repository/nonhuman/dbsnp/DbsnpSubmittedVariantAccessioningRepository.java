@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp;
 
 import org.springframework.stereotype.Repository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedObjectRepository;
-
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 
 import java.util.List;
@@ -30,5 +29,4 @@ public interface DbsnpSubmittedVariantAccessioningRepository extends
 
     List<DbsnpSubmittedVariantEntity> findByClusteredVariantAccessionIn(List<Long> clusteredVariantAccession);
 
-    List<DbsnpSubmittedVariantEntity> findByHashedMessageIn(List<String> hashes);
 }

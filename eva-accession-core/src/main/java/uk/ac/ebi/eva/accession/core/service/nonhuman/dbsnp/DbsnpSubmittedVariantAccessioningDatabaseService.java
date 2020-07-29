@@ -28,7 +28,6 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.services.InactiveAccessionService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
-
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpSubmittedVariantAccessioningRepository;
@@ -67,13 +66,6 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
             List<Long> clusteredVariantIds) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> wrappedAccessions = new ArrayList<>();
         repository.findByClusteredVariantAccessionIn(clusteredVariantIds).iterator().forEachRemaining(
-                entity -> wrappedAccessions.add(toModelWrapper(entity)));
-        return wrappedAccessions;
-    }
-
-    public List<AccessionWrapper<ISubmittedVariant, String, Long>> findByHashedMessageIn(List<String> hashes) {
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> wrappedAccessions = new ArrayList<>();
-        repository.findByHashedMessageIn(hashes).iterator().forEachRemaining(
                 entity -> wrappedAccessions.add(toModelWrapper(entity)));
         return wrappedAccessions;
     }
@@ -161,5 +153,12 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
         IAccessionedObject<ISubmittedVariant, ?, Long> inactiveObject = inactiveObjects.get(inactiveObjects.size() - 1);
         return new AccessionWrapper<>(accession, (String) inactiveObject.getHashedMessage(), inactiveObject.getModel(),
                                       inactiveObject.getVersion());
+    }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        List<DbsnpSubmittedVariantEntity> entities = this.repository.findByAccession(accession);
+        this.checkAccessionIsActive(entities, accession);
+        return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
     }
 }

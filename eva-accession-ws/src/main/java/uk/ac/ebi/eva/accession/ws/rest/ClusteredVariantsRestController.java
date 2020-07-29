@@ -36,13 +36,12 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
-
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
@@ -53,15 +52,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/v1/clustered-variants")
 @Api(tags = {"Clustered variants"})
 public class ClusteredVariantsRestController {
-
-    private final BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController;
 
     private SubmittedVariantAccessioningService submittedVariantsService;
 
@@ -71,25 +67,16 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantAccessioningService nonHumanActiveService;
 
-    // TODO don't use the dbsnpInactiveService. This won't return EVA accessioned ClusteredVariants. A method
-    //  getLastInactive was added to {@link SubmittedVariantAccessioningService} to avoid using the inactive
-    //  service directly, but at the moment, {@link ClusteredVariantAccessioningService} only deals with dbSNP variants
-    private DbsnpClusteredVariantInactiveService inactiveService;
-
     public ClusteredVariantsRestController(
-            BasicRestController<ClusteredVariant, IClusteredVariant, String, Long> basicRestController,
             SubmittedVariantAccessioningService submittedVariantsService,
             ClusteredVariantsBeaconService beaconService,
             @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
-            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService,
-            @Qualifier("nonhumanInactiveService") DbsnpClusteredVariantInactiveService inactiveService
+            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService
     ) {
-        this.basicRestController = basicRestController;
         this.submittedVariantsService = submittedVariantsService;
         this.beaconService = beaconService;
         this.humanService = humanService;
         this.nonHumanActiveService = nonHumanActiveService;
-        this.inactiveService = inactiveService;
     }
 
     /**
@@ -110,7 +97,7 @@ public class ClusteredVariantsRestController {
                     new ArrayList<>();
             clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
             clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
-                                                 .collect(Collectors.toList()));
+                    .collect(Collectors.toList()));
 
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
@@ -126,7 +113,8 @@ public class ClusteredVariantsRestController {
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
             Long identifier) throws AccessionDeprecatedException, AccessionMergedException {
         try {
-            return Collections.singletonList(basicRestController.get(identifier));
+            return nonHumanActiveService.getAllByAccession(identifier).stream().map(this::toDTO)
+                    .collect(Collectors.toList());
         } catch (AccessionDoesNotExistException e) {
             return Collections.emptyList();
         }
@@ -140,17 +128,7 @@ public class ClusteredVariantsRestController {
      */
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getDeprecatedClusteredVariant(
             Long identifier) {
-        IEvent<IClusteredVariant, Long> lastEvent = inactiveService.getLastEvent(identifier);
-        IAccessionedObject<IClusteredVariant, ?, Long> accessionedObjectWrongType = lastEvent.getInactiveObjects().get(0);
-
-        IAccessionedObject<IClusteredVariant, String, Long> accessionedObject =
-                (IAccessionedObject<IClusteredVariant, String, Long>) accessionedObjectWrongType;
-
-        return Collections.singletonList(
-                new AccessionResponseDTO<>(
-                        new AccessionWrapper<>(identifier,
-                                               accessionedObject.getHashedMessage(),
-                                               accessionedObject.getModel()),
+        return Collections.singletonList(new AccessionResponseDTO<>(nonHumanActiveService.getLastInactive(identifier),
                         ClusteredVariant::new));
     }
 
@@ -164,7 +142,7 @@ public class ClusteredVariantsRestController {
                     required = true) Long identifier)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
-        basicRestController.get(identifier);
+        nonHumanActiveService.getAllByAccession(identifier);
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
                 submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
@@ -189,9 +167,9 @@ public class ClusteredVariantsRestController {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
 
-        Optional<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariantWrapper =
+        List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
                 nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
-        clusteredVariantWrapper.map(this::toDTO).ifPresent(clusteredVariants::add);
+        nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
         List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
                 humanService.getByIdFields(assembly, chromosome, start, variantType);

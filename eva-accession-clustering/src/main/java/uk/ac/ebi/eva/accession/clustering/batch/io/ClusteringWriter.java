@@ -135,8 +135,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private VariantType getVariantType(String reference, String alternate) {
-        // TODO jmmut: this is wrong. Won't classify INDELs properly as the VariantClassifier needs a correct snpclass
-        VariantType variantType = VariantClassifier.getVariantClassification(reference, alternate, 0);
+        VariantType variantType = VariantClassifier.getVariantClassification(reference, alternate);
         return variantType;
     }
 

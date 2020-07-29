@@ -277,6 +277,19 @@ public class SubmittedVariantAccessioningServiceTest {
         assertEquals(dbsnpSubmittedVariant, retrievedSubmittedDbsnpVariant.getData());
     }
 
+    @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
+    @Test
+    public void getAllByAccession() throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        assertEquals(2, service.getAllByAccession(2200000002L).size());
+    }
+
+    @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
+    @Test
+    public void getAllByIdFields() {
+        assertEquals(2, service.getAllByIdFields("GCA_000009999.3", "21", Arrays.asList("DBSNP999", "DBSNP111"),
+                20849999L, "", "GG").size());
+    }
+
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
     public void getByAccessionAndVersionFromBothRepositories() throws AccessionMergedException,

@@ -16,13 +16,11 @@
 package uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
-import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
-
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 
 import java.util.List;
@@ -50,7 +48,12 @@ public class DbsnpClusteredVariantMonotonicAccessioningService
         return this.hashingFunction.apply(variant);
     }
 
-    public List<AccessionWrapper<IClusteredVariant, String, Long>> getByHash(List<String> hashes) {
-        return dbService.findAllByHash(hashes);
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return dbService.getAllByAccession(accession);
+    }
+
+    public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {
+        return dbService.getLastInactive(accession);
     }
 }
