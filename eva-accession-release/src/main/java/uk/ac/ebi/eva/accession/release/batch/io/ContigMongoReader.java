@@ -38,6 +38,9 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import java.util.Arrays;
 import java.util.List;
 
+import static uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader.NON_SINGLE_LOCATION_MAPPING;
+import static uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader.MAPPING_WEIGHT_FIELD;
+
 public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigMongoReader.class);
@@ -88,6 +91,13 @@ public class ContigMongoReader implements ItemStreamReader<String> {
                                      buildAggregationForMergedContigs(assemblyAccession));
     }
 
+    public static ContigMongoReader multimapContigReader(String assemblyAccession, MongoClient mongoClient,
+                                                         String database) {
+        return new ContigMongoReader(assemblyAccession, mongoClient, database,
+                                     DBSNP_CLUSTERED_VARIANT_ENTITY,
+                                     buildAggregationForMultimapContigs(assemblyAccession));
+    }
+
     private ContigMongoReader(String assemblyAccession, MongoClient mongoClient, String database, String collection,
                               List<Bson> aggregation) {
         this.assemblyAccession = assemblyAccession;
@@ -131,6 +141,15 @@ public class ContigMongoReader implements ItemStreamReader<String> {
         Bson uniqueContigs = Aggregates.group(MONGO_ID_KEY);
 
         List<Bson> aggregation = Arrays.asList(match, extractContig, projectArrayToSingleContig, uniqueContigs);
+        logger.info("Issuing aggregation: {}", aggregation);
+        return aggregation;
+    }
+
+    private static List<Bson> buildAggregationForMultimapContigs(String assemblyAccession) {
+        Bson match = Aggregates.match(Filters.and(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+                                                  Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
+        Bson uniqueContigs = Aggregates.group(ACTIVE_CONTIG_KEY);
+        List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }

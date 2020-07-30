@@ -48,10 +48,12 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MULTIMAP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -72,6 +74,8 @@ public class AccessionReleaseJobConfigurationTest {
     private static final long EXPECTED_LINES_DEPRECATED = 3;
 
     private static final long EXPECTED_LINES_MERGED_DEPRECATED = 2;
+
+    private static final long EXPECTED_LINES_MULTIMAP = 2;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -97,10 +101,12 @@ public class AccessionReleaseJobConfigurationTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
 
         List<String> expectedSteps = Arrays.asList(LIST_ACTIVE_CONTIGS_STEP, LIST_MERGED_CONTIGS_STEP,
+                                                   LIST_MULTIMAP_CONTIGS_STEP,
                                                    RELEASE_MAPPED_ACTIVE_VARIANTS_STEP,
                                                    RELEASE_MAPPED_MERGED_VARIANTS_STEP,
                                                    RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP,
-                                                   RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
+                                                   RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP,
+                                                   RELEASE_MULTIMAP_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
@@ -118,6 +124,8 @@ public class AccessionReleaseJobConfigurationTest {
         assertEquals(EXPECTED_LINES_DEPRECATED, numVariantsInDeprecatedRelease);
         long numVariantsInMergedDeprecatedRelease = FileUtils.countNonCommentLines(getMergedDeprecatedRelease());
         assertEquals(EXPECTED_LINES_MERGED_DEPRECATED, numVariantsInMergedDeprecatedRelease);
+        long numVariantsInMultimapRelease = FileUtils.countNonCommentLines(getMultimapRelease());
+        assertEquals(EXPECTED_LINES_MULTIMAP, numVariantsInMultimapRelease);
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
@@ -142,6 +150,12 @@ public class AccessionReleaseJobConfigurationTest {
         return new FileInputStream(
                 ReportPathResolver.getMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
                                                                     inputParameters.getAssemblyAccession()).toFile());
+    }
+
+    private FileInputStream getMultimapRelease() throws FileNotFoundException {
+        return new FileInputStream(
+                ReportPathResolver.getMultimapIdsReportPath(inputParameters.getOutputFolder(),
+                                                            inputParameters.getAssemblyAccession()).toFile());
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

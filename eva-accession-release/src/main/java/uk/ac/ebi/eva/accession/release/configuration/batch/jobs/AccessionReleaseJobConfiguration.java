@@ -30,16 +30,19 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateDeprecatedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMergedDeprecatedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMergedReleaseStepConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMultimapReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ListContigsStepConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MULTIMAP_VARIANTS_STEP;
 
 @Configuration
 @EnableBatchProcessing
@@ -47,7 +50,8 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
          CreateReleaseStepConfiguration.class,
          CreateDeprecatedReleaseStepConfiguration.class,
          CreateMergedDeprecatedReleaseStepConfiguration.class,
-         CreateMergedReleaseStepConfiguration.class})
+         CreateMergedReleaseStepConfiguration.class,
+         CreateMultimapReleaseStepConfiguration.class})
 public class AccessionReleaseJobConfiguration {
 
     @Autowired
@@ -57,6 +61,11 @@ public class AccessionReleaseJobConfiguration {
     @Autowired
     @Qualifier(LIST_MERGED_CONTIGS_STEP)
     private Step listMergedContigsStep;
+
+
+    @Autowired
+    @Qualifier(LIST_MULTIMAP_CONTIGS_STEP)
+    private Step listMultimapContigsStep;
 
     @Autowired
     @Qualifier(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
@@ -74,16 +83,22 @@ public class AccessionReleaseJobConfiguration {
     @Qualifier(RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
     private Step createMergedDeprecatedReleaseStep;
 
+    @Autowired
+    @Qualifier(RELEASE_MULTIMAP_VARIANTS_STEP)
+    private Step createMultimapReleaseStep;
+
     @Bean(ACCESSION_RELEASE_JOB)
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(ACCESSION_RELEASE_JOB)
                                 .incrementer(new RunIdIncrementer())
                                 .start(listActiveContigsStep)
                                 .next(listMergedContigsStep)
+                                .next(listMultimapContigsStep)
                                 .next(createReleaseStep)
                                 .next(createMergedReleaseStep)
                                 .next(createDeprecatedReleaseStep)
                                 .next(createMergedDeprecatedReleaseStep)
+                                .next(createMultimapReleaseStep)
                                 .build();
     }
 }

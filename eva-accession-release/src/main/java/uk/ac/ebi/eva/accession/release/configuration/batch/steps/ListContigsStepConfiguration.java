@@ -35,8 +35,11 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CON
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_CONTIG_WRITER;
 
 /**
  * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in
@@ -64,6 +67,14 @@ public class ListContigsStepConfiguration {
     @Qualifier(MERGED_CONTIG_WRITER)
     private ItemStreamWriter<String> mergedContigWriter;
 
+    @Autowired
+    @Qualifier(MULTIMAP_CONTIG_READER)
+    private ItemStreamReader<String> multimapContigReader;
+
+    @Autowired
+    @Qualifier(MULTIMAP_CONTIG_WRITER)
+    private ItemStreamWriter<String> multimapContigWriter;
+
     @Bean(LIST_ACTIVE_CONTIGS_STEP)
     public Step activeContigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(LIST_ACTIVE_CONTIGS_STEP)
@@ -80,6 +91,16 @@ public class ListContigsStepConfiguration {
                 .<String, String>chunk(chunkSizeCompletionPolicy)
                 .reader(mergedContigReader)
                 .writer(mergedContigWriter)
+                .build();
+        return step;
+    }
+
+    @Bean(LIST_MULTIMAP_CONTIGS_STEP)
+    public Step multimapContigsStep(StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(LIST_MULTIMAP_CONTIGS_STEP)
+                .<String, String>chunk(chunkSizeCompletionPolicy)
+                .reader(multimapContigReader)
+                .writer(multimapContigWriter)
                 .build();
         return step;
     }

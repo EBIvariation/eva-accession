@@ -26,6 +26,8 @@ public class BeanNames {
     public static final String RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP =
             "RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP";
 
+    public static final String RELEASE_MULTIMAP_VARIANTS_STEP = "RELEASE_MULTIMAP_VARIANTS_STEP";
+
     public static final String RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP = "RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP";
 
     public static final String ACCESSIONED_VARIANT_READER = "ACCESSIONED_VARIANT_READER";
@@ -36,11 +38,15 @@ public class BeanNames {
 
     public static final String MERGED_DEPRECATED_VARIANT_READER = "MERGED_DEPRECATED_VARIANT_READER";
 
+    public static final String MULTIMAP_VARIANT_READER = "MULTIMAP_VARIANT_READER";
+
     public static final String RELEASE_PROCESSOR = "RELEASE_PROCESSOR";
 
     public static final String RELEASE_WRITER = "RELEASE_WRITER";
 
     public static final String MERGED_RELEASE_WRITER = "MERGED_RELEASE_WRITER";
+
+    public static final String MULTIMAP_RELEASE_WRITER = "MULTIMAP_RELEASE_WRITER";
 
     public static final String MERGED_DEPRECATED_RELEASE_WRITER = "MERGED_DEPRECATED_RELEASE_WRITER";
 
@@ -54,11 +60,17 @@ public class BeanNames {
 
     public static final String LIST_MERGED_CONTIGS_STEP = "LIST_MERGED_CONTIGS_STEP";
 
+    public static final String LIST_MULTIMAP_CONTIGS_STEP = "LIST_MULTIMAP_CONTIGS_STEP";
+
     public static final String ACTIVE_CONTIG_READER = "ACTIVE_CONTIG_READER";
 
     public static final String MERGED_CONTIG_READER = "MERGED_CONTIG_READER";
 
+    public static final String MULTIMAP_CONTIG_READER = "MULTIMAP_CONTIG_READER";
+
     public static final String ACTIVE_CONTIG_WRITER = "ACTIVE_CONTIG_WRITER";
 
     public static final String MERGED_CONTIG_WRITER = "MERGED_CONTIG_WRITER";
+
+    public static final String MULTIMAP_CONTIG_WRITER = "MULTIMAP_CONTIG_WRITER";
 }

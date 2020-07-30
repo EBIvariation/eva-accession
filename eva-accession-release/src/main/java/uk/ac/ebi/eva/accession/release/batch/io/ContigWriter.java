@@ -41,6 +41,8 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     private static final String MERGED_FILE_PREFIX = "/merged_contigs_";
 
+    private static final String MULTIMAP_FILE_PREFIX = "/multimap_contigs_";
+
     private final File output;
 
     private ContigMapping contigMapping;
@@ -111,5 +113,17 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     public static String getMergedContigsFilePath(String outputFolder, String referenceAssembly) {
         return Paths.get(outputFolder) + getMergedContigsFilePath(referenceAssembly);
+    }
+
+    public static String getMultimapContigsFilePath(String referenceAssembly) {
+        return MULTIMAP_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
+    }
+
+    public static String getMultimapContigsFilePath(File outputFolder, String referenceAssembly) {
+        return outputFolder + getMultimapContigsFilePath(referenceAssembly);
+    }
+
+    public static String getMultimapContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + getMultimapContigsFilePath(referenceAssembly);
     }
 }

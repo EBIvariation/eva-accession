@@ -44,4 +44,8 @@ public class ReportPathResolver {
         return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
     }
 
+    public static Path getMultimapIdsReportPath(String outputFolder, String referenceAssembly) {
+        final String FILE_SUFFIX = "_multimap_ids.vcf";
+        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+    }
 }

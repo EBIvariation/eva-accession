@@ -405,6 +405,57 @@
       "accession" : NumberLong(1122557780),
       "version" : 1,
       "createdDate" : ISODate("2014-07-29T22:13:00.000Z")
+    },
+    {
+      "_id": "7A4304A9E9AE320D0E28FCC9E23EF1E605ACA444",
+      "seq": "GCA_000409795.2",
+      "tax" : 60711,
+      "study": "PRJEB7923",
+      "contig" : "CM001954.1",
+      "start" : NumberLong(42),
+      "ref" : "C",
+      "alt" : "T",
+      "rs" : NumberLong(55555),
+      "evidence" : false,
+      "validated" : false,
+      "accession" : NumberLong(55556),
+      "version" : 1,
+      "createdDate" : ISODate("2017-09-20T08:25:00Z"),
+      "mapWeight": 2
+    },
+    {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750CFFF",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(161),
+      "ref": "",
+      "alt": "T",
+      "rs": NumberLong(8182),
+      "accession": NumberLong(8282),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      ),
+      "mapWeight": 2
+    },
+    {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750CEEE",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(241),
+      "ref": "",
+      "alt": "T",
+      "rs": NumberLong(8182),
+      "accession": NumberLong(8282),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      ),
+      "mapWeight": 2
     }
   ]
 }
