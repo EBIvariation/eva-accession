@@ -132,7 +132,7 @@ public class ReuseAccessionClusteringWriterTest {
     @DirtiesContext
     public void reuse_clustered_accession_if_provided() throws AccessionCouldNotBeGeneratedException,
             AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        Long existingRs = 30L;
+        Long existingRs = 3000000000L;
         String asm1 = "asm1";
         String asm2 = "asm2";
 
@@ -141,12 +141,12 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         // keep the RS that a submitted variant already has (RS=existingRs)
-        SubmittedVariantEntity sveClustered = createSubmittedVariantEntity(asm1, existingRs, 50L);
+        SubmittedVariantEntity sveClustered = createSubmittedVariantEntity(asm1, existingRs, 5000000000L);
         clusteringWriter.write(Collections.singletonList(sveClustered));
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         // assign an existing RS to a different submitted variant (that has rs=null)
-        SubmittedVariantEntity sveNonClustered = createSubmittedVariantEntity(asm2, null, 51L);
+        SubmittedVariantEntity sveNonClustered = createSubmittedVariantEntity(asm2, null, 5100000000L);
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 

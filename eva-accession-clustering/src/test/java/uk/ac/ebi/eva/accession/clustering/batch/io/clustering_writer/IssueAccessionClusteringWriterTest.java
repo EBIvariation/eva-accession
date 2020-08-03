@@ -23,6 +23,7 @@ import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -243,6 +244,7 @@ public class IssueAccessionClusteringWriterTest {
 
     @Test
     @DirtiesContext
+//    @Ignore
     public void do_not_cluster_eva_submitted_variant_into_a_dbsnp_multimap_clustered_variant() throws Exception {
         // given
         ClusteredVariantEntity rs1Locus1 = createClusteredVariantEntity(30L, "asm1", "chr1");
@@ -296,6 +298,7 @@ public class IssueAccessionClusteringWriterTest {
 
     @Test
     @DirtiesContext
+//    @Ignore
     public void do_not_cluster_dbsnp_submitted_variant_into_a_dbsnp_multimap_clustered_variant() throws Exception {
         // given
         ClusteredVariantEntity rs1Locus1 = createClusteredVariantEntity(30L, "asm1", "chr1");

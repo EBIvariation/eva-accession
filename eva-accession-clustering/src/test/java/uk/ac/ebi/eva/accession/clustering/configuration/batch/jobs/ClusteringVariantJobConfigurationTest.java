@@ -15,6 +15,11 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
+import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
+import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
@@ -23,15 +28,27 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -45,6 +62,8 @@ import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestCon
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringVariantJobConfigurationTest {
 
+    private static final String TEST_DB = "test-db";
+
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_VCF)
     private JobLauncherTestUtils jobLauncherTestUtilsFromVcf;
@@ -53,8 +72,25 @@ public class ClusteringVariantJobConfigurationTest {
     @Qualifier(JOB_LAUNCHER_FROM_MONGO)
     private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
+    //Required by nosql-unit
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Rule
+    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
+            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+
+    @After
+    public void tearDown() {
+        mongoTemplate.getDb().drop();
+    }
+
     @Test
     @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
     public void jobFromVcf() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchJob();
         List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_VCF_STEP);
@@ -69,6 +105,16 @@ public class ClusteringVariantJobConfigurationTest {
         List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_MONGO_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+    }
+
+    private DbsnpClusteredVariantEntity createClusteredVariantEntity() {
+        ClusteredVariant variant = new ClusteredVariant("GCA_000000001.1", 1000, "1", 3000, VariantType.SNV, false,
+                                                        null);
+        Function<IClusteredVariant, String> clusteredHashingFunction =
+                new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        String hash = clusteredHashingFunction.apply(variant);
+        DbsnpClusteredVariantEntity variantEntity = new DbsnpClusteredVariantEntity(30L, hash, variant, 1);
+        return variantEntity;
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
