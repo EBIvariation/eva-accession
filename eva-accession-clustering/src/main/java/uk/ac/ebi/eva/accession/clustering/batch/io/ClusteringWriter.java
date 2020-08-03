@@ -23,6 +23,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -47,10 +51,12 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -64,6 +70,14 @@ import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergin
  * This writer has two parts:
  * 1. Use the accessioning service to generate new RS IDs or get existing ones
  * 2. Update the submitted variants to include the "rs" field with the generated/retrieved accessions
+ *
+ * Some edge cases take into account if a clustered variant is multimap. The definition of multimap variants that this
+ * class uses is "clustered variants whose accession maps several times in the same assembly". Another definition is
+ * "clustered variants that have map_weight > 1". Altough both definitions *should* yield the same set of variants, we
+ * have no guarantee that there will be no discrepancy (as the mapping weight comes from dbSNP). If there are
+ * discrepancies, only the first definition will be honoured by this class. (there is no technical limitation to use
+ * the second definition, but in jmmut's opinion it's probably less reliable, as the mapping weight was not taken into
+ * account during the dbSNP import, where we performed merges and deprecations).
  */
 public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
@@ -78,6 +92,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private Function<IClusteredVariant, String> clusteredHashingFunction;
 
     private Map<String, Long> assignedAccessions;
+
+    private Map<Long, List<ClusteredVariantEntity>> clusteredVariantsPerAccession;
 
     private Long accessioningMonotonicInitSs;
 
@@ -94,6 +110,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.assignedAccessions = new HashMap<>();
+        this.clusteredVariantsPerAccession = new HashMap<>();
         Assert.notNull(accessioningMonotonicInitSs, "accessioningMonotonicInitSs must not be null. Check autowiring.");
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
@@ -104,6 +121,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         assignedAccessions.clear();
+        clusteredVariantsPerAccession.clear();
 
         // Write new Clustered Variants in mongo and get existing ones. May merge clustered variants
         getOrCreateClusteredVariantAccessions(submittedVariantEntities);
@@ -125,6 +143,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             clusteringCounts.addClusteredVariantsCreated(newAccessions);
         }
         checkForMerges(submittedVariantEntities);
+        checkForMultimaps();
     }
 
     private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
@@ -210,9 +229,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * Note that for submitted variants the test is not this simple, as 1:1000:A:T and 1:1000:A:G can be present in the
      * same assembly and still not classify as multimap.
      */
-    private boolean isMultimap(List<? extends ClusteredVariantEntity> clusteredVariantLoci) {
+    private boolean isMultimap(List<? extends IClusteredVariant> clusteredVariantLoci) {
         int assembliesCount = clusteredVariantLoci.stream()
-                                                  .map(ClusteredVariantEntity::getAssemblyAccession)
+                                                  .map(IClusteredVariant::getAssemblyAccession)
                                                   .collect(Collectors.toSet())
                                                   .size();
         return assembliesCount < clusteredVariantLoci.size();
@@ -282,6 +301,27 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     /**
+     * From EVA-2071, do not cluster submitted variants into a multimap clustered variant.
+     *
+     * This function removes candidate clustered variant accessions if they are multimap.
+     */
+    private void checkForMultimaps() {
+        List<String> multimapHashes = new ArrayList<>();
+        for (Map.Entry<String, Long> pair : assignedAccessions.entrySet()) {
+            List<AccessionWrapper<IClusteredVariant, String, Long>> allByAccession;
+            try {
+                allByAccession = clusteredService.getAllByAccession(pair.getValue());
+            } catch (AccessionMergedException | AccessionDoesNotExistException | AccessionDeprecatedException cause) {
+                throw new RuntimeException(cause);
+            }
+            if (isMultimap(allByAccession.stream().map(AccessionWrapper::getData).collect(Collectors.toList()))) {
+                multimapHashes.add(pair.getKey());
+            }
+        }
+        multimapHashes.forEach(assignedAccessions::remove);
+    }
+
+    /**
      * This function assigns a clustered variant accession (rs) to the submitted variants that didn't have any.
      */
     private void clusterSubmittedVariants(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
@@ -301,7 +341,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 continue;
             }
 
-            long rsid = getClusteredVariantAccession(submittedVariantEntity);
+            Long rsid = getClusteredVariantAccession(submittedVariantEntity);
+            if (rsid == null) {
+                // no candidate for clustering. e.g. the candidate is a multimap clustered variant (EVA-2071)
+                continue;
+            }
             // Query to update the RSid in submittedVariantEntity
             Query updateRsQuery = query(where("_id").is(submittedVariantEntity.getId()));
             Update updateRsUpdate = new Update();
