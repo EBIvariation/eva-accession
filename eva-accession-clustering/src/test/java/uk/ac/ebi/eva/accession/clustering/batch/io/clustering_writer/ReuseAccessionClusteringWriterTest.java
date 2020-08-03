@@ -38,6 +38,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -90,6 +92,9 @@ public class ReuseAccessionClusteringWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
+    private ClusteringCounts clusteringCounts;
+
+    @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     @Autowired
@@ -112,8 +117,8 @@ public class ReuseAccessionClusteringWriterTest {
     @Before
     public void setUp() {
         mongoTemplate.getDb().drop();
-        clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                                                EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START);
+        clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService, EVA_SUBMITTED_VARIANT_RANGE_START,
+                EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
@@ -148,6 +153,8 @@ public class ReuseAccessionClusteringWriterTest {
         // for the same submitted variant without an assigned RS (rs=null), getOrCreate should not create another RS
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+
+        assertClusteringCounts(1, 0, 0, 2, 2);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -218,6 +225,8 @@ public class ReuseAccessionClusteringWriterTest {
         SubmittedVariantOperationEntity afterClusteringOperation = mongoTemplate.findOne(
                 new Query(), SubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
+
+        assertClusteringCounts(0, 0, 0, 1, 1);
     }
 
     @Test
@@ -264,5 +273,25 @@ public class ReuseAccessionClusteringWriterTest {
         DbsnpSubmittedVariantOperationEntity afterClusteringOperation = mongoTemplate.findOne(
                 new Query(), DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
+
+        assertClusteringCounts(0, 0, 0, 1, 1);
+    }
+
+    /**
+     * Clustering counts are used by the listener
+     * {@link ClusteringProgressListener}
+     * to summarize the counts after a the step is finished
+     */
+    private void assertClusteringCounts(long expectedClusteredVariantsCreated, long expectedClusteredVariantsUpdated,
+                                        long expectedClusteredVariantsMergeOperationsWritten,
+                                        long expectedSubmittedVariantsUpdated,
+                                        long expectedSubmittedVariantsUpdateOperationWritten) {
+        assertEquals(expectedClusteredVariantsCreated, clusteringCounts.getClusteredVariantsCreated());
+        assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
+        assertEquals(expectedClusteredVariantsMergeOperationsWritten,
+                clusteringCounts.getClusteredVariantsMergeOperationsWritten());
+        assertEquals(expectedSubmittedVariantsUpdated, clusteringCounts.getSubmittedVariantsUpdated());
+        assertEquals(expectedSubmittedVariantsUpdateOperationWritten,
+                clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
     }
 }

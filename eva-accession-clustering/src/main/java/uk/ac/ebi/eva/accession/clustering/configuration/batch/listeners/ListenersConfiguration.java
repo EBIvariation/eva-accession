@@ -1,11 +1,10 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners;
 
-import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
-import uk.ac.ebi.eva.accession.core.batch.listeners.GenericProgressListener;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRESS_LISTENER;
 
@@ -13,7 +12,13 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRES
 public class ListenersConfiguration {
 
     @Bean(PROGRESS_LISTENER)
-    public <R, W> StepListenerSupport<R, W> progressListener(InputParameters parameters) {
-        return new GenericProgressListener<>(parameters.getChunkSize());
+    public ClusteringProgressListener clusteringProgressListener(InputParameters parameters,
+                                                                 ClusteringCounts clusteringCounts) {
+        return new ClusteringProgressListener(parameters.getChunkSize(), clusteringCounts);
+    }
+
+    @Bean
+    public ClusteringCounts importCounts() {
+        return new ClusteringCounts();
     }
 }

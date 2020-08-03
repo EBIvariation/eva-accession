@@ -98,6 +98,7 @@ public class ClusteringVariantStepConfigurationTest {
     @After
     public void tearDown() {
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        mongoTemplate.dropCollection(ClusteredVariantEntity.class);
     }
 
     /**

@@ -19,8 +19,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
-
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
@@ -37,8 +37,9 @@ public class ClusteringWriterConfiguration {
     public ClusteringWriter clusteringWriter(MongoTemplate mongoTemplate,
                                              ClusteredVariantAccessioningService accessioningService,
                                              Long accessioningMonotonicInitSs,
-                                             Long accessioningMonotonicInitRs) {
+                                             Long accessioningMonotonicInitRs,
+                                             ClusteringCounts clusteringCounts) {
         return new ClusteringWriter(mongoTemplate, accessioningService, accessioningMonotonicInitSs,
-                                    accessioningMonotonicInitRs);
+                                    accessioningMonotonicInitRs, clusteringCounts);
     }
 }
