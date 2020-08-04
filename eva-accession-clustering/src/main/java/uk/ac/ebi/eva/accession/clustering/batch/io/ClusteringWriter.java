@@ -56,7 +56,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -93,8 +92,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private Map<String, Long> assignedAccessions;
 
-    private Map<Long, List<ClusteredVariantEntity>> clusteredVariantsPerAccession;
-
     private Long accessioningMonotonicInitSs;
 
     private Long accessioningMonotonicInitRs;
@@ -110,7 +107,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.assignedAccessions = new HashMap<>();
-        this.clusteredVariantsPerAccession = new HashMap<>();
         Assert.notNull(accessioningMonotonicInitSs, "accessioningMonotonicInitSs must not be null. Check autowiring.");
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
@@ -121,7 +117,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         assignedAccessions.clear();
-        clusteredVariantsPerAccession.clear();
 
         // Write new Clustered Variants in mongo and get existing ones. May merge clustered variants
         getOrCreateClusteredVariantAccessions(submittedVariantEntities);
@@ -303,19 +298,21 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     /**
      * From EVA-2071, do not cluster submitted variants into a multimap clustered variant.
      *
-     * This function removes candidate clustered variant accessions if they are multimap.
+     * This function removes candidate clustered variant accessions if they are multimap. This means that some submitted
+     * variants will be kept unclustered. This potentially will be revisited in the future, but for now (release 2) we
+     * are leaving this out of scope.
      */
     private void checkForMultimaps() {
         List<String> multimapHashes = new ArrayList<>();
-        for (Map.Entry<String, Long> pair : assignedAccessions.entrySet()) {
+        for (Map.Entry<String, Long> hashAndAccession : assignedAccessions.entrySet()) {
             List<AccessionWrapper<IClusteredVariant, String, Long>> allByAccession;
             try {
-                allByAccession = clusteredService.getAllByAccession(pair.getValue());
+                allByAccession = clusteredService.getAllByAccession(hashAndAccession.getValue());
             } catch (AccessionMergedException | AccessionDoesNotExistException | AccessionDeprecatedException cause) {
                 throw new RuntimeException(cause);
             }
             if (isMultimap(allByAccession.stream().map(AccessionWrapper::getData).collect(Collectors.toList()))) {
-                multimapHashes.add(pair.getKey());
+                multimapHashes.add(hashAndAccession.getKey());
             }
         }
         multimapHashes.forEach(assignedAccessions::remove);
