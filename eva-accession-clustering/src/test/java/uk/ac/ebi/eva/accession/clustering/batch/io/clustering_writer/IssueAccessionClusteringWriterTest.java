@@ -139,7 +139,7 @@ public class IssueAccessionClusteringWriterTest {
         assertClusteredVariantsCreated();
         assertSubmittedVariantsUpdated();
         assertSubmittedVariantsOperationInserted();
-        assertClusteringCounts(4, 0, 0, 5, 5);
+        assertClusteringCounts(4, 0, 0, 5, 0, 5);
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
@@ -236,13 +236,15 @@ public class IssueAccessionClusteringWriterTest {
      */
     private void assertClusteringCounts(long expectedClusteredVariantsCreated, long expectedClusteredVariantsUpdated,
                                         long expectedClusteredVariantsMergeOperationsWritten,
-                                        long expectedSubmittedVariantsUpdated,
+                                        long expectedSubmittedVariantsNewRs,
+                                        long expectedSubmittedVariantsUpdatedRs,
                                         long expectedSubmittedVariantsUpdateOperationWritten) {
         assertEquals(expectedClusteredVariantsCreated, clusteringCounts.getClusteredVariantsCreated());
         assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
         assertEquals(expectedClusteredVariantsMergeOperationsWritten,
                 clusteringCounts.getClusteredVariantsMergeOperationsWritten());
-        assertEquals(expectedSubmittedVariantsUpdated, clusteringCounts.getSubmittedVariantsUpdated());
+        assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
+        assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
         assertEquals(expectedSubmittedVariantsUpdateOperationWritten,
                 clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
     }

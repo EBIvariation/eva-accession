@@ -23,7 +23,9 @@ public class ClusteringCounts {
 
     private long clusteredVariantsMergeOperationsWritten;
 
-    private long submittedVariantsUpdated;
+    private long submittedVariantsClustered;
+
+    private long submittedVariantsUpdatedRs;
 
     private long submittedVariantsUpdateOperationWritten;
 
@@ -31,7 +33,8 @@ public class ClusteringCounts {
         this.clusteredVariantsCreated = 0;
         this.clusteredVariantsUpdated = 0;
         this.clusteredVariantsMergeOperationsWritten = 0;
-        this.submittedVariantsUpdated = 0;
+        this.submittedVariantsClustered = 0;
+        this.submittedVariantsUpdatedRs = 0;
         this.submittedVariantsUpdateOperationWritten = 0;
     }
 
@@ -71,16 +74,28 @@ public class ClusteringCounts {
         this.clusteredVariantsMergeOperationsWritten = clusteredVariantsMergeOperationsWritten;
     }
 
-    public void addSubmittedVariantsUpdated(long submittedVariantsUpdated) {
-        this.submittedVariantsUpdated += submittedVariantsUpdated;
+    public void addSubmittedVariantsClustered(long submittedVariantsClustered) {
+        this.submittedVariantsClustered += submittedVariantsClustered;
     }
 
-    public long getSubmittedVariantsUpdated() {
-        return submittedVariantsUpdated;
+    public long getSubmittedVariantsClustered() {
+        return submittedVariantsClustered;
     }
 
-    public void setSubmittedVariantsUpdated(long submittedVariantsUpdated) {
-        this.submittedVariantsUpdated = submittedVariantsUpdated;
+    public void setSubmittedVariantsClustered(long submittedVariantsClustered) {
+        this.submittedVariantsClustered = submittedVariantsClustered;
+    }
+
+    public void addSubmittedVariantsUpdatedRs(long submittedVariantsUpdatedRs) {
+        this.submittedVariantsUpdatedRs += submittedVariantsUpdatedRs;
+    }
+
+    public long getSubmittedVariantsUpdatedRs() {
+        return submittedVariantsUpdatedRs;
+    }
+
+    public void setSubmittedVariantsUpdatedRs(long submittedVariantsUpdatedRs) {
+        this.submittedVariantsUpdatedRs = submittedVariantsUpdatedRs;
     }
 
     public void addSubmittedVariantsUpdateOperationWritten(long submittedVariantsUpdateOperationWritten) {

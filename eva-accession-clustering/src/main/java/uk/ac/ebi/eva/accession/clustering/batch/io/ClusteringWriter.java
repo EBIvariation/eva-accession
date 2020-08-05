@@ -253,7 +253,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         Update update = new Update();
         update.set(RS_KEY, prioritised.accessionToKeep);
         mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
-        clusteringCounts.addSubmittedVariantsUpdated(svToUpdate.size());
+        clusteringCounts.addSubmittedVariantsUpdatedRs(svToUpdate.size());
 
         if (!svToUpdate.isEmpty()) {
             List<SubmittedVariantOperationEntity> operations =
@@ -330,13 +330,13 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
         if (numUpdates > 0) {
             bulkOperations.execute();
-            clusteringCounts.addSubmittedVariantsUpdated(numUpdates);
+            clusteringCounts.addSubmittedVariantsClustered(numUpdates);
             bulkHistoryOperations.execute();
             clusteringCounts.addSubmittedVariantsUpdateOperationWritten(numUpdates);
         }
         if (numDbsnpUpdates > 0) {
             dbsnpBulkOperations.execute();
-            clusteringCounts.addSubmittedVariantsUpdated(numDbsnpUpdates);
+            clusteringCounts.addSubmittedVariantsClustered(numDbsnpUpdates);
             dbsnpBulkHistoryOperations.execute();
             clusteringCounts.addSubmittedVariantsUpdateOperationWritten(numDbsnpUpdates);
         }

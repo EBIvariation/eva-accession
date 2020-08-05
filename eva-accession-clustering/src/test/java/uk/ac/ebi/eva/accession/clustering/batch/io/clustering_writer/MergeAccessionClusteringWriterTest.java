@@ -236,7 +236,7 @@ public class MergeAccessionClusteringWriterTest {
         assertDatabaseCounts(expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations, expectedCvOperations,
                              expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
 
-        assertClusteringCounts(0, 1, 1, 1, 1);
+        assertClusteringCounts(0, 1, 1, 0, 1, 1);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
@@ -248,13 +248,15 @@ public class MergeAccessionClusteringWriterTest {
      */
     private void assertClusteringCounts(long expectedClusteredVariantsCreated, long expectedClusteredVariantsUpdated,
                                         long expectedClusteredVariantsMergeOperationsWritten,
-                                        long expectedSubmittedVariantsUpdated,
+                                        long expectedSubmittedVariantsNewRs,
+                                        long expectedSubmittedVariantsUpdatedRs,
                                         long expectedSubmittedVariantsUpdateOperationWritten) {
         assertEquals(expectedClusteredVariantsCreated, clusteringCounts.getClusteredVariantsCreated());
         assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
         assertEquals(expectedClusteredVariantsMergeOperationsWritten,
                 clusteringCounts.getClusteredVariantsMergeOperationsWritten());
-        assertEquals(expectedSubmittedVariantsUpdated, clusteringCounts.getSubmittedVariantsUpdated());
+        assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
+        assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
         assertEquals(expectedSubmittedVariantsUpdateOperationWritten,
                 clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
     }

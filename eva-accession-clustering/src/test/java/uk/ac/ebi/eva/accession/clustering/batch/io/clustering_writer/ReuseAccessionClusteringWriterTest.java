@@ -154,7 +154,7 @@ public class ReuseAccessionClusteringWriterTest {
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
-        assertClusteringCounts(1, 0, 0, 2, 2);
+        assertClusteringCounts(1, 0, 0, 2, 0, 2);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -226,7 +226,7 @@ public class ReuseAccessionClusteringWriterTest {
                 new Query(), SubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
-        assertClusteringCounts(0, 0, 0, 1, 1);
+        assertClusteringCounts(0, 0, 0, 1, 0, 1);
     }
 
     @Test
@@ -274,7 +274,7 @@ public class ReuseAccessionClusteringWriterTest {
                 new Query(), DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
-        assertClusteringCounts(0, 0, 0, 1, 1);
+        assertClusteringCounts(0, 0, 0, 1, 0, 1);
     }
 
     /**
@@ -284,13 +284,15 @@ public class ReuseAccessionClusteringWriterTest {
      */
     private void assertClusteringCounts(long expectedClusteredVariantsCreated, long expectedClusteredVariantsUpdated,
                                         long expectedClusteredVariantsMergeOperationsWritten,
-                                        long expectedSubmittedVariantsUpdated,
+                                        long expectedSubmittedVariantsNewRs,
+                                        long expectedSubmittedVariantsUpdatedRs,
                                         long expectedSubmittedVariantsUpdateOperationWritten) {
         assertEquals(expectedClusteredVariantsCreated, clusteringCounts.getClusteredVariantsCreated());
         assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
         assertEquals(expectedClusteredVariantsMergeOperationsWritten,
                 clusteringCounts.getClusteredVariantsMergeOperationsWritten());
-        assertEquals(expectedSubmittedVariantsUpdated, clusteringCounts.getSubmittedVariantsUpdated());
+        assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
+        assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
         assertEquals(expectedSubmittedVariantsUpdateOperationWritten,
                 clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
     }
