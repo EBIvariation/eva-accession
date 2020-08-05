@@ -39,7 +39,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -72,6 +71,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringWriterTestUtils.assertClusteringCounts;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAssemblyAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertClusteredVariantAccessionEqual;
@@ -236,29 +236,9 @@ public class MergeAccessionClusteringWriterTest {
         assertDatabaseCounts(expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations, expectedCvOperations,
                              expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
 
-        assertClusteringCounts(0, 1, 1, 0, 1, 1);
+        assertClusteringCounts(clusteringCounts, 0, 1, 1, 0, 1, 1);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
-    }
-
-    /**
-     * Clustering counts are used by the listener
-     * {@link ClusteringProgressListener}
-     * to summarize the counts after a the step is finished
-     */
-    private void assertClusteringCounts(long expectedClusteredVariantsCreated, long expectedClusteredVariantsUpdated,
-                                        long expectedClusteredVariantsMergeOperationsWritten,
-                                        long expectedSubmittedVariantsNewRs,
-                                        long expectedSubmittedVariantsUpdatedRs,
-                                        long expectedSubmittedVariantsUpdateOperationWritten) {
-        assertEquals(expectedClusteredVariantsCreated, clusteringCounts.getClusteredVariantsCreated());
-        assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
-        assertEquals(expectedClusteredVariantsMergeOperationsWritten,
-                clusteringCounts.getClusteredVariantsMergeOperationsWritten());
-        assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
-        assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
-        assertEquals(expectedSubmittedVariantsUpdateOperationWritten,
-                clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
     }
 
     private ClusteredVariantEntity createClusteredVariantEntity(String assembly, Long rs) {

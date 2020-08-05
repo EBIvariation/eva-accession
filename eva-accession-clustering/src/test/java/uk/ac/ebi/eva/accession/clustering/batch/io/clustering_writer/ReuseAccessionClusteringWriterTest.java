@@ -39,7 +39,6 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -65,6 +64,7 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringWriterTestUtils.assertClusteringCounts;
 
 /**
  * This class handles some scenarios of ClusteringWriter where an existing RS is reused.
@@ -154,7 +154,7 @@ public class ReuseAccessionClusteringWriterTest {
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
-        assertClusteringCounts(1, 0, 0, 2, 0, 2);
+        assertClusteringCounts(clusteringCounts, 1, 0, 0, 2, 0, 2);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -226,7 +226,7 @@ public class ReuseAccessionClusteringWriterTest {
                 new Query(), SubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
-        assertClusteringCounts(0, 0, 0, 1, 0, 1);
+        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 1);
     }
 
     @Test
@@ -274,26 +274,6 @@ public class ReuseAccessionClusteringWriterTest {
                 new Query(), DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
-        assertClusteringCounts(0, 0, 0, 1, 0, 1);
-    }
-
-    /**
-     * Clustering counts are used by the listener
-     * {@link ClusteringProgressListener}
-     * to summarize the counts after a the step is finished
-     */
-    private void assertClusteringCounts(long expectedClusteredVariantsCreated, long expectedClusteredVariantsUpdated,
-                                        long expectedClusteredVariantsMergeOperationsWritten,
-                                        long expectedSubmittedVariantsNewRs,
-                                        long expectedSubmittedVariantsUpdatedRs,
-                                        long expectedSubmittedVariantsUpdateOperationWritten) {
-        assertEquals(expectedClusteredVariantsCreated, clusteringCounts.getClusteredVariantsCreated());
-        assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
-        assertEquals(expectedClusteredVariantsMergeOperationsWritten,
-                clusteringCounts.getClusteredVariantsMergeOperationsWritten());
-        assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
-        assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
-        assertEquals(expectedSubmittedVariantsUpdateOperationWritten,
-                clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
+        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 1);
     }
 }
