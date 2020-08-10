@@ -64,7 +64,7 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringWriterTestUtils.assertClusteringCounts;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
 
 /**
  * This class handles some scenarios of ClusteringWriter where an existing RS is reused.

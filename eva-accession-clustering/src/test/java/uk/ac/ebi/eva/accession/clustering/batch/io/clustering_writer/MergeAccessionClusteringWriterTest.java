@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringWriterTestUtils.assertClusteringCounts;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAssemblyAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertClusteredVariantAccessionEqual;

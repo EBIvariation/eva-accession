@@ -20,7 +20,7 @@ import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressList
 
 import static org.junit.Assert.assertEquals;
 
-public class ClusteringWriterTestUtils {
+public class ClusteringAssertions {
 
     /**
      * Clustering counts are used by the listener {@link ClusteringProgressListener} to summarize the counts after

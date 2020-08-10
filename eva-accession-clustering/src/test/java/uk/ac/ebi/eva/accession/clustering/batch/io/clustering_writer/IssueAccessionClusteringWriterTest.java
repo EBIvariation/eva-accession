@@ -23,7 +23,6 @@ import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,7 +67,7 @@ import java.util.function.Function;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringWriterTestUtils.assertClusteringCounts;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
 
 /**
  * This class handles the simplest scenarios of ClusteringWriter.
