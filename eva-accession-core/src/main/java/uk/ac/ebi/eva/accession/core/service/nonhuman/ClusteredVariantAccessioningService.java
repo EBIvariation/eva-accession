@@ -63,34 +63,29 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
     public List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> getOrCreate(
             List<? extends IClusteredVariant> variants)
             throws AccessionCouldNotBeGeneratedException {
-        List<AccessionWrapper<IClusteredVariant, String, Long>> dbsnpVariants = accessioningServiceDbsnp.get(variants);
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> dbsnpVariants =
+                accessioningServiceDbsnp.get(variants).stream()
+                        .map(d -> new GetOrCreateAccessionWrapper<>(d.getAccession(), d.getHash(), d.getData(), false))
+                        .collect(Collectors.toList());
         List<IClusteredVariant> variantsNotInDbsnp = removeFromList(variants, dbsnpVariants);
         if (variantsNotInDbsnp.isEmpty()) {
             // check this special case because mongo bulk inserts don't allow inserting empty lists
             // (accession-commons BasicMongoDbAccessionedCustomRepositoryImpl.insert would need to change)
-            return dbsnpVariants.stream().map(d -> new GetOrCreateAccessionWrapper<>
-                    (d.getAccession(),
-                     d.getHash(),
-                     d.getData(), false)).collect(Collectors.toList());
+            return dbsnpVariants;
         } else {
-            List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
-            accessioningService.getOrCreate(variantsNotInDbsnp)
-                               .forEach(getOrCreateAccessionWrapperObj -> clusteredVariants.add(
-                                       new AccessionWrapper<IClusteredVariant, String, Long>
-                                               (getOrCreateAccessionWrapperObj.getAccession(),
-                                                getOrCreateAccessionWrapperObj.getHash(),
-                                                getOrCreateAccessionWrapperObj.getData())));
-            return joinLists(clusteredVariants, dbsnpVariants)
-                    .stream()
-                    .map(d -> new GetOrCreateAccessionWrapper<>
-                            (d.getAccession(),
-                             d.getHash(),
-                             d.getData(), false)).collect(Collectors.toList());
+            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
+                    accessioningService.getOrCreate(variantsNotInDbsnp);
+
+            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> allClusteredVariants = new ArrayList<>();
+            allClusteredVariants.addAll(dbsnpVariants);
+            allClusteredVariants.addAll(clusteredVariants);
+
+            return allClusteredVariants;
         }
     }
 
     private List<IClusteredVariant> removeFromList(List<? extends IClusteredVariant> allVariants,
-                                                   List<AccessionWrapper<IClusteredVariant, String, Long>>
+                                                   List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>>
                                                            variantsToDelete) {
         Set<String> hashesToDelete = variantsToDelete.stream()
                                                      .map(AccessionWrapper::getHash)

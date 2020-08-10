@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.bulk.BulkWriteResult;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -29,6 +28,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrappe
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -83,10 +83,13 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private Long accessioningMonotonicInitRs;
 
+    private ClusteringCounts clusteringCounts;
+
     public ClusteringWriter(MongoTemplate mongoTemplate,
                             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                             Long accessioningMonotonicInitSs,
-                            Long accessioningMonotonicInitRs) {
+                            Long accessioningMonotonicInitRs,
+                            ClusteringCounts clusteringCounts) {
         this.mongoTemplate = mongoTemplate;
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -94,6 +97,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         Assert.notNull(accessioningMonotonicInitSs, "accessioningMonotonicInitSs must not be null. Check autowiring.");
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
+        this.clusteringCounts = clusteringCounts;
     }
 
     @Override
@@ -117,6 +121,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
                     clusteredService.getOrCreate(clusteredVariants);
             accessionWrappers.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+            long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count();
+            clusteringCounts.addClusteredVariantsCreated(newAccessions);
         }
         checkForMerges(submittedVariantEntities);
     }
@@ -175,9 +181,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                        .map(c -> buildClusteredOperation(c, prioritised.accessionToKeep))
                                        .collect(Collectors.toList());
         mongoTemplate.insert(operations, getClusteredOperationCollection(prioritised.accessionToBeMerged));
+        clusteringCounts.addClusteredVariantsMergeOperationsWritten(clusteredVariantToMerge.size());
 
         mongoTemplate.updateMulti(queryClustered, update(ACCESSION_KEY, prioritised.accessionToKeep),
                                   getClusteredVariantCollection(prioritised.accessionToBeMerged));
+        clusteringCounts.addClusteredVariantsUpdated(clusteredVariantToMerge.size());
 
         // Update submitted variants linked to the clustered variant we just merged.
         // This has to happen for both EVA and dbsnp SS because previous cross merges might have happened.
@@ -245,6 +253,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         Update update = new Update();
         update.set(RS_KEY, prioritised.accessionToKeep);
         mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
+        clusteringCounts.addSubmittedVariantsUpdatedRs(svToUpdate.size());
 
         if (!svToUpdate.isEmpty()) {
             List<SubmittedVariantOperationEntity> operations =
@@ -252,6 +261,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                               .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
                               .collect(Collectors.toList());
             mongoTemplate.insert(operations, submittedOperationCollection);
+            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(operations.size());
         }
     }
 
@@ -320,11 +330,15 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
         if (numUpdates > 0) {
             bulkOperations.execute();
+            clusteringCounts.addSubmittedVariantsClustered(numUpdates);
             bulkHistoryOperations.execute();
+            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(numUpdates);
         }
         if (numDbsnpUpdates > 0) {
             dbsnpBulkOperations.execute();
+            clusteringCounts.addSubmittedVariantsClustered(numDbsnpUpdates);
             dbsnpBulkHistoryOperations.execute();
+            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(numDbsnpUpdates);
         }
     }
 

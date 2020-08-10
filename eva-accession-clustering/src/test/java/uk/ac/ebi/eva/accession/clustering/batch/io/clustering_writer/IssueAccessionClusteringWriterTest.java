@@ -37,6 +37,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -58,6 +59,7 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringWriterTestUtils.assertClusteringCounts;
 
 /**
  * This class handles the simplest scenarios of ClusteringWriter.
@@ -93,6 +95,9 @@ public class IssueAccessionClusteringWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
+    private ClusteringCounts clusteringCounts;
+
+    @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     @Autowired
@@ -114,8 +119,8 @@ public class IssueAccessionClusteringWriterTest {
 
     @Before
     public void setUp() {
-        clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                                                EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START);
+        clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService, EVA_SUBMITTED_VARIANT_RANGE_START,
+                EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
@@ -134,6 +139,7 @@ public class IssueAccessionClusteringWriterTest {
         assertClusteredVariantsCreated();
         assertSubmittedVariantsUpdated();
         assertSubmittedVariantsOperationInserted();
+        assertClusteringCounts(clusteringCounts, 4, 0, 0, 5, 0, 5);
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
