@@ -25,6 +25,8 @@ public class ClusteringCounts {
 
     private long submittedVariantsClustered;
 
+    private long submittedVariantsKeptUnclustered;
+
     private long submittedVariantsUpdatedRs;
 
     private long submittedVariantsUpdateOperationWritten;
@@ -33,6 +35,7 @@ public class ClusteringCounts {
         this.clusteredVariantsCreated = 0;
         this.clusteredVariantsUpdated = 0;
         this.clusteredVariantsMergeOperationsWritten = 0;
+        this.submittedVariantsKeptUnclustered = 0;
         this.submittedVariantsClustered = 0;
         this.submittedVariantsUpdatedRs = 0;
         this.submittedVariantsUpdateOperationWritten = 0;
@@ -72,6 +75,18 @@ public class ClusteringCounts {
 
     public void setClusteredVariantsMergeOperationsWritten(long clusteredVariantsMergeOperationsWritten) {
         this.clusteredVariantsMergeOperationsWritten = clusteredVariantsMergeOperationsWritten;
+    }
+
+    public void addSubmittedVariantsKeptUnclustered(long submittedVariantsKeptUnclustered) {
+        this.submittedVariantsKeptUnclustered += submittedVariantsKeptUnclustered;
+    }
+
+    public long getSubmittedVariantsKeptUnclustered() {
+        return submittedVariantsKeptUnclustered;
+    }
+
+    public void setSubmittedVariantsKeptUnclustered(long submittedVariantsKeptUnclustered) {
+        this.submittedVariantsKeptUnclustered = submittedVariantsKeptUnclustered;
     }
 
     public void addSubmittedVariantsClustered(long submittedVariantsClustered) {

@@ -341,6 +341,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             Long rsid = getClusteredVariantAccession(submittedVariantEntity);
             if (rsid == null) {
                 // no candidate for clustering. e.g. the candidate is a multimap clustered variant (EVA-2071)
+                clusteringCounts.addSubmittedVariantsKeptUnclustered(1);
                 continue;
             }
             // Query to update the RSid in submittedVariantEntity

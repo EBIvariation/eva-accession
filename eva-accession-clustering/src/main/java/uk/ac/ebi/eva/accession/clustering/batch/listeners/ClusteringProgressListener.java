@@ -40,12 +40,14 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
 
         String stepName = stepExecution.getStepName();
         long numTotalItemsRead = stepExecution.getReadCount();
-        logger.info("Step {} finished: Items read = {}, rs created = {}, rs updated = {}, rs merge operations = {}, " +
+        logger.info("Step {} finished: Items (ss) read = {}, rs created = {}, rs updated = {}, " +
+                            "rs merge operations = {}, ss kept unclustered = {}, " +
                         "ss clustered = {}, ss updated rs merged = {}, ss update operations = {}",
                 stepName, numTotalItemsRead,
                 clusteringCounts.getClusteredVariantsCreated(),
                 clusteringCounts.getClusteredVariantsUpdated(),
                 clusteringCounts.getClusteredVariantsMergeOperationsWritten(),
+                clusteringCounts.getSubmittedVariantsKeptUnclustered(),
                 clusteringCounts.getSubmittedVariantsClustered(),
                 clusteringCounts.getSubmittedVariantsUpdatedRs(),
                 clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
