@@ -147,7 +147,7 @@ public class IssueAccessionClusteringWriterTest {
         assertClusteredVariantsCreated();
         assertSubmittedVariantsUpdated();
         assertSubmittedVariantsOperationInserted();
-        assertClusteringCounts(clusteringCounts, 4, 0, 0, 5, 0, 5);
+        assertClusteringCounts(clusteringCounts, 4, 0, 0, 0, 5, 0, 5);
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
@@ -271,6 +271,7 @@ public class IssueAccessionClusteringWriterTest {
         // then
         assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
                                 .getClusteredVariantAccession());
+        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 0, 0);
     }
 
     private ClusteredVariant createClusteredVariant(String assemblyAccession, String contig) {

@@ -30,6 +30,7 @@ public class ClusteringAssertions {
                                         long expectedClusteredVariantsCreated,
                                         long expectedClusteredVariantsUpdated,
                                         long expectedClusteredVariantsMergeOperationsWritten,
+                                        long expectedSubmittedVariantsKeptUnclustered,
                                         long expectedSubmittedVariantsNewRs,
                                         long expectedSubmittedVariantsUpdatedRs,
                                         long expectedSubmittedVariantsUpdateOperationWritten) {
@@ -37,6 +38,7 @@ public class ClusteringAssertions {
         assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
         assertEquals(expectedClusteredVariantsMergeOperationsWritten,
                 clusteringCounts.getClusteredVariantsMergeOperationsWritten());
+        assertEquals(expectedSubmittedVariantsKeptUnclustered, clusteringCounts.getSubmittedVariantsKeptUnclustered());
         assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
         assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
         assertEquals(expectedSubmittedVariantsUpdateOperationWritten,

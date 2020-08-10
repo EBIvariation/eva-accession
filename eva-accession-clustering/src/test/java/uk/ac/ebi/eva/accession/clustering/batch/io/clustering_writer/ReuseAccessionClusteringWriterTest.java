@@ -154,7 +154,7 @@ public class ReuseAccessionClusteringWriterTest {
         clusteringWriter.write(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
-        assertClusteringCounts(clusteringCounts, 1, 0, 0, 2, 0, 2);
+        assertClusteringCounts(clusteringCounts, 1, 0, 0, 0, 2, 0, 2);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -226,7 +226,7 @@ public class ReuseAccessionClusteringWriterTest {
                 new Query(), SubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
-        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 1);
+        assertClusteringCounts(clusteringCounts, 0, 0, 0, 0, 1, 0, 1);
     }
 
     @Test
@@ -274,6 +274,6 @@ public class ReuseAccessionClusteringWriterTest {
                 new Query(), DbsnpSubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
-        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 1);
+        assertClusteringCounts(clusteringCounts, 0, 0, 0, 0, 1, 0, 1);
     }
 }

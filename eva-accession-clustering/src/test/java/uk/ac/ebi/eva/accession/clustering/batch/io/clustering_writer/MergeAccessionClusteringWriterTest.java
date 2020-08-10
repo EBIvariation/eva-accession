@@ -236,7 +236,7 @@ public class MergeAccessionClusteringWriterTest {
         assertDatabaseCounts(expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations, expectedCvOperations,
                              expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
 
-        assertClusteringCounts(clusteringCounts, 0, 1, 1, 0, 1, 1);
+        assertClusteringCounts(clusteringCounts, 0, 1, 1, 0, 0, 1, 1);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
