@@ -20,7 +20,7 @@ import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressList
 
 import static org.junit.Assert.assertEquals;
 
-public class ClusteringWriterTestUtils {
+public class ClusteringAssertions {
 
     /**
      * Clustering counts are used by the listener {@link ClusteringProgressListener} to summarize the counts after
@@ -30,6 +30,7 @@ public class ClusteringWriterTestUtils {
                                         long expectedClusteredVariantsCreated,
                                         long expectedClusteredVariantsUpdated,
                                         long expectedClusteredVariantsMergeOperationsWritten,
+                                        long expectedSubmittedVariantsKeptUnclustered,
                                         long expectedSubmittedVariantsNewRs,
                                         long expectedSubmittedVariantsUpdatedRs,
                                         long expectedSubmittedVariantsUpdateOperationWritten) {
@@ -37,6 +38,7 @@ public class ClusteringWriterTestUtils {
         assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
         assertEquals(expectedClusteredVariantsMergeOperationsWritten,
                 clusteringCounts.getClusteredVariantsMergeOperationsWritten());
+        assertEquals(expectedSubmittedVariantsKeptUnclustered, clusteringCounts.getSubmittedVariantsKeptUnclustered());
         assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
         assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
         assertEquals(expectedSubmittedVariantsUpdateOperationWritten,

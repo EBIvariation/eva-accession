@@ -16,10 +16,14 @@
  */
 package uk.ac.ebi.eva.accession.clustering.runner;
 
+import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
+import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.JobExecutionException;
@@ -29,6 +33,7 @@ import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -36,6 +41,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
+import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
@@ -63,6 +69,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringCommandLineRunnerTest {
 
+    private static final String TEST_DB = "test-db";
+
     @Autowired
     private InputParameters inputParameters;
 
@@ -80,6 +88,15 @@ public class ClusteringCommandLineRunnerTest {
 
     @Autowired
     private VcfReader vcfReader;
+
+    //Required by nosql-unit
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Rule
+    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
+            MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+
 
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
@@ -123,6 +140,7 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
+    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
     public void runJobWithNoErrors() throws JobExecutionException {
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
@@ -144,6 +162,7 @@ public class ClusteringCommandLineRunnerTest {
 
     @Test
     @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
     public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
@@ -155,6 +174,7 @@ public class ClusteringCommandLineRunnerTest {
 
     @Test
     @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
     public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
         useTempVcfFile();
         injectErrorIntoTempVcf();
@@ -202,6 +222,7 @@ public class ClusteringCommandLineRunnerTest {
 
     @Test
     @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
     public void resumeFailingJobFromCorrectChunk() throws Exception {
         // Jobs A, B, C are run chronological order; A and C have SAME parameters;
         // A is the job that is run after VCF fault injection (as part of the runTestWithFaultInjection method),

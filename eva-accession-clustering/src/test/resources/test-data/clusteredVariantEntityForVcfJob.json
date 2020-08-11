@@ -1,0 +1,17 @@
+{
+  "dbsnpClusteredVariantEntity": [
+    {
+      "_id": "45AD6681283DABF5A0467AD32C368943EE247DAB",
+      "asm": "GCA_000000001.1",
+      "tax": 1000,
+      "contig": "1",
+      "start": NumberLong(3000),
+      "type": "SNV",
+      "accession": NumberLong(30),
+      "version": 1,
+      "createdDate": ISODate(
+      "2020-08-03T15:23:06.356Z"
+      )
+    }
+  ]
+}

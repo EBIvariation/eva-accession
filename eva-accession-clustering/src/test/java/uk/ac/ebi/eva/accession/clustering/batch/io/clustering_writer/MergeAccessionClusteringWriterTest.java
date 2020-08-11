@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringWriterTestUtils.assertClusteringCounts;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertAssemblyAccessionEqual;
 import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertClusteredVariantAccessionEqual;
@@ -236,7 +236,7 @@ public class MergeAccessionClusteringWriterTest {
         assertDatabaseCounts(expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations, expectedCvOperations,
                              expectedDbsnpSve, expectedSve, expectedDbsnpSvOperations, expectedSvOperations);
 
-        assertClusteringCounts(clusteringCounts, 0, 1, 1, 0, 1, 1);
+        assertClusteringCounts(clusteringCounts, 0, 1, 1, 0, 0, 1, 1);
 
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
