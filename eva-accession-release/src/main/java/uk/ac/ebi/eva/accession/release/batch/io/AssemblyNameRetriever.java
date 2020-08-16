@@ -36,14 +36,14 @@ import java.util.stream.Collectors;
 /**
  * Use a curated list and the ENA webservices to return the assembly name associated with an assembly accession.
  *
- * The ENA webservices in URLs like https://www.ebi.ac.uk/ena/data/view/GCA_000001405.28&display=xml
+ * The ENA webservices for URLs like https://www.ebi.ac.uk/ena/browser/api/xml/GCA_000001405.28
  * can return an xml that starts like this:
  * <pre>
  * {@code
  * <?xml version="1.0" encoding="UTF-8"?>
- * <ROOT request="GCA_000001405.28&amp;display=xml">
- * <ASSEMBLY accession="GCA_000001405.28" ...>
- *      <NAME>GRCh38.p13</NAME>
+ *   <ASSEMBLY_SET>
+ *     <ASSEMBLY accession="GCA_000001405.10" alias="GRCh37.p9" center_name="Genome Reference Consortium">
+ *     <NAME>GRCh37.p9</NAME>
  * ...
  * }
  * </pre>
@@ -59,7 +59,7 @@ public class AssemblyNameRetriever {
 
     /**
      * These curated assembly names take priority over ENA assembly names because they are used in specific community
-     * databases, and these are more likely to be known by users than ENA names.
+     * databases, and these are more likely to be known by users than ENA names. See EVA-1644.
      */
     private static final Map<String, String> priorityAssemblyNames = ((Supplier<Map<String, String>>) () -> {
         Map<String, String> priorityNames = new HashMap<>();
@@ -121,16 +121,16 @@ public class AssemblyNameRetriever {
         return String.format(ENA_ASSEMBLY_API_URL_FORMAT_STRING, assemblyAccession);
     }
 
+    public String buildAssemblyHumanReadableUrl() {
+        return String.format(ENA_ASSEMBLY_VIEW_URL_FORMAT_STRING, assemblyAccession);
+    }
+
     public String getAssemblyAccession() {
         return assemblyAccession;
     }
 
     public Optional<String> getAssemblyName() {
         return assemblyName;
-    }
-
-    public String buildAssemblyHumanReadableUrl() {
-        return String.format(ENA_ASSEMBLY_VIEW_URL_FORMAT_STRING, assemblyAccession);
     }
 
     @XmlRootElement(name = "ASSEMBLY_SET")
