@@ -31,6 +31,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 public class AssemblyNameRetrieverTest {
 
@@ -72,8 +73,13 @@ public class AssemblyNameRetrieverTest {
     }
 
     @Test
+    public void retrieveAssemblyWithWrongFormat() throws IOException, JAXBException {
+        assertThrows(RuntimeException.class, () -> new AssemblyNameRetriever("GCA_wrong_format"));
+    }
+
+    @Test
     public void retrieveNonExistentAssembly() throws IOException, JAXBException {
-        assertFalse(new AssemblyNameRetriever("GCA_non_existent").getAssemblyName().isPresent());
+        assertFalse(new AssemblyNameRetriever("GCA_000000000.1").getAssemblyName().isPresent());
     }
 
     @Test
