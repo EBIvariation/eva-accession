@@ -42,9 +42,9 @@ public class AssemblyNameRetrieverTest {
     public void parseXml() throws IOException, JAXBException {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
-        fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
-                         + "center_name=\"Genome Reference Consortium\">"
-                         + "<NAME>GRCh38.p13</NAME></ASSEMBLY></ROOT>");
+        fileWriter.write("<ASSEMBLY_SET><ASSEMBLY accession=\"GCA_000001405.28\">\n" +
+                                 "<NAME>GRCh38.p13</NAME>\n" +
+                                 "</ASSEMBLY></ASSEMBLY_SET>");
         fileWriter.close();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
@@ -57,8 +57,7 @@ public class AssemblyNameRetrieverTest {
     public void parseMissingName() throws IOException, JAXBException {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
-        fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
-                         + "center_name=\"Genome Reference Consortium\"></ASSEMBLY></ROOT>");
+        fileWriter.write("<ASSEMBLY_SET><ASSEMBLY></ASSEMBLY></ASSEMBLY_SET>");
         fileWriter.close();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
@@ -83,9 +82,9 @@ public class AssemblyNameRetrieverTest {
     }
 
     @Test
-    public void buildUrl() {
-        assertEquals("https://www.ebi.ac.uk/ena/data/view/GCA_000001405.28",
-                     new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyUrl());
+    public void buildHumanReadableUrl() {
+        assertEquals("https://www.ebi.ac.uk/ena/browser/view/GCA_000001405.28",
+                     new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyHumanReadableUrl());
     }
 
     @Test

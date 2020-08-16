@@ -20,8 +20,10 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Use a curated list and the ENA webservices to return the assembly name associated with an assembly accession.
@@ -50,7 +53,9 @@ import java.util.function.Supplier;
  */
 public class AssemblyNameRetriever {
 
-    private static final String ENA_ASSEMBLY_URL_FORMAT_STRING = "https://www.ebi.ac.uk/ena/browser/api/xml/%s";
+    private static final String ENA_ASSEMBLY_API_URL_FORMAT_STRING = "https://www.ebi.ac.uk/ena/browser/api/xml/%s";
+
+    private static final String ENA_ASSEMBLY_VIEW_URL_FORMAT_STRING = "https://www.ebi.ac.uk/ena/browser/view/%s";
 
     /**
      * These curated assembly names take priority over ENA assembly names because they are used in specific community
@@ -76,22 +81,22 @@ public class AssemblyNameRetriever {
             return Optional.of(priorityAssemblyNames.get(assemblyAccession));
         } else {
             try {
-                String url = buildAssemblyUrl(assemblyAccession);
-                URL url1 = new URL(url);
-                URLConnection connection = url1.openConnection();
+                String url = buildAssemblyApiUrl(assemblyAccession);
+                URLConnection connection = new URL(url).openConnection();
                 if (!(connection instanceof HttpURLConnection)) {
                     throw new RuntimeException("Error creating HTTP request: expected a HttpURLConnection");
                 }
                 HttpURLConnection httpConnection = (HttpURLConnection) connection;
                 int responseCode = httpConnection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-                    return Optional.empty();
-                } else if (responseCode != HttpURLConnection.HTTP_OK) {
-                    throw new RuntimeException("Unexpected response (HTTP code " + responseCode + "). Message: "
-                                                       + httpConnection.getResponseMessage());
-                } else {
-                    // response is HTTP_OK
+                if (responseCode == HttpURLConnection.HTTP_OK) {
                     return parseEnaAssemblyXml(httpConnection.getInputStream());
+                } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                    return Optional.empty();
+                } else {
+                    String errorMessage = new BufferedReader(new InputStreamReader(httpConnection.getErrorStream()))
+                            .lines().collect(Collectors.joining("\n"));
+                    throw new RuntimeException("Unexpected response (HTTP code " + responseCode + "). Message: "
+                                                       + errorMessage);
                 }
             } catch (IOException | JAXBException e) {
                 throw new RuntimeException(e);
@@ -99,7 +104,7 @@ public class AssemblyNameRetriever {
         }
     }
 
-    private Optional<String> parseEnaAssemblyXml(InputStream inputStream) throws JAXBException, IOException {
+    private Optional<String> parseEnaAssemblyXml(InputStream inputStream) throws JAXBException {
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
@@ -112,8 +117,8 @@ public class AssemblyNameRetriever {
         }
     }
 
-    private String buildAssemblyUrl(String assemblyAccession) {
-        return String.format(ENA_ASSEMBLY_URL_FORMAT_STRING, assemblyAccession);
+    private String buildAssemblyApiUrl(String assemblyAccession) {
+        return String.format(ENA_ASSEMBLY_API_URL_FORMAT_STRING, assemblyAccession);
     }
 
     public String getAssemblyAccession() {
@@ -124,11 +129,11 @@ public class AssemblyNameRetriever {
         return assemblyName;
     }
 
-    public String buildAssemblyUrl() {
-        return buildAssemblyUrl(assemblyAccession);
+    public String buildAssemblyHumanReadableUrl() {
+        return String.format(ENA_ASSEMBLY_VIEW_URL_FORMAT_STRING, assemblyAccession);
     }
 
-    @XmlRootElement(name = "ROOT")
+    @XmlRootElement(name = "ASSEMBLY_SET")
     static class EnaAssemblyXml {
 
         @XmlElement(name = "ASSEMBLY")

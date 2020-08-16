@@ -83,7 +83,7 @@ public class VariantContextWriterTest {
 
     private static final String STUDY_2 = "study_2";
 
-    private static final String REFERENCE_ASSEMBLY = "GCA_00000XXX.X";
+    private static final String REFERENCE_ASSEMBLY = "GCA_00000000.1";
 
     private static final int REF_COLUMN = 3;
 
@@ -166,7 +166,7 @@ public class VariantContextWriterTest {
 
         List<String> referenceLines = grepFile(output, "^##reference.*");
         assertEquals(1, referenceLines.size());
-        assertEquals("##reference=<ID=" + REFERENCE_ASSEMBLY + ",URL=https://www.ebi.ac.uk/ena/data/view/"
+        assertEquals("##reference=<ID=" + REFERENCE_ASSEMBLY + ",URL=https://www.ebi.ac.uk/ena/browser/view/"
                      + REFERENCE_ASSEMBLY + ">", referenceLines.get(0));
     }
 
