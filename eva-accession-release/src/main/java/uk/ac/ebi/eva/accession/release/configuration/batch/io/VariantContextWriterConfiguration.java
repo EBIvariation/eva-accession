@@ -19,10 +19,10 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.io;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.release.batch.io.ContigWriter;
-import uk.ac.ebi.eva.accession.release.batch.io.MergedVariantContextWriter;
-import uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantContextWriter;
-import uk.ac.ebi.eva.accession.release.batch.io.VariantContextWriter;
+import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
+import uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantContextWriter;
+import uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantContextWriter;
+import uk.ac.ebi.eva.accession.release.batch.io.active.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 

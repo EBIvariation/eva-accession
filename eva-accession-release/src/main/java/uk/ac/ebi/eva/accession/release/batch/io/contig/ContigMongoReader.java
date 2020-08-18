@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.contig;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
@@ -38,8 +38,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import java.util.Arrays;
 import java.util.List;
 
-import static uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader.NON_SINGLE_LOCATION_MAPPING;
-import static uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader.MAPPING_WEIGHT_FIELD;
+import static uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantMongoReader.NON_SINGLE_LOCATION_MAPPING;
+import static uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantMongoReader.MAPPING_WEIGHT_FIELD;
 
 public class ContigMongoReader implements ItemStreamReader<String> {
 

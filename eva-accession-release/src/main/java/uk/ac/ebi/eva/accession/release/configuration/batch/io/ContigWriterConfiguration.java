@@ -20,14 +20,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.release.batch.io.ContigWriter;
+import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import java.io.File;
 
-import static uk.ac.ebi.eva.accession.release.batch.io.ContigWriter.getActiveContigsFilePath;
-import static uk.ac.ebi.eva.accession.release.batch.io.ContigWriter.getMergedContigsFilePath;
-import static uk.ac.ebi.eva.accession.release.batch.io.ContigWriter.getMultimapContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getActiveContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getMergedContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getMultimapContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_CONTIG_WRITER;

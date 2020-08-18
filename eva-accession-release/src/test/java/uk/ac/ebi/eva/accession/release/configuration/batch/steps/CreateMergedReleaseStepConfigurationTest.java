@@ -51,9 +51,9 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.batch.io.MergedVariantMongoReader.MERGED_INTO_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.MergedVariantMongoReader.STUDY_ID_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.MergedVariantMongoReader.VARIANT_CLASS_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.MERGED_INTO_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.VARIANT_CLASS_KEY;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
