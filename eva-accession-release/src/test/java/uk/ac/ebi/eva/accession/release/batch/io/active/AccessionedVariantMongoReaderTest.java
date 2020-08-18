@@ -37,6 +37,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -124,7 +125,8 @@ public class AccessionedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_1, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_1, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
     }
 
     @Test
@@ -194,7 +196,8 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void queryOtherAssembly() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_2, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_2, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         Map<String, Variant> variants = readIntoMap();
 
         assertEquals(3, variants.size());
@@ -228,7 +231,8 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void insertionVariantClassAttribute() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         List<Variant> variants = readIntoList();
         assertEquals(1, variants.size());
         String insertionSequenceOntology = "SO:0000667";
@@ -240,7 +244,8 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void otherVariantClasses() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         List<Variant> variants = readIntoList();
         assertEquals(4, variants.size());
         String indelSequenceOntology = "SO:1000032";
@@ -271,7 +276,8 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void clusteredVariantWithoutSubmittedVariants() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_3, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         List<Variant> variants = readIntoList();
         assertEquals(0, variants.size());
     }
@@ -309,7 +315,8 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void includeValidatedNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, true);
         assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, false, RS_4);
         assertFlagEqualsInRS(CLUSTERED_VARIANT_VALIDATED_KEY, true, RS_5);
@@ -329,19 +336,22 @@ public class AccessionedVariantMongoReaderTest {
 
     @Test
     public void includeAssemblyMatchNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(ASSEMBLY_MATCH_KEY, false);
     }
 
     @Test
     public void includeAllelesMatchNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(ALLELES_MATCH_KEY, false);
     }
 
     @Test
     public void includeEvidenceNonDefaultFlag() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_5, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
     }
 
@@ -354,7 +364,8 @@ public class AccessionedVariantMongoReaderTest {
      */
     @Test
     public void includeOnlyVariantsWithTheSameChromosomeAndStartInRsAndSs() throws Exception {
-        reader = new AccessionedVariantMongoReader("GCA_000002775.1", mongoClient, TEST_DB,CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader("GCA_000002775.1", mongoClient, TEST_DB,CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         List<Variant> allVariants = readIntoList();
 
         assertEquals(3, allVariants.size());
@@ -395,7 +406,8 @@ public class AccessionedVariantMongoReaderTest {
      */
     @Test
     public void includeAmbiguousVariantsWithDifferentStartInSsAndRs() throws Exception {
-        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE);
+        reader = new AccessionedVariantMongoReader(ASSEMBLY_ACCESSION_4, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                   new DbsnpCollectionNames());
         List<Variant> allVariants = readIntoList();
 
         assertEquals(1, allVariants.size());

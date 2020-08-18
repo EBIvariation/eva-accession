@@ -27,6 +27,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
+import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -51,23 +52,21 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
 
-    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
-
     public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                         int chunkSize) {
-        super(assemblyAccession, mongoClient, database, chunkSize);
+                                         int chunkSize, CollectionNames names) {
+        super(assemblyAccession, mongoClient, database, chunkSize, names);
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        aggregate(DBSNP_CLUSTERED_VARIANT_ENTITY);
+        aggregate(names.getClusteredVariantEntity());
     }
 
     protected List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
+        Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), ACCESSION_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         List<Bson> aggregation = Arrays.asList(match, sort, singlemap, lookup);
         logger.info("Issuing aggregation: {}", aggregation);

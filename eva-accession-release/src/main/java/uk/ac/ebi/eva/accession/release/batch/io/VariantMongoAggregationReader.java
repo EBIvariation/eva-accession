@@ -30,6 +30,7 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
+import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
@@ -56,12 +57,6 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
     public static final String MERGED_INTO_KEY = "CURR";
 
     public static final String MAPPING_WEIGHT_KEY = "MAP_WEIGHT";
-
-    protected static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
-
-    protected static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
-
-    protected static final String DBSNP_SUBMITTED_VARIANT_OPERATION_ENTITY = "dbsnpSubmittedVariantOperationEntity";
 
     protected static final String ACCESSION_FIELD = "accession";
 
@@ -105,12 +100,15 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     private int chunkSize;
 
+    protected CollectionNames names;
+
     public VariantMongoAggregationReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                         int chunkSize) {
+                                         int chunkSize, CollectionNames names) {
         this.assemblyAccession = assemblyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
         this.chunkSize = chunkSize;
+        this.names = names;
     }
 
     protected void aggregate(String collectionName) {

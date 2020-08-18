@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -52,6 +53,7 @@ public class AccessionedVariantMongoReaderConfiguration {
                                                                 MongoProperties mongoProperties) {
         logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
         return new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                 mongoProperties.getDatabase(), parameters.getChunkSize());
+                                                 mongoProperties.getDatabase(), parameters.getChunkSize(),
+                                                 new DbsnpCollectionNames());
     }
 }

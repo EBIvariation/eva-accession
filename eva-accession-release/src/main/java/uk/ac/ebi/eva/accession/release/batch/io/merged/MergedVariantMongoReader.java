@@ -28,6 +28,7 @@ import org.springframework.batch.item.ItemStreamException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
+import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -52,8 +53,6 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final Logger logger = LoggerFactory.getLogger(MergedVariantMongoReader.class);
 
-    private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
-
     private static final String INACTIVE_OBJECTS = "inactiveObjects";
 
     private static final String MERGE_INTO_FIELD = "mergeInto";
@@ -68,13 +67,14 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     private static final String ACTIVE_RS = "activeRs";
 
-    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize) {
-        super(assemblyAccession, mongoClient, database, chunkSize);
+    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize,
+                                    CollectionNames names) {
+        super(assemblyAccession, mongoClient, database, chunkSize, names);
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        aggregate(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
+        aggregate(names.getClusteredVariantOperationEntity());
     }
 
     @Override
@@ -82,9 +82,11 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
-        Bson lookupSubmittedVariantsOperations = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_OPERATION_ENTITY, ACCESSION_FIELD,
-                                        getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD), SS_INFO_FIELD);
-        Bson lookupClusteredVariants = Aggregates.lookup(DBSNP_CLUSTERED_VARIANT_ENTITY, MERGE_INTO_FIELD,
+        Bson lookupSubmittedVariantsOperations = Aggregates.lookup(names.getSubmittedVariantOperationEntity(),
+                                                                   ACCESSION_FIELD,
+                                                                   getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
+                                                                   SS_INFO_FIELD);
+        Bson lookupClusteredVariants = Aggregates.lookup(names.getClusteredVariantEntity(), MERGE_INTO_FIELD,
                                                          ACCESSION_FIELD, ACTIVE_RS);
         List<Bson> aggregation = Arrays.asList(matchAssembly, matchMerged, sort, lookupSubmittedVariantsOperations,
                                                lookupClusteredVariants);

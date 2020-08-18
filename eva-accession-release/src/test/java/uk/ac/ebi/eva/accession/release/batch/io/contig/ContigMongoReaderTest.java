@@ -32,6 +32,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigMongoReader;
+import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 
@@ -68,7 +69,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicActiveContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
+        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB,
+                                                                        new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();
@@ -80,7 +82,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicMergedContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
+        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB,
+                                                                        new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();
@@ -92,7 +95,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicMultimapContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.multimapContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB);
+        ContigMongoReader reader = ContigMongoReader.multimapContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB,
+                                                                          new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();

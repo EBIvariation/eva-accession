@@ -35,6 +35,8 @@ import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
+import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,10 +46,6 @@ import static uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantM
 public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigMongoReader.class);
-
-    private static final String DBSNP_CLUSTERED_VARIANT_ENTITY = "dbsnpClusteredVariantEntity";
-
-    private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
 
     private static final String ACTIVE_REFERENCE_ASSEMBLY_FIELD = "asm";
 
@@ -78,23 +76,23 @@ public class ContigMongoReader implements ItemStreamReader<String> {
     private final List<Bson> aggregation;
 
     public static ContigMongoReader activeContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                       String database) {
+                                                       String database, CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
-                                     DBSNP_CLUSTERED_VARIANT_ENTITY,
+                                     names.getClusteredVariantEntity(),
                                      buildAggregationForActiveContigs(assemblyAccession));
     }
 
     public static ContigMongoReader mergedContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                       String database) {
+                                                       String database, CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
-                                     DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY,
+                                     names.getClusteredVariantOperationEntity(),
                                      buildAggregationForMergedContigs(assemblyAccession));
     }
 
     public static ContigMongoReader multimapContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                         String database) {
+                                                         String database, CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
-                                     DBSNP_CLUSTERED_VARIANT_ENTITY,
+                                     names.getClusteredVariantEntity(),
                                      buildAggregationForMultimapContigs(assemblyAccession));
     }
 
