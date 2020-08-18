@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;

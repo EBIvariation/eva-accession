@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.multimap;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.model.Aggregates;
@@ -23,6 +23,7 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.Arrays;
@@ -44,7 +45,7 @@ public class MultimapVariantMongoReader extends AccessionedVariantMongoReader {
     }
 
     @Override
-    List<Bson> buildAggregation() {
+    protected List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.and(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
                                                   Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
@@ -56,7 +57,7 @@ public class MultimapVariantMongoReader extends AccessionedVariantMongoReader {
     }
 
     @Override
-    List<Variant> getVariants(Document clusteredVariant) {
+    protected List<Variant> getVariants(Document clusteredVariant) {
         List<Variant> variants = super.getVariants(clusteredVariant);
         for (Variant variant : variants) {
             variant.getSourceEntries().iterator().next().addAttribute(MAPPING_WEIGHT_KEY,

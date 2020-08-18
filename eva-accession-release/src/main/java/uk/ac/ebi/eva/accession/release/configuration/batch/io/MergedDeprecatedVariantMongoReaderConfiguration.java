@@ -26,7 +26,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.release.batch.io.MergedDeprecatedVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.MergedDeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_VARIANT_READER;

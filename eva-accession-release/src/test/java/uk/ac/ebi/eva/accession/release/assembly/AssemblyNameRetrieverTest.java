@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.assembly;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import uk.ac.ebi.eva.accession.release.batch.io.AssemblyNameRetriever.EnaAssemblyXml;
+import uk.ac.ebi.eva.accession.release.assembly.AssemblyNameRetriever;
+import uk.ac.ebi.eva.accession.release.assembly.AssemblyNameRetriever.EnaAssemblyXml;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

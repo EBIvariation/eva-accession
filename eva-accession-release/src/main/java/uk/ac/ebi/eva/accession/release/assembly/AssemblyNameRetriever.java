@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.assembly;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;

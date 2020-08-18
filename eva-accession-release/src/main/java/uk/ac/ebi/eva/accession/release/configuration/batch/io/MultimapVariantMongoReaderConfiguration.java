@@ -27,13 +27,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader;
-import uk.ac.ebi.eva.accession.release.batch.io.MultimapVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSIONED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_VARIANT_READER;
 
 @Configuration

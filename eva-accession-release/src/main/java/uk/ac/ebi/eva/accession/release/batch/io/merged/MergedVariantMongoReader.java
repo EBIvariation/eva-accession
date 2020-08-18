@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.merged;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.model.Aggregates;
@@ -27,6 +27,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
+import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -77,7 +78,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
     }
 
     @Override
-    List<Bson> buildAggregation() {
+    protected List<Bson> buildAggregation() {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
@@ -95,7 +96,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         return INACTIVE_OBJECTS + "." + field;
     }
 
-    List<Variant> getVariants(Document mergedVariant) {
+    protected List<Variant> getVariants(Document mergedVariant) {
         Collection<Document> inactiveObjects = (Collection<Document>) mergedVariant.get(INACTIVE_OBJECTS);
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()

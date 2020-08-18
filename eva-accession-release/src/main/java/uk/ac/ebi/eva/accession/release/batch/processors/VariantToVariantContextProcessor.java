@@ -33,14 +33,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.MergedVariantMongoReader.MERGED_INTO_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.MERGED_INTO_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
 
 /**

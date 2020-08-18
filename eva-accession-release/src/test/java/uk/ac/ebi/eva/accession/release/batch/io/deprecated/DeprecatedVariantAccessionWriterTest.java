@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.deprecated;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -22,6 +22,7 @@ import org.junit.rules.TemporaryFolder;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantAccessionWriter;
 
 import java.io.BufferedReader;
 import java.io.File;

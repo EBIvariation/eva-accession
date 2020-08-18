@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.active;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import htsjdk.variant.variantcontext.writer.Options;
@@ -29,6 +29,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
 
+import uk.ac.ebi.eva.accession.release.assembly.AssemblyNameRetriever;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ListContigsStepConfiguration;
 
 import java.io.BufferedReader;
@@ -41,13 +42,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.STUDY_ID_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
-import static uk.ac.ebi.eva.accession.release.batch.io.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.STUDY_ID_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
 /**
  * Writes a VCF file for the release of RS IDs mapped against a reference assembly

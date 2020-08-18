@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
@@ -29,15 +29,15 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Writes the accessions of historical variants to a flat file.
+ * Writes the accessions of historical variants, that have been merged into a later deprecate one, to a flat file.
  */
-public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
+public class MergedDeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
 
     private final File output;
 
     private PrintWriter printWriter;
 
-    public DeprecatedVariantAccessionWriter(Path outputPath) {
+    public MergedDeprecatedVariantAccessionWriter(Path outputPath) {
         this.output = outputPath.toFile();
     }
 
@@ -57,7 +57,7 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpC
     @Override
     public void write(List<? extends DbsnpClusteredVariantOperationEntity> variants) throws Exception {
         for (DbsnpClusteredVariantOperationEntity variant : variants) {
-            printWriter.println("rs" + variant.getAccession());
+            printWriter.println("rs" + variant.getAccession() + "\trs" + variant.getMergedInto());
         }
     }
 

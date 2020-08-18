@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.release.batch.io;
+package uk.ac.ebi.eva.accession.release.batch.io.active;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.model.Aggregates;
@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 
+import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -62,7 +63,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         aggregate(DBSNP_CLUSTERED_VARIANT_ENTITY);
     }
 
-    List<Bson> buildAggregation() {
+    protected List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
@@ -73,7 +74,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         return aggregation;
     }
 
-    List<Variant> getVariants(Document clusteredVariant) {
+    protected List<Variant> getVariants(Document clusteredVariant) {
         String contig = clusteredVariant.getString(CONTIG_FIELD);
         long start = clusteredVariant.getLong(START_FIELD);
         long rs = clusteredVariant.getLong(ACCESSION_FIELD);

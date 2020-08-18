@@ -18,7 +18,7 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.io;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.release.batch.io.MergedDeprecatedVariantAccessionWriter;
+import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.MergedDeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 

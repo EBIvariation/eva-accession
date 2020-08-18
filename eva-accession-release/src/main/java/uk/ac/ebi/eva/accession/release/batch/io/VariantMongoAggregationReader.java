@@ -91,7 +91,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected static final String SUPPORTED_BY_EVIDENCE_FIELD = "evidence";
 
-    protected static final String MAPPING_WEIGHT_FIELD = "mapWeight";
+    public static final String MAPPING_WEIGHT_FIELD = "mapWeight";
 
     private static final String RS_PREFIX = "rs";
 
@@ -123,14 +123,14 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
         cursor = clusteredVariants.iterator();
     }
 
-    abstract List<Bson> buildAggregation();
+    abstract protected List<Bson> buildAggregation();
 
     @Override
     public List<Variant> read() throws UnexpectedInputException, ParseException, NonTransientResourceException {
         return cursor.hasNext() ? getVariants(cursor.next()) : null;
     }
 
-    abstract List<Variant> getVariants(Document clusteredVariant);
+    abstract protected List<Variant> getVariants(Document clusteredVariant);
 
     protected VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
                                                          boolean submittedVariantValidated, boolean allelesMatch,
