@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.configuration.DbsnpDataSource;
 import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigMongoReader;
+import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
@@ -46,7 +47,7 @@ public class ContigReaderConfiguration {
         logger.info("Injecting ContigMongoReader (active contigs) parameters: {}, {}",
                     parameters.getAssemblyAccession(), mongoProperties.getDatabase());
         return ContigMongoReader.activeContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                    mongoProperties.getDatabase());
+                                                    mongoProperties.getDatabase(), new DbsnpCollectionNames());
     }
 
     @Bean(MERGED_CONTIG_READER)
@@ -56,7 +57,7 @@ public class ContigReaderConfiguration {
         logger.info("Injecting ContigMongoReader (merged contigs) parameters: {}, {}",
                     parameters.getAssemblyAccession(), mongoProperties.getDatabase());
         return ContigMongoReader.mergedContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                    mongoProperties.getDatabase());
+                                                    mongoProperties.getDatabase(), new DbsnpCollectionNames());
     }
 
     @Bean(MULTIMAP_CONTIG_READER)
@@ -66,6 +67,6 @@ public class ContigReaderConfiguration {
         logger.info("Injecting ContigMongoReader (multimap contigs) parameters: {}, {}",
                     parameters.getAssemblyAccession(), mongoProperties.getDatabase());
         return ContigMongoReader.multimapContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                      mongoProperties.getDatabase());
+                                                      mongoProperties.getDatabase(), new DbsnpCollectionNames());
     }
 }

@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.Arrays;
@@ -40,8 +41,8 @@ public class MultimapVariantMongoReader extends AccessionedVariantMongoReader {
     public static final int NON_SINGLE_LOCATION_MAPPING = 2;
 
     public MultimapVariantMongoReader(String assemblyAccession, MongoClient mongoClient,
-                                      String database, int chunkSize) {
-        super(assemblyAccession, mongoClient, database, chunkSize);
+                                      String database, int chunkSize, CollectionNames names) {
+        super(assemblyAccession, mongoClient, database, chunkSize, names);
     }
 
     @Override
@@ -49,7 +50,7 @@ public class MultimapVariantMongoReader extends AccessionedVariantMongoReader {
         Bson match = Aggregates.match(Filters.and(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
                                                   Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, ACCESSION_FIELD,
+        Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), ACCESSION_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         List<Bson> aggregation = Arrays.asList(match, sort, lookup);
         logger.info("Issuing aggregation: {}", aggregation);

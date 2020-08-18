@@ -39,6 +39,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,10 +52,6 @@ import java.util.stream.Collectors;
 public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<DbsnpClusteredVariantOperationEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(MergedDeprecatedVariantMongoReader.class);
-
-    private static final String DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY = "dbsnpClusteredVariantOperationEntity";
-
-    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
 
     private static final String INACTIVE_OBJECTS = "inactiveObjects";
 
@@ -80,18 +77,21 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
 
     private int chunkSize;
 
+    private CollectionNames names;
+
     public MergedDeprecatedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                              MongoConverter mongoConverter, int chunkSize) {
+                                              MongoConverter mongoConverter, int chunkSize, CollectionNames names) {
         this.assemblyAccession = assemblyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
         this.mongoConverter = mongoConverter;
         this.chunkSize = chunkSize;
+        this.names = names;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        aggregate(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
+        aggregate(names.getClusteredVariantOperationEntity());
     }
 
     private void aggregate(String collectionName) {
@@ -107,7 +107,7 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
     private List<Bson> buildAggregation() {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
-        Bson lookup = Aggregates.lookup(DBSNP_SUBMITTED_VARIANT_ENTITY, MERGE_INTO_FIELD,
+        Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), MERGE_INTO_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         Bson matchEmpty = Aggregates.match(Filters.eq(SS_INFO_FIELD, Collections.EMPTY_LIST));
         List<Bson> aggregation = Arrays.asList(matchAssembly, matchMerged, lookup, matchEmpty);
