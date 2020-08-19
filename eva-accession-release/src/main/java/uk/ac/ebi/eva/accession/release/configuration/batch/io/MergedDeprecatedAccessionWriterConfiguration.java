@@ -24,12 +24,12 @@ import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 
 import java.nio.file.Path;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_DEPRECATED_RELEASE_WRITER;
 
 @Configuration
 public class MergedDeprecatedAccessionWriterConfiguration {
 
-    @Bean(MERGED_DEPRECATED_RELEASE_WRITER)
+    @Bean(DBSNP_MERGED_DEPRECATED_RELEASE_WRITER)
     public MergedDeprecatedVariantAccessionWriter mergedDeprecatedVariantItemStreamWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getMergedDeprecatedIdsReportPath(parameters.getOutputFolder(),
                                                                               parameters.getAssemblyAccession());

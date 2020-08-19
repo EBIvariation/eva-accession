@@ -34,7 +34,7 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
@@ -42,7 +42,7 @@ public class MultimapVariantMongoReaderConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
 
-    @Bean(MULTIMAP_VARIANT_READER)
+    @Bean(DBSNP_MULTIMAP_VARIANT_READER)
     @StepScope
     public ItemStreamReader<Variant> unwindingReader(MultimapVariantMongoReader multimapVariantReader) {
         return new UnwindingItemStreamReader<>(multimapVariantReader);

@@ -28,14 +28,14 @@ import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 
 import java.nio.file.Path;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_RELEASE_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_RELEASE_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_RELEASE_WRITER;
 
 @Configuration
 public class VariantContextWriterConfiguration {
 
-    @Bean(RELEASE_WRITER)
+    @Bean(DBSNP_RELEASE_WRITER)
     public VariantContextWriter variantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getCurrentIdsReportPath(parameters.getOutputFolder(),
                                                                      parameters.getAssemblyAccession());
@@ -44,7 +44,7 @@ public class VariantContextWriterConfiguration {
         return new VariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
     }
 
-    @Bean(MERGED_RELEASE_WRITER)
+    @Bean(DBSNP_MERGED_RELEASE_WRITER)
     public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getMergedIdsReportPath(parameters.getOutputFolder(),
                                                                     parameters.getAssemblyAccession());
@@ -53,7 +53,7 @@ public class VariantContextWriterConfiguration {
         return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession(), mergedContigsFilePath);
     }
 
-    @Bean(MULTIMAP_RELEASE_WRITER)
+    @Bean(DBSNP_MULTIMAP_RELEASE_WRITER)
     public MultimapVariantContextWriter multimapVariantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getMultimapIdsReportPath(parameters.getOutputFolder(),
                                                                       parameters.getAssemblyAccession());

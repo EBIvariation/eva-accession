@@ -37,10 +37,10 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.io.VariantContextWrit
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_RELEASE_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 
 @Configuration
@@ -51,7 +51,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PR
 public class CreateMergedReleaseStepConfiguration {
 
     @Autowired
-    @Qualifier(MERGED_VARIANT_READER)
+    @Qualifier(DBSNP_MERGED_VARIANT_READER)
     private ItemReader<Variant> variantReader;
 
     @Autowired
@@ -59,7 +59,7 @@ public class CreateMergedReleaseStepConfiguration {
     private ItemProcessor<Variant, VariantContext> variantProcessor;
 
     @Autowired
-    @Qualifier(MERGED_RELEASE_WRITER)
+    @Qualifier(DBSNP_MERGED_RELEASE_WRITER)
     private ItemStreamWriter<VariantContext> accessionWriter;
 
     @Autowired
@@ -70,10 +70,10 @@ public class CreateMergedReleaseStepConfiguration {
     @Qualifier(EXCLUDE_VARIANTS_LISTENER)
     private StepExecutionListener excludeVariantsListener;
 
-    @Bean(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
+    @Bean(RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP)
     public Step createMergedReleaseStep(StepBuilderFactory stepBuilderFactory,
                                         SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
+        TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)

@@ -30,9 +30,9 @@ import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_ACTIVE_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_CONTIG_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_CONTIG_READER;
 
 @Configuration
 @EnableConfigurationProperties({DbsnpDataSource.class})
@@ -40,7 +40,7 @@ public class ContigReaderConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigReaderConfiguration.class);
 
-    @Bean(ACTIVE_CONTIG_READER)
+    @Bean(DBSNP_ACTIVE_CONTIG_READER)
     @StepScope
     ItemStreamReader<String> activeContigReader(InputParameters parameters, MongoClient mongoClient,
                                                 MongoProperties mongoProperties) throws Exception {
@@ -50,7 +50,7 @@ public class ContigReaderConfiguration {
                                                     mongoProperties.getDatabase(), new DbsnpCollectionNames());
     }
 
-    @Bean(MERGED_CONTIG_READER)
+    @Bean(DBSNP_MERGED_CONTIG_READER)
     @StepScope
     ItemStreamReader<String> mergedContigReader(InputParameters parameters, MongoClient mongoClient,
                                                 MongoProperties mongoProperties) throws Exception {
@@ -60,7 +60,7 @@ public class ContigReaderConfiguration {
                                                     mongoProperties.getDatabase(), new DbsnpCollectionNames());
     }
 
-    @Bean(MULTIMAP_CONTIG_READER)
+    @Bean(DBSNP_MULTIMAP_CONTIG_READER)
     @StepScope
     ItemStreamReader<String> multimapContigReader(InputParameters parameters, MongoClient mongoClient,
                                                   MongoProperties mongoProperties) throws Exception {

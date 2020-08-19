@@ -27,13 +27,13 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_DEPRECATED_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
 public class DeprecatedVariantMongoReaderConfiguration {
 
-    @Bean(DEPRECATED_VARIANT_READER)
+    @Bean(DBSNP_DEPRECATED_VARIANT_READER)
     @StepScope
     public ItemStreamReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantMongoReader(
             InputParameters parameters, MongoTemplate mongoTemplate) {

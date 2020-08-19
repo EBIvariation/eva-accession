@@ -49,7 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -90,7 +90,8 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
     }
 
     private void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(
+                RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 

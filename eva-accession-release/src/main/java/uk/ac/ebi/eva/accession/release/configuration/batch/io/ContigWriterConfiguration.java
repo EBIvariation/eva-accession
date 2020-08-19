@@ -28,9 +28,9 @@ import java.io.File;
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getActiveContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getMergedContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getMultimapContigsFilePath;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACTIVE_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MULTIMAP_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_ACTIVE_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_CONTIG_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_CONTIG_WRITER;
 
 @Configuration
 public class ContigWriterConfiguration {
@@ -38,21 +38,21 @@ public class ContigWriterConfiguration {
     @Autowired
     private ContigMapping contigMapping;
 
-    @Bean(ACTIVE_CONTIG_WRITER)
+    @Bean(DBSNP_ACTIVE_CONTIG_WRITER)
     public ContigWriter activeContigWriter(InputParameters inputParameters) {
         return new ContigWriter(new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
                                                                   inputParameters.getAssemblyAccession())),
                                 contigMapping);
     }
 
-    @Bean(MERGED_CONTIG_WRITER)
+    @Bean(DBSNP_MERGED_CONTIG_WRITER)
     public ContigWriter mergedContigWriter(InputParameters inputParameters) {
         return new ContigWriter(new File(getMergedContigsFilePath(inputParameters.getOutputFolder(),
                                                                   inputParameters.getAssemblyAccession())),
                                 contigMapping);
     }
 
-    @Bean(MULTIMAP_CONTIG_WRITER)
+    @Bean(DBSNP_MULTIMAP_CONTIG_WRITER)
     public ContigWriter multimapContigWriter(InputParameters inputParameters) {
         return new ContigWriter(new File(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
                                                                     inputParameters.getAssemblyAccession())),

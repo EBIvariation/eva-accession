@@ -53,7 +53,7 @@ import static org.junit.Assert.assertNotNull;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MULTIMAP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -95,7 +95,7 @@ public class CreateMultimapReleaseStepConfigurationTest {
     }
 
     private void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MULTIMAP_VARIANTS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 

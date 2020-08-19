@@ -41,10 +41,10 @@ import static org.junit.Assert.assertNotEquals;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.runner.AccessionReleaseJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS;
 import static uk.ac.ebi.eva.accession.release.runner.AccessionReleaseJobLauncherCommandLineRunner.EXIT_WITH_ERRORS;
 
@@ -146,7 +146,7 @@ public class AccessionReleaseJobLauncherCommandLineRunnerTest {
                                                                                     inputParameters.toJobParameters())
                                                                .getJobInstance();
         StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+                                                                         RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP);
         //Ensure that only the first batch was written
         // (batch size is 5 and error was at entry#7 (when sorted by contig + start) for the GCA_000409795.2 assembly)
         assertEquals(inputParameters.getChunkSize(), stepExecution.getWriteCount());
@@ -163,13 +163,14 @@ public class AccessionReleaseJobLauncherCommandLineRunnerTest {
                                                                                     inputParameters.toJobParameters())
                                                                .getJobInstance();
         StepExecution stepExecution1 = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                         RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+                                                                          RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP);
         StepExecution stepExecution2 = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                          RELEASE_MAPPED_MERGED_VARIANTS_STEP);
+                                                                          RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP);
         StepExecution stepExecution3 = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                          RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP);
+                                                                          RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP);
         StepExecution stepExecution4 =
-                jobRepository.getLastStepExecution(currentJobInstance, RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
+                jobRepository.getLastStepExecution(currentJobInstance,
+                                                   RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
         assertNotEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
         // 5 active + 5 merged + 3 deprecated + 2 merged deprecated
         assertEquals(15, stepExecution1.getWriteCount() + stepExecution2.getWriteCount() +
@@ -197,9 +198,10 @@ public class AccessionReleaseJobLauncherCommandLineRunnerTest {
                                                                                     inputParameters.toJobParameters())
                                                                .getJobInstance();
         StepExecution stepExecution1 = jobRepository.getLastStepExecution(currentJobInstance,
-                                                                          RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP);
+                                                                          RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP);
         StepExecution stepExecution2 =
-                jobRepository.getLastStepExecution(currentJobInstance, RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
+                jobRepository.getLastStepExecution(currentJobInstance,
+                                                   RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
         assertEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
         // Resume from deprecated variants step - 3 deprecated + 2 merged deprecated
         assertEquals(5, stepExecution1.getWriteCount() + stepExecution2.getWriteCount());
