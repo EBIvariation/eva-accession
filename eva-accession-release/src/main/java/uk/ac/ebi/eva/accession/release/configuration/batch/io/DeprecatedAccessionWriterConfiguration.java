@@ -25,14 +25,22 @@ import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import java.nio.file.Path;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_DEPRECATED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_DEPRECATED_RELEASE_WRITER;
 
 @Configuration
 public class DeprecatedAccessionWriterConfiguration {
 
     @Bean(DBSNP_DEPRECATED_RELEASE_WRITER)
-    public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getDeprecatedIdsReportPath(parameters.getOutputFolder(),
-                                                                        parameters.getAssemblyAccession());
+    public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriterDbsnp(InputParameters parameters) {
+        Path reportPath = ReportPathResolver.getDbsnpDeprecatedIdsReportPath(parameters.getOutputFolder(),
+                                                                             parameters.getAssemblyAccession());
+        return new DeprecatedVariantAccessionWriter(reportPath);
+    }
+
+    @Bean(EVA_DEPRECATED_RELEASE_WRITER)
+    public DeprecatedVariantAccessionWriter deprecatedVariantItemStreamWriterEva(InputParameters parameters) {
+        Path reportPath = ReportPathResolver.getEvaDeprecatedIdsReportPath(parameters.getOutputFolder(),
+                                                                           parameters.getAssemblyAccession());
         return new DeprecatedVariantAccessionWriter(reportPath);
     }
 

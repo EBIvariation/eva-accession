@@ -31,8 +31,8 @@ public class MergedDeprecatedAccessionWriterConfiguration {
 
     @Bean(DBSNP_MERGED_DEPRECATED_RELEASE_WRITER)
     public MergedDeprecatedVariantAccessionWriter mergedDeprecatedVariantItemStreamWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getMergedDeprecatedIdsReportPath(parameters.getOutputFolder(),
-                                                                              parameters.getAssemblyAccession());
+        Path reportPath = ReportPathResolver.getDbsnpMergedDeprecatedIdsReportPath(parameters.getOutputFolder(),
+                                                                                   parameters.getAssemblyAccession());
         return new MergedDeprecatedVariantAccessionWriter(reportPath);
     }
 

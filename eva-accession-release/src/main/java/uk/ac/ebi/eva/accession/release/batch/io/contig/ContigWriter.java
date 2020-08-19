@@ -37,11 +37,15 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     private static final String FILE_EXTENSION = ".txt";
 
-    private static final String ACTIVE_FILE_PREFIX = "/active_contigs_";
+    private static final String ACTIVE_FILE_PREFIX = "active_contigs_";
 
-    private static final String MERGED_FILE_PREFIX = "/merged_contigs_";
+    private static final String MERGED_FILE_PREFIX = "merged_contigs_";
 
-    private static final String MULTIMAP_FILE_PREFIX = "/multimap_contigs_";
+    private static final String MULTIMAP_FILE_PREFIX = "multimap_contigs_";
+
+    private static final String EVA_PREFIX = "/eva_";
+
+    private static final String DBSNP_PREFIX = "/dbsnp_";
 
     private final File output;
 
@@ -91,39 +95,27 @@ public class ContigWriter implements ItemStreamWriter<String> {
         }
     }
 
-    public static String getActiveContigsFilePath(String referenceAssembly) {
-        return ACTIVE_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
+    public static String getDbsnpActiveContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + (DBSNP_PREFIX + ACTIVE_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 
-    public static String getActiveContigsFilePath(File outputFolder, String referenceAssembly) {
-        return outputFolder + getActiveContigsFilePath(referenceAssembly);
+    public static String getDbsnpMergedContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + (DBSNP_PREFIX + MERGED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 
-    public static String getActiveContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + getActiveContigsFilePath(referenceAssembly);
+    public static String getDbsnpMultimapContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + (DBSNP_PREFIX + MULTIMAP_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 
-    public static String getMergedContigsFilePath(String referenceAssembly) {
-        return MERGED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
+    public static String getEvaActiveContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + (EVA_PREFIX + ACTIVE_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 
-    public static String getMergedContigsFilePath(File outputFolder, String referenceAssembly) {
-        return outputFolder + getMergedContigsFilePath(referenceAssembly);
+    public static String getEvaMergedContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + (EVA_PREFIX + MERGED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 
-    public static String getMergedContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + getMergedContigsFilePath(referenceAssembly);
-    }
-
-    public static String getMultimapContigsFilePath(String referenceAssembly) {
-        return MULTIMAP_FILE_PREFIX + referenceAssembly + FILE_EXTENSION;
-    }
-
-    public static String getMultimapContigsFilePath(File outputFolder, String referenceAssembly) {
-        return outputFolder + getMultimapContigsFilePath(referenceAssembly);
-    }
-
-    public static String getMultimapContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + getMultimapContigsFilePath(referenceAssembly);
+    public static String getEvaMultimapContigsFilePath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder) + (EVA_PREFIX + MULTIMAP_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 }

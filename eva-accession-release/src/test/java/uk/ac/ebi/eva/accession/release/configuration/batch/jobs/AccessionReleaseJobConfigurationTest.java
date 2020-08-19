@@ -129,33 +129,33 @@ public class AccessionReleaseJobConfigurationTest {
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getCurrentIdsReportPath(inputParameters.getOutputFolder(),
-                                                                              inputParameters.getAssemblyAccession())
+        return new FileInputStream(ReportPathResolver.getDbsnpCurrentIdsReportPath(inputParameters.getOutputFolder(),
+                                                                                   inputParameters.getAssemblyAccession())
                                                      .toFile());
     }
 
     private FileInputStream getMergedRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getMergedIdsReportPath(inputParameters.getOutputFolder(),
-                                                                             inputParameters.getAssemblyAccession())
+        return new FileInputStream(ReportPathResolver.getDbsnpMergedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                                  inputParameters.getAssemblyAccession())
                                                      .toFile());
     }
 
     private FileInputStream getDeprecatedRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                                                 inputParameters.getAssemblyAccession())
+        return new FileInputStream(ReportPathResolver.getDbsnpDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                                      inputParameters.getAssemblyAccession())
                                                      .toFile());
     }
 
     private FileInputStream getMergedDeprecatedRelease() throws FileNotFoundException {
         return new FileInputStream(
-                ReportPathResolver.getMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                                    inputParameters.getAssemblyAccession()).toFile());
+                ReportPathResolver.getDbsnpMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                         inputParameters.getAssemblyAccession()).toFile());
     }
 
     private FileInputStream getMultimapRelease() throws FileNotFoundException {
         return new FileInputStream(
-                ReportPathResolver.getMultimapIdsReportPath(inputParameters.getOutputFolder(),
-                                                            inputParameters.getAssemblyAccession()).toFile());
+                ReportPathResolver.getDbsnpMultimapIdsReportPath(inputParameters.getOutputFolder(),
+                                                                 inputParameters.getAssemblyAccession()).toFile());
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {

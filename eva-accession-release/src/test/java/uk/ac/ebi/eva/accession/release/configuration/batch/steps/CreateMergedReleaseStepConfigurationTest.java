@@ -108,8 +108,8 @@ public class CreateMergedReleaseStepConfigurationTest {
     }
 
     private File getMergedReleaseFile() {
-        return ReportPathResolver.getMergedIdsReportPath(inputParameters.getOutputFolder(),
-                                                         inputParameters.getAssemblyAccession()).toFile();
+        return ReportPathResolver.getDbsnpMergedIdsReportPath(inputParameters.getOutputFolder(),
+                                                              inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

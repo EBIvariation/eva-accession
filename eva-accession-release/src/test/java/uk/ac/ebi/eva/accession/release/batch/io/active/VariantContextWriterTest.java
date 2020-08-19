@@ -22,7 +22,6 @@ import org.junit.rules.TemporaryFolder;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.release.batch.io.active.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.accession.release.batch.processors.VariantToVariantContextProcessor;
@@ -136,9 +135,9 @@ public class VariantContextWriterTest {
     }
 
     private File assertWriteVcf(File outputFolder, Variant... variants) throws Exception {
-        Path reportPath = ReportPathResolver.getCurrentIdsReportPath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
-        String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
-                                                                             REFERENCE_ASSEMBLY);
+        Path reportPath = ReportPathResolver.getDbsnpCurrentIdsReportPath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY);
+        String activeContigsFilePath = ContigWriter.getDbsnpActiveContigsFilePath(reportPath.toFile().getParent(),
+                                                                                  REFERENCE_ASSEMBLY);
         VariantContextWriter writer = new VariantContextWriter(reportPath, REFERENCE_ASSEMBLY, activeContigsFilePath);
         writer.open(null);
 
@@ -188,7 +187,8 @@ public class VariantContextWriterTest {
     @Test
     public void checkMetadataSection() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        FileWriter fileWriter = new FileWriter(ContigWriter.getActiveContigsFilePath(outputFolder, REFERENCE_ASSEMBLY));
+        FileWriter fileWriter = new FileWriter(
+                ContigWriter.getDbsnpActiveContigsFilePath(outputFolder.getAbsolutePath(), REFERENCE_ASSEMBLY));
         String contig = "CM0001.1,Chr1";
         fileWriter.write(contig);
         fileWriter.close();

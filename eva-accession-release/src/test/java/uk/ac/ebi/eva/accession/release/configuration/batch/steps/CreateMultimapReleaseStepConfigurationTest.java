@@ -107,8 +107,8 @@ public class CreateMultimapReleaseStepConfigurationTest {
     }
 
     private File getReleaseFile() {
-        return ReportPathResolver.getMultimapIdsReportPath(inputParameters.getOutputFolder(),
-                                                           inputParameters.getAssemblyAccession()).toFile();
+        return ReportPathResolver.getDbsnpMultimapIdsReportPath(inputParameters.getOutputFolder(),
+                                                                inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

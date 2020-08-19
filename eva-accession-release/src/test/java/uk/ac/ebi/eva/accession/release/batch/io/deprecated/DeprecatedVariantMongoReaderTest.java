@@ -32,10 +32,13 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantMongoReader;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.release.configuration.batch.io.DeprecatedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 
@@ -73,7 +76,7 @@ public class DeprecatedVariantMongoReaderTest {
     @Before
     public void setUp() {
         ExecutionContext executionContext = new ExecutionContext();
-        reader = new DeprecatedVariantMongoReader(ASSEMBLY, mongoTemplate);
+        reader = DeprecatedVariantMongoReader.dbsnpDeprecatedVariantMongoReader(ASSEMBLY, mongoTemplate);
         reader.open(executionContext);
     }
 
@@ -93,11 +96,14 @@ public class DeprecatedVariantMongoReaderTest {
         }
     }
 
-    private List<DbsnpClusteredVariantOperationEntity> readIntoList() throws Exception {
-        List<DbsnpClusteredVariantOperationEntity> variants = new ArrayList<>();
-        DbsnpClusteredVariantOperationEntity variant;
+    private <OP extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> List<OP>
+    readIntoList() throws Exception {
+        List<OP> variants = new ArrayList<>();
+        OP variant;
 
-        while ((variant = reader.read()) != null) {
+        while (true) {
+            EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> read = reader.read();
+            if (!((variant = read) != null)) break;
             variants.add(variant);
         }
 

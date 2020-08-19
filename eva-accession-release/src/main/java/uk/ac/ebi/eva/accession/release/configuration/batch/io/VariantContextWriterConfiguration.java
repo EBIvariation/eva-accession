@@ -37,28 +37,28 @@ public class VariantContextWriterConfiguration {
 
     @Bean(DBSNP_RELEASE_WRITER)
     public VariantContextWriter variantContextWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getCurrentIdsReportPath(parameters.getOutputFolder(),
-                                                                     parameters.getAssemblyAccession());
-        String activeContigsFilePath = ContigWriter.getActiveContigsFilePath(reportPath.toFile().getParent(),
-                                                                             parameters.getAssemblyAccession());
+        Path reportPath = ReportPathResolver.getDbsnpCurrentIdsReportPath(parameters.getOutputFolder(),
+                                                                          parameters.getAssemblyAccession());
+        String activeContigsFilePath = ContigWriter.getDbsnpActiveContigsFilePath(reportPath.toFile().getParent(),
+                                                                                  parameters.getAssemblyAccession());
         return new VariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
     }
 
     @Bean(DBSNP_MERGED_RELEASE_WRITER)
     public MergedVariantContextWriter mergedVariantContextWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getMergedIdsReportPath(parameters.getOutputFolder(),
-                                                                    parameters.getAssemblyAccession());
-        String mergedContigsFilePath = ContigWriter.getMergedContigsFilePath(reportPath.toFile().getParent(),
-                                                                             parameters.getAssemblyAccession());
+        Path reportPath = ReportPathResolver.getDbsnpMergedIdsReportPath(parameters.getOutputFolder(),
+                                                                         parameters.getAssemblyAccession());
+        String mergedContigsFilePath = ContigWriter.getDbsnpMergedContigsFilePath(reportPath.toFile().getParent(),
+                                                                                  parameters.getAssemblyAccession());
         return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession(), mergedContigsFilePath);
     }
 
     @Bean(DBSNP_MULTIMAP_RELEASE_WRITER)
     public MultimapVariantContextWriter multimapVariantContextWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getMultimapIdsReportPath(parameters.getOutputFolder(),
-                                                                      parameters.getAssemblyAccession());
-        String activeContigsFilePath = ContigWriter.getMultimapContigsFilePath(reportPath.toFile().getParent(),
-                                                                             parameters.getAssemblyAccession());
+        Path reportPath = ReportPathResolver.getDbsnpMultimapIdsReportPath(parameters.getOutputFolder(),
+                                                                           parameters.getAssemblyAccession());
+        String activeContigsFilePath = ContigWriter.getDbsnpMultimapContigsFilePath(reportPath.toFile().getParent(),
+                                                                                    parameters.getAssemblyAccession());
         return new MultimapVariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
     }
 

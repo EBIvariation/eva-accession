@@ -98,8 +98,8 @@ public class CreateDeprecatedReleaseStepConfigurationTest {
     }
 
     private File getDeprecatedReleaseFile() {
-        return ReportPathResolver.getDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                             inputParameters.getAssemblyAccession()).toFile();
+        return ReportPathResolver.getDbsnpDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                  inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

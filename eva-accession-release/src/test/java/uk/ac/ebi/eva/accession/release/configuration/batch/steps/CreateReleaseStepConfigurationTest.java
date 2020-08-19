@@ -106,8 +106,8 @@ public class CreateReleaseStepConfigurationTest {
     }
 
     private File getReleaseFile() {
-        return ReportPathResolver.getCurrentIdsReportPath(inputParameters.getOutputFolder(),
-                                                          inputParameters.getAssemblyAccession()).toFile();
+        return ReportPathResolver.getDbsnpCurrentIdsReportPath(inputParameters.getOutputFolder(),
+                                                               inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

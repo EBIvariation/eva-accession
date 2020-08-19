@@ -104,8 +104,8 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
     }
 
     private File getMergedDeprecatedReleaseFile() {
-        return ReportPathResolver.getMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                                   inputParameters.getAssemblyAccession()).toFile();
+        return ReportPathResolver.getDbsnpMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                        inputParameters.getAssemblyAccession()).toFile();
     }
 
     @Test

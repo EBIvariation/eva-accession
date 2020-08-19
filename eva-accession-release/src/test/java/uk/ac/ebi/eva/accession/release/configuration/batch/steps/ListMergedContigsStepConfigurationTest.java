@@ -77,15 +77,15 @@ public class ListMergedContigsStepConfigurationTest {
 
     @Before
     public void setUp() throws Exception {
-        new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
-                                                       inputParameters.getAssemblyAccession()))
+        new File(ContigWriter.getDbsnpMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                            inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
     @After
     public void tearDown() throws Exception {
-        new File(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
-                                                       inputParameters.getAssemblyAccession()))
+        new File(ContigWriter.getDbsnpMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                            inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
@@ -102,8 +102,8 @@ public class ListMergedContigsStepConfigurationTest {
         assertStepExecutesAndCompletes();
 
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1,CAE13", "CM001941.2,CAE1")),
-                     setOfLines(ContigWriter.getMergedContigsFilePath(inputParameters.getOutputFolder(),
-                                                                      inputParameters.getAssemblyAccession())));
+                     setOfLines(ContigWriter.getDbsnpMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                                           inputParameters.getAssemblyAccession())));
     }
 
     private Set<String> setOfLines(String path) throws IOException {

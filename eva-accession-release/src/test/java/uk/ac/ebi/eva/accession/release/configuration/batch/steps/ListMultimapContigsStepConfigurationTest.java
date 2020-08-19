@@ -48,7 +48,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getMultimapContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getDbsnpMultimapContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MULTIMAP_CONTIGS_STEP;
 
 @RunWith(SpringRunner.class)
@@ -77,15 +77,15 @@ public class ListMultimapContigsStepConfigurationTest {
 
     @Before
     public void setUp() throws Exception {
-        new File(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                            inputParameters.getAssemblyAccession()))
+        new File(getDbsnpMultimapContigsFilePath(inputParameters.getOutputFolder(),
+                                                 inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
     @After
     public void tearDown() throws Exception {
-        new File(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                            inputParameters.getAssemblyAccession()))
+        new File(getDbsnpMultimapContigsFilePath(inputParameters.getOutputFolder(),
+                                                 inputParameters.getAssemblyAccession()))
                 .delete();
     }
     @Test
@@ -101,8 +101,8 @@ public class ListMultimapContigsStepConfigurationTest {
         assertStepExecutesAndCompletes();
 
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1,CAE13")),
-                     setOfLines(getMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                                           inputParameters.getAssemblyAccession())));
+                     setOfLines(getDbsnpMultimapContigsFilePath(inputParameters.getOutputFolder(),
+                                                                inputParameters.getAssemblyAccession())));
     }
 
     private Set<String> setOfLines(String path) throws IOException {
