@@ -25,9 +25,8 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
+import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
-
-import java.lang.reflect.ParameterizedType;
 
 public class DeprecatedVariantMongoReader<T extends
         EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
@@ -36,22 +35,22 @@ public class DeprecatedVariantMongoReader<T extends
     public static DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> dbsnpDeprecatedVariantMongoReader(
             String assemblyAccession,
             MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new EvaCollectionNames());
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new DbsnpCollectionNames(),
+                                                  DbsnpClusteredVariantOperationEntity.class);
     }
 
     public static DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> evaDeprecatedVariantMongoReader(
             String assemblyAccession,
             MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new EvaCollectionNames());
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new EvaCollectionNames(),
+                                                  ClusteredVariantOperationEntity.class);
     }
 
-    public DeprecatedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, CollectionNames names) {
+    public DeprecatedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, CollectionNames names,
+                                        Class<T> operationClass) {
         setCollection(names.getClusteredVariantOperationEntity());
         setTemplate(mongoTemplate);
-        setTargetType((Class<T>)
-                              ((ParameterizedType)getClass()
-                                      .getGenericSuperclass())
-                                      .getActualTypeArguments()[0]);
+        setTargetType(operationClass);
 
         setQuery(String.format("{ \"inactiveObjects.asm\" : \"%s\", eventType : \"%s\" }", assemblyAccession,
                                EventType.DEPRECATED));

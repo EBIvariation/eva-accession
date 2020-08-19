@@ -20,6 +20,7 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemStreamWriter;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EV
          ListenersConfiguration.class})
 public class CreateDeprecatedReleaseStepConfiguration {
 
+    @Autowired
     @Qualifier(PROGRESS_LISTENER)
     private StepExecutionListener progressListener;
 
@@ -61,7 +63,7 @@ public class CreateDeprecatedReleaseStepConfiguration {
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Qualifier(DBSNP_DEPRECATED_VARIANT_READER)
-                    ItemReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantReader,
+                    DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantReader,
             @Qualifier(DBSNP_DEPRECATED_RELEASE_WRITER) DeprecatedVariantAccessionWriter accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP)
                 .<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>,

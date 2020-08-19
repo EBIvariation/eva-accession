@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
@@ -35,18 +36,18 @@ public class DeprecatedVariantMongoReaderConfiguration {
 
     @Bean(DBSNP_DEPRECATED_VARIANT_READER)
     @StepScope
-    public DeprecatedVariantMongoReader deprecatedVariantMongoReaderDbsnp(InputParameters parameters,
-                                                                          MongoTemplate mongoTemplate) {
-        return DeprecatedVariantMongoReader.evaDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
-                                                                            mongoTemplate);
+    public DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantMongoReaderDbsnp(
+            InputParameters parameters, MongoTemplate mongoTemplate) {
+        return DeprecatedVariantMongoReader.dbsnpDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                                              mongoTemplate);
     }
 
     @Bean(EVA_DEPRECATED_VARIANT_READER)
     @StepScope
-    public DeprecatedVariantMongoReader deprecatedVariantMongoReaderEva(InputParameters parameters,
-                                                                        MongoTemplate mongoTemplate) {
-        return DeprecatedVariantMongoReader.dbsnpDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
-                                                                              mongoTemplate);
+    public DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> deprecatedVariantMongoReaderEva(
+            InputParameters parameters, MongoTemplate mongoTemplate) {
+        return DeprecatedVariantMongoReader.evaDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                                            mongoTemplate);
     }
 
 }
