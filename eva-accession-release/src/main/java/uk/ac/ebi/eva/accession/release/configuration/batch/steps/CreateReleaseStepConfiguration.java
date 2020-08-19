@@ -37,12 +37,12 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersCo
 import uk.ac.ebi.eva.accession.release.configuration.batch.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSIONED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_ACCESSIONED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_RELEASE_WRITER;
 
 @Configuration
 @Import({AccessionedVariantMongoReaderConfiguration.class,
@@ -52,7 +52,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_WR
 public class CreateReleaseStepConfiguration {
 
     @Autowired
-    @Qualifier(ACCESSIONED_VARIANT_READER)
+    @Qualifier(DBSNP_ACCESSIONED_VARIANT_READER)
     private ItemReader<Variant> variantReader;
 
     @Autowired
@@ -60,7 +60,7 @@ public class CreateReleaseStepConfiguration {
     private ItemProcessor<Variant, VariantContext> variantProcessor;
 
     @Autowired
-    @Qualifier(RELEASE_WRITER)
+    @Qualifier(DBSNP_RELEASE_WRITER)
     private ItemStreamWriter<VariantContext> accessionWriter;
 
     @Autowired
@@ -74,10 +74,10 @@ public class CreateReleaseStepConfiguration {
     @Autowired
     private IllegalStartSkipPolicy illegalStartSkipPolicy;
 
-    @Bean(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
+    @Bean(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
     public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
                                           SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
+        TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)

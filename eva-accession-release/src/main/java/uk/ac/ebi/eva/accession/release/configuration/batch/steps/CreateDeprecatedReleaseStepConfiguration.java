@@ -33,10 +33,10 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersCo
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.DeprecatedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.DeprecatedAccessionWriterConfiguration;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_VARIANT_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DEPRECATED_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_DEPRECATED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_DEPRECATED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP;
 
 @Configuration
 @Import({DeprecatedVariantMongoReaderConfiguration.class,
@@ -45,21 +45,21 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MA
 public class CreateDeprecatedReleaseStepConfiguration {
 
     @Autowired
-    @Qualifier(DEPRECATED_VARIANT_READER)
+    @Qualifier(DBSNP_DEPRECATED_VARIANT_READER)
     private ItemReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantReader;
 
     @Autowired
-    @Qualifier(DEPRECATED_RELEASE_WRITER)
+    @Qualifier(DBSNP_DEPRECATED_RELEASE_WRITER)
     private ItemStreamWriter<DbsnpClusteredVariantOperationEntity> accessionWriter;
 
     @Autowired
     @Qualifier(PROGRESS_LISTENER)
     private StepExecutionListener progressListener;
 
-    @Bean(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
+    @Bean(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP)
     public Step createDeprecatedReleaseStep(StepBuilderFactory stepBuilderFactory,
                                             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
+        TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP)
                 .<DbsnpClusteredVariantOperationEntity, DbsnpClusteredVariantOperationEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(deprecatedVariantReader)
                 .writer(accessionWriter)

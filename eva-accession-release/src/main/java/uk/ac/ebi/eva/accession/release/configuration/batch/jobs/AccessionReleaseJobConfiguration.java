@@ -35,14 +35,14 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateReleaseSt
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ListContigsStepConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.ACCESSION_RELEASE_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_ACTIVE_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MULTIMAP_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_MERGED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MULTIMAP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_ACTIVE_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MULTIMAP_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP;
 
 @Configuration
 @EnableBatchProcessing
@@ -55,36 +55,36 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MU
 public class AccessionReleaseJobConfiguration {
 
     @Autowired
-    @Qualifier(LIST_ACTIVE_CONTIGS_STEP)
+    @Qualifier(LIST_DBSNP_ACTIVE_CONTIGS_STEP)
     private Step listActiveContigsStep;
 
     @Autowired
-    @Qualifier(LIST_MERGED_CONTIGS_STEP)
+    @Qualifier(LIST_DBSNP_MERGED_CONTIGS_STEP)
     private Step listMergedContigsStep;
 
 
     @Autowired
-    @Qualifier(LIST_MULTIMAP_CONTIGS_STEP)
+    @Qualifier(LIST_DBSNP_MULTIMAP_CONTIGS_STEP)
     private Step listMultimapContigsStep;
 
     @Autowired
-    @Qualifier(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP)
+    @Qualifier(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
     private Step createReleaseStep;
 
     @Autowired
-    @Qualifier(RELEASE_MAPPED_MERGED_VARIANTS_STEP)
+    @Qualifier(RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP)
     private Step createMergedReleaseStep;
 
     @Autowired
-    @Qualifier(RELEASE_MAPPED_DEPRECATED_VARIANTS_STEP)
+    @Qualifier(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP)
     private Step createDeprecatedReleaseStep;
 
     @Autowired
-    @Qualifier(RELEASE_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
+    @Qualifier(RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
     private Step createMergedDeprecatedReleaseStep;
 
     @Autowired
-    @Qualifier(RELEASE_MULTIMAP_VARIANTS_STEP)
+    @Qualifier(RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP)
     private Step createMultimapReleaseStep;
 
     @Bean(ACCESSION_RELEASE_JOB)

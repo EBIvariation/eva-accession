@@ -30,13 +30,13 @@ import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.MergedDeprecat
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_DEPRECATED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_DEPRECATED_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
 public class MergedDeprecatedVariantMongoReaderConfiguration {
 
-    @Bean(MERGED_DEPRECATED_VARIANT_READER)
+    @Bean(DBSNP_MERGED_DEPRECATED_VARIANT_READER)
     @StepScope
     public ItemStreamReader<DbsnpClusteredVariantOperationEntity> mergedDeprecatedVariantMongoReader(
             InputParameters parameters, MongoClient mongoClient, MongoTemplate mongoTemplate,

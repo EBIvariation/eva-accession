@@ -49,7 +49,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MERGED_CONTIGS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
@@ -92,7 +92,7 @@ public class ListMergedContigsStepConfigurationTest {
     @Test
     @DirtiesContext
     public void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_MERGED_CONTIGS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_DBSNP_MERGED_CONTIGS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 

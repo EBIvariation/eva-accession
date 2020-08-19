@@ -50,7 +50,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 
@@ -94,7 +94,7 @@ public class CreateReleaseStepConfigurationTest {
     }
 
     private void assertStepExecutesAndCompletes() {
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_MAPPED_ACTIVE_VARIANTS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
