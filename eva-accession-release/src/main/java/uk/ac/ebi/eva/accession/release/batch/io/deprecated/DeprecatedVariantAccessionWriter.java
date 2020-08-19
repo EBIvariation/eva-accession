@@ -18,8 +18,11 @@ package uk.ac.ebi.eva.accession.release.batch.io.deprecated;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -31,7 +34,8 @@ import java.util.List;
 /**
  * Writes the accessions of historical variants to a flat file.
  */
-public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
+public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<EventDocument<IClusteredVariant, Long,
+        ? extends ClusteredVariantInactiveEntity>> {
 
     private final File output;
 
@@ -55,8 +59,9 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpC
     }
 
     @Override
-    public void write(List<? extends DbsnpClusteredVariantOperationEntity> variants) throws Exception {
-        for (DbsnpClusteredVariantOperationEntity variant : variants) {
+    public void write(
+            List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> variants) {
+        for (EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> variant : variants) {
             printWriter.println("rs" + variant.getAccession());
         }
     }

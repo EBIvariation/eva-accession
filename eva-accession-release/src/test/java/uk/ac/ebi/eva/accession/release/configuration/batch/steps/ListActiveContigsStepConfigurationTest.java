@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_ACTIVE_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getActiveContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getDbsnpActiveContigsFilePath;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
@@ -77,15 +77,15 @@ public class ListActiveContigsStepConfigurationTest {
 
     @Before
     public void setUp() throws Exception {
-        new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                          inputParameters.getAssemblyAccession()))
+        new File(getDbsnpActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                               inputParameters.getAssemblyAccession()))
                 .delete();
     }
 
     @After
     public void tearDown() throws Exception {
-        new File(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                          inputParameters.getAssemblyAccession()))
+        new File(getDbsnpActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                               inputParameters.getAssemblyAccession()))
                 .delete();
     }
     @Test
@@ -101,8 +101,8 @@ public class ListActiveContigsStepConfigurationTest {
         assertStepExecutesAndCompletes();
 
         assertEquals(new HashSet<>(Arrays.asList("CM001954.1,CAE13", "CM001941.2,CAE1")),
-                     setOfLines(getActiveContigsFilePath(inputParameters.getOutputFolder(),
-                                                         inputParameters.getAssemblyAccession())));
+                     setOfLines(getDbsnpActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                                              inputParameters.getAssemblyAccession())));
     }
 
     private Set<String> setOfLines(String path) throws IOException {

@@ -29,11 +29,13 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
+import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_ACCESSIONED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_ACCESSIONED_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
@@ -43,17 +45,23 @@ public class AccessionedVariantMongoReaderConfiguration {
 
     @Bean(DBSNP_ACCESSIONED_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<Variant> unwindingReader(AccessionedVariantMongoReader accessionedVariantMongoReader) {
-        return new UnwindingItemStreamReader<>(accessionedVariantMongoReader);
+    public ItemStreamReader<Variant> unwindingReader(InputParameters parameters, MongoClient mongoClient,
+                                                     MongoProperties mongoProperties) {
+        logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
+        return new UnwindingItemStreamReader<>(
+                new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                                                  mongoProperties.getDatabase(), parameters.getChunkSize(),
+                                                  new DbsnpCollectionNames()));
     }
 
-    @Bean
+    @Bean(EVA_ACCESSIONED_VARIANT_READER)
     @StepScope
-    AccessionedVariantMongoReader accessionedVariantMongoReader(InputParameters parameters, MongoClient mongoClient,
-                                                                MongoProperties mongoProperties) {
+    public ItemStreamReader<Variant> unwindingReaderEva(InputParameters parameters, MongoClient mongoClient,
+                                                        MongoProperties mongoProperties) {
         logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
-        return new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                 mongoProperties.getDatabase(), parameters.getChunkSize(),
-                                                 new DbsnpCollectionNames());
+        return new UnwindingItemStreamReader<>(
+                new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                                                  mongoProperties.getDatabase(), parameters.getChunkSize(),
+                                                  new EvaCollectionNames()));
     }
 }

@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.release.configuration.batch.io;
 
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -28,6 +27,7 @@ import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantMong
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_DEPRECATED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_DEPRECATED_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
@@ -35,9 +35,18 @@ public class DeprecatedVariantMongoReaderConfiguration {
 
     @Bean(DBSNP_DEPRECATED_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantMongoReader(
-            InputParameters parameters, MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
+    public DeprecatedVariantMongoReader deprecatedVariantMongoReaderDbsnp(InputParameters parameters,
+                                                                          MongoTemplate mongoTemplate) {
+        return DeprecatedVariantMongoReader.evaDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                                            mongoTemplate);
+    }
+
+    @Bean(EVA_DEPRECATED_VARIANT_READER)
+    @StepScope
+    public DeprecatedVariantMongoReader deprecatedVariantMongoReaderEva(InputParameters parameters,
+                                                                        MongoTemplate mongoTemplate) {
+        return DeprecatedVariantMongoReader.dbsnpDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                                              mongoTemplate);
     }
 
 }

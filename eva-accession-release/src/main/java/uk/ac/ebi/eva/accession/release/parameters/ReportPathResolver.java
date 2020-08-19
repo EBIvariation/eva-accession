@@ -24,28 +24,56 @@ import java.nio.file.Paths;
  */
 public class ReportPathResolver {
 
-    public static Path getCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
-        final String FILE_SUFFIX = "_current_ids.vcf";
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+    public static final String CURRENT_FILE_SUFFIX = "_current_ids.vcf";
+
+    public static final String MERGED_FILE_SUFFIX = "_merged_ids.vcf";
+
+    public static final String DEPRECATED_FILE_SUFFIX = "_deprecated_ids.unsorted.txt";
+
+    public static final String MERGED_DEPRECATED_FILE_SUFFIX = "_merged_deprecated_ids.unsorted.txt";
+
+    public static final String MULTIMAP_FILE_SUFFIX = "_multimap_ids.vcf";
+
+    public static final String DBSNP_PREFIX = "dbsnp_";
+
+
+    public static Path getDbsnpCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + CURRENT_FILE_SUFFIX);
     }
 
-    public static Path getMergedIdsReportPath(String outputFolder, String referenceAssembly) {
-        final String FILE_SUFFIX = "_merged_ids.vcf";
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+    public static Path getDbsnpMergedIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + MERGED_FILE_SUFFIX);
     }
 
-    public static Path getDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
-        final String FILE_SUFFIX = "_deprecated_ids.unsorted.txt";
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+    public static Path getDbsnpDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + DEPRECATED_FILE_SUFFIX);
     }
 
-    public static Path getMergedDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
-        final String FILE_SUFFIX = "_merged_deprecated_ids.unsorted.txt";
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+    public static Path getDbsnpMergedDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + MERGED_DEPRECATED_FILE_SUFFIX);
     }
 
-    public static Path getMultimapIdsReportPath(String outputFolder, String referenceAssembly) {
-        final String FILE_SUFFIX = "_multimap_ids.vcf";
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+    public static Path getDbsnpMultimapIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + MULTIMAP_FILE_SUFFIX);
+    }
+
+    public static Path getEvaCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + CURRENT_FILE_SUFFIX);
+    }
+
+    public static Path getEvaMergedIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + MERGED_FILE_SUFFIX);
+    }
+
+    public static Path getEvaDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + DEPRECATED_FILE_SUFFIX);
+    }
+
+    public static Path getEvaMergedDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + MERGED_DEPRECATED_FILE_SUFFIX);
+    }
+
+    public static Path getEvaMultimapIdsReportPath(String outputFolder, String referenceAssembly) {
+        return Paths.get(outputFolder).resolve(referenceAssembly + MULTIMAP_FILE_SUFFIX);
     }
 }
