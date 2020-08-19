@@ -32,6 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocu
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersConfiguration;
@@ -56,12 +57,12 @@ public class CreateDeprecatedReleaseStepConfiguration {
     private StepExecutionListener progressListener;
 
     @Bean(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP)
-    public Step createDbsnpDeprecatedReleaseStep(StepBuilderFactory stepBuilderFactory,
-                                                 SimpleCompletionPolicy chunkSizeCompletionPolicy,
-                                                 @Qualifier(DBSNP_DEPRECATED_VARIANT_READER)
-                                                             DeprecatedVariantMongoReader deprecatedVariantReader,
-                                                 @Qualifier(DBSNP_DEPRECATED_RELEASE_WRITER)
-                                                             DeprecatedVariantAccessionWriter accessionWriter) {
+    public Step createDbsnpDeprecatedReleaseStep(
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            @Qualifier(DBSNP_DEPRECATED_VARIANT_READER)
+                    ItemReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantReader,
+            @Qualifier(DBSNP_DEPRECATED_RELEASE_WRITER) DeprecatedVariantAccessionWriter accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP)
                 .<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>,
                         EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>
@@ -74,12 +75,12 @@ public class CreateDeprecatedReleaseStepConfiguration {
     }
 
     @Bean(RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP)
-    public Step createEvaDeprecatedReleaseStep(StepBuilderFactory stepBuilderFactory,
-                                               SimpleCompletionPolicy chunkSizeCompletionPolicy,
-                                               @Qualifier(EVA_DEPRECATED_VARIANT_READER)
-                                                           DeprecatedVariantMongoReader deprecatedVariantReader,
-                                               @Qualifier(EVA_DEPRECATED_RELEASE_WRITER)
-                                                           DeprecatedVariantAccessionWriter accessionWriter) {
+    public Step createEvaDeprecatedReleaseStep(
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            @Qualifier(EVA_DEPRECATED_VARIANT_READER)
+                    DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> deprecatedVariantReader,
+            @Qualifier(EVA_DEPRECATED_RELEASE_WRITER) DeprecatedVariantAccessionWriter accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP)
                 .<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>,
                         EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>

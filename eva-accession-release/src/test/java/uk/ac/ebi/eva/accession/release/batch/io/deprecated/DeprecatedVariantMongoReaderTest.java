@@ -71,7 +71,7 @@ public class DeprecatedVariantMongoReaderTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    private DeprecatedVariantMongoReader reader;
+    private DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> reader;
 
     @Before
     public void setUp() {
@@ -96,14 +96,11 @@ public class DeprecatedVariantMongoReaderTest {
         }
     }
 
-    private <OP extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> List<OP>
-    readIntoList() throws Exception {
-        List<OP> variants = new ArrayList<>();
-        OP variant;
+    private List<DbsnpClusteredVariantOperationEntity> readIntoList() throws Exception {
+        List<DbsnpClusteredVariantOperationEntity> variants = new ArrayList<>();
+        DbsnpClusteredVariantOperationEntity variant;
 
-        while (true) {
-            EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> read = reader.read();
-            if (!((variant = read) != null)) break;
+        while ((variant = reader.read()) != null) {
             variants.add(variant);
         }
 

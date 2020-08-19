@@ -27,27 +27,31 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 
-public class DeprecatedVariantMongoReader extends MongoDbCursorItemReader<
-        EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> {
+import java.lang.reflect.ParameterizedType;
 
-    public static DeprecatedVariantMongoReader evaDeprecatedVariantMongoReader(String assemblyAccession,
-                                                                               MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader(assemblyAccession, mongoTemplate, new EvaCollectionNames(),
-                                                ClusteredVariantOperationEntity.class);
+public class DeprecatedVariantMongoReader<T extends
+        EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+        extends MongoDbCursorItemReader<T> {
+
+    public static DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> dbsnpDeprecatedVariantMongoReader(
+            String assemblyAccession,
+            MongoTemplate mongoTemplate) {
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new EvaCollectionNames());
     }
 
-    public static DeprecatedVariantMongoReader dbsnpDeprecatedVariantMongoReader(String assemblyAccession,
-                                                                                 MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader(assemblyAccession, mongoTemplate, new EvaCollectionNames(),
-                                                DbsnpClusteredVariantOperationEntity.class);
+    public static DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> evaDeprecatedVariantMongoReader(
+            String assemblyAccession,
+            MongoTemplate mongoTemplate) {
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new EvaCollectionNames());
     }
 
-    public DeprecatedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, CollectionNames names,
-                                        Class<? extends EventDocument<IClusteredVariant, Long,
-                                                ? extends ClusteredVariantInactiveEntity>> clusteredVariantOperationEntityClass) {
+    public DeprecatedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, CollectionNames names) {
         setCollection(names.getClusteredVariantOperationEntity());
         setTemplate(mongoTemplate);
-        setTargetType(clusteredVariantOperationEntityClass);
+        setTargetType((Class<T>)
+                              ((ParameterizedType)getClass()
+                                      .getGenericSuperclass())
+                                      .getActualTypeArguments()[0]);
 
         setQuery(String.format("{ \"inactiveObjects.asm\" : \"%s\", eventType : \"%s\" }", assemblyAccession,
                                EventType.DEPRECATED));
