@@ -35,20 +35,19 @@ public class DeprecatedVariantMongoReader<T extends
     public static DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> dbsnpDeprecatedVariantMongoReader(
             String assemblyAccession,
             MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new DbsnpCollectionNames(),
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate,
                                                   DbsnpClusteredVariantOperationEntity.class);
     }
 
     public static DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> evaDeprecatedVariantMongoReader(
             String assemblyAccession,
             MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate, new EvaCollectionNames(),
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate,
                                                   ClusteredVariantOperationEntity.class);
     }
 
-    public DeprecatedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate, CollectionNames names,
+    public DeprecatedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
                                         Class<T> operationClass) {
-        setCollection(names.getClusteredVariantOperationEntity());
         setTemplate(mongoTemplate);
         setTargetType(operationClass);
 
