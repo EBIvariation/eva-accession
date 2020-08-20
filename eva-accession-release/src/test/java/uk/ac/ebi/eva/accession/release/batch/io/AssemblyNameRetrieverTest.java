@@ -31,6 +31,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 public class AssemblyNameRetrieverTest {
 
@@ -41,9 +42,9 @@ public class AssemblyNameRetrieverTest {
     public void parseXml() throws IOException, JAXBException {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
-        fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
-                         + "center_name=\"Genome Reference Consortium\">"
-                         + "<NAME>GRCh38.p13</NAME></ASSEMBLY></ROOT>");
+        fileWriter.write("<ASSEMBLY_SET><ASSEMBLY accession=\"GCA_000001405.28\">\n" +
+                                 "<NAME>GRCh38.p13</NAME>\n" +
+                                 "</ASSEMBLY></ASSEMBLY_SET>");
         fileWriter.close();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
@@ -56,8 +57,7 @@ public class AssemblyNameRetrieverTest {
     public void parseMissingName() throws IOException, JAXBException {
         File xml = temporaryFolderRule.newFile();
         FileWriter fileWriter = new FileWriter(xml);
-        fileWriter.write("<ROOT><ASSEMBLY accession=\"GCA_000001405.28\" "
-                         + "center_name=\"Genome Reference Consortium\"></ASSEMBLY></ROOT>");
+        fileWriter.write("<ASSEMBLY_SET><ASSEMBLY></ASSEMBLY></ASSEMBLY_SET>");
         fileWriter.close();
 
         JAXBContext jaxbContext = JAXBContext.newInstance(EnaAssemblyXml.class);
@@ -72,14 +72,19 @@ public class AssemblyNameRetrieverTest {
     }
 
     @Test
-    public void retrieveNonExistentAssembly() throws IOException, JAXBException {
-        assertFalse(new AssemblyNameRetriever("GCA_non_existent").getAssemblyName().isPresent());
+    public void retrieveAssemblyWithWrongFormat() throws IOException, JAXBException {
+        assertThrows(RuntimeException.class, () -> new AssemblyNameRetriever("GCA_wrong_format"));
     }
 
     @Test
-    public void buildUrl() {
-        assertEquals("https://www.ebi.ac.uk/ena/data/view/GCA_000001405.28",
-                     new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyUrl());
+    public void retrieveNonExistentAssembly() throws IOException, JAXBException {
+        assertFalse(new AssemblyNameRetriever("GCA_000000000.1").getAssemblyName().isPresent());
+    }
+
+    @Test
+    public void buildHumanReadableUrl() {
+        assertEquals("https://www.ebi.ac.uk/ena/browser/view/GCA_000001405.28",
+                     new AssemblyNameRetriever("GCA_000001405.28").buildAssemblyHumanReadableUrl());
     }
 
     @Test
