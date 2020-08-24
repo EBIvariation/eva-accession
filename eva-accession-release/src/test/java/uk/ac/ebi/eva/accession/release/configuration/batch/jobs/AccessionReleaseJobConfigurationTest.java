@@ -69,13 +69,18 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EV
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantOperationEntity.json"})
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json",
+        "/test-data/submittedVariantEntity.json",
+        "/test-data/clusteredVariantEntity.json",
+})
 @TestPropertySource("classpath:application.properties")
 public class AccessionReleaseJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
     private static final long EXPECTED_LINES = 5;
+
+    private static final long EXPECTED_EVA_LINES = 2;
 
     private static final long EXPECTED_LINES_MERGED = 5;
 
@@ -141,11 +146,20 @@ public class AccessionReleaseJobConfigurationTest {
         assertEquals(EXPECTED_LINES_MERGED_DEPRECATED, numVariantsInMergedDeprecatedRelease);
         long numVariantsInMultimapRelease = FileUtils.countNonCommentLines(getMultimapRelease());
         assertEquals(EXPECTED_LINES_MULTIMAP, numVariantsInMultimapRelease);
+        long numVariantsInEvaRelease = FileUtils.countNonCommentLines(getEvaRelease());
+        assertEquals(EXPECTED_EVA_LINES, numVariantsInEvaRelease);
+
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getDbsnpCurrentIdsReportPath(inputParameters.getOutputFolder(),
                                                                                    inputParameters.getAssemblyAccession())
+                                                     .toFile());
+    }
+
+    private FileInputStream getEvaRelease() throws FileNotFoundException {
+        return new FileInputStream(ReportPathResolver.getEvaCurrentIdsReportPath(inputParameters.getOutputFolder(),
+                                                                                 inputParameters.getAssemblyAccession())
                                                      .toFile());
     }
 
@@ -180,3 +194,4 @@ public class AccessionReleaseJobConfigurationTest {
     }
 
 }
+

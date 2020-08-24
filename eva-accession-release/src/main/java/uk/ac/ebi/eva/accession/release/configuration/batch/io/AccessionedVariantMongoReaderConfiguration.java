@@ -41,13 +41,13 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_ACCESS
 @Import({MongoConfiguration.class})
 public class AccessionedVariantMongoReaderConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReaderConfiguration.class);
 
     @Bean(DBSNP_ACCESSIONED_VARIANT_READER)
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderDbsnp(InputParameters parameters, MongoClient mongoClient,
-                                                     MongoProperties mongoProperties) {
-        logger.info("Injecting Dbsnp AccessionedVariantMongoReader with parameters: {}", parameters);
+                                                          MongoProperties mongoProperties) {
+        logger.info("Injecting Dbsnp AccessionedVariantMongoReader with parameters: {}", parameters.toJobParameters());
         return new UnwindingItemStreamReader<>(
                 new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
                                                   mongoProperties.getDatabase(), parameters.getChunkSize(),
@@ -58,7 +58,7 @@ public class AccessionedVariantMongoReaderConfiguration {
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderEva(InputParameters parameters, MongoClient mongoClient,
                                                         MongoProperties mongoProperties) {
-        logger.info("Injecting Eva AccessionedVariantMongoReader with parameters: {}", parameters);
+        logger.info("Injecting Eva AccessionedVariantMongoReader with parameters: {}", parameters.toJobParameters());
         return new UnwindingItemStreamReader<>(
                 new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
                                                   mongoProperties.getDatabase(), parameters.getChunkSize(),

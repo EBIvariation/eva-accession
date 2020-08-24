@@ -23,6 +23,8 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
@@ -39,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class VariantMongoAggregationReader implements ItemStreamReader<List<Variant>> {
+
+    private static final Logger logger = LoggerFactory.getLogger(VariantMongoAggregationReader.class);
 
     public static final String VARIANT_CLASS_KEY = "VC";
 
@@ -113,6 +117,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected void aggregate(String collectionName) {
         MongoDatabase db = mongoClient.getDatabase(database);
+        logger.info("issuing aggregation on collection {}", collectionName);
         MongoCollection<Document> collection = db.getCollection(collectionName);
         AggregateIterable<Document> clusteredVariants = collection.aggregate(buildAggregation())
                                                                   .allowDiskUse(true)

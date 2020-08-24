@@ -36,6 +36,8 @@ public class ReportPathResolver {
 
     public static final String DBSNP_PREFIX = "dbsnp_";
 
+    public static final String EVA_PREFIX = "eva_";
+
 
     public static Path getDbsnpCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
         return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + CURRENT_FILE_SUFFIX);
@@ -58,22 +60,22 @@ public class ReportPathResolver {
     }
 
     public static Path getEvaCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + CURRENT_FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + CURRENT_FILE_SUFFIX);
     }
 
     public static Path getEvaMergedIdsReportPath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + MERGED_FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + MERGED_FILE_SUFFIX);
     }
 
     public static Path getEvaDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + DEPRECATED_FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + DEPRECATED_FILE_SUFFIX);
     }
 
     public static Path getEvaMergedDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + MERGED_DEPRECATED_FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + MERGED_DEPRECATED_FILE_SUFFIX);
     }
 
     public static Path getEvaMultimapIdsReportPath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(referenceAssembly + MULTIMAP_FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + MULTIMAP_FILE_SUFFIX);
     }
 }

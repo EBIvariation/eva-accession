@@ -53,18 +53,23 @@ import static org.junit.Assert.assertNotNull;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"})
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/clusteredVariantEntity.json",
+        "/test-data/submittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class CreateReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 5;
+    private static final long EXPECTED_DBSNP_LINES = 5;
+
+    private static final long EXPECTED_EVA_LINES = 2;
 
     private static final Map<String, String> assemblyAccessionToName =
             Collections.singletonMap("GCA_000409795.2", "Chlorocebus_sabeus 1.1");
@@ -102,7 +107,7 @@ public class CreateReleaseStepConfigurationTest {
     public void variantsWritten() throws Exception {
         assertStepExecutesAndCompletes();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        assertEquals(EXPECTED_DBSNP_LINES, numVariantsInRelease);
     }
 
     private File getReleaseFile() {
@@ -149,9 +154,9 @@ public class CreateReleaseStepConfigurationTest {
     public void rsAccessionsWritten() throws Exception {
         assertStepExecutesAndCompletes();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getReleaseFile()));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        assertEquals(EXPECTED_DBSNP_LINES, numVariantsInRelease);
         List<String> dataLinesWithRs = grepFile(getReleaseFile(), "^.*\trs[0-9]+\t.*$");
-        assertEquals(EXPECTED_LINES, dataLinesWithRs.size());
+        assertEquals(EXPECTED_DBSNP_LINES, dataLinesWithRs.size());
     }
 
     @Test
@@ -159,16 +164,16 @@ public class CreateReleaseStepConfigurationTest {
         assertStepExecutesAndCompletes();
         File outputFile = getReleaseFile();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        assertEquals(EXPECTED_DBSNP_LINES, numVariantsInRelease);
         String dataLinesDoNotStartWithHash = "^[^#]";
         String variantClass = VARIANT_CLASS_KEY + "=SO:[0-9]+";
         String studyId = STUDY_ID_KEY + "=[a-zA-Z0-9,]+";
 
         List<String> dataLines;
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + variantClass + ".*");
-        assertEquals(EXPECTED_LINES, dataLines.size());
+        assertEquals(EXPECTED_DBSNP_LINES, dataLines.size());
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + studyId + ".*");
-        assertEquals(EXPECTED_LINES, dataLines.size());
+        assertEquals(EXPECTED_DBSNP_LINES, dataLines.size());
 
     }
 
@@ -181,7 +186,24 @@ public class CreateReleaseStepConfigurationTest {
         assertStepExecutesAndCompletes();
         File outputFile = getReleaseFile();
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
-        assertEquals(EXPECTED_LINES, numVariantsInRelease);
+        assertEquals(EXPECTED_DBSNP_LINES, numVariantsInRelease);
         assertEquals(0, grepFile(outputFile, ".*rs8181.*").size());
+    }
+
+    @Test
+    public void evaVariantsWritten() throws Exception {
+        assertEvaStepExecutesAndCompletes();
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(getEvaReleaseFile()));
+        assertEquals(EXPECTED_EVA_LINES, numVariantsInRelease);
+    }
+
+    private void assertEvaStepExecutesAndCompletes() {
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+    }
+
+    private File getEvaReleaseFile() {
+        return ReportPathResolver.getEvaCurrentIdsReportPath(inputParameters.getOutputFolder(),
+                                                             inputParameters.getAssemblyAccession()).toFile();
     }
 }
