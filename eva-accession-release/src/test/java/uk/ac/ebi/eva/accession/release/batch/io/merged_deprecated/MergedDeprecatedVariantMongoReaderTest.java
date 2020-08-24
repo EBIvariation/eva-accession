@@ -77,13 +77,13 @@ public class MergedDeprecatedVariantMongoReaderTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    private MergedDeprecatedVariantMongoReader reader;
+    private MergedDeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> reader;
 
     @Before
     public void setUp() {
         ExecutionContext executionContext = new ExecutionContext();
-        reader = new MergedDeprecatedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, mongoTemplate.getConverter(),
-                                                        CHUNK_SIZE, new DbsnpCollectionNames());
+        reader = new DbsnpMergedDeprecatedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, mongoTemplate.getConverter(),
+                                                             CHUNK_SIZE, new DbsnpCollectionNames());
         reader.open(executionContext);
     }
 

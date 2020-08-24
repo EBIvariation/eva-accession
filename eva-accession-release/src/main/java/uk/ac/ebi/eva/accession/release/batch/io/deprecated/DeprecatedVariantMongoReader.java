@@ -24,9 +24,6 @@ import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
-import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
-import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 
 public class DeprecatedVariantMongoReader<T extends
         EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
