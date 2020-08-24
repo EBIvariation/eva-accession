@@ -45,9 +45,9 @@ public class AccessionedVariantMongoReaderConfiguration {
 
     @Bean(DBSNP_ACCESSIONED_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<Variant> unwindingReader(InputParameters parameters, MongoClient mongoClient,
+    public ItemStreamReader<Variant> unwindingReaderDbsnp(InputParameters parameters, MongoClient mongoClient,
                                                      MongoProperties mongoProperties) {
-        logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
+        logger.info("Injecting Dbsnp AccessionedVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
                 new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
                                                   mongoProperties.getDatabase(), parameters.getChunkSize(),
@@ -58,7 +58,7 @@ public class AccessionedVariantMongoReaderConfiguration {
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderEva(InputParameters parameters, MongoClient mongoClient,
                                                         MongoProperties mongoProperties) {
-        logger.info("Injecting AccessionedVariantMongoReader with parameters: {}", parameters);
+        logger.info("Injecting Eva AccessionedVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
                 new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
                                                   mongoProperties.getDatabase(), parameters.getChunkSize(),

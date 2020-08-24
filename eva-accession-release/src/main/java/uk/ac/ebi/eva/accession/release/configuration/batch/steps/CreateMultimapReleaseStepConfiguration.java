@@ -36,11 +36,14 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersCo
 import uk.ac.ebi.eva.accession.release.configuration.batch.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MULTIMAP_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 
 @Configuration
@@ -51,18 +54,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PR
 public class CreateMultimapReleaseStepConfiguration {
 
     @Autowired
-    @Qualifier(DBSNP_MULTIMAP_VARIANT_READER)
-    private ItemReader<Variant> variantReader;
-
-    @Autowired
-    @Qualifier(RELEASE_PROCESSOR)
-    private ItemProcessor<Variant, VariantContext> variantProcessor;
-
-    @Autowired
-    @Qualifier(DBSNP_MULTIMAP_RELEASE_WRITER)
-    private ItemStreamWriter<VariantContext> accessionWriter;
-
-    @Autowired
     @Qualifier(PROGRESS_LISTENER)
     private StepExecutionListener progressListener;
 
@@ -71,9 +62,31 @@ public class CreateMultimapReleaseStepConfiguration {
     private StepExecutionListener excludeVariantsListener;
 
     @Bean(RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP)
-    public Step createMultimapReleaseStep(StepBuilderFactory stepBuilderFactory,
-                                        SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+    public Step createMultimapReleaseStepDbsnp(
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            @Qualifier(DBSNP_MULTIMAP_VARIANT_READER) ItemReader<Variant> variantReader,
+            @Qualifier(RELEASE_PROCESSOR) ItemProcessor<Variant, VariantContext> variantProcessor,
+            @Qualifier(DBSNP_MULTIMAP_RELEASE_WRITER) ItemStreamWriter<VariantContext> accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP)
+                .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
+                .reader(variantReader)
+                .processor(variantProcessor)
+                .writer(accessionWriter)
+                .listener(excludeVariantsListener)
+                .listener(progressListener)
+                .build();
+        return step;
+    }
+
+    @Bean(RELEASE_EVA_MULTIMAP_VARIANTS_STEP)
+    public Step createMultimapReleaseStepEva(
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            @Qualifier(EVA_MULTIMAP_VARIANT_READER) ItemReader<Variant> variantReader,
+            @Qualifier(RELEASE_PROCESSOR) ItemProcessor<Variant, VariantContext> variantProcessor,
+            @Qualifier(EVA_MULTIMAP_RELEASE_WRITER) ItemStreamWriter<VariantContext> accessionWriter) {
+        TaskletStep step = stepBuilderFactory.get(RELEASE_EVA_MULTIMAP_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)

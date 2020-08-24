@@ -29,11 +29,13 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
+import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
@@ -43,17 +45,24 @@ public class MergedVariantMongoReaderConfiguration {
 
     @Bean(DBSNP_MERGED_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<Variant> unwindingReader(MergedVariantMongoReader mergedVariantMongoReader) {
-        return new UnwindingItemStreamReader<>(mergedVariantMongoReader);
+    public ItemStreamReader<Variant> unwindingReaderDbsnp(InputParameters parameters, MongoClient mongoClient,
+                                                     MongoProperties mongoProperties) {
+        logger.info("Injecting Dbsnp MergedVariantMongoReader with parameters: {}", parameters);
+        return new UnwindingItemStreamReader<>(
+                new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                                             mongoProperties.getDatabase(), parameters.getChunkSize(),
+                                             new DbsnpCollectionNames()));
     }
 
-    @Bean
+    @Bean(EVA_MERGED_VARIANT_READER)
     @StepScope
-    MergedVariantMongoReader mergedVariantMongoReader(InputParameters parameters, MongoClient mongoClient,
-                                                      MongoProperties mongoProperties) {
-        logger.info("Injecting MergedVariantMongoReader with parameters: {}", parameters);
-        return new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                            mongoProperties.getDatabase(), parameters.getChunkSize(),
-                                            new DbsnpCollectionNames());
+    public ItemStreamReader<Variant> unwindingReaderEva(InputParameters parameters, MongoClient mongoClient,
+                                                     MongoProperties mongoProperties) {
+        logger.info("Injecting Eva MergedVariantMongoReader with parameters: {}", parameters);
+        return new UnwindingItemStreamReader<>(
+                new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                                             mongoProperties.getDatabase(), parameters.getChunkSize(),
+                                             new EvaCollectionNames()));
     }
+
 }

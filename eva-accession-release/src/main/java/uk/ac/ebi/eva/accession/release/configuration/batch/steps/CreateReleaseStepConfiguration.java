@@ -38,9 +38,12 @@ import uk.ac.ebi.eva.accession.release.configuration.batch.processors.ReleasePro
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_ACCESSIONED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_ACCESSIONED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_RELEASE_WRITER;
 
@@ -50,18 +53,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_RELE
          VariantContextWriterConfiguration.class,
          ListenersConfiguration.class})
 public class CreateReleaseStepConfiguration {
-
-    @Autowired
-    @Qualifier(DBSNP_ACCESSIONED_VARIANT_READER)
-    private ItemReader<Variant> variantReader;
-
-    @Autowired
-    @Qualifier(RELEASE_PROCESSOR)
-    private ItemProcessor<Variant, VariantContext> variantProcessor;
-
-    @Autowired
-    @Qualifier(DBSNP_RELEASE_WRITER)
-    private ItemStreamWriter<VariantContext> accessionWriter;
 
     @Autowired
     @Qualifier(PROGRESS_LISTENER)
@@ -75,9 +66,32 @@ public class CreateReleaseStepConfiguration {
     private IllegalStartSkipPolicy illegalStartSkipPolicy;
 
     @Bean(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
-    public Step createSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory,
-                                          SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+    public Step createSubsnpAccessionStepDbsnp(
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            @Qualifier(DBSNP_ACCESSIONED_VARIANT_READER) ItemReader<Variant> variantReader,
+            @Qualifier(RELEASE_PROCESSOR) ItemProcessor<Variant, VariantContext> variantProcessor,
+            @Qualifier(DBSNP_RELEASE_WRITER) ItemStreamWriter<VariantContext> accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
+                .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
+                .reader(variantReader)
+                .processor(variantProcessor)
+                .writer(accessionWriter)
+                .faultTolerant()
+                .skipPolicy(illegalStartSkipPolicy)
+                .listener(excludeVariantsListener)
+                .listener(progressListener)
+                .build();
+        return step;
+    }
+    @Bean(RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP)
+    public Step createSubsnpAccessionStepEva(
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            @Qualifier(EVA_ACCESSIONED_VARIANT_READER) ItemReader<Variant> variantReader,
+            @Qualifier(RELEASE_PROCESSOR) ItemProcessor<Variant, VariantContext> variantProcessor,
+            @Qualifier(EVA_RELEASE_WRITER) ItemStreamWriter<VariantContext> accessionWriter) {
+        TaskletStep step = stepBuilderFactory.get(RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)

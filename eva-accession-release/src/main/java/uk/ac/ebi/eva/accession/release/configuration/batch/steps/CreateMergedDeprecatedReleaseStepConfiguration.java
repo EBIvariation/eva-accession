@@ -80,7 +80,7 @@ public class CreateMergedDeprecatedReleaseStepConfiguration {
                     ItemReader<ClusteredVariantOperationEntity> mergedDeprecatedVariantReader,
             @Qualifier(EVA_MERGED_DEPRECATED_RELEASE_WRITER)
                     ItemStreamWriter<? super ClusteredVariantOperationEntity> accessionWriter) {
-        TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
+        TaskletStep step = stepBuilderFactory.get(RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
                 .<ClusteredVariantOperationEntity, ClusteredVariantOperationEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(mergedDeprecatedVariantReader)
                 .writer(accessionWriter)
