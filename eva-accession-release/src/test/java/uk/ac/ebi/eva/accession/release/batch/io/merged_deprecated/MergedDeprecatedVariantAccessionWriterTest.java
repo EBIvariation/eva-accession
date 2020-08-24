@@ -20,7 +20,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.MergedDeprecatedVariantAccessionWriter;
 
@@ -28,7 +31,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;

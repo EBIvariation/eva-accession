@@ -26,11 +26,16 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.DbsnpMergedDeprecatedVariantMongoReader;
+import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.EvaMergedDeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.MergedDeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
+import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_DEPRECATED_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_DEPRECATED_VARIANT_READER;
 
 @Configuration
 @Import({MongoConfiguration.class})
@@ -38,11 +43,21 @@ public class MergedDeprecatedVariantMongoReaderConfiguration {
 
     @Bean(DBSNP_MERGED_DEPRECATED_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<DbsnpClusteredVariantOperationEntity> mergedDeprecatedVariantMongoReader(
+    public ItemStreamReader<DbsnpClusteredVariantOperationEntity> mergedDeprecatedVariantMongoReaderDbsnp(
             InputParameters parameters, MongoClient mongoClient, MongoTemplate mongoTemplate,
             MongoProperties mongoProperties) {
-        return new MergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                      mongoProperties.getDatabase(), mongoTemplate.getConverter(),
-                                                      parameters.getChunkSize(), new DbsnpCollectionNames());
+        return new DbsnpMergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                                                           mongoProperties.getDatabase(), mongoTemplate.getConverter(),
+                                                           parameters.getChunkSize(), new DbsnpCollectionNames());
+    }
+
+    @Bean(EVA_MERGED_DEPRECATED_VARIANT_READER)
+    @StepScope
+    public ItemStreamReader<ClusteredVariantOperationEntity> mergedDeprecatedVariantMongoReaderEva(
+            InputParameters parameters, MongoClient mongoClient, MongoTemplate mongoTemplate,
+            MongoProperties mongoProperties) {
+        return new EvaMergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                                                         mongoProperties.getDatabase(), mongoTemplate.getConverter(),
+                                                         parameters.getChunkSize(), new EvaCollectionNames());
     }
 }

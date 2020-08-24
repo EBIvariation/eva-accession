@@ -16,7 +16,6 @@
 
 package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;
@@ -37,23 +36,21 @@ import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Reads historical variants, that have been merged into a later deprecate one, from a MongoDB database.
  */
-public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<DbsnpClusteredVariantOperationEntity> {
+public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
+        implements ItemStreamReader<OPERATION_ENTITY> {
 
     private static final Logger logger = LoggerFactory.getLogger(MergedDeprecatedVariantMongoReader.class);
 
-    private static final String INACTIVE_OBJECTS = "inactiveObjects";
+    protected static final String INACTIVE_OBJECTS = "inactiveObjects";
 
     private static final String MERGE_INTO_FIELD = "mergeInto";
 
@@ -73,18 +70,15 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
 
     private MongoCursor<Document> cursor;
 
-    private MongoConverter mongoConverter;
-
     private int chunkSize;
 
     private CollectionNames names;
 
     public MergedDeprecatedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                              MongoConverter mongoConverter, int chunkSize, CollectionNames names) {
+                                              int chunkSize, CollectionNames names) {
         this.assemblyAccession = assemblyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
-        this.mongoConverter = mongoConverter;
         this.chunkSize = chunkSize;
         this.names = names;
     }
@@ -120,37 +114,18 @@ public class MergedDeprecatedVariantMongoReader implements ItemStreamReader<Dbsn
     }
 
     @Override
-    public DbsnpClusteredVariantOperationEntity read()
+    public OPERATION_ENTITY read()
             throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
         return cursor.hasNext() ? getEntity(cursor.next()) : null;
     }
 
-    /**
-     * Converts to {@link DbsnpClusteredVariantOperationEntity} using MongoConverter.
-     *
-     * Note how we also use the MongoConverter to convert the internal "inactiveObjects". If we didn't do that, the
-     * converter puts in
-     * {@link uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument#inactiveObjects} a list
-     * of Documents instead of a list of DbsnpClusteredVariantInactiveEntity.
-     */
-    private DbsnpClusteredVariantOperationEntity getEntity(Document operation) {
-        List<Document> objects = (List<Document>)operation.get(INACTIVE_OBJECTS);
-        operation.put(INACTIVE_OBJECTS, objects.stream()
-                                               .map(BasicDBObject::new)
-                                               .map(o -> mongoConverter.read(DbsnpClusteredVariantInactiveEntity.class,
-                                                                             o))
-                                               .collect(Collectors.toList()));
-
-        return mongoConverter.read(DbsnpClusteredVariantOperationEntity.class, new BasicDBObject(operation));
-    }
+    abstract protected OPERATION_ENTITY getEntity(Document operation);
 
     @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
-
     }
 
     @Override
     public void close() throws ItemStreamException {
-
     }
 }

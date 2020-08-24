@@ -18,7 +18,10 @@ package uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 
 import java.io.File;
@@ -31,7 +34,8 @@ import java.util.List;
 /**
  * Writes the accessions of historical variants, that have been merged into a later deprecate one, to a flat file.
  */
-public class MergedDeprecatedVariantAccessionWriter implements ItemStreamWriter<DbsnpClusteredVariantOperationEntity> {
+public class MergedDeprecatedVariantAccessionWriter implements ItemStreamWriter<EventDocument<? extends IClusteredVariant, Long,
+        ? extends InactiveSubDocument<? extends IClusteredVariant, Long>>> {
 
     private final File output;
 
@@ -55,8 +59,10 @@ public class MergedDeprecatedVariantAccessionWriter implements ItemStreamWriter<
     }
 
     @Override
-    public void write(List<? extends DbsnpClusteredVariantOperationEntity> variants) throws Exception {
-        for (DbsnpClusteredVariantOperationEntity variant : variants) {
+    public void write(List<? extends EventDocument<? extends IClusteredVariant, Long,
+            ? extends InactiveSubDocument<? extends IClusteredVariant, Long>>> variants) throws Exception {
+        for (EventDocument<? extends IClusteredVariant, Long, ? extends InactiveSubDocument<? extends IClusteredVariant, Long>> variant
+                : variants) {
             printWriter.println("rs" + variant.getAccession() + "\trs" + variant.getMergedInto());
         }
     }
