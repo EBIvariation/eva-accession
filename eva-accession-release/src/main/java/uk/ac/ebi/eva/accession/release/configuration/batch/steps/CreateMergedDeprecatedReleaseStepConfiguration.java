@@ -62,8 +62,7 @@ public class CreateMergedDeprecatedReleaseStepConfiguration {
             @Qualifier(DBSNP_MERGED_DEPRECATED_VARIANT_READER)
                     ItemReader<DbsnpClusteredVariantOperationEntity> mergedDeprecatedVariantReader,
             @Qualifier(DBSNP_MERGED_DEPRECATED_RELEASE_WRITER)
-                    ItemStreamWriter<? super EventDocument<? extends IClusteredVariant, Long,
-                    ? extends InactiveSubDocument<? extends IClusteredVariant, Long>>> accessionWriter) {
+                    ItemStreamWriter<? super DbsnpClusteredVariantOperationEntity> accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
                 .<DbsnpClusteredVariantOperationEntity, DbsnpClusteredVariantOperationEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(mergedDeprecatedVariantReader)
@@ -80,8 +79,7 @@ public class CreateMergedDeprecatedReleaseStepConfiguration {
             @Qualifier(EVA_MERGED_DEPRECATED_VARIANT_READER)
                     ItemReader<ClusteredVariantOperationEntity> mergedDeprecatedVariantReader,
             @Qualifier(EVA_MERGED_DEPRECATED_RELEASE_WRITER)
-                    ItemStreamWriter<? super EventDocument<? extends IClusteredVariant, Long,
-                    ? extends InactiveSubDocument<? extends IClusteredVariant, Long>>> accessionWriter) {
+                    ItemStreamWriter<? super ClusteredVariantOperationEntity> accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP)
                 .<ClusteredVariantOperationEntity, ClusteredVariantOperationEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(mergedDeprecatedVariantReader)

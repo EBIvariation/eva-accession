@@ -24,6 +24,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.MergedDeprecatedVariantAccessionWriter;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
@@ -39,20 +40,16 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED
 public class MergedDeprecatedAccessionWriterConfiguration {
 
     @Bean(DBSNP_MERGED_DEPRECATED_RELEASE_WRITER)
-    public ItemStreamWriter<? super EventDocument<? extends IClusteredVariant, Long,
-            ? extends InactiveSubDocument<? extends IClusteredVariant, Long>>> mergedDeprecatedVariantWriterDbsnp(
-                    InputParameters parameters) {
+    public ItemStreamWriter<? super DbsnpClusteredVariantOperationEntity> mergedDeprecatedVariantWriterDbsnp(
+            InputParameters parameters) {
         Path reportPath = ReportPathResolver.getDbsnpMergedDeprecatedIdsReportPath(parameters.getOutputFolder(),
                                                                                    parameters.getAssemblyAccession());
-        ItemStreamWriter<EventDocument<? extends IClusteredVariant, Long,
-                ? extends InactiveSubDocument<? extends IClusteredVariant, Long>>>  mergedDeprecatedVariantAccessionWriter =
-                new MergedDeprecatedVariantAccessionWriter(
-                reportPath);
-        return mergedDeprecatedVariantAccessionWriter;
+        return new MergedDeprecatedVariantAccessionWriter(reportPath);
     }
 
     @Bean(EVA_MERGED_DEPRECATED_RELEASE_WRITER)
-    public MergedDeprecatedVariantAccessionWriter mergedDeprecatedVariantWriterEva(InputParameters parameters) {
+    public ItemStreamWriter<? super ClusteredVariantOperationEntity> mergedDeprecatedVariantWriterEva(
+            InputParameters parameters) {
         Path reportPath = ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(parameters.getOutputFolder(),
                                                                                  parameters.getAssemblyAccession());
         return new MergedDeprecatedVariantAccessionWriter(reportPath);
