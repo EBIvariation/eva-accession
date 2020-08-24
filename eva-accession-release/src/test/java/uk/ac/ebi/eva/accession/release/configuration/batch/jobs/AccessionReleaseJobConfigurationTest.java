@@ -49,11 +49,19 @@ import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MERGED_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MULTIMAP_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_ACTIVE_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MULTIMAP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
@@ -106,7 +114,14 @@ public class AccessionReleaseJobConfigurationTest {
                                                    RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP,
                                                    RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP,
                                                    RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP,
-                                                   RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP);
+                                                   RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP,
+                                                   LIST_EVA_ACTIVE_CONTIGS_STEP, LIST_EVA_MERGED_CONTIGS_STEP,
+                                                   LIST_EVA_MULTIMAP_CONTIGS_STEP,
+                                                   RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP,
+                                                   RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP,
+                                                   RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP,
+                                                   RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP,
+                                                   RELEASE_EVA_MULTIMAP_VARIANTS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());

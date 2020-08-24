@@ -27,6 +27,8 @@ public class BeanNames {
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
     ///////////////// dbsnp beans
+    public static final String DBSNP_FLOW = "DBSNP_FLOW";
+
     public static final String RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP = "RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP";
 
     public static final String RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP = "RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP";
@@ -78,6 +80,8 @@ public class BeanNames {
     public static final String DBSNP_MULTIMAP_CONTIG_WRITER = "DBSNP_MULTIMAP_CONTIG_WRITER";
 
     ///////////////// eva beans
+    public static final String EVA_FLOW = "EVA_FLOW";
+
     public static final String RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP = "RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP";
 
     public static final String RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP = "RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP";
