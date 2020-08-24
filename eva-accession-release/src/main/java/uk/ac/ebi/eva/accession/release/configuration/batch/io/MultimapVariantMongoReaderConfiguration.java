@@ -42,12 +42,12 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIM
 @Import({MongoConfiguration.class})
 public class MultimapVariantMongoReaderConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReaderConfiguration.class);
 
     @Bean(DBSNP_MULTIMAP_VARIANT_READER)
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderDbsnp(InputParameters parameters, MongoClient mongoClient,
-                                                     MongoProperties mongoProperties) {
+                                                          MongoProperties mongoProperties) {
         logger.info("Injecting Dbsnp MultimapVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
                 new MultimapVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
@@ -58,7 +58,7 @@ public class MultimapVariantMongoReaderConfiguration {
     @Bean(EVA_MULTIMAP_VARIANT_READER)
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderEva(InputParameters parameters, MongoClient mongoClient,
-                                                     MongoProperties mongoProperties) {
+                                                        MongoProperties mongoProperties) {
         logger.info("Injecting Eva MultimapVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
                 new MultimapVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,

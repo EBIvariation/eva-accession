@@ -1,0 +1,46 @@
+{
+  "clusteredVariantEntity": [
+    { "_id" : "E369E3AC49B1D074E7125EF4277F7AE7",
+      "asm" : "GCA_000409795.2",
+      "tax" : 60711,
+      "contig" : "CM001954.1",
+      "start" : NumberLong(2),
+      "type": "SNV",
+      "accession" : NumberLong("3000000000"),
+      "version" : 1,
+      "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+    },
+    { "_id" : "36FD291AC907B3177E343C6ACF4EAAD7",
+      "asm" : "GCA_000409795.2",
+      "tax" : 60711,
+      "contig" : "CM001941.2",
+      "start" : NumberLong(15),
+      "type": "SNV",
+      "accession" : NumberLong("3000000001"),
+      "version" : 1,
+      "createdDate" : ISODate("2019-07-06T11:04:24.445Z")
+    },
+    { "_id" : "E689B017E27ADF747F417874F29D81EA",
+      "asm" : "GCA_000002305.1",
+      "tax" : 9796,
+      "contig" : "CM000377.2",
+      "start" : NumberLong(4573797),
+      "type": "SNV",
+      "evidence" : true,
+      "accession" : NumberLong("3000000002"),
+      "version" : 1,
+      "createdDate" : ISODate("2018-06-20T08:31:07.900Z")
+    },
+    { "_id" : "A6DDC28FF00D842122F86D698054D9ED",
+      "asm" : "GCA_000002305.1",
+      "tax" : 9796,
+      "contig" : "CM000381.2",
+      "start" : NumberLong(67450096),
+      "type": "SNV",
+      "evidence" : true,
+      "accession" : NumberLong("3000000003"),
+      "version" : 1,
+      "createdDate" : ISODate("2018-06-20T08:36:43.050Z")
+    }
+  ]
+}
