@@ -29,7 +29,6 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.DbsnpMergedDeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.EvaMergedDeprecatedVariantMongoReader;
-import uk.ac.ebi.eva.accession.release.batch.io.merged_deprecated.MergedDeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
