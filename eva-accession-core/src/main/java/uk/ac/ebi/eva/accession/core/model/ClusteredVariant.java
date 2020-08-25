@@ -36,6 +36,8 @@ public class ClusteredVariant implements IClusteredVariant {
 
     private Boolean validated;
 
+    private Integer mapWeight;
+
     private LocalDateTime createdDate;
 
     ClusteredVariant() {
@@ -120,6 +122,15 @@ public class ClusteredVariant implements IClusteredVariant {
 
     public void setValidated(Boolean validated) {
         this.validated = validated;
+    }
+
+    @Override
+    public Integer getMapWeight() {
+        return mapWeight;
+    }
+
+    public void setMapWeight(Integer mapWeight) {
+        this.mapWeight = mapWeight;
     }
 
     @Override

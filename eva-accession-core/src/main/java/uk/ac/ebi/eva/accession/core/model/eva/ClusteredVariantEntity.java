@@ -47,6 +47,8 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
 
     private Boolean validated;
 
+    private Integer mapWeight;
+
     protected ClusteredVariantEntity() {
     }
 
@@ -57,6 +59,16 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
     public ClusteredVariantEntity(Long accession, String hashedMessage, IClusteredVariant model, int version) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getContig(),
              model.getStart(), model.getType(), model.isValidated(), model.getCreatedDate(), version);
+    }
+
+    /**
+     * This constructor should only be used when the mapping weight is required
+     */
+    public ClusteredVariantEntity(Long accession, String hashedMessage, IClusteredVariant model, int version,
+                                  Integer mapWeight) {
+        this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getContig(),
+                model.getStart(), model.getType(), model.isValidated(), model.getCreatedDate(), version);
+        this.mapWeight = mapWeight;
     }
 
     public ClusteredVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
@@ -79,6 +91,7 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
     public IClusteredVariant getModel() {
         ClusteredVariant clusteredVariant = new ClusteredVariant(this);
         clusteredVariant.setValidated(isValidated());
+        clusteredVariant.setMapWeight(getMapWeight());
         return clusteredVariant;
     }
 
@@ -110,6 +123,11 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
     @Override
     public Boolean isValidated() {
         return validated == null ? DEFAULT_VALIDATED : validated;
+    }
+
+    @Override
+    public Integer getMapWeight() {
+        return mapWeight;
     }
 
     @Override

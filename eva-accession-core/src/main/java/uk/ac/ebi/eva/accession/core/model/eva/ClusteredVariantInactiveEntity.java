@@ -43,6 +43,8 @@ public class ClusteredVariantInactiveEntity extends InactiveSubDocument<ICluster
 
     private Boolean validated;
 
+    private Integer mapWeight;
+
     public ClusteredVariantInactiveEntity() {
         super();
     }
@@ -85,6 +87,11 @@ public class ClusteredVariantInactiveEntity extends InactiveSubDocument<ICluster
     @Override
     public Boolean isValidated() {
         return validated;
+    }
+
+    @Override
+    public Integer getMapWeight() {
+        return mapWeight;
     }
 
     @Override
