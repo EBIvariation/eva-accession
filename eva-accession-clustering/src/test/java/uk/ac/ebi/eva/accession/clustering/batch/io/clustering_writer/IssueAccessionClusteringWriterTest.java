@@ -326,7 +326,9 @@ public class IssueAccessionClusteringWriterTest {
                                                                 String contig, Integer mapWeight) {
         ClusteredVariant variant = createClusteredVariant(assemblyAccession, contig);
         String hash = clusteredHashingFunction.apply(variant);
-        ClusteredVariantEntity variantEntity = new ClusteredVariantEntity(accession, hash, variant, 1, mapWeight);
+        ClusteredVariantEntity variantEntity = new ClusteredVariantEntity(accession, hash, assemblyAccession, 1000,
+                                                                          contig, 100, VariantType.SNV, false, null, 1,
+                                                                          mapWeight);
         return variantEntity;
     }
 

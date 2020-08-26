@@ -66,12 +66,11 @@ import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergin
  * 2. Update the submitted variants to include the "rs" field with the generated/retrieved accessions
  *
  * Some edge cases take into account if a clustered variant is multimap. The definition of multimap variants that this
- * class uses is "clustered variants whose accession maps several times in the same assembly". Another definition is
- * "clustered variants that have map_weight > 1". Altough both definitions *should* yield the same set of variants, we
- * have no guarantee that there will be no discrepancy (as the mapping weight comes from dbSNP). If there are
- * discrepancies, only the first definition will be honoured by this class. (there is no technical limitation to use
- * the second definition, but in jmmut's opinion it's probably less reliable, as the mapping weight was not taken into
- * account during the dbSNP import, where we performed merges and deprecations).
+ * class uses is "clustered variants whose mapWeight is 2 or greater". Another definition is "clustered variants
+ * whose accession maps several times in the same assembly". Although both definitions should yield the same
+ * set of variants, the check for the second definition is less efficient and less accurate: both the active and the
+ * deprecated/merged collections should be queried, and we lost clusteredVariantOperations during the
+ * deprecation pipeline in the dbSNP import due to a bug.
  */
 public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 

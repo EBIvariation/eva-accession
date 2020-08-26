@@ -61,16 +61,6 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
              model.getStart(), model.getType(), model.isValidated(), model.getCreatedDate(), version);
     }
 
-    /**
-     * This constructor should only be used when the mapping weight is required
-     */
-    public ClusteredVariantEntity(Long accession, String hashedMessage, IClusteredVariant model, int version,
-                                  Integer mapWeight) {
-        this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getContig(),
-                model.getStart(), model.getType(), model.isValidated(), model.getCreatedDate(), version);
-        this.mapWeight = mapWeight;
-    }
-
     public ClusteredVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
                                        int taxonomyAccession, String contig, long start, VariantType type,
                                        Boolean validated, LocalDateTime createdDate, int version) {
@@ -86,6 +76,27 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
         } else {
             this.validated = validated == DEFAULT_VALIDATED ? null : validated;
         }
+    }
+
+    /**
+     * This constructor should only be used when the mapping weight is required
+     */
+    public ClusteredVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
+                                  int taxonomyAccession, String contig, long start, VariantType type,
+                                  Boolean validated, LocalDateTime createdDate, int version, Integer mapWeight) {
+        super(hashedMessage, accession, version);
+        this.setCreatedDate(createdDate);
+        this.assemblyAccession = assemblyAccession;
+        this.taxonomyAccession = taxonomyAccession;
+        this.contig = contig;
+        this.start = start;
+        this.type = type;
+        if (validated == null) {
+            throw new IllegalArgumentException("validated should not be null, as null is used for default values");
+        } else {
+            this.validated = validated == DEFAULT_VALIDATED ? null : validated;
+        }
+        this.mapWeight = mapWeight == null || mapWeight == 1 ? null : mapWeight;
     }
 
     public IClusteredVariant getModel() {

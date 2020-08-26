@@ -565,7 +565,8 @@ public class MergeAccessionClusteringWriterTest {
                                                                 Integer mapWeight) {
         ClusteredVariant cv = new ClusteredVariant(assembly, 1000, "1", start, VariantType.SNV, false, null);
         String cvHash = clusteredHashingFunction.apply(cv);
-        return new ClusteredVariantEntity(rs, cvHash, cv, 1, mapWeight);
+        return new ClusteredVariantEntity(rs, cvHash, assembly, 1000, "1", start, VariantType.SNV, false, null, 1,
+                                          mapWeight);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss) {
