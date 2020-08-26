@@ -129,7 +129,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
                     clusteredService.getOrCreate(clusteredVariants);
 
-            excludeMultimaps(accessionWrappers);
+            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap =
+                    excludeMultimaps(accessionWrappers);
+
+            accessionNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
 
             long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count();
             clusteringCounts.addClusteredVariantsCreated(newAccessions);
@@ -300,11 +303,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * variants will be kept unclustered. This potentially will be revisited in the future, but for now (release 2) we
      * are leaving this out of scope.
      */
-    private void excludeMultimaps(List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers) {
-        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionsNoMultimap =
-                accessionWrappers.stream().filter(x -> !isMultimap(x.getData())).collect(Collectors.toList());
-
-        accessionsNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+    private List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> excludeMultimaps(
+            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers) {
+        return accessionWrappers.stream().filter(x -> !isMultimap(x.getData())).collect(Collectors.toList());
     }
 
     /**
