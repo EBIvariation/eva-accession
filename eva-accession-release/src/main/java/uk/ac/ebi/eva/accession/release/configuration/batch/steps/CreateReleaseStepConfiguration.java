@@ -66,7 +66,7 @@ public class CreateReleaseStepConfiguration {
     private IllegalStartSkipPolicy illegalStartSkipPolicy;
 
     @Bean(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
-    public Step createSubsnpAccessionStepDbsnp(
+    public Step createActiveReleaseStepDbsnp(
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Qualifier(DBSNP_ACCESSIONED_VARIANT_READER) ItemReader<Variant> variantReader,
@@ -85,7 +85,7 @@ public class CreateReleaseStepConfiguration {
         return step;
     }
     @Bean(RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP)
-    public Step createSubsnpAccessionStepEva(
+    public Step createActiveReleaseStepEva(
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Qualifier(EVA_ACCESSIONED_VARIANT_READER) ItemReader<Variant> variantReader,

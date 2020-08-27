@@ -17,7 +17,7 @@ package uk.ac.ebi.eva.accession.release.configuration;
 
 public class BeanNames {
 
-    ///////////////// common beans
+// common beans
     public static final String ACCESSION_RELEASE_JOB = "ACCESSION_RELEASE_JOB";
 
     public static final String RELEASE_PROCESSOR = "RELEASE_PROCESSOR";
@@ -26,7 +26,7 @@ public class BeanNames {
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
-    ///////////////// dbsnp beans
+    // dbsnp beans
     public static final String DBSNP_FLOW = "DBSNP_FLOW";
 
     public static final String RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP = "RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP";
@@ -79,7 +79,7 @@ public class BeanNames {
 
     public static final String DBSNP_MULTIMAP_CONTIG_WRITER = "DBSNP_MULTIMAP_CONTIG_WRITER";
 
-    ///////////////// eva beans
+    // eva beans
     public static final String EVA_FLOW = "EVA_FLOW";
 
     public static final String RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP = "RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP";
