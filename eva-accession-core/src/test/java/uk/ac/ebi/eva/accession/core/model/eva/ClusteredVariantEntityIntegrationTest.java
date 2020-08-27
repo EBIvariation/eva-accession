@@ -48,7 +48,7 @@ import static org.junit.Assert.assertEquals;
 @EnableAutoConfiguration
 @ContextConfiguration(classes = {MongoConfiguration.class})
 @TestPropertySource("classpath:test-model.properties")
-public class SubmittedVariantEntityIntegrationTest {
+public class ClusteredVariantEntityIntegrationTest {
 
     private static final String TEST_DB = "test-db";
 
