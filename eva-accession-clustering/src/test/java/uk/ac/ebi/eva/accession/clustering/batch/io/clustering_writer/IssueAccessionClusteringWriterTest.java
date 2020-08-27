@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
@@ -243,22 +244,41 @@ public class IssueAccessionClusteringWriterTest {
 
     @Test
     @DirtiesContext
-//    @Ignore
-    public void do_not_cluster_eva_submitted_variant_into_a_dbsnp_multimap_clustered_variant() throws Exception {
+    public void cluster_eva_submitted_variant_into_a_dbsnp_not_multimap_clustered_variant() throws Exception {
         // given
-        ClusteredVariantEntity rs1Locus1 = createClusteredVariantEntity(30L, "asm1", "chr1");
-        ClusteredVariantEntity rs1Locus2 = createClusteredVariantEntity(30L, "asm1", "chr2");
+        Long rsAccession = 30L;
+        ClusteredVariantEntity rs1 = createClusteredVariantEntity(rsAccession, "asm1", "chr1", null);
 
-        SubmittedVariantEntity ss1 = createSubmittedVariantEntity(50L, "asm1", "chr1", "project1",
-                                                                  rs1Locus1.getAccession());
-        SubmittedVariantEntity ss2 = createSubmittedVariantEntity(51L, "asm1", "chr2", "project1",
-                                                                  rs1Locus2.getAccession());
+        SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(5200000000L, "asm1", "chr1", "project2",
+                null);
 
-        SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(5200000000L, "asm1", "chr2", "project2",
+        mongoTemplate.insert(Arrays.asList(rs1), DbsnpClusteredVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(ssToCluster), SubmittedVariantEntity.class);
+
+        Query querySsToCluster = new Query(new Criteria("accession").is(ssToCluster.getAccession()));
+        assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
+                .getClusteredVariantAccession());
+
+        // when
+        clusteringWriter.write(Collections.singletonList(ssToCluster));
+
+        // then
+        assertEquals(rsAccession, mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
+                .getClusteredVariantAccession());
+        assertClusteringCounts(clusteringCounts, 0, 0, 0, 0, 1, 0, 1);
+    }
+
+    @Test
+    @DirtiesContext
+    public void do_not_cluster_eva_submitted_variant_into_a_dbsnp_multimap_clustered_variant_multicopy()
+            throws Exception {
+        // given
+        ClusteredVariantEntity rs1Locus1 = createClusteredVariantEntity(30L, "asm1", "chr1", 3);
+        ClusteredVariantEntity rs1Locus2 = createClusteredVariantEntity(30L, "asm1", "chr2", null);
+        SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(5200000000L, "asm1", "chr1", "project2",
                                                                           null);
 
         mongoTemplate.insert(Arrays.asList(rs1Locus1, rs1Locus2), DbsnpClusteredVariantEntity.class);
-        mongoTemplate.insert(Arrays.asList(ss1, ss2), DbsnpSubmittedVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(ssToCluster), SubmittedVariantEntity.class);
 
         Query querySsToCluster = new Query(new Criteria("accession").is(ssToCluster.getAccession()));
@@ -274,15 +294,41 @@ public class IssueAccessionClusteringWriterTest {
         assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 0, 0);
     }
 
+    @Test
+    @DirtiesContext
+    public void do_not_cluster_eva_submitted_variant_into_a_dbsnp_multimap_clustered_variant() throws Exception {
+        // given
+        ClusteredVariantEntity rs1 = createClusteredVariantEntity(30L, "asm1", "chr1", 3);
+        SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(5200000000L, "asm1", "chr1", "project2",
+                null);
+
+        mongoTemplate.insert(Arrays.asList(rs1), DbsnpClusteredVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(ssToCluster), SubmittedVariantEntity.class);
+
+        Query querySsToCluster = new Query(new Criteria("accession").is(ssToCluster.getAccession()));
+        assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
+                .getClusteredVariantAccession());
+
+        // when
+        clusteringWriter.write(Collections.singletonList(ssToCluster));
+
+        // then
+        assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
+                .getClusteredVariantAccession());
+        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 0, 0);
+    }
+
     private ClusteredVariant createClusteredVariant(String assemblyAccession, String contig) {
         return new ClusteredVariant(assemblyAccession, 1000, contig, 100, VariantType.SNV, false, null);
     }
 
     private ClusteredVariantEntity createClusteredVariantEntity(Long accession, String assemblyAccession,
-                                                                String contig) {
+                                                                String contig, Integer mapWeight) {
         ClusteredVariant variant = createClusteredVariant(assemblyAccession, contig);
         String hash = clusteredHashingFunction.apply(variant);
-        ClusteredVariantEntity variantEntity = new ClusteredVariantEntity(accession, hash, variant, 1);
+        ClusteredVariantEntity variantEntity = new ClusteredVariantEntity(accession, hash, assemblyAccession, 1000,
+                                                                          contig, 100, VariantType.SNV, false, null, 1,
+                                                                          mapWeight);
         return variantEntity;
     }
 
@@ -294,36 +340,5 @@ public class IssueAccessionClusteringWriterTest {
         String hash = hashingFunction.apply(variant);
         SubmittedVariantEntity variantEntity = new SubmittedVariantEntity(accession, hash, variant, 1);
         return variantEntity;
-    }
-
-    @Test
-    @DirtiesContext
-//    @Ignore
-    public void do_not_cluster_dbsnp_submitted_variant_into_a_dbsnp_multimap_clustered_variant() throws Exception {
-        // given
-        ClusteredVariantEntity rs1Locus1 = createClusteredVariantEntity(30L, "asm1", "chr1");
-        ClusteredVariantEntity rs1Locus2 = createClusteredVariantEntity(30L, "asm1", "chr2");
-
-        SubmittedVariantEntity ss1 = createSubmittedVariantEntity(50L, "asm1", "chr1", "project1",
-                                                                  rs1Locus1.getAccession());
-        SubmittedVariantEntity ss2 = createSubmittedVariantEntity(51L, "asm1", "chr2", "project1",
-                                                                  rs1Locus2.getAccession());
-
-        SubmittedVariantEntity ssToCluster = createSubmittedVariantEntity(52L, "asm1", "chr2", "project2",
-                                                                          null);
-
-        mongoTemplate.insert(Arrays.asList(rs1Locus1, rs1Locus2), DbsnpClusteredVariantEntity.class);
-        mongoTemplate.insert(Arrays.asList(ss1, ss2, ssToCluster), DbsnpSubmittedVariantEntity.class);
-
-        Query querySsToCluster = new Query(new Criteria("accession").is(ssToCluster.getAccession()));
-        assertNull(mongoTemplate.find(querySsToCluster, DbsnpSubmittedVariantEntity.class).get(0)
-                                .getClusteredVariantAccession());
-
-        // when
-        clusteringWriter.write(Collections.singletonList(ssToCluster));
-
-        // then
-        assertNull(mongoTemplate.find(querySsToCluster, DbsnpSubmittedVariantEntity.class).get(0)
-                                .getClusteredVariantAccession());
     }
 }

@@ -23,10 +23,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -51,7 +47,6 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -71,12 +66,11 @@ import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergin
  * 2. Update the submitted variants to include the "rs" field with the generated/retrieved accessions
  *
  * Some edge cases take into account if a clustered variant is multimap. The definition of multimap variants that this
- * class uses is "clustered variants whose accession maps several times in the same assembly". Another definition is
- * "clustered variants that have map_weight > 1". Altough both definitions *should* yield the same set of variants, we
- * have no guarantee that there will be no discrepancy (as the mapping weight comes from dbSNP). If there are
- * discrepancies, only the first definition will be honoured by this class. (there is no technical limitation to use
- * the second definition, but in jmmut's opinion it's probably less reliable, as the mapping weight was not taken into
- * account during the dbSNP import, where we performed merges and deprecations).
+ * class uses is "clustered variants whose mapWeight is 2 or greater". Another definition is "clustered variants
+ * whose accession maps several times in the same assembly". Although both definitions should yield the same
+ * set of variants, the check for the second definition is less efficient and less accurate: both the active and the
+ * deprecated/merged collections should be queried, and we lost clusteredVariantOperations during the
+ * deprecation pipeline in the dbSNP import due to a bug.
  */
 public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
@@ -133,12 +127,16 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         if (!clusteredVariants.isEmpty()) {
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
                     clusteredService.getOrCreate(clusteredVariants);
-            accessionWrappers.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+
+            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap =
+                    excludeMultimaps(accessionWrappers);
+
+            accessionNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+
             long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count();
             clusteringCounts.addClusteredVariantsCreated(newAccessions);
         }
         checkForMerges(submittedVariantEntities);
-        checkForMultimaps();
     }
 
     private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
@@ -164,7 +162,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             if (submittedVariant.getClusteredVariantAccession() != null) {
                 String hash = clusteredHashingFunction.apply(toClusteredVariant(submittedVariant));
                 Long accessionInDatabase = assignedAccessions.get(hash);
-                if (!submittedVariant.getClusteredVariantAccession().equals(accessionInDatabase)) {
+                //accessionInDatabase will be null if it was excluded for being a multimap
+                if (accessionInDatabase != null &&
+                        !submittedVariant.getClusteredVariantAccession().equals(accessionInDatabase)) {
                     merge(submittedVariant.getClusteredVariantAccession(), hash, accessionInDatabase);
                 }
             }
@@ -224,12 +224,12 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * Note that for submitted variants the test is not this simple, as 1:1000:A:T and 1:1000:A:G can be present in the
      * same assembly and still not classify as multimap.
      */
-    private boolean isMultimap(List<? extends IClusteredVariant> clusteredVariantLoci) {
-        int assembliesCount = clusteredVariantLoci.stream()
-                                                  .map(IClusteredVariant::getAssemblyAccession)
-                                                  .collect(Collectors.toSet())
-                                                  .size();
-        return assembliesCount < clusteredVariantLoci.size();
+    private boolean isMultimap(List<? extends IClusteredVariant> clusteredVariants) {
+        return clusteredVariants.stream().anyMatch(cv -> cv.getMapWeight() != null && cv.getMapWeight() > 1);
+    }
+
+    private boolean isMultimap(IClusteredVariant clusteredVariant) {
+        return isMultimap(Collections.singletonList(clusteredVariant));
     }
 
     private Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
@@ -302,20 +302,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * variants will be kept unclustered. This potentially will be revisited in the future, but for now (release 2) we
      * are leaving this out of scope.
      */
-    private void checkForMultimaps() {
-        List<String> multimapHashes = new ArrayList<>();
-        for (Map.Entry<String, Long> hashAndAccession : assignedAccessions.entrySet()) {
-            List<AccessionWrapper<IClusteredVariant, String, Long>> allByAccession;
-            try {
-                allByAccession = clusteredService.getAllByAccession(hashAndAccession.getValue());
-            } catch (AccessionMergedException | AccessionDoesNotExistException | AccessionDeprecatedException cause) {
-                throw new RuntimeException(cause);
-            }
-            if (isMultimap(allByAccession.stream().map(AccessionWrapper::getData).collect(Collectors.toList()))) {
-                multimapHashes.add(hashAndAccession.getKey());
-            }
-        }
-        multimapHashes.forEach(assignedAccessions::remove);
+    private List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> excludeMultimaps(
+            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers) {
+        return accessionWrappers.stream().filter(x -> !isMultimap(x.getData())).collect(Collectors.toList());
     }
 
     /**

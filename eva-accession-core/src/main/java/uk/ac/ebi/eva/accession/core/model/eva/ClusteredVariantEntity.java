@@ -47,6 +47,8 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
 
     private Boolean validated;
 
+    private Integer mapWeight;
+
     protected ClusteredVariantEntity() {
     }
 
@@ -76,9 +78,31 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
         }
     }
 
+    /**
+     * This constructor should only be used when the mapping weight is required
+     */
+    public ClusteredVariantEntity(Long accession, String hashedMessage, String assemblyAccession,
+                                  int taxonomyAccession, String contig, long start, VariantType type,
+                                  Boolean validated, LocalDateTime createdDate, int version, Integer mapWeight) {
+        super(hashedMessage, accession, version);
+        this.setCreatedDate(createdDate);
+        this.assemblyAccession = assemblyAccession;
+        this.taxonomyAccession = taxonomyAccession;
+        this.contig = contig;
+        this.start = start;
+        this.type = type;
+        if (validated == null) {
+            throw new IllegalArgumentException("validated should not be null, as null is used for default values");
+        } else {
+            this.validated = validated == DEFAULT_VALIDATED ? null : validated;
+        }
+        this.mapWeight = mapWeight == null || mapWeight == 1 ? null : mapWeight;
+    }
+
     public IClusteredVariant getModel() {
         ClusteredVariant clusteredVariant = new ClusteredVariant(this);
         clusteredVariant.setValidated(isValidated());
+        clusteredVariant.setMapWeight(getMapWeight());
         return clusteredVariant;
     }
 
@@ -110,6 +134,11 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
     @Override
     public Boolean isValidated() {
         return validated == null ? DEFAULT_VALIDATED : validated;
+    }
+
+    @Override
+    public Integer getMapWeight() {
+        return mapWeight;
     }
 
     @Override

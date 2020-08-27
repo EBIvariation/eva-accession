@@ -47,5 +47,7 @@ public interface IClusteredVariant {
      */
     Boolean isValidated();
 
+    Integer getMapWeight();
+
     LocalDateTime getCreatedDate();
 }
