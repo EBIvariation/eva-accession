@@ -49,11 +49,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getEvaMergedContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MERGED_CONTIGS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_MERGED_CONTIGS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
-@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantOperationEntity.json"})
+@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantOperationEntity.json",
+                           "/test-data/clusteredVariantOperationEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class ListMergedContigsStepConfigurationTest {
 
@@ -80,11 +83,17 @@ public class ListMergedContigsStepConfigurationTest {
         new File(ContigWriter.getDbsnpMergedContigsFilePath(inputParameters.getOutputFolder(),
                                                             inputParameters.getAssemblyAccession()))
                 .delete();
+        new File(ContigWriter.getEvaMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                            inputParameters.getAssemblyAccession()))
+                .delete();
     }
 
     @After
     public void tearDown() throws Exception {
         new File(ContigWriter.getDbsnpMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                            inputParameters.getAssemblyAccession()))
+                .delete();
+        new File(ContigWriter.getEvaMergedContigsFilePath(inputParameters.getOutputFolder(),
                                                             inputParameters.getAssemblyAccession()))
                 .delete();
     }
@@ -109,5 +118,15 @@ public class ListMergedContigsStepConfigurationTest {
     private Set<String> setOfLines(String path) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
         return bufferedReader.lines().collect(Collectors.toSet());
+    }
+    @Test
+    @DirtiesContext
+    public void evaContigsWritten() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_EVA_MERGED_CONTIGS_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1,CAE13")),
+                     setOfLines(getEvaMergedContigsFilePath(inputParameters.getOutputFolder(),
+                                                            inputParameters.getAssemblyAccession())));
     }
 }

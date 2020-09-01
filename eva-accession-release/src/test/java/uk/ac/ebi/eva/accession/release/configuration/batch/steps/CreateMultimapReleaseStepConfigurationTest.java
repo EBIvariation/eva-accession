@@ -54,18 +54,23 @@ import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariant
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.VARIANT_CLASS_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.MAPPING_WEIGHT_KEY;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MULTIMAP_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"})
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/clusteredVariantEntity.json",
+        "/test-data/submittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class CreateMultimapReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
     private static final long EXPECTED_LINES = 2;
+
+    private static final long EXPECTED_EVA_LINES = 1;
 
     private static final Map<String, String> assemblyAccessionToName =
             Collections.singletonMap("GCA_000409795.2", "Chlorocebus_sabeus 1.1");
@@ -190,5 +195,15 @@ public class CreateMultimapReleaseStepConfigurationTest {
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
         assertEquals(EXPECTED_LINES, numVariantsInRelease);
         assertEquals(0, grepFile(outputFile, ".*rs8182.*").size());
+    }
+
+    @Test
+    public void evaVariantsWritten() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_EVA_MULTIMAP_VARIANTS_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(
+                ReportPathResolver.getEvaMultimapIdsReportPath(inputParameters.getOutputFolder(),
+                                                               inputParameters.getAssemblyAccession()).toFile()));
+        assertEquals(EXPECTED_EVA_LINES, numVariantsInRelease);
     }
 }
