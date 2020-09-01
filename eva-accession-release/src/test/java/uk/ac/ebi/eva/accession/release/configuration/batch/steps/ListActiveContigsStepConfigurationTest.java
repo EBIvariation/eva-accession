@@ -48,12 +48,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getEvaActiveContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getDbsnpActiveContigsFilePath;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_ACTIVE_CONTIGS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
-@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json"})
+@UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json",
+                           "/test-data/clusteredVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class ListActiveContigsStepConfigurationTest {
 
@@ -80,11 +83,17 @@ public class ListActiveContigsStepConfigurationTest {
         new File(getDbsnpActiveContigsFilePath(inputParameters.getOutputFolder(),
                                                inputParameters.getAssemblyAccession()))
                 .delete();
+        new File(getEvaActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                               inputParameters.getAssemblyAccession()))
+                .delete();
     }
 
     @After
     public void tearDown() throws Exception {
         new File(getDbsnpActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                               inputParameters.getAssemblyAccession()))
+                .delete();
+        new File(getEvaActiveContigsFilePath(inputParameters.getOutputFolder(),
                                                inputParameters.getAssemblyAccession()))
                 .delete();
     }
@@ -108,5 +117,16 @@ public class ListActiveContigsStepConfigurationTest {
     private Set<String> setOfLines(String path) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
         return bufferedReader.lines().collect(Collectors.toSet());
+    }
+
+    @Test
+    @DirtiesContext
+    public void evaContigsWritten() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(LIST_EVA_ACTIVE_CONTIGS_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertEquals(new HashSet<>(Arrays.asList("CM001954.1,CAE13", "CM001941.2,CAE1")),
+                     setOfLines(getEvaActiveContigsFilePath(inputParameters.getOutputFolder(),
+                                                            inputParameters.getAssemblyAccession())));
     }
 }

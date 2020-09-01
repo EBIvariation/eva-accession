@@ -1,6 +1,6 @@
 {
   "clusteredVariantEntity": [
-    { "_id" : "E369E3AC49B1D074E7125EF4277F7AE7",
+    { "_id" : "3DC347AF565091197CAB480EBB5972AF04BC4CE3",
       "asm" : "GCA_000409795.2",
       "tax" : 60711,
       "contig" : "CM001954.1",
@@ -10,7 +10,7 @@
       "version" : 1,
       "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
     },
-    { "_id" : "36FD291AC907B3177E343C6ACF4EAAD7",
+    { "_id" : "F0864B40A1164F4BA3827AFA3827049483D01C48",
       "asm" : "GCA_000409795.2",
       "tax" : 60711,
       "contig" : "CM001941.2",
@@ -20,7 +20,18 @@
       "version" : 1,
       "createdDate" : ISODate("2019-07-06T11:04:24.445Z")
     },
-    { "_id" : "E689B017E27ADF747F417874F29D81EA",
+    { "_id" : "AF001E7FA51A752C603C0DBEA47654E21E877A80",
+      "asm" : "GCA_000409795.2",
+      "tax" : 60711,
+      "contig" : "CM001941.2",
+      "start" : NumberLong(20),
+      "type": "SNV",
+      "accession" : NumberLong("3000000030"),
+      "version" : 1,
+      "mapWeight" : 2,
+      "createdDate" : ISODate("2019-07-06T11:04:24.445Z")
+    },
+    { "_id" : "450B4386C3286F97509008604BA8D3B4006B50DF",
       "asm" : "GCA_000002305.1",
       "tax" : 9796,
       "contig" : "CM000377.2",
@@ -31,7 +42,7 @@
       "version" : 1,
       "createdDate" : ISODate("2018-06-20T08:31:07.900Z")
     },
-    { "_id" : "A6DDC28FF00D842122F86D698054D9ED",
+    { "_id" : "82331F05303AAE16022D1FB7F3967653399322C6",
       "asm" : "GCA_000002305.1",
       "tax" : 9796,
       "contig" : "CM000381.2",

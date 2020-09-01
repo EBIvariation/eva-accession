@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,19 +55,25 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DB
 import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.MERGED_INTO_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.VARIANT_CLASS_KEY;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantOperationEntity.json",
-        "/test-data/dbsnpClusteredVariantEntity.json"})
+        "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/clusteredVariantOperationEntity.json",
+        "/test-data/submittedVariantOperationEntity.json",
+        "/test-data/clusteredVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class CreateMergedReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
     private static final long EXPECTED_LINES = 5;
+
+    private static final long EXPECTED_EVA_LINES = 1;
 
     private static final Map<String, String> assemblyAccessionToName =
             Collections.singletonMap("GCA_000409795.2", "Chlorocebus_sabeus 1.1");
@@ -180,5 +187,15 @@ public class CreateMergedReleaseStepConfigurationTest {
         assertEquals(EXPECTED_LINES, dataLines.size());
         dataLines = grepFile(outputFile, dataLinesDoNotStartWithHash + ".*" + mergedInto + ".*");
         assertEquals(EXPECTED_LINES, dataLines.size());
+    }
+
+    @Test
+    public void evaVariantsWritten() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        Path evaReportPath = ReportPathResolver.getEvaMergedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                          inputParameters.getAssemblyAccession());
+        long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(evaReportPath.toFile()));
+        assertEquals(EXPECTED_EVA_LINES, numVariantsInRelease);
     }
 }

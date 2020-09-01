@@ -43,20 +43,27 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"})
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/clusteredVariantOperationEntity.json",
+        "/test-data/clusteredVariantEntity.json",
+        "/test-data/submittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class CreateMergedDeprecatedReleaseStepConfigurationTest {
 
@@ -131,4 +138,15 @@ public class CreateMergedDeprecatedReleaseStepConfigurationTest {
         return lines;
     }
 
+    @Test
+    public void evaVariantsWritten() throws Exception {
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        Path evaReportPath = ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(
+                inputParameters.getOutputFolder(),
+                inputParameters.getAssemblyAccession());
+        BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(evaReportPath.toFile())));
+        assertEquals(1, file.lines().count());
+        assertTrue(file.lines().allMatch("rs3000000020\trs3000000016"::equals));
+    }
 }

@@ -1,0 +1,85 @@
+{
+  "clusteredVariantOperationEntity": [
+    {
+      "_id" : ObjectId("5ba125831912036924cc2418"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(3000000010),
+      "mergeInto" : NumberLong(3000000001),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "hashedMessage" : "3DC347AF565091197CAB480EBB5972AF04BC4CE3",
+          "asm" : "GCA_000409795.2",
+          "tax" : 60711,
+          "contig" : "CM001954.1",
+          "start" : NumberLong(2),
+          "type": "SNV",
+          "accession" : NumberLong("3000000010"),
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c36053f4a2c10d01c39d9c5"),
+      "eventType" : "DEPRECATED",
+      "accession" : NumberLong(3000000015),
+      "reason" : "All associated submitted variants have been declustered",
+      "inactiveObjects" : [
+        {
+          "asm": "GCA_000409795.2",
+          "tax" : 60711,
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337129),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "7A4304A9E9AE320D0E28FCC9E23EF1E605ACACAA",
+          "accession" : NumberLong(3000000015),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-20T08:25:00Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c36053f4a2c10d01c39d9c6"),
+      "eventType" : "DEPRECATED",
+      "accession" : NumberLong(3000000016),
+      "reason" : "All associated submitted variants have been declustered",
+      "inactiveObjects" : [
+        {
+          "asm": "GCA_000409795.2",
+          "tax" : 60711,
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337130),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "7A4304A9E9AE320D0E28FCC9E23EF1E605ACACAA",
+          "accession" : NumberLong(3000000016),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-20T08:25:00Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5ba125831912036924cc2419"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(3000000020),
+      "mergeInto" : NumberLong(3000000016),
+      "reason" : "Identical clustered variant received multiple RS identifiers",
+      "inactiveObjects" : [
+        {
+          "asm": "GCA_000409795.2",
+          "tax" : 60711,
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337130),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "7A4304A9E9AE320D0E28FCC9E23EF1E605ACACAA",
+          "accession" : NumberLong(3000000020),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-20T08:25:00Z")
+        }
+      ]
+    }
+  ]
+}

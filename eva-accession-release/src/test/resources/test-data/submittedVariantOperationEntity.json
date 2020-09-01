@@ -1,0 +1,26 @@
+{
+  "submittedVariantOperationEntity": [
+    {
+      "_id" : ObjectId("5c51c1e5dcc3abf7ee91326a"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(5198093015),
+      "reason" : "Original 3000000010 was merged into 3000000001.",
+      "inactiveObjects" : [
+        {
+          "_id" : "94817D33F68E8DB175881EF4668AE548",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB22988",
+          "contig" : "CM001941.2",
+          "start" : NumberLong(15),
+          "ref" : "C",
+          "alt" : "G",
+          "accession" : NumberLong("5198093015"),
+          "rs" : NumberLong(3000000010),
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-06T11:04:24.445Z")
+        }
+      ]
+    }
+  ]
+}

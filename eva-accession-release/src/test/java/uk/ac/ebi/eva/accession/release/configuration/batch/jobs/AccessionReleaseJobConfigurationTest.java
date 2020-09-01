@@ -70,8 +70,10 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EV
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantOperationEntity.json",
-        "/test-data/submittedVariantEntity.json",
         "/test-data/clusteredVariantEntity.json",
+        "/test-data/clusteredVariantOperationEntity.json",
+        "/test-data/submittedVariantEntity.json",
+        "/test-data/submittedVariantOperationEntity.json",
 })
 @TestPropertySource("classpath:application.properties")
 public class AccessionReleaseJobConfigurationTest {
@@ -84,11 +86,19 @@ public class AccessionReleaseJobConfigurationTest {
 
     private static final long EXPECTED_LINES_MERGED = 5;
 
+    private static final long EXPECTED_EVA_LINES_MERGED = 1;
+
     private static final long EXPECTED_LINES_DEPRECATED = 3;
+
+    private static final long EXPECTED_EVA_LINES_DEPRECATED = 2;
 
     private static final long EXPECTED_LINES_MERGED_DEPRECATED = 2;
 
+    private static final long EXPECTED_EVA_LINES_MERGED_DEPRECATED = 1;
+
     private static final long EXPECTED_LINES_MULTIMAP = 2;
+
+    private static final long EXPECTED_EVA_LINES_MULTIMAP = 1;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -146,9 +156,17 @@ public class AccessionReleaseJobConfigurationTest {
         assertEquals(EXPECTED_LINES_MERGED_DEPRECATED, numVariantsInMergedDeprecatedRelease);
         long numVariantsInMultimapRelease = FileUtils.countNonCommentLines(getMultimapRelease());
         assertEquals(EXPECTED_LINES_MULTIMAP, numVariantsInMultimapRelease);
+
         long numVariantsInEvaRelease = FileUtils.countNonCommentLines(getEvaRelease());
         assertEquals(EXPECTED_EVA_LINES, numVariantsInEvaRelease);
-
+        long numVariantsInEvaMergedRelease = FileUtils.countNonCommentLines(getEvaMergedRelease());
+        assertEquals(EXPECTED_EVA_LINES_MERGED, numVariantsInEvaMergedRelease);
+        long numVariantsInEvaDeprecatedRelease = FileUtils.countNonCommentLines(getEvaDeprecatedRelease());
+        assertEquals(EXPECTED_EVA_LINES_DEPRECATED, numVariantsInEvaDeprecatedRelease);
+        long numVariantsInEvaMergedDeprecatedRelease = FileUtils.countNonCommentLines(getEvaMergedDeprecatedRelease());
+        assertEquals(EXPECTED_EVA_LINES_MERGED_DEPRECATED, numVariantsInEvaMergedDeprecatedRelease);
+        long numVariantsInEvaMultimapRelease = FileUtils.countNonCommentLines(getEvaMultimapRelease());
+        assertEquals(EXPECTED_EVA_LINES_MULTIMAP, numVariantsInEvaMultimapRelease);
     }
 
     private FileInputStream getRelease() throws FileNotFoundException {
@@ -169,10 +187,24 @@ public class AccessionReleaseJobConfigurationTest {
                                                      .toFile());
     }
 
-    private FileInputStream getDeprecatedRelease() throws FileNotFoundException {
-        return new FileInputStream(ReportPathResolver.getDbsnpDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
-                                                                                      inputParameters.getAssemblyAccession())
+    private FileInputStream getEvaMergedRelease() throws FileNotFoundException {
+        return new FileInputStream(ReportPathResolver.getEvaMergedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                                inputParameters.getAssemblyAccession())
                                                      .toFile());
+    }
+
+    private FileInputStream getDeprecatedRelease() throws FileNotFoundException {
+        return new FileInputStream(
+                ReportPathResolver.getDbsnpDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                   inputParameters.getAssemblyAccession())
+                                  .toFile());
+    }
+
+    private FileInputStream getEvaDeprecatedRelease() throws FileNotFoundException {
+        return new FileInputStream(
+                ReportPathResolver.getEvaDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                 inputParameters.getAssemblyAccession())
+                                  .toFile());
     }
 
     private FileInputStream getMergedDeprecatedRelease() throws FileNotFoundException {
@@ -181,17 +213,30 @@ public class AccessionReleaseJobConfigurationTest {
                                                                          inputParameters.getAssemblyAccession()).toFile());
     }
 
+    private FileInputStream getEvaMergedDeprecatedRelease() throws FileNotFoundException {
+        return new FileInputStream(
+                ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(inputParameters.getOutputFolder(),
+                                                                       inputParameters.getAssemblyAccession()).toFile());
+    }
+
     private FileInputStream getMultimapRelease() throws FileNotFoundException {
         return new FileInputStream(
                 ReportPathResolver.getDbsnpMultimapIdsReportPath(inputParameters.getOutputFolder(),
                                                                  inputParameters.getAssemblyAccession()).toFile());
     }
 
-    private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
+    private FileInputStream getEvaMultimapRelease() throws FileNotFoundException {
+        return new FileInputStream(
+                ReportPathResolver.getEvaMultimapIdsReportPath(inputParameters.getOutputFolder(),
+                                                               inputParameters.getAssemblyAccession()).toFile());
+    }
+
+    private void assertStepsExecuted(List<String> expectedSteps, JobExecution jobExecution) {
         Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
         List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
     }
 
 }
+
 

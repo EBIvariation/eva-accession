@@ -27,6 +27,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -113,7 +114,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         long mergedInto = mergedVariant.getLong(MERGE_INTO_FIELD);
         String type = inactiveEntity.getString(TYPE_FIELD);
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
-        boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD);
+        boolean validated = inactiveEntity.getBoolean(VALIDATED_FIELD, IClusteredVariant.DEFAULT_VALIDATED);
 
         Map<String, Variant> mergedVariants = new HashMap<>();
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
