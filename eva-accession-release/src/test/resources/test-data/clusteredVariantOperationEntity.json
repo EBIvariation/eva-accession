@@ -4,7 +4,7 @@
       "_id" : ObjectId("5ba125831912036924cc2418"),
       "eventType" : "MERGED",
       "accession" : NumberLong(3000000010),
-      "mergeInto" : NumberLong(3000000001),
+      "mergeInto" : NumberLong(3000000000),
       "reason" : "Identical clustered variant received multiple RS identifiers",
       "inactiveObjects" : [
         {
