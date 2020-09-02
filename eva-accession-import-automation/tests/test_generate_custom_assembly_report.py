@@ -109,4 +109,4 @@ class TestGenerateCustomAssemblyReport(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.run_clustering()
+    unittest.main()
