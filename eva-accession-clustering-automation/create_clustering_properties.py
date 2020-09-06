@@ -15,8 +15,6 @@
 import os
 import sys
 import argparse
-import json
-import yaml
 import logging
 from config_custom import get_properties
 

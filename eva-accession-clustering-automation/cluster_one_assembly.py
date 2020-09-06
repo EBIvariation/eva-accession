@@ -20,7 +20,7 @@ import logging
 from create_clustering_properties import create_properties_file
 from create_clustering_properties import check_valid_sources
 from create_clustering_properties import check_vcf_source_requirements
-from create_clustering_properties import get_args_from_private_config_file
+from config_custom import get_args_from_private_config_file
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 
 logger = logging.getLogger(__name__)
@@ -56,19 +56,16 @@ def add_to_command_file(properties_path, command, automation_timestamp):
         commands.write(command + '\n')
 
 
-def run_command(command):
-    run_command_with_output('Run clustering command', command, return_process_output=True)
-
-
-def run_clustering(source, vcf_file, project_accession, assembly_accession, private_config_file, output_directory,
-                   clustering_artifact, only_printing, automation_timestamp):
+def run_clustering(source, vcf_file, project_accession, assembly_accession, private_config_file,
+                   private_config_xml_file, profile, output_directory, clustering_artifact, only_printing,
+                   automation_timestamp):
     preliminary_check(source, vcf_file, project_accession)
     clustering_artifact_path = get_clustering_artifact(clustering_artifact, private_config_file)
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
-                                             private_config_file, output_directory)
+                                             private_config_xml_file, profile, output_directory)
     command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact_path, automation_timestamp)
     if not only_printing:
-        run_command(command)
+        run_command_with_output('Run clustering command', command, return_process_output=True)
 
 
 def preliminary_check(source, vcf_file, project_accession):
@@ -108,6 +105,8 @@ if __name__ == "__main__":
                         help="Assembly for which the process has to be run, e.g. GCA_000002285.2", required=True)
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private info (JSON/YML format)", required=True)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+    parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("-o", "--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument("-ca","--clustering-artifact", help="Artifact of the clustering pipeline",
                         required=False)
@@ -121,8 +120,8 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         run_clustering(args.source, args.vcf_file, args.project_accession, args.assembly_accession,
-                       args.private_config_file, args.output_directory, clustering_artifact_path,  args.only_printing,
-                       args.automation_timestamp)
+                       args.private_config_file, args.private_config_xml_file, args.profile, args.output_directory,
+                       args.clustering_artifact,  args.only_printing, args.automation_timestamp)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
