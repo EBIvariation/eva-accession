@@ -15,6 +15,7 @@ The clustering automation script have the following parameters:
 * **clustering-artifact:** Clustering artifact path is the latest version of the clustering pipeline
 * **only-printing:** Is a flag to only get the commands but not run them  
 
+
 ##Examples
 * Example using Mongo as source
     ```bash
@@ -25,6 +26,7 @@ The clustering automation script have the following parameters:
     ```bash
     python3 ../eva-accession/eva-accession-clustering-automation/cluster_multiple_assemblies.py --source vcf --asm-vcf-prj-list GCA_000233375.4#/nfs/eva/accessioned.vcf.gz#PRJEB1111,GCA_000233375.4#/nfs/eva/file.vcf.gz#PRJEB2222 --private-config-file config.json --output-directory /home/clustering_automation --only-printing
     ```
+
 
 ##Notes
 * The **clustering_artifact** can be passed either with the parameter or it can be included in the private configuration file.

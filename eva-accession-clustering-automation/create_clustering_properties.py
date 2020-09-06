@@ -18,24 +18,25 @@ import argparse
 import json
 import yaml
 import logging
+from config_custom import get_properties
 
 logger = logging.getLogger(__name__)
 
 
-def create_properties_file(source, vcf_file, project_accession, assembly_accession, private_config_file,
+def create_properties_file(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
                            output_directory):
     """
     This method creates the application properties file
     """
     preliminary_check(source, vcf_file, project_accession)
-    private_config_args = get_args_from_private_config_file(private_config_file)
+    properties = get_properties(profile, private_config_xml_file)
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
-    with open(path, 'w') as properties:
-        add_clustering_properties(assembly_accession, project_accession, properties, source, vcf_file)
-        add_accessioning_properties(properties)
-        add_mongo_properties(private_config_args, properties)
-        add_job_tracker_properties(private_config_args, properties)
-        add_spring_properties(properties)
+    with open(path, 'w') as property_line:
+        add_clustering_properties(property_line, assembly_accession, project_accession, source, vcf_file)
+        add_accessioning_properties(property_line)
+        add_mongo_properties(property_line, properties)
+        add_job_tracker_properties(property_line, properties)
+        add_spring_properties(property_line)
     return path
 
 
@@ -55,12 +56,12 @@ def preliminary_check(source, vcf_file, project_accession):
     check_vcf_source_requirements(source, vcf_file, project_accession)
 
 
-def add_clustering_properties(assembly_accession, project_accession, properties, source, vcf_file):
-    properties.write('spring.batch.job.names=' + get_job_name(source) + '\n')
-    properties.write('\n')
-    properties.write('parameters.assemblyAccession=' + assembly_accession + '\n')
-    if vcf_file: properties.write('parameters.vcf=' + vcf_file + '\n')
-    if project_accession: properties.write('parameters.projectAccession=' + project_accession + '\n')
+def add_clustering_properties(property_line, assembly_accession, project_accession, source, vcf_file):
+    property_line.write('spring.batch.job.names=' + get_job_name(source) + '\n')
+    property_line.write('\n')
+    property_line.write('parameters.assemblyAccession=' + assembly_accession + '\n')
+    if vcf_file: property_line.write('parameters.vcf=' + vcf_file + '\n')
+    if project_accession: property_line.write('parameters.projectAccession=' + project_accession + '\n')
 
 
 def get_job_name(source):
@@ -70,20 +71,20 @@ def get_job_name(source):
         return 'CLUSTERING_FROM_VCF_JOB'
 
 
-def add_accessioning_properties(properties):
-    properties.write('\n')
-    properties.write('parameters.chunkSize=100' + '\n')
-    properties.write('\n')
-    properties.write('accessioning.instanceId=instance-01' + '\n')
-    properties.write('accessioning.submitted.categoryId=ss' + '\n')
-    properties.write('accessioning.clustered.categoryId=rs' + '\n')
-    properties.write('\n')
-    properties.write('accessioning.monotonic.ss.blockSize=100000' + '\n')
-    properties.write('accessioning.monotonic.ss.blockStartValue=5000000000' + '\n')
-    properties.write('accessioning.monotonic.ss.nextBlockInterval=1000000000' + '\n')
-    properties.write('accessioning.monotonic.rs.blockSize=100000' + '\n')
-    properties.write('accessioning.monotonic.rs.blockStartValue=3000000000' + '\n')
-    properties.write('accessioning.monotonic.rs.nextBlockInterval=1000000000' + '\n')
+def add_accessioning_properties(property_line):
+    property_line.write('\n')
+    property_line.write('parameters.chunkSize=100' + '\n')
+    property_line.write('\n')
+    property_line.write('accessioning.instanceId=instance-01' + '\n')
+    property_line.write('accessioning.submitted.categoryId=ss' + '\n')
+    property_line.write('accessioning.clustered.categoryId=rs' + '\n')
+    property_line.write('\n')
+    property_line.write('accessioning.monotonic.ss.blockSize=100000' + '\n')
+    property_line.write('accessioning.monotonic.ss.blockStartValue=5000000000' + '\n')
+    property_line.write('accessioning.monotonic.ss.nextBlockInterval=1000000000' + '\n')
+    property_line.write('accessioning.monotonic.rs.blockSize=100000' + '\n')
+    property_line.write('accessioning.monotonic.rs.blockStartValue=3000000000' + '\n')
+    property_line.write('accessioning.monotonic.rs.nextBlockInterval=1000000000' + '\n')
 
 
 def add_spring_properties(properties):
@@ -103,41 +104,24 @@ def add_spring_properties(properties):
     properties.write('spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation = true' + '\n')
 
 
-def add_job_tracker_properties(private_config_args, properties):
-    properties.write('\n')
-    properties.write('spring.datasource.driver-class-name=org.postgresql.Driver' + '\n')
-    job_tracker_host = private_config_args['job_tracker_host']
-    job_tracker_port = str(private_config_args['job_tracker_port'])
-    job_tracker_db = private_config_args['job_tracker_db']
-    job_tracker_url = 'postgresql://' + job_tracker_host + ':' + job_tracker_port + '/' + job_tracker_db
-    properties.write('spring.datasource.url=jdbc:' + job_tracker_url + '\n')
-    job_tracker_user = private_config_args['job_tracker_user']
-    properties.write('spring.datasource.username=' + job_tracker_user + '\n')
-    job_tracker_password = private_config_args['job_tracker_password']
-    properties.write('spring.datasource.password=' + job_tracker_password + '\n')
-    properties.write('spring.datasource.tomcat.max-active=3' + '\n')
+def add_mongo_properties(property_line, properties):
+    property_line.write('\n')
+    mongo_hosts_and_ports = properties['eva.mongo.host']
+    mongo_uri = 'mongodb://' + mongo_hosts_and_ports
+    property_line.write('spring.data.mongodb.uri=' + mongo_uri + '\n')
+    property_line.write('spring.data.mongodb.database=' + properties['eva.accession.mongo.database'] + '\n')
+    property_line.write('spring.data.mongodb.username=' + properties['eva.mongo.user'] + '\n')
+    property_line.write('spring.data.mongodb.password=' + properties['eva.mongo.passwd'] + '\n')
+    property_line.write('mongodb.read-preference=primary' + '\n')
 
 
-def add_mongo_properties(private_config_args, properties):
-    properties.write('\n')
-    mongo_host = private_config_args['mongo_host']
-    mongo_port = str(private_config_args['mongo_port'])
-    mongo_uri = 'mongodb://' + mongo_host + ':' + mongo_port
-    properties.write('spring.data.mongodb.uri=' + mongo_uri + '\n')
-    mongo_database = private_config_args['mongo_acc_db']
-    properties.write('spring.data.mongodb.database=' + mongo_database + '\n')
-    properties.write('mongodb.read-preference=primary' + '\n')
-
-
-def get_args_from_private_config_file(private_config_file):
-    with open(private_config_file) as private_config_file_handle:
-        if 'json' in private_config_file:
-            return json.load(private_config_file_handle)
-        else:
-            if 'yml' in private_config_file:
-                return yaml.safe_load(private_config_file_handle)
-            else:
-                raise TypeError('Configuration file should be either json or yaml')
+def add_job_tracker_properties(property_line, properties):
+    property_line.write('\n')
+    property_line.write('spring.datasource.driver-class-name=org.postgresql.Driver' + '\n')
+    property_line.write('spring.datasource.url=' + properties['eva.accession.jdbc.url'] + '\n')
+    property_line.write('spring.datasource.username=' + properties['eva.accession.user'] + '\n')
+    property_line.write('spring.datasource.password=' + properties['eva.accession.password'] + '\n')
+    property_line.write('spring.datasource.tomcat.max-active=3' + '\n')
 
 
 def check_valid_sources(source):
@@ -166,8 +150,8 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("-a", "--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002285.2", required=True)
-    parser.add_argument("-p", "--private-config-file",
-                        help="Path to the configuration file with private info (JSON/YML format)", required=True)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+    parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("-o", "--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
@@ -175,7 +159,7 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         create_properties_file(args.source, args.vcf_file, args.project_accession, args.assembly_accession,
-                               args.private_config_file, args.output_directory)
+                               args.private_config_xml_file, args.profile, args.output_directory)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
