@@ -23,20 +23,20 @@ logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_file, output_directory,
-                     clustering_artifact, only_printing):
+def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_file, private_config_xml_file, profile,
+                     output_directory, clustering_artifact, only_printing):
     """
     This method decides how to call the run_clustering method depending on the source (Mongo or VCF)
     """
     preliminary_check(source, asm_vcf_prj_list, assembly_list)
 
-    if source.upper() == 'VCF':
-        cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, output_directory, clustering_artifact,
-                                  only_printing)
-
     if source.upper() == 'MONGO':
-        cluster_multiple_from_mongo(source, assembly_list, private_config_file, output_directory, clustering_artifact,
-                                    only_printing)
+        cluster_multiple_from_mongo(source, assembly_list, private_config_file, private_config_xml_file, profile,
+                                    output_directory, clustering_artifact, only_printing)
+
+    if source.upper() == 'VCF':
+        cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, private_config_xml_file, profile,
+                                  output_directory, clustering_artifact, only_printing)
 
 
 def preliminary_check(source, asm_vcf_prj_list, assembly_list):
@@ -47,26 +47,26 @@ def preliminary_check(source, asm_vcf_prj_list, assembly_list):
     check_requirements(source, asm_vcf_prj_list, assembly_list)
 
 
-def cluster_multiple_from_mongo(source, assembly_list, private_config_file, output_directory, clustering_artifact,
-                                only_printing):
+def cluster_multiple_from_mongo(source, assembly_list, private_config_file, private_config_xml_file, profile,
+                                output_directory, clustering_artifact, only_printing):
     """
     This method splits the list of assemblies and call the run_clustering method for each assembly
     """
     for assembly in assembly_list.split(','):
-        run_clustering(source, None, None, assembly, private_config_file, output_directory, clustering_artifact,
-                       only_printing, timestamp)
+        run_clustering(source, None, None, assembly, private_config_file, private_config_xml_file, profile,
+                       output_directory, clustering_artifact, only_printing, timestamp)
 
 
-def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, output_directory, clustering_artifact,
-                              only_printing):
+def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, private_config_xml_file, profile,
+                              output_directory, clustering_artifact, only_printing):
     """
     The list will be of the form: asm1,GCA000000001.1,PRJEB1111#asm2,GCA000000002.2,PRJEB2222...
     This method splits the triplets and then call the run_clustering method for each one
     """
     for triplet in asm_vcf_prj_list.split(','):
         data = triplet.split('#')
-        run_clustering(source, data[1], data[2], data[0], private_config_file, output_directory, clustering_artifact,
-                       only_printing, timestamp)
+        run_clustering(source, data[1], data[2], data[0], private_config_file, private_config_xml_file, profile,
+                       output_directory, clustering_artifact, only_printing, timestamp)
 
 
 def check_requirements(source, asm_vcf_prj_list, assembly_list):
@@ -98,6 +98,8 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("-p", "--private-config-file",
                         help="Path to the configuration file with private info (JSON/YML format)", required=True)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+    parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("-o", "--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument("-ca","--clustering-artifact", help="Artifact of the clustering pipeline",
                         required=False)
@@ -109,7 +111,8 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.private_config_file,
-                         args.output_directory, args.clustering_artifact, args.only_printing)
+                         args.private_config_xml_file, args.profile, args.output_directory, args.clustering_artifact,
+                         args.only_printing)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
