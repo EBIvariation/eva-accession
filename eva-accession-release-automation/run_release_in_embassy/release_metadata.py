@@ -23,3 +23,39 @@ def get_assemblies_to_import_for_dbsnp_species(metadata_connection_handle, dbsnp
     if len(results) > 0:
         return [result[0] for result in results]
     return []
+
+
+def get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table,
+                                           metadata_connection_handle):
+    results = get_all_results_for_query(metadata_connection_handle, "select distinct tempmongo_instance from {0} "
+                                                                    "where taxonomy_id = '{1}'"
+                                        .format(release_species_inventory_table, taxonomy_id))
+    if len(results) == 0:
+        raise Exception("Could not find target Mongo instance in Embassy for taxonomy ID: " + taxonomy_id)
+    if len(results) > 1:
+        raise Exception("More than one target Mongo instance in Embassy specified for taxonomy ID: {0} "
+                        "in the release inventory table: {1}".format(taxonomy_id, release_species_inventory_table))
+    return results[0][0]
+
+
+def get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_table,
+                                        metadata_connection_handle):
+    results = get_all_results_for_query(metadata_connection_handle, "select assembly from {0} "
+                                                                    "where taxonomy_id = '{1}'"
+                                        .format(release_species_inventory_table, taxonomy_id))
+    if len(results) == 0:
+        raise Exception("Could not find assemblies pertaining to taxonomy ID: " + taxonomy_id)
+    return [result[0] for result in results]
+
+
+def get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession, release_species_inventory_table,
+                                            metadata_connection_handle):
+    results = get_all_results_for_query(metadata_connection_handle, "select row_to_json(row) from "
+                                                                    "(select * from {0} where "
+                                                                    "taxonomy_id = '{1}' and "
+                                                                    "assembly = '{2}') row"
+                                        .format(release_species_inventory_table, taxonomy_id, assembly_accession))
+    if len(results) == 0:
+        raise Exception("Could not find release inventory pertaining to taxonomy ID: {0} and assembly: {1} "
+                        .format(taxonomy_id, assembly_accession))
+    return results[0][0]

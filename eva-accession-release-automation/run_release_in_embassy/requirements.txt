@@ -1,2 +1,2 @@
-ebi_eva_common_pyutils==0.2.0
+ebi_eva_common_pyutils==0.2.8
 click==7.1.2

@@ -16,11 +16,14 @@
 import click
 import logging
 import os
+import psycopg2
 import signal
 import sys
 import traceback
 
-from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile
+from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy, \
+    get_target_mongo_instance_for_taxonomy
+from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile, get_pg_metadata_uri_for_eva_profile
 from ebi_eva_common_pyutils.mongo_utils import copy_db
 from ebi_eva_common_pyutils.network_utils import get_available_local_port, forward_remote_port_to_local_port
 from pymongo.uri_parser import parse_uri
@@ -70,41 +73,53 @@ def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file
             copy_db(mongodump_args, mongorestore_args)
 
 
-def copy_species_mongo_data_to_embassy(private_config_xml_file, assemblies, tempmongo_instance,
-                                       collections_to_copy, dump_dir):
+def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id,
+                                             collections_to_copy, release_species_inventory_table, dump_dir):
     MONGO_PORT = 27017
     local_forwarded_port = get_available_local_port(MONGO_PORT)
     port_forwarding_process_id = None
     exit_code = 0
     try:
-        logger.info("Forwarding remote MongoDB port 27017 to local port {0}...".format(local_forwarded_port))
-        port_forwarding_process_id = forward_remote_port_to_local_port(tempmongo_instance, MONGO_PORT,
-                                                                       local_forwarded_port)
-        logger.info("Beginning data copy to remote MongoDB host {0}...".format(tempmongo_instance))
-        mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file,
-                                       assemblies, collections_to_copy, dump_dir)
+        with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
+                              user="evadev") as \
+                metadata_connection_handle:
+            tempmongo_instance = get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table,
+                                                                        metadata_connection_handle)
+            logger.info("Forwarding remote MongoDB port 27017 to local port {0}...".format(local_forwarded_port))
+            port_forwarding_process_id = forward_remote_port_to_local_port(tempmongo_instance, MONGO_PORT,
+                                                                           local_forwarded_port)
+            logger.info("Beginning data copy to remote MongoDB host {0}...".format(tempmongo_instance))
+
+            assemblies = get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_table,
+                                                             metadata_connection_handle)
+            mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file,
+                                           assemblies, collections_to_copy, dump_dir)
     except Exception as ex:
-        logger.error("Encountered an error while copying species data to Embassy for " + ",".join(assemblies) + "\n" +
-                     traceback.format_exc())
+        logger.error("Encountered an error while copying species data to Embassy for assemblies in "
+                      + tempmongo_instance + "\n" + traceback.format_exc())
         exit_code = -1
     finally:
         if port_forwarding_process_id:
             os.kill(port_forwarding_process_id, signal.SIGTERM)
-            logger.info("Killed port forwarding from remote port")
+            os.system('echo -e "Killed port forwarding from remote port with signal 1 - SIGTERM. '
+                      '\\033[31;1;4mIGNORE OS MESSAGE ' # escape sequences for bold red and underlined text
+                      '\'Killed by Signal 1\' in the preceding/following text\\033[0m".')
+        logger.info("Copy process completed with exit_code: " + str(exit_code))
         sys.exit(exit_code)
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
-@click.option("--assembly", "-a", help="ex: -a GCA_000003055.3 -a GCA_000003055.5", multiple=True,  required=True)
-@click.option("--tempmongo-instance", help="ex: tempmongo-1", required=True)
-@click.option("--collections-to-copy", default=None,
-              help="ex: dbsnpSubmittedVariantEntity dbsnpSubmittedVariantOperationEntity", multiple=True,
+@click.option("--taxonomy-id", help="ex: 9913", required=True)
+@click.option("--collections-to-copy", "-c", default=None,
+              help="ex: dbsnpSubmittedVariantEntity,dbsnpSubmittedVariantOperationEntity", multiple=True,
+              required=False)
+@click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
 @click.option("--dump-dir", help="ex: /path/to/dump", required=True)
 @click.command()
-def main(private_config_xml_file, assembly, tempmongo_instance, collections_to_copy, dump_dir):
-    copy_species_mongo_data_to_embassy(private_config_xml_file, assembly, tempmongo_instance,
-                                       collections_to_copy, dump_dir)
+def main(private_config_xml_file, taxonomy_id, collections_to_copy, release_species_inventory_table, dump_dir):
+    copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id, collections_to_copy,
+                                             release_species_inventory_table, dump_dir)
 
 
 if __name__ == "__main__":
