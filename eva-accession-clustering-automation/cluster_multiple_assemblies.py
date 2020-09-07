@@ -87,21 +87,21 @@ def check_requirements(source, asm_vcf_prj_list, assembly_list):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Cluster multiple assemblies', add_help=False)
-    parser.add_argument("-s", "--source", help="mongo database or VCF", required=True)
+    parser.add_argument("--source", help="mongo database or VCF", required=True)
     parser.add_argument("--asm-vcf-prj-list", help="List of Assembly, VCF, project to be clustered, "
                                                    "e.g. GCA_000233375.4#/nfs/eva/accessioned.vcf.gz#PRJEB1111, "
                                                    "GCA_000002285.2#/nfs/eva/file.vcf.gz#PRJEB2222. "
                                                    "Required when the source is VCF",
                         required=False)
-    parser.add_argument("-al", "--assembly-list",
+    parser.add_argument("--assembly-list",
                         help="Assembly list for which the process has to be run, e.g. GCA_000002285.2,GCA_000233375.4",
                         required=False)
-    parser.add_argument("-p", "--private-config-file",
+    parser.add_argument("--private-config-file",
                         help="Path to the configuration file with private info (JSON/YML format)", required=True)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
-    parser.add_argument("-o", "--output-directory", help="Output directory for the properties file", required=False)
-    parser.add_argument("-ca","--clustering-artifact", help="Artifact of the clustering pipeline",
+    parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
+    parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline",
                         required=False)
     parser.add_argument("--only-printing", help="Prepare and write the commands, but don't run them",
                         action='store_true', required=False)

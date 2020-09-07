@@ -96,23 +96,23 @@ def get_clustering_artifact(clustering_artifact_arg, private_config_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Cluster one assembly',
                                      add_help=False)
-    parser.add_argument("-s", "--source", help="mongo database or VCF", required=True)
-    parser.add_argument("-vcf", "--vcf-file", help="Path to the VCF file, required when the source is VCF",
+    parser.add_argument("--source", help="mongo database or VCF", required=True)
+    parser.add_argument("--vcf-file", help="Path to the VCF file, required when the source is VCF",
                         required=False)
-    parser.add_argument("-pj", "--project-accession", help="Project accession, required when the source is VCF",
+    parser.add_argument("--project-accession", help="Project accession, required when the source is VCF",
                         required=False)
-    parser.add_argument("-a", "--assembly-accession",
+    parser.add_argument("--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002285.2", required=True)
-    parser.add_argument("-p", "--private-config-file",
+    parser.add_argument("--private-config-file",
                         help="Path to the configuration file with private info (JSON/YML format)", required=True)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
-    parser.add_argument("-o", "--output-directory", help="Output directory for the properties file", required=False)
-    parser.add_argument("-ca","--clustering-artifact", help="Artifact of the clustering pipeline",
+    parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
+    parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline",
                         required=False)
     parser.add_argument("--only-printing", help="Prepare and write the commands, but don't run them",
                         action="store_true", required=False)
-    parser.add_argument("-ats","--automation-timestamp", help="Timestamp from the automation script (run_multiple_assemblies)",
+    parser.add_argument("--automation-timestamp", help="Timestamp from the automation script (run_multiple_assemblies)",
                         required=False)
     parser.add_argument("--help", action="help", help="Show this help message and exit")
 

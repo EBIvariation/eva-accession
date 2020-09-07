@@ -142,15 +142,15 @@ def check_vcf_source_requirements(source, vcf_file, project_accession):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create clustering properties file', add_help=False)
-    parser.add_argument("-s", "--source", help="mongo database or VCF", required=True)
-    parser.add_argument("-vcf", "--vcf-file", help="Path to the VCF file, required when the source is VCF", required=False)
-    parser.add_argument("-pj", "--project-accession", help="Project accession, required when the source is VCF",
+    parser.add_argument("--source", help="mongo database or VCF", required=True)
+    parser.add_argument("--vcf-file", help="Path to the VCF file, required when the source is VCF", required=False)
+    parser.add_argument("--project-accession", help="Project accession, required when the source is VCF",
                         required=False)
-    parser.add_argument("-a", "--assembly-accession",
+    parser.add_argument("--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002285.2", required=True)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
-    parser.add_argument("-o", "--output-directory", help="Output directory for the properties file", required=False)
+    parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
