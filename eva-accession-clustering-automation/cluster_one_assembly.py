@@ -26,6 +26,7 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
+
 def generate_bsub_command(assembly_accession, properties_path, clustering_artifact, automation_timestamp):
     job_name = 'cluster_' + assembly_accession
     log_file = assembly_accession + '_cluster_' + timestamp + '.log'
@@ -62,7 +63,7 @@ def run_clustering(source, vcf_file, project_accession, assembly_accession, priv
     preliminary_check(source, vcf_file, project_accession)
     clustering_artifact_path = get_clustering_artifact(clustering_artifact, private_config_file)
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
-                                             private_config_xml_file, profile, output_directory)
+                                             private_config_file, private_config_xml_file, profile, output_directory)
     command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact_path, automation_timestamp)
     if not only_printing:
         run_command_with_output('Run clustering command', command, return_process_output=True)
@@ -105,7 +106,7 @@ if __name__ == "__main__":
                         help="Assembly for which the process has to be run, e.g. GCA_000002285.2", required=True)
     parser.add_argument("--private-config-file",
                         help="Path to the configuration file with private info (JSON/YML format)", required=True)
-    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline",

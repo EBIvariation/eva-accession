@@ -97,8 +97,8 @@ if __name__ == "__main__":
                         help="Assembly list for which the process has to be run, e.g. GCA_000002285.2,GCA_000233375.4",
                         required=False)
     parser.add_argument("--private-config-file",
-                        help="Path to the configuration file with private info (JSON/YML format)", required=True)
-    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+                        help="Path to the configuration file with private info (JSON/YML format)", required=False)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline",

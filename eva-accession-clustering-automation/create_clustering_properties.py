@@ -16,18 +16,21 @@ import os
 import sys
 import argparse
 import logging
-from config_custom import get_properties
+from config_custom import get_properties_from_xml_file
+from config_custom import get_properties_from_xml_string
+from config_custom import get_eva_settings_xml_string
+from config_custom import get_args_from_private_config_file
 
 logger = logging.getLogger(__name__)
 
 
-def create_properties_file(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                           output_directory):
+def create_properties_file(source, vcf_file, project_accession, assembly_accession, private_config_file,
+                           private_config_xml_file, profile, output_directory):
     """
     This method creates the application properties file
     """
     preliminary_check(source, vcf_file, project_accession)
-    properties = get_properties(profile, private_config_xml_file)
+    properties = get_properties(profile, private_config_file, private_config_xml_file)
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
     with open(path, 'w') as property_line:
         add_clustering_properties(property_line, assembly_accession, project_accession, source, vcf_file)
@@ -36,6 +39,21 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
         add_job_tracker_properties(property_line, properties)
         add_spring_properties(property_line)
     return path
+
+
+def get_properties(profile, private_config_file, private_config_xml_file):
+    if private_config_xml_file:
+        return get_properties_from_xml_file(profile, private_config_xml_file)
+
+    if private_config_file:
+        private_config_args = get_args_from_private_config_file(private_config_file)
+        if private_config_args.get('github_token'):
+            settings = get_eva_settings_xml_string(private_config_args['github_token'])
+            return get_properties_from_xml_string(profile, settings)
+
+    logger.error('Must provide either the private config xml path using parameter --private-config-xml-file or the '
+                 'github token by including the "github_token" field in the config file --private-config-file')
+    sys.exit(1)
 
 
 def get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory):
@@ -104,21 +122,21 @@ def add_spring_properties(properties):
 
 def add_mongo_properties(property_line, properties):
     property_line.write('\n')
-    mongo_hosts_and_ports = properties['eva.mongo.host']
+    mongo_hosts_and_ports = str(properties['eva.mongo.host'])
     mongo_uri = 'mongodb://' + mongo_hosts_and_ports
     property_line.write('spring.data.mongodb.uri=' + mongo_uri + '\n')
-    property_line.write('spring.data.mongodb.database=' + properties['eva.accession.mongo.database'] + '\n')
-    property_line.write('spring.data.mongodb.username=' + properties['eva.mongo.user'] + '\n')
-    property_line.write('spring.data.mongodb.password=' + properties['eva.mongo.passwd'] + '\n')
+    property_line.write('spring.data.mongodb.database=' + str(properties['eva.accession.mongo.database']) + '\n')
+    property_line.write('spring.data.mongodb.username=' + str(properties['eva.mongo.user']) + '\n')
+    property_line.write('spring.data.mongodb.password=' + str(properties['eva.mongo.passwd']) + '\n')
     property_line.write('mongodb.read-preference=primary' + '\n')
 
 
 def add_job_tracker_properties(property_line, properties):
     property_line.write('\n')
     property_line.write('spring.datasource.driver-class-name=org.postgresql.Driver' + '\n')
-    property_line.write('spring.datasource.url=' + properties['eva.accession.jdbc.url'] + '\n')
-    property_line.write('spring.datasource.username=' + properties['eva.accession.user'] + '\n')
-    property_line.write('spring.datasource.password=' + properties['eva.accession.password'] + '\n')
+    property_line.write('spring.datasource.url=' + str(properties['eva.accession.jdbc.url']) + '\n')
+    property_line.write('spring.datasource.username=' + str(properties['eva.accession.user']) + '\n')
+    property_line.write('spring.datasource.password=' + str(properties['eva.accession.password']) + '\n')
     property_line.write('spring.datasource.tomcat.max-active=3' + '\n')
 
 
@@ -148,7 +166,9 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("--assembly-accession",
                         help="Assembly for which the process has to be run, e.g. GCA_000002285.2", required=True)
-    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+    parser.add_argument("--private-config-file",
+                        help="Path to the configuration file with private info (JSON/YML format)", required=False)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
@@ -157,7 +177,8 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         create_properties_file(args.source, args.vcf_file, args.project_accession, args.assembly_accession,
-                               args.private_config_xml_file, args.profile, args.output_directory)
+                               args.private_config_file, args.private_config_xml_file, args.profile,
+                               args.output_directory)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
