@@ -1,7 +1,7 @@
 # Pre-requisites
 * Install the **ebi_eva_common_pyutils** module in your local python environment
     ```bash
-    pip install -r requirements.txt
+    pip3 install -r requirements.txt
     ```
 
 # Usage
@@ -33,8 +33,8 @@ The clustering automation script have the following parameters:
 ## Notes
 * The **clustering_artifact** can be passed either with the parameter or it can be included in the private configuration file.
 If the parameter is specified, the clustering artifact in the configuration will not be taken into account.
-* The settings xml file can be passed using the parameter or if the eva settings in github should be used include the 
-token in the json/yml config file. The param is prioritized if it is passed in the command.
+* The **settings xml file** can be passed using the parameter or if the eva settings in github should be used include the 
+token in the json/yml config file and don't pass the parameter. The param is prioritized if it is passed in the command.
 * **Private configuration file** example
     ```json
     {
