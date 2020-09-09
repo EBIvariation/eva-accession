@@ -62,23 +62,6 @@ def run_clustering(source, vcf_file, project_accession, assembly_accession, gith
         run_command_with_output('Run clustering command', command, return_process_output=True)
 
 
-# def get_clustering_artifact(clustering_artifact_arg, private_config_file):
-#     """
-#     This method checks the artifact was passed to the script either using the parameter (--clustering-artifact) or
-#     in the private configuration file, and gets its value. The parameter is prioritized.
-#     """
-#     if clustering_artifact_arg:
-#         return clustering_artifact_arg
-#
-#     private_config_args = get_args_from_private_config_file(private_config_file)
-#     if private_config_args.get('clustering_artifact'):
-#         return private_config_args['clustering_artifact']
-#
-#     logger.error('If the clustering artifact must be provided either by the parameters (-ca, --clustering-artifact) or'
-#                  'in the private configuration file')
-#     sys.exit(1)
-
-
 def cluster_multiple(source, asm_vcf_prj_list, assembly_list, github_token, private_config_xml_file, profile,
                      output_directory, clustering_artifact, only_printing, memory):
     """
@@ -134,14 +117,12 @@ def check_requirements(source, asm_vcf_prj_list, assembly_list):
     For VCF it is expected to have a list of one or more assembly, vcf file, project separated by #
     For Mongo it is expected to have a list of assemblies.
     """
-    if source.upper() == 'VCF' and not asm_vcf_prj_list:
-        logger.error('If the source is VCF a list of assembly#vcf#project mus be provided using the parameter'
-                     '--asm-vcf-prj-list')
-        sys.exit(1)
-    if source.upper() == 'MONGO' and not assembly_list:
-        logger.error('If the source is MONGO a list of assembly accessions must be provided using the parameter '
-                     '--assembly-list')
-        sys.exit(1)
+    if source == 'VCF' and not asm_vcf_prj_list:
+        raise ValueError('If the source is VCF a list of assembly#vcf#project mus be provided using the parameter '
+                         '--asm-vcf-prj-list')
+    if source == 'MONGO' and not assembly_list:
+        raise ValueError('If the source is MONGO a list of assembly accessions must be provided using the parameter '
+                         '--assembly-list')
 
 
 if __name__ == "__main__":
@@ -150,17 +131,15 @@ if __name__ == "__main__":
     parser.add_argument("--asm-vcf-prj-list", help="List of Assembly, VCF, project to be clustered, "
                                                    "e.g. GCA_000233375.4#/nfs/eva/accessioned.vcf.gz#PRJEB1111, "
                                                    "GCA_000002285.2#/nfs/eva/file.vcf.gz#PRJEB2222. "
-                                                   "Required when the source is VCF",
-                        required=False)
-    parser.add_argument("--assembly-list",
-                        help="Assembly list for which the process has to be run, e.g. GCA_000002285.2,GCA_000233375.4. "
-                             "Required when the source is mongo", required=False)
+                                                   "Required when the source is VCF", required=False)
+    parser.add_argument("--assembly-list", help="Assembly list for which the process has to be run, "
+                                                "e.g. GCA_000002285.2,GCA_000233375.4. "
+                                                "Required when the source is mongo", required=False)
     parser.add_argument("--github-token", help="Github token to download the eva settings file", required=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
-    parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline",
-                        required=True)
+    parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline", required=True)
     parser.add_argument("--only-printing", help="Prepare and write the commands, but don't run them",
                         action='store_true', required=False)
     parser.add_argument("--memory", help="Amount of memory jobs will use", required=False)

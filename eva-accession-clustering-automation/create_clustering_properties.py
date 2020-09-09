@@ -48,9 +48,8 @@ def get_properties(profile, github_token, private_config_xml_file):
         settings = get_eva_settings_xml_string(github_token)
         return get_properties_from_xml_string(profile, settings)
 
-    logger.error('Must provide either the private config xml path using parameter --private-config-xml-file or the '
-                 'github token using the --github-token parameter')
-    sys.exit(1)
+    raise ValueError('Must provide either the private config xml path using parameter --private-config-xml-file or the '
+                     'github token using the --github-token parameter')
 
 
 def get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory):
@@ -65,7 +64,6 @@ def preliminary_check(source, vcf_file, project_accession):
     """
     This checks must pass in order to run the script
     """
-    check_valid_sources(source)
     check_vcf_source_requirements(source, vcf_file, project_accession)
 
 
@@ -154,32 +152,22 @@ spring.datasource.tomcat.max-active=3
     properties_file.write(postgres_properties)
 
 
-def check_valid_sources(source):
-    """
-    This method checks that ony MONGO and VCF are used as sources
-    """
-    if source.upper() not in ('MONGO', 'VCF'):
-        logger.error("Wrong source specified. Please choose between MONGO and VCF")
-        sys.exit(1)
-
-
 def check_vcf_source_requirements(source, vcf_file, project_accession):
     """
     This method checks that if the source is VCF the VCF file and project accession are provided
     """
-    if source.upper() == 'VCF' and not (vcf_file and project_accession):
-        logger.error('If the source is VCF the file path and project accession must be provided')
-        sys.exit(1)
+    if source == 'VCF' and not (vcf_file and project_accession):
+        raise ValueError('If the source is VCF the file path and project accession must be provided')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Create clustering properties file', add_help=False)
-    parser.add_argument("--source", help="mongo database or VCF", required=True)
+    parser.add_argument("--source", help="mongo database or VCF", required=True, choices=['VCF', 'MONGO'])
     parser.add_argument("--vcf-file", help="Path to the VCF file, required when the source is VCF", required=False)
     parser.add_argument("--project-accession", help="Project accession, required when the source is VCF",
                         required=False)
-    parser.add_argument("--assembly-accession",
-                        help="Assembly for which the process has to be run, e.g. GCA_000002285.2", required=True)
+    parser.add_argument("--assembly-accession", help="Assembly for which the process has to be run, "
+                                                     "e.g. GCA_000002285.2", required=True)
     parser.add_argument("--github-token", help="Github token to download the eva settings file", required=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
