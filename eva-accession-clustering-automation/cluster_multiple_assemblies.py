@@ -27,13 +27,22 @@ logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def generate_bsub_command(assembly_accession, properties_path, clustering_artifact):
+def generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory):
     job_name = 'cluster_' + assembly_accession
     log_file = assembly_accession + '_cluster_' + timestamp + '.log'
     error_file = assembly_accession + '_cluster_' + timestamp + '.err'
+    memory_amount = 8192
+    if memory:
+        memory_amount = memory
 
-    command = 'bsub -J ' + job_name + ' -o ' + log_file + ' -e ' + error_file + ' -M 8192 -R "rusage[mem=8192]" ' + \
-              'java -jar ' + clustering_artifact + ' -Dspring.config.location=' + properties_path
+    command = 'bsub -J {job_name} -o {log_file} -e {error_file} -M {memory_amount} -R "rusage[mem={memory_amount}]" ' \
+              'java -jar {clustering_artifact} -Dspring.config.location= {properties_path}'\
+        .format(job_name=job_name, log_file=log_file, error_file=error_file, memory_amount=memory_amount,
+                clustering_artifact=clustering_artifact, properties_path=properties_path)
+
+    # command = 'bsub -J ' + job_name + ' -o ' + log_file + ' -e ' + error_file + ' -M ' + memory + \
+    #           '-R "rusage[mem=' + memory + ']" ' + 'java -jar ' + clustering_artifact + \
+    #           ' -Dspring.config.location=' + properties_path
 
     print(command)
     add_to_command_file(properties_path, command)
@@ -50,11 +59,11 @@ def add_to_command_file(properties_path, command):
 
 
 def run_clustering(source, vcf_file, project_accession, assembly_accession, private_config_file,
-                   private_config_xml_file, profile, output_directory, clustering_artifact, only_printing):
+                   private_config_xml_file, profile, output_directory, clustering_artifact, only_printing, memory):
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
                                              private_config_file, private_config_xml_file, profile, output_directory)
     clustering_artifact_path = get_clustering_artifact(clustering_artifact, private_config_file)
-    command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact_path)
+    command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact_path, memory)
     if not only_printing:
         run_command_with_output('Run clustering command', command, return_process_output=True)
 
@@ -77,7 +86,7 @@ def get_clustering_artifact(clustering_artifact_arg, private_config_file):
 
 
 def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_file, private_config_xml_file, profile,
-                     output_directory, clustering_artifact, only_printing):
+                     output_directory, clustering_artifact, only_printing, memory):
     """
     This method decides how to call the run_clustering method depending on the source (Mongo or VCF)
     """
@@ -85,11 +94,11 @@ def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_fil
 
     if source.upper() == 'MONGO':
         cluster_multiple_from_mongo(source, assembly_list, private_config_file, private_config_xml_file, profile,
-                                    output_directory, clustering_artifact, only_printing)
+                                    output_directory, clustering_artifact, only_printing, memory)
 
     if source.upper() == 'VCF':
         cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, private_config_xml_file, profile,
-                                  output_directory, clustering_artifact, only_printing)
+                                  output_directory, clustering_artifact, only_printing, memory)
 
 
 def preliminary_check(source, asm_vcf_prj_list, assembly_list):
@@ -101,17 +110,17 @@ def preliminary_check(source, asm_vcf_prj_list, assembly_list):
 
 
 def cluster_multiple_from_mongo(source, assembly_list, private_config_file, private_config_xml_file, profile,
-                                output_directory, clustering_artifact, only_printing):
+                                output_directory, clustering_artifact, only_printing, memory):
     """
     This method splits the list of assemblies and call the run_clustering method for each assembly
     """
     for assembly in assembly_list.split(','):
         run_clustering(source, None, None, assembly, private_config_file, private_config_xml_file, profile,
-                       output_directory, clustering_artifact, only_printing)
+                       output_directory, clustering_artifact, only_printing, memory)
 
 
 def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, private_config_xml_file, profile,
-                              output_directory, clustering_artifact, only_printing):
+                              output_directory, clustering_artifact, only_printing, memory):
     """
     The list will be of the form: asm1,GCA000000001.1,PRJEB1111#asm2,GCA000000002.2,PRJEB2222...
     This method splits the triplets and then call the run_clustering method for each one
@@ -119,7 +128,7 @@ def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, pri
     for triplet in asm_vcf_prj_list.split(','):
         data = triplet.split('#')
         run_clustering(source, data[1], data[2], data[0], private_config_file, private_config_xml_file, profile,
-                       output_directory, clustering_artifact, only_printing)
+                       output_directory, clustering_artifact, only_printing, memory)
 
 
 def check_requirements(source, asm_vcf_prj_list, assembly_list):
@@ -158,6 +167,7 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("--only-printing", help="Prepare and write the commands, but don't run them",
                         action='store_true', required=False)
+    parser.add_argument("--memory", help="Amount of memory jobs will use", required=False)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
@@ -165,7 +175,7 @@ if __name__ == "__main__":
         args = parser.parse_args()
         cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.private_config_file,
                          args.private_config_xml_file, args.profile, args.output_directory, args.clustering_artifact,
-                         args.only_printing)
+                         args.only_printing, args.memory)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
