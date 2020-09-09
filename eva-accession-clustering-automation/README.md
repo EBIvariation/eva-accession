@@ -8,7 +8,7 @@
 ## Cluster multiple assemblies
 The clustering automation script have the following parameters:
 * **source\*:** The possible sources are Mongo or VCF
-* **asm-vcf-prj-list:** Is a list of one or many assembly#vcf#project combinations. This is required is the source is VCF
+* **asm-vcf-prj-list:** Is a list of one or many assembly#vcf#project combinations. This is required if the source is VCF
 * **assembly-list:** Is a list of assemblies to process. This is required if the source is Mongo
 * **private-config-file\*:** Private configuration file with sensitive information like internal paths or tokens
 * **private-config-xml-file\*:** Maven settings.xml file with the profiles that hold database connection data
@@ -26,7 +26,7 @@ The clustering automation script have the following parameters:
 
 * Example using VCF as source
     ```bash
-    python3 path/to/eva-accession/eva-accession-clustering-automation/cluster_multiple_assemblies.py --source vcf --asm-vcf-prj-list GCA_000233375.4#path/to/accessioned.vcf.gz#PRJEB1111,GCA_000233375.4#/nfs/eva/file.vcf.gz#PRJEB2222 --private-config-file path/to/private_config.json --output-directory /output/clustering_automation --only-printing --private-config-xml-file path/to/settings.xml --profile productio
+    python3 path/to/eva-accession/eva-accession-clustering-automation/cluster_multiple_assemblies.py --source vcf --asm-vcf-prj-list GCA_000233375.4#path/to/accessioned.vcf.gz#PRJEB1111,GCA_000233375.4#/nfs/eva/file.vcf.gz#PRJEB2222 --private-config-file path/to/private_config.json --output-directory /output/clustering_automation --only-printing --private-config-xml-file path/to/settings.xml --profile production
     ```
   
 

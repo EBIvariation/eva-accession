@@ -80,21 +80,22 @@ def check_requirements(source, asm_vcf_prj_list, assembly_list):
                      '--asm-vcf-prj-list')
         sys.exit(1)
     if source.upper() == 'MONGO' and not assembly_list:
-        logger.error('If the source is MONGO a list of assembly accessions must be provided using the parameters '
-                     '-al or --assembly-list')
+        logger.error('If the source is MONGO a list of assembly accessions must be provided using the parameter '
+                     '--assembly-list')
         sys.exit(1)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Cluster multiple assemblies', add_help=False)
-    parser.add_argument("--source", help="mongo database or VCF", required=True)
+    parser.add_argument("--source", help="mongo database or VCF", required=True, choices=['VCF', 'MONGO'])
     parser.add_argument("--asm-vcf-prj-list", help="List of Assembly, VCF, project to be clustered, "
                                                    "e.g. GCA_000233375.4#/nfs/eva/accessioned.vcf.gz#PRJEB1111, "
                                                    "GCA_000002285.2#/nfs/eva/file.vcf.gz#PRJEB2222. "
                                                    "Required when the source is VCF",
                         required=False)
     parser.add_argument("--assembly-list",
-                        help="Assembly list for which the process has to be run, e.g. GCA_000002285.2,GCA_000233375.4",
+                        help="Assembly list for which the process has to be run, e.g. GCA_000002285.2,GCA_000233375.4. "
+                             "Required when the source is mongo",
                         required=False)
     parser.add_argument("--private-config-file",
                         help="Path to the configuration file with private info (JSON/YML format)", required=False)

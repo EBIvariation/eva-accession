@@ -32,12 +32,12 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
     preliminary_check(source, vcf_file, project_accession)
     properties = get_properties(profile, private_config_file, private_config_xml_file)
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
-    with open(path, 'w') as property_line:
-        add_clustering_properties(property_line, assembly_accession, project_accession, source, vcf_file)
-        add_accessioning_properties(property_line)
-        add_mongo_properties(property_line, properties)
-        add_job_tracker_properties(property_line, properties)
-        add_spring_properties(property_line)
+    with open(path, 'w') as properties_file:
+        add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file)
+        add_accessioning_properties(properties_file)
+        add_mongo_properties(properties_file, properties)
+        add_job_tracker_properties(properties_file, properties)
+        add_spring_properties(properties_file)
     return path
 
 
@@ -72,12 +72,20 @@ def preliminary_check(source, vcf_file, project_accession):
     check_vcf_source_requirements(source, vcf_file, project_accession)
 
 
-def add_clustering_properties(property_line, assembly_accession, project_accession, source, vcf_file):
-    property_line.write('spring.batch.job.names=' + get_job_name(source) + '\n')
-    property_line.write('\n')
-    property_line.write('parameters.assemblyAccession=' + assembly_accession + '\n')
-    if vcf_file: property_line.write('parameters.vcf=' + vcf_file + '\n')
-    if project_accession: property_line.write('parameters.projectAccession=' + project_accession + '\n')
+def add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file):
+    job_name = get_job_name(source)
+
+    clustering_properties = ("""
+spring.batch.job.names={job_name}
+
+parameters.assemblyAccession={assembly_accession}    
+    """).format(job_name=job_name, assembly_accession=assembly_accession)
+    properties_file.write(clustering_properties)
+
+    if vcf_file:
+        properties_file.write('parameters.vcf=' + vcf_file + '\n')
+    if project_accession:
+        properties_file.write('parameters.projectAccession=' + project_accession + '\n')
 
 
 def get_job_name(source):
@@ -87,57 +95,66 @@ def get_job_name(source):
         return 'CLUSTERING_FROM_VCF_JOB'
 
 
-def add_accessioning_properties(property_line):
-    property_line.write('\n')
-    property_line.write('parameters.chunkSize=100' + '\n')
-    property_line.write('\n')
-    property_line.write('accessioning.instanceId=instance-01' + '\n')
-    property_line.write('accessioning.submitted.categoryId=ss' + '\n')
-    property_line.write('accessioning.clustered.categoryId=rs' + '\n')
-    property_line.write('\n')
-    property_line.write('accessioning.monotonic.ss.blockSize=100000' + '\n')
-    property_line.write('accessioning.monotonic.ss.blockStartValue=5000000000' + '\n')
-    property_line.write('accessioning.monotonic.ss.nextBlockInterval=1000000000' + '\n')
-    property_line.write('accessioning.monotonic.rs.blockSize=100000' + '\n')
-    property_line.write('accessioning.monotonic.rs.blockStartValue=3000000000' + '\n')
-    property_line.write('accessioning.monotonic.rs.nextBlockInterval=1000000000' + '\n')
+def add_accessioning_properties(properties_file):
+    properties_file.write("""
+parameters.chunkSize=100
+
+accessioning.instanceId=instance-01
+accessioning.submitted.categoryId=ss
+accessioning.clustered.categoryId=rs
+
+accessioning.monotonic.ss.blockSize=100000
+accessioning.monotonic.ss.blockStartValue=5000000000 
+accessioning.monotonic.ss.nextBlockInterval=1000000000
+accessioning.monotonic.rs.blockSize=100000'
+accessioning.monotonic.rs.blockStartValue=3000000000 
+accessioning.monotonic.rs.nextBlockInterval=1000000000
+    """)
 
 
-def add_spring_properties(properties):
-    properties.write('\n')
-    properties.write(
-        '#See https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.1-Release-Notes#bean-overriding' + '\n')
-    properties.write('spring.main.allow-bean-definition-overriding=true' + '\n')
-    properties.write(
-        '#As this is a spring batch application, disable the embedded tomcat. This is the new way to do that for spring 2.' + '\n')
-    properties.write('spring.main.web-application-type=none' + '\n')
-    properties.write('\n')
-    properties.write(
-        '# This entry is put just to avoid a warning message in the logs when you start the spring-boot application.' + '\n')
-    properties.write(
-        '# This bug is from hibernate which tries to retrieve some metadata from postgresql db and failed to find that and logs as a warning' + '\n')
-    properties.write('# It doesnt cause any issue though.' + '\n')
-    properties.write('spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation = true' + '\n')
+def add_spring_properties(properties_file):
+    properties_file.write("""
+#See https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.1-Release-Notes#bean-overriding
+spring.main.allow-bean-definition-overriding=true
+#As this is a spring batch application, disable the embedded tomcat. This is the new way to do that for spring 2.
+spring.main.web-application-type=none
+
+# This entry is put just to avoid a warning message in the logs when you start the spring-boot application.
+# This bug is from hibernate which tries to retrieve some metadata from postgresql db and failed to find that and logs as a warning
+# It doesnt cause any issue though.
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation = true""")
 
 
-def add_mongo_properties(property_line, properties):
-    property_line.write('\n')
+def add_mongo_properties(properties_file, properties):
     mongo_hosts_and_ports = str(properties['eva.mongo.host'])
     mongo_uri = 'mongodb://' + mongo_hosts_and_ports
-    property_line.write('spring.data.mongodb.uri=' + mongo_uri + '\n')
-    property_line.write('spring.data.mongodb.database=' + str(properties['eva.accession.mongo.database']) + '\n')
-    property_line.write('spring.data.mongodb.username=' + str(properties['eva.mongo.user']) + '\n')
-    property_line.write('spring.data.mongodb.password=' + str(properties['eva.mongo.passwd']) + '\n')
-    property_line.write('mongodb.read-preference=primary' + '\n')
+    mongo_database = str(properties['eva.accession.mongo.database'])
+    mongo_username = str(properties['eva.mongo.user'])
+    mongo_password = str(properties['eva.mongo.passwd'])
+
+    mongo_properties = ("""
+spring.data.mongodb.uri={uri}
+spring.data.mongodb.database={database}
+spring.data.mongodb.username={username}
+spring.data.mongodb.password={password}
+mongodb.read-preference=primary
+    """).format(uri=mongo_uri, database=mongo_database, username=mongo_username, password=mongo_password)
+    properties_file.write(mongo_properties)
 
 
-def add_job_tracker_properties(property_line, properties):
-    property_line.write('\n')
-    property_line.write('spring.datasource.driver-class-name=org.postgresql.Driver' + '\n')
-    property_line.write('spring.datasource.url=' + str(properties['eva.accession.jdbc.url']) + '\n')
-    property_line.write('spring.datasource.username=' + str(properties['eva.accession.user']) + '\n')
-    property_line.write('spring.datasource.password=' + str(properties['eva.accession.password']) + '\n')
-    property_line.write('spring.datasource.tomcat.max-active=3' + '\n')
+def add_job_tracker_properties(properties_file, properties):
+    postgres_url = str(properties['eva.accession.jdbc.url'])
+    postgres_username = str(properties['eva.accession.user'])
+    postgres_password = str(properties['eva.accession.password'])
+
+    postgres_properties = ("""
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.url={postgres_url}
+spring.datasource.username={postgres_username}
+spring.datasource.password={postgres_password}
+spring.datasource.tomcat.max-active=3    
+    """).format(postgres_url=postgres_url, postgres_username=postgres_username, postgres_password=postgres_password)
+    properties_file.write(postgres_properties)
 
 
 def check_valid_sources(source):

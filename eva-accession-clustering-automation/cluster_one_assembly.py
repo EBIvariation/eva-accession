@@ -50,7 +50,7 @@ def add_to_command_file(properties_path, command, automation_timestamp):
     if automation_timestamp:
         commands_path += automation_timestamp
     else:
-        commands_path +=  timestamp
+        commands_path += timestamp
     commands_path += '.txt'
 
     with open(commands_path, 'a+') as commands:
@@ -60,21 +60,12 @@ def add_to_command_file(properties_path, command, automation_timestamp):
 def run_clustering(source, vcf_file, project_accession, assembly_accession, private_config_file,
                    private_config_xml_file, profile, output_directory, clustering_artifact, only_printing,
                    automation_timestamp):
-    preliminary_check(source, vcf_file, project_accession)
-    clustering_artifact_path = get_clustering_artifact(clustering_artifact, private_config_file)
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
                                              private_config_file, private_config_xml_file, profile, output_directory)
+    clustering_artifact_path = get_clustering_artifact(clustering_artifact, private_config_file)
     command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact_path, automation_timestamp)
     if not only_printing:
         run_command_with_output('Run clustering command', command, return_process_output=True)
-
-
-def preliminary_check(source, vcf_file, project_accession):
-    """
-    This checks must pass in order to run the script
-    """
-    check_valid_sources(source)
-    check_vcf_source_requirements(source, vcf_file, project_accession)
 
 
 def get_clustering_artifact(clustering_artifact_arg, private_config_file):
