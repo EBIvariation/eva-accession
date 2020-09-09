@@ -67,7 +67,7 @@ def cluster_multiple(source, asm_vcf_prj_list, assembly_list, github_token, priv
     """
     This method decides how to call the run_clustering method depending on the source (Mongo or VCF)
     """
-    preliminary_check(source, asm_vcf_prj_list, assembly_list)
+    check_requirements(source, asm_vcf_prj_list, assembly_list)
 
     if source == 'MONGO':
         cluster_multiple_from_mongo(source, assembly_list, github_token, private_config_xml_file, profile,
@@ -76,13 +76,6 @@ def cluster_multiple(source, asm_vcf_prj_list, assembly_list, github_token, priv
     if source == 'VCF':
         cluster_multiple_from_vcf(source, asm_vcf_prj_list, github_token, private_config_xml_file, profile,
                                   output_directory, clustering_artifact, only_printing, memory)
-
-
-def preliminary_check(source, asm_vcf_prj_list, assembly_list):
-    """
-    This checks must pass in order to run the script
-    """
-    check_requirements(source, asm_vcf_prj_list, assembly_list)
 
 
 def cluster_multiple_from_mongo(source, assembly_list, github_token, private_config_xml_file, profile,

@@ -28,7 +28,7 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
     """
     This method creates the application properties file
     """
-    preliminary_check(source, vcf_file, project_accession)
+    check_vcf_source_requirements(source, vcf_file, project_accession)
     properties = get_properties(profile, github_token, private_config_xml_file)
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
     with open(path, 'w') as properties_file:
@@ -58,13 +58,6 @@ def get_properties_path(source, vcf_file, project_accession, assembly_accession,
         path += '_' + os.path.basename(vcf_file) + '_' + project_accession
     path += '.properties'
     return path
-
-
-def preliminary_check(source, vcf_file, project_accession):
-    """
-    This checks must pass in order to run the script
-    """
-    check_vcf_source_requirements(source, vcf_file, project_accession)
 
 
 def add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file):
