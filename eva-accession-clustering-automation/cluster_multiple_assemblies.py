@@ -18,8 +18,6 @@ import sys
 import logging
 import datetime
 from create_clustering_properties import create_properties_file
-from create_clustering_properties import check_valid_sources
-from create_clustering_properties import check_valid_sources
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 
 logger = logging.getLogger(__name__)
@@ -27,9 +25,11 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 def generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory):
-    job_name = 'cluster_' + assembly_accession
-    log_file = assembly_accession + '_cluster_' + timestamp + '.log'
-    error_file = assembly_accession + '_cluster_' + timestamp + '.err'
+    job_name = 'cluster_{assembly_accession}'.format(assembly_accession=assembly_accession)
+    log_file = '{assembly_accession}_cluster_{timestamp}.log'.format(assembly_accession=assembly_accession,
+                                                                     timestamp=timestamp)
+    error_file = '{assembly_accession}_cluster_{timestamp}.err'.format(assembly_accession=assembly_accession,
+                                                                       timestamp=timestamp)
     memory_amount = 8192
     if memory:
         memory_amount = memory
@@ -69,11 +69,11 @@ def cluster_multiple(source, asm_vcf_prj_list, assembly_list, github_token, priv
     """
     preliminary_check(source, asm_vcf_prj_list, assembly_list)
 
-    if source.upper() == 'MONGO':
+    if source == 'MONGO':
         cluster_multiple_from_mongo(source, assembly_list, github_token, private_config_xml_file, profile,
                                     output_directory, clustering_artifact, only_printing, memory)
 
-    if source.upper() == 'VCF':
+    if source == 'VCF':
         cluster_multiple_from_vcf(source, asm_vcf_prj_list, github_token, private_config_xml_file, profile,
                                   output_directory, clustering_artifact, only_printing, memory)
 
@@ -82,16 +82,15 @@ def preliminary_check(source, asm_vcf_prj_list, assembly_list):
     """
     This checks must pass in order to run the script
     """
-    check_valid_sources(source)
     check_requirements(source, asm_vcf_prj_list, assembly_list)
 
 
 def cluster_multiple_from_mongo(source, assembly_list, github_token, private_config_xml_file, profile,
                                 output_directory, clustering_artifact, only_printing, memory):
     """
-    This method splits the list of assemblies and call the run_clustering method for each assembly
+    This method call the run_clustering method for each assembly
     """
-    for assembly in assembly_list.split(','):
+    for assembly in assembly_list:
         run_clustering(source, None, None, assembly, github_token, private_config_xml_file, profile,
                        output_directory, clustering_artifact, only_printing, memory)
 
@@ -99,10 +98,10 @@ def cluster_multiple_from_mongo(source, assembly_list, github_token, private_con
 def cluster_multiple_from_vcf(source, asm_vcf_prj_list, github_token, private_config_xml_file, profile,
                               output_directory, clustering_artifact, only_printing, memory):
     """
-    The list will be of the form: GCA_000000001.1#/file1.vcf.gz#PRJEB1111,GCA_000000002.2#/file2.vcf.gz#PRJEB2222 ...
+    The list will be of the form: GCA_000000001.1#/file1.vcf.gz#PRJEB1111 GCA_000000002.2#/file2.vcf.gz#PRJEB2222 ...
     This method splits the triplets and then call the run_clustering method for each one
     """
-    for triplet in asm_vcf_prj_list.split(','):
+    for triplet in asm_vcf_prj_list:
         data = triplet.split('#')
         assembly_accession = data[0]
         vcf_file = data[1]
@@ -129,12 +128,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Cluster multiple assemblies', add_help=False)
     parser.add_argument("--source", help="mongo database or VCF", required=True, choices=['VCF', 'MONGO'])
     parser.add_argument("--asm-vcf-prj-list", help="List of Assembly, VCF, project to be clustered, "
-                                                   "e.g. GCA_000233375.4#/nfs/eva/accessioned.vcf.gz#PRJEB1111, "
+                                                   "e.g. GCA_000233375.4#/nfs/eva/accessioned.vcf.gz#PRJEB1111 "
                                                    "GCA_000002285.2#/nfs/eva/file.vcf.gz#PRJEB2222. "
-                                                   "Required when the source is VCF", required=False)
+                                                   "Required when the source is VCF", required=False, nargs='+')
     parser.add_argument("--assembly-list", help="Assembly list for which the process has to be run, "
-                                                "e.g. GCA_000002285.2,GCA_000233375.4. "
-                                                "Required when the source is mongo", required=False)
+                                                "e.g. GCA_000002285.2 GCA_000233375.4. "
+                                                "Required when the source is mongo", required=False, nargs='+')
     parser.add_argument("--github-token", help="Github token to download the eva settings file", required=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
