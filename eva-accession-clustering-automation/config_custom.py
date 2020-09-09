@@ -2,6 +2,7 @@ from lxml import etree as et
 import json
 import yaml
 import urllib.request
+from retry import retry
 
 #TODO: Move methods to pyutils repository
 
@@ -23,6 +24,7 @@ def get_profile_properties(profile, root):
     return properties
 
 
+@retry(tries=4, delay=2, backoff=1.2, jitter=(1, 3))
 def get_eva_settings_xml_string(token):
     url = 'https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml'
     headers = {'Authorization': 'token ' + token, 'Accept' : 'application/vnd.github.raw' }
