@@ -12,15 +12,68 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import argparse
 import sys
 import logging
 import datetime
-from cluster_one_assembly import run_clustering
+from create_clustering_properties import create_properties_file
 from create_clustering_properties import check_valid_sources
+from config_custom import get_args_from_private_config_file
+from create_clustering_properties import check_valid_sources
+from ebi_eva_common_pyutils.command_utils import run_command_with_output
 
 logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+
+def generate_bsub_command(assembly_accession, properties_path, clustering_artifact):
+    job_name = 'cluster_' + assembly_accession
+    log_file = assembly_accession + '_cluster_' + timestamp + '.log'
+    error_file = assembly_accession + '_cluster_' + timestamp + '.err'
+
+    command = 'bsub -J ' + job_name + ' -o ' + log_file + ' -e ' + error_file + ' -M 8192 -R "rusage[mem=8192]" ' + \
+              'java -jar ' + clustering_artifact + ' -Dspring.config.location=' + properties_path
+
+    print(command)
+    add_to_command_file(properties_path, command)
+    return command
+
+
+def add_to_command_file(properties_path, command):
+    """
+    This method writes the commands to a text file in the output folder
+    """
+    commands_path = os.path.dirname(properties_path) + '/commands_' + timestamp + '.txt'
+    with open(commands_path, 'a+') as commands:
+        commands.write(command + '\n')
+
+
+def run_clustering(source, vcf_file, project_accession, assembly_accession, private_config_file,
+                   private_config_xml_file, profile, output_directory, clustering_artifact, only_printing):
+    properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
+                                             private_config_file, private_config_xml_file, profile, output_directory)
+    clustering_artifact_path = get_clustering_artifact(clustering_artifact, private_config_file)
+    command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact_path)
+    if not only_printing:
+        run_command_with_output('Run clustering command', command, return_process_output=True)
+
+
+def get_clustering_artifact(clustering_artifact_arg, private_config_file):
+    """
+    This method checks the artifact was passed to the script either using the parameter (-ca, --clustering-artifact) or
+    in the private configuration file, and gets its value. The parameter is prioritized.
+    """
+    if clustering_artifact_arg:
+        return clustering_artifact_arg
+
+    private_config_args = get_args_from_private_config_file(private_config_file)
+    if private_config_args.get('clustering_artifact'):
+        return private_config_args['clustering_artifact']
+
+    logger.error('If the clustering artifact must be provided either by the parameters (-ca, --clustering-artifact) or'
+                 'in the private configuration file')
+    sys.exit(1)
 
 
 def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_file, private_config_xml_file, profile,
@@ -54,7 +107,7 @@ def cluster_multiple_from_mongo(source, assembly_list, private_config_file, priv
     """
     for assembly in assembly_list.split(','):
         run_clustering(source, None, None, assembly, private_config_file, private_config_xml_file, profile,
-                       output_directory, clustering_artifact, only_printing, timestamp)
+                       output_directory, clustering_artifact, only_printing)
 
 
 def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, private_config_xml_file, profile,
@@ -66,7 +119,7 @@ def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_file, pri
     for triplet in asm_vcf_prj_list.split(','):
         data = triplet.split('#')
         run_clustering(source, data[1], data[2], data[0], private_config_file, private_config_xml_file, profile,
-                       output_directory, clustering_artifact, only_printing, timestamp)
+                       output_directory, clustering_artifact, only_printing)
 
 
 def check_requirements(source, asm_vcf_prj_list, assembly_list):
@@ -95,8 +148,7 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("--assembly-list",
                         help="Assembly list for which the process has to be run, e.g. GCA_000002285.2,GCA_000233375.4. "
-                             "Required when the source is mongo",
-                        required=False)
+                             "Required when the source is mongo", required=False)
     parser.add_argument("--private-config-file",
                         help="Path to the configuration file with private info (JSON/YML format)", required=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
