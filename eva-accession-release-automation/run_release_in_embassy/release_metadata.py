@@ -14,6 +14,9 @@
 
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
+release_vcf_file_categories = ["current_ids", "merged_ids", "multimap_ids"]
+release_text_file_categories = ["deprecated_ids", "merged_deprecated_ids"]
+
 
 def get_assemblies_to_import_for_dbsnp_species(metadata_connection_handle, dbsnp_species_taxonomy, release_version):
     query = "select distinct assembly_accession from dbsnp_ensembl_species.release_assemblies " \

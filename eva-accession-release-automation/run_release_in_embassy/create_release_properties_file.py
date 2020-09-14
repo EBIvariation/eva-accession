@@ -54,7 +54,9 @@ def get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, as
 
 def create_release_properties_file_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_folder, job_repo_url):
-    output_file = "{0}_release.properties".format(assembly_accession)
+    assembly_release_folder = os.path.join(release_folder, assembly_accession)
+    os.makedirs(assembly_release_folder, exist_ok=True)
+    output_file = "{0}/{1}_release.properties".format(assembly_release_folder, assembly_accession)
     release_properties = get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
                                                              release_species_inventory_table, release_folder)
     # TODO: Production Spring Job repository URL won't be used for Release 2
