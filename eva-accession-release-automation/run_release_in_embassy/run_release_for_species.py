@@ -15,6 +15,7 @@
 import click
 import collections
 import copy
+import datetime
 import json
 import logging
 import os
@@ -25,6 +26,7 @@ from run_release_in_embassy.release_metadata import get_release_assemblies_for_t
 
 
 logger = logging.getLogger(__name__)
+timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 # Processes, in order, that make up the workflow and the arguments that they take
 workflow_process_arguments_map = collections.OrderedDict(
     [("copy_accessioning_collections_to_embassy", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
@@ -68,8 +70,10 @@ def get_release_properties_for_current_assembly(common_release_properties, taxon
     release_properties["assembly-release-folder"] = \
         os.path.join(release_properties["release-folder"], assembly_accession)
     os.makedirs(release_properties["assembly-release-folder"], exist_ok=True)
+    release_properties["timestamp"] = timestamp
     release_properties["assembly-release-log-file"] = \
-        "{assembly-release-folder}/release_{taxonomy-id}_{assembly-accession}.log".format(**release_properties)
+        "{assembly-release-folder}/release_{taxonomy-id}_{assembly-accession}_{timestamp}.log"\
+            .format(**release_properties)
     release_properties["dump-dir"] = os.path.join(release_properties["assembly-release-folder"], "dumps")
     os.makedirs(release_properties["dump-dir"], exist_ok=True)
     return release_properties
@@ -77,7 +81,8 @@ def get_release_properties_for_current_assembly(common_release_properties, taxon
 
 def generate_workflow_file_for_assembly(release_properties):
     workflow_file_name = os.path.join(release_properties["assembly-release-folder"],
-                                      "{0}_release_workflow.nf".format(release_properties["assembly-accession"]))
+                                      "{assembly-accession}_release_workflow_{timestamp}.nf".format(
+                                          **release_properties))
     with open(workflow_file_name, "w") as workflow_file_handle:
         header = "#!/usr/bin/env nextflow"
         workflow_file_handle.write(header + "\n")
