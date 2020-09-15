@@ -130,6 +130,8 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, memory)
                                            for assembly_accession in release_assemblies]
         for workflow_file_name, release_log_file in release_assembly_workflow_files:
             workflow_report_file_name = workflow_file_name.replace(".nf", ".report.html")
+            if os.path.exists(workflow_report_file_name):
+                os.remove(workflow_report_file_name)
             workflow_command = "{0} run {1} -c {2} -with-report {3} -bg".format(
                 common_release_properties["nextflow-binary-path"], workflow_file_name,
                 common_release_properties["nextflow-config-path"], workflow_report_file_name)
