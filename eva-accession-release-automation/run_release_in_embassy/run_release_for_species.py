@@ -41,7 +41,8 @@ workflow_process_arguments_map = collections.OrderedDict(
      ("validate_release_vcf_files", ["private-config-xml-file", "taxonomy-id",
                                      "assembly-accession", "release-species-inventory-table",
                                      "release-folder",
-                                     "vcf-validator-path", "assembly-checker-path"])
+                                     "vcf-validator-path", "assembly-checker-path"]),
+     ("count_rs_ids_in_release_files", ["count-ids-script-path", "assembly-accession", "release-folder"])
      ])
 
 workflow_process_template_for_nextflow = """
@@ -53,7 +54,7 @@ process {workflow-process-name} {{
         val true into {current-process-output-flag}
     script:
     \"\"\"
-    export PYTHONPATH={script-path} &&  ({python3-path} -m run_release_in_embassy.{process-with-args} 1>> {assembly-release-folder}/release_3847_{assembly-accession}.log 2>&1)
+    export PYTHONPATH={script-path} &&  ({python3-path} -m run_release_in_embassy.{process-with-args} 1>> {assembly-release-log-file} 2>&1)
     \"\"\"
 }}
 """
@@ -67,6 +68,8 @@ def get_release_properties_for_current_assembly(common_release_properties, taxon
     release_properties["assembly-release-folder"] = \
         os.path.join(release_properties["release-folder"], assembly_accession)
     os.makedirs(release_properties["assembly-release-folder"], exist_ok=True)
+    release_properties["assembly-release-log-file"] = \
+        "{assembly-release-folder}/release_{taxonomy-id}_{assembly-accession}.log".format(**release_properties)
     release_properties["dump-dir"] = os.path.join(release_properties["assembly-release-folder"], "dumps")
     os.makedirs(release_properties["dump-dir"], exist_ok=True)
     return release_properties
@@ -106,7 +109,7 @@ def prepare_release_workflow_file_for_assembly(common_release_properties, taxono
     release_properties = get_release_properties_for_current_assembly(common_release_properties, taxonomy_id,
                                                                      assembly_accession, memory)
 
-    return generate_workflow_file_for_assembly(release_properties)
+    return generate_workflow_file_for_assembly(release_properties), release_properties["assembly-release-log-file"]
 
 
 def get_common_release_properties(common_release_properties_file):
@@ -125,11 +128,12 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, memory)
                                                                                       taxonomy_id, assembly_accession,
                                                                                       memory)
                                            for assembly_accession in release_assemblies]
-        for workflow_file_name in release_assembly_workflow_files:
+        for workflow_file_name, release_log_file in release_assembly_workflow_files:
             workflow_report_file_name = workflow_file_name.replace(".nf", ".report.html")
             workflow_command = "{0} run {1} -c {2} -with-report {3} -bg".format(
                 common_release_properties["nextflow-binary-path"], workflow_file_name,
                 common_release_properties["nextflow-config-path"], workflow_report_file_name)
+            logger.info("Check log file in: " + release_log_file + " to monitor progress...")
             logger.info("Running workflow file {0} with the following command:\n\n {1} \n\n"
                         "Use the above command with -resume if this workflow needs to be resumed in the future"
                         .format(workflow_file_name, workflow_command))

@@ -31,8 +31,8 @@ def sort_bgzip_tabix_release_files(bgzip_path, tabix_path, vcf_sort_script_path,
                                                                         vcf_file_category)
         sorted_release_file_name = get_release_vcf_file_name(release_folder, assembly_accession, vcf_file_category)
         commands.append("rm -f {2} && {0} -f {1} {2}".format(vcf_sort_script_path,
-                                                          unsorted_release_file_name,
-                                                          sorted_release_file_name))
+                                                             unsorted_release_file_name,
+                                                             sorted_release_file_name))
         commands.extend(get_bgzip_tabix_commands_for_file(bgzip_path, tabix_path, sorted_release_file_name))
     for text_release_file_category in release_text_file_categories:
         unsorted_release_file_name = get_unsorted_release_text_file_name(release_folder, assembly_accession,
@@ -42,6 +42,7 @@ def sort_bgzip_tabix_release_files(bgzip_path, tabix_path, vcf_sort_script_path,
         commands.append("(sort -V {1} | uniq > {2})".format(vcf_sort_script_path,
                                                             unsorted_release_file_name,
                                                             sorted_release_file_name))
+        commands.append("(gzip < {0} > {0}.gz)".format(sorted_release_file_name))
     command = " && ".join(commands)
     run_command_with_output("Sort, bgzip and tabix release files for assembly: " + assembly_accession,
                             command)
