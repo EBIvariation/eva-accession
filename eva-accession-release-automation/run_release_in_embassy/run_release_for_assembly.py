@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
-                             release_folder, release_jar_path, job_repo_url):
+                             release_folder, release_jar_path, job_repo_url, memory):
     exit_code = 0
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id,
@@ -35,8 +35,8 @@ def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_acce
                                                                               assembly_accession,
                                                                               release_species_inventory_table,
                                                                               release_folder, job_repo_url)
-        release_command = 'java -Xmx7g -jar {0} --spring.config.location="{1}" -Dspring.data.mongodb.port={2}'\
-            .format(release_jar_path, release_properties_file, mongo_port)
+        release_command = 'java -Xmx{0}g -jar {1} --spring.config.location="{2}" -Dspring.data.mongodb.port={3}'\
+            .format(memory, release_jar_path, release_properties_file, mongo_port)
         run_command_with_output("Running release pipeline for assembly: " + assembly_accession, release_command)
     except Exception as ex:
         logger.error("Encountered an error while running release for assembly: " + assembly_accession + "\n"
@@ -60,11 +60,12 @@ def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_acce
 #  has been created (with similar credentials)  and passed in through the job_repo_url property.
 #  The following argument is not needed after the production repository upgrade to the Spring Boot 2 metadata schema
 @click.option("--job-repo-url", required=True)
+@click.option("--memory",  help="Memory in GB. ex: 8", default=8, type=int, required=False)
 @click.command()
 def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_folder,
-         release_jar_path, job_repo_url):
+         release_jar_path, job_repo_url, memory):
     run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
-                             release_folder, release_jar_path, job_repo_url)
+                             release_folder, release_jar_path, job_repo_url, memory)
 
 
 if __name__ == "__main__":

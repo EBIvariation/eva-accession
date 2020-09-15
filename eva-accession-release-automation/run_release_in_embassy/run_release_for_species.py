@@ -31,7 +31,7 @@ workflow_process_arguments_map = collections.OrderedDict(
                                                    "release-species-inventory-table", "dump-dir"]),
      ("run_release_for_assembly", ["private-config-xml-file", "taxonomy-id",
                                    "assembly-accession", "release-species-inventory-table",
-                                   "release-folder", "release-jar-path", "job-repo-url"]),
+                                   "release-folder", "release-jar-path", "job-repo-url", "memory"]),
      ("merge_dbsnp_eva_release_files", ["bgzip-path", "tabix-path", "bcftools-path",
                                         "vcf-sort-script-path", "assembly-accession",
                                         "release-folder"]),
@@ -46,7 +46,7 @@ workflow_process_arguments_map = collections.OrderedDict(
 
 workflow_process_template_for_nextflow = """
 process {workflow-process-name} {{
-    memory='{memory}'
+    memory='{memory} GB'
     input:
         val flag from {previous-process-output-flag}
     output:
@@ -63,7 +63,7 @@ def get_release_properties_for_current_assembly(common_release_properties, taxon
     release_properties = copy.deepcopy(common_release_properties)
     release_properties["taxonomy-id"] = taxonomy_id
     release_properties["assembly-accession"] = assembly_accession
-    release_properties["memory"] = str(memory) + "G"
+    release_properties["memory"] = memory
     release_properties["assembly-release-folder"] = \
         os.path.join(release_properties["release-folder"], assembly_accession)
     os.makedirs(release_properties["assembly-release-folder"], exist_ok=True)
