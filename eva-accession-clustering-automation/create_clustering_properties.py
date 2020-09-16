@@ -16,9 +16,7 @@ import os
 import sys
 import argparse
 import logging
-from config_custom import get_properties_from_xml_file
-from config_custom import get_properties_from_xml_string
-from config_custom import get_eva_settings_xml_string
+from ebi_eva_common_pyutils.config_utils import get_properties_from_xml_file
 
 logger = logging.getLogger(__name__)
 
