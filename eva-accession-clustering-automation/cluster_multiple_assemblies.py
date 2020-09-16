@@ -53,16 +53,16 @@ def add_to_command_file(properties_path, command):
         commands.write(command + '\n')
 
 
-def run_clustering(source, vcf_file, project_accession, assembly_accession, github_token, private_config_xml_file,
-                   profile, output_directory, clustering_artifact, only_printing, memory):
-    properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession, github_token,
+def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file,
+                profile, output_directory, clustering_artifact, only_printing, memory):
+    properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
                                              private_config_xml_file, profile, output_directory)
     command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory)
     if not only_printing:
         run_command_with_output('Run clustering command', command, return_process_output=True)
 
 
-def cluster_multiple(source, asm_vcf_prj_list, assembly_list, github_token, private_config_xml_file, profile,
+def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_xml_file, profile,
                      output_directory, clustering_artifact, only_printing, memory):
     """
     This method decides how to call the run_clustering method depending on the source (Mongo or VCF)
@@ -70,25 +70,25 @@ def cluster_multiple(source, asm_vcf_prj_list, assembly_list, github_token, priv
     check_requirements(source, asm_vcf_prj_list, assembly_list)
 
     if source == 'MONGO':
-        cluster_multiple_from_mongo(source, assembly_list, github_token, private_config_xml_file, profile,
-                                    output_directory, clustering_artifact, only_printing, memory)
+        cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile, output_directory,
+                                    clustering_artifact, only_printing, memory)
 
     if source == 'VCF':
-        cluster_multiple_from_vcf(source, asm_vcf_prj_list, github_token, private_config_xml_file, profile,
-                                  output_directory, clustering_artifact, only_printing, memory)
+        cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile, output_directory,
+                                  clustering_artifact, only_printing, memory)
 
 
-def cluster_multiple_from_mongo(source, assembly_list, github_token, private_config_xml_file, profile,
+def cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile,
                                 output_directory, clustering_artifact, only_printing, memory):
     """
     This method call the run_clustering method for each assembly
     """
     for assembly in assembly_list:
-        run_clustering(source, None, None, assembly, github_token, private_config_xml_file, profile,
-                       output_directory, clustering_artifact, only_printing, memory)
+        cluster_one(source, None, None, assembly, private_config_xml_file, profile, output_directory,
+                    clustering_artifact, only_printing, memory)
 
 
-def cluster_multiple_from_vcf(source, asm_vcf_prj_list, github_token, private_config_xml_file, profile,
+def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile,
                               output_directory, clustering_artifact, only_printing, memory):
     """
     The list will be of the form: GCA_000000001.1#/file1.vcf.gz#PRJEB1111 GCA_000000002.2#/file2.vcf.gz#PRJEB2222 ...
@@ -99,8 +99,8 @@ def cluster_multiple_from_vcf(source, asm_vcf_prj_list, github_token, private_co
         assembly_accession = data[0]
         vcf_file = data[1]
         project_accession = data[2]
-        run_clustering(source, vcf_file, project_accession, assembly_accession, github_token, private_config_xml_file,
-                       profile, output_directory, clustering_artifact, only_printing, memory)
+        cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
+                    output_directory, clustering_artifact, only_printing, memory)
 
 
 def check_requirements(source, asm_vcf_prj_list, assembly_list):
@@ -127,8 +127,7 @@ if __name__ == "__main__":
     parser.add_argument("--assembly-list", help="Assembly list for which the process has to be run, "
                                                 "e.g. GCA_000002285.2 GCA_000233375.4. "
                                                 "Required when the source is mongo", required=False, nargs='+')
-    parser.add_argument("--github-token", help="Github token to download the eva settings file", required=False)
-    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline", required=True)
@@ -140,9 +139,8 @@ if __name__ == "__main__":
     args = {}
     try:
         args = parser.parse_args()
-        cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.github_token,
-                         args.private_config_xml_file, args.profile, args.output_directory, args.clustering_artifact,
-                         args.only_printing, args.memory)
+        cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.private_config_xml_file,
+                         args.profile, args.output_directory, args.clustering_artifact, args.only_printing, args.memory)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)

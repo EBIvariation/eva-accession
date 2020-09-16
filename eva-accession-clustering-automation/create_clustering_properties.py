@@ -23,13 +23,13 @@ from config_custom import get_eva_settings_xml_string
 logger = logging.getLogger(__name__)
 
 
-def create_properties_file(source, vcf_file, project_accession, assembly_accession, github_token,
-                           private_config_xml_file, profile, output_directory):
+def create_properties_file(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
+                           output_directory):
     """
     This method creates the application properties file
     """
     check_vcf_source_requirements(source, vcf_file, project_accession)
-    properties = get_properties(profile, github_token, private_config_xml_file)
+    properties = get_properties_from_xml_file(profile, private_config_xml_file)
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
     with open(path, 'w') as properties_file:
         add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file)
@@ -38,18 +38,6 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
         add_job_tracker_properties(properties_file, properties)
         add_spring_properties(properties_file)
     return path
-
-
-def get_properties(profile, github_token, private_config_xml_file):
-    if private_config_xml_file:
-        return get_properties_from_xml_file(profile, private_config_xml_file)
-
-    if github_token:
-        settings = get_eva_settings_xml_string(github_token)
-        return get_properties_from_xml_string(profile, settings)
-
-    raise ValueError('Must provide either the private config xml path using parameter --private-config-xml-file or the '
-                     'github token using the --github-token parameter')
 
 
 def get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory):
@@ -161,8 +149,7 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("--assembly-accession", help="Assembly for which the process has to be run, "
                                                      "e.g. GCA_000002285.2", required=True)
-    parser.add_argument("--github-token", help="Github token to download the eva settings file", required=False)
-    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=False)
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument('--help', action='help', help='Show this help message and exit')
@@ -171,7 +158,7 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         create_properties_file(args.source, args.vcf_file, args.project_accession, args.assembly_accession,
-                               args.github_token, args.private_config_xml_file, args.profile, args.output_directory)
+                               args.private_config_xml_file, args.profile, args.output_directory)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
