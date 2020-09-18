@@ -35,7 +35,7 @@ def generate_bsub_command(assembly_accession, properties_path, clustering_artifa
         memory_amount = memory
 
     command = 'bsub -J {job_name} -o {log_file} -e {error_file} -M {memory_amount} -R "rusage[mem={memory_amount}]" ' \
-              'java -jar {clustering_artifact} -Dspring.config.location= {properties_path}'\
+              'java -jar {clustering_artifact} -Dspring.config.location={properties_path}'\
         .format(job_name=job_name, log_file=log_file, error_file=error_file, memory_amount=memory_amount,
                 clustering_artifact=clustering_artifact, properties_path=properties_path)
 
