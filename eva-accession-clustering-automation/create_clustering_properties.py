@@ -80,7 +80,7 @@ accessioning.clustered.categoryId=rs
 accessioning.monotonic.ss.blockSize=100000
 accessioning.monotonic.ss.blockStartValue=5000000000 
 accessioning.monotonic.ss.nextBlockInterval=1000000000
-accessioning.monotonic.rs.blockSize=100000'
+accessioning.monotonic.rs.blockSize=100000
 accessioning.monotonic.rs.blockStartValue=3000000000 
 accessioning.monotonic.rs.nextBlockInterval=1000000000
     """)
