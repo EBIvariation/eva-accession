@@ -48,18 +48,17 @@ def get_properties_path(source, vcf_file, project_accession, assembly_accession,
 
 def add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file):
     job_name = get_job_name(source)
+    vcf = vcf_file or ''
+    project = project_accession or ''
 
     clustering_properties = ("""
 spring.batch.job.names={job_name}
 
-parameters.assemblyAccession={assembly_accession}    
-    """).format(job_name=job_name, assembly_accession=assembly_accession)
+parameters.assemblyAccession={assembly_accession}
+parameters.vcf={vcf}
+parameters.projectAccession={project}
+    """).format(job_name=job_name, assembly_accession=assembly_accession, vcf=vcf, project=project)
     properties_file.write(clustering_properties)
-
-    if vcf_file:
-        properties_file.write('parameters.vcf=' + vcf_file + '\n')
-    if project_accession:
-        properties_file.write('parameters.projectAccession=' + project_accession + '\n')
 
 
 def get_job_name(source):
@@ -78,10 +77,10 @@ accessioning.submitted.categoryId=ss
 accessioning.clustered.categoryId=rs
 
 accessioning.monotonic.ss.blockSize=100000
-accessioning.monotonic.ss.blockStartValue=5000000000 
+accessioning.monotonic.ss.blockStartValue=5000000000
 accessioning.monotonic.ss.nextBlockInterval=1000000000
 accessioning.monotonic.rs.blockSize=100000
-accessioning.monotonic.rs.blockStartValue=3000000000 
+accessioning.monotonic.rs.blockStartValue=3000000000
 accessioning.monotonic.rs.nextBlockInterval=1000000000
     """)
 
@@ -101,19 +100,33 @@ spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation = true""")
 
 def add_mongo_properties(properties_file, properties):
     mongo_hosts_and_ports = str(properties['eva.mongo.host'])
-    mongo_uri = 'mongodb://' + mongo_hosts_and_ports
+    mongo_host, mongo_port = get_mongo_primary_host_and_port(mongo_hosts_and_ports)
     mongo_database = str(properties['eva.accession.mongo.database'])
     mongo_username = str(properties['eva.mongo.user'])
     mongo_password = str(properties['eva.mongo.passwd'])
 
     mongo_properties = ("""
-spring.data.mongodb.uri={uri}
+spring.data.mongodb.host={host}
+spring.data.mongodb.port={port}
 spring.data.mongodb.database={database}
 spring.data.mongodb.username={username}
 spring.data.mongodb.password={password}
+spring.data.mongodb.authentication-database=admin
 mongodb.read-preference=primary
-    """).format(uri=mongo_uri, database=mongo_database, username=mongo_username, password=mongo_password)
+    """).format(database=mongo_database, username=mongo_username, password=mongo_password, host=mongo_host,
+                port=mongo_port)
     properties_file.write(mongo_properties)
+
+
+def get_mongo_primary_host_and_port(mongo_hosts_and_ports):
+    """
+    :param mongo_hosts_and_ports: All host and ports stored in the private settings xml
+    :return: mongo primary host and port
+    """
+    for host_and_port in mongo_hosts_and_ports.split(','):
+        if '001' in host_and_port:
+            properties = host_and_port.split(':')
+            return properties[0], properties[1]
 
 
 def add_job_tracker_properties(properties_file, properties):
