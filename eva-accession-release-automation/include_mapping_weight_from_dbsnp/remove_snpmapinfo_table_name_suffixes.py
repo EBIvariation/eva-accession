@@ -14,10 +14,13 @@
 
 # This script removes unnecessary suffixes like "_0_0" in SNPMapInfo table names
 import click
+import logging
 
-from pg_query_utils import execute_query, get_pg_connection_handle
-from snpmapinfo_metadata import *
-from __init__ import *
+from ebi_eva_common_pyutils.pg_utils import execute_query, get_pg_connection_handle
+from include_mapping_weight_from_dbsnp.snpmapinfo_metadata import get_snpmapinfo_table_names_for_species
+from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_db_conn_for_species, get_species_info
+
+logger = logging.getLogger(__name__)
 
 
 def remove_snpmapinfo_table_name_suffixes(metadata_db_name, metadata_db_user, metadata_db_host):

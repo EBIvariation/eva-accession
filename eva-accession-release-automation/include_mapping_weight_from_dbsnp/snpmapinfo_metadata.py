@@ -12,14 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
-from dbsnp_mirror_metadata import *
-from pg_query_utils import get_all_results_for_query
-from __init__ import *
+from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_db_conn_for_species
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_build_version_from_file_name(file_name):
     return os.path.basename(file_name).split("_")[0].lower()
+
+
+# dbsnp_species_name -> ex: cow_9913
+def get_snpmapinfo_tables_with_overweight_snps_for_dbsnp_species(metadata_connection_handle, dbsnp_species_name):
+    query = "select snpmapinfo_table_name from " \
+            "dbsnp_ensembl_species.EVA2015_snpmapinfo_asm_lookup " \
+            "where database_name = '{0}'".format(dbsnp_species_name)
+    return [result[0] for result in get_all_results_for_query(metadata_connection_handle, query)]
 
 
 def get_snpmapinfo_tables_with_GCA_assembly(metadata_connection_handle, GCA_assembly_accession):

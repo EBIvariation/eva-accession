@@ -17,12 +17,18 @@
 # against the NCBI SNPMapInfo dumps for each species and if a match is found, attempt to import it
 
 import click
+import logging
 import glob
 import gzip
+import os
+import psycopg2
 
-from pg_query_utils import get_pg_connection_handle
-from snpmapinfo_metadata import *
-from __init__ import *
+from ebi_eva_common_pyutils.pg_utils import get_pg_connection_handle, get_all_results_for_query
+from include_mapping_weight_from_dbsnp.snpmapinfo_metadata import get_build_version_from_file_name, \
+    get_snpmapinfo_table_names_for_species
+from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_db_conn_for_species, get_species_info
+
+logger = logging.getLogger(__name__)
 
 
 # dbsnp_data_source_base: NFS path to the root directory where dbSNP SQL dumps are stored

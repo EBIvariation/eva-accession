@@ -14,13 +14,17 @@
 
 # This script adds "mapping weight" attribute to the dbSNP-imported SNPs in Mongo collections - see EVA-2063, EVA-2015
 
+import logging
 import click
 import pymongo.errors
+import sys
 import traceback
-from mongo_query_utils import *
-from pg_query_utils import *
-from snpmapinfo_metadata import *
+from ebi_eva_common_pyutils.mongo_utils import get_mongo_connection_handle
+from ebi_eva_common_pyutils.pg_utils import get_pg_connection_handle, get_result_cursor
+from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_species_info, get_db_conn_for_species
+from include_mapping_weight_from_dbsnp.snpmapinfo_metadata import get_snpmapinfo_tables_with_GCA_assembly
 
+logger = logging.getLogger(__name__)
 eva_accession_database = "eva_accession_sharded"
 collections_to_update = {"dbsnpClusteredVariantEntity":
                              {"assembly_attribute_name": "asm",
@@ -49,14 +53,10 @@ def get_all_assemblies_in_accessioning(accessioning_mongo_handle: pymongo.MongoC
     return sorted(accessioning_mongo_handle["eva_accession_sharded"]["dbsnpSubmittedVariantEntity"].distinct("seq"))
 
 
-def get_mapping_weight_query(assembly, schema_name, table_name):
-    query_to_get_mapping_weight = "select snp_id, weight from dbsnp_{0}.{1} where weight > 1 and " \
-        .format(schema_name, table_name)
-    if assembly.lower().startswith("gcf"):
-        asm_acc, asm_version = assembly.split(".")
-        query_to_get_mapping_weight += "asm_acc = '{0}' and asm_version = '{1}'".format(asm_acc, asm_version)
-    else:
-        query_to_get_mapping_weight += "assembly = '{0}'".format(assembly)
+def get_mapping_weight_query(assembly_from_dbsnp, schema_name):
+    query_to_get_mapping_weight = "select snp_id, weight from dbsnp_{0}.multimap_snps where weight > 1 and "\
+        .format(schema_name)
+    query_to_get_mapping_weight += "assembly = '{0}'".format(assembly_from_dbsnp)
     return query_to_get_mapping_weight
 
 
@@ -101,10 +101,14 @@ def incorporate_mapping_weight_for_assembly(accessioning_mongo_handle: pymongo.M
                                             GCA_accession: str):
     accessioning_database_handle = accessioning_mongo_handle[eva_accession_database]
 
-    for schema_name, table_name, assembly in get_snpmapinfo_tables_with_GCA_assembly(metadata_connection_handle,
-                                                                                     GCA_accession):
+    # Since we create a single table for multimap SNPs for each species in cre
+    # the individual table name does not matter
+    schema_assembly_association = set([(schema_name, assembly_from_dbsnp) for schema_name, _, assembly_from_dbsnp in
+                                       get_snpmapinfo_tables_with_GCA_assembly(metadata_connection_handle,
+                                                                               GCA_accession)])
+    for schema_name, assembly_from_dbsnp in schema_assembly_association:
         species_info = get_species_info(metadata_connection_handle, schema_name)[0]
-        query_to_get_mapping_weight = get_mapping_weight_query(assembly, schema_name, table_name)
+        query_to_get_mapping_weight = get_mapping_weight_query(assembly_from_dbsnp, schema_name)
         logger.info("Running query to get mapping weight: " + query_to_get_mapping_weight)
         with get_db_conn_for_species(species_info) as species_connection_handle, \
                 get_result_cursor(species_connection_handle, query_to_get_mapping_weight) as cursor:

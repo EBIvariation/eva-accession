@@ -15,11 +15,17 @@
 
 # This script creates a look up table that maps the GCF assembly (or) assembly name in the SNPMapInfo tables
 # to the correct GCA accession
-import click
 
-from pg_query_utils import execute_query, get_pg_connection_handle
-from snpmapinfo_metadata import *
-from __init__ import *
+import click
+import logging
+from ebi_eva_common_pyutils.pg_utils import execute_query, get_pg_connection_handle
+from ebi_eva_common_pyutils.assembly_utils \
+    import resolve_assembly_name_to_GCA_accession, retrieve_genbank_equivalent_for_GCF_accession
+from include_mapping_weight_from_dbsnp.snpmapinfo_metadata import get_snpmapinfo_table_names_for_species, \
+    get_distinct_asm_with_overweight_snps_in_snpmapinfo_table
+from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_species_info
+
+logger = logging.getLogger(__name__)
 
 
 def create_asm_lookup_table(metadata_connection_handle, asm_lookup_table_name):

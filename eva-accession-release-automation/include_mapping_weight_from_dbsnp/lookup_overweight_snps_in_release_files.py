@@ -15,10 +15,18 @@
 # This script looks up the impact of overweight SNPs
 
 import click
+import logging
+import os
 
-from pg_query_utils import get_pg_connection_handle
-from snpmapinfo_metadata import *
-from __init__ import *
+from ebi_eva_common_pyutils.pg_utils import get_pg_connection_handle, get_result_cursor
+from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from include_mapping_weight_from_dbsnp.snpmapinfo_metadata import get_build_version_from_file_name, \
+    get_snpmapinfo_table_names_for_species, get_distinct_asm_with_overweight_snps_in_snpmapinfo_table, \
+    lookup_GCA_assembly
+from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_db_conn_for_species, get_species_info
+
+
+logger = logging.getLogger(__name__)
 
 
 def export_snpmapinfo_for_species(species_info, metadata_connection_handle, mapping_weight_threshold, export_dir):

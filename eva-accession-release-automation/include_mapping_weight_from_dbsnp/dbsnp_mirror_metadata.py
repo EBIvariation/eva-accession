@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import psycopg2
-from pg_query_utils import get_all_results_for_query, get_result_cursor
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, get_result_cursor
 
 
 def get_db_conn_for_species(species_db_info):
