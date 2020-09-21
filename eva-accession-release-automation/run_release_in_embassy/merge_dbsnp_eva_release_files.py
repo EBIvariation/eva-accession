@@ -14,7 +14,9 @@
 
 
 import click
+import collections
 import glob
+import gzip
 import os
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
@@ -50,6 +52,34 @@ def get_bgzip_and_tabix_commands(bgzip_path, tabix_path, vcf_sort_script_path, f
     return commands
 
 
+# This is needed because bcftools merge messes up the order of the header meta-information lines when merging
+def merge_dbsnp_eva_vcf_headers(file1, file2, output_file):
+    import tempfile
+    run_command_with_output("Removing output file {0} if it already exists...".format(output_file),
+                            "rm -f " + output_file)
+    working_folder = os.path.dirname(file1)
+    # Write content for each meta info category in the header to a specific temp file
+    metainfo_category_tempfile_map = collections.OrderedDict([("fileformat", None), ("info", None),
+                                                              ("contig", None), ("reference", None)])
+    for category in metainfo_category_tempfile_map.keys():
+        metainfo_category_tempfile_map[category] = open(tempfile.mktemp(prefix=category, dir=working_folder), "a+")
+    with gzip.open(file1) as file1_handle, gzip.open(file2) as file2_handle:
+        for file_handle in [file1_handle, file2_handle]:
+            for line_bytes in file_handle:
+                line = line_bytes.decode("utf-8")
+                if line.startswith("##"):
+                    metainfo_category = line.split("=")[0].split("##")[-1].lower()
+                    metainfo_category_tempfile_map[metainfo_category].write(line)
+                else:
+                    break
+    for metainfo_category, tempfile_handle in metainfo_category_tempfile_map.items():
+        tempfile_handle.flush()
+        run_command_with_output("Merging header section ##{0} ...".format(metainfo_category),
+                                "(sort -V {0} | uniq >> {1})".format(tempfile_handle.name, output_file))
+        tempfile_handle.close()
+        os.remove(tempfile_handle.name)
+
+
 def merge_dbsnp_eva_vcf_files(bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path, assembly_accession,
                               release_folder, vcf_file_category):
     vcf_merge_commands = []
@@ -78,10 +108,13 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, tabix_path, bcftools_path, vcf_sort_sc
         vcf_merge_commands.extend(
             get_bgzip_and_tabix_commands(bgzip_path, tabix_path, vcf_sort_script_path, files_in_category))
         sorted_file_names = [name.replace("_unsorted", "") for name in files_in_category]
-        vcf_merge_commands.append("({0} merge -O v {1}.gz {2}.gz > {3})".format(bcftools_path,
-                                                                                sorted_file_names[0],
-                                                                                sorted_file_names[1],
-                                                                                unsorted_release_file_path))
+        merge_dbsnp_eva_vcf_headers(sorted_file_names[0] + ".gz", sorted_file_names[1] + ".gz",
+                                    unsorted_release_file_path)
+        vcf_merge_commands.append(
+            "(({0} merge --no-version -O v {1}.gz {2}.gz | grep -v ^##) >> {3})".format(bcftools_path,
+                                                                                        sorted_file_names[0],
+                                                                                        sorted_file_names[1],
+                                                                                        unsorted_release_file_path))
     else:
         if len(files_in_category) == 2:
             raise Exception("A non-EVA or non-dbSNP VCF was found in the release folder in the {0} category"
