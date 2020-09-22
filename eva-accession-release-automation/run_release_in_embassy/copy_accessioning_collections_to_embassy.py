@@ -78,16 +78,18 @@ def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file
 
 
 def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id, assembly_accession,
-                                             collections_to_copy, release_species_inventory_table, dump_dir):
+                                             collections_to_copy, release_species_inventory_table, release_version,
+                                             dump_dir):
     exit_code = 0
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id,
-                                                                              release_species_inventory_table)
+                                                                              release_species_inventory_table,
+                                                                              release_version)
         with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
                               user="evadev") as \
                 metadata_connection_handle:
             tempmongo_instance = get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table,
-                                                                        metadata_connection_handle)
+                                                                        release_version, metadata_connection_handle)
             logger.info("Beginning data copy to remote MongoDB host {0} on port {1}...".format(tempmongo_instance,
                                                                                                mongo_port))
             mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file,
@@ -110,12 +112,14 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_i
               required=False)
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
+@click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--dump-dir", help="ex: /path/to/dump", required=True)
 @click.command()
 def main(private_config_xml_file, taxonomy_id, assembly_accession, collections_to_copy, release_species_inventory_table,
-         dump_dir):
+         release_version, dump_dir):
     copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id, assembly_accession,
-                                             collections_to_copy, release_species_inventory_table, dump_dir)
+                                             collections_to_copy, release_species_inventory_table, release_version,
+                                             dump_dir)
 
 
 if __name__ == "__main__":

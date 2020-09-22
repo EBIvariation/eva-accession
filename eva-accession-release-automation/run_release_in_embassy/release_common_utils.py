@@ -25,7 +25,8 @@ from ebi_eva_common_pyutils.network_utils import get_available_local_port, forwa
 logger = logging.getLogger(__name__)
 
 
-def open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id, release_species_inventory_table):
+def open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id, release_species_inventory_table,
+                                 release_version):
     MONGO_PORT = 27017
     local_forwarded_port = get_available_local_port(MONGO_PORT)
     try:
@@ -33,7 +34,7 @@ def open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id, release_s
                               user="evadev") as \
                 metadata_connection_handle:
             tempmongo_instance = get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table,
-                                                                        metadata_connection_handle)
+                                                                        release_version, metadata_connection_handle)
             logger.info("Forwarding remote MongoDB port 27017 to local port {0}...".format(local_forwarded_port))
             port_forwarding_process_id = forward_remote_port_to_local_port(tempmongo_instance, MONGO_PORT,
                                                                            local_forwarded_port)

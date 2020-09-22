@@ -24,7 +24,7 @@ from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_prof
 
 
 def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_accession,
-                               release_species_inventory_table, release_folder, vcf_validator_path,
+                               release_species_inventory_table, release_version, release_folder, vcf_validator_path,
                                assembly_checker_path):
     validate_release_vcf_files_commands = []
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
@@ -32,6 +32,7 @@ def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_ac
             metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                                       release_species_inventory_table,
+                                                                                      release_version,
                                                                                       metadata_connection_handle)
         fasta_path = release_inventory_info_for_assembly["fasta_path"]
         assembly_report_path = release_inventory_info_for_assembly["report_path"]
@@ -60,14 +61,15 @@ def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_ac
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
+@click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--release-folder", required=True)
 @click.option("--vcf-validator-path", help="/path/to/vcf/validator/binary", required=True)
 @click.option("--assembly-checker-path", help="/path/to/assembly/checker/binary", required=True)
 @click.command()
-def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_folder,
-         vcf_validator_path, assembly_checker_path):
+def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
+         release_folder, vcf_validator_path, assembly_checker_path):
     validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_accession,
-                               release_species_inventory_table, release_folder, vcf_validator_path,
+                               release_species_inventory_table, release_version, release_folder, vcf_validator_path,
                                assembly_checker_path)
 
 
