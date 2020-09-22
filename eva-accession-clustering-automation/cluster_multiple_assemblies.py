@@ -34,13 +34,15 @@ def generate_bsub_command(assembly_accession, properties_path, clustering_artifa
     if memory:
         memory_amount = memory
 
-    command = 'bsub '
+    dependency_param = ''
     if dependency:
-        command += '-w {dependency} '.format(dependency=dependency)
-    command += '-J {job_name} -o {log_file} -e {error_file} -M {memory_amount} -R "rusage[mem={memory_amount}]" ' \
-               'java -jar {clustering_artifact} --spring.config.location=file:{properties_path}'\
-        .format(job_name=job_name, log_file=log_file, error_file=error_file, memory_amount=memory_amount,
-                clustering_artifact=clustering_artifact, properties_path=properties_path)
+        dependency_param = '-w {dependency} '.format(dependency=dependency)
+
+    command = 'bsub {dependency_param}-J {job_name} -o {log_file} -e {error_file} -M {memory_amount} ' \
+              '-R "rusage[mem={memory_amount}]" java -jar {clustering_artifact} ' \
+              '--spring.config.location=file:{properties_path}'\
+        .format(dependency_param=dependency_param, job_name=job_name, log_file=log_file, error_file=error_file,
+                memory_amount=memory_amount, clustering_artifact=clustering_artifact, properties_path=properties_path)
 
     print(command)
     add_to_command_file(properties_path, command)
