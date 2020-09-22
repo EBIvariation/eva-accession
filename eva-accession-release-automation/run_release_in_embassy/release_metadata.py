@@ -12,10 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
 
 release_vcf_file_categories = ["current_ids", "merged_ids", "multimap_ids"]
 release_text_file_categories = ["deprecated_ids", "merged_deprecated_ids"]
+
+release_progress_table = "dbsnp_ensembl_species.rs_release_progress"
+
+
+def update_release_progress_status(metadata_connection_handle, taxonomy, assembly_accession, release_version,
+                                   release_status):
+    insert_sql = '''
+       INSERT INTO {table_name} (taxonomy, assembly_accession, release_version, release_status)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (taxonomy, assembly_accession, release_version)
+            DO UPDATE SET
+               (release_status)
+                = (EXCLUDED.release_status) ;
+    '''
+    with metadata_connection_handle.cursor() as cursor:
+        cursor.execute(insert_sql.format(table_name=release_progress_table), (taxonomy, assembly_accession,
+                                                                              release_version, release_status))
+    metadata_connection_handle.commit()
 
 
 def get_assemblies_to_import_for_dbsnp_species(metadata_connection_handle, dbsnp_species_taxonomy, release_version):
