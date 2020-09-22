@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory):
-    job_name = 'cluster_{assembly_accession}'.format(assembly_accession=assembly_accession)
+def generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory, dependency):
+    job_name = get_job_name(assembly_accession)
     log_file = '{assembly_accession}_cluster_{timestamp}.log'.format(assembly_accession=assembly_accession,
                                                                      timestamp=timestamp)
     error_file = '{assembly_accession}_cluster_{timestamp}.err'.format(assembly_accession=assembly_accession,
@@ -34,14 +34,23 @@ def generate_bsub_command(assembly_accession, properties_path, clustering_artifa
     if memory:
         memory_amount = memory
 
-    command = 'bsub -J {job_name} -o {log_file} -e {error_file} -M {memory_amount} -R "rusage[mem={memory_amount}]" ' \
-              'java -jar {clustering_artifact} --spring.config.location=file:{properties_path}'\
-        .format(job_name=job_name, log_file=log_file, error_file=error_file, memory_amount=memory_amount,
-                clustering_artifact=clustering_artifact, properties_path=properties_path)
+    dependency_param = ''
+    if dependency:
+        dependency_param = '-w {dependency} '.format(dependency=dependency)
+
+    command = 'bsub {dependency_param}-J {job_name} -o {log_file} -e {error_file} -M {memory_amount} ' \
+              '-R "rusage[mem={memory_amount}]" java -jar {clustering_artifact} ' \
+              '--spring.config.location=file:{properties_path}'\
+        .format(dependency_param=dependency_param, job_name=job_name, log_file=log_file, error_file=error_file,
+                memory_amount=memory_amount, clustering_artifact=clustering_artifact, properties_path=properties_path)
 
     print(command)
     add_to_command_file(properties_path, command)
     return command
+
+
+def get_job_name(assembly_accession):
+    return '{timestamp}_cluster_{assembly_accession}'.format(assembly_accession=assembly_accession, timestamp=timestamp)
 
 
 def add_to_command_file(properties_path, command):
@@ -54,10 +63,10 @@ def add_to_command_file(properties_path, command):
 
 
 def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file,
-                profile, output_directory, clustering_artifact, only_printing, memory):
+                profile, output_directory, clustering_artifact, only_printing, memory, dependency):
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
                                              private_config_xml_file, profile, output_directory)
-    command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory)
+    command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory, dependency)
     if not only_printing:
         run_command_with_output('Run clustering command', command, return_process_output=True)
 
@@ -83,9 +92,11 @@ def cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, 
     """
     This method call the run_clustering method for each assembly
     """
-    for assembly in assembly_list:
-        cluster_one(source, None, None, assembly, private_config_xml_file, profile, output_directory,
-                    clustering_artifact, only_printing, memory)
+    dependency = None
+    for assembly_accession in assembly_list:
+        cluster_one(source, None, None, assembly_accession, private_config_xml_file, profile, output_directory,
+                    clustering_artifact, only_printing, memory, dependency)
+        dependency = get_job_name(assembly_accession)
 
 
 def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile,
@@ -94,13 +105,15 @@ def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file,
     The list will be of the form: GCA_000000001.1#/file1.vcf.gz#PRJEB1111 GCA_000000002.2#/file2.vcf.gz#PRJEB2222 ...
     This method splits the triplets and then call the run_clustering method for each one
     """
+    dependency = None
     for triplet in asm_vcf_prj_list:
         data = triplet.split('#')
         assembly_accession = data[0]
         vcf_file = data[1]
         project_accession = data[2]
         cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                    output_directory, clustering_artifact, only_printing, memory)
+                    output_directory, clustering_artifact, only_printing, memory, dependency)
+        dependency = get_job_name(assembly_accession)
 
 
 def check_requirements(source, asm_vcf_prj_list, assembly_list):
