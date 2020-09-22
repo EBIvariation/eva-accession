@@ -110,6 +110,7 @@ def create_release_properties_file_for_assembly(private_config_xml_file, taxonom
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
+@click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--release-folder", required=True)
 @click.option("--job-repo-url", required=True)
 @click.command()

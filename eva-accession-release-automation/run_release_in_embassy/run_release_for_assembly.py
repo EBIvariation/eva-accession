@@ -35,7 +35,8 @@ def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_acce
         release_properties_file = create_release_properties_file_for_assembly(private_config_xml_file, taxonomy_id,
                                                                               assembly_accession,
                                                                               release_species_inventory_table,
-                                                                              release_folder, job_repo_url)
+                                                                              release_version, release_folder,
+                                                                              job_repo_url)
         release_command = 'java -Xmx{0}g -jar {1} --spring.config.location="{2}" -Dspring.data.mongodb.port={3}'\
             .format(memory, release_jar_path, release_properties_file, mongo_port)
         run_command_with_output("Running release pipeline for assembly: " + assembly_accession, release_command)
