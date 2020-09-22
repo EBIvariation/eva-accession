@@ -48,7 +48,7 @@ def generate_bsub_command(assembly_accession, properties_path, clustering_artifa
 
 
 def get_job_name(assembly_accession):
-    return 'cluster_{assembly_accession}'.format(assembly_accession=assembly_accession)
+    return '{timestamp}_cluster_{assembly_accession}'.format(assembly_accession=assembly_accession, timestamp=timestamp)
 
 
 def add_to_command_file(properties_path, command):
