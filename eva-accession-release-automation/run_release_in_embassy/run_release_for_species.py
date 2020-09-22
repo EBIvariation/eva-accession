@@ -45,7 +45,8 @@ workflow_process_arguments_map = collections.OrderedDict(
                                      "release-folder",
                                      "vcf-validator-path", "assembly-checker-path"]),
      ("count_rs_ids_in_release_files", ["count-ids-script-path", "assembly-accession", "release-folder"]),
-     ("update_release_status_for_assembly", ["taxonomy-id", "assembly-accession", "release-version"])
+     ("update_release_status_for_assembly", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
+                                             "release-version"])
      ])
 
 workflow_process_template_for_nextflow = """
