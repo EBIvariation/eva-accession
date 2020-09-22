@@ -63,10 +63,9 @@ def merge_dbsnp_eva_vcf_headers(file1, file2, output_file):
                                                               ("contig", None), ("reference", None)])
     for category in metainfo_category_tempfile_map.keys():
         metainfo_category_tempfile_map[category] = open(tempfile.mktemp(prefix=category, dir=working_folder), "a+")
-    with gzip.open(file1) as file1_handle, gzip.open(file2) as file2_handle:
+    with open(file1) as file1_handle, open(file2) as file2_handle:
         for file_handle in [file1_handle, file2_handle]:
-            for line_bytes in file_handle:
-                line = line_bytes.decode("utf-8")
+            for line in file_handle:
                 if line.startswith("##"):
                     metainfo_category = line.split("=")[0].split("##")[-1].lower()
                     metainfo_category_tempfile_map[metainfo_category].write(line)
@@ -104,12 +103,11 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, tabix_path, bcftools_path, vcf_sort_sc
                         .format(vcf_file_category))
     file_prefixes = set([os.path.basename(filename).split("_")[0].lower() for filename in files_in_category])
     if "eva" in file_prefixes and "dbsnp" in file_prefixes:
+        merge_dbsnp_eva_vcf_headers(files_in_category[0], files_in_category[1], unsorted_release_file_path)
         # Merge commands require input VCF files to be sorted, bgzipped and tabixed!!
         vcf_merge_commands.extend(
             get_bgzip_and_tabix_commands(bgzip_path, tabix_path, vcf_sort_script_path, files_in_category))
         sorted_file_names = [name.replace("_unsorted", "") for name in files_in_category]
-        merge_dbsnp_eva_vcf_headers(sorted_file_names[0] + ".gz", sorted_file_names[1] + ".gz",
-                                    unsorted_release_file_path)
         vcf_merge_commands.append(
             "(({0} merge --no-version -O v {1}.gz {2}.gz | grep -v ^##) >> {3})".format(bcftools_path,
                                                                                         sorted_file_names[0],
