@@ -47,6 +47,9 @@ def get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, as
                                                                                       release_species_inventory_table,
                                                                                       release_version,
                                                                                       metadata_connection_handle)
+    if not release_inventory_info_for_assembly["report_path"].startswith("file:"):
+        release_inventory_info_for_assembly["report_path"] = "file:" + \
+                                                             release_inventory_info_for_assembly["report_path"]
     release_inventory_info_for_assembly["output_folder"] = os.path.join(release_folder, assembly_accession)
     release_inventory_info_for_assembly["mongo_accessioning_db"] = "acc_" + assembly_accession.replace('.', '_')
     return merge_two_dicts(release_inventory_info_for_assembly,
