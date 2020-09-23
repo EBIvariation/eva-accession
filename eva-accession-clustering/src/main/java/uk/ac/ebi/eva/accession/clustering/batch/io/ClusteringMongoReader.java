@@ -17,11 +17,10 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
-import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -32,10 +31,8 @@ import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
-import java.util.ArrayList;
-import java.util.List;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantEntity> {
 
@@ -83,20 +80,15 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         MongoDatabase db = mongoClient.getDatabase(database);
         MongoCollection<Document> collection = db.getCollection(SUBMITTED_VARIANT_ENTITY);
-        AggregateIterable<Document> notClusteredSubmittedVariants = collection.aggregate(buildAggregation())
-                .allowDiskUse(true)
-                .useCursor(true)
-                .batchSize(chunkSize);
+
+        Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
+                                 Filters.eq(CLUSTERED_VARIANT_ACCESSION_FIELD, null));
+        logger.info("Issuing find: {}", query);
+        FindIterable<Document> notClusteredSubmittedVariants = collection.find(query)
+                                                                         .noCursorTimeout(true)
+                                                                         .batchSize(chunkSize);
         cursor = notClusteredSubmittedVariants.iterator();
         converter = mongoTemplate.getConverter();
-    }
-
-    private List<Bson> buildAggregation() {
-        List<Bson> aggregation = new ArrayList<>();
-        aggregation.add(Aggregates.match(Filters.in(ASSEMBLY_FIELD, assembly)));
-        aggregation.add(Aggregates.match(Filters.eq(CLUSTERED_VARIANT_ACCESSION_FIELD, null)));
-        logger.info("Issuing aggregation: {}", aggregation);
-        return aggregation;
     }
 
     @Override
