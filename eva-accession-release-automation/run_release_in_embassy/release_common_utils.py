@@ -78,3 +78,7 @@ def get_unsorted_release_text_file_name(release_folder, assembly_accession, rele
     release_text_file_path = get_release_text_file_name(release_folder, assembly_accession, release_text_file_category)
     filename = os.path.basename(release_text_file_path)
     return release_text_file_path.replace(filename, filename.replace(".txt", ".unsorted.txt"))
+
+
+def get_release_db_name_in_tempmongo_instance(assembly_accession):
+    return "acc_" + assembly_accession.replace(".", "_")
