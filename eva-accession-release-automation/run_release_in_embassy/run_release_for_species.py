@@ -30,10 +30,10 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 # Processes, in order, that make up the workflow and the arguments that they take
 workflow_process_arguments_map = collections.OrderedDict(
     [("copy_accessioning_collections_to_embassy", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
-                                                   "release-species-inventory-table", "dump-dir"]),
+                                                   "release-species-inventory-table", "release-version", "dump-dir"]),
      ("run_release_for_assembly", ["private-config-xml-file", "taxonomy-id",
                                    "assembly-accession", "release-species-inventory-table",
-                                   "release-folder", "release-jar-path", "job-repo-url", "memory"]),
+                                   "release-version", "release-folder", "release-jar-path", "job-repo-url", "memory"]),
      ("merge_dbsnp_eva_release_files", ["bgzip-path", "tabix-path", "bcftools-path",
                                         "vcf-sort-script-path", "assembly-accession",
                                         "release-folder"]),
@@ -41,10 +41,12 @@ workflow_process_arguments_map = collections.OrderedDict(
                                          "vcf-sort-script-path", "assembly-accession",
                                          "release-folder"]),
      ("validate_release_vcf_files", ["private-config-xml-file", "taxonomy-id",
-                                     "assembly-accession", "release-species-inventory-table",
+                                     "assembly-accession", "release-species-inventory-table", "release-version",
                                      "release-folder",
                                      "vcf-validator-path", "assembly-checker-path"]),
-     ("count_rs_ids_in_release_files", ["count-ids-script-path", "assembly-accession", "release-folder"])
+     ("count_rs_ids_in_release_files", ["count-ids-script-path", "assembly-accession", "release-folder"]),
+     ("update_release_status_for_assembly", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
+                                             "release-version"])
      ])
 
 workflow_process_template_for_nextflow = """
@@ -125,10 +127,11 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, memory)
     common_release_properties = get_common_release_properties(common_release_properties_file)
     private_config_xml_file = common_release_properties["private-config-xml-file"]
     release_species_inventory_table = common_release_properties["release-species-inventory-table"]
+    release_version = common_release_properties["release-version"]
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file), user="evadev") \
         as metadata_connection_handle:
         release_assemblies = get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_table,
-                                                                 metadata_connection_handle)
+                                                                 release_version, metadata_connection_handle)
         release_assembly_workflow_files = [prepare_release_workflow_file_for_assembly(common_release_properties,
                                                                                       taxonomy_id, assembly_accession,
                                                                                       memory)
