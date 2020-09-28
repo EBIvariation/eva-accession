@@ -45,6 +45,8 @@ workflow_process_arguments_map = collections.OrderedDict(
                                      "release-folder",
                                      "vcf-validator-path", "assembly-checker-path"]),
      ("count_rs_ids_in_release_files", ["count-ids-script-path", "assembly-accession", "release-folder"]),
+     ("validate_rs_release_files", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
+                                    "release-species-inventory-table", "release-version", "release-folder"]),
      ("update_release_status_for_assembly", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
                                              "release-version"])
      ])
