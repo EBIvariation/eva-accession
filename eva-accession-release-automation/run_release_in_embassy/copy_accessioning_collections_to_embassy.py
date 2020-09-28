@@ -25,7 +25,7 @@ from ebi_eva_common_pyutils.mongo_utils import copy_db
 from pymongo import MongoClient
 from pymongo.uri_parser import parse_uri
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo
-from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_taxonomy
+from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly
 
 
 logger = logging.getLogger(__name__)
@@ -42,11 +42,7 @@ collections_assembly_attribute_map = {
 
 
 def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file, assembly_accession,
-                                   collections_to_copy_list, dump_dir):
-    collections_to_copy_map = collections_assembly_attribute_map
-    if collections_to_copy_list:
-        collections_to_copy_map = {key: value for (key, value) in collections_assembly_attribute_map.items()
-                                   if key in collections_to_copy_list}
+                                   collections_to_copy_map, dump_dir):
     mongo_params = parse_uri(get_mongo_uri_for_eva_profile("production", private_config_xml_file))
     # nodelist is in format: [(host1,port1), (host2,port2)]. Just choose one.
     # Mongo is smart enough to fallback to secondaries automatically.
@@ -77,10 +73,24 @@ def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file
         copy_db(mongodump_args, mongorestore_args)
 
 
+def get_collections_to_copy(collections_to_copy, sources="EVA,DBSNP"):
+    collections_to_copy_map = collections_assembly_attribute_map
+    if collections_to_copy:
+        collections_to_copy_map = {key: value for (key, value) in collections_assembly_attribute_map.items()
+                                   if key in collections_to_copy}
+    if "dbsnp" not in sources.lower():
+        collections_to_copy_map = dict(filter(lambda key_value: not key_value[0].startswith("dbsnp"),
+                                              collections_to_copy_map.items()))
+    if "eva" not in sources.lower():
+        collections_to_copy_map = dict(filter(lambda key_value: key_value[0].startswith("dbsnp"),
+                                              collections_to_copy_map.items()))
+    return collections_to_copy_map
+
+
 def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id, assembly_accession,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir):
-    exit_code = 0
+    port_forwarding_process_id, mongo_port, exit_code = None, None, None
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id,
                                                                               release_species_inventory_table,
@@ -88,15 +98,18 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_i
         with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
                               user="evadev") as \
                 metadata_connection_handle:
-            tempmongo_instance = get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table,
-                                                                        release_version, metadata_connection_handle)
-            logger.info("Beginning data copy to remote MongoDB host {0} on port {1}...".format(tempmongo_instance,
-                                                                                               mongo_port))
+            release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
+                                                                   release_species_inventory_table,
+                                                                   release_version, metadata_connection_handle)
+            logger.info("Beginning data copy to remote MongoDB host {0} on port {1}..."
+                        .format(release_info["tempmongo_instance"], mongo_port))
+            collections_to_copy_map = get_collections_to_copy(collections_to_copy, sources=release_info["sources"])
             mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file,
-                                           assembly_accession, collections_to_copy, dump_dir)
+                                           assembly_accession, collections_to_copy_map, dump_dir)
+            exit_code = 0
     except Exception as ex:
         logger.error("Encountered an error while copying species data to Embassy for assemblies in "
-                     + tempmongo_instance + "\n" + traceback.format_exc())
+                     + release_info["tempmongo_instance"] + "\n" + traceback.format_exc())
         exit_code = -1
     finally:
         close_mongo_port_to_tempmongo(port_forwarding_process_id)
