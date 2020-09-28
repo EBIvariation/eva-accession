@@ -16,6 +16,8 @@ from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_q
 
 release_vcf_file_categories = ["current_ids", "merged_ids", "multimap_ids"]
 release_text_file_categories = ["deprecated_ids", "merged_deprecated_ids"]
+vcf_validation_output_file_pattern = "*.vcf.errors_summary.*"
+asm_report_output_file_pattern = "*.vcf.text_assembly_report.*"
 
 release_progress_table = "dbsnp_ensembl_species.rs_release_progress"
 
