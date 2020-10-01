@@ -53,7 +53,8 @@ def get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventor
     results = get_all_results_for_query(metadata_connection_handle, "select distinct tempmongo_instance from {0} "
                                                                     "where taxonomy_id = '{1}' "
                                                                     "and release_version = {2} "
-                                                                    "and should_be_processed"
+                                                                    "and should_be_processed "
+                                                                    "and number_variants_to_process > 0"
                                         .format(release_species_inventory_table, taxonomy_id, release_version))
     if len(results) == 0:
         raise Exception("Could not find target Mongo instance in Embassy for taxonomy ID: " + taxonomy_id)
@@ -67,7 +68,8 @@ def get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_t
                                         release_version, metadata_connection_handle):
     results = get_all_results_for_query(metadata_connection_handle, "select assembly from {0} "
                                                                     "where taxonomy_id = '{1}' "
-                                                                    "and release_version = {2} and should_be_processed"
+                                                                    "and release_version = {2} and should_be_processed "
+                                                                    "and number_variants_to_process > 0"
                                         .format(release_species_inventory_table, taxonomy_id, release_version))
     if len(results) == 0:
         raise Exception("Could not find assemblies pertaining to taxonomy ID: " + taxonomy_id)
@@ -80,7 +82,8 @@ def get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession, rel
                                                                     "(select * from {0} where "
                                                                     "taxonomy_id = '{1}' and "
                                                                     "assembly = '{2}' and release_version = {3} "
-                                                                    "and should_be_processed) row"
+                                                                    "and should_be_processed "
+                                                                    "and number_variants_to_process > 0) row"
                                         .format(release_species_inventory_table, taxonomy_id, assembly_accession,
                                                 release_version))
     if len(results) == 0:
