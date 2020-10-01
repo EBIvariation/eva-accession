@@ -16,7 +16,7 @@ import click
 import collections
 import copy
 import datetime
-import json
+import yaml
 import logging
 import os
 import psycopg2
@@ -123,7 +123,7 @@ def prepare_release_workflow_file_for_assembly(common_release_properties, taxono
 
 
 def get_common_release_properties(common_release_properties_file):
-    return json.load(open(common_release_properties_file))
+    return yaml.load(open(common_release_properties_file), Loader=yaml.FullLoader)
 
 
 def run_release_for_species(common_release_properties_file, taxonomy_id, memory):
@@ -153,7 +153,7 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, memory)
             os.system(workflow_command)
 
 
-@click.option("--common-release-properties-file", help="ex: /path/to/release/properties.json", required=True)
+@click.option("--common-release-properties-file", help="ex: /path/to/release/properties.yml", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--memory",  help="Memory in GB. ex: 8", default=8, type=int, required=False)
 @click.command()
