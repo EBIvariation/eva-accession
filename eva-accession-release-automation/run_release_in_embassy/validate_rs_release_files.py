@@ -28,6 +28,7 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.file_utils import file_diff, FileDiffOption
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
     get_release_db_name_in_tempmongo_instance
+from run_release_in_embassy.copy_accessioning_collections_to_embassy import collections_assembly_attribute_map
 from pymongo import MongoClient
 
 logger = logging.getLogger(__name__)
@@ -254,8 +255,8 @@ def read_next_batch_of_missing_ids(missing_rs_ids_file_handle):
         yield lines_read
 
 
-def get_unique_release_rs_ids(release_folder, assembly_accession):
-    folder_prefix = os.path.join(release_folder, assembly_accession, assembly_accession)
+def get_unique_release_rs_ids(species_release_folder, assembly_accession):
+    folder_prefix = os.path.join(species_release_folder, assembly_accession, assembly_accession)
     active_rs_ids_file = folder_prefix + "_current_ids.vcf.gz"
     merged_rs_ids_file = folder_prefix + "_merged_ids.vcf.gz"
     multimap_rs_ids_file = folder_prefix + "_multimap_ids.vcf.gz"
@@ -415,35 +416,39 @@ def get_missing_ids_attributions(assembly_accession, missing_rs_ids_file, mongo_
         logger.info("All missing RS IDs have been accounted for!")
 
 
-def export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, mongo_unique_rs_ids_file):
+def export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, assembly_accession,
+                                    mongo_unique_rs_ids_file):
     collection_rs_ids_files = []
-    for collection in ["clusteredVariantEntity", "clusteredVariantOperationEntity",
-                       "dbsnpClusteredVariantEntity", "dbsnpClusteredVariantOperationEntity"]:
-        collection_rs_ids_file = mongo_unique_rs_ids_file.replace(".txt", "_{0}.txt".format(collection))
-        run_command_with_output("Exporting RS IDs from collection " + collection,
-                                "mongoexport --host localhost --port {0} --db {1} --collection {2} "
-                                "--fields accession --type csv --noHeaderLine --out {3}"
-                                .format(mongo_port, db_name_in_tempmongo_instance, collection,
-                                        collection_rs_ids_file), log_error_stream_to_output=True)
-        collection_rs_ids_files.append(collection_rs_ids_file)
+    for collection, assembly_attribute_path in collections_assembly_attribute_map.items():
+        if "clustered" in collection.lower():
+            collection_rs_ids_file = mongo_unique_rs_ids_file.replace(".txt", "_{0}.txt".format(collection))
+            run_command_with_output("Exporting RS IDs from collection " + collection,
+                                    "mongoexport --host localhost --port {0} --db {1} --collection {2} "
+                                    "--query '{{\"{3}\": \"{4}\"}}' "
+                                    "--fields accession --type csv --noHeaderLine --out {5}"
+                                    .format(mongo_port, db_name_in_tempmongo_instance, collection,
+                                            assembly_attribute_path, assembly_accession, collection_rs_ids_file),
+                                    log_error_stream_to_output=True)
+            collection_rs_ids_files.append(collection_rs_ids_file)
     run_command_with_output("Removing duplicates from RS IDs exported from Mongo",
                             "(cat {0} | sort -u > {1})".format(" ".join(collection_rs_ids_files),
                                                                mongo_unique_rs_ids_file))
 
 
 def validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
-                              release_version, release_folder):
+                              release_version, species_release_folder):
     port_forwarding_process_id, mongo_port, exit_code  = None, None, None
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id,
                                                                               release_species_inventory_table,
                                                                               release_version)
-        db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(assembly_accession)
+        db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id)
         with MongoClient(port=mongo_port) as client:
-            mongo_unique_rs_ids_file = os.path.join(release_folder, assembly_accession,
+            mongo_unique_rs_ids_file = os.path.join(species_release_folder, assembly_accession,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))
-            export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, mongo_unique_rs_ids_file)
-            unique_release_rs_ids_file = get_unique_release_rs_ids(release_folder, assembly_accession)
+            export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, assembly_accession,
+                                            mongo_unique_rs_ids_file)
+            unique_release_rs_ids_file = get_unique_release_rs_ids(species_release_folder, assembly_accession)
             missing_rs_ids_file = os.path.join(os.path.dirname(unique_release_rs_ids_file),
                                                assembly_accession + "_missing_ids.txt")
             file_diff(mongo_unique_rs_ids_file, unique_release_rs_ids_file, FileDiffOption.NOT_IN, missing_rs_ids_file)
@@ -455,7 +460,7 @@ def validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_acc
         exit_code = -1
     finally:
         close_mongo_port_to_tempmongo(port_forwarding_process_id)
-        logger.info("Release process completed with exit_code: " + str(exit_code))
+        logger.info("Validate RS release file process completed with exit_code: " + str(exit_code))
         sys.exit(exit_code)
 
 
@@ -465,12 +470,12 @@ def validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_acc
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--release-folder", required=True)
+@click.option("--species-release-folder", required=True)
 @click.command()
 def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         release_folder):
+         species_release_folder):
     validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
-                              release_version, release_folder)
+                              release_version, species_release_folder)
 
 
 if __name__ == '__main__':

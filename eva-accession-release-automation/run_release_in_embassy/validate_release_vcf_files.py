@@ -25,10 +25,10 @@ from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_prof
 
 
 def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_accession,
-                               release_species_inventory_table, release_version, release_folder, vcf_validator_path,
-                               assembly_checker_path):
+                               release_species_inventory_table, release_version, species_release_folder,
+                               vcf_validator_path, assembly_checker_path):
     run_command_with_output("Remove existing VCF validation and assembly report outputs...",
-                            "rm -f {0}/{1}/{2} {0}/{1}/{3}".format(release_folder, assembly_accession,
+                            "rm -f {0}/{1}/{2} {0}/{1}/{3}".format(species_release_folder, assembly_accession,
                                                                    vcf_validation_output_file_pattern,
                                                                    asm_report_output_file_pattern))
     validate_release_vcf_files_commands = []
@@ -46,7 +46,8 @@ def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_ac
 
         for vcf_file_category in release_vcf_file_categories:
 
-            release_vcf_file_name = get_release_vcf_file_name(release_folder, assembly_accession, vcf_file_category)
+            release_vcf_file_name = get_release_vcf_file_name(species_release_folder, assembly_accession,
+                                                              vcf_file_category)
             release_vcf_dir = os.path.dirname(release_vcf_file_name)
             if "multimap" not in vcf_file_category:
                 validate_release_vcf_files_commands.append("({0} -i {1} -o {2}) || true".format(vcf_validator_path,
@@ -67,15 +68,15 @@ def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_ac
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--release-folder", required=True)
+@click.option("--species-release-folder", required=True)
 @click.option("--vcf-validator-path", help="/path/to/vcf/validator/binary", required=True)
 @click.option("--assembly-checker-path", help="/path/to/assembly/checker/binary", required=True)
 @click.command()
 def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         release_folder, vcf_validator_path, assembly_checker_path):
+         species_release_folder, vcf_validator_path, assembly_checker_path):
     validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_accession,
-                               release_species_inventory_table, release_version, release_folder, vcf_validator_path,
-                               assembly_checker_path)
+                               release_species_inventory_table, release_version, species_release_folder,
+                               vcf_validator_path, assembly_checker_path)
 
 
 if __name__ == "__main__":
