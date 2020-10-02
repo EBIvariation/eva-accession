@@ -31,7 +31,8 @@ def analyze_vcf_validation_files(vcf_validation_report_files):
                                                      "Warning: Reference and alternate alleles "
                                                      "do not share the first nucleotide",
                                                      "the input file is not valid",
-                                                     "the input file is valid"]
+                                                     "the input file is valid",
+                                                     "not listed in a valid meta-data ALT entry"]
     vcf_validation_error_grep_command_chain = " | ".join(['grep -v "{0}"'.format(error_class) for error_class in
                                                           vcf_validation_report_error_classes_to_ignore])
     for vcf_validation_report_file in vcf_validation_report_files:
