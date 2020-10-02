@@ -73,8 +73,10 @@ def merge_dbsnp_eva_vcf_headers(file1, file2, output_file):
                     break
     for metainfo_category, tempfile_handle in metainfo_category_tempfile_map.items():
         tempfile_handle.flush()
+        # Sorting needs to happen by ID field for the headers
+        # ex: ##contig=<ID=1,accession="CM000994.2">
         run_command_with_output("Merging header section ##{0} ...".format(metainfo_category),
-                                "(sort {0} | uniq >> {1})".format(tempfile_handle.name, output_file))
+                                "sort -t ',' -k1 -V {0} | uniq >> {1}".format(tempfile_handle.name, output_file))
         tempfile_handle.close()
         os.remove(tempfile_handle.name)
 
