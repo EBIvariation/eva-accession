@@ -24,7 +24,8 @@ from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile, g
 from ebi_eva_common_pyutils.mongo_utils import copy_db
 from pymongo import MongoClient
 from pymongo.uri_parser import parse_uri
-from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo
+from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
+    get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly
 
 
@@ -49,7 +50,7 @@ def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file
     mongo_host = mongo_params["nodelist"][0][0]
     logger.info("Beginning data copy for assembly: " + assembly_accession)
     dump_output_dir = "{0}/dump_{1}".format(dump_dir, assembly_accession.replace(".", "_"))
-    destination_db_name = "acc_" + assembly_accession.replace(".", "_")
+    destination_db_name = get_release_db_name_in_tempmongo_instance(assembly_accession)
 
     # To be idempotent, clear source dump files and destination tempmongo database
     shutil.rmtree(dump_output_dir, ignore_errors=True)

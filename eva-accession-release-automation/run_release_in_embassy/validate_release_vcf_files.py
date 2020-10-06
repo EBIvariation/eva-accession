@@ -18,7 +18,8 @@ import os
 import psycopg2
 
 from run_release_in_embassy.release_common_utils import get_release_vcf_file_name
-from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, release_vcf_file_categories
+from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
+    release_vcf_file_categories, vcf_validation_output_file_pattern, asm_report_output_file_pattern
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 
@@ -26,6 +27,10 @@ from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_prof
 def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_accession,
                                release_species_inventory_table, release_version, release_folder, vcf_validator_path,
                                assembly_checker_path):
+    run_command_with_output("Remove existing VCF validation and assembly report outputs...",
+                            "rm -f {0}/{1}/{2} {0}/{1}/{3}".format(release_folder, assembly_accession,
+                                                                   vcf_validation_output_file_pattern,
+                                                                   asm_report_output_file_pattern))
     validate_release_vcf_files_commands = []
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
                           user="evadev") as \
