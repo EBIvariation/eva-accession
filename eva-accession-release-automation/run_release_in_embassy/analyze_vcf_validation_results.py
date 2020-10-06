@@ -20,9 +20,10 @@ import logging
 import sys
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.logger import logging_config as log_cfg
 from run_release_in_embassy.release_metadata import vcf_validation_output_file_pattern, asm_report_output_file_pattern
 
-logger = logging.getLogger(__name__)
+logger = log_cfg.get_logger(__name__)
 
 
 def analyze_vcf_validation_files(vcf_validation_report_files):
