@@ -26,7 +26,8 @@ from pymongo import MongoClient
 from pymongo.uri_parser import parse_uri
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
     get_release_db_name_in_tempmongo_instance
-from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly
+from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
+    get_release_assemblies_for_taxonomy
 
 
 logger = logging.getLogger(__name__)
@@ -43,18 +44,16 @@ collections_assembly_attribute_map = {
 
 
 def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file, assembly_accession,
-                                   collections_to_copy_map, dump_dir):
+                                   collections_to_copy_map, dump_dir, destination_db_name):
     mongo_params = parse_uri(get_mongo_uri_for_eva_profile("production", private_config_xml_file))
     # nodelist is in format: [(host1,port1), (host2,port2)]. Just choose one.
     # Mongo is smart enough to fallback to secondaries automatically.
     mongo_host = mongo_params["nodelist"][0][0]
     logger.info("Beginning data copy for assembly: " + assembly_accession)
     dump_output_dir = "{0}/dump_{1}".format(dump_dir, assembly_accession.replace(".", "_"))
-    destination_db_name = get_release_db_name_in_tempmongo_instance(assembly_accession)
 
-    # To be idempotent, clear source dump files and destination tempmongo database
+    # To be idempotent, clear source dump files
     shutil.rmtree(dump_output_dir, ignore_errors=True)
-    MongoClient(port=local_forwarded_port).drop_database(destination_db_name)
 
     for collection, collection_assembly_attribute_name in sorted(collections_to_copy_map.items()):
         logger.info("Begin processing collection: " + collection)
@@ -88,7 +87,7 @@ def get_collections_to_copy(collections_to_copy, sources="EVA,DBSNP"):
     return collections_to_copy_map
 
 
-def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id, assembly_accession,
+def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir):
     port_forwarding_process_id, mongo_port, exit_code = None, None, None
@@ -99,14 +98,20 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_i
         with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
                               user="evadev") as \
                 metadata_connection_handle:
-            release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
-                                                                   release_species_inventory_table,
-                                                                   release_version, metadata_connection_handle)
-            logger.info("Beginning data copy to remote MongoDB host {0} on port {1}..."
-                        .format(release_info["tempmongo_instance"], mongo_port))
-            collections_to_copy_map = get_collections_to_copy(collections_to_copy, sources=release_info["sources"])
-            mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file,
-                                           assembly_accession, collections_to_copy_map, dump_dir)
+            assemblies = get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_table,
+                                                             release_version, metadata_connection_handle)
+            # To be idempotent, clear destination tempmongo database
+            destination_db_name = get_release_db_name_in_tempmongo_instance(taxonomy_id)
+            MongoClient(port=mongo_port).drop_database(destination_db_name)
+            for assembly_accession in assemblies:
+                release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
+                                                                       release_species_inventory_table,
+                                                                       release_version, metadata_connection_handle)
+                logger.info("Beginning data copy to remote MongoDB host {0} on port {1}..."
+                            .format(release_info["tempmongo_instance"], mongo_port))
+                collections_to_copy_map = get_collections_to_copy(collections_to_copy, sources=release_info["sources"])
+                mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file, assembly_accession,
+                                               collections_to_copy_map, dump_dir, destination_db_name)
             exit_code = 0
     except Exception as ex:
         logger.error("Encountered an error while copying species data to Embassy for assemblies in "
@@ -120,7 +125,6 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_i
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
-@click.option("--assembly-accession", help="ex: 9913", required=True)
 @click.option("--collections-to-copy", "-c", default=collections_assembly_attribute_map.keys(),
               help="ex: dbsnpSubmittedVariantEntity,dbsnpSubmittedVariantOperationEntity", multiple=True,
               required=False)
@@ -129,9 +133,9 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_i
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--dump-dir", help="ex: /path/to/dump", required=True)
 @click.command()
-def main(private_config_xml_file, taxonomy_id, assembly_accession, collections_to_copy, release_species_inventory_table,
+def main(private_config_xml_file, taxonomy_id, collections_to_copy, release_species_inventory_table,
          release_version, dump_dir):
-    copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id, assembly_accession,
+    copy_accessioning_collections_to_embassy(private_config_xml_file, taxonomy_id,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir)
 

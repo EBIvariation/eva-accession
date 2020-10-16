@@ -19,6 +19,7 @@ import psycopg2
 import textwrap
 
 
+from run_release_in_embassy.release_common_utils import get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly
 from ebi_eva_common_pyutils.common_utils import merge_two_dicts
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile, EVAPrivateSettingsXMLConfig
@@ -39,7 +40,7 @@ def get_release_job_repo_properties(private_config_xml_file):
 
 
 def get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
-                                        release_species_inventory_table, release_version, release_folder):
+                                        release_species_inventory_table, release_version, species_release_folder):
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
                           user="evadev") as \
             metadata_connection_handle:
@@ -50,21 +51,22 @@ def get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, as
     if not release_inventory_info_for_assembly["report_path"].startswith("file:"):
         release_inventory_info_for_assembly["report_path"] = "file:" + \
                                                              release_inventory_info_for_assembly["report_path"]
-    release_inventory_info_for_assembly["output_folder"] = os.path.join(release_folder, assembly_accession)
-    release_inventory_info_for_assembly["mongo_accessioning_db"] = "acc_" + assembly_accession.replace('.', '_')
+    release_inventory_info_for_assembly["output_folder"] = os.path.join(species_release_folder, assembly_accession)
+    release_inventory_info_for_assembly["mongo_accessioning_db"] = \
+        get_release_db_name_in_tempmongo_instance(taxonomy_id)
     return merge_two_dicts(release_inventory_info_for_assembly,
                            get_release_job_repo_properties(private_config_xml_file))
 
 
 def create_release_properties_file_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
-                                                release_species_inventory_table, release_version, release_folder,
-                                                job_repo_url):
-    assembly_release_folder = os.path.join(release_folder, assembly_accession)
-    os.makedirs(assembly_release_folder, exist_ok=True)
-    output_file = "{0}/{1}_release.properties".format(assembly_release_folder, assembly_accession)
+                                                release_species_inventory_table, release_version,
+                                                species_release_folder, job_repo_url):
+    assembly_species_release_folder = os.path.join(species_release_folder, assembly_accession)
+    os.makedirs(assembly_species_release_folder, exist_ok=True)
+    output_file = "{0}/{1}_release.properties".format(assembly_species_release_folder, assembly_accession)
     release_properties = get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
                                                              release_species_inventory_table, release_version,
-                                                             release_folder)
+                                                             species_release_folder)
     # TODO: Production Spring Job repository URL won't be used for Release 2
     #  since it hasn't been upgraded to support Spring Boot 2 metadata schema. Therefore a separate job repository
     #  has been created (with similar credentials)  and passed in through the job_repo_url parameter.
@@ -114,14 +116,14 @@ def create_release_properties_file_for_assembly(private_config_xml_file, taxonom
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--release-folder", required=True)
+@click.option("--species-release-folder", required=True)
 @click.option("--job-repo-url", required=True)
 @click.command()
 def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         release_folder, job_repo_url):
+         species_release_folder, job_repo_url):
     create_release_properties_file_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
-                                                release_species_inventory_table, release_version, release_folder,
-                                                job_repo_url)
+                                                release_species_inventory_table, release_version,
+                                                species_release_folder, job_repo_url)
 
 
 if __name__ == "__main__":

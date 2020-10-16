@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
-                             release_version, release_folder, release_jar_path, job_repo_url, memory):
+                             release_version, species_release_folder, release_jar_path, job_repo_url, memory):
     exit_code = 0
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id,
@@ -35,7 +35,7 @@ def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_acce
         release_properties_file = create_release_properties_file_for_assembly(private_config_xml_file, taxonomy_id,
                                                                               assembly_accession,
                                                                               release_species_inventory_table,
-                                                                              release_version, release_folder,
+                                                                              release_version, species_release_folder,
                                                                               job_repo_url)
         release_command = 'java -Xmx{0}g -jar {1} --spring.config.location="{2}" -Dspring.data.mongodb.port={3}'\
             .format(memory, release_jar_path, release_properties_file, mongo_port)
@@ -46,7 +46,7 @@ def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_acce
         exit_code = -1
     finally:
         close_mongo_port_to_tempmongo(port_forwarding_process_id)
-        logger.info("Release process completed with exit_code: " + str(exit_code))
+        logger.info("Java release pipeline run completed with exit_code: " + str(exit_code))
         sys.exit(exit_code)
 
 
@@ -56,7 +56,7 @@ def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_acce
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--release-folder", required=True)
+@click.option("--species-release-folder", required=True)
 @click.option("--release-jar-path", required=True)
 # TODO: Production Spring Job repository URL won't be used for Release 2
 #  since it hasn't been upgraded to support Spring Boot 2 metadata schema. Therefore a separate job repository
@@ -66,9 +66,9 @@ def run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_acce
 @click.option("--memory",  help="Memory in GB. ex: 8", default=8, type=int, required=False)
 @click.command()
 def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         release_folder, release_jar_path, job_repo_url, memory):
+         species_release_folder, release_jar_path, job_repo_url, memory):
     run_release_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
-                             release_version, release_folder, release_jar_path, job_repo_url, memory)
+                             release_version, species_release_folder, release_jar_path, job_repo_url, memory)
 
 
 if __name__ == "__main__":

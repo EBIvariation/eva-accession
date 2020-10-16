@@ -15,9 +15,11 @@
 import logging
 import os
 import psycopg2
+import requests
 import signal
 import traceback
 
+from retry import retry
 from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_taxonomy
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 from ebi_eva_common_pyutils.network_utils import get_available_local_port, forward_remote_port_to_local_port
@@ -58,27 +60,47 @@ def get_bgzip_tabix_commands_for_file(bgzip_path, tabix_path, file):
     return commands
 
 
-def get_release_vcf_file_name(release_folder, assembly_accession, vcf_file_category):
-    return os.path.join(release_folder, assembly_accession, "{0}_{1}.vcf".format(assembly_accession,
-                                                                                 vcf_file_category))
+def get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category):
+    return os.path.join(species_release_folder, assembly_accession, "{0}_{1}.vcf".format(assembly_accession,
+                                                                                         vcf_file_category))
 
 
-def get_unsorted_release_vcf_file_name(release_folder, assembly_accession, vcf_file_category):
-    vcf_file_path = get_release_vcf_file_name(release_folder, assembly_accession, vcf_file_category)
+def get_unsorted_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category):
+    vcf_file_path = get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category)
     filename = os.path.basename(vcf_file_path)
     return vcf_file_path.replace(filename, filename.replace(".vcf", "_unsorted.vcf"))
 
 
-def get_release_text_file_name(release_folder, assembly_accession, release_text_file_category):
-    return os.path.join(release_folder, assembly_accession, "{0}_{1}.txt".format(assembly_accession,
-                                                                                 release_text_file_category))
+def get_release_text_file_name(species_release_folder, assembly_accession, release_text_file_category):
+    return os.path.join(species_release_folder, assembly_accession, "{0}_{1}.txt".format(assembly_accession,
+                                                                                         release_text_file_category))
 
 
-def get_unsorted_release_text_file_name(release_folder, assembly_accession, release_text_file_category):
-    release_text_file_path = get_release_text_file_name(release_folder, assembly_accession, release_text_file_category)
+def get_unsorted_release_text_file_name(species_release_folder, assembly_accession, release_text_file_category):
+    release_text_file_path = get_release_text_file_name(species_release_folder, assembly_accession,
+                                                        release_text_file_category)
     filename = os.path.basename(release_text_file_path)
     return release_text_file_path.replace(filename, filename.replace(".txt", ".unsorted.txt"))
 
 
-def get_release_db_name_in_tempmongo_instance(assembly_accession):
-    return "acc_" + assembly_accession.replace(".", "_")
+def get_release_db_name_in_tempmongo_instance(taxonomy_id):
+    return "acc_" + str(taxonomy_id)
+
+
+@retry(exceptions=(ConnectionError, requests.RequestException), logger=logger,
+       tries=4, delay=2, backoff=1.2, jitter=(1, 3))
+def json_request(url: str, payload: dict = None, method=requests.get) -> dict:
+    """Makes a request of a specified type (by default GET) with the specified URL and payload, attempts to parse the
+    result as a JSON string and return it as a dictionary, on failure raises an exception."""
+    result = method(url, data=payload)
+    result.raise_for_status()
+    return result.json()
+
+
+def get_ensembl_scientific_name(taxonomy_id):
+    ENSEMBL_REST_API_URL = "https://rest.ensembl.org/taxonomy/id/{0}?content-type=application/json".format(taxonomy_id)
+    response = json_request(ENSEMBL_REST_API_URL)
+    if "scientific_name" not in response:
+        raise Exception("Scientific name could not be found for taxonomy {0} using the Ensembl API URL: {1}"
+                        .format(taxonomy_id, ENSEMBL_REST_API_URL))
+    return response["scientific_name"].lower().replace(' ', '_')
