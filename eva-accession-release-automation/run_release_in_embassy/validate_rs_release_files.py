@@ -266,14 +266,15 @@ def get_unique_release_rs_ids(species_release_folder, assembly_accession):
     all_ids_file = folder_prefix + "_all_release_ids.txt"
     unique_ids_file = folder_prefix + "_unique_release_ids.txt"
 
+    command_to_split_semicolon_separated_rs_ids = 'sed s/";"/\\\\n/g'
     run_command_with_output("Remove pre-existing all IDs and unique IDs file:", "rm -f {0} {1}"
                             .format(all_ids_file, unique_ids_file))
-    run_command_with_output("Get active RS IDs", "zcat {0} | grep -v ^# | cut -f3 | sed s/rs//g >> {1}"
-                            .format(active_rs_ids_file, all_ids_file))
-    run_command_with_output("Get merged RS IDs", "zcat {0} | grep -v ^# | cut -f3 | sed s/rs//g >> {1}"
-                            .format(merged_rs_ids_file, all_ids_file))
-    run_command_with_output("Get multimap RS IDs", "zcat {0} | grep -v ^# | cut -f3 | sed s/rs//g >> {1}"
-                            .format(multimap_rs_ids_file, all_ids_file))
+    run_command_with_output("Get active RS IDs", "zcat {0} | grep -v ^# | cut -f3 | sed s/rs//g | {1} >> {2}"
+                            .format(active_rs_ids_file, command_to_split_semicolon_separated_rs_ids, all_ids_file))
+    run_command_with_output("Get merged RS IDs", "zcat {0} | grep -v ^# | cut -f3 | sed s/rs//g | {1} >> {2}"
+                            .format(merged_rs_ids_file, command_to_split_semicolon_separated_rs_ids, all_ids_file))
+    run_command_with_output("Get multimap RS IDs", "zcat {0} | grep -v ^# | cut -f3 | sed s/rs//g | {1} >> {2}"
+                            .format(multimap_rs_ids_file, command_to_split_semicolon_separated_rs_ids, all_ids_file))
     run_command_with_output("Get merged deprecated RS IDs column 1", "zcat {0} | cut -f1 | sed s/rs//g >> {1}"
                             .format(merged_deprecated_rs_ids_file, all_ids_file))
     run_command_with_output("Get merged deprecated RS IDs column 2", "zcat {0} | cut -f2 | sed s/rs//g >> {1}"

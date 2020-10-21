@@ -38,8 +38,9 @@ workflow_process_arguments_map = collections.OrderedDict(
                                    "assembly-accession", "release-species-inventory-table",
                                    "release-version", "species-release-folder", "release-jar-path", "job-repo-url",
                                    "memory"]),
-     ("merge_dbsnp_eva_release_files", ["bgzip-path", "tabix-path", "bcftools-path",
-                                        "vcf-sort-script-path", "assembly-accession",
+     ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "bgzip-path", "tabix-path", "bcftools-path",
+                                        "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
+                                        "release-species-inventory-table", "release-version",
                                         "species-release-folder"]),
      ("sort_bgzip_tabix_release_files", ["bgzip-path", "tabix-path",
                                          "vcf-sort-script-path", "assembly-accession",
@@ -172,7 +173,8 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, memory)
         workflow_report_file_name = workflow_file_name.replace(".nf", ".report.html")
         if os.path.exists(workflow_report_file_name):
             os.remove(workflow_report_file_name)
-        workflow_command = "{0} run {1} -c {2} -with-report {3} -bg".format(
+        workflow_command = "cd {0} && {1} run {2} -c {3} -with-report {4} -bg".format(
+            os.path.dirname(release_log_file),
             common_release_properties["nextflow-binary-path"], workflow_file_name,
             common_release_properties["nextflow-config-path"], workflow_report_file_name)
         logger.info("Check log file in: " + release_log_file + " to monitor progress...")
