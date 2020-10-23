@@ -15,6 +15,7 @@
 import logging
 import os
 import psycopg2
+import re
 import requests
 import signal
 import traceback
@@ -103,4 +104,12 @@ def get_ensembl_scientific_name(taxonomy_id):
     if "scientific_name" not in response:
         raise Exception("Scientific name could not be found for taxonomy {0} using the Ensembl API URL: {1}"
                         .format(taxonomy_id, ENSEMBL_REST_API_URL))
-    return response["scientific_name"].lower().replace(' ', '_')
+    return response["scientific_name"]
+
+
+def get_release_folder_name(taxonomy_id):
+    ensembl_scientific_name = get_ensembl_scientific_name(taxonomy_id)
+    # Match Ensembl representation
+    # See Clostridium sp. SS2/1 represented as clostridium_sp_ss2_1 in
+    # ftp://ftp.ensemblgenomes.org/pub/bacteria/release-48/fasta/bacteria_25_collection/clostridium_sp_ss2_1/
+    return re.sub('[^0-9a-zA-Z]+', '_', ensembl_scientific_name.lower())
