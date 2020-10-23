@@ -169,7 +169,7 @@ def hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_
 
     if os.path.exists(public_previous_release_assembly_folder):
         recreate_public_release_assembly_folder(assembly_accession, public_current_release_assembly_folder)
-        for filename in get_release_file_list_for_assembly(current_release_assembly_info):
+        for filename in get_release_file_list_for_assembly(current_release_assembly_info) + ["md5checksums.txt"]:
             file_to_hardlink = "{0}/{1}".format(public_previous_release_assembly_folder, filename)
             if os.path.exists(file_to_hardlink):
                 run_command_with_output("Creating hardlink from previous release assembly folder {0} "
