@@ -17,6 +17,7 @@
 # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
 
 import click
+import glob
 import os
 import psycopg2
 
@@ -35,7 +36,7 @@ readme_general_info_file = "README_release_general_info.txt"
 readme_known_issues_file = "README_release_known_issues.txt"
 release_top_level_files_to_copy = ("README_release_known_issues.txt", readme_general_info_file,
                                    "species_name_mapping.tsv")
-unmapped_ids_file_regex = ".*_unmapped_ids.txt.gz"
+unmapped_ids_file_regex = "*_unmapped_ids.txt.gz"
 logger = logging_config.get_logger(__name__)
 
 
@@ -150,11 +151,13 @@ def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_pro
         source_file_path = os.path.join(release_properties.staging_release_folder, species_release_folder_name,
                                         assembly_accession, filename)
         run_command_with_output("Copying {0} to {1}...".format(filename, public_release_assembly_folder),
-                                "rsync -av {0} {1}".format(source_file_path, public_release_assembly_folder))
+                                "cp {0} {1}".format(source_file_path, public_release_assembly_folder))
         if filename.endswith(release_file_types_to_be_checksummed):
             md5sum_output = run_command_with_output("Checksumming file {0}...".format(filename),
-                                                    "md5sum " + source_file_path, return_process_output=True)
-            open(md5sum_output_file, "a").write(md5sum_output)
+                                                    "(md5sum {0} | awk '{{ print $1 }}')".format(source_file_path),
+                                                    return_process_output=True)
+            open(md5sum_output_file, "a").write(md5sum_output.strip() + "\t" +
+                                                os.path.basename(source_file_path) + "\n")
 
 
 def hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_info, release_properties):
@@ -212,7 +215,47 @@ def get_release_assemblies_for_release_version(assemblies_to_process, release_ve
     return list(filter(lambda x: x["release_version"] == release_version, assemblies_to_process))
 
 
-def publish_species_level_files_to_ftp(taxonomy_id, release_properties, species_current_release_folder_name,
+def copy_unmapped_files(source_folder_to_copy_from, species_current_release_folder_path, copy_from_current_release):
+    def copy_file(src, dest, copy_command):
+        run_command_with_output("Copying file {0} to {1}...".format(src, dest),
+                                "({0} {1} {2})".format(copy_command, src, dest))
+    species_level_files_to_copy = (unmapped_ids_file_regex, "md5checksums.txt", "README_unmapped_rs_ids_count.txt")
+
+    # Copy files from current release folder
+    if copy_from_current_release:
+        for filename in species_level_files_to_copy:
+            absolute_file_path = os.path.join(source_folder_to_copy_from, filename)
+            copy_file(absolute_file_path, species_current_release_folder_path, "cp")
+    else:
+        unmapped_variants_files = glob.glob("{0}/{1}".format(source_folder_to_copy_from, unmapped_ids_file_regex))
+        assert len(unmapped_variants_files) <= 1, \
+            "Multiple unmapped variant files found in source folder: {0}".format(" ".join(unmapped_variants_files))
+        assert len(unmapped_variants_files) > 0, \
+            "No unmapped variant files found in source folder: {0}".format(source_folder_to_copy_from)
+        # Ensure that the species name is properly replaced (ex: mouse_10090 renamed to mus_musculus)
+        # in the unmapped variants file name
+        unmapped_variants_file_path_current_release = \
+            os.path.join(species_current_release_folder_path,
+                         unmapped_ids_file_regex.replace("*", os.path.basename(species_current_release_folder_path)))
+        copy_file(unmapped_variants_files[0], unmapped_variants_file_path_current_release, "ln -f")
+        # Compute MD5 checksum file
+        run_command_with_output("Compute MD5 checksum",
+                                "(md5sum {0} | awk '{{print $1}}' | xargs -i echo -e '{{}}\t{1}') > {2}"
+                                .format(unmapped_variants_file_path_current_release,
+                                        os.path.basename(unmapped_variants_file_path_current_release),
+                                        os.path.join(species_current_release_folder_path,
+                                                     species_level_files_to_copy[1])))
+        # Compute unmapped variants count and populate it in the README file
+        run_command_with_output("Compute MD5 checksum",
+                                "(zcat {0} | grep -v ^# | cut -f1 | sort | uniq | wc -l "
+                                "| xargs -i echo -e '# Unique RS ID counts\n{1}\t{{}}') > {2}"
+                                .format(unmapped_variants_file_path_current_release,
+                                        os.path.basename(unmapped_variants_file_path_current_release),
+                                        os.path.join(species_current_release_folder_path,
+                                                     species_level_files_to_copy[2])))
+
+
+def publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name,
                                        species_previous_release_folder_name):
     species_staging_release_folder_path = os.path.join(release_properties.staging_release_folder,
                                                        species_current_release_folder_name)
@@ -222,39 +265,15 @@ def publish_species_level_files_to_ftp(taxonomy_id, release_properties, species_
     species_previous_release_folder_path = \
         get_folder_path_for_species(release_properties.public_ftp_previous_release_folder,
                                     species_previous_release_folder_name)
-    source_folder_to_copy_from, copy_command = species_staging_release_folder_path, "rsync -av"
-    species_level_files_to_copy = ("md5checksums.txt", "README_unmapped_rs_ids_count.txt", unmapped_ids_file_regex)
-    grep_command_for_species_level_files = "grep " + " ".join(['-e "{0}"'.format(filename) for filename in
-                                                               species_level_files_to_copy])
     run_command_with_output("Creating species release folder {0}...".format(species_current_release_folder_path),
-                            "mkdir -p {0}".format(species_current_release_folder_path))
+                            "rm -rf {0} && mkdir {0}".format(species_current_release_folder_path))
+    # Determine if the unmapped data should be copied from the current or a previous release
+    copy_from_current_release = len(glob.glob(os.path.join(species_staging_release_folder_path,
+                                                           unmapped_ids_file_regex))) > 0
+    source_folder_to_copy_from = species_current_release_folder_path if copy_from_current_release \
+        else species_previous_release_folder_path
 
-    def count_num_species_level_files_in_folder(folder):
-        return int(run_command_with_output("Checking for species level release files in the folder {0}..."
-                                           .format(folder),
-                                           "(ls -1 {0} | {1} | wc -l)".format(folder,
-                                                                              grep_command_for_species_level_files),
-                                           return_process_output=True))
-
-    num_species_level_files_in_staging_release_folder = \
-        count_num_species_level_files_in_folder(species_staging_release_folder_path)
-    num_species_level_files_in_previous_release_folder = \
-        count_num_species_level_files_in_folder(species_previous_release_folder_path)
-
-    if num_species_level_files_in_staging_release_folder == 0:
-        if num_species_level_files_in_previous_release_folder == 0:
-            raise Exception("Unmapped variants file could not be found in current or previous release "
-                            "for taxonomy/species {0}/{1}!".format(taxonomy_id, species_current_release_folder_name))
-        else:
-            # Use hard-linking if copying from previous release
-            source_folder_to_copy_from, copy_command = species_previous_release_folder_path, "ln -f"
-
-    run_command_with_output("Copying species level release files from {0} to {1}..."
-                            .format(source_folder_to_copy_from, species_current_release_folder_path),
-                            "(find {0} -maxdepth 1 -type f | {1} | xargs -i {2} {{}} {3})"
-                            .format(source_folder_to_copy_from, grep_command_for_species_level_files,
-                                    copy_command, species_current_release_folder_path),
-                            return_process_output=True)
+    copy_unmapped_files(source_folder_to_copy_from, species_current_release_folder_path, copy_from_current_release)
 
 
 def publish_release_top_level_files_to_ftp(release_properties):
@@ -300,7 +319,7 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
         # Unmapped variant data is published at the species level
         # because they are not mapped to any assemblies (duh!)
         if species_has_unmapped_data:
-            publish_species_level_files_to_ftp(taxonomy_id, release_properties, species_current_release_folder_name,
+            publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name,
                                                species_previous_release_folder_name)
 
         # Publish assembly level data
