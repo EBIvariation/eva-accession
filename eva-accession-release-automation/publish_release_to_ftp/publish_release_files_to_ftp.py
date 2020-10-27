@@ -265,19 +265,14 @@ def publish_species_level_files_to_ftp(release_properties, species_current_relea
     species_previous_release_folder_path = \
         get_folder_path_for_species(release_properties.public_ftp_previous_release_folder,
                                     species_previous_release_folder_name)
-    run_command_with_output("Creating species release folder {0}...".format(species_current_release_folder_path),
-                            "rm -rf {0} && mkdir {0}".format(species_current_release_folder_path))
 
-    # Unmapped variant data is published at the species level
-    # because they are not mapped to any assemblies (duh!)
-    if species_has_unmapped_data:
-        # Determine if the unmapped data should be copied from the current or a previous release
-        copy_from_current_release = len(glob.glob(os.path.join(species_staging_release_folder_path,
-                                                               unmapped_ids_file_regex))) > 0
-        source_folder_to_copy_from = species_current_release_folder_path if copy_from_current_release \
-            else species_previous_release_folder_path
+    # Determine if the unmapped data should be copied from the current or a previous release
+    copy_from_current_release = len(glob.glob(os.path.join(species_staging_release_folder_path,
+                                                           unmapped_ids_file_regex))) > 0
+    source_folder_to_copy_from = species_current_release_folder_path if copy_from_current_release \
+        else species_previous_release_folder_path
 
-        copy_unmapped_files(source_folder_to_copy_from, species_current_release_folder_path, copy_from_current_release)
+    copy_unmapped_files(source_folder_to_copy_from, species_current_release_folder_path, copy_from_current_release)
 
 
 def publish_release_top_level_files_to_ftp(release_properties):
@@ -298,6 +293,15 @@ def create_requisite_folders(release_properties):
     run_command_with_output("Creating by_assembly folder for the current release...",
                             "mkdir -p " + os.path.join(release_properties.public_ftp_current_release_folder,
                                                        by_assembly_folder_name))
+
+
+def create_species_folder(release_properties, species_current_release_folder_name):
+    species_current_release_folder_path = \
+        get_folder_path_for_species(release_properties.public_ftp_current_release_folder,
+                                    species_current_release_folder_name)
+
+    run_command_with_output("Creating species release folder {0}...".format(species_current_release_folder_path),
+                            "rm -rf {0} && mkdir {0}".format(species_current_release_folder_path))
 
 
 def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
@@ -321,8 +325,15 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
             get_current_and_previous_release_folders_for_taxonomy(taxonomy_id, release_properties,
                                                                   metadata_connection_handle)
 
-        publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name,
-                                           species_previous_release_folder_name, species_has_unmapped_data)
+        create_species_folder(release_properties, species_current_release_folder_name)
+
+        # Unmapped variant data is published at the species level
+        # because they are not mapped to any assemblies (duh!)
+        if species_has_unmapped_data:
+            publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name,
+                                               species_previous_release_folder_name, species_has_unmapped_data)
+
+
 
         # Publish assembly level data
         for current_release_assembly_info in \
