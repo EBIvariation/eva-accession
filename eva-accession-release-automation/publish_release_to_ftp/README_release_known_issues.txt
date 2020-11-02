@@ -6,16 +6,16 @@ being completely or partially excluded from this release. The EVA is working to
 solve the issues so those species can be included in subsequent releases.
 
 Zebu_9915 (GCA_000247795.2)
-This species was completely excluded due to problems with RS IDs clustering SS IDs 
-that map to many different contigs/chromosomes
+Mapped variants from dbSNP for this species could not be released due to technical problems with high cardinality
+multimap variants i.e.,variants that map to too many different contigs/chromosomes
 
-The following species were completely excluded due to inconsistencies in the data:
+Mapped variants from dbSNP for the following species were completely excluded due to inconsistencies in the data:
 Date_palm_42345 (GCA_000413155.1) - Based on the data from dbSNP FTP, the 
 submission batches could not be definitively associated with the variant data
 Plasmodium_5833 (GCA_000002765.1) - Insufficient data from dbSNP FTP
 Trematode_6183 (GCA_000237925.2) - Insufficient data from dbSNP FTP
 
-The following species were completely excluded because an INSDC accessioned assembly 
+Mapped variants from dbSNP for the following species were completely excluded because an INSDC accessioned assembly
 could not be identified for the variant mapping:
 Platypus_9258 (1303499 variants) - No equivalent INSDC accessioned assembly (GCA) for 
 https://www.ncbi.nlm.nih.gov/assembly/GCF_000002275.1/
