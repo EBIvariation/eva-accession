@@ -1,5 +1,11 @@
 EVA RefSNP release 2
 
+Feedback
+==================================
+If you access and use the data stored in the release we would love to hear from you.
+Please fill in this short survey to let us know what you think.
+https://tinyurl.com/evarelease2survey
+
 Definitions
 ==================================
 
