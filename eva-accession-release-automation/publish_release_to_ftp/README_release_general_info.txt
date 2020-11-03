@@ -50,8 +50,8 @@ Folder structure
 The top folder contains folders for browsing the release files by species or by
 assembly accession.
 
-The species folders naming is listed in the file species_name_mapping.tsv in
-the top folder.
+The "species_name_mapping.tsv" file in
+the top-level release folder lists the FTP directory names for the various species and provides cross-references for the common and scientific names.
 
 In each species folder, there are links to the folders of the assemblies
 available for that species, both by assembly name (e.g. GRCm38.p4) and by
