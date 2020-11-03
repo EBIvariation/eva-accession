@@ -15,15 +15,13 @@
 import logging
 import os
 import psycopg2
-import re
-import requests
 import signal
 import traceback
 
-from retry import retry
 from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_taxonomy
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 from ebi_eva_common_pyutils.network_utils import get_available_local_port, forward_remote_port_to_local_port
+from ebi_eva_common_pyutils.taxonomy import taxonomy
 
 logger = logging.getLogger(__name__)
 
@@ -88,28 +86,5 @@ def get_release_db_name_in_tempmongo_instance(taxonomy_id):
     return "acc_" + str(taxonomy_id)
 
 
-@retry(exceptions=(ConnectionError, requests.RequestException), logger=logger,
-       tries=4, delay=2, backoff=1.2, jitter=(1, 3))
-def json_request(url: str, payload: dict = None, method=requests.get) -> dict:
-    """Makes a request of a specified type (by default GET) with the specified URL and payload, attempts to parse the
-    result as a JSON string and return it as a dictionary, on failure raises an exception."""
-    result = method(url, data=payload)
-    result.raise_for_status()
-    return result.json()
-
-
-def get_ensembl_scientific_name(taxonomy_id):
-    ENSEMBL_REST_API_URL = "https://rest.ensembl.org/taxonomy/id/{0}?content-type=application/json".format(taxonomy_id)
-    response = json_request(ENSEMBL_REST_API_URL)
-    if "scientific_name" not in response:
-        raise Exception("Scientific name could not be found for taxonomy {0} using the Ensembl API URL: {1}"
-                        .format(taxonomy_id, ENSEMBL_REST_API_URL))
-    return response["scientific_name"]
-
-
 def get_release_folder_name(taxonomy_id):
-    ensembl_scientific_name = get_ensembl_scientific_name(taxonomy_id)
-    # Match Ensembl representation
-    # See Clostridium sp. SS2/1 represented as clostridium_sp_ss2_1 in
-    # ftp://ftp.ensemblgenomes.org/pub/bacteria/release-48/fasta/bacteria_25_collection/clostridium_sp_ss2_1/
-    return re.sub('[^0-9a-zA-Z]+', '_', ensembl_scientific_name.lower())
+    return taxonomy.get_normalized_scientific_name_from_ensembl(taxonomy_id)
