@@ -3,7 +3,9 @@ import os
 import requests
 import glob
 import xml.etree.ElementTree
-from __init__ import *
+from ebi_eva_common_pyutils.logger import logging_config
+
+logger = logging_config.get_logger(__name__)
 
 
 def get_assembly_name_for_accession(assembly_accession):
@@ -45,13 +47,17 @@ def add_assembly_name_symlink_for_dir(assembly_accession_release_dir):
     os.system('cd {0} && ln -sfT {1} "{2}"'.format(parent_dir, assembly_accession, target_dir_to_create))
 
 
+def create_assembly_name_symlinks(species_dir):
+    for assembly_dir in glob.glob(species_dir + os.path.sep + "GCA_*"):
+        add_assembly_name_symlink_for_dir(assembly_dir)
+
+
 @click.command()
 @click.argument("by_species_dir", nargs=1, type=click.Path(exists=True, resolve_path=True, readable=True))
 def main(by_species_dir):
     for dirinfo in os.walk(by_species_dir):
         species_dir = dirinfo[0]
-        for assembly_dir in glob.glob(species_dir + os.path.sep + "GCA_*"):
-            add_assembly_name_symlink_for_dir(assembly_dir)
+        create_assembly_name_symlinks(species_dir)
 
 
 if __name__ == '__main__':

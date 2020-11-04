@@ -24,7 +24,7 @@ import yaml
 from ebi_eva_common_pyutils.common_utils import merge_two_dicts
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy
-from run_release_in_embassy.release_common_utils import get_ensembl_scientific_name
+from run_release_in_embassy.release_common_utils import get_release_folder_name
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ process {workflow-process-name} {{
 def get_release_properties_for_current_species(common_release_properties, taxonomy_id, memory):
     release_properties = {"taxonomy-id": taxonomy_id, "memory": memory,
                           "species-release-folder": os.path.join(common_release_properties["release-folder"],
-                                                                 get_ensembl_scientific_name(taxonomy_id))}
+                                                                 get_release_folder_name(taxonomy_id))}
     os.makedirs(release_properties["species-release-folder"], exist_ok=True)
     release_properties["timestamp"] = timestamp
     release_properties["release-log-file"] = \

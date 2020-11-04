@@ -1,4 +1,4 @@
-ebi_eva_common_pyutils==0.3.5
+ebi_eva_common_pyutils==0.3.6
 click==7.1.2
 pyyaml==5.3.1
 requests==2.22.0
