@@ -29,6 +29,8 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -41,10 +43,15 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
         new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     private String refseqAssembly;
     private String genbankAssembly;
+    private int previousImportedBuild;
+    private boolean incrementalImport;
 
-    public JsonNodeToClusteredVariantProcessor(String refseqAssembly, String genbankAssembly) {
+    public JsonNodeToClusteredVariantProcessor(String refseqAssembly, String genbankAssembly,
+                                               int previousImportedBuild, boolean incrementalImport) {
         this.refseqAssembly = refseqAssembly;
         this.genbankAssembly = genbankAssembly;
+        this.previousImportedBuild = previousImportedBuild;
+        this.incrementalImport = incrementalImport;
     }
 
     /**
@@ -54,12 +61,42 @@ public class JsonNodeToClusteredVariantProcessor implements ItemProcessor<JsonNo
      */
     public DbsnpClusteredVariantEntity process(JsonNode jsonRootNode) {
         long accession = Long.parseLong(jsonRootNode.path("refsnp_id").asText());
+        // If we are doing incremental import, ignore record if it is not a new RS
+        if(incrementalImport && !isNewRS(jsonRootNode)) {
+            logger.debug("Variant with RS ID {} skipped"
+                            + " because it is not a new RS added after build {}}",
+                    jsonRootNode.path("refsnp_id").asText(), previousImportedBuild);
+            return null;
+        }
         ClusteredVariant clusteredVariant = parseJsonNodeToClusteredVariant(jsonRootNode);
         if(clusteredVariant == null) {
             return null;
         }
         String hashedMessage = hashingFunction.apply(clusteredVariant);
         return new DbsnpClusteredVariantEntity(accession, hashedMessage, clusteredVariant);
+    }
+
+    private boolean isNewRS(JsonNode jsonNode) {
+        // The record of movements between the previous and current release
+        // See https://api.ncbi.nlm.nih.gov/variation/v0/var_service.yaml for definition
+        JsonNode presentObsMovementsNode = jsonNode.path("present_obs_movements");
+        // If the attribute is found, try looking at the earliest build from the list of movements
+        if (!presentObsMovementsNode.isMissingNode()) {
+            Set<Integer> movementBuilds = new HashSet<>();
+            for (JsonNode movementNode : presentObsMovementsNode) {
+                JsonNode lastAddedBuildNode = movementNode.path("last_added_to_this_rs");
+                if (!lastAddedBuildNode.isMissingNode()) {
+                    movementBuilds.add(lastAddedBuildNode.asInt());
+                }
+            }
+            if (!movementBuilds.isEmpty()) {
+                return movementBuilds.stream().reduce(Math::min).orElse(Integer.MAX_VALUE) > previousImportedBuild;
+            }
+        }
+        // If the present_obs_movements attribute is not found, we might as well roll the dice and try importing the RS
+        // If it happens to be a duplicate RS, it will be ignored anyway
+        // Since there should not be a lot of records with this attribute missing, this is a tolerable overhead
+        return true;
     }
 
     private ClusteredVariant parseJsonNodeToClusteredVariant(JsonNode jsonRootNode) {

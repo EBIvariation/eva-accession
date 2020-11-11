@@ -58,7 +58,8 @@ public class JsonNodeToClusteredVariantProcessorConfiguration {
 
     @Bean
     JsonNodeToClusteredVariantProcessor jsonNodeToClusteredVariantProcessor(InputParameters parameters) {
-        return new JsonNodeToClusteredVariantProcessor(parameters.getRefseqAssembly(), parameters.getGenbankAssembly());
+        return new JsonNodeToClusteredVariantProcessor(parameters.getRefseqAssembly(), parameters.getGenbankAssembly(),
+                parameters.getPreviousImportedBuild(), parameters.isIncrementalImport());
     }
 
     @Bean

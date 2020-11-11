@@ -24,6 +24,8 @@ public class InputParameters {
     private String genbankAssembly;
     private String refseqAssembly;
     private String assemblyReportUrl;
+    private int previousImportedBuild;
+    private boolean incrementalImport;
     private int chunkSize;
     private boolean forceRestart;
     private boolean forceImport;
@@ -67,6 +69,22 @@ public class InputParameters {
 
     public void setAssemblyReportUrl(String assemblyReportUrl) {
         this.assemblyReportUrl = assemblyReportUrl;
+    }
+
+    public int getPreviousImportedBuild() {
+        return previousImportedBuild;
+    }
+
+    public void setPreviousImportedBuild(int previousImportedBuild) {
+        this.previousImportedBuild = previousImportedBuild;
+    }
+
+    public boolean isIncrementalImport() {
+        return incrementalImport;
+    }
+
+    public void setIncrementalImport(boolean incrementalImport) {
+        this.incrementalImport = incrementalImport;
     }
 
     public int getChunkSize() {
