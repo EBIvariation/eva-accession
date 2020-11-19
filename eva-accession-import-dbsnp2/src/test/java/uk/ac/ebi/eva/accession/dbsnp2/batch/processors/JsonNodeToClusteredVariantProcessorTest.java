@@ -76,7 +76,8 @@ public class JsonNodeToClusteredVariantProcessorTest {
             variants.add(variant);
         }
         processor = new JsonNodeToClusteredVariantProcessor(inputParameters.getRefseqAssembly(),
-                                                            inputParameters.getGenbankAssembly());
+                                                            inputParameters.getGenbankAssembly(),
+                inputParameters.getPreviousImportedBuild(), inputParameters.isIncrementalImport());
     }
 
     @Test
@@ -138,6 +139,18 @@ public class JsonNodeToClusteredVariantProcessorTest {
             new File("src/test/resources/input-files/test-dbsnp-no-ptlp.json.bz2")));
         reader.open(new ExecutionContext());
         JsonNode variant = reader.read();
+        assertNull(processor.process(variant));
+    }
+
+    @Test
+    public void nullForNotNewRSCheck() throws Exception {
+        reader = new FlatFileItemReader<JsonNode>();
+        reader.setLineMapper(new JsonNodeLineMapper());
+        reader.setResource(new BzipLazyResource(
+                new File("src/test/resources/input-files/test-dbsnp-not-new-rs.json.bz2")));
+        reader.open(new ExecutionContext());
+        JsonNode variant = reader.read();
+        //When a RS is not newer than an old RS
         assertNull(processor.process(variant));
     }
 
