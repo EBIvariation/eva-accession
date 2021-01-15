@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
 
 public class ContigToGenbankReplacerProcessorTest {
@@ -63,7 +64,7 @@ public class ContigToGenbankReplacerProcessorTest {
     @Test
     public void GenbankAndRefseqNotEquivalents() throws Exception {
         IVariant variant = buildMockVariant("chr3");
-        assertEquals("chr3", processor.process(variant).getChromosome());
+        assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
 
     @Test
@@ -75,25 +76,25 @@ public class ContigToGenbankReplacerProcessorTest {
     @Test
     public void GenbankAndRefseqNotEquivalentsGenbankNotPresent() throws Exception {
         IVariant variant = buildMockVariant("chr5");
-        assertEquals("chr5", processor.process(variant).getChromosome());
+        assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
 
     @Test
     public void GenbankAndRefseqNotEquivalentsNonePresent() throws Exception {
         IVariant variant = buildMockVariant("chr7");
-        assertEquals("chr7", processor.process(variant).getChromosome());
+        assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
 
     @Test
     public void ContigNotFoundInAssemblyReport() throws Exception {
         IVariant variant = buildMockVariant("chr");
-        assertEquals("chr", processor.process(variant).getChromosome());
+        assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
 
     @Test
     public void NoGenbankDontConvert() throws Exception {
         IVariant variant = buildMockVariant("chr4");
-        assertEquals("chr4", processor.process(variant).getChromosome());
+        assertThrows(IllegalArgumentException.class, () -> processor.process(variant));
     }
 
     @Test
