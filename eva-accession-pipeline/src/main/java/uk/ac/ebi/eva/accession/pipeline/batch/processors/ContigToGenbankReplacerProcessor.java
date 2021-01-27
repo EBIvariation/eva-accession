@@ -57,11 +57,7 @@ public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant,
         if (contigMapping.isGenbankReplacementPossible(contigName, contigSynonyms, message)) {
             return replaceContigWithGenbankAccession(variant, contigSynonyms);
         } else {
-            if (!processedContigs.contains(contigName)) {
-                logger.warn(message.toString());
-                processedContigs.add(contigName);
-            }
-            return variant;
+            throw new IllegalArgumentException(message.toString() );
         }
     }
 
