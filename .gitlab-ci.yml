@@ -7,6 +7,8 @@ variables:
     WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
     CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
     ACCESSIONING_ARTIFACT_PATH: eva-accession-pipeline/target/eva-accession-pipeline-*.jar
+    CLUSTERING_SYMLINK_NAME: "eva-accession-clustering.jar"
+    ACCESSIONING_SYMLINK_NAME: "eva-accession-pipeline.jar"
     MAVEN_SETTINGS: maven-settings.xml
     URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
     MEDIA_TYPE: application/vnd.github.raw
@@ -155,7 +157,7 @@ deploy-clustering-jar-development:
         ENVIRONMENT_NAME: development
         ARTIFACT_PATH: $CLUSTERING_ARTIFACT_PATH
         DEPLOY_DIRECTORY_PATH: $CLUSTERING_DEVELOPMENT_PATH
-        SYMLINK_NAME: "eva-accession-clustering.jar"
+        SYMLINK_NAME: $CLUSTERING_SYMLINK_NAME
     dependencies:
         - package-development
     only:
@@ -168,19 +170,33 @@ deploy-accessioning-jar-development:
         ENVIRONMENT_NAME: development
         ARTIFACT_PATH: $ACCESSIONING_ARTIFACT_PATH
         DEPLOY_DIRECTORY_PATH: $ACCESSIONING_DEVELOPMENT_PATH
-        SYMLINK_NAME: "eva-accession-pipeline.jar"
+        SYMLINK_NAME: $ACCESSIONING_SYMLINK_NAME
     dependencies:
         - package-development
     only:
         - master
         - EVA-1883
 
-deploy-jar-production:
+deploy-clustering-jar-production:
     extends: .deploy-jar
     when: manual
     variables:
         ENVIRONMENT_NAME: production
-        CLUSTERING_PATH: $CLUSTERING_PRODUCTION_PATH
+        ARTIFACT_PATH: $CLUSTERING_ARTIFACT_PATH
+        DEPLOY_DIRECTORY_PATH: $CLUSTERING_PRODUCTION_PATH
+        SYMLINK_NAME: $CLUSTERING_SYMLINK_NAME
+    dependencies:
+        - package-production
+    only:
+        - tags
+
+deploy-accessioning-jar-production:
+    extends: .deploy-jar
+    when: manual
+    variables:
+        ARTIFACT_PATH: $ACCESSIONING_ARTIFACT_PATH
+        DEPLOY_DIRECTORY_PATH: $ACCESSIONING_PRODUCTION_PATH
+        SYMLINK_NAME: $ACCESSIONING_SYMLINK_NAME
     dependencies:
         - package-production
     only:
