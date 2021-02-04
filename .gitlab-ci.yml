@@ -162,7 +162,6 @@ deploy-clustering-jar-development:
         - package-development
     only:
         - master
-        - EVA-1883
 
 deploy-accessioning-jar-development:
     extends: .deploy-jar
@@ -175,7 +174,6 @@ deploy-accessioning-jar-development:
         - package-development
     only:
         - master
-        - EVA-1883
 
 deploy-clustering-jar-production:
     extends: .deploy-jar
