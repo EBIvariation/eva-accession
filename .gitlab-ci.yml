@@ -6,6 +6,7 @@ stages:
 variables:
     WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
     CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
+    ACCESSIONING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-pipeline-*.jar
     MAVEN_SETTINGS: maven-settings.xml
     URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
     MEDIA_TYPE: application/vnd.github.raw
@@ -17,7 +18,7 @@ test:
         - mongo:3.2.17
     script:
         # Gitlab exposes services under their own hostnames. So test host should be "mongo" instead of "localhost".
-        - mvn clean test --projects 'eva-accession-core,eva-accession-ws' -Deva.mongo.host.test=mongo
+        - mvn clean test --projects 'eva-accession-core,eva-accession-ws,eva-accession-remapping,eva-accession-clustering,eva-accession-pipeline' -Deva.mongo.host.test=mongo
     environment:
         name: test-env
     only:
@@ -35,7 +36,7 @@ test:
         - apk add --update curl
         - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $URL_MAVEN_SETTINGS > $MAVEN_SETTINGS
     script:
-        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-remapping,eva-accession-clustering ' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
+        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-accession-remapping,eva-accession-clustering,eva-accession-pipeline' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
         - cp eva-accession-ws/target/eva*.war $WS_ARTIFACT_PATH
     after_script:
         - rm $MAVEN_SETTINGS
@@ -43,6 +44,7 @@ test:
         paths:
             - $WS_ARTIFACT_PATH
             - $CLUSTERING_ARTIFACT_PATH
+            - $ACCESSIONING_ARTIFACT_PATH
 
 package-internal:
     extends: .package
@@ -59,6 +61,7 @@ package-development:
         MAVEN_PROFILE: development
     only:
         - master
+        - EVA-1883
 
 package-production:
     extends: .package
@@ -141,20 +144,36 @@ deploy-tomcat-production-fallback:
         - apk add --update openssh-client
         - eval "$(ssh-agent)"
         - echo "$EVA_ETL_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-        - TMP_NAME=$(basename $(ls $CLUSTERING_ARTIFACT_PATH))
-        - CLUSTERING_ARTIFACT_NAME=${TMP_NAME%%.jar}-${ENVIRONMENT_NAME}.jar
-        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CLUSTERING_ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE}:${CLUSTERING_PATH}/${CLUSTERING_ARTIFACT_NAME}
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE} "ln -fns ${CLUSTERING_PATH}/${CLUSTERING_ARTIFACT_NAME} ${CLUSTERING_PATH}/eva-accession-clustering.jar"
+        - TMP_NAME=$(basename $(ls $ARTIFACT_PATH))
+        - ARTIFACT_NAME=${TMP_NAME%%.jar}-${ENVIRONMENT_NAME}.jar
+        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE}:${DEPLOY_DIRECTORY_PATH}/${ARTIFACT_NAME}
+        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE} "ln -fns ${DEPLOY_DIRECTORY_PATH}/${ARTIFACT_NAME} ${DEPLOY_DIRECTORY_PATH}/{SYMLINK_NAME}"
 
-deploy-jar-development:
+deploy-clustering-jar-development:
     extends: .deploy-jar
     variables:
         ENVIRONMENT_NAME: development
-        CLUSTERING_PATH: $CLUSTERING_DEVELOPMENT_PATH
+        ARTIFACT_PATH: $CLUSTERING_ARTIFACT_PATH
+        DEPLOY_DIRECTORY_PATH: $CLUSTERING_DEVELOPMENT_PATH
+        SYMLINK_NAME: "eva-accession-clustering.jar"
     dependencies:
         - package-development
     only:
         - master
+        - EVA-1883
+
+deploy-accessioning-jar-development:
+    extends: .deploy-jar
+    variables:
+        ENVIRONMENT_NAME: development
+        ARTIFACT_PATH: $ACCESSIONING_ARTIFACT_PATH
+        DEPLOY_DIRECTORY_PATH: $ACCESSIONING_DEVELOPMENT_PATH
+        SYMLINK_NAME: "eva-accession-pipeline.jar"
+    dependencies:
+        - package-development
+    only:
+        - master
+        - EVA-1883
 
 deploy-jar-production:
     extends: .deploy-jar
