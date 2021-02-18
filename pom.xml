@@ -129,15 +129,15 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>eva-releases</id>
-            <url>https://oss.jfrog.org/artifactory/libs-release</url>
+            <id>eva-artifactory-releases</id>
+            <url>https://evaebi.jfrog.io/artifactory/libs-release</url>
         </repository>
         <repository>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-            <id>eva-snapshots</id>
-            <url>https://oss.jfrog.org/artifactory/libs-snapshot</url>
+            <id>eva-artifactory-snapshots</id>
+            <url>https://evaebi.jfrog.io/artifactory/libs-snapshot</url>
         </repository>
     </repositories>
 
