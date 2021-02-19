@@ -23,6 +23,7 @@ jobs:
         run: |
           sudo apt-get install software-properties-common && sudo apt-add-repository universe && sudo apt-get update && sudo apt-get install maven -y
           curl -v -X GET --url "${URL_MAVEN_SETTINGS}" -u '${{ secrets.GH_USERNAME }}:${{ secrets.GH_TOKEN }}' --header "Accept:${MEDIA_TYPE}" > ${{ matrix.MAVEN_SETTINGS }}
+          cat ${{ matrix.MAVEN_SETTINGS }}
         env:
           URL_MAVEN_SETTINGS: ${{ 'https://api.github.com/repos/EBIVariation/configuration/contents/eva-maven-settings.xml?ref=ops/migrate_to_new_jfrog_artifactory' }}
           MEDIA_TYPE: ${{ 'application/vnd.github.raw' }}
