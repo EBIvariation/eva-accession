@@ -126,18 +126,16 @@
 
     <repositories>
         <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>eva-releases</id>
-            <url>https://oss.jfrog.org/artifactory/libs-release</url>
-        </repository>
-        <repository>
+            <id>cloudsmith</id>
+            <url>https://dl.cloudsmith.io/public/ebivariation/packages/maven/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </releases>
             <snapshots>
                 <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
             </snapshots>
-            <id>eva-snapshots</id>
-            <url>https://oss.jfrog.org/artifactory/libs-snapshot</url>
         </repository>
     </repositories>
 
