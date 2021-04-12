@@ -20,10 +20,12 @@ test:
         - mongo:3.2.17
     script:
         # Gitlab exposes services under their own hostnames. So test host should be "mongo" instead of "localhost".
-        - mvn clean test --projects 'eva-accession-core,eva-accession-ws,eva-accession-remapping,eva-accession-clustering,eva-accession-pipeline' -Deva.mongo.host.test=mongo
+#        - mvn clean test --projects 'eva-accession-core,eva-accession-ws,eva-accession-remapping,eva-accession-clustering,eva-accession-pipeline' -Deva.mongo.host.test=mongo
+        - mvn clean test --projects 'eva-accession-core,eva-accession-ws,eva-accession-clustering' -Deva.mongo.host.test=mongo
     environment:
         name: test-env
     only:
+        - fix/mongo-error-gitlab-deployment
         - master
         - tags
 
