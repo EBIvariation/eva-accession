@@ -13,6 +13,9 @@ variables:
     URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
     MEDIA_TYPE: application/vnd.github.raw
 
+before_script:
+    - echo $DOCKER_AUTH_CONFIG > $HOME/.docker/config.json
+
 test:
     stage: test
     image: maven:3.6.1-jdk-8-alpine
