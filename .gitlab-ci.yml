@@ -24,7 +24,6 @@ test:
     environment:
         name: test-env
     only:
-        - fix/mongo-error-gitlab-deployment
         - master
         - tags
 
