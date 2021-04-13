@@ -55,5 +55,32 @@
                 </executions>
             </plugin>
         </plugins>
+
+        <testResources>
+            <testResource>
+                <directory>src/test/resources/properties</directory>
+                <filtering>true</filtering>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources/</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>src/test/resources/properties/*</exclude>
+                </excludes>
+            </testResource>
+        </testResources>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources/</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
     </build>
+
+    <properties>
+        <eva.mongo.host.test>localhost</eva.mongo.host.test>
+    </properties>
+
 </project>
