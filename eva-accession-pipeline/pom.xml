@@ -58,8 +58,15 @@
 
         <testResources>
             <testResource>
-                <directory>src/test/resources/</directory>
+                <directory>src/test/resources/properties</directory>
                 <filtering>true</filtering>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources/</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>src/test/resources/properties/*</exclude>
+                </excludes>
             </testResource>
         </testResources>
 
