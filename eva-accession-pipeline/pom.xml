@@ -7,7 +7,7 @@
     <parent>
         <artifactId>eva-accession</artifactId>
         <groupId>uk.ac.ebi.eva</groupId>
-        <version>0.4.6</version>
+        <version>0.4.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>eva-accession-pipeline</artifactId>
