@@ -1,0 +1,16 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id": "BAE8C696D28B3173552AF2A5692FE29E65A18024",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "T",
+      "alt": "A",
+      "accession": NumberLong(5000000001),
+      "version": 1
+    }
+  ]
+}
