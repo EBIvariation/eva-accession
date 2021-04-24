@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 EMBL - European Bioinformatics Institute
+ * Copyright 2021 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.eva.ingest.remapped.configuration.batch.processors;
+package uk.ac.ebi.eva.ingest.remapped.configuration;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.ingest.remapped.batch.processors.VariantToSubmittedVariantEntityRemappedProcessor;
 import uk.ac.ebi.eva.ingest.remapped.parameters.InputParameters;
 
 @Configuration
-public class VariantToSubmittedVariantEntityRemappedProcessorConfiguration {
+public class InputParametersConfiguration {
 
-    @Bean("VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR")
-    public VariantToSubmittedVariantEntityRemappedProcessor variantToSubmittedVariantEntityRemappedProcessor(
-            InputParameters inputParameters) {
-        return new VariantToSubmittedVariantEntityRemappedProcessor(inputParameters.getAssemblyAccession(),
-                                                                    inputParameters.getRemappedFrom());
+    @Bean
+    @ConfigurationProperties(prefix = "parameters")
+    public InputParameters inputParameters() {
+        return new InputParameters();
     }
-
 }

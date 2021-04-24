@@ -20,7 +20,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantRemappedEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -28,24 +28,29 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.function.Function;
 
-public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemProcessor<Variant, SubmittedVariantEntity> {
+public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemProcessor<Variant,
+        SubmittedVariantRemappedEntity> {
 
     private String assemblyAccession;
 
+    private String remappedFrom;
+
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession) {
-        if (assemblyAccession == null) {
-            throw new IllegalArgumentException("assembly accession must be provided when reading from a VCF");
+    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession, String remappedFrom) {
+        if (assemblyAccession == null || remappedFrom == null) {
+            throw new IllegalArgumentException("assembly accession and assembly remapped from must be provided");
         }
         this.assemblyAccession = assemblyAccession;
+        this.remappedFrom = remappedFrom;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @Override
-    public SubmittedVariantEntity process(Variant variant) throws Exception {
+    public SubmittedVariantRemappedEntity process(Variant variant) throws Exception {
         long accession = Long.parseLong(variant.getMainId().substring(2));
         VariantSourceEntry sourceEntry = variant.getSourceEntries().iterator().next();
+
         String projectAccession = sourceEntry.getAttribute(VariantContextWriter.PROJECT_KEY);
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, projectAccession,
@@ -53,8 +58,10 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
                                                                  variant.getReference(), variant.getAlternate(), null);
 
         String hash = hashingFunction.apply(submittedVariant);
-        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(accession, hash,
-                                                                                   submittedVariant, 1);
-        return submittedVariantEntity;
+        SubmittedVariantRemappedEntity submittedVariantRemappedEntity = new SubmittedVariantRemappedEntity(accession,
+                                                                                                           hash,
+                                                                                                           submittedVariant,
+                                                                                                           remappedFrom);
+        return submittedVariantRemappedEntity;
     }
 }

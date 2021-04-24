@@ -21,7 +21,6 @@ import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +30,8 @@ import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -77,6 +78,9 @@ public class IngestRemappedFromVcfStepConfigurationTest {
     public void runStep() {
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(4, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+
+        Query query = new Query(Criteria.where("remappedFrom").exists(true));
+        assertEquals(2, mongoTemplate.find(query, SubmittedVariantEntity.class).size());
     }
 }

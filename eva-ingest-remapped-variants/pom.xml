@@ -19,10 +19,6 @@
         </dependency>
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
-            <artifactId>eva-accession-clustering</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>variation-commons-batch</artifactId>
         </dependency>
         <dependency>

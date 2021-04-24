@@ -19,28 +19,26 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantRemappedEntity;
 
 import java.util.List;
 
-public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVariantEntity> {
+import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.SUBMITTED_VARIANT_ENTITY;
+
+public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVariantRemappedEntity> {
 
     private MongoTemplate mongoTemplate;
 
-    private SubmittedVariantAccessioningService submittedVariantAccessioningService;
-
-    public RemappedSubmittedVariantsWriter(MongoTemplate mongoTemplate,
-                                           SubmittedVariantAccessioningService submittedVariantAccessioningService) {
+    public RemappedSubmittedVariantsWriter(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.submittedVariantAccessioningService = submittedVariantAccessioningService;
     }
 
     @Override
-    public void write(List<? extends SubmittedVariantEntity> submittedVariants) throws Exception {
+    public void write(List<? extends SubmittedVariantRemappedEntity> submittedVariantsRemapped) throws Exception {
         BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              SubmittedVariantEntity.class);
-        bulkOperations.insert(submittedVariants);
+                                                              SubmittedVariantRemappedEntity.class,
+                                                              SUBMITTED_VARIANT_ENTITY);
+        bulkOperations.insert(submittedVariantsRemapped);
         bulkOperations.execute();
     }
 }

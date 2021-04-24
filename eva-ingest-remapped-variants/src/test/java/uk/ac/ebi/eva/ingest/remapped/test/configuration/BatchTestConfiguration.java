@@ -25,13 +25,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import uk.ac.ebi.eva.ingest.remapped.configuration.batch.io.IngestRemappedSubmittedVariantsWriterConfiguration;
+import uk.ac.ebi.eva.ingest.remapped.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.ingest.remapped.configuration.batch.jobs.IngestRemappedVariantsFromVcfJobConfiguration;
 import uk.ac.ebi.eva.ingest.remapped.configuration.batch.processors.VariantToSubmittedVariantEntityRemappedProcessorConfiguration;
 import uk.ac.ebi.eva.ingest.remapped.configuration.batch.steps.IngestRemappedFromVcfStepConfiguration;
+import uk.ac.ebi.eva.ingest.remapped.configuration.policies.ChunkSizeCompletionPolicyConfiguration;
 
 import javax.sql.DataSource;
 

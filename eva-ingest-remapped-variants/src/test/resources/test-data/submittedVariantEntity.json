@@ -1,13 +1,25 @@
 {
   "submittedVariantEntity": [
     {
-      "_id": "BAE8C696D28B3173552AF2A5692FE29E65A18024",
+      "_id": "CD3FC3E21AB428EA21F811EA3B80E40B80C88EFA",
       "seq": "GCA_000000001.1",
       "tax": 1000,
-      "study": "projectId_1",
-      "contig": "1",
-      "start": NumberLong(1000),
-      "ref": "T",
+      "study": "projectId1",
+      "contig": "chr1",
+      "start": NumberLong(98),
+      "ref": "C",
+      "alt": "CG",
+      "accession": NumberLong(5000000000),
+      "version": 1
+    },
+    {
+      "_id": "7F02A902A6CEFD8D2EDE5AB9AEB3FACDD22F19B5",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId1",
+      "contig": "chr1",
+      "start": NumberLong(1078),
+      "ref": "G",
       "alt": "A",
       "accession": NumberLong(5000000001),
       "version": 1

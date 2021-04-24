@@ -1,5 +1,6 @@
 /*
- * Copyright 2020 EMBL - European Bioinformatics Institute
+ *
+ * Copyright 2021 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,23 +13,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
-package uk.ac.ebi.eva.ingest.remapped.configuration.batch.processors;
+package uk.ac.ebi.eva.ingest.remapped.configuration.policies;
 
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.ingest.remapped.batch.processors.VariantToSubmittedVariantEntityRemappedProcessor;
 import uk.ac.ebi.eva.ingest.remapped.parameters.InputParameters;
 
 @Configuration
-public class VariantToSubmittedVariantEntityRemappedProcessorConfiguration {
+public class ChunkSizeCompletionPolicyConfiguration {
 
-    @Bean("VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR")
-    public VariantToSubmittedVariantEntityRemappedProcessor variantToSubmittedVariantEntityRemappedProcessor(
-            InputParameters inputParameters) {
-        return new VariantToSubmittedVariantEntityRemappedProcessor(inputParameters.getAssemblyAccession(),
-                                                                    inputParameters.getRemappedFrom());
+    @Bean
+    @StepScope
+    public SimpleCompletionPolicy chunkSizeCompletionPolicy(InputParameters inputParameters) {
+        return new SimpleCompletionPolicy(inputParameters.getChunkSize());
     }
 
 }

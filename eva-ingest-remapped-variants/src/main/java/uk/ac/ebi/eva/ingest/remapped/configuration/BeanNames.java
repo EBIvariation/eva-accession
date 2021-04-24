@@ -17,6 +17,8 @@ package uk.ac.ebi.eva.ingest.remapped.configuration;
 
 public class BeanNames {
 
+    public static final String SUBMITTED_VARIANT_ENTITY = "submittedVariantEntity";
+
     public static final String VCF_READER = "VCF_READER";
 
     public static final String VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR =

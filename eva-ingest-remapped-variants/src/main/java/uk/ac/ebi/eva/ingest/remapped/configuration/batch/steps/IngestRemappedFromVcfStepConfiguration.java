@@ -27,19 +27,10 @@ import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.ClusteringVariantProcessorConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantRemappedEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR;
 import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.REMAPPED_SUBMITTED_VARIANTS_WRITER;
 import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR;
@@ -47,18 +38,17 @@ import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.VCF_READER;
 
 @Configuration
 @EnableBatchProcessing
-@Import({VcfReaderConfiguration.class})
 public class IngestRemappedFromVcfStepConfiguration {
 
     @Bean(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP)
     public Step ingestRemappedFromVcf(
             @Qualifier(VCF_READER) ItemReader<Variant> vcfReader,
-            @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR) ItemProcessor<Variant, SubmittedVariantEntity> processor,
-            @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR) ItemProcessor<Variant, SubmittedVariantRemappedEntity> processor,
+            @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantRemappedEntity> submittedVariantWriter,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP)
-                                             .<Variant, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+                                             .<Variant, SubmittedVariantRemappedEntity>chunk(chunkSizeCompletionPolicy)
                                              .reader(vcfReader)
                                              .processor(processor)
                                              .writer(submittedVariantWriter)
