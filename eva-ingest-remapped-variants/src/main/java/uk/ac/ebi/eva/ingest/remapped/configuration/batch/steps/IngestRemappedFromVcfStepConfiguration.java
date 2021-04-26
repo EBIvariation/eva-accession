@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantRemappedEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP;
@@ -43,12 +43,12 @@ public class IngestRemappedFromVcfStepConfiguration {
     @Bean(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP)
     public Step ingestRemappedFromVcf(
             @Qualifier(VCF_READER) ItemReader<Variant> vcfReader,
-            @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR) ItemProcessor<Variant, SubmittedVariantRemappedEntity> processor,
-            @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantRemappedEntity> submittedVariantWriter,
+            @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR) ItemProcessor<Variant, SubmittedVariantEntity> processor,
+            @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP)
-                                             .<Variant, SubmittedVariantRemappedEntity>chunk(chunkSizeCompletionPolicy)
+                                             .<Variant, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
                                              .reader(vcfReader)
                                              .processor(processor)
                                              .writer(submittedVariantWriter)

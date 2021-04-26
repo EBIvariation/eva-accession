@@ -20,16 +20,17 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantRemappedEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.function.Function;
 
 public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemProcessor<Variant,
-        SubmittedVariantRemappedEntity> {
+        SubmittedVariantEntity> {
+
+    public static final String PROJECT_KEY = "PROJECT";
 
     private String assemblyAccession;
 
@@ -47,21 +48,20 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
     }
 
     @Override
-    public SubmittedVariantRemappedEntity process(Variant variant) throws Exception {
+    public SubmittedVariantEntity process(Variant variant) throws Exception {
         long accession = Long.parseLong(variant.getMainId().substring(2));
         VariantSourceEntry sourceEntry = variant.getSourceEntries().iterator().next();
 
-        String projectAccession = sourceEntry.getAttribute(VariantContextWriter.PROJECT_KEY);
+        String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
                                                                  variant.getReference(), variant.getAlternate(), null);
 
         String hash = hashingFunction.apply(submittedVariant);
-        SubmittedVariantRemappedEntity submittedVariantRemappedEntity = new SubmittedVariantRemappedEntity(accession,
-                                                                                                           hash,
-                                                                                                           submittedVariant,
-                                                                                                           remappedFrom);
+        SubmittedVariantEntity submittedVariantRemappedEntity = new SubmittedVariantEntity(accession, hash,
+                                                                                           submittedVariant, 1,
+                                                                                           remappedFrom);
         return submittedVariantRemappedEntity;
     }
 }

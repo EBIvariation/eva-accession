@@ -25,6 +25,8 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 
+import java.util.Objects;
+
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVariant, Long> implements ISubmittedVariant {
 
@@ -64,7 +66,16 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     @Field("validated")
     private Boolean validated;
 
+    private String remappedFrom;
+
     protected SubmittedVariantEntity() {
+    }
+
+    //Constructor to be used to store remapped submitted variants
+    public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version,
+                                  String remappedFrom) {
+        this(accession, hashedMessage, model, version);
+        this.remappedFrom = remappedFrom;
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
@@ -232,6 +243,14 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         }
     }
 
+    public String getRemappedFrom() {
+        return remappedFrom;
+    }
+
+    public void setRemappedFrom(String remappedFrom) {
+        this.remappedFrom = remappedFrom;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -278,6 +297,9 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         if (allelesMatch != null ? !allelesMatch.equals(that.allelesMatch) : that.allelesMatch != null) {
             return false;
         }
+        if (!Objects.equals(remappedFrom, that.remappedFrom)) {
+            return false;
+        }
         return validated != null ? validated.equals(that.validated) : that.validated == null;
     }
 
@@ -295,6 +317,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
         result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
         result = 31 * result + (validated != null ? validated.hashCode() : 0);
+        result = 31 * result + (remappedFrom != null ? remappedFrom.hashCode() : 0);
         return result;
     }
 
@@ -313,6 +336,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
                 ", assemblyMatch=" + assemblyMatch +
                 ", allelesMatch=" + allelesMatch +
                 ", validated=" + validated +
+                ", remappedFrom=" + remappedFrom +
                 '}';
     }
 }

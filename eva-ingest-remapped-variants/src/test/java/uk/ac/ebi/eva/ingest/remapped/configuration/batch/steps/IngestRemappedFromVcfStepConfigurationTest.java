@@ -54,6 +54,8 @@ public class IngestRemappedFromVcfStepConfigurationTest {
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
+    public static final String REMAPPED_FROM = "GCA_000000001.1";
+
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
@@ -80,7 +82,7 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         assertEquals(4, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
-        Query query = new Query(Criteria.where("remappedFrom").exists(true));
-        assertEquals(2, mongoTemplate.find(query, SubmittedVariantEntity.class).size());
+        Query remappedVariants = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
+        assertEquals(2, mongoTemplate.find(remappedVariants, SubmittedVariantEntity.class).size());
     }
 }
