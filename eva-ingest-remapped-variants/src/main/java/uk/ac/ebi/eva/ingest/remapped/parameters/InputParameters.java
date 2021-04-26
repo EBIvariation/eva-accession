@@ -22,8 +22,6 @@ public class InputParameters {
 
     private String vcf;
 
-    private String projectAccession;
-
     private String remappedFrom;
 
     private String assemblyAccession;
@@ -38,14 +36,6 @@ public class InputParameters {
 
     public void setVcf(String vcf) {
         this.vcf = vcf;
-    }
-
-    public String getProjectAccession() {
-        return projectAccession;
-    }
-
-    public void setProjectAccession(String projectAccession) {
-        this.projectAccession = projectAccession;
     }
 
     public String getRemappedFrom() {
@@ -84,7 +74,6 @@ public class InputParameters {
         return new JobParametersBuilder()
                 .addString("remappedFrom", remappedFrom)
                 .addString("assemblyAccession", assemblyAccession)
-                .addString("projectAccession", projectAccession)
                 .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
