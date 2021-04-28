@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -92,8 +93,17 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
+    @Before
+    public void setUp() throws Exception {
+        this.cleanSlate();
+    }
+
     @After
     public void tearDown() throws Exception {
+        this.cleanSlate();
+    }
+
+    public void cleanSlate() throws Exception {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
