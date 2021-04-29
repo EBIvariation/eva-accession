@@ -73,6 +73,7 @@ public class RecoveringAccessioningConfiguration {
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNCOMMITTED_ACCESSION, "hash-10", model, 1);
 
         repository.save(entity);
+
         logger.warn(
                 "Saved an entity without committing its accession {} in the block service. This should only appear in"
                 + " tests.",

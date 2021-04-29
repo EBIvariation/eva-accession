@@ -26,12 +26,15 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
@@ -44,8 +47,11 @@ import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.pipeline.test.RecoveringAccessioningConfiguration;
+import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -101,6 +107,7 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     @After
     public void tearDown() throws Exception {
         this.cleanSlate();
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     public void cleanSlate() throws Exception {
@@ -108,13 +115,14 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     /**
      * Note that for this test to work, we prepare the Mongo database in {@link RecoveringAccessioningConfiguration}.
      */
     @Test
+    @Sql(scripts="classpath:test-data/contiguous_id_blocks_data.sql", executionPhase =
+            Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     public void accessionJobShouldRecoverUncommittedAccessions() throws Exception {
         startWithAnAccessionInMongoNotCommittedInTheBlockService();
 
