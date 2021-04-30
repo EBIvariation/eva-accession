@@ -72,6 +72,7 @@ public class RecoveringAccessioningConfiguration {
 
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNCOMMITTED_ACCESSION, "hash-10", model, 1);
 
+        repository.deleteAll();
         repository.save(entity);
 
         logger.warn(
