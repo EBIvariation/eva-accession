@@ -74,7 +74,6 @@ public class RecoveringAccessioningConfiguration {
 
         repository.deleteAll();
         repository.save(entity);
-
         logger.warn(
                 "Saved an entity without committing its accession {} in the block service. This should only appear in"
                 + " tests.",
