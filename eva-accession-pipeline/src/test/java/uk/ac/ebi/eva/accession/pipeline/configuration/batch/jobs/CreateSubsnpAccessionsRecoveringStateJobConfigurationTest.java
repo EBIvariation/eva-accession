@@ -121,8 +121,6 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
      * Note that for this test to work, we prepare the Mongo database in {@link RecoveringAccessioningConfiguration}.
      */
     @Test
-    @Sql(scripts="classpath:test-data/contiguous_id_blocks_data.sql", executionPhase =
-            Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     public void accessionJobShouldRecoverUncommittedAccessions() throws Exception {
         startWithAnAccessionInMongoNotCommittedInTheBlockService();
 
