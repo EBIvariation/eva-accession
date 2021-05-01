@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.ingest.remapped.batch.processors;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
@@ -31,6 +32,8 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         SubmittedVariantEntity> {
 
     public static final String PROJECT_KEY = "PROJECT";
+
+    public static final String RS_KEY = "RS";
 
     private String assemblyAccession;
 
@@ -53,10 +56,11 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         VariantSourceEntry sourceEntry = variant.getSourceEntries().iterator().next();
 
         String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
+        Long rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).replaceAll("[^0-9]", ""));
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
-                                                                 variant.getReference(), variant.getAlternate(), null);
+                                                                 variant.getReference(), variant.getAlternate(), rsId);
 
         String hash = hashingFunction.apply(submittedVariant);
         SubmittedVariantEntity submittedVariantRemappedEntity = new SubmittedVariantEntity(accession, hash,

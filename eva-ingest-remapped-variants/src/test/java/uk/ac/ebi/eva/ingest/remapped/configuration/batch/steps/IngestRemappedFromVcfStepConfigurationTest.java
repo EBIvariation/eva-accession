@@ -21,6 +21,7 @@ import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,10 +37,17 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.ingest.remapped.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.ingest.remapped.test.rule.FixSpringMongoDbRule;
+
+import java.util.List;
+import java.util.function.Function;
 
 import static junit.framework.TestCase.assertEquals;
 import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP;
@@ -54,7 +62,13 @@ public class IngestRemappedFromVcfStepConfigurationTest {
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
+    public static final String PROJECT_ACCESSION = "projectId_1";
+
+    public static final String ASSEMBLY_ACCESSION = "GCA_000000001.2";
+
     public static final String REMAPPED_FROM = "GCA_000000001.1";
+
+    private Function<ISubmittedVariant, String> hashingFunction;
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -70,6 +84,11 @@ public class IngestRemappedFromVcfStepConfigurationTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
+    @Before
+    public void setUp() throws Exception {
+        hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+    }
+
     @After
     public void tearDown() {
         mongoTemplate.getDb().drop();
@@ -82,7 +101,21 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         assertEquals(4, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
-        Query remappedVariants = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
-        assertEquals(2, mongoTemplate.find(remappedVariants, SubmittedVariantEntity.class).size());
+        Query remappedVariantsQuery = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
+        List<SubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
+                                                                           SubmittedVariantEntity.class);
+        assertEquals(2, remappedVariants.size());
+
+        SubmittedVariant variant1 = new SubmittedVariant(ASSEMBLY_ACCESSION, 1000, PROJECT_ACCESSION, "chr2", 98L, "C", "CG", 3000000000L);
+        SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(5000000000L, variant1);
+        submittedVariantEntity1.setRemappedFrom(REMAPPED_FROM);
+
+        assertEquals(submittedVariantEntity1, remappedVariants.get(0));
+    }
+
+    private SubmittedVariantEntity createSubmittedVariantEntity(Long accession, SubmittedVariant submittedVariant) {
+        String hash = hashingFunction.apply(submittedVariant);
+        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(accession, hash, submittedVariant, 1);
+        return submittedVariantEntity;
     }
 }
