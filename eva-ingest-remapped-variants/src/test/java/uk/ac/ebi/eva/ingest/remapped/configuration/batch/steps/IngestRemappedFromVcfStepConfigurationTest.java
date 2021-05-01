@@ -106,7 +106,8 @@ public class IngestRemappedFromVcfStepConfigurationTest {
                                                                            SubmittedVariantEntity.class);
         assertEquals(2, remappedVariants.size());
 
-        SubmittedVariant variant1 = new SubmittedVariant(ASSEMBLY_ACCESSION, 1000, PROJECT_ACCESSION, "chr2", 98L, "C", "CG", 3000000000L);
+        SubmittedVariant variant1 = new SubmittedVariant(ASSEMBLY_ACCESSION, 1000, PROJECT_ACCESSION, "chr2", 99L, "",
+                                                         "G", 3000000000L);
         SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(5000000000L, variant1);
         submittedVariantEntity1.setRemappedFrom(REMAPPED_FROM);
 

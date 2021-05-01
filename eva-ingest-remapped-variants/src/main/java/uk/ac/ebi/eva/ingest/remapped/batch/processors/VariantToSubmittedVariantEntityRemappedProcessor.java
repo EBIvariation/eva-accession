@@ -60,7 +60,7 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         VariantSourceEntry sourceEntry = variant.getSourceEntries().iterator().next();
 
         String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
-        Long rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).replaceAll("[^0-9]", ""));
+        Long rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).substring(2));
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
