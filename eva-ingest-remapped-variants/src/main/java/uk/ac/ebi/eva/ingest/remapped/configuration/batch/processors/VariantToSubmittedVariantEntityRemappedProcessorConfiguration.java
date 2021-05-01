@@ -21,13 +21,16 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.ingest.remapped.batch.processors.VariantToSubmittedVariantEntityRemappedProcessor;
 import uk.ac.ebi.eva.ingest.remapped.parameters.InputParameters;
 
+import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR;
+
 @Configuration
 public class VariantToSubmittedVariantEntityRemappedProcessorConfiguration {
 
-    @Bean("VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR")
+    @Bean(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR)
     public VariantToSubmittedVariantEntityRemappedProcessor variantToSubmittedVariantEntityRemappedProcessor(
             InputParameters inputParameters) {
         return new VariantToSubmittedVariantEntityRemappedProcessor(inputParameters.getAssemblyAccession(),
+                                                                    inputParameters.getTaxonomyAccession(),
                                                                     inputParameters.getRemappedFrom());
     }
 

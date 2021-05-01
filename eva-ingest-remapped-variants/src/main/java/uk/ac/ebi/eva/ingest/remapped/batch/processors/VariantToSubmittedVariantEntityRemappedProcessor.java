@@ -37,15 +37,19 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
 
     private String assemblyAccession;
 
+    private int taxonomyAccession;
+
     private String remappedFrom;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession, String remappedFrom) {
+    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession, int taxonomyAccession,
+                                                            String remappedFrom) {
         if (assemblyAccession == null || remappedFrom == null) {
             throw new IllegalArgumentException("assembly accession and assembly remapped from must be provided");
         }
         this.assemblyAccession = assemblyAccession;
+        this.taxonomyAccession = taxonomyAccession;
         this.remappedFrom = remappedFrom;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
@@ -58,7 +62,7 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
         Long rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).replaceAll("[^0-9]", ""));
 
-        SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, 0, projectAccession,
+        SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
                                                                  variant.getReference(), variant.getAlternate(), rsId);
 

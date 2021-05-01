@@ -26,6 +26,8 @@ public class InputParameters {
 
     private String assemblyAccession;
 
+    private int taxonomyAccession;
+
     private int chunkSize;
 
     private boolean forceRestart;
@@ -70,10 +72,19 @@ public class InputParameters {
         this.forceRestart = forceRestart;
     }
 
+    public int getTaxonomyAccession() {
+        return taxonomyAccession;
+    }
+
+    public void setTaxonomyAccession(int taxonomyAccession) {
+        this.taxonomyAccession = taxonomyAccession;
+    }
+
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("remappedFrom", remappedFrom)
                 .addString("assemblyAccession", assemblyAccession)
+                .addLong("taxonomyAccession", (long)taxonomyAccession)
                 .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
