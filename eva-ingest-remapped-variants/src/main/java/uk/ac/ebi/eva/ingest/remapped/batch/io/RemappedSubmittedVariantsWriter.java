@@ -15,7 +15,10 @@
  */
 package uk.ac.ebi.eva.ingest.remapped.batch.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -27,6 +30,8 @@ import static uk.ac.ebi.eva.ingest.remapped.configuration.BeanNames.SUBMITTED_VA
 
 public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVariantEntity> {
 
+    private static final Logger logger = LoggerFactory.getLogger(RemappedSubmittedVariantsWriter.class);
+
     private MongoTemplate mongoTemplate;
 
     public RemappedSubmittedVariantsWriter(MongoTemplate mongoTemplate) {
@@ -35,10 +40,14 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
     @Override
     public void write(List<? extends SubmittedVariantEntity> submittedVariantsRemapped) throws Exception {
-        BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                              SubmittedVariantEntity.class,
-                                                              SUBMITTED_VARIANT_ENTITY);
-        bulkOperations.insert(submittedVariantsRemapped);
-        bulkOperations.execute();
+        try {
+            BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
+                                                                  SubmittedVariantEntity.class,
+                                                                  SUBMITTED_VARIANT_ENTITY);
+            bulkOperations.insert(submittedVariantsRemapped);
+            bulkOperations.execute();
+        } catch (DuplicateKeyException exception) {
+            logger.warn(exception.toString());
+        }
     }
 }

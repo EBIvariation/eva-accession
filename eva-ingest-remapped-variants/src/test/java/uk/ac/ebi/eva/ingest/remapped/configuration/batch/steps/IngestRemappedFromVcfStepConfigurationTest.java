@@ -40,7 +40,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.ingest.remapped.test.configuration.BatchTestConfiguration;
@@ -97,26 +96,30 @@ public class IngestRemappedFromVcfStepConfigurationTest {
     @Test
     @DirtiesContext
     public void runStep() {
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        assertEquals(4, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(7, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         Query remappedVariantsQuery = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
         List<SubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
                                                                            SubmittedVariantEntity.class);
-        assertEquals(2, remappedVariants.size());
+        assertEquals(4, remappedVariants.size());
 
-        SubmittedVariant variant1 = new SubmittedVariant(ASSEMBLY_ACCESSION, 1000, PROJECT_ACCESSION, "chr2", 99L, "",
-                                                         "G", 3000000000L);
-        SubmittedVariantEntity submittedVariantEntity1 = createSubmittedVariantEntity(5000000000L, variant1);
-        submittedVariantEntity1.setRemappedFrom(REMAPPED_FROM);
+        //Variant ss5000000000: Remapped only once
+        assertEquals(2, getVariantCountBySsId(5000000000L));
 
-        assertEquals(submittedVariantEntity1, remappedVariants.get(0));
+        //Variant ss5000000001: Remapped twice to the same location
+        //Skip the duplicate variant as they have the same hash
+        assertEquals(2, getVariantCountBySsId(5000000001L));
+
+        //Variant ss5000000002: Remapped twice to a different location
+        //Insert both remapped variants
+        assertEquals(3, getVariantCountBySsId(5000000002L));
     }
 
-    private SubmittedVariantEntity createSubmittedVariantEntity(Long accession, SubmittedVariant submittedVariant) {
-        String hash = hashingFunction.apply(submittedVariant);
-        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(accession, hash, submittedVariant, 1);
-        return submittedVariantEntity;
+    private long getVariantCountBySsId(long ssId) {
+        Query query = new Query(Criteria.where("accession").is(ssId));
+        return mongoTemplate.count(query, SubmittedVariantEntity.class);
     }
 }
