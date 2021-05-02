@@ -20,7 +20,7 @@
         <module>eva-accession-deprecate</module>
         <module>eva-accession-import-dbsnp2</module>
         <module>eva-accession-clustering</module>
-        <module>eva-ingest-remapped-variants</module>
+        <module>eva-remapping-ingest</module>
     </modules>
 
     <properties>
