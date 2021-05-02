@@ -16,7 +16,7 @@
         <module>eva-accession-pipeline</module>
         <module>eva-accession-import</module>
         <module>eva-accession-release</module>
-        <module>eva-accession-remapping</module>
+        <module>eva-remapping-get-source</module>
         <module>eva-accession-deprecate</module>
         <module>eva-accession-import-dbsnp2</module>
         <module>eva-accession-clustering</module>
@@ -45,7 +45,7 @@
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
-                <artifactId>eva-accession-remapping</artifactId>
+                <artifactId>eva-remapping-get-source</artifactId>
                 <version>0.4.8-SNAPSHOT</version>
             </dependency>
             <dependency>
