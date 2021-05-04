@@ -19,18 +19,22 @@ package uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
@@ -43,8 +47,11 @@ import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.pipeline.test.RecoveringAccessioningConfiguration;
+import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -92,13 +99,22 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
+    @Before
+    public void setUp() throws Exception {
+        this.cleanSlate();
+    }
+
     @After
     public void tearDown() throws Exception {
+        this.cleanSlate();
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+    }
+
+    public void cleanSlate() throws Exception {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     /**

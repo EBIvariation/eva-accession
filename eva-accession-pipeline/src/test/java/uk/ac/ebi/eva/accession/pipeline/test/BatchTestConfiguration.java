@@ -16,6 +16,7 @@
 
 package uk.ac.ebi.eva.accession.pipeline.test;
 
+import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -35,8 +36,10 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportSte
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CheckSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
+import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 @EnableAutoConfiguration
@@ -58,11 +61,24 @@ public class BatchTestConfiguration {
     private DataSource dataSource;
 
     @Autowired
+    private EntityManagerFactory entityManagerFactory;
+
+    @Autowired
     private PlatformTransactionManager platformTransactionManager;
 
     @Bean
-    public JobLauncherTestUtils jobLauncherTestUtils() {
-        return new JobLauncherTestUtils();
+    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
+            throws Exception {
+        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
+                entityManagerFactory);
+    }
+
+    @Bean
+    public JobLauncherTestUtils jobLauncherTestUtils(BatchConfigurer configurer) throws Exception {
+        JobLauncherTestUtils jobLauncherTestUtils = new JobLauncherTestUtils();
+        jobLauncherTestUtils.setJobLauncher(configurer.getJobLauncher());
+        jobLauncherTestUtils.setJobRepository(configurer.getJobRepository());
+        return jobLauncherTestUtils;
     }
 
     @Bean
