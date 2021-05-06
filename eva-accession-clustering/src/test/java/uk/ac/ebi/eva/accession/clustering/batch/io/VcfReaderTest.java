@@ -43,8 +43,8 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.PROJECT_KEY;
-import static uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter.RS_KEY;
+import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.PROJECT_KEY;
+import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.RS_KEY;
 
 public class VcfReaderTest {
 

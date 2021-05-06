@@ -1,0 +1,71 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id": "CD3FC3E21AB428EA21F811EA3B80E40B80C88EFA",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "chr1",
+      "start": 98,
+      "ref": "C",
+      "alt": "CG",
+      "accession": 5000000000,
+      "rs": 3000000000,
+      "version": 1
+    },
+    {
+      "_id": "7F02A902A6CEFD8D2EDE5AB9AEB3FACDD22F19B5",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "chr1",
+      "start": 1078,
+      "ref": "G",
+      "alt": "A",
+      "accession": 5000000001,
+      "rs": 3000000001,
+      "version": 1
+    },
+    {
+      "_id": "749110B9C983605E3AC5CEA2D59FDB53E1D9D4F2",
+      "seq": "GCA_000000001.2",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "chr2",
+      "start": 1078,
+      "ref": "A",
+      "alt": "G",
+      "accession": 5000000001,
+      "rs": 3000000001,
+      "remappedFrom" : "GCA_000000001.1",
+      "version": 1
+    },
+    {
+      "_id": "43E19CB9FA61C7CBEAB18923D08BEEFFC248574E",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "chr1",
+      "start": 2000,
+      "ref": "T",
+      "alt": "C",
+      "accession": 5000000002,
+      "rs": 3000000002,
+      "version": 1
+    },
+    {
+      "_id": "9C3A4FF45D590A79052D657DEF9C8C6D4C843112",
+      "seq": "GCA_000000001.2",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "chr2",
+      "start": 2100,
+      "ref": "C",
+      "alt": "T",
+      "accession": 5000000002,
+      "rs": 3000000002,
+      "remappedFrom" : "GCA_000000001.1",
+      "version": 1
+    }
+  ]
+}

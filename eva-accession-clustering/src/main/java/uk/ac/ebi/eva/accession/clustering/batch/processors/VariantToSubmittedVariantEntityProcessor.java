@@ -23,8 +23,8 @@ import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.accession.remapping.batch.io.VariantContextWriter;
-import uk.ac.ebi.eva.accession.remapping.batch.processors.SubmittedVariantToVariantContextProcessor;
+import uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter;
+import uk.ac.ebi.eva.remapping.source.batch.processors.SubmittedVariantToVariantContextProcessor;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
