@@ -23,6 +23,10 @@
         </dependency>
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>variation-commons-batch</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
             <type>test-jar</type>
             <version>${project.version}</version>
