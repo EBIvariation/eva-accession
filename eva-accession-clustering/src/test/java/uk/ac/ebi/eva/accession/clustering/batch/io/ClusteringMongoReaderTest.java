@@ -38,6 +38,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -93,12 +94,12 @@ public class ClusteringMongoReaderTest {
     }
 
     @Test
-    public void readNotClusteredSubmittedVariants() {
+    public void readAllSubmittedVariants() {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList();
-        assertEquals(5, variants.size());
-        assertFalse(variants.stream().anyMatch(x -> x.getId().equals(CLUSTERED_SUBMITTED_VARIANT_ID)));
-        assertTrue(variants.stream().anyMatch(x -> x.getId().equals(NOT_CLUSTERED_SUBMITTED_VARIANT_ID)));
+        assertEquals(6, variants.size());
+        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), CLUSTERED_SUBMITTED_VARIANT_ID)));
+        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), NOT_CLUSTERED_SUBMITTED_VARIANT_ID)));
     }
 
     private List<SubmittedVariantEntity> readIntoList() {
