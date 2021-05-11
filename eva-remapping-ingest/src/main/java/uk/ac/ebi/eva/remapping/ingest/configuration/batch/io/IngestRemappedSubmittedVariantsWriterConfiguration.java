@@ -27,7 +27,7 @@ import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 
 @Configuration
-@Import({SubmittedVariantAccessioningConfiguration.class, MongoConfiguration.class})
+@Import({MongoConfiguration.class})
 public class IngestRemappedSubmittedVariantsWriterConfiguration {
 
     @Bean(BeanNames.REMAPPED_SUBMITTED_VARIANTS_WRITER)
