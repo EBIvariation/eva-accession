@@ -30,4 +30,6 @@ public class BeanNames {
 
     public static final String INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB = "INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB";
 
+    public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
+
 }

@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.batch.io.RemappedSubmittedVariantsWriter;
+import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 
 @Configuration
@@ -30,7 +31,8 @@ import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 public class IngestRemappedSubmittedVariantsWriterConfiguration {
 
     @Bean(BeanNames.REMAPPED_SUBMITTED_VARIANTS_WRITER)
-    public RemappedSubmittedVariantsWriter remappedSubmittedVariantsWriter(MongoTemplate mongoTemplate){
-        return new RemappedSubmittedVariantsWriter(mongoTemplate);
+    public RemappedSubmittedVariantsWriter remappedSubmittedVariantsWriter(MongoTemplate mongoTemplate,
+                                                                           RemappingIngestCounts remappingIngestCounts){
+        return new RemappedSubmittedVariantsWriter(mongoTemplate, remappingIngestCounts);
     }
 }

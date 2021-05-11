@@ -26,9 +26,11 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
+import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestionProgressListener;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.IngestRemappedSubmittedVariantsWriterConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.jobs.IngestRemappedVariantsFromVcfJobConfiguration;
+import uk.ac.ebi.eva.remapping.ingest.configuration.batch.listeners.ListenerConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.processors.VariantToSubmittedVariantEntityRemappedProcessorConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps.IngestRemappedFromVcfStepConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.policies.ChunkSizeCompletionPolicyConfiguration;
@@ -41,6 +43,7 @@ import javax.sql.DataSource;
         VcfReaderConfiguration.class,
         VariantToSubmittedVariantEntityRemappedProcessorConfiguration.class,
         IngestRemappedSubmittedVariantsWriterConfiguration.class,
+        ListenerConfiguration.class,
         ChunkSizeCompletionPolicyConfiguration.class})
 public class BatchTestConfiguration {
 

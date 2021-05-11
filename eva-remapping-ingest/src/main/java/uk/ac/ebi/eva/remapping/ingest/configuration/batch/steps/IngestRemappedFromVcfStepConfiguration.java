@@ -17,6 +17,7 @@
 package uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -32,6 +33,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 
+import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.PROGRESS_LISTENER;
+
 @Configuration
 @EnableBatchProcessing
 public class IngestRemappedFromVcfStepConfiguration {
@@ -41,6 +44,7 @@ public class IngestRemappedFromVcfStepConfiguration {
             @Qualifier(BeanNames.VCF_READER) ItemReader<Variant> vcfReader,
             @Qualifier(BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR) ItemProcessor<Variant, SubmittedVariantEntity> processor,
             @Qualifier(BeanNames.REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP)
@@ -48,7 +52,7 @@ public class IngestRemappedFromVcfStepConfiguration {
                                              .reader(vcfReader)
                                              .processor(processor)
                                              .writer(submittedVariantWriter)
-//                                             .listener(progressListener)
+                                             .listener(progressListener)
                                              .build();
         return step;
     }
