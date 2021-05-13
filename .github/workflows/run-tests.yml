@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mongodb-version: [3.2.17]
+        mongodb-version: [4.0.18]
         java-version: [1.8]
         python-version: [3.7]
 
