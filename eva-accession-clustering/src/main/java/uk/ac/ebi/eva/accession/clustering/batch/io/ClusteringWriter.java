@@ -159,7 +159,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private void checkForMerges(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
         for (SubmittedVariantEntity submittedVariant : submittedVariantEntities) {
-            if (submittedVariant.getClusteredVariantAccession() != null) {
+            if (submittedVariant.getClusteredVariantAccession() != null && submittedVariant.getRemappedFrom() != null) {
                 String hash = clusteredHashingFunction.apply(toClusteredVariant(submittedVariant));
                 Long accessionInDatabase = assignedAccessions.get(hash);
                 //accessionInDatabase will be null if it was excluded for being a multimap

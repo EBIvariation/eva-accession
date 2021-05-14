@@ -104,6 +104,10 @@ public class MergeAccessionClusteringWriterTest {
 
     public static final long EVA_SUBMITTED_VARIANT_RANGE_START = 5000000000L;
 
+    public static final long START = 100L;
+
+    public static final String NOT_REMAPPED = null;
+
     @Autowired
     private InputParameters inputParameters;
 
@@ -219,17 +223,18 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createClusteredVariantEntity(asm2, rs2), getClusteredTable(rs2));
 
         // ssToRemap in the old assembly, will be remapped to asm2 (see sve1Remapped below)
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, START, rs1, ssToRemap, NOT_REMAPPED),
+                             getSubmittedTable(ssToRemap));
 
         // ss2 in the new assembly, will change its RS to rs1 when we realise rs1 and rs2 should be merged
         // because they both map to the same position in asm2
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, rs2, ss2), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, START, rs2, ss2, NOT_REMAPPED), getSubmittedTable(ss2));
 
         assertDatabaseCounts(expectedDbsnpCve, expectedCve, 0, 0,
                              expectedDbsnpSve, expectedSve, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, rs1, ssToRemap);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, START, rs1, ssToRemap, asm1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
@@ -245,12 +250,6 @@ public class MergeAccessionClusteringWriterTest {
         ClusteredVariant cv = new ClusteredVariant(assembly, 1000, "1", 100L, VariantType.SNV, false, null);
         String cvHash = clusteredHashingFunction.apply(cv);
         return new ClusteredVariantEntity(rs, cvHash, cv, 1);
-    }
-
-    private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
-        SubmittedVariant submittedClustered = new SubmittedVariant(assembly, 1000, "project", "1", 100L, "T", "A", rs);
-        String hash1 = hashingFunction.apply(submittedClustered);
-        return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1);
     }
 
     private String getClusteredTable(Long rs1) {
@@ -330,20 +329,21 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1, 3), getClusteredTable(rs1));
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 200L, rs1, null), getClusteredTable(rs1));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED),
+                             getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3, NOT_REMAPPED), getSubmittedTable(ssToRemap));
 
 
         // NOTE: rs2 won't be merged into rs1 because rs1 is multimap
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 100L, rs2, null), getClusteredTable(rs2));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2, NOT_REMAPPED), getSubmittedTable(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
                              0, 3, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap, asm1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
@@ -369,19 +369,20 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1, 3), getClusteredTable(rs1));
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 200L, rs1, 3), getClusteredTable(rs1));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED),
+                             getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 200L, rs1, ss3, NOT_REMAPPED), getSubmittedTable(ssToRemap));
 
 
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 100L, rs2, 3), getClusteredTable(rs2));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 100L, rs2, ss2, NOT_REMAPPED), getSubmittedTable(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
                              0, 3, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap, asm1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
@@ -405,21 +406,22 @@ public class MergeAccessionClusteringWriterTest {
 
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1, null), getClusteredTable(rs1));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED),
+                             getSubmittedTable(ssToRemap));
 
 
         // NOTE: rs2 won't be merged into rs1 because rs2 is multimap
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2, 3), getClusteredTable(rs2));
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 300L, rs2, null), getClusteredTable(rs2));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 300L, rs2, ss3), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2, NOT_REMAPPED), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 300L, rs2, ss3, NOT_REMAPPED), getSubmittedTable(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
                              0, 3, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
@@ -444,20 +446,20 @@ public class MergeAccessionClusteringWriterTest {
         // NOTE rs1 won't be merged into rs2 because rs2 is multimap
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1, null), getClusteredTable(rs1));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED), getSubmittedTable(ssToRemap));
 
 
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2, 3), getClusteredTable(rs2));
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 300L, rs2, 3), getClusteredTable(rs2));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 300L, rs2, ss3), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2, NOT_REMAPPED), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 300L, rs2, ss3, NOT_REMAPPED), getSubmittedTable(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
                              0, 3, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
@@ -486,19 +488,19 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1, null), getClusteredTable(rs1));
         mongoTemplate.insert(createClusteredVariantEntity(asm3, 300L, rs1, null), getClusteredTable(rs2));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
-        mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs1, ss3), getSubmittedTable(ss3));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs1, ss3, NOT_REMAPPED), getSubmittedTable(ss3));
 
 
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2, null), getClusteredTable(rs2));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2, NOT_REMAPPED), getSubmittedTable(ss2));
 
         assertDatabaseCounts(0, 3, 0, 0,
                              0, 3, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
@@ -526,21 +528,21 @@ public class MergeAccessionClusteringWriterTest {
 
         mongoTemplate.insert(createClusteredVariantEntity(asm1, 100L, rs1, null), getClusteredTable(rs1));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap), getSubmittedTable(ssToRemap));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm1, 100L, rs1, ssToRemap, NOT_REMAPPED), getSubmittedTable(ssToRemap));
 
 
         // NOTE: merging into rs1 here is allowed because rs2 maps once in asm2 and once in asm3
         mongoTemplate.insert(createClusteredVariantEntity(asm2, 200L, rs2, null), getClusteredTable(rs2));
         mongoTemplate.insert(createClusteredVariantEntity(asm3, 300L, rs2, null), getClusteredTable(rs2));
 
-        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2), getSubmittedTable(ss2));
-        mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs2, ss3), getSubmittedTable(ss3));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm2, 200L, rs2, ss2, NOT_REMAPPED), getSubmittedTable(ss2));
+        mongoTemplate.insert(createSubmittedVariantEntity(asm3, 300L, rs2, ss3, NOT_REMAPPED), getSubmittedTable(ss3));
 
         assertDatabaseCounts(0, 3, 0, 0,
                              0, 3, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
         clusteringWriter.write(Collections.singletonList(sve1Remapped));
 
         // then
@@ -569,9 +571,10 @@ public class MergeAccessionClusteringWriterTest {
                                           mapWeight);
     }
 
-    private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss) {
+    private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
+                                                                String remappedFrom) {
         SubmittedVariant submittedClustered = new SubmittedVariant(assembly, 1000, "project", "1", start, "T", "A", rs);
         String hash1 = hashingFunction.apply(submittedClustered);
-        return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1);
+        return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1, remappedFrom);
     }
 }
