@@ -26,7 +26,6 @@ test:
     only:
         - master
         - tags
-        - fix/change-remapping-module-name-in-ci
 
 # Not executed, parent job definition for package
 .package:
