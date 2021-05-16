@@ -26,6 +26,8 @@ public class InputParameters {
 
     private String assemblyAccession;
 
+    private String loadTo;
+
     private int chunkSize;
 
     private boolean forceRestart;
@@ -54,6 +56,14 @@ public class InputParameters {
         this.assemblyAccession = assemblyAccession;
     }
 
+    public String getLoadTo() {
+        return loadTo;
+    }
+
+    public void setLoadTo(String loadTo) {
+        this.loadTo = loadTo;
+    }
+
     public int getChunkSize() {
         return chunkSize;
     }
@@ -75,6 +85,7 @@ public class InputParameters {
                 .addString("remappedFrom", remappedFrom)
                 .addString("assemblyAccession", assemblyAccession)
                 .addString("vcf", vcf)
+                .addString("loadTo", loadTo)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
     }

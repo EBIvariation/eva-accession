@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps;
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -40,7 +39,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration;
@@ -53,13 +52,13 @@ import static junit.framework.TestCase.assertEquals;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
-@TestPropertySource("classpath:ingest-remapped-variants.properties")
-@UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
-public class IngestRemappedFromVcfStepConfigurationTest {
+@TestPropertySource("classpath:ingest-remapped-variants-dbsnp.properties")
+@UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
+public class IngestRemappedFromVcfStepDbsnpConfigurationTest {
 
     private static final String TEST_DB = "test-ingest-remapping";
 
-    private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
+    private static final String DBSNP_SUBMITTED_VARIANT_COLLECTION = "dbsnpSubmittedVariantEntity";
 
     public static final String REMAPPED_FROM = "GCA_000000001.1";
 
@@ -84,46 +83,29 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
-    @After
-    public void tearDown() {
-        mongoTemplate.getDb().drop();
-    }
-
     @Test
     @DirtiesContext
-    public void runStep() {
-        //Documents in the database before the ingestion
-        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+    public void runStepDbsnp() {
+        assertEquals(1, mongoTemplate.getCollection(DBSNP_SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         //Documents in the database after the ingestion
-        assertEquals(9, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(2, mongoTemplate.getCollection(DBSNP_SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         Query remappedVariantsQuery = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
-        List<SubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
-                                                                           SubmittedVariantEntity.class);
+        List<DbsnpSubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
+                                                                                DbsnpSubmittedVariantEntity.class);
 
-        assertEquals(5, remappedVariants.size());
+        assertEquals(1, remappedVariants.size());
 
         //Variant ss5000000000: Remapped only once
         assertEquals(2, getVariantCountBySsId(5000000000L));
-
-        //Variant ss5000000001: Remapped twice to the same location
-        //Skip the duplicate variant as they have the same hash
-        assertEquals(2, getVariantCountBySsId(5000000001L));
-
-        //Variant ss5000000002: Remapped twice to a different location
-        //Insert both remapped variants
-        assertEquals(3, getVariantCountBySsId(5000000002L));
-
-        //Variant ss5000000002: Remapped only once, belongs to a different project and have a different taxonomy
-        assertEquals(2, getVariantCountBySsId(5000000003L));
     }
 
     private long getVariantCountBySsId(long ssId) {
         Query query = new Query(Criteria.where("accession").is(ssId));
-        return mongoTemplate.count(query, SubmittedVariantEntity.class);
+        return mongoTemplate.count(query, DbsnpSubmittedVariantEntity.class);
     }
 }

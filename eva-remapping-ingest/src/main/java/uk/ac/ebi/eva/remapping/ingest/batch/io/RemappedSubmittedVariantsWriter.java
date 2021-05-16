@@ -37,10 +37,14 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
     private MongoTemplate mongoTemplate;
 
+    private String collection;
+
     private RemappingIngestCounts remappingIngestCounts;
 
-    public RemappedSubmittedVariantsWriter(MongoTemplate mongoTemplate, RemappingIngestCounts remappingIngestCounts) {
+    public RemappedSubmittedVariantsWriter(MongoTemplate mongoTemplate, String collection,
+                                           RemappingIngestCounts remappingIngestCounts) {
         this.mongoTemplate = mongoTemplate;
+        this.collection = collection;
         this.remappingIngestCounts = remappingIngestCounts;
     }
 
@@ -49,7 +53,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                                   SubmittedVariantEntity.class,
-                                                                  BeanNames.SUBMITTED_VARIANT_ENTITY);
+                                                                  collection);
             bulkOperations.insert(submittedVariantsRemapped);
             BulkWriteResult bulkWriteResult = bulkOperations.execute();
             remappingIngestCounts.addRemappedVariantsIngested(bulkWriteResult.getInsertedCount());
