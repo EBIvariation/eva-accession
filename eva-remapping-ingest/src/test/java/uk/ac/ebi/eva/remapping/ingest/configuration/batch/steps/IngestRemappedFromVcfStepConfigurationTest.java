@@ -42,9 +42,9 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 
 import java.util.List;
 import java.util.function.Function;
@@ -96,15 +96,20 @@ public class IngestRemappedFromVcfStepConfigurationTest {
     @Test
     @DirtiesContext
     public void runStep() {
-        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        //Documents in the database before the ingestion
+        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        assertEquals(7, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+
+        //Documents in the database after the ingestion
+        assertEquals(9, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         Query remappedVariantsQuery = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
         List<SubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
                                                                            SubmittedVariantEntity.class);
-        assertEquals(4, remappedVariants.size());
+
+        assertEquals(5, remappedVariants.size());
 
         //Variant ss5000000000: Remapped only once
         assertEquals(2, getVariantCountBySsId(5000000000L));
@@ -116,6 +121,9 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         //Variant ss5000000002: Remapped twice to a different location
         //Insert both remapped variants
         assertEquals(3, getVariantCountBySsId(5000000002L));
+
+        //Variant ss5000000002: Remapped only once, belongs to a different project and have a different taxonomy
+        assertEquals(2, getVariantCountBySsId(5000000003L));
     }
 
     private long getVariantCountBySsId(long ssId) {

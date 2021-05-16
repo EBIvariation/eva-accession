@@ -66,6 +66,19 @@
       "rs": 3000000002,
       "remappedFrom" : "GCA_000000001.1",
       "version": 1
+    },
+    {
+      "_id": "F916D37BD66D782B84635991EA1985CB1DE2F7C0",
+      "seq": "GCA_000000001.1",
+      "tax": 2000,
+      "study": "projectId_2",
+      "contig": "chr2",
+      "start": 4000,
+      "ref": "T",
+      "alt": "A",
+      "accession": 5000000003,
+      "rs": 3000000003,
+      "version": 1
     }
   ]
 }

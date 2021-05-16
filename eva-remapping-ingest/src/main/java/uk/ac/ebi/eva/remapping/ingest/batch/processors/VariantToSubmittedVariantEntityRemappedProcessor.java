@@ -31,34 +31,33 @@ import java.util.function.Function;
 public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemProcessor<Variant,
         SubmittedVariantEntity> {
 
+    public static final String TAX_ID = "TAX_ID";
+
     public static final String PROJECT_KEY = "PROJECT";
 
     public static final String RS_KEY = "RS";
 
     private String assemblyAccession;
 
-    private int taxonomyAccession;
-
     private String remappedFrom;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession, int taxonomyAccession,
-                                                            String remappedFrom) {
+    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession, String remappedFrom) {
         if (assemblyAccession == null || remappedFrom == null) {
             throw new IllegalArgumentException("assembly accession and assembly remapped from must be provided");
         }
         this.assemblyAccession = assemblyAccession;
-        this.taxonomyAccession = taxonomyAccession;
         this.remappedFrom = remappedFrom;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
     @Override
-    public SubmittedVariantEntity process(Variant variant) throws Exception {
+    public SubmittedVariantEntity process(Variant variant) {
         long accession = Long.parseLong(variant.getMainId().substring(2));
         VariantSourceEntry sourceEntry = variant.getSourceEntries().iterator().next();
 
+        int taxonomyAccession = NumberUtils.createInteger(sourceEntry.getAttribute(TAX_ID));
         String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
         Long rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).substring(2));
 

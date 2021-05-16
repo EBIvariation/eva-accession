@@ -19,8 +19,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.remapping.ingest.batch.processors.VariantToSubmittedVariantEntityRemappedProcessor;
-import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
+import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
 
 @Configuration
 public class VariantToSubmittedVariantEntityRemappedProcessorConfiguration {
@@ -29,7 +29,6 @@ public class VariantToSubmittedVariantEntityRemappedProcessorConfiguration {
     public VariantToSubmittedVariantEntityRemappedProcessor variantToSubmittedVariantEntityRemappedProcessor(
             InputParameters inputParameters) {
         return new VariantToSubmittedVariantEntityRemappedProcessor(inputParameters.getAssemblyAccession(),
-                                                                    inputParameters.getTaxonomyAccession(),
                                                                     inputParameters.getRemappedFrom());
     }
 
