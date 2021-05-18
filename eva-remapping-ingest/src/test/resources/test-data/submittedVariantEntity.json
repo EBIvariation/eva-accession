@@ -1,24 +1,24 @@
 {
   "submittedVariantEntity": [
     {
-      "_id": "CD3FC3E21AB428EA21F811EA3B80E40B80C88EFA",
+      "_id": "BE2EC4F7D4135A6BFCB18AB426EA53231E79A88E",
       "seq": "GCA_000000001.1",
       "tax": 1000,
       "study": "projectId_1",
-      "contig": "chr1",
+      "contig": "CM000001.1",
       "start": 98,
-      "ref": "C",
-      "alt": "CG",
+      "ref": "",
+      "alt": "G",
       "accession": 5000000000,
       "rs": 3000000000,
       "version": 1
     },
     {
-      "_id": "7F02A902A6CEFD8D2EDE5AB9AEB3FACDD22F19B5",
+      "_id": "133BF2F70BA62A7BAFF27D124B989A582EA1D2FB",
       "seq": "GCA_000000001.1",
       "tax": 1000,
       "study": "projectId_1",
-      "contig": "chr1",
+      "contig": "CM000001.1",
       "start": 1078,
       "ref": "G",
       "alt": "A",
@@ -27,11 +27,11 @@
       "version": 1
     },
     {
-      "_id": "749110B9C983605E3AC5CEA2D59FDB53E1D9D4F2",
+      "_id": "CCBF37D7F7D4A2373757034B67DA77F69ADA58F6",
       "seq": "GCA_000000001.2",
       "tax": 1000,
       "study": "projectId_1",
-      "contig": "chr2",
+      "contig": "CM000002.1",
       "start": 1078,
       "ref": "A",
       "alt": "G",
@@ -41,11 +41,11 @@
       "version": 1
     },
     {
-      "_id": "43E19CB9FA61C7CBEAB18923D08BEEFFC248574E",
+      "_id": "6508008CA57C72FBC8191AB6908BAA60D966B6D7",
       "seq": "GCA_000000001.1",
       "tax": 1000,
       "study": "projectId_1",
-      "contig": "chr1",
+      "contig": "CM000001.1",
       "start": 2000,
       "ref": "T",
       "alt": "C",
@@ -54,11 +54,11 @@
       "version": 1
     },
     {
-      "_id": "9C3A4FF45D590A79052D657DEF9C8C6D4C843112",
+      "_id": "145367E2D35028006A07D493BD8133EF4828BC93",
       "seq": "GCA_000000001.2",
       "tax": 1000,
       "study": "projectId_1",
-      "contig": "chr2",
+      "contig": "CM000002.1",
       "start": 2100,
       "ref": "C",
       "alt": "T",
@@ -68,11 +68,11 @@
       "version": 1
     },
     {
-      "_id": "F916D37BD66D782B84635991EA1985CB1DE2F7C0",
+      "_id": "DA872A5FB062EF860BABBB0500E574EA7FD27B67",
       "seq": "GCA_000000001.1",
       "tax": 2000,
       "study": "projectId_2",
-      "contig": "chr2",
+      "contig": "CM000001.1",
       "start": 4000,
       "ref": "T",
       "alt": "A",

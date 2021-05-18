@@ -28,6 +28,8 @@ public class InputParameters {
 
     private String loadTo;
 
+    private String assemblyReportUrl;
+
     private int chunkSize;
 
     private boolean forceRestart;
@@ -64,6 +66,14 @@ public class InputParameters {
         this.loadTo = loadTo;
     }
 
+    public String getAssemblyReportUrl() {
+        return assemblyReportUrl;
+    }
+
+    public void setAssemblyReportUrl(String assemblyReportUrl) {
+        this.assemblyReportUrl = assemblyReportUrl;
+    }
+
     public int getChunkSize() {
         return chunkSize;
     }
@@ -86,6 +96,7 @@ public class InputParameters {
                 .addString("assemblyAccession", assemblyAccession)
                 .addString("vcf", vcf)
                 .addString("loadTo", loadTo)
+                .addString("assemblyReportUrl", assemblyReportUrl)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
     }

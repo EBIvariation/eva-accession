@@ -30,10 +30,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 
+import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.COMPOSITE_VARIANT_PROCESSOR;
 import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.PROGRESS_LISTENER;
+import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.REMAPPED_SUBMITTED_VARIANTS_WRITER;
+import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.VCF_READER;
 
 @Configuration
 @EnableBatchProcessing
@@ -41,9 +45,9 @@ public class IngestRemappedFromVcfStepConfiguration {
 
     @Bean(BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP)
     public Step ingestRemappedFromVcf(
-            @Qualifier(BeanNames.VCF_READER) ItemReader<Variant> vcfReader,
-            @Qualifier(BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_REMAPPED_PROCESSOR) ItemProcessor<Variant, SubmittedVariantEntity> processor,
-            @Qualifier(BeanNames.REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            @Qualifier(VCF_READER) ItemReader<Variant> vcfReader,
+            @Qualifier(COMPOSITE_VARIANT_PROCESSOR) ItemProcessor<IVariant, SubmittedVariantEntity> processor,
+            @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
