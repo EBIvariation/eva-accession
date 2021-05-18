@@ -15,6 +15,8 @@
  */
 package uk.ac.ebi.eva.remapping.ingest.batch.io;
 
+import com.mongodb.MongoBulkWriteException;
+import com.mongodb.bulk.BulkWriteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -22,7 +24,9 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.eva.accession.core.exceptions.MongoBulkWriteExceptionUtils;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames;
 
 import java.util.List;
@@ -33,20 +37,34 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
     private MongoTemplate mongoTemplate;
 
-    public RemappedSubmittedVariantsWriter(MongoTemplate mongoTemplate) {
+    private RemappingIngestCounts remappingIngestCounts;
+
+    public RemappedSubmittedVariantsWriter(MongoTemplate mongoTemplate, RemappingIngestCounts remappingIngestCounts) {
         this.mongoTemplate = mongoTemplate;
+        this.remappingIngestCounts = remappingIngestCounts;
     }
 
     @Override
-    public void write(List<? extends SubmittedVariantEntity> submittedVariantsRemapped) throws Exception {
+    public void write(List<? extends SubmittedVariantEntity> submittedVariantsRemapped) {
         try {
             BulkOperations bulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
                                                                   SubmittedVariantEntity.class,
                                                                   BeanNames.SUBMITTED_VARIANT_ENTITY);
             bulkOperations.insert(submittedVariantsRemapped);
-            bulkOperations.execute();
+            BulkWriteResult bulkWriteResult = bulkOperations.execute();
+            remappingIngestCounts.addRemappedVariantsIngested(bulkWriteResult.getInsertedCount());
         } catch (DuplicateKeyException exception) {
             logger.warn(exception.toString());
+
+            MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
+            BulkWriteResult bulkWriteResult = writeException.getWriteResult();
+
+            int ingested = bulkWriteResult.getInsertedCount();
+            remappingIngestCounts.addRemappedVariantsIngested(ingested);
+
+            long duplicatesSkipped = MongoBulkWriteExceptionUtils
+                    .extractUniqueHashesForDuplicateKeyError(writeException).count();
+            remappingIngestCounts.addRemappedVariantsSkipped(duplicatesSkipped);
         }
     }
 }
