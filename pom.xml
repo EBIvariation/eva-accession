@@ -89,7 +89,11 @@
                 <artifactId>htsjdk</artifactId>
                 <version>2.14.3</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.thoughtworks.xstream</groupId>
+                <artifactId>xstream</artifactId>
+                <version>1.4.9</version>
+            </dependency>
             <dependency>
                 <groupId>io.springfox</groupId>
                 <artifactId>springfox-swagger2</artifactId>

@@ -23,6 +23,10 @@
         </dependency>
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>variation-commons-batch</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
             <type>test-jar</type>
             <version>${project.version}</version>
@@ -36,6 +40,10 @@
         <dependency>
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
         </dependency>
 
         <dependency>

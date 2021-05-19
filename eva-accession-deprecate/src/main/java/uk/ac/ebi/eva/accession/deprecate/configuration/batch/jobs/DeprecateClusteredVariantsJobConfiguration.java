@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.deprecate.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -24,6 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
+
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_CLUSTERED_VARIANTS_JOB;
 import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_CLUSTERED_VARIANTS_STEP;
@@ -42,5 +47,12 @@ public class DeprecateClusteredVariantsJobConfiguration {
                                 .incrementer(new RunIdIncrementer())
                                 .start(deprecateClusteredVariantsStep)
                                 .build();
+    }
+
+    @Bean
+    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
+            throws Exception {
+        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
+                entityManagerFactory);
     }
 }

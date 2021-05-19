@@ -17,6 +17,15 @@
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>variation-commons-batch</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.thoughtworks.xstream</groupId>
+            <artifactId>xstream</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.lordofthejars</groupId>
