@@ -26,6 +26,14 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+/**
+ * This processor was added because the one in eva-accession-pipeline ignores the ID column of the VCF and it is
+ * important in this context
+ *
+ * @see uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor
+ *
+ * TODO: Check if it can be extracted to eva-accession-core and reused from both modules
+ */
 public class ContigToGenbankReplacerProcessor implements ItemProcessor<IVariant, IVariant> {
 
     public static final String ORIGINAL_CHROMOSOME = "CHR";
