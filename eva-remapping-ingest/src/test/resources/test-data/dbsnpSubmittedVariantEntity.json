@@ -1,0 +1,17 @@
+{
+  "dbsnpSubmittedVariantEntity": [
+    {
+      "_id": "CD3FC3E21AB428EA21F811EA3B80E40B80C88EFA",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "chr1",
+      "start": 98,
+      "ref": "C",
+      "alt": "CG",
+      "accession": 5000000000,
+      "rs": 3000000000,
+      "version": 1
+    }
+  ]
+}

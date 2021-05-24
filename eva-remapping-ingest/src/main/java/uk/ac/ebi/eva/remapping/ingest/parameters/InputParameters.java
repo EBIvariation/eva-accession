@@ -26,7 +26,9 @@ public class InputParameters {
 
     private String assemblyAccession;
 
-    private int taxonomyAccession;
+    private String loadTo;
+
+    private String assemblyReportUrl;
 
     private int chunkSize;
 
@@ -56,6 +58,22 @@ public class InputParameters {
         this.assemblyAccession = assemblyAccession;
     }
 
+    public String getLoadTo() {
+        return loadTo;
+    }
+
+    public void setLoadTo(String loadTo) {
+        this.loadTo = loadTo;
+    }
+
+    public String getAssemblyReportUrl() {
+        return assemblyReportUrl;
+    }
+
+    public void setAssemblyReportUrl(String assemblyReportUrl) {
+        this.assemblyReportUrl = assemblyReportUrl;
+    }
+
     public int getChunkSize() {
         return chunkSize;
     }
@@ -72,20 +90,13 @@ public class InputParameters {
         this.forceRestart = forceRestart;
     }
 
-    public int getTaxonomyAccession() {
-        return taxonomyAccession;
-    }
-
-    public void setTaxonomyAccession(int taxonomyAccession) {
-        this.taxonomyAccession = taxonomyAccession;
-    }
-
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("remappedFrom", remappedFrom)
                 .addString("assemblyAccession", assemblyAccession)
-                .addLong("taxonomyAccession", (long)taxonomyAccession)
                 .addString("vcf", vcf)
+                .addString("loadTo", loadTo)
+                .addString("assemblyReportUrl", assemblyReportUrl)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
     }
