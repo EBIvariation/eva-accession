@@ -16,6 +16,7 @@
 
 package uk.ac.ebi.eva.remapping.source.parameters;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 
@@ -43,7 +44,7 @@ public class InputParameters {
                 .addString("fasta", fasta)
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addString("outputFolder", outputFolder)
-                .addString("projects", String.join(",", projects))
+                .addString("projects", CollectionUtils.isEmpty(projects) ? "" : String.join(",", projects))
                 .toJobParameters();
     }
 

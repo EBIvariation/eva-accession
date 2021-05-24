@@ -55,7 +55,7 @@ import static org.junit.Assert.assertEquals;
 @UsingDataSet(locations = {
         "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/submittedVariantEntity.json"})
-@TestPropertySource("classpath:application.properties")
+@TestPropertySource("classpath:with-projects.properties")
 public class ExportSubmittedVariantsJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
