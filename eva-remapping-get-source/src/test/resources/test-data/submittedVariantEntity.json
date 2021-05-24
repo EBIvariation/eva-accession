@@ -15,6 +15,22 @@
       "createdDate": ISODate(
       "2016-05-05T13:43:00Z"
       )
+    },
+    {
+      "_id": "486F97D6B110145B790C21E21A5FC742E9A27CF5",
+      "seq": "GCA_000409795.2",
+      "tax": 10000,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(5),
+      "ref": "T",
+      "alt": "G",
+      "rs": NumberLong(869808637),
+      "accession": NumberLong(5000000001),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
     }
   ]
 }

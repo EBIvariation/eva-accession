@@ -34,6 +34,8 @@ public class InputParameters {
 
     private List<String> projects;
 
+    private int taxonomy;
+
     private boolean forceRestart;
 
     private int chunkSize;
@@ -45,6 +47,7 @@ public class InputParameters {
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addString("outputFolder", outputFolder)
                 .addString("projects", CollectionUtils.isEmpty(projects) ? "" : String.join(",", projects))
+                .addLong("taxonomy", (long)taxonomy)
                 .toJobParameters();
     }
 
@@ -102,5 +105,13 @@ public class InputParameters {
 
     public void setProjects(List<String> projects) {
         this.projects = projects;
+    }
+
+    public int getTaxonomy() {
+        return taxonomy;
+    }
+
+    public void setTaxonomy(int taxonomy) {
+        this.taxonomy = taxonomy;
     }
 }

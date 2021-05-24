@@ -30,35 +30,30 @@ import uk.ac.ebi.eva.remapping.source.batch.io.EvaSubmittedVariantMongoReader;
 import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
 
+import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.DBSNP_SUBMITTED_VARIANT_READER;
+import static uk.ac.ebi.eva.remapping.source.configuration.BeanNames.EVA_SUBMITTED_VARIANT_READER;
+
 @Configuration
 @Import({MongoConfiguration.class})
 public class SubmittedVariantMongoReaderConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantMongoReaderConfiguration.class);
 
-    @Bean(BeanNames.EVA_SUBMITTED_VARIANT_READER)
+    @Bean(EVA_SUBMITTED_VARIANT_READER)
     @StepScope
     EvaSubmittedVariantMongoReader evaSubmittedVariantMongoReader(InputParameters parameters,
                                                                   MongoTemplate mongoTemplate) {
         logger.info("Injecting EvaSubmittedVariantMongoReader with parameters: {}", parameters);
-        if (parameters.getProjects() == null || parameters.getProjects().isEmpty()) {
-            return new EvaSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
-        } else {
-            return new EvaSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate,
-                                                      parameters.getProjects());
-        }
+        return new EvaSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate,
+                                                  parameters.getProjects(), parameters.getTaxonomy());
     }
 
-    @Bean(BeanNames.DBSNP_SUBMITTED_VARIANT_READER)
+    @Bean(DBSNP_SUBMITTED_VARIANT_READER)
     @StepScope
     DbsnpSubmittedVariantMongoReader dbsnpSubmittedVariantMongoReader(InputParameters parameters,
                                                                       MongoTemplate mongoTemplate) {
         logger.info("Injecting DbsnpSubmittedVariantMongoReader with parameters: {}", parameters);
-        if (parameters.getProjects() == null || parameters.getProjects().isEmpty()) {
-            return new DbsnpSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate);
-        } else {
-            return new DbsnpSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate,
-                                                        parameters.getProjects());
-        }
+        return new DbsnpSubmittedVariantMongoReader(parameters.getAssemblyAccession(), mongoTemplate,
+                                                    parameters.getProjects(), parameters.getTaxonomy());
     }
 }

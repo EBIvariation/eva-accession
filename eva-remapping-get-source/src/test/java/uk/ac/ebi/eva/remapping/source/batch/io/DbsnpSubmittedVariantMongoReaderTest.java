@@ -73,7 +73,7 @@ public class DbsnpSubmittedVariantMongoReaderTest {
     @Before
     public void setUp() {
         ExecutionContext executionContext = new ExecutionContext();
-        reader = new DbsnpSubmittedVariantMongoReader(ASSEMBLY, mongoTemplate);
+        reader = new DbsnpSubmittedVariantMongoReader(ASSEMBLY, mongoTemplate, null, 0);
         reader.open(executionContext);
     }
 
@@ -85,7 +85,7 @@ public class DbsnpSubmittedVariantMongoReaderTest {
     @Test
     public void basicRead() throws Exception {
         List<DbsnpSubmittedVariantEntity> variants = readIntoList(reader);
-        assertEquals(9, variants.size());
+        assertEquals(10, variants.size());
 
         for (DbsnpSubmittedVariantEntity variant : variants) {
             assertEquals(ASSEMBLY, variant.getReferenceSequenceAccession());
@@ -95,15 +95,34 @@ public class DbsnpSubmittedVariantMongoReaderTest {
     @Test
     public void queryByStudy() throws Exception {
         DbsnpSubmittedVariantMongoReader reader = new DbsnpSubmittedVariantMongoReader(
-                ASSEMBLY, mongoTemplate, Arrays.asList("PRJEB7923", "PRJEB7929"));
+                ASSEMBLY, mongoTemplate, Arrays.asList("PRJEB7923", "PRJEB7929"), 0);
         reader.open(new ExecutionContext());
         List<DbsnpSubmittedVariantEntity> variants = readIntoList(reader);
-        assertEquals(5, variants.size());
+        assertEquals(6, variants.size());
     }
+
+    @Test
+    public void queryByStudyAndTaxonomy() throws Exception {
+        DbsnpSubmittedVariantMongoReader reader = new DbsnpSubmittedVariantMongoReader(
+                ASSEMBLY, mongoTemplate, Arrays.asList("PRJEB7923", "PRJEB7929"), 10000);
+        reader.open(new ExecutionContext());
+        List<DbsnpSubmittedVariantEntity> variants = readIntoList(reader);
+        assertEquals(1, variants.size());
+    }
+
+    @Test
+    public void queryByTaxonomy() throws Exception {
+        DbsnpSubmittedVariantMongoReader reader = new DbsnpSubmittedVariantMongoReader(
+                ASSEMBLY, mongoTemplate, null, 10000);
+        reader.open(new ExecutionContext());
+        List<DbsnpSubmittedVariantEntity> variants = readIntoList(reader);
+        assertEquals(1, variants.size());
+    }
+
     @Test
     public void queryByMissingStudy() throws Exception {
         DbsnpSubmittedVariantMongoReader reader = new DbsnpSubmittedVariantMongoReader(
-                ASSEMBLY, mongoTemplate, Collections.singletonList("inexistent_PRJEB"));
+                ASSEMBLY, mongoTemplate, Collections.singletonList("inexistent_PRJEB"), 0);
 
         reader.open(new ExecutionContext());
         List<DbsnpSubmittedVariantEntity> variants = readIntoList(reader);
