@@ -57,13 +57,15 @@ public class VariantContextWriterTest {
 
     public static final String PROJECT_ACCESSION = "project1";
 
+    public static final int TAXONOMY_ACCESSION = 9606;
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Test
     public void basicWrite() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", 123L));
+        assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", 123L));
     }
 
     private File assertWriteVcf(File outputFolder, SubmittedVariantEntity... variants) throws Exception {
@@ -87,11 +89,12 @@ public class VariantContextWriterTest {
     }
 
     private SubmittedVariantEntity buildVariant(String chr, long start, String ref, String alt, Long rs) {
-        return buildVariant(chr, start, ref, alt, rs, PROJECT_ACCESSION);
+        return buildVariant(chr, start, ref, alt, rs, PROJECT_ACCESSION, TAXONOMY_ACCESSION);
     }
+
     private SubmittedVariantEntity buildVariant(String chr, long start, String ref, String alt, Long rs,
-                                                String project) {
-        return new SubmittedVariantEntity(1L, "hash1", REFERENCE_ASSEMBLY, 9606, project, chr, start, ref,
+                                                String project, int taxonomy) {
+        return new SubmittedVariantEntity(1L, "hash1", REFERENCE_ASSEMBLY, taxonomy, project, chr, start, ref,
                                           alt, rs, false, false, false, false, 1);
     }
 
@@ -142,50 +145,54 @@ public class VariantContextWriterTest {
     }
 
     private void assertInfo(Long rsId, String infoColumn) {
-        assertInfo(rsId, PROJECT_ACCESSION, infoColumn);
+        assertInfo(rsId, PROJECT_ACCESSION, TAXONOMY_ACCESSION, infoColumn);
     }
-    private void assertInfo(Long expectedRsId, String expectedProject, String infoColumn) {
+
+    private void assertInfo(Long expectedRsId, String expectedProject, int expectedTaxonomy, String infoColumn) {
         String[] infos = infoColumn.split(";");
+
         if (expectedRsId != null) {
-            assertEquals(2, infos.length);
-            String project, rs;
-            if (infos[0].startsWith("RS=")) {
-                project = infos[1];
-                rs = infos[0];
-            } else {
-                project = infos[0];
-                rs = infos[1];
-            }
-            assertEquals("RS=rs" + expectedRsId, rs);
-            assertEquals("PROJECT=" + expectedProject, project);
+            assertEquals(3, infos.length);
         } else {
-            assertEquals(1, infos.length);
-            assertEquals("PROJECT=" + expectedProject, infos[0]);
+            assertEquals(2, infos.length);
+        }
+
+        for (String info : infos) {
+            if (info.startsWith("RS=")){
+                assertEquals("RS=rs" + expectedRsId, info);
+            } else if(info.startsWith("PROJECT=")) {
+                assertEquals("PROJECT=" + expectedProject, info);
+            } else if(info.startsWith("TAX=")) {
+                assertEquals("TAX=" + expectedTaxonomy, info);
+            }
         }
     }
 
     @Test
-    public void writeProject() throws Exception {
+    public void writeProjectAndTaxonomy() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        String specialProject = "project2";
-        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", null, specialProject));
+        String project2 = "project2";
+        int taxonomy2 = 1000;
+        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", null, project2, taxonomy2));
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertInfo(null, specialProject, columns[VCF_INFO_COLUMN]);
+            assertInfo(null, project2, taxonomy2, columns[VCF_INFO_COLUMN]);
         });
         assertEquals(1, variantCount);
     }
+
     @Test
-    public void writeProjectAndRs() throws Exception {
+    public void writeProjectAndTaxonomyAndRs() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        String specialProject = "project2";
+        String project2 = "project2";
+        int taxonomy2 = 1000;
         long rsId = 123L;
-        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", rsId, specialProject));
+        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", rsId, project2, taxonomy2));
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertInfo(rsId, specialProject, columns[VCF_INFO_COLUMN]);
+            assertInfo(rsId, project2, taxonomy2, columns[VCF_INFO_COLUMN]);
         });
         assertEquals(1, variantCount);
     }
@@ -194,19 +201,20 @@ public class VariantContextWriterTest {
     @Test
     public void writeSeveralVariants() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
-        String specialProject = "project2";
+        String project2 = "project2";
+        int taxonomy2 = 1000;
         long rsId = 123L;
         File output = assertWriteVcf(outputFolder,
-                                     buildVariant("1", 1000, "C", "A", rsId, specialProject),
-                                     buildVariant("2", 1000, "C", "A", rsId, specialProject),
-                                     buildVariant("3", 1000, "C", "A", rsId, specialProject),
-                                     buildVariant("4", 1000, "C", "A", rsId, specialProject));
+                                     buildVariant("1", 1000, "C", "A", rsId, project2, taxonomy2),
+                                     buildVariant("2", 1000, "C", "A", rsId, project2, taxonomy2),
+                                     buildVariant("3", 1000, "C", "A", rsId, project2, taxonomy2),
+                                     buildVariant("4", 1000, "C", "A", rsId, project2, taxonomy2));
 
         final Long[] expectedChr = {1L};
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
             assertEquals(expectedChr[0].toString(), columns[VCF_CHROMOSOME_COLUMN]);
-            assertInfo(rsId, specialProject, columns[VCF_INFO_COLUMN]);
+            assertInfo(rsId, project2, taxonomy2, columns[VCF_INFO_COLUMN]);
             expectedChr[0]++;
         });
         assertEquals(4, variantCount);
@@ -216,11 +224,12 @@ public class VariantContextWriterTest {
     public void writeProjectWithSpecialCharacters() throws Exception {
         File outputFolder = temporaryFolder.newFolder();
         String specialProject = "a%weird=project;with,special characters";
-        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", null, specialProject));
+        File output = assertWriteVcf(outputFolder, buildVariant("1", 1000, "C", "A", null, specialProject,
+                                                                TAXONOMY_ACCESSION));
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertInfo(null, "a%25weird%3Dproject%3Bwith%2Cspecial characters", columns[VCF_INFO_COLUMN]);
+            assertInfo(null, "a%25weird%3Dproject%3Bwith%2Cspecial characters", TAXONOMY_ACCESSION, columns[VCF_INFO_COLUMN]);
         });
         assertEquals(1, variantCount);
     }

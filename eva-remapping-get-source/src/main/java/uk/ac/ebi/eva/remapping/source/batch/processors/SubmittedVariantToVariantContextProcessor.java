@@ -27,6 +27,7 @@ import java.util.Map;
 
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.RS_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.PROJECT_KEY;
+import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.TAXONOMY;
 
 /**
  * Converts an SubmittedVariantEntity to a VariantContext.
@@ -74,6 +75,8 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
             attributes.put(RS_KEY, RS_PREFIX + variant.getClusteredVariantAccession());
         }
         attributes.put(PROJECT_KEY, replaceInvalidCharacters(variant.getProjectAccession()));
+        String taxonomyAccession = String.valueOf(variant.getTaxonomyAccession());
+        attributes.put(TAXONOMY, replaceInvalidCharacters(taxonomyAccession));
         return attributes;
     }
 
