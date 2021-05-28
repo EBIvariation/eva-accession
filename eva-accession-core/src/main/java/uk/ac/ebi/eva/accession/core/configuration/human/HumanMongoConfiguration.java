@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.core.configuration.human;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import org.springframework.beans.factory.ObjectProvider;
@@ -74,8 +75,7 @@ public class HumanMongoConfiguration {
             mongoClientOptionsBuilder = new MongoClientOptions.Builder();
         }
         mongoClientOptions = mongoClientOptionsBuilder.readPreference(ReadPreference.valueOf(readPreference))
-                                                      .writeConcern(WriteConcern.MAJORITY)
-                                                      .build();
+                .writeConcern(WriteConcern.MAJORITY).readConcern(ReadConcern.MAJORITY).build();
         return new MongoClientFactory(properties, environment).createMongoClient(mongoClientOptions);
     }
 
