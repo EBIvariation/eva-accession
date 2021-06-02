@@ -47,7 +47,7 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
         }
 
         if (taxonomy != 0) {
-            criteria.and(TAXONOMY_KEY).in(taxonomy);
+            criteria.and(TAXONOMY_KEY).is(taxonomy);
         }
 
         setQuery(new Query(criteria));
