@@ -72,7 +72,7 @@ public class EvaSubmittedVariantMongoReaderTest {
     @Before
     public void setUp() {
         ExecutionContext executionContext = new ExecutionContext();
-        reader = new EvaSubmittedVariantMongoReader(ASSEMBLY, mongoTemplate);
+        reader = new EvaSubmittedVariantMongoReader(ASSEMBLY, mongoTemplate, null, 0);
         reader.open(executionContext);
     }
 
@@ -84,7 +84,7 @@ public class EvaSubmittedVariantMongoReaderTest {
     @Test
     public void basicRead() throws Exception {
         List<SubmittedVariantEntity> variants = readIntoList(reader);
-        assertEquals(1, variants.size());
+        assertEquals(2, variants.size());
 
         for (SubmittedVariantEntity variant : variants) {
             assertEquals(ASSEMBLY, variant.getReferenceSequenceAccession());
@@ -94,15 +94,34 @@ public class EvaSubmittedVariantMongoReaderTest {
     @Test
     public void queryByStudy() throws Exception {
         EvaSubmittedVariantMongoReader reader = new EvaSubmittedVariantMongoReader(
-                ASSEMBLY, mongoTemplate, Collections.singletonList("PRJEB7923"));
+                ASSEMBLY, mongoTemplate, Collections.singletonList("PRJEB7923"), 0);
+        reader.open(new ExecutionContext());
+        List<SubmittedVariantEntity> variants = readIntoList(reader);
+        assertEquals(2, variants.size());
+    }
+
+    @Test
+    public void queryByStudyAndTaxonomy() throws Exception {
+        EvaSubmittedVariantMongoReader reader = new EvaSubmittedVariantMongoReader(
+                ASSEMBLY, mongoTemplate, Collections.singletonList("PRJEB7923"), 10000);
         reader.open(new ExecutionContext());
         List<SubmittedVariantEntity> variants = readIntoList(reader);
         assertEquals(1, variants.size());
     }
+
+    @Test
+    public void queryByTaxonomy() throws Exception {
+        EvaSubmittedVariantMongoReader reader = new EvaSubmittedVariantMongoReader(
+                ASSEMBLY, mongoTemplate, null, 10000);
+        reader.open(new ExecutionContext());
+        List<SubmittedVariantEntity> variants = readIntoList(reader);
+        assertEquals(1, variants.size());
+    }
+
     @Test
     public void queryByMissingStudy() throws Exception {
         EvaSubmittedVariantMongoReader reader = new EvaSubmittedVariantMongoReader(
-                ASSEMBLY, mongoTemplate, Collections.singletonList("inexistent_PRJEB"));
+                ASSEMBLY, mongoTemplate, Collections.singletonList("inexistent_PRJEB"), 0);
 
         reader.open(new ExecutionContext());
         List<SubmittedVariantEntity> variants = readIntoList(reader);

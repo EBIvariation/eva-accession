@@ -15,11 +15,14 @@
  */
 package uk.ac.ebi.eva.remapping.source.batch.io;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.List;
 
@@ -31,17 +34,24 @@ public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<Db
 
     public static final String PROJECT_KEY = "study";
 
-    public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate) {
-        setTemplate(mongoTemplate);
-        setTargetType(DbsnpSubmittedVariantEntity.class);
-        setQuery(new Query(where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession)));
-    }
+    public static final String TAXONOMY_KEY = "tax";
 
     public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
-                                            List<String> studies) {
+                                          List<String> projects, int taxonomy) {
         setTemplate(mongoTemplate);
         setTargetType(DbsnpSubmittedVariantEntity.class);
-        setQuery(new Query(where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession).and(PROJECT_KEY).in(studies)));
+
+        Criteria criteria = where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession);
+
+        if (!CollectionUtils.isEmpty(projects)) {
+            criteria.and(PROJECT_KEY).in(projects);
+        }
+
+        if (taxonomy != 0) {
+            criteria.and(TAXONOMY_KEY).is(taxonomy);
+        }
+
+        setQuery(new Query(criteria));
     }
 
 }

@@ -45,6 +45,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     public static final String PROJECT_KEY = "PROJECT";
 
+    public static final String TAXONOMY = "TAX";
+
     private final File output;
 
     private final String referenceAssembly;
@@ -80,6 +82,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                                            "RS ID where this SS ID is clustered"));
         metaData.add(new VCFInfoHeaderLine(PROJECT_KEY, 1, VCFHeaderLineType.String,
                                            "PROJECT ID associated with this SS ID"));
+        metaData.add(new VCFInfoHeaderLine(TAXONOMY, 1, VCFHeaderLineType.String,
+                                           "TAXONOMY ID associated with this SS ID"));
         return metaData;
     }
 
