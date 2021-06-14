@@ -31,7 +31,7 @@ import java.util.function.Function;
 public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemProcessor<Variant,
         SubmittedVariantEntity> {
 
-    public static final String TAX_ID = "TAX_ID";
+    public static final String TAXONOMY_KEY = "TAX";
 
     public static final String PROJECT_KEY = "PROJECT";
 
@@ -57,7 +57,7 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         long accession = Long.parseLong(variant.getMainId().substring(2));
         VariantSourceEntry sourceEntry = variant.getSourceEntries().iterator().next();
 
-        int taxonomyAccession = NumberUtils.createInteger(sourceEntry.getAttribute(TAX_ID));
+        int taxonomyAccession = NumberUtils.createInteger(sourceEntry.getAttribute(TAXONOMY_KEY));
         String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
         Long rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).substring(2));
 
