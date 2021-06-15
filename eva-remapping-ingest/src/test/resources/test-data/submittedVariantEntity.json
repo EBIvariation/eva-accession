@@ -14,6 +14,18 @@
       "version": 1
     },
     {
+      "_id": "BE2EC4F7D4135A6BFCB18AB426EA53231E79A899",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "CM000001.1",
+      "start": 100,
+      "ref": "C",
+      "alt": "G",
+      "accession": 5000000004,
+      "version": 1
+    },
+    {
       "_id": "133BF2F70BA62A7BAFF27D124B989A582EA1D2FB",
       "seq": "GCA_000000001.1",
       "tax": 1000,

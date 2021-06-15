@@ -16,6 +16,8 @@
 package uk.ac.ebi.eva.remapping.ingest.batch.processors;
 
 import org.apache.commons.lang3.math.NumberUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
@@ -31,11 +33,15 @@ import java.util.function.Function;
 public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemProcessor<Variant,
         SubmittedVariantEntity> {
 
+    private static final Logger logger = LoggerFactory.getLogger(VariantToSubmittedVariantEntityRemappedProcessor.class);
+
     public static final String TAXONOMY_KEY = "TAX";
 
     public static final String PROJECT_KEY = "PROJECT";
 
     public static final String RS_KEY = "RS";
+
+    public static final String RS_PREFIX = "rs";
 
     private String assemblyAccession;
 
@@ -59,7 +65,17 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
 
         int taxonomyAccession = NumberUtils.createInteger(sourceEntry.getAttribute(TAXONOMY_KEY));
         String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
-        Long rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).substring(2));
+        String rsIdTxt = sourceEntry.getAttribute(RS_KEY);
+        Long rsId = null;
+        if (rsIdTxt != null) {
+            if (rsIdTxt.startsWith("rs")) {
+                    rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).substring(2));
+            } else {
+                throw new IllegalArgumentException("RS id is not in the correct format: " + rsIdTxt);
+            }
+        } else {
+            logger.warn("Variant {} does not have an RS ID associated: {}", variant.getMainId(), variant);
+        }
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
