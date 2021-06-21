@@ -30,7 +30,7 @@ public class ExcludeMultimapVariantsProcessor implements ItemProcessor<Submitted
 
     @Override
     public SubmittedVariantEntity process(SubmittedVariantEntity submittedVariantEntity) throws Exception {
-        if (isMultimap(submittedVariantEntity)) {
+        if (!isMultimap(submittedVariantEntity)) {
             return submittedVariantEntity;
         }
         logger.warn("Skipped multimap variant {}", submittedVariantEntity);
@@ -38,6 +38,6 @@ public class ExcludeMultimapVariantsProcessor implements ItemProcessor<Submitted
     }
 
     public boolean isMultimap(SubmittedVariantEntity submittedVariantEntity) {
-        return submittedVariantEntity.getMapWeight() == null || submittedVariantEntity.getMapWeight() > 1;
+        return submittedVariantEntity.getMapWeight() != null && submittedVariantEntity.getMapWeight() > 1;
     }
 }
