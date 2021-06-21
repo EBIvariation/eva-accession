@@ -46,6 +46,8 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private Boolean validated;
 
+    private Integer mapWeight;
+
     private LocalDateTime createdDate;
 
     SubmittedVariant() {
@@ -204,6 +206,15 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
+    public Integer getMapWeight() {
+        return mapWeight;
+    }
+
+    public void setMapWeight(Integer mapWeight) {
+        this.mapWeight = mapWeight;
+    }
+
+    @Override
     public LocalDateTime getCreatedDate() {
         return createdDate;
     }
@@ -232,71 +243,32 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof SubmittedVariant)) {
-            return false;
-        }
-
-        SubmittedVariant variant = (SubmittedVariant) o;
-
-        if (taxonomyAccession != variant.taxonomyAccession) {
-            return false;
-        }
-        if (start != variant.start) {
-            return false;
-        }
-        if (!referenceSequenceAccession.equals(variant.referenceSequenceAccession)) {
-            return false;
-        }
-        if (!projectAccession.equals(variant.projectAccession)) {
-            return false;
-        }
-        if (!contig.equals(variant.contig)) {
-            return false;
-        }
-        if (!referenceAllele.equals(variant.referenceAllele)) {
-            return false;
-        }
-        if (!alternateAllele.equals(variant.alternateAllele)) {
-            return false;
-        }
-        if (clusteredVariantAccession != null ? !clusteredVariantAccession.equals(
-                variant.clusteredVariantAccession) : variant.clusteredVariantAccession != null) {
-            return false;
-        }
-        if (supportedByEvidence != null ? !supportedByEvidence.equals(
-                variant.supportedByEvidence) : variant.supportedByEvidence != null) {
-            return false;
-        }
-        if (assemblyMatch != null ? !assemblyMatch.equals(variant.assemblyMatch) : variant.assemblyMatch != null) {
-            return false;
-        }
-        if (allelesMatch != null ? !allelesMatch.equals(variant.allelesMatch) : variant.allelesMatch != null) {
-            return false;
-        }
-        if (validated != null ? !validated.equals(variant.validated) : variant.validated != null) {
-            return false;
-        }
-        return true;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SubmittedVariant that = (SubmittedVariant) o;
+        return taxonomyAccession == that.taxonomyAccession &&
+                start == that.start &&
+                Objects.equals(referenceSequenceAccession, that.referenceSequenceAccession) &&
+                Objects.equals(projectAccession, that.projectAccession) &&
+                Objects.equals(contig, that.contig) &&
+                Objects.equals(referenceAllele, that.referenceAllele) &&
+                Objects.equals(alternateAllele, that.alternateAllele) &&
+                Objects.equals(clusteredVariantAccession, that.clusteredVariantAccession) &&
+                Objects.equals(supportedByEvidence, that.supportedByEvidence) &&
+                Objects.equals(assemblyMatch, that.assemblyMatch) &&
+                Objects.equals(allelesMatch, that.allelesMatch) &&
+                Objects.equals(validated, that.validated) &&
+                Objects.equals(mapWeight, that.mapWeight) &&
+                Objects.equals(createdDate, that.createdDate);
     }
 
     @Override
     public int hashCode() {
-        int result = referenceSequenceAccession.hashCode();
-        result = 31 * result + taxonomyAccession;
-        result = 31 * result + projectAccession.hashCode();
-        result = 31 * result + contig.hashCode();
-        result = 31 * result + (int) (start ^ (start >>> 32));
-        result = 31 * result + referenceAllele.hashCode();
-        result = 31 * result + alternateAllele.hashCode();
-        result = 31 * result + (clusteredVariantAccession != null ? clusteredVariantAccession.hashCode() : 0);
-        result = 31 * result + (supportedByEvidence != null ? supportedByEvidence.hashCode() : 0);
-        result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
-        result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
-        result = 31 * result + (validated != null ? validated.hashCode() : 0);
-        return result;
+        return Objects.hash(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
+                            referenceAllele,
+                            alternateAllele, clusteredVariantAccession, supportedByEvidence, assemblyMatch,
+                            allelesMatch,
+                            validated, mapWeight, createdDate);
     }
 
     @Override
@@ -314,6 +286,7 @@ public class SubmittedVariant implements ISubmittedVariant {
                 ", assemblyMatch=" + assemblyMatch +
                 ", allelesMatch=" + allelesMatch +
                 ", validated=" + validated +
+                ", mapWeight=" + mapWeight +
                 ", createdDate=" + createdDate +
                 '}';
     }

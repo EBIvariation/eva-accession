@@ -78,6 +78,8 @@ public interface ISubmittedVariant {
      */
     Boolean isValidated();
 
+    Integer getMapWeight();
+
     LocalDateTime getCreatedDate();
 
 }
