@@ -25,6 +25,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import java.util.HashMap;
 import java.util.Map;
 
+import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.CREATED_DATE;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.RS_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.PROJECT_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.TAXONOMY;
@@ -77,6 +78,8 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
         attributes.put(PROJECT_KEY, replaceInvalidCharacters(variant.getProjectAccession()));
         String taxonomyAccession = String.valueOf(variant.getTaxonomyAccession());
         attributes.put(TAXONOMY, replaceInvalidCharacters(taxonomyAccession));
+        String createdDate = variant.getCreatedDate().toString();
+        attributes.put(CREATED_DATE, replaceInvalidCharacters(createdDate));
         return attributes;
     }
 

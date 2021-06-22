@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -65,6 +66,7 @@ public class VariantToVariantContextProcessorTest {
         SubmittedVariantEntity variant = new SubmittedVariantEntity(SS_ID, "hash", "assembly", taxonomy, project, chr1,
                                                                     start, reference, alternate, RS_ID,
                                                                     false, false, false, false, 1);
+        variant.setCreatedDate(LocalDateTime.now());
         return variant;
     }
 
@@ -78,7 +80,7 @@ public class VariantToVariantContextProcessorTest {
                      variantContext.getAlternateAlleles());
         assertEquals("ss" + expectedId, variantContext.getID());
         assertTrue(variantContext.getFilters().isEmpty());
-        assertEquals(3, variantContext.getCommonInfo().getAttributes().size());
+        assertEquals(4, variantContext.getCommonInfo().getAttributes().size());
 
         assertTrue(variantContext.getCommonInfo().hasAttribute(PROJECT_ID_KEY));
         assertEquals(expectedStudy, variantContext.getCommonInfo().getAttribute(PROJECT_ID_KEY));

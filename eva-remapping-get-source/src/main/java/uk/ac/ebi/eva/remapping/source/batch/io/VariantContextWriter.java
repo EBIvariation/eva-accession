@@ -47,6 +47,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     public static final String TAXONOMY = "TAX";
 
+    public static final String CREATED_DATE = "CREATED";
+
     private final File output;
 
     private final String referenceAssembly;
@@ -84,6 +86,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                                            "PROJECT ID associated with this SS ID"));
         metaData.add(new VCFInfoHeaderLine(TAXONOMY, 1, VCFHeaderLineType.String,
                                            "TAXONOMY ID associated with this SS ID"));
+        metaData.add(new VCFInfoHeaderLine(CREATED_DATE, 1, VCFHeaderLineType.String,
+                                           "Date when the SS ID was created"));
         return metaData;
     }
 
