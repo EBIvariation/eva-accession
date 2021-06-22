@@ -11,7 +11,8 @@
       "alt": "G",
       "accession": 5000000000,
       "rs": 3000000000,
-      "version": 1
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
     },
     {
       "_id": "BE2EC4F7D4135A6BFCB18AB426EA53231E79A899",
@@ -23,7 +24,8 @@
       "ref": "C",
       "alt": "G",
       "accession": 5000000004,
-      "version": 1
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
     },
     {
       "_id": "133BF2F70BA62A7BAFF27D124B989A582EA1D2FB",
@@ -36,7 +38,8 @@
       "alt": "A",
       "accession": 5000000001,
       "rs": 3000000001,
-      "version": 1
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
     },
     {
       "_id": "CCBF37D7F7D4A2373757034B67DA77F69ADA58F6",
@@ -50,7 +53,8 @@
       "accession": 5000000001,
       "rs": 3000000001,
       "remappedFrom" : "GCA_000000001.1",
-      "version": 1
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
     },
     {
       "_id": "6508008CA57C72FBC8191AB6908BAA60D966B6D7",
@@ -63,7 +67,8 @@
       "alt": "C",
       "accession": 5000000002,
       "rs": 3000000002,
-      "version": 1
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
     },
     {
       "_id": "145367E2D35028006A07D493BD8133EF4828BC93",
@@ -77,7 +82,8 @@
       "accession": 5000000002,
       "rs": 3000000002,
       "remappedFrom" : "GCA_000000001.1",
-      "version": 1
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
     },
     {
       "_id": "DA872A5FB062EF860BABBB0500E574EA7FD27B67",
@@ -90,7 +96,8 @@
       "alt": "A",
       "accession": 5000000003,
       "rs": 3000000003,
-      "version": 1
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
     }
   ]
 }

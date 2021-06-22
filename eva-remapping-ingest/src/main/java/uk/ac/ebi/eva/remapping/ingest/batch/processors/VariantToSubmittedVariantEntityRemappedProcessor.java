@@ -28,6 +28,7 @@ import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
+import java.time.LocalDateTime;
 import java.util.function.Function;
 
 public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemProcessor<Variant,
@@ -41,7 +42,7 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
 
     public static final String RS_KEY = "RS";
 
-    public static final String RS_PREFIX = "rs";
+    public static final String CREATED_DATE = "CREATED";
 
     private String assemblyAccession;
 
@@ -80,6 +81,8 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
                                                                  variant.getReference(), variant.getAlternate(), rsId);
+        String createdDate = sourceEntry.getAttribute(CREATED_DATE);
+        submittedVariant.setCreatedDate(LocalDateTime.parse(createdDate));
 
         String hash = hashingFunction.apply(submittedVariant);
         SubmittedVariantEntity submittedVariantRemappedEntity = new SubmittedVariantEntity(accession, hash,

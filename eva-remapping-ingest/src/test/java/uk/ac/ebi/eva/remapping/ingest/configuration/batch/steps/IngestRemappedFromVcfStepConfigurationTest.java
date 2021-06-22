@@ -136,4 +136,5 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         Query query = new Query(Criteria.where("accession").is(ssId));
         return mongoTemplate.find(query, SubmittedVariantEntity.class);
     }
+
 }
