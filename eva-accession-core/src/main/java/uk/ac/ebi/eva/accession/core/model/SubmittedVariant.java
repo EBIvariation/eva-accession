@@ -257,18 +257,14 @@ public class SubmittedVariant implements ISubmittedVariant {
                 Objects.equals(supportedByEvidence, that.supportedByEvidence) &&
                 Objects.equals(assemblyMatch, that.assemblyMatch) &&
                 Objects.equals(allelesMatch, that.allelesMatch) &&
-                Objects.equals(validated, that.validated) &&
-                Objects.equals(mapWeight, that.mapWeight) &&
-                Objects.equals(createdDate, that.createdDate);
+                Objects.equals(validated, that.validated);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele,
-                            alternateAllele, clusteredVariantAccession, supportedByEvidence, assemblyMatch,
-                            allelesMatch,
-                            validated, mapWeight, createdDate);
+                            referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
+                            assemblyMatch, allelesMatch, validated);
     }
 
     @Override
