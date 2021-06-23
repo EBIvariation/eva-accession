@@ -160,9 +160,10 @@ def get_common_release_properties(common_release_properties_file):
 def run_release_for_species(common_release_properties_file, taxonomy_id, memory):
     common_release_properties = get_common_release_properties(common_release_properties_file)
     private_config_xml_file = common_release_properties["private-config-xml-file"]
+    profile = common_release_properties["profile"]
     release_species_inventory_table = common_release_properties["release-species-inventory-table"]
     release_version = common_release_properties["release-version"]
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file), user="evadev") \
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evadev") \
         as metadata_connection_handle:
         release_assemblies = get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_table,
                                                                  release_version, metadata_connection_handle)

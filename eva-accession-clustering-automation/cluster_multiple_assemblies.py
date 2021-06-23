@@ -24,12 +24,16 @@ logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory, dependency):
+def generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory, dependency):
     job_name = get_job_name(assembly_accession)
     log_file = '{assembly_accession}_cluster_{timestamp}.log'.format(assembly_accession=assembly_accession,
                                                                      timestamp=timestamp)
     error_file = '{assembly_accession}_cluster_{timestamp}.err'.format(assembly_accession=assembly_accession,
                                                                        timestamp=timestamp)
+    if logs_directory:
+        log_file = os.path.join(logs_directory, log_file)
+        error_file = os.path.join(logs_directory, error_file)
+
     memory_amount = 8192
     if memory:
         memory_amount = memory
@@ -63,16 +67,17 @@ def add_to_command_file(properties_path, command):
 
 
 def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file,
-                profile, output_directory, clustering_artifact, only_printing, memory, dependency):
+                profile, output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency):
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
                                              private_config_xml_file, profile, output_directory)
-    command = generate_bsub_command(assembly_accession, properties_path, clustering_artifact, memory, dependency)
+    command = generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory,
+                                    dependency)
     if not only_printing:
         run_command_with_output('Run clustering command', command, return_process_output=True)
 
 
 def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_xml_file, profile,
-                     output_directory, clustering_artifact, only_printing, memory):
+                     output_directory, logs_directory, clustering_artifact, only_printing, memory):
     """
     This method decides how to call the run_clustering method depending on the source (Mongo or VCF)
     """
@@ -80,27 +85,27 @@ def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_xml
 
     if source == 'MONGO':
         cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile, output_directory,
-                                    clustering_artifact, only_printing, memory)
+                                    logs_directory, clustering_artifact, only_printing, memory)
 
     if source == 'VCF':
         cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile, output_directory,
-                                  clustering_artifact, only_printing, memory)
+                                  logs_directory, clustering_artifact, only_printing, memory)
 
 
 def cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile,
-                                output_directory, clustering_artifact, only_printing, memory):
+                                output_directory, logs_directory, clustering_artifact, only_printing, memory):
     """
     This method call the run_clustering method for each assembly
     """
     dependency = None
     for assembly_accession in assembly_list:
         cluster_one(source, None, None, assembly_accession, private_config_xml_file, profile, output_directory,
-                    clustering_artifact, only_printing, memory, dependency)
+                    logs_directory, clustering_artifact, only_printing, memory, dependency)
         dependency = get_job_name(assembly_accession)
 
 
 def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile,
-                              output_directory, clustering_artifact, only_printing, memory):
+                              output_directory, logs_directory, clustering_artifact, only_printing, memory):
     """
     The list will be of the form: GCA_000000001.1#/file1.vcf.gz#PRJEB1111 GCA_000000002.2#/file2.vcf.gz#PRJEB2222 ...
     This method splits the triplets and then call the run_clustering method for each one
@@ -112,7 +117,7 @@ def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file,
         vcf_file = data[1]
         project_accession = data[2]
         cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                    output_directory, clustering_artifact, only_printing, memory, dependency)
+                    output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency)
         dependency = get_job_name(assembly_accession)
 
 
@@ -143,6 +148,7 @@ if __name__ == "__main__":
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
+    parser.add_argument("--logs-directory", help="Directory for logs files", required=False)
     parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline", required=True)
     parser.add_argument("--only-printing", help="Prepare and write the commands, but don't run them",
                         action='store_true', required=False)
@@ -153,7 +159,8 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.private_config_xml_file,
-                         args.profile, args.output_directory, args.clustering_artifact, args.only_printing, args.memory)
+                         args.profile, args.output_directory, args.logs_directory, args.clustering_artifact,
+                         args.only_printing, args.memory)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
