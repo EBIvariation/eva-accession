@@ -34,16 +34,18 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.test.rule.FixSpringMongoDbRule;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.STORE_REMAPPING_METADATA_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
@@ -51,13 +53,16 @@ import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.INGEST_REMA
 @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
 public class IngestRemappedVariantsFromVcfJobConfigurationTest {
 
-    private static final String TEST_DB = "test-db";
+    private static final String TEST_DB = "test-ingest-remapping";
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private RemappingIngestCounts remappingIngestCounts;
 
     //Required by nosql-unit
     @Autowired
@@ -76,7 +81,8 @@ public class IngestRemappedVariantsFromVcfJobConfigurationTest {
     @DirtiesContext
     public void jobFromVcf() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-        List<String> expectedSteps = Collections.singletonList(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
+        List<String> expectedSteps = Arrays.asList(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP,
+                                                   STORE_REMAPPING_METADATA_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }

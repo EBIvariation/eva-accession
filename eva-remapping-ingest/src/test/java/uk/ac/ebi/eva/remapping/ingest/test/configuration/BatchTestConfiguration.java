@@ -32,12 +32,14 @@ import uk.ac.ebi.eva.remapping.ingest.configuration.batch.jobs.IngestRemappedVar
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.listeners.ListenerConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.processors.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps.IngestRemappedFromVcfStepConfiguration;
+import uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps.StoreRemappingMetadataStepConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.policies.ChunkSizeCompletionPolicyConfiguration;
 
 import javax.sql.DataSource;
 
 @EnableAutoConfiguration
 @Import({IngestRemappedFromVcfStepConfiguration.class,
+        StoreRemappingMetadataStepConfiguration.class,
         IngestRemappedVariantsFromVcfJobConfiguration.class,
         VcfReaderConfiguration.class,
         VariantProcessorConfiguration.class,
