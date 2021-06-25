@@ -15,34 +15,25 @@
  */
 package uk.ac.ebi.eva.remapping.ingest.batch.tasklets;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.info.BuildProperties;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-@Document
 public class RemappingMetadata {
-
-    @Autowired
-    BuildProperties buildProperties;
 
     @Id
     private String hashedMessage;
 
     private String remappingVersion;
 
-//    @Value("${build.version}")
-    private String ingestionVersion;
+    private String accessioningVersion;
 
     private String remappedFrom;
 
     private String remappedTo;
 
-    public RemappingMetadata(String remappingVersion, String ingestionVersion, String remappedFrom, String remappedTo) {
+    public RemappingMetadata(String remappingVersion, String accessioningVersion, String remappedFrom, String remappedTo) {
         this.remappingVersion = remappingVersion;
-        this.ingestionVersion = ingestionVersion;
+        this.accessioningVersion = accessioningVersion;
         this.remappedFrom = remappedFrom;
         this.remappedTo = remappedTo;
         this.hashedMessage = new RemappingMetadataSummaryFunction().andThen(new SHA1HashingFunction()).apply(this);
@@ -64,12 +55,12 @@ public class RemappingMetadata {
         this.remappingVersion = remappingVersion;
     }
 
-    public String getIngestionVersion() {
-        return ingestionVersion;
+    public String getAccessioningVersion() {
+        return accessioningVersion;
     }
 
-    public void setIngestionVersion(String ingestionVersion) {
-        this.ingestionVersion = ingestionVersion;
+    public void setAccessioningVersion(String accessioningVersion) {
+        this.accessioningVersion = accessioningVersion;
     }
 
     public String getRemappedFrom() {

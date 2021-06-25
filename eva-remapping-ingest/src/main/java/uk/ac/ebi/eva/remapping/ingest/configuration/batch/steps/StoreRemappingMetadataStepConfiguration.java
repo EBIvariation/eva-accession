@@ -20,6 +20,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -39,16 +40,19 @@ public class StoreRemappingMetadataStepConfiguration {
 
     private final MongoTemplate mongoTemplate;
 
-    private final InputParameters inputParameters;
+    private final RemappingMetadata remappingMetadata;
 
-    public StoreRemappingMetadataStepConfiguration(MongoTemplate mongoTemplate, InputParameters inputParameters) {
+//    @Value("${build.version}")
+//    private String accessionVersion;
+
+    public StoreRemappingMetadataStepConfiguration(MongoTemplate mongoTemplate, RemappingMetadata remappingMetadata) {
         this.mongoTemplate = mongoTemplate;
-        this.inputParameters = inputParameters;
+        this.remappingMetadata = remappingMetadata;
     }
 
     @Bean(STORE_REMAPPING_METADATA_STEP)
     public Step buildReportStep(StepBuilderFactory stepBuilderFactory) throws IOException {
-        StoreRemappingMetadataTasklet tasklet = new StoreRemappingMetadataTasklet(mongoTemplate, inputParameters);
+        StoreRemappingMetadataTasklet tasklet = new StoreRemappingMetadataTasklet(mongoTemplate, remappingMetadata);
         TaskletStep step = stepBuilderFactory.get(STORE_REMAPPING_METADATA_STEP)
                                              .tasklet(tasklet)
                                              .build();

@@ -26,6 +26,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
+import uk.ac.ebi.eva.remapping.ingest.configuration.RemappingMetadataConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.IngestRemappedSubmittedVariantsWriterConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.jobs.IngestRemappedVariantsFromVcfJobConfiguration;
@@ -45,7 +46,8 @@ import javax.sql.DataSource;
         VariantProcessorConfiguration.class,
         IngestRemappedSubmittedVariantsWriterConfiguration.class,
         ListenerConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class})
+        ChunkSizeCompletionPolicyConfiguration.class,
+        RemappingMetadataConfiguration.class})
 public class BatchTestConfiguration {
 
     @Autowired

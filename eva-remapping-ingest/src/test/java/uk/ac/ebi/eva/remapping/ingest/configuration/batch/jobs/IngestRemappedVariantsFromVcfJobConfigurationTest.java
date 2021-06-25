@@ -61,9 +61,6 @@ public class IngestRemappedVariantsFromVcfJobConfigurationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Autowired
-    private RemappingIngestCounts remappingIngestCounts;
-
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;

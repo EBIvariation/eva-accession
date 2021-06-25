@@ -24,7 +24,7 @@ public class RemappingMetadataSummaryFunction implements Function<RemappingMetad
     @Override
     public String apply(RemappingMetadata remappingMetadata) {
         return remappingMetadata.getRemappingVersion() +
-                "_" + remappingMetadata.getIngestionVersion() +
+                "_" + remappingMetadata.getAccessioningVersion() +
                 "_" + remappingMetadata.getRemappedFrom() +
                 "_" + remappingMetadata.getRemappedTo();
     }

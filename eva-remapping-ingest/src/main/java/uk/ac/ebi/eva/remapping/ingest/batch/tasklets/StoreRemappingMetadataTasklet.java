@@ -15,36 +15,28 @@
  */
 package uk.ac.ebi.eva.remapping.ingest.batch.tasklets;
 
-import org.bson.Document;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
 
 public class StoreRemappingMetadataTasklet implements Tasklet {
 
     private final MongoTemplate mongoTemplate;
 
-    private InputParameters inputParameters;
+    private final RemappingMetadata remappingMetadata;
 
-    public StoreRemappingMetadataTasklet(MongoTemplate mongoTemplate, InputParameters inputParameters) {
+    public StoreRemappingMetadataTasklet(MongoTemplate mongoTemplate, RemappingMetadata remappingMetadata) {
         this.mongoTemplate = mongoTemplate;
-        this.inputParameters = inputParameters;
+        this.remappingMetadata = remappingMetadata;
     }
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-//                Document remappingMetadata = new Document(new RemappingIngestCounts());
-        RemappingMetadata remappingMetadata = new RemappingMetadata("v1", "0.5.1",
-                                                                    inputParameters.getAssemblyAccession(),
-                                                                    inputParameters.getRemappedFrom());
         mongoTemplate.save(remappingMetadata, "remappingMetadata");
-        //        mongoTemplate.getCollection("remappingMetadata").insertOne(new RemappingIngestCounts());
-
         return RepeatStatus.FINISHED;
     }
 }
