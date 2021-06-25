@@ -24,7 +24,7 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 
 
-def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_accession,
+def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                release_species_inventory_table, release_version, species_release_folder,
                                vcf_validator_path, assembly_checker_path):
     run_command_with_output("Remove existing VCF validation and assembly report outputs...",
@@ -32,7 +32,7 @@ def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_ac
                                                                    vcf_validation_output_file_pattern,
                                                                    asm_report_output_file_pattern))
     validate_release_vcf_files_commands = []
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
                           user="evadev") as \
             metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
@@ -63,6 +63,7 @@ def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_ac
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+@click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
@@ -72,9 +73,9 @@ def validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_ac
 @click.option("--vcf-validator-path", help="/path/to/vcf/validator/binary", required=True)
 @click.option("--assembly-checker-path", help="/path/to/assembly/checker/binary", required=True)
 @click.command()
-def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
          species_release_folder, vcf_validator_path, assembly_checker_path):
-    validate_release_vcf_files(private_config_xml_file, taxonomy_id, assembly_accession,
+    validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                release_species_inventory_table, release_version, species_release_folder,
                                vcf_validator_path, assembly_checker_path)
 

@@ -25,9 +25,8 @@ from ebi_eva_common_pyutils.common_utils import merge_two_dicts
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile, EVAPrivateSettingsXMLConfig
 
 
-def get_release_job_repo_properties(private_config_xml_file):
+def get_release_job_repo_properties(private_config_xml_file, eva_profile_name):
     release_job_repo_properties = {}
-    eva_profile_name = "production"
     config = EVAPrivateSettingsXMLConfig(private_config_xml_file)
     xpath_location_template = '//settings/profiles/profile/id[text()="{0}"]/../properties/{1}/text()'
     release_job_repo_properties["job_repo_url"] = config.get_value_with_xpath(
@@ -39,9 +38,9 @@ def get_release_job_repo_properties(private_config_xml_file):
     return release_job_repo_properties
 
 
-def get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
+def get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                         release_species_inventory_table, release_version, species_release_folder):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
                           user="evadev") as \
             metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
@@ -55,16 +54,16 @@ def get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, as
     release_inventory_info_for_assembly["mongo_accessioning_db"] = \
         get_release_db_name_in_tempmongo_instance(taxonomy_id)
     return merge_two_dicts(release_inventory_info_for_assembly,
-                           get_release_job_repo_properties(private_config_xml_file))
+                           get_release_job_repo_properties(private_config_xml_file, profile))
 
 
-def create_release_properties_file_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
+def create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
                                                 species_release_folder, job_repo_url):
     assembly_species_release_folder = os.path.join(species_release_folder, assembly_accession)
     os.makedirs(assembly_species_release_folder, exist_ok=True)
     output_file = "{0}/{1}_release.properties".format(assembly_species_release_folder, assembly_accession)
-    release_properties = get_release_properties_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
+    release_properties = get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                              release_species_inventory_table, release_version,
                                                              species_release_folder)
     # TODO: Production Spring Job repository URL won't be used for Release 2
@@ -111,6 +110,7 @@ def create_release_properties_file_for_assembly(private_config_xml_file, taxonom
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+@click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
@@ -119,9 +119,9 @@ def create_release_properties_file_for_assembly(private_config_xml_file, taxonom
 @click.option("--species-release-folder", required=True)
 @click.option("--job-repo-url", required=True)
 @click.command()
-def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
          species_release_folder, job_repo_url):
-    create_release_properties_file_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession,
+    create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
                                                 species_release_folder, job_repo_url)
 

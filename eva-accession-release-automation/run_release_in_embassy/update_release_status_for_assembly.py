@@ -24,9 +24,9 @@ from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_prof
 logger = logging.getLogger(__name__)
 
 
-def update_release_status_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession, release_version):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
-                          user = "evadev") as metadata_connection_handle:
+def update_release_status_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_version):
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
+                          user="evadev") as metadata_connection_handle:
         update_release_progress_status(metadata_connection_handle, taxonomy_id, assembly_accession, release_version,
                                        release_status='done')
         logger.info("Successfully marked release status as 'Done' in {0} for taxonomy {1} and assembly {2}"
@@ -34,12 +34,13 @@ def update_release_status_for_assembly(private_config_xml_file, taxonomy_id, ass
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+@click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.command()
-def main(private_config_xml_file, taxonomy_id, assembly_accession, release_version):
-    update_release_status_for_assembly(private_config_xml_file, taxonomy_id, assembly_accession, release_version)
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_version):
+    update_release_status_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_version)
 
 
 if __name__ == "__main__":
