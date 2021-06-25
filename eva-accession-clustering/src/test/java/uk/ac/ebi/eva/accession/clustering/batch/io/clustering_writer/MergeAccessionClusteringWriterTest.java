@@ -576,6 +576,6 @@ public class MergeAccessionClusteringWriterTest {
                                                                 String remappedFrom) {
         SubmittedVariant submittedClustered = new SubmittedVariant(assembly, 1000, "project", "1", start, "T", "A", rs);
         String hash1 = hashingFunction.apply(submittedClustered);
-        return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1, remappedFrom, LocalDateTime.now());
+        return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1, remappedFrom, LocalDateTime.now(), null);
     }
 }
