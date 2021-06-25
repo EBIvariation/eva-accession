@@ -23,22 +23,26 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
+import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
 
 public class StoreRemappingMetadataTasklet implements Tasklet {
 
     private final MongoTemplate mongoTemplate;
 
-    private RemappingIngestCounts remappingIngestCounts;
+    private InputParameters inputParameters;
 
-    public StoreRemappingMetadataTasklet(MongoTemplate mongoTemplate, RemappingIngestCounts remappingIngestCounts) {
+    public StoreRemappingMetadataTasklet(MongoTemplate mongoTemplate, InputParameters inputParameters) {
         this.mongoTemplate = mongoTemplate;
-        this.remappingIngestCounts = remappingIngestCounts;
+        this.inputParameters = inputParameters;
     }
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 //                Document remappingMetadata = new Document(new RemappingIngestCounts());
-        mongoTemplate.save(remappingIngestCounts, "remappingMetadata");
+        RemappingMetadata remappingMetadata = new RemappingMetadata("v1", "0.5.1",
+                                                                    inputParameters.getAssemblyAccession(),
+                                                                    inputParameters.getRemappedFrom());
+        mongoTemplate.save(remappingMetadata, "remappingMetadata");
         //        mongoTemplate.getCollection("remappingMetadata").insertOne(new RemappingIngestCounts());
 
         return RepeatStatus.FINISHED;

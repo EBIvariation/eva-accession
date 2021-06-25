@@ -25,7 +25,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
+import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.RemappingMetadata;
 import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.StoreRemappingMetadataTasklet;
+import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
 
 import java.io.IOException;
 
@@ -37,17 +39,16 @@ public class StoreRemappingMetadataStepConfiguration {
 
     private final MongoTemplate mongoTemplate;
 
-    private RemappingIngestCounts remappingIngestCounts;
+    private final InputParameters inputParameters;
 
-    public StoreRemappingMetadataStepConfiguration(MongoTemplate mongoTemplate,
-                                                   RemappingIngestCounts remappingIngestCounts) {
+    public StoreRemappingMetadataStepConfiguration(MongoTemplate mongoTemplate, InputParameters inputParameters) {
         this.mongoTemplate = mongoTemplate;
-        this.remappingIngestCounts = remappingIngestCounts;
+        this.inputParameters = inputParameters;
     }
 
     @Bean(STORE_REMAPPING_METADATA_STEP)
     public Step buildReportStep(StepBuilderFactory stepBuilderFactory) throws IOException {
-        StoreRemappingMetadataTasklet tasklet = new StoreRemappingMetadataTasklet(mongoTemplate, remappingIngestCounts);
+        StoreRemappingMetadataTasklet tasklet = new StoreRemappingMetadataTasklet(mongoTemplate, inputParameters);
         TaskletStep step = stepBuilderFactory.get(STORE_REMAPPING_METADATA_STEP)
                                              .tasklet(tasklet)
                                              .build();
