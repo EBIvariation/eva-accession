@@ -19,11 +19,9 @@ release_text_file_categories = ["deprecated_ids", "merged_deprecated_ids"]
 vcf_validation_output_file_pattern = "*.vcf.errors_summary.*"
 asm_report_output_file_pattern = "*.vcf.text_assembly_report.*"
 
-release_progress_table = "dbsnp_ensembl_species.rs_release_progress"
 
-
-def update_release_progress_status(metadata_connection_handle, taxonomy, assembly_accession, release_version,
-                                   release_status):
+def update_release_progress_status(metadata_connection_handle, release_progress_table, taxonomy, assembly_accession,
+                                   release_version, release_status):
     insert_sql = '''
        INSERT INTO {table_name} (taxonomy, assembly_accession, release_version, release_status)
             VALUES (%s, %s, %s, %s)
