@@ -25,6 +25,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Document
@@ -68,6 +69,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     private String remappedFrom;
 
+    private LocalDateTime remappedDate;
+
     private Integer mapWeight;
 
     protected SubmittedVariantEntity() {
@@ -75,9 +78,10 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     //Constructor to be used to store remapped submitted variants
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version,
-                                  String remappedFrom) {
+                                  String remappedFrom, LocalDateTime remappedDate) {
         this(accession, hashedMessage, model, version);
         this.remappedFrom = remappedFrom;
+        this.remappedDate = remappedDate;
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
@@ -279,6 +283,14 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         this.remappedFrom = remappedFrom;
     }
 
+    public LocalDateTime getRemappedDate() {
+        return remappedDate;
+    }
+
+    public void setRemappedDate(LocalDateTime remappedDate) {
+        this.remappedDate = remappedDate;
+    }
+
     public Integer getMapWeight() {
         return mapWeight;
     }
@@ -305,16 +317,15 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
                 Objects.equals(allelesMatch, that.allelesMatch) &&
                 Objects.equals(validated, that.validated) &&
                 Objects.equals(remappedFrom, that.remappedFrom) &&
+                Objects.equals(remappedDate, that.remappedDate) &&
                 Objects.equals(mapWeight, that.mapWeight);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele,
-                            alternateAllele, clusteredVariantAccession, supportedByEvidence, assemblyMatch,
-                            allelesMatch,
-                            validated, remappedFrom, mapWeight);
+                            referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
+                            assemblyMatch, allelesMatch, validated, remappedFrom, remappedDate, mapWeight);
     }
 
     @Override
@@ -333,6 +344,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
                 ", allelesMatch=" + allelesMatch +
                 ", validated=" + validated +
                 ", remappedFrom='" + remappedFrom + '\'' +
+                ", remappedDate='" + remappedDate + '\'' +
                 ", mapWeight=" + mapWeight +
                 '}';
     }

@@ -87,7 +87,8 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         String hash = hashingFunction.apply(submittedVariant);
         SubmittedVariantEntity submittedVariantRemappedEntity = new SubmittedVariantEntity(accession, hash,
                                                                                            submittedVariant, 1,
-                                                                                           remappedFrom);
+                                                                                           remappedFrom,
+                                                                                           LocalDateTime.now());
         return submittedVariantRemappedEntity;
     }
 }
