@@ -78,8 +78,8 @@ public class IngestRemappedVariantsFromVcfJobConfigurationTest {
     @DirtiesContext
     public void jobFromVcf() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-        List<String> expectedSteps = Arrays.asList(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP,
-                                                   STORE_REMAPPING_METADATA_STEP);
+        List<String> expectedSteps = Arrays.asList(STORE_REMAPPING_METADATA_STEP,
+                                                   INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }

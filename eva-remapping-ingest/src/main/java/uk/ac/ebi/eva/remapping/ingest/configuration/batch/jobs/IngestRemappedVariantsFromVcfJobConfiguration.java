@@ -39,8 +39,8 @@ public class IngestRemappedVariantsFromVcfJobConfiguration {
             JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(INGEST_REMAPPED_VARIANTS_FROM_VCF_JOB)
                                 .incrementer(new RunIdIncrementer())
-                                .start(ingestRemappedVariantsStep)
-                                .next(storeRemappingMetadataStep)
+                                .start(storeRemappingMetadataStep)
+                                .next(ingestRemappedVariantsStep)
                                 .build();
     }
 
