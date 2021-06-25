@@ -32,28 +32,28 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 copy_process = "copy_accessioning_collections_to_embassy"
 # Processes, in order, that make up the workflow and the arguments that they take
 workflow_process_arguments_map = collections.OrderedDict(
-    [(copy_process, ["private-config-xml-file", "taxonomy-id",
+    [(copy_process, ["private-config-xml-file", "profile", "taxonomy-id",
                      "release-species-inventory-table", "release-version", "dump-dir"]),
-     ("run_release_for_assembly", ["private-config-xml-file", "taxonomy-id",
+     ("run_release_for_assembly", ["private-config-xml-file", "profile", "taxonomy-id",
                                    "assembly-accession", "release-species-inventory-table",
                                    "release-version", "species-release-folder", "release-jar-path", "job-repo-url",
                                    "memory"]),
-     ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "bgzip-path", "tabix-path", "bcftools-path",
+     ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "profile", "bgzip-path", "tabix-path", "bcftools-path",
                                         "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
                                         "release-species-inventory-table", "release-version",
                                         "species-release-folder"]),
      ("sort_bgzip_tabix_release_files", ["bgzip-path", "tabix-path",
                                          "vcf-sort-script-path", "assembly-accession",
                                          "species-release-folder"]),
-     ("validate_release_vcf_files", ["private-config-xml-file", "taxonomy-id",
+     ("validate_release_vcf_files", ["private-config-xml-file", "profile", "taxonomy-id",
                                      "assembly-accession", "release-species-inventory-table", "release-version",
                                      "species-release-folder",
                                      "vcf-validator-path", "assembly-checker-path"]),
      ("analyze_vcf_validation_results", ["species-release-folder", "assembly-accession"]),
      ("count_rs_ids_in_release_files", ["count-ids-script-path", "assembly-accession", "species-release-folder"]),
-     ("validate_rs_release_files", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
+     ("validate_rs_release_files", ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
                                     "release-species-inventory-table", "release-version", "species-release-folder"]),
-     ("update_release_status_for_assembly", ["private-config-xml-file", "taxonomy-id", "assembly-accession",
+     ("update_release_status_for_assembly", ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
                                              "release-version"])
      ])
 
