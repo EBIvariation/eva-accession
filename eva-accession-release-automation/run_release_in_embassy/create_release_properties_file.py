@@ -59,19 +59,13 @@ def get_release_properties_for_assembly(private_config_xml_file, profile, taxono
 
 def create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
-                                                species_release_folder, job_repo_url):
+                                                species_release_folder):
     assembly_species_release_folder = os.path.join(species_release_folder, assembly_accession)
     os.makedirs(assembly_species_release_folder, exist_ok=True)
     output_file = "{0}/{1}_release.properties".format(assembly_species_release_folder, assembly_accession)
     release_properties = get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                              release_species_inventory_table, release_version,
                                                              species_release_folder)
-    # TODO: Production Spring Job repository URL won't be used for Release 2
-    #  since it hasn't been upgraded to support Spring Boot 2 metadata schema. Therefore a separate job repository
-    #  has been created (with similar credentials)  and passed in through the job_repo_url parameter.
-    #  The following line + job_repo_url parameter should be removed after the
-    #  production upgrade to the Spring Boot 2 metadata schema
-    release_properties["job_repo_url"] = job_repo_url
     properties_string = """
         spring.batch.job.names=ACCESSION_RELEASE_JOB
         parameters.assemblyAccession={assembly}
@@ -117,13 +111,12 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--species-release-folder", required=True)
-@click.option("--job-repo-url", required=True)
 @click.command()
-def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         species_release_folder, job_repo_url):
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
+         release_version, species_release_folder):
     create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
-                                                species_release_folder, job_repo_url)
+                                                species_release_folder)
 
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ workflow_process_arguments_map = collections.OrderedDict(
                      "release-species-inventory-table", "release-version", "dump-dir"]),
      ("run_release_for_assembly", ["private-config-xml-file", "profile", "taxonomy-id",
                                    "assembly-accession", "release-species-inventory-table",
-                                   "release-version", "species-release-folder", "release-jar-path", "job-repo-url",
+                                   "release-version", "species-release-folder", "release-jar-path",
                                    "memory"]),
      ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "profile", "bgzip-path", "tabix-path", "bcftools-path",
                                         "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
