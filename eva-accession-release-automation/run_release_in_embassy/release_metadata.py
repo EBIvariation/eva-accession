@@ -27,8 +27,7 @@ def update_release_progress_status(metadata_connection_handle, release_progress_
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (taxonomy, assembly_accession, release_version)
             DO UPDATE SET
-               (release_status)
-                = (EXCLUDED.release_status) ;
+               release_status = (EXCLUDED.release_status) ;
     '''
     with metadata_connection_handle.cursor() as cursor:
         cursor.execute(insert_sql.format(table_name=release_progress_table), (taxonomy, assembly_accession,
