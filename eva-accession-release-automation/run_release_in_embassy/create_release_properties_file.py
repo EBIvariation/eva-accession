@@ -72,7 +72,7 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
         parameters.assemblyReportUrl={report_path}
         parameters.chunkSize=1000
         parameters.fasta={fasta_path}
-        parameters.forceRestart=true
+        parameters.forceRestart=false
         parameters.outputFolder={output_folder}
         
         # job repository datasource
