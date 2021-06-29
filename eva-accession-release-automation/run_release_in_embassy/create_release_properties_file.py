@@ -66,7 +66,6 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
     release_properties = get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                              release_species_inventory_table, release_version,
                                                              species_release_folder)
-    # TODO forceRestart should be true once no previous job exception is handled appropriately by pipeline
     properties_string = """
         spring.batch.job.names=ACCESSION_RELEASE_JOB
         parameters.assemblyAccession={assembly}

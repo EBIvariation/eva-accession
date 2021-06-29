@@ -187,7 +187,7 @@ public class DbsnpJsonImportVariantsJobLauncherCommandLineRunnerTest {
         assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
         runner.run();
 
-        assertEquals(EXIT_WITH_ERRORS, runner.getExitCode());
+        assertEquals(EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
     @Test

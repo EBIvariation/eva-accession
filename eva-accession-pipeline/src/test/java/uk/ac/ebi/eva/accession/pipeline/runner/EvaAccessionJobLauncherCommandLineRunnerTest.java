@@ -208,7 +208,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
         assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
         runner.run();
 
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
+        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
     @Test
