@@ -71,6 +71,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     private LocalDateTime remappedDate;
 
+    private String remappingId;
+
     private Integer mapWeight;
 
     protected SubmittedVariantEntity() {
@@ -78,10 +80,11 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     //Constructor to be used to store remapped submitted variants
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version,
-                                  String remappedFrom, LocalDateTime remappedDate) {
+                                  String remappedFrom, LocalDateTime remappedDate, String remappingId) {
         this(accession, hashedMessage, model, version);
         this.remappedFrom = remappedFrom;
         this.remappedDate = remappedDate;
+        this.remappingId = remappingId;
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
@@ -121,20 +124,9 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
                                   String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
                                   Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
                                   Boolean validated, int version, Integer mapWeight) {
-        super(hashedMessage, accession, version);
-        this.referenceSequenceAccession = referenceSequenceAccession;
-        this.taxonomyAccession = taxonomyAccession;
-        this.projectAccession = projectAccession;
-        this.contig = contig;
-        this.start = start;
-        this.referenceAllele = referenceAllele;
-        this.alternateAllele = alternateAllele;
-        this.clusteredVariantAccession = clusteredVariantAccession;
-
-        setSupportedByEvidence(supportedByEvidence);
-        setAssemblyMatch(assemblyMatch);
-        setAllelesMatch(allelesMatch);
-        setValidated(validated);
+        this(accession, hashedMessage, referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start, 
+             referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence, assemblyMatch, 
+             allelesMatch, validated, version);
         this.mapWeight = mapWeight == null || mapWeight == 1 ? null : mapWeight;
     }
 
@@ -289,6 +281,14 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     public void setRemappedDate(LocalDateTime remappedDate) {
         this.remappedDate = remappedDate;
+    }
+
+    public String getRemappingId() {
+        return remappingId;
+    }
+
+    public void setRemappingId(String remappingId) {
+        this.remappingId = remappingId;
     }
 
     public Integer getMapWeight() {
