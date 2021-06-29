@@ -71,8 +71,6 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     private LocalDateTime remappedDate;
 
-    private String remappingId;
-
     private Integer mapWeight;
 
     protected SubmittedVariantEntity() {
@@ -80,11 +78,10 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     //Constructor to be used to store remapped submitted variants
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version,
-                                  String remappedFrom, LocalDateTime remappedDate, String remappingId) {
+                                  String remappedFrom, LocalDateTime remappedDate) {
         this(accession, hashedMessage, model, version);
         this.remappedFrom = remappedFrom;
         this.remappedDate = remappedDate;
-        this.remappingId = remappingId;
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
@@ -281,14 +278,6 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     public void setRemappedDate(LocalDateTime remappedDate) {
         this.remappedDate = remappedDate;
-    }
-
-    public String getRemappingId() {
-        return remappingId;
-    }
-
-    public void setRemappingId(String remappingId) {
-        this.remappingId = remappingId;
     }
 
     public Integer getMapWeight() {
