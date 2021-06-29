@@ -46,8 +46,9 @@ public class VariantToVariantContextProcessorTest {
 
     private static final String TAXONOMY_ID_KEY = "TAX";
 
-    private SubmittedVariantToVariantContextProcessor variantConverter;
+    public static final String CREATED_DATE = "2021-06-22T10:10:10.100";
 
+    private SubmittedVariantToVariantContextProcessor variantConverter;
 
     @Before
     public void setUp() {
@@ -66,7 +67,7 @@ public class VariantToVariantContextProcessorTest {
         SubmittedVariantEntity variant = new SubmittedVariantEntity(SS_ID, "hash", "assembly", taxonomy, project, chr1,
                                                                     start, reference, alternate, RS_ID,
                                                                     false, false, false, false, 1);
-        variant.setCreatedDate(LocalDateTime.now());
+        variant.setCreatedDate(LocalDateTime.parse(CREATED_DATE));
         return variant;
     }
 
