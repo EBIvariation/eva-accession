@@ -26,7 +26,6 @@ release-species-inventory-table:
 release-progress-table:
 
 release-jar-path:
-job-repo-url:
 
 bgzip-path:
 tabix-path:
