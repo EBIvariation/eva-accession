@@ -125,7 +125,7 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
             if (inputParameters.isForceRestart()) {
                 JobExecution previousJobExecution = CommandLineRunnerUtils.getLastJobExecution(jobName, jobExplorer,
                                                                                                jobParameters);
-                markPreviousJobAsFailed(
+                CommandLineRunnerUtils.markPreviousJobAsFailed(jobName, jobRepository,
                         previousJobExecution != null ? previousJobExecution.getJobParameters() : jobParameters);
             }
             else {
@@ -159,11 +159,5 @@ public class EvaAccessionJobLauncherCommandLineRunner extends JobLauncherCommand
             JobParametersNotFoundException {
         logger.info("Running job '" + jobName + "' with parameters: " + jobParameters);
         super.execute(job, jobParameters);
-    }
-
-    private void markPreviousJobAsFailed(JobParameters jobParameters) throws
-            NoPreviousJobExecutionException {
-        logger.info("Force restartPreviousExecution of job '" + jobName + "' with parameters: " + jobParameters);
-        JobStatusManager.markLastJobAsFailed(jobRepository, jobName, jobParameters);
     }
 }
