@@ -25,6 +25,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Document
@@ -68,14 +69,19 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     private String remappedFrom;
 
+    private LocalDateTime remappedDate;
+
+    private Integer mapWeight;
+
     protected SubmittedVariantEntity() {
     }
 
     //Constructor to be used to store remapped submitted variants
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version,
-                                  String remappedFrom) {
+                                  String remappedFrom, LocalDateTime remappedDate) {
         this(accession, hashedMessage, model, version);
         this.remappedFrom = remappedFrom;
+        this.remappedDate = remappedDate;
     }
 
     public SubmittedVariantEntity(Long accession, String hashedMessage, ISubmittedVariant model, int version) {
@@ -107,6 +113,20 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         setValidated(validated);
     }
 
+    /**
+     * This constructor should only be used when the mapping weight is required
+     */
+    public SubmittedVariantEntity(Long accession, String hashedMessage, String referenceSequenceAccession,
+                                  int taxonomyAccession, String projectAccession, String contig, long start,
+                                  String referenceAllele, String alternateAllele, Long clusteredVariantAccession,
+                                  Boolean supportedByEvidence, Boolean assemblyMatch, Boolean allelesMatch,
+                                  Boolean validated, int version, Integer mapWeight) {
+        this(accession, hashedMessage, referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start, 
+             referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence, assemblyMatch, 
+             allelesMatch, validated, version);
+        this.mapWeight = mapWeight == null || mapWeight == 1 ? null : mapWeight;
+    }
+
     public ISubmittedVariant getModel() {
         SubmittedVariant variant = new SubmittedVariant(this);
         variant.setSupportedByEvidence(isSupportedByEvidence());
@@ -114,6 +134,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         variant.setAllelesMatch(isAllelesMatch());
         variant.setValidated(isValidated());
         variant.setCreatedDate(getCreatedDate());
+        variant.setMapWeight(getMapWeight());
         return variant;
     }
 
@@ -251,74 +272,49 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         this.remappedFrom = remappedFrom;
     }
 
+    public LocalDateTime getRemappedDate() {
+        return remappedDate;
+    }
+
+    public void setRemappedDate(LocalDateTime remappedDate) {
+        this.remappedDate = remappedDate;
+    }
+
+    public Integer getMapWeight() {
+        return mapWeight;
+    }
+
+    public void setMapWeight(Integer mapWeight) {
+        this.mapWeight = mapWeight;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof SubmittedVariantEntity)) {
-            return false;
-        }
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         SubmittedVariantEntity that = (SubmittedVariantEntity) o;
-
-        if (taxonomyAccession != that.taxonomyAccession) {
-            return false;
-        }
-        if (start != that.start) {
-            return false;
-        }
-        if (!referenceSequenceAccession.equals(that.referenceSequenceAccession)) {
-            return false;
-        }
-        if (!projectAccession.equals(that.projectAccession)) {
-            return false;
-        }
-        if (!contig.equals(that.contig)) {
-            return false;
-        }
-        if (!referenceAllele.equals(that.referenceAllele)) {
-            return false;
-        }
-        if (!alternateAllele.equals(that.alternateAllele)) {
-            return false;
-        }
-        if (clusteredVariantAccession != null ? !clusteredVariantAccession.equals(
-                that.clusteredVariantAccession) : that.clusteredVariantAccession != null) {
-            return false;
-        }
-        if (supportedByEvidence != null ? !supportedByEvidence.equals(
-                that.supportedByEvidence) : that.supportedByEvidence != null) {
-            return false;
-        }
-        if (assemblyMatch != null ? !assemblyMatch.equals(that.assemblyMatch) : that.assemblyMatch != null) {
-            return false;
-        }
-        if (allelesMatch != null ? !allelesMatch.equals(that.allelesMatch) : that.allelesMatch != null) {
-            return false;
-        }
-        if (!Objects.equals(remappedFrom, that.remappedFrom)) {
-            return false;
-        }
-        return validated != null ? validated.equals(that.validated) : that.validated == null;
+        return taxonomyAccession == that.taxonomyAccession &&
+                start == that.start &&
+                Objects.equals(referenceSequenceAccession, that.referenceSequenceAccession) &&
+                Objects.equals(projectAccession, that.projectAccession) &&
+                Objects.equals(contig, that.contig) &&
+                Objects.equals(referenceAllele, that.referenceAllele) &&
+                Objects.equals(alternateAllele, that.alternateAllele) &&
+                Objects.equals(clusteredVariantAccession, that.clusteredVariantAccession) &&
+                Objects.equals(supportedByEvidence, that.supportedByEvidence) &&
+                Objects.equals(assemblyMatch, that.assemblyMatch) &&
+                Objects.equals(allelesMatch, that.allelesMatch) &&
+                Objects.equals(validated, that.validated) &&
+                Objects.equals(remappedFrom, that.remappedFrom) &&
+                Objects.equals(remappedDate, that.remappedDate) &&
+                Objects.equals(mapWeight, that.mapWeight);
     }
 
     @Override
     public int hashCode() {
-        int result = referenceSequenceAccession.hashCode();
-        result = 31 * result + taxonomyAccession;
-        result = 31 * result + projectAccession.hashCode();
-        result = 31 * result + contig.hashCode();
-        result = 31 * result + (int) (start ^ (start >>> 32));
-        result = 31 * result + referenceAllele.hashCode();
-        result = 31 * result + alternateAllele.hashCode();
-        result = 31 * result + (clusteredVariantAccession != null ? clusteredVariantAccession.hashCode() : 0);
-        result = 31 * result + (supportedByEvidence != null ? supportedByEvidence.hashCode() : 0);
-        result = 31 * result + (assemblyMatch != null ? assemblyMatch.hashCode() : 0);
-        result = 31 * result + (allelesMatch != null ? allelesMatch.hashCode() : 0);
-        result = 31 * result + (validated != null ? validated.hashCode() : 0);
-        result = 31 * result + (remappedFrom != null ? remappedFrom.hashCode() : 0);
-        return result;
+        return Objects.hash(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
+                            referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
+                            assemblyMatch, allelesMatch, validated, remappedFrom, remappedDate, mapWeight);
     }
 
     @Override
@@ -336,7 +332,9 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
                 ", assemblyMatch=" + assemblyMatch +
                 ", allelesMatch=" + allelesMatch +
                 ", validated=" + validated +
-                ", remappedFrom=" + remappedFrom +
+                ", remappedFrom='" + remappedFrom + '\'' +
+                ", remappedDate='" + remappedDate + '\'' +
+                ", mapWeight=" + mapWeight +
                 '}';
     }
 }

@@ -65,6 +65,8 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     @Field("validated")
     private Boolean validated;
 
+    private Integer mapWeight;
+
     public SubmittedVariantInactiveEntity() {
     }
 
@@ -142,6 +144,11 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     @Override
     public Boolean isValidated() {
         return validated;
+    }
+
+    @Override
+    public Integer getMapWeight() {
+        return mapWeight;
     }
 
     @Override

@@ -28,9 +28,10 @@ import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.remapping.source.batch.processors.ContextNucleotideAdditionProcessor;
 import uk.ac.ebi.eva.remapping.source.batch.processors.ExcludeInvalidVariantsProcessor;
+import uk.ac.ebi.eva.remapping.source.batch.processors.ExcludeMultimapVariantsProcessor;
 import uk.ac.ebi.eva.remapping.source.batch.processors.SubmittedVariantToVariantContextProcessor;
-import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 import uk.ac.ebi.eva.remapping.source.configuration.BeanNames;
+import uk.ac.ebi.eva.remapping.source.parameters.InputParameters;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,6 +46,7 @@ public class SubmittedVariantsProcessorConfiguration {
                 new CompositeItemProcessor<>();
 
         compositeItemProcessor.setDelegates(Arrays.asList(
+                new ExcludeMultimapVariantsProcessor(),
                 new ExcludeInvalidVariantsProcessor(),
                 new ContextNucleotideAdditionProcessor(fastaReader),
                 new ExcludeInvalidVariantsProcessor(),  // exclude again in case a IUPAC code is added as context base
@@ -64,10 +66,4 @@ public class SubmittedVariantsProcessorConfiguration {
             return new FastaSynonymSequenceReader(contigMapping, referenceFastaFile);
         }
     }
-
-//    @Bean
-//    ContigMapping contigMapping(InputParameters parameters) throws Exception {
-//        return new ContigMapping(parameters.getAssemblyReportUrl());
-//    }
-
 }

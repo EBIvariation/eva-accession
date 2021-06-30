@@ -93,22 +93,27 @@ public class IngestRemappedFromVcfStepConfigurationTest {
     @DirtiesContext
     public void runStep() {
         //Documents in the database before the ingestion
-        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(7, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         //Documents in the database after the ingestion
-        assertEquals(9, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(11, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         Query remappedVariantsQuery = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
         List<SubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
                                                                            SubmittedVariantEntity.class);
 
-        assertEquals(5, remappedVariants.size());
+        assertEquals(6, remappedVariants.size());
 
         //Variant ss5000000000: Remapped only once
         assertEquals(2, getVariantCountBySsId(5000000000L));
+
+        //Variant ss5000000004: Remapped only once not clustered
+        assertEquals(2, getVariantCountBySsId(5000000004L));
+        List<SubmittedVariantEntity> variants = getVariantsBySsId(5000000004L);
+        assertEquals(0, variants.stream().filter(x -> x.getClusteredVariantAccession() != null).count());
 
         //Variant ss5000000001: Remapped twice to the same location
         //Skip the duplicate variant as they have the same hash
@@ -126,4 +131,10 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         Query query = new Query(Criteria.where("accession").is(ssId));
         return mongoTemplate.count(query, SubmittedVariantEntity.class);
     }
+
+    private List<SubmittedVariantEntity> getVariantsBySsId(long ssId) {
+        Query query = new Query(Criteria.where("accession").is(ssId));
+        return mongoTemplate.find(query, SubmittedVariantEntity.class);
+    }
+
 }

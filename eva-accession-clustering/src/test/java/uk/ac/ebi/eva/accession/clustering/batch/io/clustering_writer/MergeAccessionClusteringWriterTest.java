@@ -62,6 +62,7 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
@@ -575,6 +576,6 @@ public class MergeAccessionClusteringWriterTest {
                                                                 String remappedFrom) {
         SubmittedVariant submittedClustered = new SubmittedVariant(assembly, 1000, "project", "1", start, "T", "A", rs);
         String hash1 = hashingFunction.apply(submittedClustered);
-        return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1, remappedFrom);
+        return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1, remappedFrom, LocalDateTime.now());
     }
 }
