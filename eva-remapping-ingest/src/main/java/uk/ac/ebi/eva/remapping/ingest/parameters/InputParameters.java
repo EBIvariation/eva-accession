@@ -30,6 +30,8 @@ public class InputParameters {
 
     private String assemblyReportUrl;
 
+    private String remappingVersion;
+
     private int chunkSize;
 
     private boolean forceRestart;
@@ -74,6 +76,14 @@ public class InputParameters {
         this.assemblyReportUrl = assemblyReportUrl;
     }
 
+    public String getRemappingVersion() {
+        return remappingVersion;
+    }
+
+    public void setRemappingVersion(String remappingVersion) {
+        this.remappingVersion = remappingVersion;
+    }
+
     public int getChunkSize() {
         return chunkSize;
     }
@@ -97,6 +107,7 @@ public class InputParameters {
                 .addString("vcf", vcf)
                 .addString("loadTo", loadTo)
                 .addString("assemblyReportUrl", assemblyReportUrl)
+                .addString("remappingVersion", remappingVersion)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
     }

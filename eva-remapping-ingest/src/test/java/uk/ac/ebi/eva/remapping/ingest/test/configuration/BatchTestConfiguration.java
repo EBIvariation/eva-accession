@@ -26,24 +26,28 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
+import uk.ac.ebi.eva.remapping.ingest.configuration.RemappingMetadataConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.IngestRemappedSubmittedVariantsWriterConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.jobs.IngestRemappedVariantsFromVcfJobConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.listeners.ListenerConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.processors.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps.IngestRemappedFromVcfStepConfiguration;
+import uk.ac.ebi.eva.remapping.ingest.configuration.batch.steps.StoreRemappingMetadataStepConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.configuration.policies.ChunkSizeCompletionPolicyConfiguration;
 
 import javax.sql.DataSource;
 
 @EnableAutoConfiguration
 @Import({IngestRemappedFromVcfStepConfiguration.class,
+        StoreRemappingMetadataStepConfiguration.class,
         IngestRemappedVariantsFromVcfJobConfiguration.class,
         VcfReaderConfiguration.class,
         VariantProcessorConfiguration.class,
         IngestRemappedSubmittedVariantsWriterConfiguration.class,
         ListenerConfiguration.class,
-        ChunkSizeCompletionPolicyConfiguration.class})
+        ChunkSizeCompletionPolicyConfiguration.class,
+        RemappingMetadataConfiguration.class})
 public class BatchTestConfiguration {
 
     @Autowired

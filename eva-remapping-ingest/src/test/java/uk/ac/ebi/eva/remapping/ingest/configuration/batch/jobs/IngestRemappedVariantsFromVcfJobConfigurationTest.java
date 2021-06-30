@@ -29,21 +29,27 @@ import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.RemappingMetadata;
 import uk.ac.ebi.eva.remapping.ingest.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.remapping.ingest.test.rule.FixSpringMongoDbRule;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.STORE_REMAPPING_METADATA_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
@@ -51,7 +57,7 @@ import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.INGEST_REMA
 @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
 public class IngestRemappedVariantsFromVcfJobConfigurationTest {
 
-    private static final String TEST_DB = "test-db";
+    private static final String TEST_DB = "test-ingest-remapping";
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -76,14 +82,31 @@ public class IngestRemappedVariantsFromVcfJobConfigurationTest {
     @DirtiesContext
     public void jobFromVcf() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
-        List<String> expectedSteps = Collections.singletonList(INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
+        List<String> expectedSteps = Arrays.asList(STORE_REMAPPING_METADATA_STEP,
+                                                   INGEST_REMAPPED_VARIANTS_FROM_VCF_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        assertMetadataAssociatedToSubmittedVariants();
     }
 
     private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
         Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
         List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
+    }
+
+    private void assertMetadataAssociatedToSubmittedVariants() {
+        RemappingMetadata metadata = mongoTemplate.findOne(new Query(), RemappingMetadata.class);
+        assertNotNull(metadata);
+        String remappingId = metadata.getHashedMessage();
+
+        Query remappedQuery = new Query(Criteria.where("remappedFrom").exists(true));
+        List<SubmittedVariantEntity> variantsRemapped = mongoTemplate.find(remappedQuery, SubmittedVariantEntity.class);
+
+        long variantsWithMetatada = variantsRemapped.stream()
+                                                    .filter(x -> x.getRemappingId() != null &&
+                                                            x.getRemappingId().equals(remappingId))
+                                                    .count();
+        assertEquals(4, variantsWithMetatada);
     }
 }

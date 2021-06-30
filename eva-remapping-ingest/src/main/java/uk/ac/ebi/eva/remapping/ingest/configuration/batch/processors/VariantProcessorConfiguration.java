@@ -26,6 +26,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.remapping.ingest.batch.processors.ContigToGenbankReplacerProcessor;
 import uk.ac.ebi.eva.remapping.ingest.batch.processors.VariantToSubmittedVariantEntityRemappedProcessor;
+import uk.ac.ebi.eva.remapping.ingest.batch.tasklets.RemappingMetadata;
 import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
 
 import java.util.Arrays;
@@ -58,9 +59,10 @@ public class VariantProcessorConfiguration {
 
     @Bean
     public VariantToSubmittedVariantEntityRemappedProcessor variantToSubmittedVariantEntityRemappedProcessor(
-            InputParameters inputParameters) {
+            InputParameters inputParameters, RemappingMetadata remappingMetadata) {
         return new VariantToSubmittedVariantEntityRemappedProcessor(inputParameters.getAssemblyAccession(),
-                                                                    inputParameters.getRemappedFrom());
+                                                                    inputParameters.getRemappedFrom(),
+                                                                    remappingMetadata.getHashedMessage());
     }
 
 }

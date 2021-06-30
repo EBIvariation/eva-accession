@@ -165,6 +165,7 @@ public class SubmittedVariantAccessioningServiceTest {
         submittedVariantModified = new SubmittedVariant("GCA_000003055.3", 9913, PROJECT, "21", 20800319,
                                                         "C", "TCTC", CLUSTERED_VARIANT, DEFAULT_SUPPORTED_BY_EVIDENCE,
                                                         DEFAULT_ASSEMBLY_MATCH, true, DEFAULT_VALIDATED, null);
+//        submittedVariantModified.setCreatedDate(LocalDateTime.now());
     }
 
     @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)

@@ -33,4 +33,5 @@ public class BeanNames {
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
+    public static final String STORE_REMAPPING_METADATA_STEP = "STORE_REMAPPING_METADATA_STEP";
 }

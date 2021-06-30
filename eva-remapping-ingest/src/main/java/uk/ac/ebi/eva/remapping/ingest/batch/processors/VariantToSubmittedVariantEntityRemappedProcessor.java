@@ -48,14 +48,17 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
 
     private String remappedFrom;
 
+    private String remappingId;
+
     private Function<ISubmittedVariant, String> hashingFunction;
 
-    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession, String remappedFrom) {
+    public VariantToSubmittedVariantEntityRemappedProcessor(String assemblyAccession, String remappedFrom, String remappingId) {
         if (assemblyAccession == null || remappedFrom == null) {
             throw new IllegalArgumentException("assembly accession and assembly remapped from must be provided");
         }
         this.assemblyAccession = assemblyAccession;
         this.remappedFrom = remappedFrom;
+        this.remappingId = remappingId;
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
 
@@ -88,7 +91,8 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         SubmittedVariantEntity submittedVariantRemappedEntity = new SubmittedVariantEntity(accession, hash,
                                                                                            submittedVariant, 1,
                                                                                            remappedFrom,
-                                                                                           LocalDateTime.now());
+                                                                                           LocalDateTime.now(),
+                                                                                           remappingId);
         return submittedVariantRemappedEntity;
     }
 }
