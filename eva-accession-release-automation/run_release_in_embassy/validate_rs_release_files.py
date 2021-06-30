@@ -436,11 +436,11 @@ def export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, a
                                                                mongo_unique_rs_ids_file))
 
 
-def validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
+def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
                               release_version, species_release_folder):
     port_forwarding_process_id, mongo_port, exit_code  = None, None, None
     try:
-        port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, taxonomy_id,
+        port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
                                                                               release_species_inventory_table,
                                                                               release_version)
         db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id)
@@ -466,6 +466,7 @@ def validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_acc
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+@click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
@@ -473,9 +474,9 @@ def validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_acc
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--species-release-folder", required=True)
 @click.command()
-def main(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
          species_release_folder):
-    validate_rs_release_files(private_config_xml_file, taxonomy_id, assembly_accession, release_species_inventory_table,
+    validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
                               release_version, species_release_folder)
 
 

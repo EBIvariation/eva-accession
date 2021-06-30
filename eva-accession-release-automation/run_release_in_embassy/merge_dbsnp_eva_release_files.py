@@ -169,10 +169,10 @@ def merge_dbsnp_eva_text_files(assembly_accession, species_release_folder, text_
     return text_release_file_merge_commands
 
 
-def merge_dbsnp_eva_release_files(private_config_xml_file, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path,
+def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file), user="evadev") \
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evadev") \
         as metadata_connection_handle:
         release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                release_species_inventory_table,
@@ -191,6 +191,7 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, bgzip_path, tabix_pat
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+@click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--bgzip-path", help="ex: /path/to/bgzip/binary", required=True)
 @click.option("--tabix-path", help="ex: /path/to/tabix/binary", required=True)
 @click.option("--bcftools-path", help="ex: /path/to/vcftools/binary", required=True)
@@ -202,9 +203,9 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, bgzip_path, tabix_pat
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--species-release-folder", required=True)
 @click.command()
-def main(private_config_xml_file, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path, taxonomy_id,
+def main(private_config_xml_file, profile, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path, taxonomy_id,
          assembly_accession, release_species_inventory_table, release_version, species_release_folder):
-    merge_dbsnp_eva_release_files(private_config_xml_file, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path,
+    merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder)
 

@@ -1,5 +1,7 @@
 package uk.ac.ebi.eva.accession.core.runner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Entity;
 import org.springframework.batch.core.JobExecution;
@@ -9,12 +11,17 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.NoSuchJobException;
+import org.springframework.batch.core.repository.JobRepository;
+import uk.ac.ebi.eva.commons.batch.exception.NoPreviousJobExecutionException;
+import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 public class CommandLineRunnerUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(CommandLineRunnerUtils.class);
 
     private static final String RUN_ID_PARAMETER_NAME = "run.id";
 
@@ -73,6 +80,18 @@ public class CommandLineRunnerUtils {
             secondJobParameterMap.remove(RUN_ID_PARAMETER_NAME);
         }
         return firstJobParameterMap.equals(secondJobParameterMap);
+    }
+
+    public static void markPreviousJobAsFailed(String jobName, JobRepository jobRepository, JobParameters jobParameters)
+            throws NoPreviousJobExecutionException {
+        logger.info("Force restartPreviousExecution of job '" + jobName + "' with parameters: " + jobParameters);
+        try {
+            JobStatusManager.markLastJobAsFailed(jobRepository, jobName, jobParameters);
+        }
+        catch (NoPreviousJobExecutionException ex) {
+            //Be forgiving if a previous job does not exist: just print a warning message
+            logger.warn(ex.getMessage());
+        }
     }
 
 }
