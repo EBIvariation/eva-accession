@@ -24,6 +24,13 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 
 
+def remove_index_if_outdated(fasta_path):
+    """Remove fasta index file if it's older than the fasta file, assembly checker will regenerate."""
+    fasta_index_path = f'{fasta_path}.fai'
+    if os.path.exists(fasta_index_path) and os.path.getmtime(fasta_index_path) < os.path.getmtime(fasta_path):
+        os.remove(fasta_index_path)
+
+
 def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                release_species_inventory_table, release_version, species_release_folder,
                                vcf_validator_path, assembly_checker_path):
@@ -41,6 +48,7 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
                                                                                       metadata_connection_handle)
         fasta_path = release_inventory_info_for_assembly["fasta_path"]
         assembly_report_path = release_inventory_info_for_assembly["report_path"]
+        remove_index_if_outdated(fasta_path)
         if assembly_report_path.startswith("file:/"):
             assembly_report_path = assembly_report_path.replace("file:/", "/")
 
