@@ -17,11 +17,28 @@ import argparse
 import sys
 import logging
 import datetime
+import yaml
+import psycopg2
+from ebi_eva_common_pyutils.nextflow import LinearNextFlowPipeline
+
 from create_clustering_properties import create_properties_file
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
+
 
 logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+
+
+def set_progress_start(profile, private_config_xml_file, assembly, tax_id, release_version):
+    update_status_query = ('UPDATE eva_progress_tracker.clustering_release_tracker '
+                           f"SET clustering_status='started', clustering_start = '{datetime.datetime.now().isoformat()}' "
+                           f"WHERE assembly='{assembly}' AND taxonomy_id='{tax_id}' "
+                           f"AND release_version={release_version}")
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evadev") \
+            as metadata_connection_handle:
+        execute_query(metadata_connection_handle, update_status_query)
 
 
 def generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory, dependency):
@@ -66,45 +83,54 @@ def add_to_command_file(properties_path, command):
         commands.write(command + '\n')
 
 
-def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file,
-                profile, output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency):
+def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile, release,
+                taxonomy, output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency):
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
                                              private_config_xml_file, profile, output_directory)
-    command = generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory,
-                                    dependency)
+    # command = generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory,
+    #                                 dependency)
     if not only_printing:
-        run_command_with_output('Run clustering command', command, return_process_output=True)
+        set_progress_start(profile, private_config_xml_file, assembly_accession, taxonomy, release)
+        generate_linear_pipeline(assembly_accession, properties_path, logs_directory,
+                                 clustering_artifact, memory, dependency)
+        # run_command_with_output('Run clustering command', command, return_process_output=True)
 
 
-def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_xml_file, profile,
-                     output_directory, logs_directory, clustering_artifact, only_printing, memory):
+def cluster_multiple(source, asm_vcf_prj_list, assembly_list, taxonomy, output_directory, logs_directory,
+                     clustering_artifact, only_printing, memory, common_clustering_properties_file):
     """
     This method decides how to call the run_clustering method depending on the source (Mongo or VCF)
     """
     check_requirements(source, asm_vcf_prj_list, assembly_list)
 
+    common_clustering_properties = get_common_release_properties(common_clustering_properties_file)
+    private_config_xml_file = common_clustering_properties["private-config-xml-file"]
+    profile = common_clustering_properties["profile"]
+    # release_species_inventory_table = common_clustering_properties["clustering-release-tracker-table"]
+    release = common_clustering_properties["release-version"]
+
     if source == 'MONGO':
-        cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile, output_directory,
-                                    logs_directory, clustering_artifact, only_printing, memory)
+        cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile, release, taxonomy,
+                                    output_directory, logs_directory, clustering_artifact, only_printing, memory)
 
     if source == 'VCF':
-        cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile, output_directory,
-                                  logs_directory, clustering_artifact, only_printing, memory)
+        cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile, release, taxonomy,
+                                  output_directory, logs_directory, clustering_artifact, only_printing, memory)
 
 
-def cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile,
+def cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile, release, taxonomy,
                                 output_directory, logs_directory, clustering_artifact, only_printing, memory):
     """
     This method call the run_clustering method for each assembly
     """
     dependency = None
     for assembly_accession in assembly_list:
-        cluster_one(source, None, None, assembly_accession, private_config_xml_file, profile, output_directory,
-                    logs_directory, clustering_artifact, only_printing, memory, dependency)
+        cluster_one(source, None, None, assembly_accession, private_config_xml_file, profile, release, taxonomy,
+                    output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency)
         dependency = get_job_name(assembly_accession)
 
 
-def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile,
+def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile, release, taxonomy,
                               output_directory, logs_directory, clustering_artifact, only_printing, memory):
     """
     The list will be of the form: GCA_000000001.1#/file1.vcf.gz#PRJEB1111 GCA_000000002.2#/file2.vcf.gz#PRJEB2222 ...
@@ -116,9 +142,26 @@ def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file,
         assembly_accession = data[0]
         vcf_file = data[1]
         project_accession = data[2]
-        cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                    output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency)
+        cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile, release,
+                    taxonomy, output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency)
         dependency = get_job_name(assembly_accession)
+
+
+def get_common_release_properties(common_clustering_properties_file):
+    return yaml.load(open(common_clustering_properties_file), Loader=yaml.FullLoader)
+
+
+def generate_linear_pipeline(assembly_accession, properties_path, logs_directory, clustering_artifact, memory,
+                             dependency):
+    pipeline = LinearNextFlowPipeline()
+    clustering_command = generate_bsub_command(assembly_accession, properties_path, logs_directory,
+                                               clustering_artifact, memory, dependency)
+    pipeline.add_process("run_clustering", clustering_command)
+    # get python path and nextflow config path from clustering yaml config file
+    pipeline.add_process("update_clustering_status", "python3 update_clustering_status.py")
+    pipeline.run_pipeline(workflow_file_path=f"/home/asilva/Documents/clustering_nextflow/linear_pipeline_{assembly_accession}.nf",
+                          working_dir='/home/asilva/Documents/clustering_nextflow',
+                          nextflow_config_path='/home/asilva/Documents/clustering_nextflow/nextflow.config')
 
 
 def check_requirements(source, asm_vcf_prj_list, assembly_list):
@@ -145,8 +188,8 @@ if __name__ == "__main__":
     parser.add_argument("--assembly-list", help="Assembly list for which the process has to be run, "
                                                 "e.g. GCA_000002285.2 GCA_000233375.4. "
                                                 "Required when the source is mongo", required=False, nargs='+')
-    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
-    parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
+    parser.add_argument("--taxonomy", help="Taxonomy id", required=True)
+    parser.add_argument("--common-clustering-properties-file", help="ex: /path/to/clustering/properties.yml", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
     parser.add_argument("--logs-directory", help="Directory for logs files", required=False)
     parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline", required=True)
@@ -158,9 +201,9 @@ if __name__ == "__main__":
     args = {}
     try:
         args = parser.parse_args()
-        cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.private_config_xml_file,
-                         args.profile, args.output_directory, args.logs_directory, args.clustering_artifact,
-                         args.only_printing, args.memory)
+        cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.taxonomy, args.output_directory,
+                         args.logs_directory, args.clustering_artifact, args.only_printing, args.memory,
+                         args.common_clustering_properties_file)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
