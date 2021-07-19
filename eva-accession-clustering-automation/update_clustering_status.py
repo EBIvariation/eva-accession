@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def set_progress_status(profile, private_config_xml_file, assembly, tax_id, release_version, status):
+def set_clustering_status(profile, private_config_xml_file, assembly, tax_id, release_version, status):
     now = datetime.datetime.now().isoformat()
     update_status_query = 'UPDATE eva_progress_tracker.clustering_release_tracker '
     update_status_query += f"SET clustering_status={status}"
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     args = {}
     try:
         args = parser.parse_args()
-        set_progress_status(args.profile, args.private_config_xml_file, args.assembly, args.taxonomy, args.release, args.status)
+        set_clustering_status(args.profile, args.private_config_xml_file, args.assembly, args.taxonomy, args.release, args.status)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)

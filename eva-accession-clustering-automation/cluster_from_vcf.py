@@ -68,9 +68,9 @@ def add_to_command_file(properties_path, command):
         commands.write(command + '\n')
 
 
-def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file,
-                profile, output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency):
-    properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
+def cluster_one(vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
+                output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency):
+    properties_path = create_properties_file('VCF', vcf_file, project_accession, assembly_accession,
                                              private_config_xml_file, profile, output_directory, instance)
     command = generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory,
                                     dependency)

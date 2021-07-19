@@ -39,6 +39,10 @@ def get_assemblies_and_scientific_name_from_taxonomy(taxonomy_id, metadata_conne
     return [result[0] for result in results], results[0][1]
 
 
+def get_common_clustering_properties(common_clustering_properties_file):
+    return yaml.load(open(common_clustering_properties_file), Loader=yaml.FullLoader)
+
+
 def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance):
     private_config_xml_file = common_properties["private-config-xml-file"]
     profile = common_properties["profile"]
@@ -82,7 +86,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
 
 def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, memory, instance):
     """
-    This method call the run_clustering method for each assembly
+    Generates and runs a Nextflow pipeline to cluster all assemblies for a given taxonomy.
     """
     common_properties = get_common_clustering_properties(common_clustering_properties_file)
     clustering_tracking_table = common_properties["clustering-release-tracker"],
@@ -96,10 +100,6 @@ def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, 
             nextflow_binary_path=common_properties['nextflow-binary-path'],
             nextflow_config_path=common_properties['nextflow-config-path']
         )
-
-
-def get_common_clustering_properties(common_clustering_properties_file):
-    return yaml.load(open(common_clustering_properties_file), Loader=yaml.FullLoader)
 
 
 if __name__ == "__main__":
