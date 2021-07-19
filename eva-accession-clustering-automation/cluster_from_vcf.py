@@ -68,8 +68,8 @@ def add_to_command_file(properties_path, command):
         commands.write(command + '\n')
 
 
-def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency):
+def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file,
+                profile, output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency):
     properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
                                              private_config_xml_file, profile, output_directory, instance)
     command = generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory,
@@ -90,7 +90,8 @@ def cluster_multiple_from_vcf(asm_vcf_prj_list, private_config_xml_file, profile
         assembly_accession = data[0]
         vcf_file = data[1]
         project_accession = data[2]
-        cluster_one(vcf_file, project_accession, assembly_accession, private_config_xml_file, profile, output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency)
+        cluster_one(vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
+                    output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency)
         dependency = get_job_name(assembly_accession)
 
 
