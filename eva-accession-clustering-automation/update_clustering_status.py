@@ -14,11 +14,10 @@
 
 import sys
 import argparse
-import psycopg2
 import datetime
 import logging
 
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.pg_utils import execute_query
 
 
@@ -26,13 +25,17 @@ logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
 
-def set_progress_end(profile, private_config_xml_file, assembly, tax_id, release_version):
-    update_status_query = ('UPDATE eva_progress_tracker.clustering_release_tracker '
-                           f"SET clustering_status='done', clustering_end = '{datetime.datetime.now().isoformat()}' "
-                           f"WHERE assembly='{assembly}' AND taxonomy_id='{tax_id}' "
-                           f"AND release_version={release_version}")
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evadev") \
-            as metadata_connection_handle:
+def set_progress_status(profile, private_config_xml_file, assembly, tax_id, release_version, status):
+    now = datetime.datetime.now().isoformat()
+    update_status_query = 'UPDATE eva_progress_tracker.clustering_release_tracker '
+    update_status_query += f"SET clustering_status={status}"
+    if status == 'Started':
+        update_status_query += f", clustering_start='{now}'"
+    elif status == 'Completed':
+        update_status_query += f", clustering_end='{now}'"
+    update_status_query += (f" WHERE assembly='{assembly}' AND taxonomy_id='{tax_id}' "
+                            f"AND release_version={release_version}")
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         execute_query(metadata_connection_handle, update_status_query)
 
 
@@ -41,11 +44,13 @@ if __name__ == "__main__":
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--release", help="Release version", required=True)
+    parser.add_argument("--assembly", help="Assembly accession", required=True)
     parser.add_argument("--taxonomy", help="Taxonomy id", required=True)
+    parser.add_argument("--status", help="Status to set", required=True, choices=["Started", "Completed", "Failed"])
     args = {}
     try:
         args = parser.parse_args()
-        set_progress_end()
+        set_progress_status(args.profile, args.private_config_xml_file, args.assembly, args.taxonomy, args.release, args.status)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
