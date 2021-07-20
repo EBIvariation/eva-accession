@@ -72,7 +72,7 @@ def add_accessioning_properties(properties_file, instance):
     properties_file.write(f"""
 parameters.chunkSize=100
 
-accessioning.instanceId=instance-{instance}
+accessioning.instanceId=instance-{instance:02d}
 accessioning.submitted.categoryId=ss
 accessioning.clustered.categoryId=rs
 
