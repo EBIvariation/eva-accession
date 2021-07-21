@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_properties_file(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                           output_directory):
+                           output_directory, instance):
     """
     This method creates the application properties file
     """
@@ -31,7 +31,7 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
     with open(path, 'w') as properties_file:
         add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file)
-        add_accessioning_properties(properties_file)
+        add_accessioning_properties(properties_file, instance)
         add_mongo_properties(properties_file, properties)
         add_job_tracker_properties(properties_file, properties)
         add_spring_properties(properties_file)
@@ -68,11 +68,11 @@ def get_job_name(source):
         return 'CLUSTERING_FROM_VCF_JOB'
 
 
-def add_accessioning_properties(properties_file):
-    properties_file.write("""
+def add_accessioning_properties(properties_file, instance):
+    properties_file.write(f"""
 parameters.chunkSize=100
 
-accessioning.instanceId=instance-01
+accessioning.instanceId=instance-{instance:02d}
 accessioning.submitted.categoryId=ss
 accessioning.clustered.categoryId=rs
 
