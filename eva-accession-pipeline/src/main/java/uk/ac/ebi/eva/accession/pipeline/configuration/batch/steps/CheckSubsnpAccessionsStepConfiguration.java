@@ -27,9 +27,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.core.io.AccessionedVcfLineMapper;
 import uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck.ReportCheckTasklet;
-import uk.ac.ebi.eva.commons.batch.io.CoordinatesVcfLineMapper;
+import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -58,7 +58,7 @@ public class CheckSubsnpAccessionsStepConfiguration {
     @Bean
     @Qualifier(REPORT_READER)
     public ItemStreamReader<Variant> reportReader() throws IOException {
-        VcfReader vcfReader = new VcfReader(new CoordinatesVcfLineMapper(), new File(inputParameters.getOutputVcf()));
+        VcfReader vcfReader = new VcfReader(new AccessionedVcfLineMapper(), new File(inputParameters.getOutputVcf()));
         return new UnwindingItemStreamReader<>(vcfReader);
     }
 
