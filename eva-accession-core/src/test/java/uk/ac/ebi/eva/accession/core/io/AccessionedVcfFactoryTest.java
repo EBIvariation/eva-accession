@@ -2,7 +2,6 @@ package uk.ac.ebi.eva.accession.core.io;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import uk.ac.ebi.eva.commons.core.models.factories.CoordinatesVcfFactory;
 import uk.ac.ebi.eva.commons.core.models.factories.VariantVcfFactory;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
@@ -192,7 +191,7 @@ public class AccessionedVcfFactoryTest {
     @Test
     public void testVariantIdsEnabled() {
         // EVA-1898 - needed for eva-accession-clustering, test that ID is read if explicitly configured
-        VariantVcfFactory accessionedVariantFactory = new CoordinatesVcfFactory();
+        VariantVcfFactory accessionedVariantFactory = new AccessionedVcfFactory();
         accessionedVariantFactory.setIncludeIds(true);
 
         // test that an ID is properly read
@@ -214,7 +213,7 @@ public class AccessionedVcfFactoryTest {
     @Test
     public void testVariantIdsDisabled() {
         // ignore ids if explicitly configured, to comply with the interface
-        VariantVcfFactory nonAccessionedVariantFactory = new CoordinatesVcfFactory();
+        VariantVcfFactory nonAccessionedVariantFactory = new AccessionedVcfFactory();
         nonAccessionedVariantFactory.setIncludeIds(false);
         Set<String> emptySet = Collections.emptySet();
 
