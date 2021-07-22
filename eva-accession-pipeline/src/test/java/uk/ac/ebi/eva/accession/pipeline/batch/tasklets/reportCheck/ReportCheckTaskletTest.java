@@ -29,8 +29,8 @@ import org.springframework.batch.item.UnexpectedInputException;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
+import uk.ac.ebi.eva.accession.core.io.AccessionedVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
-import uk.ac.ebi.eva.commons.batch.io.CoordinatesVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.Aggregation;
@@ -81,7 +81,7 @@ public class ReportCheckTaskletTest {
         UnwindingItemStreamReader<Variant> unwindingVcfReader = new UnwindingItemStreamReader<>(vcfReader);
 
         File reportFile = new File(reportUri);
-        VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
+        VcfReader reportReader = new VcfReader(new AccessionedVcfLineMapper(), reportFile);
         UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
         return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, initialBufferSize, contigMapping);
@@ -150,7 +150,7 @@ public class ReportCheckTaskletTest {
         UnwindingItemStreamReader<Variant> unwindingVcfReader = new UnwindingItemStreamReader<>(vcfReader);
 
         File reportFile = new File(reportUri);
-        VcfReader reportReader = new VcfReader(new CoordinatesVcfLineMapper(), reportFile);
+        VcfReader reportReader = new VcfReader(new AccessionedVcfLineMapper(), reportFile);
         UnwindingItemStreamReader<Variant> unwindingReportReader = new UnwindingItemStreamReader<>(reportReader);
 
         return new ReportCheckTasklet(unwindingVcfReader, unwindingReportReader, 1000, contigMapping);
@@ -173,13 +173,13 @@ public class ReportCheckTaskletTest {
         // then
         // TODO: when we do left alignment using the reference fasta, the next asserts should be:
         // step is properly completed, 2 duplicates in input, 0 duplicates in report
-        assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
+        assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
         assertEquals(1, reportCheckTasklet.getDuplicatedVariantsInInputVcf());
-        assertEquals(1, reportCheckTasklet.getDuplicatedVariantsInReportVcf());
+        assertEquals(0, reportCheckTasklet.getDuplicatedVariantsInReportVcf());
     }
 
     @Test
-    public void vcfsContainAmbiguousVariantThatCanNotBeMatched() throws Exception {
+    public void reportContainingContextBaseVariantShouldMatch() throws Exception {
         // given
         URI vcfUri = ReportCheckTaskletTest.class
                 .getResource("/input-files/vcf/aggregated.with_ambiguous.vcf.gz").toURI();
@@ -193,9 +193,9 @@ public class ReportCheckTaskletTest {
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
-        assertEquals(ExitStatus.FAILED, stepContribution.getExitStatus());
-        assertEquals(1, reportCheckTasklet.getUnmatchedVariantsInInputVcf());
-        assertEquals(1, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
+        assertEquals(ExitStatus.COMPLETED, stepContribution.getExitStatus());
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInInputVcf());
+        assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInReportVcf());
     }
 
     @Test

@@ -20,28 +20,24 @@ public class AccessionedVcfFactory extends VariantVcfFactory {
     public List<Variant> create(String fileId, String studyId, String line) throws IllegalArgumentException, NonVariantException, IncompleteInformationException {
         String[] fields = line.split("\t", 6);
         String chromosome = fields[0];
-        long position = this.getPosition(fields);
-        Set<String> ids = this.getIds(fields);
-        String reference = this.getReference(fields);
-        String[] alternateAlleles = this.getAlternateAlleles(fields);
-        List<Variant> variants = new LinkedList();
-        String[] var12 = alternateAlleles;
-        int var13 = alternateAlleles.length;
+        long position = getPosition(fields);
+        Set<String> ids = getIds(fields);
+        String reference = getReference(fields);
+        String[] alternateAlleles = getAlternateAlleles(fields);
 
-        for (int var14 = 0; var14 < var13; ++var14) {
-            String alternateAllele = var12[var14];
-
+        List<Variant> variants = new LinkedList<>();
+        for (String alternateAllele : alternateAlleles) {
             VariantCoreFields keyFields;
             try {
                 keyFields = getVariantCoreKeyFields(chromosome, position, reference, alternateAllele);
-            } catch (NonVariantException var18) {
+            } catch (NonVariantException e) {
                 continue;
             }
 
             Variant variant = new Variant(chromosome, keyFields.getStart(), keyFields.getEnd(), keyFields.getReference(), keyFields.getAlternate());
             variant.setIds(ids);
             if (ids.size() > 0) {
-                variant.setMainId((String) ids.iterator().next());
+                variant.setMainId(ids.iterator().next());
             }
 
             variants.add(variant);
@@ -50,6 +46,27 @@ public class AccessionedVcfFactory extends VariantVcfFactory {
         return variants;
     }
 
+    /**
+     * @param chromosome
+     * @param position
+     * @param reference
+     * @param alternateAllele
+     * @return VariantCoreFields
+     * When reading variant from Accessioned VCF, this method checks if a context base has been added to the Variant.
+     * If yes, we need to remove that first, in order to make the representation consistent and then give to VariantCoreFields
+     * for other checks
+     *
+     * ex: Assume the following variant   ->     After right trimming    ->     stored in vcf
+     * CHR POS  REF  ALT                         CHR POS REF ALT                CHR POS REF  ALT
+     * 1   100  CAGT  T                          1  100 CAG                     1  99  GCAG  G
+     *
+     * Storing in VCF (as per normalition algorithm, VCF cannot store an empty REF or ALT. If after right trimming REF or ALT become empty,
+     * a context base needs to be added)
+     *
+     * reading without context base adjustment                  reading with context base adjustment
+     * CHR POS REF ALT                                          CHR POS REF ALT
+     * 1   99  GCA                                              1   100 CAG
+     */
     private VariantCoreFields getVariantCoreKeyFields(String chromosome, long position, String reference, String alternateAllele) {
         if (isContextBasePresent(reference, alternateAllele)) {
             if (alternateAllele.length() == 1) {

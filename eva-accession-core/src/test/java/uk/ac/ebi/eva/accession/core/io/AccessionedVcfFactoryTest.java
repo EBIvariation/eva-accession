@@ -250,5 +250,15 @@ public class AccessionedVcfFactoryTest {
         expectedResult = Collections.singletonList(new Variant("chr1", 1001, 1001, "", "G"));
         actualResult = factory.create(FILE_ID, STUDY_ID, line);
         assertEquals(expectedResult, actualResult);
+
+        line = "chr1\t661015\t.\tCC\tCCCACC\t.\t.\t.";
+        expectedResult = Collections.singletonList(new Variant("chr1", 661015, 661018, "", "CCCA"));
+        actualResult = factory.create(FILE_ID, STUDY_ID, line);
+        assertEquals(expectedResult, actualResult);
+
+        line = "chr1\t661014\t.\tA\tACCCA\t.\t.\t.";
+        expectedResult = Collections.singletonList(new Variant("chr1", 661015, 661018, "", "CCCA"));
+        actualResult = factory.create(FILE_ID, STUDY_ID, line);
+        assertEquals(expectedResult, actualResult);
     }
 }
