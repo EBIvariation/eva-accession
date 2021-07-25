@@ -469,15 +469,15 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
 @click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
-@click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
+@click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--species-release-folder", required=True)
 @click.command()
-def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         species_release_folder):
-    validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
-                              release_version, species_release_folder)
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
+         release_version, species_release_folder):
+    validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
+                              release_species_inventory_table, release_version, species_release_folder)
 
 
 if __name__ == '__main__':

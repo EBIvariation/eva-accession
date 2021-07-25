@@ -23,7 +23,6 @@ release-version:
 release-folder:
 public-ftp-release-base-folder:
 release-species-inventory-table:
-release-progress-table:
 
 release-jar-path:
 

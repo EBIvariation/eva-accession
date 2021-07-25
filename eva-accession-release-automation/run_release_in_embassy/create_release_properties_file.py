@@ -107,7 +107,7 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
 @click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
-@click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
+@click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--species-release-folder", required=True)

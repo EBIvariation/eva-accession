@@ -24,25 +24,27 @@ from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_prof
 logger = logging.getLogger(__name__)
 
 
-def update_release_status_for_assembly(private_config_xml_file, profile, release_progress_table, taxonomy_id, assembly_accession, release_version):
+def update_release_status_for_assembly(private_config_xml_file, profile, release_species_inventory_table, taxonomy_id,
+                                       assembly_accession, release_version):
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
                           user="evadev") as metadata_connection_handle:
-        update_release_progress_status(metadata_connection_handle, release_progress_table,
+        update_release_progress_status(metadata_connection_handle, release_species_inventory_table,
                                        taxonomy_id, assembly_accession, release_version,
-                                       release_status='done')
-        logger.info("Successfully marked release status as 'Done' in {0} for taxonomy {1} and assembly {2}"
-                    .format(release_progress_table, taxonomy_id, assembly_accession))
+                                       release_status='Completed')
+        logger.info("Successfully marked release status as 'Completed' in {0} for taxonomy {1} and assembly {2}"
+                    .format(release_species_inventory_table, taxonomy_id, assembly_accession))
 
 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
 @click.option("--profile", help="Maven profile to use, ex: internal", required=True)
-@click.option("--release-progress-table", help="Name of release progress table", required=True)
+@click.option("--release-species-inventory-table", help="Name of release inventory table", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.command()
-def main(private_config_xml_file, profile, release_progress_table, taxonomy_id, assembly_accession, release_version):
-    update_release_status_for_assembly(private_config_xml_file, profile, release_progress_table, taxonomy_id, assembly_accession, release_version)
+def main(private_config_xml_file, profile, release_species_inventory_table, taxonomy_id, assembly_accession, release_version):
+    update_release_status_for_assembly(private_config_xml_file, profile, release_species_inventory_table, taxonomy_id,
+                                       assembly_accession, release_version)
 
 
 if __name__ == "__main__":
