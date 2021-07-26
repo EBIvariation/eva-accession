@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
-import uk.ac.ebi.eva.accession.core.io.AccessionedVcfLineMapper;
+import uk.ac.ebi.eva.accession.core.batch.io.AccessionedVcfLineMapper;
 import uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck.ReportCheckTasklet;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;

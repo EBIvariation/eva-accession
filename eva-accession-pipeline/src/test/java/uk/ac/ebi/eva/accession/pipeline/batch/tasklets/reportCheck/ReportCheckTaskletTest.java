@@ -29,7 +29,7 @@ import org.springframework.batch.item.UnexpectedInputException;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
-import uk.ac.ebi.eva.accession.core.io.AccessionedVcfLineMapper;
+import uk.ac.ebi.eva.accession.core.batch.io.AccessionedVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfReader;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;

@@ -1,4 +1,4 @@
-package uk.ac.ebi.eva.accession.core.io;
+package uk.ac.ebi.eva.accession.core.batch.io;
 
 import org.springframework.batch.item.file.LineMapper;
 import uk.ac.ebi.eva.commons.core.models.factories.VariantVcfFactory;

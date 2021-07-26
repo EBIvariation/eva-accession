@@ -1,4 +1,4 @@
-package uk.ac.ebi.eva.accession.core.io;
+package uk.ac.ebi.eva.accession.core.batch.io;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
