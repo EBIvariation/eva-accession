@@ -63,9 +63,9 @@ public class AccessionedVcfFactory extends VariantVcfFactory {
      * Storing in VCF (as per normalition algorithm, VCF cannot store an empty REF or ALT. If after right trimming REF or ALT become empty,
      * a context base needs to be added)
      *
-     * reading without context base adjustment                  reading with context base adjustment
-     * CHR POS REF ALT                                          CHR POS REF ALT
-     * 1   99  GCA                                              1   100 CAG
+     * reading without context base adjustment (erroneous)                  reading with context base adjustment
+     * CHR POS REF ALT                                                      CHR POS REF ALT
+     * 1   99  GCA                                                          1   100 CAG
      */
     private VariantCoreFields getVariantCoreKeyFields(String chromosome, long position, String reference, String alternateAllele) {
         if (isContextBasePresent(reference, alternateAllele)) {
