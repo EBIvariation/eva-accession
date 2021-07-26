@@ -1,4 +1,4 @@
-package uk.ac.ebi.eva.accession.core.io;
+package uk.ac.ebi.eva.accession.core.batch.io;
 
 import uk.ac.ebi.eva.commons.core.models.VariantCoreFields;
 import uk.ac.ebi.eva.commons.core.models.factories.VariantVcfFactory;
