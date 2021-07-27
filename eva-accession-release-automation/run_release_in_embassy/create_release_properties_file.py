@@ -68,7 +68,7 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
                                                              species_release_folder)
     properties_string = """
         spring.batch.job.names=ACCESSION_RELEASE_JOB
-        parameters.assemblyAccession={assembly}
+        parameters.assemblyAccession={assembly_accession}
         parameters.assemblyReportUrl={report_path}
         parameters.chunkSize=1000
         parameters.fasta={fasta_path}
