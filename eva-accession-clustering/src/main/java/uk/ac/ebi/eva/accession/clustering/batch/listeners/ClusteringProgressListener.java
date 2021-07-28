@@ -39,14 +39,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ClusteringProgressListener extends GenericProgressListener<Variant, SubmittedVariantEntity> {
+    private static final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
     private static final String PROCESS = "clustering";
-    private static final String SUBMITTED_VARIANTS = "submitted_variants";
-    private static final String CREATED_VARIANTS = "created_variants";
-    private static final String UPDATED_VARIANTS = "updated_variants";
-    private static final String MERGED_VARIANTS = "merged_variants";
-    private static final String NEW_CLUSTER_VARIANTS = "new_cluster_variants";
-
-    private static final String URL = "http://localhost:8080/v1/countstats/bulk/count";
 
     private static final Logger logger = LoggerFactory.getLogger(ClusteringProgressListener.class);
 
@@ -80,7 +74,8 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
         try {
             String assembly = stepExecution.getJobExecution().getJobParameters().getString("assemblyAccession");
             String identifier = createIdentifier(assembly);
-            saveClusteringCountMetricsInDB(numTotalItemsRead, clusteringCounts, identifier);
+            String url = stepExecution.getJobExecution().getJobParameters().getString("countStatsUrl") + URL_PATH_SAVE_COUNT;
+            saveClusteringCountMetricsInDB(url, numTotalItemsRead, clusteringCounts, identifier);
         } catch (JSONException | RestClientException ex) {
             logger.error("Error occurred while saving Counts to DB", ex);
         }
@@ -94,22 +89,23 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
         return identifier.toString();
     }
 
-    //TODO: numtotalItemsRead does not make sense here, check for others as well
-    //TODO: how to get url here ("https://www.ebi.ac.uk/v1/countstats/bulk/count") <eva.context.root>https://www.ebi.ac.uk</eva.context.root>
-    private void saveClusteringCountMetricsInDB(long numTotalItemsRead, ClusteringCounts clusteringCounts, String identifier) {
+    private void saveClusteringCountMetricsInDB(String url, long numTotalItemsRead, ClusteringCounts clusteringCounts, String identifier) {
         List<Count> countList = new ArrayList<>();
-        countList.add(new Count(PROCESS, identifier, SUBMITTED_VARIANTS, numTotalItemsRead));
-        countList.add(new Count(PROCESS, identifier, CREATED_VARIANTS, clusteringCounts.getClusteredVariantsCreated()));
-        countList.add(new Count(PROCESS, identifier, UPDATED_VARIANTS, clusteringCounts.getClusteredVariantsUpdated()));
-        countList.add(new Count(PROCESS, identifier, MERGED_VARIANTS, clusteringCounts.getClusteredVariantsMergeOperationsWritten()));
-        countList.add(new Count(PROCESS, identifier, NEW_CLUSTER_VARIANTS, clusteringCounts.getSubmittedVariantsClustered()));
+        countList.add(new Count(PROCESS, identifier, Metric.SUBMITTED_VARIANTS.getName(), numTotalItemsRead));
+        countList.add(new Count(PROCESS, identifier, Metric.CREATED_VARIANTS.getName(), clusteringCounts.getClusteredVariantsCreated()));
+        countList.add(new Count(PROCESS, identifier, Metric.UPDATED_VARIANTS.getName(), clusteringCounts.getClusteredVariantsUpdated()));
+        countList.add(new Count(PROCESS, identifier, Metric.MERGED_VARIANTS.getName(), clusteringCounts.getClusteredVariantsMergeOperationsWritten()));
+        countList.add(new Count(PROCESS, identifier, Metric.SUBMITTED_VARIANTS_CLUSTERED.getName(), clusteringCounts.getSubmittedVariantsClustered()));
+        countList.add(new Count(PROCESS, identifier, Metric.SUBMITTED_VARIANTS_UNCLUSTERED.getName(), clusteringCounts.getSubmittedVariantsKeptUnclustered()));
+        countList.add(new Count(PROCESS, identifier, Metric.SUBMITTED_VARIANTS_RS_MERGED.getName(), clusteringCounts.getSubmittedVariantsUpdatedRs()));
+        countList.add(new Count(PROCESS, identifier, Metric.SUBMITTED_VARIANTS_UPDATED_OPERATIONS.getName(), clusteringCounts.getSubmittedVariantsUpdateOperationWritten()));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(countList, headers);
-        ResponseEntity<List<Count>> response = restTemplate.exchange(URL, HttpMethod.POST, requestEntity,
+        ResponseEntity<List<Count>> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity,
                 new ParameterizedTypeReference<List<Count>>() {
                 });
 
