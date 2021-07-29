@@ -129,7 +129,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
 @click.option("--collections-to-copy", "-c", default=collections_assembly_attribute_map.keys(),
               help="ex: dbsnpSubmittedVariantEntity,dbsnpSubmittedVariantOperationEntity", multiple=True,
               required=False)
-@click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
+@click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--dump-dir", help="ex: /path/to/dump", required=True)

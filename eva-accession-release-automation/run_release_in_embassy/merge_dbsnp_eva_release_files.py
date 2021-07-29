@@ -198,7 +198,7 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
 @click.option("--vcf-sort-script-path", help="ex: /path/to/vcf/sort/script", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
-@click.option("--release-species-inventory-table", default="dbsnp_ensembl_species.release_species_inventory",
+@click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--species-release-folder", required=True)

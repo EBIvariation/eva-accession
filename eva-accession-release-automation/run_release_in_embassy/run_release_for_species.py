@@ -53,7 +53,7 @@ workflow_process_arguments_map = collections.OrderedDict(
      ("count_rs_ids_in_release_files", ["count-ids-script-path", "assembly-accession", "species-release-folder"]),
      ("validate_rs_release_files", ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
                                     "release-species-inventory-table", "release-version", "species-release-folder"]),
-     ("update_release_status_for_assembly", ["private-config-xml-file", "profile", "release-progress-table",
+     ("update_release_status_for_assembly", ["private-config-xml-file", "profile", "release-species-inventory-table",
                                              "taxonomy-id", "assembly-accession", "release-version"])
      ])
 
