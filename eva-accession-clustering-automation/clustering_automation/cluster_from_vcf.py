@@ -17,8 +17,10 @@ import argparse
 import sys
 import logging
 import datetime
-from create_clustering_properties import create_properties_file
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+
+from create_clustering_properties import create_properties_file
+
 
 logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -66,46 +68,18 @@ def add_to_command_file(properties_path, command):
         commands.write(command + '\n')
 
 
-def cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file,
-                profile, output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency):
-    properties_path = create_properties_file(source, vcf_file, project_accession, assembly_accession,
-                                             private_config_xml_file, profile, output_directory)
+def cluster_one(vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
+                output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency):
+    properties_path = create_properties_file('VCF', vcf_file, project_accession, assembly_accession,
+                                             private_config_xml_file, profile, output_directory, instance)
     command = generate_bsub_command(assembly_accession, properties_path, logs_directory, clustering_artifact, memory,
                                     dependency)
     if not only_printing:
         run_command_with_output('Run clustering command', command, return_process_output=True)
 
 
-def cluster_multiple(source, asm_vcf_prj_list, assembly_list, private_config_xml_file, profile,
-                     output_directory, logs_directory, clustering_artifact, only_printing, memory):
-    """
-    This method decides how to call the run_clustering method depending on the source (Mongo or VCF)
-    """
-    check_requirements(source, asm_vcf_prj_list, assembly_list)
-
-    if source == 'MONGO':
-        cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile, output_directory,
-                                    logs_directory, clustering_artifact, only_printing, memory)
-
-    if source == 'VCF':
-        cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile, output_directory,
-                                  logs_directory, clustering_artifact, only_printing, memory)
-
-
-def cluster_multiple_from_mongo(source, assembly_list, private_config_xml_file, profile,
-                                output_directory, logs_directory, clustering_artifact, only_printing, memory):
-    """
-    This method call the run_clustering method for each assembly
-    """
-    dependency = None
-    for assembly_accession in assembly_list:
-        cluster_one(source, None, None, assembly_accession, private_config_xml_file, profile, output_directory,
-                    logs_directory, clustering_artifact, only_printing, memory, dependency)
-        dependency = get_job_name(assembly_accession)
-
-
-def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file, profile,
-                              output_directory, logs_directory, clustering_artifact, only_printing, memory):
+def cluster_multiple_from_vcf(asm_vcf_prj_list, private_config_xml_file, profile,
+                              output_directory, logs_directory, clustering_artifact, only_printing, memory, instance):
     """
     The list will be of the form: GCA_000000001.1#/file1.vcf.gz#PRJEB1111 GCA_000000002.2#/file2.vcf.gz#PRJEB2222 ...
     This method splits the triplets and then call the run_clustering method for each one
@@ -116,35 +90,17 @@ def cluster_multiple_from_vcf(source, asm_vcf_prj_list, private_config_xml_file,
         assembly_accession = data[0]
         vcf_file = data[1]
         project_accession = data[2]
-        cluster_one(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                    output_directory, logs_directory, clustering_artifact, only_printing, memory, dependency)
+        cluster_one(vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
+                    output_directory, logs_directory, clustering_artifact, only_printing, memory, instance, dependency)
         dependency = get_job_name(assembly_accession)
-
-
-def check_requirements(source, asm_vcf_prj_list, assembly_list):
-    """
-    This method checks depending on the source, what list should have been provided.
-    For VCF it is expected to have a list of one or more assembly, vcf file, project separated by #
-    For Mongo it is expected to have a list of assemblies.
-    """
-    if source == 'VCF' and not asm_vcf_prj_list:
-        raise ValueError('If the source is VCF a list of assembly#vcf#project mus be provided using the parameter '
-                         '--asm-vcf-prj-list')
-    if source == 'MONGO' and not assembly_list:
-        raise ValueError('If the source is MONGO a list of assembly accessions must be provided using the parameter '
-                         '--assembly-list')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Cluster multiple assemblies', add_help=False)
-    parser.add_argument("--source", help="mongo database or VCF", required=True, choices=['VCF', 'MONGO'])
     parser.add_argument("--asm-vcf-prj-list", help="List of Assembly, VCF, project to be clustered, "
                                                    "e.g. GCA_000233375.4#/nfs/eva/accessioned.vcf.gz#PRJEB1111 "
                                                    "GCA_000002285.2#/nfs/eva/file.vcf.gz#PRJEB2222. "
-                                                   "Required when the source is VCF", required=False, nargs='+')
-    parser.add_argument("--assembly-list", help="Assembly list for which the process has to be run, "
-                                                "e.g. GCA_000002285.2 GCA_000233375.4. "
-                                                "Required when the source is mongo", required=False, nargs='+')
+                                                   "Required when the source is VCF", required=True, nargs='+')
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
@@ -152,15 +108,16 @@ if __name__ == "__main__":
     parser.add_argument("--clustering-artifact", help="Artifact of the clustering pipeline", required=True)
     parser.add_argument("--only-printing", help="Prepare and write the commands, but don't run them",
                         action='store_true', required=False)
-    parser.add_argument("--memory", help="Amount of memory jobs will use", required=False)
+    parser.add_argument("--memory", help="Amount of memory jobs will use", required=False, default=8192)
+    parser.add_argument("--instance", help="Accessioning instance id", required=False, default=1, choices=range(1, 13))
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
     try:
         args = parser.parse_args()
-        cluster_multiple(args.source, args.asm_vcf_prj_list, args.assembly_list, args.private_config_xml_file,
+        cluster_multiple_from_vcf(args.asm_vcf_prj_list, args.private_config_xml_file,
                          args.profile, args.output_directory, args.logs_directory, args.clustering_artifact,
-                         args.only_printing, args.memory)
+                         args.only_printing, args.memory, args.instance)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
