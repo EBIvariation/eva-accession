@@ -16,7 +16,7 @@ public class ListenersConfiguration {
     @Bean(PROGRESS_LISTENER)
     public ClusteringProgressListener clusteringProgressListener(InputParameters parameters,
                                                                  ClusteringCounts clusteringCounts, RestTemplate restTemplate) {
-        return new ClusteringProgressListener(parameters.getChunkSize(), clusteringCounts, restTemplate);
+        return new ClusteringProgressListener(parameters, clusteringCounts, restTemplate);
     }
 
     @Bean

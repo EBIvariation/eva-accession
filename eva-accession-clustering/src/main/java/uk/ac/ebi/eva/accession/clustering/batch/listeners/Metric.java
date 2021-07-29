@@ -5,8 +5,8 @@ public enum Metric {
     CREATED_VARIANTS("created_variants", "Number of Variants Created (RS created)"),
     UPDATED_VARIANTS("updated_variants", "Number of Variants Updated (RS updated)"),
     MERGED_VARIANTS("merged_variants", "Number of Variants Merged (RS merged)"),
-    SUBMITTED_VARIANTS_CLUSTERED("submitted_variants_clustered", "Number of Variants Clustered (SS)"),
-    SUBMITTED_VARIANTS_UNCLUSTERED("submitted_variants_unclustered", "Number of Variants(SS) kept unclustered"),
+    SUBMITTED_VARIANTS_CLUSTERED("submitted_variants_clustered", "Number of Variants(SS) Clustered"),
+    SUBMITTED_VARIANTS_UNCLUSTERED("submitted_variants_unclustered", "Number of Variants(SS) kept Unclustered"),
     SUBMITTED_VARIANTS_RS_MERGED("submitted_variants_rs_merged", "Number of Submitted Variants updated because of RS merged"),
     SUBMITTED_VARIANTS_UPDATED_OPERATIONS("submitted_variants_updated", "Number of Submitted Variants update operations performed");
 

@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.batch.listeners.GenericProgressListener;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -46,9 +47,11 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
 
     private final RestTemplate restTemplate;
     private final ClusteringCounts clusteringCounts;
+    private final InputParameters inputParameters;
 
-    public ClusteringProgressListener(long chunkSize, ClusteringCounts clusteringCounts, RestTemplate restTemplate) {
-        super(chunkSize);
+    public ClusteringProgressListener(InputParameters inputParameters, ClusteringCounts clusteringCounts, RestTemplate restTemplate) {
+        super(inputParameters.getChunkSize());
+        this.inputParameters = inputParameters;
         this.clusteringCounts = clusteringCounts;
         this.restTemplate = restTemplate;
     }
@@ -72,7 +75,7 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
                 clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
 
         try {
-            String assembly = stepExecution.getJobExecution().getJobParameters().getString("assemblyAccession");
+            String assembly = inputParameters.getAssemblyAccession();
             String identifier = createIdentifier(assembly);
             String url = stepExecution.getJobExecution().getJobParameters().getString("countStatsUrl") + URL_PATH_SAVE_COUNT;
             saveClusteringCountMetricsInDB(url, numTotalItemsRead, clusteringCounts, identifier);
@@ -112,7 +115,7 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
         if (response.getStatusCode() == HttpStatus.OK) {
             logger.info("Metric Count successfully saved In DB");
         } else {
-            logger.warn("Could not save count In DB");
+            logger.error("Could not save count In DB");
         }
     }
 }
