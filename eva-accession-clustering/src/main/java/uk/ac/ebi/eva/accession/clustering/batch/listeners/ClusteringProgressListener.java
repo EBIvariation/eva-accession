@@ -73,7 +73,6 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
                 clusteringCounts.getSubmittedVariantsClustered(),
                 clusteringCounts.getSubmittedVariantsUpdatedRs(),
                 clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
-
         try {
             String assembly = inputParameters.getAssemblyAccession();
             String identifier = createIdentifier(assembly);
@@ -115,7 +114,7 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
         if (response.getStatusCode() == HttpStatus.OK) {
             logger.info("Metric Count successfully saved In DB");
         } else {
-            logger.error("Could not save count In DB");
+            throw new RestClientException("Could not save count In DB. HttpStatus code is " + response.getStatusCode());
         }
     }
 }
