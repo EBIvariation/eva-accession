@@ -61,6 +61,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 
@@ -85,6 +86,9 @@ public class ClusteringCommandLineRunnerTest {
 
     @Autowired
     private ClusteringCommandLineRunner runner;
+
+    @Autowired
+    private ClusteringCommandLineRunner mongoRunner;
 
     @Autowired
     private VcfReader vcfReader;
@@ -137,6 +141,14 @@ public class ClusteringCommandLineRunnerTest {
     public void tearDown() {
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
+    }
+
+    @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    public void runMongoJobWithNoErrors() throws JobExecutionException {
+        mongoRunner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        mongoRunner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, mongoRunner.getExitCode());
     }
 
     @Test
