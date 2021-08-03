@@ -54,8 +54,9 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
 
@@ -136,7 +137,7 @@ public class ClusteringVariantStepConfigurationTest {
 
     @Test
     @DirtiesContext
-    public void stepFromMongo() {
+    public void nonClusteredVariantStepFromMongo() {
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertTrue(allSubmittedVariantsNotClustered());
 
@@ -146,6 +147,33 @@ public class ClusteringVariantStepConfigurationTest {
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertClusteredVariantsCreated(Arrays.asList(3000000000L, 3000000001L, 3000000002L, 3000000003L));
         assertSubmittedVariantsUpdated();
+    }
+
+    @Test
+    @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    public void clusteredVariantStepFromMongo() {
+        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(1, getSubmittedVariantsWithRS());
+
+        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertClusteredVariantsCreated(Arrays.asList(3000000000L));
+        assertEquals(1, getSubmittedVariantsWithRS());
+    }
+
+    private int getSubmittedVariantsWithRS() {
+        int count = 0;
+        MongoCollection<Document> collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
+        FindIterable<Document> documents = collection.find();
+        for (Document document : documents) {
+            if (document.get("rs") != null) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private boolean allSubmittedVariantsNotClustered() {
