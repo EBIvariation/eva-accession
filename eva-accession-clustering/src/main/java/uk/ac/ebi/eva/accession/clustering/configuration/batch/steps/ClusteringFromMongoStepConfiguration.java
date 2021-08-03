@@ -29,23 +29,41 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_VARIANTS_MONGO_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONGO_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_VARIANTS_MONGO_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRESS_LISTENER;
 
 @Configuration
 @EnableBatchProcessing
 public class ClusteringFromMongoStepConfiguration {
 
-    @Bean(CLUSTERING_FROM_MONGO_STEP)
-    public Step clusteringVariantStepMongoReader(
-            @Qualifier(MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
+    @Bean(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
+    public Step clusteringClusteredVariantStepMongoReader(
+            @Qualifier(CLUSTERED_VARIANTS_MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
             @Qualifier(CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(CLUSTERING_FROM_MONGO_STEP)
+        TaskletStep step = stepBuilderFactory.get(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
+                .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+                .reader(mongoReader)
+                .writer(submittedVariantWriter)
+                .listener(progressListener)
+                .build();
+        return step;
+    }
+
+    @Bean(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
+    public Step clusteringNonClusteredVariantStepMongoReader(
+            @Qualifier(NON_CLUSTERED_VARIANTS_MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
+            @Qualifier(CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(mongoReader)
                 .writer(submittedVariantWriter)

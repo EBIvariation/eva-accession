@@ -41,10 +41,10 @@ import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -52,8 +52,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
 
@@ -102,7 +103,9 @@ public class ClusteringVariantJobConfigurationTest {
     @DirtiesContext
     public void jobFromMongo() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
-        List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_MONGO_STEP);
+        List<String> expectedSteps = new ArrayList<>();
+        expectedSteps.add(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        expectedSteps.add(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
@@ -117,7 +120,7 @@ public class ClusteringVariantJobConfigurationTest {
         return variantEntity;
     }
 
-    private void assertStepsExecuted(List expectedSteps, JobExecution jobExecution) {
+    private void assertStepsExecuted(List<String> expectedSteps, JobExecution jobExecution) {
         Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
         List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);

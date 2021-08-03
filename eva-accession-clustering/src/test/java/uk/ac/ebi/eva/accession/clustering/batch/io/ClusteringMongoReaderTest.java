@@ -42,7 +42,6 @@ import java.util.Objects;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
@@ -64,7 +63,9 @@ public class ClusteringMongoReaderTest {
 
     private static final String NOT_CLUSTERED_SUBMITTED_VARIANT_ID = "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB";
 
-    private ClusteringMongoReader reader;
+    private ClusteringMongoReader clusteredVariantReader;
+
+    private ClusteringMongoReader nonClusteredVariantReader;
 
     @Autowired
     private MongoClient mongoClient;
@@ -81,28 +82,38 @@ public class ClusteringMongoReaderTest {
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp(){
         ExecutionContext executionContext = new ExecutionContext();
-        reader = new ClusteringMongoReader(mongoClient, TEST_DB, mongoTemplate, ASSEMBLY, CHUNK_SIZE);
-        reader.open(executionContext);
+        clusteredVariantReader = new ClusteringMongoReader(mongoClient, TEST_DB, mongoTemplate, ASSEMBLY, CHUNK_SIZE, true);
+        nonClusteredVariantReader = new ClusteringMongoReader(mongoClient, TEST_DB, mongoTemplate, ASSEMBLY, CHUNK_SIZE, false);
+        clusteredVariantReader.open(executionContext);
+        nonClusteredVariantReader.open(executionContext);
     }
 
     @After
     public void tearDown() {
-        reader.close();
+        clusteredVariantReader.close();
+        nonClusteredVariantReader.close();
         mongoClient.dropDatabase(TEST_DB);
     }
 
     @Test
-    public void readAllSubmittedVariants() {
+    public void readAllSubmittedVariantsWithRS() {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
-        List<SubmittedVariantEntity> variants = readIntoList();
-        assertEquals(6, variants.size());
+        List<SubmittedVariantEntity> variants = readIntoList(clusteredVariantReader);
+        assertEquals(1, variants.size());
         assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), CLUSTERED_SUBMITTED_VARIANT_ID)));
+    }
+
+    @Test
+    public void readAllSubmittedVariantsWithoutRS() {
+        assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
+        List<SubmittedVariantEntity> variants = readIntoList(nonClusteredVariantReader);
+        assertEquals(5, variants.size());
         assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), NOT_CLUSTERED_SUBMITTED_VARIANT_ID)));
     }
 
-    private List<SubmittedVariantEntity> readIntoList() {
+    private List<SubmittedVariantEntity> readIntoList(ClusteringMongoReader reader) {
         SubmittedVariantEntity variant;
         List<SubmittedVariantEntity> variants = new ArrayList<>();
         while ((variant = reader.read()) != null) {
