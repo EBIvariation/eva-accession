@@ -23,7 +23,9 @@ from __init__ import *
 
 def export_mongo_accessions(mongo_connection_properties, collection_name, export_output_filename):
     export_command = 'mongoexport --host {0} --port {1} --db {2} --username {3} --password {4} ' \
-                     '--authenticationDatabase={5} --collection {6} --type=csv --fields accession -o "{7}" 2>&1' \
+                     '--authenticationDatabase={5} --collection {6} --type=csv --fields accession ' \
+                     "--query  '{{remapped_from: {{$exists: 0}}}}' " \
+                     '-o "{7}" 2>&1' \
                     .format(mongo_connection_properties["mongo_host"],
                             mongo_connection_properties["mongo_port"],
                             mongo_connection_properties["mongo_db"],
