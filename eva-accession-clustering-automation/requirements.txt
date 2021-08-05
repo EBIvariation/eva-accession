@@ -1,2 +1,2 @@
-ebi_eva_common_pyutils==0.3.15
+ebi_eva_common_pyutils==0.3.16
 retry
