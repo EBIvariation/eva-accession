@@ -121,9 +121,15 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws AccessionCouldNotBeGeneratedException {
+        List<IClusteredVariant> processedClusteredVariants = processClusteredVariantsWhereNoRSExists(submittedVariantEntities);
+
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
                                                                            .map(this::toClusteredVariant)
                                                                            .collect(Collectors.toList());
+
+        //remove all variants already processed by processClusteredVariantsNoRSExists
+        clusteredVariants.removeAll(processedClusteredVariants);
+
         if (!clusteredVariants.isEmpty()) {
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
                     clusteredService.getOrCreate(clusteredVariants);
@@ -137,6 +143,61 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             clusteringCounts.addClusteredVariantsCreated(newAccessions);
         }
         checkForMerges(submittedVariantEntities);
+    }
+
+    /**
+     * This method handles a specific scenario in clustering where an already clustered variant is remapped and
+     * no matching rs id exist. In this case, clustered variant should continue using its existing rs id and an entry
+     * needs to be made ClusteredVariantEntity collection.
+     *
+     *                     SubmittedVariantEntity                                                           ClusteredVariantEntity
+     * SS	HASH	        RS	ASM	    STUDY	CONTIG	POS	REF	ALT                             RS	HASH	        ASM	    POS	CONTIG	TYPE
+     * 500	ASM1_Chr1_1_A_T	300	ASM1	PRJEB1	Chr1	1	A	T    (original)                 300	ASM1_Chr1_1_SNV	ASM1	1	Chr1	SNV
+     * 500	ASM2_Chr1_2_A_T	300	ASM2	PRJEB1	Chr1	2	A	T    (remapped to asm2)
+     *
+     * No RS id exist for the HASH ASM2_Chr1_2_A_T,	but it has an existing rs id of 300, which it should continue to use.
+     * It should not generate a new rs id for this situation as they will get merged right after generation and will be wasted
+     *
+     *         ClusteredVariantEntity (after operation)
+     *          RS	HASH	        ASM	    POS	CONTIG	TYPE
+     *          300	ASM1_Chr1_1_SNV	ASM1	1	Chr1	SNV
+     *          300	ASM2_Chr1_2_SNV	ASM1	1	Chr1	SNV
+     */
+    private List<IClusteredVariant> processClusteredVariantsWhereNoRSExists(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
+        List<SubmittedVariantEntity> submittedVariantWithRS = submittedVariantEntities.stream()
+                .filter(v -> v.getClusteredVariantAccession() != null)
+                .collect(Collectors.toList());
+        List<? extends SubmittedVariantEntity> submittedVariantsNoRSExists = getSubmittedVariantsNoRSExists(submittedVariantWithRS);
+        List<ClusteredVariantEntity> clusteredVariantEntityNoRSExists = submittedVariantsNoRSExists.stream()
+                .map(this::toClusteredVariantEntity)
+                .collect(Collectors.toList());
+        mongoTemplate.insert(clusteredVariantEntityNoRSExists, ClusteredVariantEntity.class);
+        // TODO: update clustering counts
+        return clusteredVariantEntityNoRSExists.stream()
+                .map(cve -> cve.getModel())
+                .collect(Collectors.toList());
+    }
+
+    private List<? extends SubmittedVariantEntity> getSubmittedVariantsNoRSExists(List<? extends SubmittedVariantEntity> submittedVariantWithRS) {
+        List<IClusteredVariant> clusteredVariantList = submittedVariantWithRS.stream()
+                .map(this::toClusteredVariantEntity)
+                .collect(Collectors.toList());
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers = clusteredService.get(clusteredVariantList).stream()
+                .map(d -> new GetOrCreateAccessionWrapper<>(d.getAccession(), d.getHash(), d.getData(), false))
+                .collect(Collectors.toList());
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap = excludeMultimaps(accessionWrappers);
+        List<IClusteredVariant> clusteredVariantsRSExists = accessionNoMultimap.stream()
+                .map(v -> v.getData())
+                .collect(Collectors.toList());
+
+        return submittedVariantWithRS.stream()
+                .filter(sub -> !clusteredVariantsRSExists.contains(toClusteredVariant(sub)))
+                .collect(Collectors.toList());
+    }
+
+    private ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
+        return new ClusteredVariantEntity(submittedVariantEntity.getClusteredVariantAccession(), getClusteredVariantHash(submittedVariantEntity),
+                toClusteredVariant(submittedVariantEntity));
     }
 
     private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
