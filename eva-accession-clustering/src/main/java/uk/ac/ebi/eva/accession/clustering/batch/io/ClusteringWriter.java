@@ -185,8 +185,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers = clusteredService.get(clusteredVariantList).stream()
                 .map(d -> new GetOrCreateAccessionWrapper<>(d.getAccession(), d.getHash(), d.getData(), false))
                 .collect(Collectors.toList());
-        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap = excludeMultimaps(accessionWrappers);
-        List<IClusteredVariant> clusteredVariantsRSExists = accessionNoMultimap.stream()
+        List<IClusteredVariant> clusteredVariantsRSExists = accessionWrappers.stream()
                 .map(v -> v.getData())
                 .collect(Collectors.toList());
 

@@ -122,7 +122,7 @@ public class ClusteringVariantStepConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
-        assertClusteredVariantsCreated(Arrays.asList(3000000000L, 3000000001L, 3000000002L));
+        assertClusteredVariantsCreated(Arrays.asList(30L, 3000000000L, 3000000001L, 3000000002L));
         assertGeneratedAccessions(SUBMITTED_VARIANT_COLLECTION, "rs",
                                   Arrays.asList(-1L, 3000000000L, 3000000000L, 3000000001L, 3000000002L));
     }
@@ -160,7 +160,7 @@ public class ClusteringVariantStepConfigurationTest {
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
-        assertClusteredVariantsCreated(Arrays.asList(3000000000L));
+        assertClusteredVariantsCreated(Arrays.asList(1L));
         assertEquals(1, getSubmittedVariantsWithRS());
     }
 
