@@ -88,9 +88,6 @@ public class ClusteringCommandLineRunnerTest {
     private ClusteringCommandLineRunner runner;
 
     @Autowired
-    private ClusteringCommandLineRunner mongoRunner;
-
-    @Autowired
     private VcfReader vcfReader;
 
     //Required by nosql-unit
@@ -146,9 +143,9 @@ public class ClusteringCommandLineRunnerTest {
     @Test
     @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     public void runMongoJobWithNoErrors() throws JobExecutionException {
-        mongoRunner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
-        mongoRunner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, mongoRunner.getExitCode());
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
     @Test
