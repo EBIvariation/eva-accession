@@ -84,17 +84,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         MongoDatabase db = mongoClient.getDatabase(database);
         MongoCollection<Document> collection = db.getCollection(SUBMITTED_VARIANT_ENTITY);
-        Bson query;
-        if (isClusteredVariantsMongoReader) {
-            query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                    Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, true),
-                    Filters.ne(CLUSTERED_VARIANT_ACCESSION_FIELD, NULL));
-        } else {
-            query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                    Filters.or(Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, false),
-                            Filters.and(Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, true),
-                                    Filters.eq(CLUSTERED_VARIANT_ACCESSION_FIELD, NULL))));
-        }
+        Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
+                Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, isClusteredVariantsMongoReader));
         logger.info("Issuing find: {}", query);
         FindIterable<Document> notClusteredSubmittedVariants = collection.find(query)
                                                                          .noCursorTimeout(true)
