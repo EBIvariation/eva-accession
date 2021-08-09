@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
+import htsjdk.samtools.util.StringUtil;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -23,6 +24,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -126,7 +128,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
                                                                            .map(this::toClusteredVariant)
                                                                            .collect(Collectors.toList());
-
         //remove all variants already processed by processClusteredVariantsNoRSExists
         clusteredVariants.removeAll(processedClusteredVariants);
 
@@ -166,31 +167,27 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private List<IClusteredVariant> processClusteredVariantsWhereNoRSExists(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
         List<SubmittedVariantEntity> submittedVariantWithRS = submittedVariantEntities.stream()
                 .filter(v -> v.getClusteredVariantAccession() != null)
+                .filter(v -> !StringUtil.isBlank(v.getRemappedFrom()))
                 .collect(Collectors.toList());
-        List<? extends SubmittedVariantEntity> submittedVariantsNoRSExists = getSubmittedVariantsNoRSExists(submittedVariantWithRS);
-        List<ClusteredVariantEntity> clusteredVariantEntityNoRSExists = submittedVariantsNoRSExists.stream()
-                .map(this::toClusteredVariantEntity)
-                .collect(Collectors.toList());
+        List<ClusteredVariantEntity> clusteredVariantEntityNoRSExists = getClusteredVariantEntityNoRSExists(submittedVariantWithRS);
         mongoTemplate.insert(clusteredVariantEntityNoRSExists, ClusteredVariantEntity.class);
-        // TODO: update clustering counts
+        clusteringCounts.addClusteredVariantsRemapped(clusteredVariantEntityNoRSExists.size());
         return clusteredVariantEntityNoRSExists.stream()
                 .map(cve -> cve.getModel())
                 .collect(Collectors.toList());
     }
 
-    private List<? extends SubmittedVariantEntity> getSubmittedVariantsNoRSExists(List<? extends SubmittedVariantEntity> submittedVariantWithRS) {
+    private List<ClusteredVariantEntity> getClusteredVariantEntityNoRSExists(List<? extends SubmittedVariantEntity> submittedVariantWithRS) {
         List<IClusteredVariant> clusteredVariantList = submittedVariantWithRS.stream()
                 .map(this::toClusteredVariantEntity)
                 .collect(Collectors.toList());
-        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers = clusteredService.get(clusteredVariantList).stream()
-                .map(d -> new GetOrCreateAccessionWrapper<>(d.getAccession(), d.getHash(), d.getData(), false))
-                .collect(Collectors.toList());
-        List<IClusteredVariant> clusteredVariantsRSExists = accessionWrappers.stream()
-                .map(v -> v.getData())
+        List<String> existingClusteredVariantsHashes = clusteredService.get(clusteredVariantList).stream()
+                .map(AccessionWrapper::getHash)
                 .collect(Collectors.toList());
 
         return submittedVariantWithRS.stream()
-                .filter(sub -> !clusteredVariantsRSExists.contains(toClusteredVariant(sub)))
+                .filter(sve -> !existingClusteredVariantsHashes.contains(toClusteredVariantEntity(sve).getHashedMessage()))
+                .map(this::toClusteredVariantEntity)
                 .collect(Collectors.toList());
     }
 
