@@ -59,16 +59,17 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     private int chunkSize;
 
-    private boolean isClusteredVariantsMongoReader;
+    //decides whether already clustered or non clustered variants will be read by mongo reader
+    private boolean readOnlyClusteredVariants;
 
     public ClusteringMongoReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
-                                 String assembly, int chunkSize, boolean isClusteredVariantsMongoReader) {
+                                 String assembly, int chunkSize, boolean readOnlyClusteredVariants) {
         this.mongoClient = mongoClient;
         this.database = database;
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.chunkSize = chunkSize;
-        this.isClusteredVariantsMongoReader = isClusteredVariantsMongoReader;
+        this.readOnlyClusteredVariants = readOnlyClusteredVariants;
     }
 
     @Override
@@ -85,7 +86,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
         MongoDatabase db = mongoClient.getDatabase(database);
         MongoCollection<Document> collection = db.getCollection(SUBMITTED_VARIANT_ENTITY);
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, isClusteredVariantsMongoReader));
+                Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
         logger.info("Issuing find: {}", query);
         FindIterable<Document> notClusteredSubmittedVariants = collection.find(query)
                                                                          .noCursorTimeout(true)
