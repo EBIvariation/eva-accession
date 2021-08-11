@@ -49,6 +49,7 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -94,11 +95,14 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private ClusteringCounts clusteringCounts;
 
+    private boolean processClusteredRemappedVariants;
+
     public ClusteringWriter(MongoTemplate mongoTemplate,
                             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                             Long accessioningMonotonicInitSs,
                             Long accessioningMonotonicInitRs,
-                            ClusteringCounts clusteringCounts) {
+                            ClusteringCounts clusteringCounts,
+                            boolean processClusteredRemappedVariants) {
         this.mongoTemplate = mongoTemplate;
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -107,6 +111,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
         this.clusteringCounts = clusteringCounts;
+        this.processClusteredRemappedVariants = processClusteredRemappedVariants;
     }
 
     @Override
@@ -123,8 +128,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws AccessionCouldNotBeGeneratedException {
-        List<IClusteredVariant> processedClusteredVariants = processClusteredVariantsWhereNoRSExists(submittedVariantEntities);
-
+        List<IClusteredVariant> processedClusteredVariants = new ArrayList<>();
+        if(processClusteredRemappedVariants){
+            processedClusteredVariants = processClusteredRemappedVariantsWhereNoRSExists(submittedVariantEntities);
+        }
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
                                                                            .map(this::toClusteredVariant)
                                                                            .collect(Collectors.toList());
@@ -164,7 +171,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      *          300	ASM1_Chr1_1_SNV	ASM1	1	Chr1	SNV
      *          300	ASM2_Chr1_2_SNV	ASM1	1	Chr1	SNV
      */
-    private List<IClusteredVariant> processClusteredVariantsWhereNoRSExists(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
+    private List<IClusteredVariant> processClusteredRemappedVariantsWhereNoRSExists(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
         List<SubmittedVariantEntity> submittedVariantWithRS = submittedVariantEntities.stream()
                 .filter(v -> v.getClusteredVariantAccession() != null)
                 .filter(v -> !StringUtil.isBlank(v.getRemappedFrom()))

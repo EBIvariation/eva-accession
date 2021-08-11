@@ -129,7 +129,7 @@ public class IssueAccessionClusteringWriterTest {
     @Before
     public void setUp() {
         clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService, EVA_SUBMITTED_VARIANT_RANGE_START,
-                EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts);
+                EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts, true);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }

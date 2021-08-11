@@ -26,20 +26,31 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 
 @Configuration
 @Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
         MongoConfiguration.class})
 public class ClusteringWriterConfiguration {
 
-    @Bean(CLUSTERING_WRITER)
-    public ClusteringWriter clusteringWriter(MongoTemplate mongoTemplate,
+    @Bean(CLUSTERED_CLUSTERING_WRITER)
+    public ClusteringWriter clusteredClusteringWriter(MongoTemplate mongoTemplate,
+                                                      ClusteredVariantAccessioningService accessioningService,
+                                                      Long accessioningMonotonicInitSs,
+                                                      Long accessioningMonotonicInitRs,
+                                                      ClusteringCounts clusteringCounts) {
+        return new ClusteringWriter(mongoTemplate, accessioningService, accessioningMonotonicInitSs,
+                accessioningMonotonicInitRs, clusteringCounts, true);
+    }
+
+    @Bean(NON_CLUSTERED_CLUSTERING_WRITER)
+    public ClusteringWriter nonClusteredClusteringWriter(MongoTemplate mongoTemplate,
                                              ClusteredVariantAccessioningService accessioningService,
                                              Long accessioningMonotonicInitSs,
                                              Long accessioningMonotonicInitRs,
                                              ClusteringCounts clusteringCounts) {
         return new ClusteringWriter(mongoTemplate, accessioningService, accessioningMonotonicInitSs,
-                                    accessioningMonotonicInitRs, clusteringCounts);
+                                    accessioningMonotonicInitRs, clusteringCounts,false);
     }
 }
