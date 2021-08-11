@@ -33,7 +33,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VCF_READER;
@@ -46,7 +46,7 @@ public class ClusteringFromVcfStepConfiguration {
     public Step clusteringVariantsStep(
             @Qualifier(VCF_READER) ItemReader<Variant> vcfReader,
             @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR) ItemProcessor<Variant, SubmittedVariantEntity> processor,
-            @Qualifier(CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            @Qualifier(CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {

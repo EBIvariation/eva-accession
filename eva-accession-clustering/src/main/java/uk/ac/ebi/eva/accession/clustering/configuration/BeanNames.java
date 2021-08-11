@@ -26,7 +26,9 @@ public class BeanNames {
     public static final String VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR =
             "VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR";
 
-    public static final String CLUSTERING_WRITER = "CLUSTERING_WRITER";
+    public static final String NON_CLUSTERED_CLUSTERING_WRITER = "NON_CLUSTERED_CLUSTERING_WRITER";
+
+    public static final String CLUSTERED_CLUSTERING_WRITER = "CLUSTERED_CLUSTERING_WRITER";
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
