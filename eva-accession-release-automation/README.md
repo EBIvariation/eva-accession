@@ -27,7 +27,6 @@ release-species-inventory-table:
 release-jar-path:
 
 bgzip-path:
-tabix-path:
 bcftools-path:
 vcf-sort-script-path:
 vcf-validator-path:
