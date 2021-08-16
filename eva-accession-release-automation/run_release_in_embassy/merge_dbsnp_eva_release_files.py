@@ -23,7 +23,7 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
-from run_release_in_embassy.release_common_utils import get_bgzip_tabix_commands_for_file, \
+from run_release_in_embassy.release_common_utils import get_bgzip_bcftools_index_commands_for_file, \
     get_release_vcf_file_name, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
 
 
@@ -42,7 +42,7 @@ def move_release_files_to_unsorted_category(assembly_accession, species_release_
             os.rename(vcf_file_name, unsorted_file_name)
 
 
-def get_bgzip_and_tabix_commands(bgzip_path, tabix_path, vcf_sort_script_path, files_in_category):
+def get_bgzip_and_index_commands(bgzip_path, bcftools_path, vcf_sort_script_path, files_in_category):
     commands = []
     for unsorted_file_name in files_in_category:
         sorted_file_name = unsorted_file_name.replace("_unsorted", "")
@@ -50,7 +50,7 @@ def get_bgzip_and_tabix_commands(bgzip_path, tabix_path, vcf_sort_script_path, f
             "rm -f {0}/*.chromosomes && {1} -f {2} {3}".format(os.path.dirname(unsorted_file_name),
                                                                vcf_sort_script_path,
                                                                unsorted_file_name, sorted_file_name))
-        commands.extend(get_bgzip_tabix_commands_for_file(bgzip_path, tabix_path, sorted_file_name))
+        commands.extend(get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, sorted_file_name))
     return commands
 
 
@@ -83,7 +83,7 @@ def merge_dbsnp_eva_vcf_headers(file1, file2, output_file):
         os.remove(tempfile_handle.name)
 
 
-def merge_dbsnp_eva_vcf_files(bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path, assembly_accession,
+def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, assembly_accession,
                               species_release_folder, vcf_file_category, data_sources):
     vcf_merge_commands = []
     # This is the desired post-merge output file name in the format <assembly>_<category>.vcf
@@ -113,9 +113,9 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, tabix_path, bcftools_path, vcf_sort_sc
     eva_file = files_in_eva_for_category[0]
     if "eva" in data_sources.lower() and "dbsnp" in data_sources.lower():
         merge_dbsnp_eva_vcf_headers(dbsnp_file, eva_file, unsorted_release_file_path)
-        # Merge commands require input VCF files to be sorted, bgzipped and tabixed!!
+        # Merge commands require input VCF files to be sorted, bgzipped and indexed with bcftools!!
         vcf_merge_commands.extend(
-            get_bgzip_and_tabix_commands(bgzip_path, tabix_path, vcf_sort_script_path, [dbsnp_file, eva_file]))
+            get_bgzip_and_index_commands(bgzip_path, bcftools_path, vcf_sort_script_path, [dbsnp_file, eva_file]))
         sorted_file_names = [name.replace("_unsorted", "") for name in [dbsnp_file, eva_file]]
         vcf_merge_commands.append(
             "(({0} merge --no-version -O v {1}.gz {2}.gz | grep -v ^##) >> {3})".format(bcftools_path,
@@ -169,7 +169,7 @@ def merge_dbsnp_eva_text_files(assembly_accession, species_release_folder, text_
     return text_release_file_merge_commands
 
 
-def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path,
+def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder):
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evadev") \
@@ -179,7 +179,7 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
                                                                release_version, metadata_connection_handle)
         merge_commands = []
         for vcf_file_category in release_vcf_file_categories:
-            merge_commands.extend(merge_dbsnp_eva_vcf_files(bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path,
+            merge_commands.extend(merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path,
                                                             assembly_accession, species_release_folder,
                                                             vcf_file_category, release_info["sources"]))
         for text_release_file_category in release_text_file_categories:
@@ -193,7 +193,6 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
 @click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--bgzip-path", help="ex: /path/to/bgzip/binary", required=True)
-@click.option("--tabix-path", help="ex: /path/to/tabix/binary", required=True)
 @click.option("--bcftools-path", help="ex: /path/to/vcftools/binary", required=True)
 @click.option("--vcf-sort-script-path", help="ex: /path/to/vcf/sort/script", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
@@ -203,9 +202,9 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--species-release-folder", required=True)
 @click.command()
-def main(private_config_xml_file, profile, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path, taxonomy_id,
+def main(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id,
          assembly_accession, release_species_inventory_table, release_version, species_release_folder):
-    merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, tabix_path, bcftools_path, vcf_sort_script_path,
+    merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder)
 
