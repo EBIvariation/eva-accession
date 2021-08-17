@@ -30,8 +30,6 @@ public class InputParameters {
 
     private boolean forceRestart;
 
-    private String countStatsUrl;
-
     public String getVcf() {
         return vcf;
     }
@@ -72,21 +70,12 @@ public class InputParameters {
         this.forceRestart = forceRestart;
     }
 
-    public String getCountStatsUrl() {
-        return countStatsUrl;
-    }
-
-    public void setCountStatsUrl(String countStatsUrl) {
-        this.countStatsUrl = countStatsUrl;
-    }
-
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("assemblyAccession", assemblyAccession)
                 .addString("projectAccession", projectAccession)
                 .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
-                .addString("countStatsUrl", countStatsUrl)
                 .toJobParameters();
     }
 }

@@ -48,12 +48,14 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
     private final RestTemplate restTemplate;
     private final ClusteringCounts clusteringCounts;
     private final InputParameters inputParameters;
+    private final String countStatsBaseURL;
 
-    public ClusteringProgressListener(InputParameters inputParameters, ClusteringCounts clusteringCounts, RestTemplate restTemplate) {
+    public ClusteringProgressListener(InputParameters inputParameters, ClusteringCounts clusteringCounts, RestTemplate restTemplate, String countStatsBaseURL) {
         super(inputParameters.getChunkSize());
         this.inputParameters = inputParameters;
         this.clusteringCounts = clusteringCounts;
         this.restTemplate = restTemplate;
+        this.countStatsBaseURL = countStatsBaseURL;
     }
 
     @Override
@@ -76,7 +78,7 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
         try {
             String assembly = inputParameters.getAssemblyAccession();
             String identifier = createIdentifier(assembly);
-            String url = stepExecution.getJobExecution().getJobParameters().getString("countStatsUrl") + URL_PATH_SAVE_COUNT;
+            String url = countStatsBaseURL + URL_PATH_SAVE_COUNT;
             saveClusteringCountMetricsInDB(url, numTotalItemsRead, clusteringCounts, identifier);
         } catch (JSONException | RestClientException ex) {
             logger.error("Error occurred while saving Counts to DB", ex);
