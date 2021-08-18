@@ -52,12 +52,6 @@ def close_mongo_port_to_tempmongo(port_forwarding_process_id):
               '\'Killed by Signal 1\' in the preceding/following text\\033[0m".')
 
 
-def get_bgzip_tabix_commands_for_file(bgzip_path, tabix_path, file):
-    commands = ["rm -f {0}.gz".format(file), "({0} < {1} > {1}.gz)".format(bgzip_path, file),
-                "({0} -f {1}.gz)".format(tabix_path, file)]
-    return commands
-
-
 def get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, file):
     commands = ["rm -f {0}.gz".format(file), "({0} --csi {1} > {1}.gz)".format(bgzip_path, file),
                 "({0} -cf {1}.gz)".format(bcftools_path, file)]
