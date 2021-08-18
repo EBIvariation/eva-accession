@@ -59,7 +59,7 @@ def get_bgzip_tabix_commands_for_file(bgzip_path, tabix_path, file):
 
 
 def get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, file):
-    commands = ["rm -f {0}.gz".format(file), "({0} -c {1} > {1}.gz)".format(bgzip_path, file),
+    commands = ["rm -f {0}.gz".format(file), "({0} --csi {1} > {1}.gz)".format(bgzip_path, file),
                 "({0} -cf {1}.gz)".format(bcftools_path, file)]
     return commands
 
