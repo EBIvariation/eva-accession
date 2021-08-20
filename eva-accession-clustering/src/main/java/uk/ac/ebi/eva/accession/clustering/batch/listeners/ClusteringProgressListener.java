@@ -50,7 +50,8 @@ public class ClusteringProgressListener extends GenericProgressListener<Variant,
     private final InputParameters inputParameters;
     private final String countStatsBaseURL;
 
-    public ClusteringProgressListener(InputParameters inputParameters, ClusteringCounts clusteringCounts, RestTemplate restTemplate, String countStatsBaseURL) {
+    public ClusteringProgressListener(InputParameters inputParameters, ClusteringCounts clusteringCounts,
+                                      RestTemplate restTemplate, String countStatsBaseURL) {
         super(inputParameters.getChunkSize());
         this.inputParameters = inputParameters;
         this.clusteringCounts = clusteringCounts;
