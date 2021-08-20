@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.ParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.AggregatedVcfLineMapper;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
@@ -35,7 +35,7 @@ import java.io.IOException;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VCF_READER;
 
 @Configuration
-@Import(InputParametersConfiguration.class)
+@Import(ParametersConfiguration.class)
 public class VcfReaderConfiguration {
 
     @Bean(VCF_READER)
