@@ -43,6 +43,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
@@ -96,8 +97,8 @@ public class ClusteringVariantJobConfigurationTest {
 
     private MockRestServiceServer mockServer;
 
-    @Value("${eva.count-stats.url}")
-    private String COUNT_STATS_BASE_URL;
+    @Autowired
+    private CountParameters countParameters;
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     @Rule
@@ -107,7 +108,7 @@ public class ClusteringVariantJobConfigurationTest {
     @Before
     public void init() throws Exception {
         mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(COUNT_STATS_BASE_URL + URL_PATH_SAVE_COUNT)))
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
     }

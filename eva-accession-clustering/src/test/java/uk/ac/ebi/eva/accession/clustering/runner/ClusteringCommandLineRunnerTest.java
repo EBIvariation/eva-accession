@@ -45,6 +45,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+
+import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -124,8 +126,8 @@ public class ClusteringCommandLineRunnerTest {
 
     private MockRestServiceServer mockServer;
 
-    @Value("${eva.count-stats.url}")
-    private String COUNT_STATS_BASE_URL;
+    @Autowired
+    private CountParameters countParameters;
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     @BeforeClass
@@ -153,7 +155,7 @@ public class ClusteringCommandLineRunnerTest {
         useOriginalVcfFile();
 
         mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(COUNT_STATS_BASE_URL + URL_PATH_SAVE_COUNT)))
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
     }
