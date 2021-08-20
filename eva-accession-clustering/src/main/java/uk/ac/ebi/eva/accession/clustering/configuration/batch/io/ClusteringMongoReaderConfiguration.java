@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
-import uk.ac.ebi.eva.accession.clustering.configuration.ParametersConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 
@@ -31,7 +31,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_VARIANTS_MONGO_READER;
 
 @Configuration
-@Import({MongoConfiguration.class, ParametersConfiguration.class})
+@Import({MongoConfiguration.class, InputParametersConfiguration.class})
 public class ClusteringMongoReaderConfiguration {
 
     @Bean(CLUSTERED_VARIANTS_MONGO_READER)

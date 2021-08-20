@@ -23,7 +23,7 @@ import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
 @Configuration
-public class ParametersConfiguration {
+public class InputParametersConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "parameters")
