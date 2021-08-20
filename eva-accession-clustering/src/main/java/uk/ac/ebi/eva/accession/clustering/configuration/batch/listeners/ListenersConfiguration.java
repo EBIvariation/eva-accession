@@ -1,6 +1,5 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
