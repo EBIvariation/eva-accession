@@ -19,21 +19,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
 @Configuration
-public class ParametersConfiguration {
+public class InputParametersConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "parameters")
     public InputParameters inputParameters() {
         return new InputParameters();
-    }
-
-    @Bean
-    @ConfigurationProperties(prefix = "eva.count-stats")
-    public CountParameters countParameters() {
-        return new CountParameters();
     }
 }
