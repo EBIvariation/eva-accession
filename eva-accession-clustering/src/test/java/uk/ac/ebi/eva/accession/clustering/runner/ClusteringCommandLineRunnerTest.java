@@ -34,11 +34,18 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
+
+import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -53,6 +60,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,6 +69,9 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
@@ -109,6 +120,15 @@ public class ClusteringCommandLineRunnerTest {
 
     private boolean originalInputParametersCaptured = false;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
+    private MockRestServiceServer mockServer;
+
+    @Autowired
+    private CountParameters countParameters;
+    private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
+
     @BeforeClass
     public static void initializeTempFile() throws Exception {
         tempVcfInputFileToTestFailingJobs = File.createTempFile("resumeFailingJob", ".vcf.gz");
@@ -132,6 +152,11 @@ public class ClusteringCommandLineRunnerTest {
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
         useOriginalVcfFile();
+
+        mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK));
     }
 
     @After

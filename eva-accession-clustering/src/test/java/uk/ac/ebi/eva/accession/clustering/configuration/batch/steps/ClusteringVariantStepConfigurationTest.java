@@ -22,6 +22,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,12 +33,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
+import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
@@ -46,6 +53,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,6 +62,9 @@ import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
@@ -87,6 +98,16 @@ public class ClusteringVariantStepConfigurationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
+    private MockRestServiceServer mockServer;
+
+    @Autowired
+    private CountParameters countParameters;
+
+    private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
+
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
@@ -94,6 +115,14 @@ public class ClusteringVariantStepConfigurationTest {
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+
+    @Before
+    public void init() throws Exception {
+        mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+                  .andExpect(method(HttpMethod.POST))
+                  .andRespond(withStatus(HttpStatus.OK));
+    }
 
     @After
     public void tearDown() {
@@ -103,7 +132,7 @@ public class ClusteringVariantStepConfigurationTest {
     /**
      * Note how this test generates 1 less clusteredVariantAccession than the stepFromMongo test, because
      * the VCF here already provides a dbsnp RS for one submitted variant.
-     *
+     * <p>
      * Note also how we are not checking that all the variants end up clustered because it's assumed that
      * the SS already links to the dbsnp RS (although it's not in the DB test data). The assumption will hold in real
      * data because if it linked to another RS, then it would be merged (see tests in
@@ -141,7 +170,8 @@ public class ClusteringVariantStepConfigurationTest {
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertTrue(allSubmittedVariantsNotClustered());
 
-        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(
+                CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
@@ -156,7 +186,8 @@ public class ClusteringVariantStepConfigurationTest {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertEquals(1, getSubmittedVariantsWithRS());
 
-        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(
+                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
@@ -180,7 +211,7 @@ public class ClusteringVariantStepConfigurationTest {
         MongoCollection<Document> collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
         FindIterable<Document> documents = collection.find();
         for (Document document : documents) {
-            if (document.get("rs") != null){
+            if (document.get("rs") != null) {
                 return false;
             }
         }
@@ -200,7 +231,7 @@ public class ClusteringVariantStepConfigurationTest {
         FindIterable<Document> documents = collection.find();
         for (Document document : documents) {
             Long accessionId = (Long) document.get(accessionField);
-            generatedAccessions.add(accessionId == null? -1 : accessionId);
+            generatedAccessions.add(accessionId == null ? -1 : accessionId);
         }
         Collections.sort(generatedAccessions);
         assertEquals(expectedAccessions, generatedAccessions);
@@ -216,7 +247,7 @@ public class ClusteringVariantStepConfigurationTest {
         MongoCollection<Document> collection = mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION);
         FindIterable<Document> documents = collection.find();
         for (Document document : documents) {
-            if (document.get("rs") == null){
+            if (document.get("rs") == null) {
                 return false;
             }
         }
