@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.release.batch.io.active;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import htsjdk.variant.variantcontext.VariantContext;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -135,9 +136,7 @@ public class ReleaseRecordWriterTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        submittedVariantAccessioningRepository.deleteAll();
-        clusteredVariantAccessioningRepository.deleteAll();
-        mongoOperations.dropCollection(ReleaseRecordWriter.RELEASE_RECORD_COLLECTION_NAME);
+        cleanupDatabase();
 
         study1Variants =
                 getVariants("src/test/resources/test-data/incremental_release/study1.accessioned.vcf");
@@ -165,6 +164,13 @@ public class ReleaseRecordWriterTest {
 
         clusteredVariantAccessioningRepository.saveAll(Collections.singletonList(evaRS4));
         submittedVariantAccessioningRepository.saveAll(Arrays.asList(evaSS4, evaSS5, evaSS6));
+    }
+
+    @After
+    public void cleanupDatabase() {
+        submittedVariantAccessioningRepository.deleteAll();
+        clusteredVariantAccessioningRepository.deleteAll();
+        mongoOperations.dropCollection(ReleaseRecordWriter.RELEASE_RECORD_COLLECTION_NAME);
     }
 
     @Test
