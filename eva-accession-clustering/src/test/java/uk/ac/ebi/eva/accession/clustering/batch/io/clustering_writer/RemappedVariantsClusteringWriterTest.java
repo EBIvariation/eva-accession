@@ -57,6 +57,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * This class test some scenarios of ClusteringWriter for remapped Variants
@@ -82,10 +83,6 @@ public class RemappedVariantsClusteringWriterTest {
     private static final int TAXONOMY = 100;
 
     private static final String CONTIG = "chr1";
-
-    private static final String T = "T";
-
-    private static final String A = "A";
 
     private static final String ASM_1 = "asm1";
 
@@ -308,16 +305,72 @@ public class RemappedVariantsClusteringWriterTest {
         assertEquals("Clustering submitted variant 5000000000 with rs3000000006", submittedVariantOperationEntity.getReason());
     }
 
-    private SubmittedVariantEntity getSubmittedVariantEntity(String assembly, String project, long start, Long rs, long ss, String remappedFrom) {
-        SubmittedVariant submittedClustered = new SubmittedVariant(assembly, TAXONOMY, project, CONTIG, start, T, A, rs);
+    @Test
+    @DirtiesContext
+    public void test() throws Exception {
+        //original submitted variants
+        SubmittedVariantEntity submittedVariantEntity1 = getSubmittedVariantEntity(ASM_1, PROJECT_1, 1000, 3000000006L, 5000000001L, "", "TT", NOT_REMAPPED);
+        mongoTemplate.insert(submittedVariantEntity1, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity2 = getSubmittedVariantEntity(ASM_1, PROJECT_1, 1000, 3000000006L, 5000000000L, "A", "AT", NOT_REMAPPED);
+        mongoTemplate.insert(submittedVariantEntity2, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity3 = getSubmittedVariantEntity(ASM_1, PROJECT_2, 3000, 3000000007L, 5000000002L, "C", "G", NOT_REMAPPED);
+        mongoTemplate.insert(submittedVariantEntity3, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity4 = getSubmittedVariantEntity(ASM_1, PROJECT_2, 4000, 3000000008L, 5000000003L, "G", "C", NOT_REMAPPED);
+        mongoTemplate.insert(submittedVariantEntity4, SUBMITTED_VARIANT_COLLECTION);
+
+        //clustered variants
+        ClusteredVariantEntity clusteredVariantEntity1 = getClusteredVariantEntity(ASM_1, 1000, 3000000006L, VariantType.INS);
+        mongoTemplate.insert(clusteredVariantEntity1, CLUSTERED_VARIANT_COLLECTION);
+        ClusteredVariantEntity clusteredVariantEntity2 = getClusteredVariantEntity(ASM_2, 3000, 3000000007L, VariantType.SNV);
+        mongoTemplate.insert(clusteredVariantEntity2, CLUSTERED_VARIANT_COLLECTION);
+
+        //submitted variants after remapping
+        SubmittedVariantEntity submittedVariantEntity5 = getSubmittedVariantEntity(ASM_2, PROJECT_1, 1500, 3000000006L, 5000000005L, "", "TT", ASM_1);
+        mongoTemplate.insert(submittedVariantEntity5, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity6 = getSubmittedVariantEntity(ASM_2, PROJECT_1, 1000, 3000000006L, 5000000004L, "", "T", ASM_1);
+        mongoTemplate.insert(submittedVariantEntity6, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity7 = getSubmittedVariantEntity(ASM_2, PROJECT_2, 3000, 3000000007L, 5000000006L, "C", "G", ASM_1);
+        mongoTemplate.insert(submittedVariantEntity7, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity8 = getSubmittedVariantEntity(ASM_2, PROJECT_2, 4000, 3000000008L, 5000000007L, "G", "CC", ASM_1);
+        mongoTemplate.insert(submittedVariantEntity8, SUBMITTED_VARIANT_COLLECTION);
+
+        //asm2 clustered
+        List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
+        submittedVariantEntityList.add(submittedVariantEntity5);
+        submittedVariantEntityList.add(submittedVariantEntity7);
+        clusteringWriter.write(submittedVariantEntityList);
+        submittedVariantEntityList.add(submittedVariantEntity6);
+        submittedVariantEntityList.add(submittedVariantEntity8);
+        clusteringWriter.write(submittedVariantEntityList);
+
+        //assert clusteredVariantEntities
+        List<ClusteredVariantEntity> clusteredVariantEntities = mongoTemplate.findAll(ClusteredVariantEntity.class);
+        assertEquals(5, clusteredVariantEntities.size());
+        IClusteredVariant clusteredVariant = new ClusteredVariant(ASM_2, 100, "chr1", 1500, VariantType.INS,
+                                                                  false, null);
+        assertTrue(clusteredVariantEntities.contains(true));
+
+    }
+
+    private SubmittedVariantEntity getSubmittedVariantEntity(String assembly, String project, long start, Long rs,
+                                                             long ss, String ref, String alt, String remappedFrom) {
+        SubmittedVariant submittedClustered = new SubmittedVariant(assembly, TAXONOMY, project, CONTIG, start, ref, alt, rs);
         String hash1 = hashingFunction.apply(submittedClustered);
         return new SubmittedVariantEntity(ss, hash1, submittedClustered, 1, remappedFrom, LocalDateTime.now(), null);
     }
 
+    private SubmittedVariantEntity getSubmittedVariantEntity(String assembly, String project, long start, Long rs,
+                                                             long ss, String remappedFrom) {
+        return getSubmittedVariantEntity(assembly, project, start, rs, ss, "T", "A", remappedFrom);
+    }
+
     private ClusteredVariantEntity getClusteredVariantEntity(String assembly, long start, Long rs) {
-        ClusteredVariant cv = new ClusteredVariant(assembly, TAXONOMY, CONTIG, start, VariantType.SNV, false, null);
+        return getClusteredVariantEntity(assembly, start, rs, VariantType.SNV);
+    }
+
+    private ClusteredVariantEntity getClusteredVariantEntity(String assembly, long start, Long rs, VariantType type) {
+        ClusteredVariant cv = new ClusteredVariant(assembly, TAXONOMY, CONTIG, start, type, false, null);
         String cvHash = clusteredHashingFunction.apply(cv);
-        return new ClusteredVariantEntity(rs, cvHash, assembly, TAXONOMY, CONTIG, start, VariantType.SNV, false, null,
-                1, null);
+        return new ClusteredVariantEntity(rs, cvHash, assembly, TAXONOMY, CONTIG, start, type, false, null, 1, null);
     }
 }
