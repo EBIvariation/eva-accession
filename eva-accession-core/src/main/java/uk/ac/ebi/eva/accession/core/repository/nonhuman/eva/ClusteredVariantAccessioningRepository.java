@@ -31,4 +31,7 @@ public interface ClusteredVariantAccessioningRepository extends
         IAccessionedObjectRepository<ClusteredVariantEntity, Long> {
 
     List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end);
+
+    List<ClusteredVariantEntity> findByAssemblyAccessionAndAccessionIn(String referenceSequenceAccession,
+                                                                       List<Long> accession);
 }

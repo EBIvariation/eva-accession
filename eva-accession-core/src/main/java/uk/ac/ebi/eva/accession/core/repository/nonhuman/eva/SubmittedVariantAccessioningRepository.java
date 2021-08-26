@@ -31,5 +31,8 @@ public interface SubmittedVariantAccessioningRepository extends
 
     List<SubmittedVariantEntity> findByClusteredVariantAccessionIn(List<Long> clusteredVariantAccession);
 
+    List<SubmittedVariantEntity> findByReferenceSequenceAccessionAndAccessionIn(String referenceSequenceAccession,
+                                                                                List<Long> accession);
+
     List<AccessionProjection<Long>> findByAccessionGreaterThanEqualAndAccessionLessThanEqual(Long start, Long end);
 }

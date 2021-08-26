@@ -19,6 +19,11 @@ package uk.ac.ebi.eva.accession.release.configuration.batch.io;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.data.mongodb.core.MongoOperations;
+
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.release.batch.io.ReleaseRecordWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantContextWriter;
@@ -34,6 +39,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_RELE
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.INCREMENTAL_RELEASE_WRITER;
 
 @Configuration
 public class VariantContextWriterConfiguration {
@@ -90,6 +96,15 @@ public class VariantContextWriterConfiguration {
         String activeContigsFilePath = ContigWriter.getEvaMultimapContigsFilePath(reportPath.toFile().getParent(),
                                                                                   parameters.getAssemblyAccession());
         return new MultimapVariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
+    }
+
+    @Bean(INCREMENTAL_RELEASE_WRITER)
+    public ReleaseRecordWriter incrementalReleaseWriter(MongoOperations mongoOperations,
+                                                        SubmittedVariantAccessioningRepository submittedVariantAccessioningRepository,
+                                                        ClusteredVariantAccessioningRepository clusteredVariantAccessioningRepository,
+                                                        InputParameters parameters) {
+        return new ReleaseRecordWriter(mongoOperations, submittedVariantAccessioningRepository,
+                                       clusteredVariantAccessioningRepository, parameters.getAssemblyAccession());
     }
 
 }

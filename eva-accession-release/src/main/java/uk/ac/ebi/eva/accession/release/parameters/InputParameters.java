@@ -33,6 +33,8 @@ public class InputParameters {
 
     private int chunkSize;
 
+    private String accessionedVcf;
+
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("assemblyAccession", assemblyAccession)
@@ -90,4 +92,11 @@ public class InputParameters {
         this.chunkSize = chunkSize;
     }
 
+    public String getAccessionedVcf() {
+        return accessionedVcf;
+    }
+
+    public void setAccessionedVcf(String accessionedVcf) {
+        this.accessionedVcf = accessionedVcf;
+    }
 }

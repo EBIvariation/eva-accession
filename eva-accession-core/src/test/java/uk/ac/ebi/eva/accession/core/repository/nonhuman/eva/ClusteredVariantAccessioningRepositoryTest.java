@@ -30,6 +30,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.AccessionProjection;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
@@ -41,6 +42,7 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -106,5 +108,27 @@ public class ClusteredVariantAccessioningRepositoryTest {
                                         List<AccessionProjection<Long>> accessionsProjection) {
         assertEquals(new TreeSet<>(expectedAccessions),
                      accessionsProjection.stream().map(AccessionProjection::getAccession).collect(Collectors.toSet()));
+    }
+
+    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @Test
+    public void testQueryAssemblyAndAccessionFilter() {
+        long firstAccession = 1000L;
+        long secondAccession = 1002L;
+        List<ClusteredVariantEntity> variants = Arrays.asList(
+                new ClusteredVariantEntity(firstAccession, "hash-1", clusteredVariant, 1),
+                new ClusteredVariantEntity(secondAccession, "hash-2", newClusteredVariant, 1));
+
+        repository.saveAll(variants);
+
+        List<Long> accessions =  repository.findByAssemblyAccessionAndAccessionIn(
+                "assembly", Arrays.asList(firstAccession, secondAccession)
+        ).stream().map(AccessionedDocument::getAccession).collect(Collectors.toList());
+        assertEquals(1, accessions.size());
+
+        accessions =  repository.findByAssemblyAccessionAndAccessionIn(
+                "assembly", Collections.singletonList(firstAccession)
+        ).stream().map(AccessionedDocument::getAccession).collect(Collectors.toList());
+        assertEquals(0, accessions.size());
     }
 }
