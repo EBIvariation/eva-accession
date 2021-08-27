@@ -321,8 +321,10 @@ public class RemappedVariantsClusteringWriterTest {
         //clustered variants
         ClusteredVariantEntity clusteredVariantEntity1 = getClusteredVariantEntity(ASM_1, 1000, 3000000006L, VariantType.INS);
         mongoTemplate.insert(clusteredVariantEntity1, CLUSTERED_VARIANT_COLLECTION);
-        ClusteredVariantEntity clusteredVariantEntity2 = getClusteredVariantEntity(ASM_2, 3000, 3000000007L, VariantType.SNV);
+        ClusteredVariantEntity clusteredVariantEntity2 = getClusteredVariantEntity(ASM_2, 3000, 3000000005L, VariantType.SNV);
         mongoTemplate.insert(clusteredVariantEntity2, CLUSTERED_VARIANT_COLLECTION);
+        ClusteredVariantEntity clusteredVariantEntity3 = getClusteredVariantEntity(ASM_1, 4000, 3000000008L, VariantType.INS);
+        mongoTemplate.insert(clusteredVariantEntity3, CLUSTERED_VARIANT_COLLECTION);
 
         //submitted variants after remapping
         SubmittedVariantEntity submittedVariantEntity5 = getSubmittedVariantEntity(ASM_2, PROJECT_1, 1500, 3000000006L, 5000000005L, "", "TT", ASM_1);
@@ -339,6 +341,7 @@ public class RemappedVariantsClusteringWriterTest {
         submittedVariantEntityList.add(submittedVariantEntity5);
         submittedVariantEntityList.add(submittedVariantEntity7);
         clusteringWriter.write(submittedVariantEntityList);
+        submittedVariantEntityList.clear();
         submittedVariantEntityList.add(submittedVariantEntity6);
         submittedVariantEntityList.add(submittedVariantEntity8);
         clusteringWriter.write(submittedVariantEntityList);
@@ -346,9 +349,9 @@ public class RemappedVariantsClusteringWriterTest {
         //assert clusteredVariantEntities
         List<ClusteredVariantEntity> clusteredVariantEntities = mongoTemplate.findAll(ClusteredVariantEntity.class);
         assertEquals(5, clusteredVariantEntities.size());
-        IClusteredVariant clusteredVariant = new ClusteredVariant(ASM_2, 100, "chr1", 1500, VariantType.INS,
+        IClusteredVariant expectedClusteredVariant = new ClusteredVariant(ASM_2, 100, "chr1", 1500, VariantType.INS,
                                                                   false, null);
-        assertTrue(clusteredVariantEntities.contains(true));
+        assertTrue(clusteredVariantEntities.contains(expectedClusteredVariant));
 
     }
 

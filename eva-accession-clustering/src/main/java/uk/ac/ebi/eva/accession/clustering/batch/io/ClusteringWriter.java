@@ -136,6 +136,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             throws AccessionCouldNotBeGeneratedException {
         if (processClusteredRemappedVariants) {
             List<SubmittedVariantEntity> processedClusteredVariants = processClusteredRemappedVariantsRSSplit(submittedVariantEntities);
+            clusteringCounts.addClusteredVariantsRSSplit(processedClusteredVariants.size());
             submittedVariantEntities.removeAll(processedClusteredVariants);
         }
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
@@ -161,12 +162,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * remapped variant is at a different location
      * or a different variant type.
      * <p>
-     * SubmittedVariantEntity
-     * ClusteredVariantEntity
-     * SS	    HASH	                RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH
-     * ASM	    POS	    CONTIG	TYPE
-     * 501	ASM1_PRJEB1_Chr1_1000__TT	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306
-     * ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
+     * SubmittedVariantEntity                                                                                               ClusteredVariantEntity
+     * SS	    HASH	                RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH                ASM	    POS	    CONTIG	TYPE
+     * 501	ASM1_PRJEB1_Chr1_1000__TT	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
      * 500	ASM1_PRJEB2_Chr1_1000_A_AT	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)
      * 505	ASM1_PRJEB1_Chr1_1000__TT	306	ASM2	PRJEB1	Chr1	1500		TT  (remapped)
      * 504	ASM1_PRJEB2_Chr1_1000__AT	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
@@ -174,63 +172,117 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * SS id 504 and 505 has same RS because of remapping, but they are now at different positions and can't have
      * same RS. RS split needs to be done here.
      * <p>
-     * SubmittedVariantEntity
-     * ClusteredVariantEntity
-     * SS	    HASH	                RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH
-     * ASM	    POS	    CONTIG	TYPE
-     * 501	ASM1_PRJEB1_Chr1_1000__TT	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306
-     * ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
-     * 500	ASM1_PRJEB2_Chr1_1000_A_AT	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)              306
-     * ASM2_Chr1_1000_INS	ASM2	1000	Chr1	INS
-     * 505	ASM1_PRJEB1_Chr1_1000__TT	400	ASM2	PRJEB1	Chr1	1500		TT  (remapped)         400
-     * ASM2_Chr1_1500_INS	ASM2	1500	Chr1	INS
+     * SubmittedVariantEntity                                                                                                   ClusteredVariantEntity
+     * SS	    HASH	                RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH                ASM	    POS	    CONTIG	TYPE
+     * 501	ASM1_PRJEB1_Chr1_1000__TT	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
+     * 500	ASM1_PRJEB2_Chr1_1000_A_AT	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)              306  ASM2_Chr1_1000_INS	ASM2	1000	Chr1	INS
+     * 505	ASM1_PRJEB1_Chr1_1000__TT	400	ASM2	PRJEB1	Chr1	1500		TT  (remapped)         400  ASM2_Chr1_1500_INS	ASM2	1500	Chr1	INS
      * 504	ASM1_PRJEB2_Chr1_1000__AT	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
      */
-    private List<SubmittedVariantEntity> processClusteredRemappedVariantsRSSplit(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
-        List<SubmittedVariantEntity> clusteredRemappedSubmittedVariantsList = submittedVariantEntities.stream()
+    private List<SubmittedVariantEntity> processClusteredRemappedVariantsRSSplit(List<? extends SubmittedVariantEntity> submittedVariantEntities)
+            throws AccessionCouldNotBeGeneratedException{
+        List<SubmittedVariantEntity> clusteredRemappedSubmittedVariantsList = getClusteredAndRemappedVariants(submittedVariantEntities);
+        Map<Long,List<SubmittedVariantEntity>> submittedVariantsEligibleForRSSplitList = getVariantsEligibleForRSSplit(clusteredRemappedSubmittedVariantsList);
+        if(!submittedVariantsEligibleForRSSplitList.isEmpty()){
+            List<SubmittedVariantEntity> processedVariants = processRSSplitVariants(submittedVariantsEligibleForRSSplitList);
+            return processedVariants;
+        }
+        return Collections.emptyList();
+    }
+
+    private List<SubmittedVariantEntity> getClusteredAndRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariantList){
+        return submittedVariantList.stream()
                 .filter(v -> v.getClusteredVariantAccession() != null)
                 .filter(v -> !StringUtil.isBlank(v.getRemappedFrom()))
                 .collect(Collectors.toList());
-        List<SubmittedVariantEntity> submittedVariantSplitRSList = getSubmittedVariantWithSplitRS(clusteredRemappedSubmittedVariantsList);
-        if(!submittedVariantSplitRSList.isEmpty()){
-        List<ClusteredVariantEntity> clusteredVariantEntitySplitRSList = submittedVariantSplitRSList.stream()
-                .map(this::toClusteredVariantEntity)
-                .collect(Collectors.toList());
-        mongoTemplate.insert(clusteredVariantEntitySplitRSList, ClusteredVariantEntity.class);
-        //TODO : add to correct count
-        clusteringCounts.addClusteredVariantsRemapped(clusteredVariantEntitySplitRSList.size());
-        }
-        return submittedVariantSplitRSList;
     }
 
-    private List<SubmittedVariantEntity> getSubmittedVariantWithSplitRS(List<? extends SubmittedVariantEntity> submittedVariantEntityList) {
-        List<IClusteredVariant> clusteredVariantEntityList = submittedVariantEntityList.stream()
+    private Map<Long,List<SubmittedVariantEntity>> getVariantsEligibleForRSSplit(List<? extends SubmittedVariantEntity> submittedVariantList) {
+        List<IClusteredVariant> clusteredVariantList = submittedVariantList.stream()
                 .map(this::toClusteredVariantEntity)
                 .collect(Collectors.toList());
-        List<String> clusteredVariantsRSExistsHashes = clusteredService.get(clusteredVariantEntityList).stream()
+        List<String> clusteredVariantsRSExistsInDB = clusteredService.get(clusteredVariantList).stream()
                 .map(AccessionWrapper::getHash)
                 .collect(Collectors.toList());
-        Map<Long,List<SubmittedVariantEntity>> submittedVariantEntitySplitRS = submittedVariantEntityList.stream()
-                .filter(sve -> !clusteredVariantsRSExistsHashes.contains(toClusteredVariantEntity(sve).getHashedMessage()))
+        Map<Long,List<SubmittedVariantEntity>> submittedVariantRSSplitMap = submittedVariantList.stream()
+                .filter(sve -> !clusteredVariantsRSExistsInDB.contains(toClusteredVariantEntity(sve).getHashedMessage()))
                 .collect(Collectors.groupingBy(sve->sve.getClusteredVariantAccession()));
-        List<SubmittedVariantEntity> processedVariants = new ArrayList<>();
-        if(!submittedVariantEntitySplitRS.isEmpty()){
-            String assembly = submittedVariantEntityList.get(0).getReferenceSequenceAccession();
-            for(Long rsId:submittedVariantEntitySplitRS.keySet()){
-                try {
-                boolean entryExistForRSAndAssembly = clusteredService.getAllByAccession(rsId).stream()
-                           .map(accessionWrapper -> accessionWrapper.getData().getAssemblyAccession())
-                           .anyMatch(assemblyAccession -> assemblyAccession.equals(assembly));
-                if(!entryExistForRSAndAssembly){
-                        processedVariants.add(submittedVariantEntitySplitRS.get(rsId).get(0));
-                 }
-                }catch (AccessionMergedException| AccessionDoesNotExistException| AccessionDeprecatedException ex){
-                    logger.warn("exception occurred while getting variants with rs ID {}. Exception {}", rsId, ex);
-                    processedVariants.add(submittedVariantEntitySplitRS.get(rsId).get(0));
+
+            return submittedVariantRSSplitMap;
+    }
+
+    private List<SubmittedVariantEntity> processRSSplitVariants(Map<Long,List<SubmittedVariantEntity>> submittedVariantRSSplitMap)
+            throws AccessionCouldNotBeGeneratedException{
+        String assembly = submittedVariantRSSplitMap.values().iterator().next().get(0).getReferenceSequenceAccession();
+        List<SubmittedVariantEntity> submittedVariantRetainingRsList = getSubmittedVariantsRetainingRS(submittedVariantRSSplitMap, assembly);
+        List<SubmittedVariantEntity> submittedVariantGeneratingNewRSList = submittedVariantRSSplitMap.values().stream()
+                .flatMap(sveList->sveList.stream())
+                .filter(sve->!submittedVariantRetainingRsList.contains(sve))
+                .collect(Collectors.toList());
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers = generateNewRSIdAndGetAccessionWrappers(submittedVariantGeneratingNewRSList);
+        List<ClusteredVariantOperationEntity> clusteredVariantOperationEntityList = getClusteredVariantOperations(accessionWrappers, submittedVariantGeneratingNewRSList);
+        List<ClusteredVariantEntity> clusteredVariantEntityList = submittedVariantRetainingRsList.stream()
+                .map(this::toClusteredVariantEntity)
+                .collect(Collectors.toList());
+
+        mongoTemplate.insert(clusteredVariantEntityList, ClusteredVariantEntity.class);
+        mongoTemplate.insert(clusteredVariantOperationEntityList,ClusteredVariantOperationEntity.class);
+
+        return submittedVariantRSSplitMap.values().stream()
+                .flatMap(sveList->sveList.stream())
+                .collect(Collectors.toList());
+    }
+
+    private List<SubmittedVariantEntity> getSubmittedVariantsRetainingRS(Map<Long,List<SubmittedVariantEntity>> submittedVariantsRSSplitMap, String assembly){
+        List<SubmittedVariantEntity> submittedVariantRetainingRsList = new ArrayList<>();
+        for(Map.Entry<Long,List<SubmittedVariantEntity>> entry:submittedVariantsRSSplitMap.entrySet()){
+            try {
+                boolean isThereAnEntryForRSAndAssembly = clusteredService.getAllByAccession(entry.getKey()).stream()
+                        .map(accessionWrapper -> accessionWrapper.getData().getAssemblyAccession())
+                        .anyMatch(assemblyAccession -> assemblyAccession.equals(assembly));
+
+                if(!isThereAnEntryForRSAndAssembly){
+                    submittedVariantRetainingRsList.add(entry.getValue().get(0));
                 }
+            }catch (AccessionMergedException| AccessionDoesNotExistException| AccessionDeprecatedException ex){
+                logger.error("exception occurred while getting variants with rs ID {" + entry.getKey() + "}. " + ex);
             }
         }
-        return processedVariants;
+        return submittedVariantRetainingRsList;
+    }
+
+    private List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> generateNewRSIdAndGetAccessionWrappers(List<SubmittedVariantEntity> submittedVariantNewRSList)
+            throws AccessionCouldNotBeGeneratedException{
+        List<ClusteredVariantEntity> clusteredVariantNewRSList = submittedVariantNewRSList.stream()
+                .map(this::toClusteredVariantEntity)
+                .collect(Collectors.toList());
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
+                clusteredService.getOrCreate(clusteredVariantNewRSList);
+        long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count();
+        clusteringCounts.addClusteredVariantsCreated(newAccessions);
+
+        return accessionWrappers;
+    }
+
+    private List<ClusteredVariantOperationEntity> getClusteredVariantOperations(List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers,
+                                                                                List<SubmittedVariantEntity> submittedVariantEntityListForRS){
+        List<ClusteredVariantOperationEntity> clusteredVariantOperationEntityList = new ArrayList<>();
+        for(GetOrCreateAccessionWrapper<IClusteredVariant,String,Long> accessionWrapper : accessionWrappers) {
+            SubmittedVariantEntity submittedVariantEntity = submittedVariantEntityListForRS.stream()
+                    .filter(sve->toClusteredVariantEntity(sve).getHashedMessage().equals(accessionWrapper.getHash()))
+                    .findFirst().get();
+            ClusteredVariantOperationEntity clusteredVariantOperationEntity = new ClusteredVariantOperationEntity();
+            //TODO : create a new EventType and replace this
+            clusteredVariantOperationEntity.fill(EventType.MERGED,
+                                                 submittedVariantEntity.getClusteredVariantAccession(),
+                                                 accessionWrapper.getAccession(),
+                                                 new StringBuilder().append("new accession id ").append(accessionWrapper.getAccession()).append(" created for remapped accession ")
+                                                         .append(submittedVariantEntity.getClusteredVariantAccession()).toString(),
+                                                 null);
+            clusteredVariantOperationEntityList.add(clusteredVariantOperationEntity);
+        }
+
+        return clusteredVariantOperationEntityList;
     }
 
     private ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
