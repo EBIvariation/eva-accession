@@ -77,7 +77,7 @@ public class ReleaseRecordWriterTest {
 
     private SubmittedVariantEntity evaSS1, evaSS2, evaSS3, evaSS4, evaSS5, evaSS6;
 
-    private ClusteredVariantEntity evaRS1, evaRS2, dbsnpRS3, evaRS4;
+    private ClusteredVariantEntity evaRS1, evaRS2, evaRS3, evaRS4;
 
     private ExecutionContext executionContext;
 
@@ -146,21 +146,21 @@ public class ReleaseRecordWriterTest {
         Long evaRS2_accession = 3000000002L;
         evaRS2 = createRSFromVariant(study1Variants.get(1), evaRS2_accession);
         evaSS2 = createSSFromVariant(study1Variants.get(1), evaRS2_accession);
-        Long dbsnpRS3_accession = 1000000001L;
-        dbsnpRS3 = createRSFromVariant(study1Variants.get(2), dbsnpRS3_accession);
-        evaSS3 = createSSFromVariant(study1Variants.get(2), dbsnpRS3_accession);
+        Long evaRS3_accession = 3000000003L;
+        evaRS3 = createRSFromVariant(study1Variants.get(2), evaRS3_accession);
+        evaSS3 = createSSFromVariant(study1Variants.get(2), evaRS3_accession);
 
-        clusteredVariantAccessioningRepository.saveAll(Arrays.asList(evaRS1, evaRS2, dbsnpRS3));
+        clusteredVariantAccessioningRepository.saveAll(Arrays.asList(evaRS1, evaRS2, evaRS3));
         submittedVariantAccessioningRepository.saveAll(Arrays.asList(evaSS1, evaSS2, evaSS3));
 
         study2Variants =
                 getVariants("src/test/resources/test-data/incremental_release/study2.accessioned.vcf");
 
-        Long evaRS4_accession = 3000000003L;
+        Long evaRS4_accession = 3000000004L;
         evaRS4 = createRSFromVariant(study2Variants.get(0), evaRS4_accession);
         evaSS4 = createSSFromVariant(study2Variants.get(0), evaRS4_accession);
         evaSS5 = createSSFromVariant(study2Variants.get(1), evaRS2_accession);
-        evaSS6 = createSSFromVariant(study2Variants.get(2), dbsnpRS3_accession);
+        evaSS6 = createSSFromVariant(study2Variants.get(2), evaRS3_accession);
 
         clusteredVariantAccessioningRepository.saveAll(Collections.singletonList(evaRS4));
         submittedVariantAccessioningRepository.saveAll(Arrays.asList(evaSS4, evaSS5, evaSS6));
@@ -183,7 +183,7 @@ public class ReleaseRecordWriterTest {
          * Study 1 variants: see study1.accessioned.vcf and setup() above for the RS-SS associations
          * evaSS1 -> evaRS1
          * evaSS2 -> evaRS2
-         * evaSS3 -> dbsnpRS3
+         * evaSS3 -> evaRS3
          */
         releaseRecordWriter.write(study1Variants);
         Map<Long, ReleaseRecordEntity> releaseRecordsAfterStudy1Ingestion =
@@ -195,7 +195,7 @@ public class ReleaseRecordWriterTest {
          * Study 2 variants: see study2.accessioned.vcf and setup() above for the RS-SS associations
          * evaSS4 -> evaRS4
          * evaSS5 -> evaRS2
-         * evaSS6 -> dbsnpRS3
+         * evaSS6 -> evaRS3
          */
 
         releaseRecordWriter.write(study2Variants);
@@ -204,7 +204,7 @@ public class ReleaseRecordWriterTest {
          * evaRS1 - evaSS1
          * evaRS2 - evaSS2, evaSS5
          * evaRS4 - evaSS4
-         * dbsnpRS3 - evaSS3, evaSS6
+         * evaRS3 - evaSS3, evaSS6
          */
         Map<Long, ReleaseRecordEntity> releaseRecordsAfterStudy2Ingestion =
                 this.mongoOperations.findAll(ReleaseRecordEntity.class).stream()
@@ -214,8 +214,8 @@ public class ReleaseRecordWriterTest {
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS2, evaRS2));
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS5, evaRS2));
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS4, evaRS4));
-        assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS3, dbsnpRS3));
-        assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS6, dbsnpRS3));
+        assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS3, evaRS3));
+        assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS6, evaRS3));
     }
 
     private boolean isSSAssociatedWithRS(Map<Long, ReleaseRecordEntity> releaseRecordEntityMap,
