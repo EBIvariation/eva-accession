@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.core.batch.io.AccessionedVcfLineMapper;
 import uk.ac.ebi.eva.accession.core.batch.policies.IllegalStartSkipPolicy;
+import uk.ac.ebi.eva.accession.release.batch.io.ReleaseRecordWriter;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.AccessionedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.VariantContextWriterConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersConfiguration;
@@ -66,7 +67,6 @@ public class CreateIncrementalReleaseStepConfiguration {
     @Autowired
     private IllegalStartSkipPolicy illegalStartSkipPolicy;
 
-    @Bean
     public ItemStreamReader<Variant> accessionedVcfReader() throws IOException {
         VcfReader vcfReader = new VcfReader(new AccessionedVcfLineMapper(),
                 new File(inputParameters.getAccessionedVcf()));
@@ -78,7 +78,7 @@ public class CreateIncrementalReleaseStepConfiguration {
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Qualifier(RELEASE_PROCESSOR) ItemProcessor<Variant, VariantContext> releaseProcessor,
-            @Qualifier(INCREMENTAL_RELEASE_WRITER) ItemStreamWriter<VariantContext> releaseRecordWriter)
+            @Qualifier(INCREMENTAL_RELEASE_WRITER) ReleaseRecordWriter releaseRecordWriter)
             throws IOException {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)

@@ -47,9 +47,10 @@ public class CreateIncrementalReleaseJobConfiguration {
      * of asynchronous parallel flows.
      */
     @Bean(CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB)
-    public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
+    public Job createIncrementalAccessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB)
                 .incrementer(new RunIdIncrementer())
                 .start(createIncrementalAccessionReleaseStep)
                 .build();
-    }}
+    }
+}
