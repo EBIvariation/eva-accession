@@ -141,7 +141,8 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
                 releaseInfo.get(rsID).getRight().add(submittedVariantEntity);
             } else {
                 releaseInfo.put(rsID, new MutablePair<>(clusteredVariantEntityMap.get(rsID),
-                                                        Collections.singletonList(submittedVariantEntity)));
+                                                        new ArrayList<>(
+                                                                Collections.singletonList(submittedVariantEntity))));
             }
         }
         return releaseInfo;
