@@ -53,11 +53,14 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
 
     private final ContigMapping contigMapping;
 
+    private final ContigNaming contigNaming;
+
     private final VariantContextBuilder variantContextBuilder;
 
-    public VariantToVariantContextProcessor(ContigMapping contigMapping) {
+    public VariantToVariantContextProcessor(ContigMapping contigMapping, ContigNaming contigNaming) {
         this.contigMapping = contigMapping;
         this.variantContextBuilder = new VariantContextBuilder();
+        this.contigNaming = contigNaming;
     }
 
     @Override
@@ -67,7 +70,7 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                     "VCF specification and HTSJDK forbid empty alleles. Illegal variant: " + variant);
         }
         String[] allelesArray = getAllelesArray(variant);
-        String sequenceName = getSequenceName(variant.getChromosome());
+        String sequenceName = getSequenceName(variant.getChromosome(), this.contigNaming);
 
         VariantContext variantContext = variantContextBuilder
                 .chr(sequenceName)
@@ -83,9 +86,9 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
         return variantContext;
     }
 
-    private String getSequenceName(String contig) {
+    private String getSequenceName(String contig, ContigNaming namingScheme) {
         ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(contig);
-        return contigMapping.getContigSynonym(contig, contigSynonyms, ContigNaming.SEQUENCE_NAME);
+        return contigMapping.getContigSynonym(contig, contigSynonyms, namingScheme);
     }
 
     private Map<String, String> getAttributes(IVariant variant) {

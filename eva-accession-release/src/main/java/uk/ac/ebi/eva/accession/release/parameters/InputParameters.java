@@ -19,6 +19,8 @@ package uk.ac.ebi.eva.accession.release.parameters;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+
 public class InputParameters {
 
     private String assemblyAccession;
@@ -34,6 +36,8 @@ public class InputParameters {
     private int chunkSize;
 
     private String accessionedVcf;
+
+    private ContigNaming contigNaming;
 
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
@@ -98,5 +102,13 @@ public class InputParameters {
 
     public void setAccessionedVcf(String accessionedVcf) {
         this.accessionedVcf = accessionedVcf;
+    }
+
+    public ContigNaming getContigNaming() {
+        return contigNaming;
+    }
+
+    public void setContigNaming(ContigNaming contigNaming) {
+        this.contigNaming = contigNaming;
     }
 }

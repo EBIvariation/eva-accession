@@ -181,7 +181,7 @@ public class AccessionIncrementalReleaseJobLauncherCommandLineRunnerTest {
         ReleaseRecordEntity indelReleaseRecord = releaseRecordsAfterStudy1Ingestion.get(3000000001L);
         assertEquals(5000000001L, indelReleaseRecord.getAssociatedSubmittedVariantEntities().get(0).getAccession());
         assertEquals(77L, indelReleaseRecord.getStart());
-        assertEquals("CAE13", indelReleaseRecord.getContig());
+        assertEquals("CM001954.1", indelReleaseRecord.getContig());
         assertEquals("G", indelReleaseRecord.getAssociatedSubmittedVariantEntities().get(0).getReferenceAllele());
         assertEquals("T", indelReleaseRecord.getAssociatedSubmittedVariantEntities().get(0).getAlternateAllele());
     }
