@@ -80,7 +80,7 @@ public class CreateIncrementalReleaseStepConfiguration {
             @Qualifier(RELEASE_PROCESSOR) ItemProcessor<Variant, VariantContext> releaseProcessor,
             @Qualifier(INCREMENTAL_RELEASE_WRITER) ReleaseRecordWriter releaseRecordWriter)
             throws IOException {
-        TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP)
+        TaskletStep step = stepBuilderFactory.get(CREATE_INCREMENTAL_ACCESSION_RELEASE_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(accessionedVcfReader())
                 .processor(releaseProcessor)
