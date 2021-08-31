@@ -395,9 +395,24 @@ public class RemappedVariantsClusteringWriterTest {
         List<SubmittedVariantEntity> submittedVariantEntities = mongoTemplate.findAll(SubmittedVariantEntity.class);
         assertEquals(8, submittedVariantEntities.size());
 
+        List<SubmittedVariantEntity> expectedSubmittedVariantEntityNewRS = submittedVariantEntities.stream()
+                .filter(sve->sve.getClusteredVariantAccession().equals(3000000000L))
+                .filter(sve->sve.getReferenceSequenceAccession().equals("asm2"))
+                .collect(Collectors.toList());
+        assertEquals(1, expectedSubmittedVariantEntityNewRS.size());
+        assertEquals(1000, expectedSubmittedVariantEntityNewRS.get(0).getStart());
+
+        List<SubmittedVariantEntity> expectedSubmittedVariantEntityRetainRS = submittedVariantEntities.stream()
+                .filter(sve->sve.getClusteredVariantAccession().equals(3000000006L))
+                .filter(sve->sve.getReferenceSequenceAccession().equals("asm2"))
+                .collect(Collectors.toList());
+        assertEquals(1, expectedSubmittedVariantEntityRetainRS.size());
+        assertEquals(1500, expectedSubmittedVariantEntityRetainRS.get(0).getStart());
+
         //assert clusteredVariantEntity
         List<ClusteredVariantEntity> clusteredVariantEntities = mongoTemplate.findAll(ClusteredVariantEntity.class);
         assertEquals(6, clusteredVariantEntities.size());
+
         List<ClusteredVariantEntity> expectedClusteredVariantEntityWithNewRS = clusteredVariantEntities.stream()
                                         .filter(cls -> cls.getAccession().equals(3000000000L))
                                         .collect(Collectors.toList());
@@ -405,10 +420,19 @@ public class RemappedVariantsClusteringWriterTest {
         assertEquals(Long.valueOf(3000000000L), expectedClusteredVariantEntityWithNewRS.get(0).getAccession());
         assertEquals(1000, expectedClusteredVariantEntityWithNewRS.get(0).getStart());
 
+        List<ClusteredVariantEntity> expectedClusteredVariantEntityWithRetainRS = clusteredVariantEntities.stream()
+                                        .filter(cls -> cls.getAccession().equals(3000000006L))
+                                        .filter(cls->cls.getAssemblyAccession().equals("asm2"))
+                                        .collect(Collectors.toList());
+        assertEquals(1, expectedClusteredVariantEntityWithRetainRS.size());
+        assertEquals(Long.valueOf(3000000006L), expectedClusteredVariantEntityWithRetainRS.get(0).getAccession());
+        assertEquals(1500, expectedClusteredVariantEntityWithRetainRS.get(0).getStart());
+
         //assert submittedVariantOperationEntity
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = mongoTemplate.findAll(
                 SubmittedVariantOperationEntity.class);
         assertEquals(3, submittedVariantOperationEntities.size());
+
         List<SubmittedVariantOperationEntity> expectedSubmittedOperationEntityWithNewRS =
                 submittedVariantOperationEntities.stream()
                                                  .filter(sve -> sve.getAccession().equals(5000000004L))
@@ -422,6 +446,7 @@ public class RemappedVariantsClusteringWriterTest {
         List<ClusteredVariantOperationEntity> clusteredVariantOperationEntities = mongoTemplate.findAll(
                 ClusteredVariantOperationEntity.class);
         assertEquals(1, clusteredVariantOperationEntities.size());
+
         ClusteredVariantOperationEntity expectedClusteredVariantOperationEntity = clusteredVariantOperationEntities.get(0);
         assertEquals(Long.valueOf(3000000006L), expectedClusteredVariantOperationEntity.getAccession());
         assertEquals(Long.valueOf(3000000000L), expectedClusteredVariantOperationEntity.getMergedInto());
