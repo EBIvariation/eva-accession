@@ -316,8 +316,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             clusteredVariantOperationEntity.fill(EventType.MERGED,
                                                  submittedVariantEntity.getClusteredVariantAccession(),
                                                  accessionWrapper.getAccession(),
-                                                 new StringBuilder().append("Due to RS Split new accession id ").append(accessionWrapper.getAccession()).append(" created for remapped accession ")
-                                                         .append(submittedVariantEntity.getClusteredVariantAccession()).toString(),
+                                                 new StringBuilder().append("Due to RS Split new accession id ")
+                                                                    .append(accessionWrapper.getAccession())
+                                                                    .append(" created for remapped accession ")
+                                                                    .append(submittedVariantEntity.getClusteredVariantAccession())
+                                                                    .toString(),
                                                  null);
             clusteredVariantOperationEntityList.add(clusteredVariantOperationEntity);
         }
