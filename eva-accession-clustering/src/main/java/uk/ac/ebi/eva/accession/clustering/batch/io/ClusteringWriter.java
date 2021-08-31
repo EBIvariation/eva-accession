@@ -165,22 +165,22 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * This method handles a specific scenario in clustering where an already clustered variant is remapped but the
      * remapped variant is at a different location or a different variant type.
      * <p>
-     * SubmittedVariantEntity                                                                                               ClusteredVariantEntity
-     * SS	    HASH	                RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH                ASM	    POS	    CONTIG	TYPE
-     * 501	ASM1_PRJEB1_Chr1_1000__TT	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
-     * 500	ASM1_PRJEB2_Chr1_1000_A_AT	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)
-     * 505	ASM1_PRJEB1_Chr1_1000__TT	306	ASM2	PRJEB1	Chr1	1500		TT  (remapped)
-     * 504	ASM1_PRJEB2_Chr1_1000__AT	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
+     * SubmittedVariantEntity                                                           ClusteredVariantEntity
+     * SS	RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH                ASM	    POS	    CONTIG	TYPE
+     * 501	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
+     * 500	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)
+     * 505	306	ASM2	PRJEB1	Chr1	1500		TT  (remapped)
+     * 504	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
      * <p>
      * SS id 504 and 505 has same RS because of remapping, but they are now at different positions and can't have
      * same RS. RS split needs to be done here.
      * <p>
-     * SubmittedVariantEntity                                                                                                   ClusteredVariantEntity
-     * SS	    HASH	                RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH                ASM	    POS	    CONTIG	TYPE
-     * 501	ASM1_PRJEB1_Chr1_1000__TT	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
-     * 500	ASM1_PRJEB2_Chr1_1000_A_AT	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)              306  ASM2_Chr1_1000_INS	ASM2	1000	Chr1	INS
-     * 505	ASM1_PRJEB1_Chr1_1000__TT	400	ASM2	PRJEB1	Chr1	1500		TT  (remapped)         400  ASM2_Chr1_1500_INS	ASM2	1500	Chr1	INS
-     * 504	ASM1_PRJEB2_Chr1_1000__AT	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
+     * SubmittedVariantEntity                                                           ClusteredVariantEntity
+     * SS	RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH                ASM	    POS	    CONTIG	TYPE
+     * 501	306	ASM1	PRJEB1	Chr1	1000		TT  (org)              306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
+     * 500	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)              306  ASM2_Chr1_1000_INS	ASM2	1000	Chr1	INS
+     * 505	400	ASM2	PRJEB1	Chr1	1500		TT  (remapped)         400  ASM2_Chr1_1500_INS	ASM2	1500	Chr1	INS
+     * 504	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
      */
     private List<SubmittedVariantEntity> processClusteredRemappedVariantsRSSplit(List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws AccessionCouldNotBeGeneratedException{
@@ -222,8 +222,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 .flatMap(sveList->sveList.stream())
                 .filter(sve->!submittedVariantRetainingRsList.contains(sve))
                 .collect(Collectors.toList());
-        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers = generateNewRSIdAndGetAccessionWrappers(submittedVariantGeneratingNewRSList);
-        List<ClusteredVariantOperationEntity> clusteredVariantOperationEntityList = getClusteredVariantOperations(accessionWrappers, submittedVariantGeneratingNewRSList);
+        List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
+                generateNewRSIdAndGetAccessionWrappers(submittedVariantGeneratingNewRSList);
+        List<ClusteredVariantOperationEntity> clusteredVariantOperationEntityList =
+                getClusteredVariantOperations(accessionWrappers, submittedVariantGeneratingNewRSList);
         List<ClusteredVariantEntity> clusteredVariantEntityList = submittedVariantRetainingRsList.stream()
                 .map(this::toClusteredVariantEntity)
                 .collect(Collectors.toList());
@@ -231,11 +233,15 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.insert(clusteredVariantEntityList, ClusteredVariantEntity.class);
         mongoTemplate.insert(clusteredVariantOperationEntityList,ClusteredVariantOperationEntity.class);
 
-        Map<String, Long> newlyGeneratedAccessions = accessionWrappers.stream().collect(Collectors.toMap(ac->ac.getHash(),ac->ac.getAccession()));
+        Map<String, Long> newlyGeneratedAccessions = accessionWrappers.stream()
+                                                                      .collect(Collectors.toMap(ac->ac.getHash(),ac->ac.getAccession()));
         for(SubmittedVariantEntity submittedVariantEntity: submittedVariantGeneratingNewRSList) {
-            Priority prioritised = new Priority(newlyGeneratedAccessions.get(toClusteredVariantEntity(submittedVariantEntity).getHashedMessage()),submittedVariantEntity.getClusteredVariantAccession());
-            updateSubmittedVariantsWithNewlyGeneratedRS(submittedVariantEntity, prioritised, SubmittedVariantEntity.class, SubmittedVariantOperationEntity.class);
-            updateSubmittedVariantsWithNewlyGeneratedRS(submittedVariantEntity, prioritised, DbsnpSubmittedVariantEntity.class, DbsnpSubmittedVariantOperationEntity.class);
+            Priority prioritised = new Priority(newlyGeneratedAccessions.get(toClusteredVariantEntity(submittedVariantEntity).getHashedMessage()),
+                                                submittedVariantEntity.getClusteredVariantAccession());
+            updateSubmittedVariantsWithNewlyGeneratedRS(submittedVariantEntity, prioritised, SubmittedVariantEntity.class,
+                                                        SubmittedVariantOperationEntity.class);
+            updateSubmittedVariantsWithNewlyGeneratedRS(submittedVariantEntity, prioritised, DbsnpSubmittedVariantEntity.class,
+                                                        DbsnpSubmittedVariantOperationEntity.class);
         }
 
         return submittedVariantRSSplitMap.values().stream()
@@ -243,9 +249,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 .collect(Collectors.toList());
     }
 
-    private void updateSubmittedVariantsWithNewlyGeneratedRS(SubmittedVariantEntity submittedVariantEntity, Priority prioritised, Class<? extends SubmittedVariantEntity> submittedVariantCollection,
-                                                              Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
-                                                                      submittedOperationCollection){
+    private void updateSubmittedVariantsWithNewlyGeneratedRS(SubmittedVariantEntity submittedVariantEntity,
+                                                             Priority prioritised, Class<? extends SubmittedVariantEntity> submittedVariantCollection,
+                                                             Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                                                                     submittedOperationCollection){
         Query querySubmitted = query(where(ID).is(submittedVariantEntity.getHashedMessage()));
         List<? extends SubmittedVariantEntity> svToUpdate =
                     mongoTemplate.find(querySubmitted, submittedVariantCollection);
@@ -284,8 +291,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return submittedVariantRetainingRsList;
     }
 
-    private List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> generateNewRSIdAndGetAccessionWrappers(List<SubmittedVariantEntity> submittedVariantNewRSList)
-            throws AccessionCouldNotBeGeneratedException{
+    private List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> generateNewRSIdAndGetAccessionWrappers(
+            List<SubmittedVariantEntity> submittedVariantNewRSList) throws AccessionCouldNotBeGeneratedException{
         List<ClusteredVariantEntity> clusteredVariantNewRSList = submittedVariantNewRSList.stream()
                 .map(this::toClusteredVariantEntity)
                 .collect(Collectors.toList());
