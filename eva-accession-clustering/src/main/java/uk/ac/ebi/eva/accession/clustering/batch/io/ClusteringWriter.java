@@ -139,7 +139,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         if (processClusteredRemappedVariants) {
             List<SubmittedVariantEntity> processedClusteredVariants = processClusteredRemappedVariantsRSSplit(submittedVariantEntities);
             clusteringCounts.addClusteredVariantsRSSplit(processedClusteredVariants.size());
-            submittedVariantEntities.removeAll(processedClusteredVariants);
+            submittedVariantEntities = Collections.unmodifiableList(submittedVariantEntities.stream()
+                                                                            .filter(sve->!processedClusteredVariants.contains(sve))
+                                                                            .collect(Collectors.toList()));
         }
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
                                                                            .map(this::toClusteredVariant)

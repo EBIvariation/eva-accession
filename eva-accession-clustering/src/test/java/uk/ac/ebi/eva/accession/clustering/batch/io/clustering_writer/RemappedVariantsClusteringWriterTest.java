@@ -356,7 +356,7 @@ public class RemappedVariantsClusteringWriterTest {
         assertEquals(8, submittedVariantEntities.size());
 
         //assert clusteredVariantEntity
-        assertEquals(5, clusteredVariantEntities.size());
+        assertEquals(6, clusteredVariantEntities.size());
 
         //assert submittedVariantOperationEntity
         assertEquals(3, submittedVariantOperationEntities.size());
