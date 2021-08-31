@@ -87,6 +87,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     public static final String RS_KEY = "rs";
 
+    public static final String ID = "_id";
+
     private MongoTemplate mongoTemplate;
 
     private ClusteredVariantAccessioningService clusteredService;
@@ -159,8 +161,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     /**
      * This method handles a specific scenario in clustering where an already clustered variant is remapped but the
-     * remapped variant is at a different location
-     * or a different variant type.
+     * remapped variant is at a different location or a different variant type.
      * <p>
      * SubmittedVariantEntity                                                                                               ClusteredVariantEntity
      * SS	    HASH	                RS	ASM	    STUDY	CONTIG	POS	    REF	ALT                    RS	HASH                ASM	    POS	    CONTIG	TYPE
@@ -228,10 +229,40 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.insert(clusteredVariantEntityList, ClusteredVariantEntity.class);
         mongoTemplate.insert(clusteredVariantOperationEntityList,ClusteredVariantOperationEntity.class);
 
+        Map<String, Long> newlyGeneratedAccessions = accessionWrappers.stream().collect(Collectors.toMap(ac->ac.getHash(),ac->ac.getAccession()));
+        for(SubmittedVariantEntity submittedVariantEntity: submittedVariantGeneratingNewRSList) {
+            Priority prioritised = new Priority(newlyGeneratedAccessions.get(toClusteredVariantEntity(submittedVariantEntity).getHashedMessage()),submittedVariantEntity.getClusteredVariantAccession());
+            updateSubmittedVariantsWithNewlyGeneratedRS(submittedVariantEntity, prioritised, SubmittedVariantEntity.class, SubmittedVariantOperationEntity.class);
+            updateSubmittedVariantsWithNewlyGeneratedRS(submittedVariantEntity, prioritised, DbsnpSubmittedVariantEntity.class, DbsnpSubmittedVariantOperationEntity.class);
+        }
+
         return submittedVariantRSSplitMap.values().stream()
                 .flatMap(sveList->sveList.stream())
                 .collect(Collectors.toList());
     }
+
+    private void updateSubmittedVariantsWithNewlyGeneratedRS(SubmittedVariantEntity submittedVariantEntity, Priority prioritised, Class<? extends SubmittedVariantEntity> submittedVariantCollection,
+                                                              Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                                                                      submittedOperationCollection){
+        Query querySubmitted = query(where(ID).is(submittedVariantEntity.getHashedMessage()));
+        List<? extends SubmittedVariantEntity> svToUpdate =
+                    mongoTemplate.find(querySubmitted, submittedVariantCollection);
+
+        Update update = new Update();
+        update.set(RS_KEY, prioritised.accessionToKeep);
+        mongoTemplate.upsert(querySubmitted, update, submittedVariantCollection);
+        clusteringCounts.addSubmittedVariantsUpdatedRs(svToUpdate.size());
+
+        if (!svToUpdate.isEmpty()) {
+            List<SubmittedVariantOperationEntity> operations =
+                    svToUpdate.stream()
+                              .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
+                              .collect(Collectors.toList());
+            mongoTemplate.insert(operations, submittedOperationCollection);
+            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(operations.size());
+        }
+    }
+
 
     private List<SubmittedVariantEntity> getSubmittedVariantsRetainingRS(Map<Long,List<SubmittedVariantEntity>> submittedVariantsRSSplitMap, String assembly){
         List<SubmittedVariantEntity> submittedVariantRetainingRsList = new ArrayList<>();
@@ -276,7 +307,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             clusteredVariantOperationEntity.fill(EventType.MERGED,
                                                  submittedVariantEntity.getClusteredVariantAccession(),
                                                  accessionWrapper.getAccession(),
-                                                 new StringBuilder().append("new accession id ").append(accessionWrapper.getAccession()).append(" created for remapped accession ")
+                                                 new StringBuilder().append("Due to RS Split new accession id ").append(accessionWrapper.getAccession()).append(" created for remapped accession ")
                                                          .append(submittedVariantEntity.getClusteredVariantAccession()).toString(),
                                                  null);
             clusteredVariantOperationEntityList.add(clusteredVariantOperationEntity);

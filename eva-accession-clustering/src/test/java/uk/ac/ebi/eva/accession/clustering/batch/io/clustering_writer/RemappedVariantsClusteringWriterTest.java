@@ -346,13 +346,28 @@ public class RemappedVariantsClusteringWriterTest {
         submittedVariantEntityList.add(submittedVariantEntity8);
         clusteringWriter.write(submittedVariantEntityList);
 
-        //assert clusteredVariantEntities
+        //assert
+        List<SubmittedVariantEntity> submittedVariantEntities = mongoTemplate.findAll(SubmittedVariantEntity.class);
         List<ClusteredVariantEntity> clusteredVariantEntities = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        assertEquals(5, clusteredVariantEntities.size());
-        IClusteredVariant expectedClusteredVariant = new ClusteredVariant(ASM_2, 100, "chr1", 1500, VariantType.INS,
-                                                                  false, null);
-        assertTrue(clusteredVariantEntities.contains(expectedClusteredVariant));
+        List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = mongoTemplate.findAll(SubmittedVariantOperationEntity.class);
+        List<ClusteredVariantOperationEntity> clusteredVariantOperationEntities = mongoTemplate.findAll(ClusteredVariantOperationEntity.class);
 
+        //assert submittedVariantEntity
+        assertEquals(8, submittedVariantEntities.size());
+
+        //assert clusteredVariantEntity
+        assertEquals(5, clusteredVariantEntities.size());
+
+        //assert submittedVariantOperationEntity
+        assertEquals(3, submittedVariantOperationEntities.size());
+
+        //assert clusteredVariantOperationEntity
+        assertEquals(1, clusteredVariantOperationEntities.size());
+        ClusteredVariantOperationEntity clusteredVariantOperationEntity = clusteredVariantOperationEntities.get(0);
+        assertEquals(Long.valueOf(3000000006L),clusteredVariantOperationEntity.getAccession());
+        assertEquals(Long.valueOf(3000000000L), clusteredVariantOperationEntity.getMergedInto());
+        assertEquals(EventType.MERGED,clusteredVariantOperationEntity.getEventType());
+        assertEquals("Due to RS Split new accession id 3000000000 created for remapped accession 3000000006", clusteredVariantOperationEntity.getReason());
     }
 
     private SubmittedVariantEntity getSubmittedVariantEntity(String assembly, String project, long start, Long rs,
