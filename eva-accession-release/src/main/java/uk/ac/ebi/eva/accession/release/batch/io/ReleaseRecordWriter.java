@@ -37,6 +37,7 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAcce
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -91,8 +92,8 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
     private void checkSSIDsAreInAccessioningWarehouse(List<Long> ssIds,
                                                       List<SubmittedVariantEntity> submittedVariantEntities) {
         if (ssIds.size() != submittedVariantEntities.size()) {
-            List<Long> ssIdsFromAccessioningWarehouse = submittedVariantEntities
-                    .stream().map(SubmittedVariantEntity::getAccession).collect(Collectors.toList());
+            HashSet<Long> ssIdsFromAccessioningWarehouse = submittedVariantEntities
+                    .stream().map(SubmittedVariantEntity::getAccession).collect(Collectors.toCollection(HashSet::new));
             String absentssIdsInAccessioningWarehouse =
                     ssIds.stream().filter(ssId -> !ssIdsFromAccessioningWarehouse.contains(ssId))
                          .map(Object::toString).collect(Collectors.joining(","));
