@@ -363,7 +363,7 @@ public class RemappedVariantsClusteringWriterTest {
      */
     @Test
     @DirtiesContext
-    public void testClusteredVariantRemappedRsSplit() throws Exception {
+    public void test_clustered_variant_remapped_RS_split() throws Exception {
         //original submitted variants
         SubmittedVariantEntity submittedVariantEntity1 = getSubmittedVariantEntity(ASM_1, PROJECT_1, 1000, 3000000006L,
                                                                                    5000000001L, "", "TT", NOT_REMAPPED);
