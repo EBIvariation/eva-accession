@@ -346,8 +346,8 @@ public class RemappedVariantsClusteringWriterTest {
      *
      *              SubmittedVariantEntity
      * SS	RS	ASM	    STUDY	CONTIG	POS	    REF	    ALT
-     * 501	306	ASM1	PRJEB1	Chr1	1000		    TT  (org)
-     * 500	306	ASM1	PRJEB1	Chr1	1000	A	    AT  (org)
+     * 501	306	ASM1	PRJEB1	Chr1	1000		    TT  (original)
+     * 500	306	ASM1	PRJEB1	Chr1	1000	A	    AT  (original)
      * 501	306	ASM2	PRJEB1	Chr1	1500		    TT  (remapped)
      * 500	306	ASM2	PRJEB1	Chr1	1000		    T   (remapped)
      *
@@ -362,8 +362,8 @@ public class RemappedVariantsClusteringWriterTest {
      *
      *              SubmittedVariantEntity
      * SS	RS	ASM	    STUDY	CONTIG	POS	    REF	ALT
-     * 501	306	ASM1	PRJEB1	Chr1	1000		TT  (org)
-     * 500	306	ASM1	PRJEB1	Chr1	1000	A	AT  (org)
+     * 501	306	ASM1	PRJEB1	Chr1	1000		TT  (original)
+     * 500	306	ASM1	PRJEB1	Chr1	1000	A	AT  (original)
      * 501	400	ASM2	PRJEB1	Chr1	1500		TT  (remapped)
      * 500	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
      *
@@ -464,7 +464,7 @@ public class RemappedVariantsClusteringWriterTest {
         assertEquals(Long.valueOf(3000000006L), expectedClusteredVariantOperationEntity.getAccession());
         assertEquals(Long.valueOf(3000000000L), expectedClusteredVariantOperationEntity.getMergedInto());
         assertEquals(EventType.MERGED, expectedClusteredVariantOperationEntity.getEventType());
-        assertEquals("Due to RS Split new accession id 3000000000 created for remapped accession 3000000006",
+        assertEquals("Due to RS split new accession id 3000000000 created for remapped accession 3000000006",
                      expectedClusteredVariantOperationEntity.getReason());
     }
 
