@@ -79,7 +79,7 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
                 'fasta_path, report_path, tempmongo_instance, should_be_released, release_folder_name) '
                 f"VALUES ('{sources}', {taxonomy}, '{scientific_name}', '{assembly_accession}', {release_version}, "
                 f"{should_be_clustered}, '{fasta_path}', '{report_path}', '{tempmongo_instance}', {should_be_released}, "
-                f"'{release_folder_name}')")
+                f"'{release_folder_name}') ON CONFLICT DO NOTHING")
             execute_query(pg_conn, query_insert)
 
 
@@ -95,7 +95,7 @@ def fill_in_from_previous_inventory(private_config_xml_file, release_version):
                 '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
                 'should_be_released, release_folder_name) '
                 f"VALUES ('{sources}', {taxonomy}, '{scientific_name}', '{assembly}', {release_version}, "
-                f"{should_be_clustered}, {should_be_released}, '{release_folder_name}')"
+                f"{should_be_clustered}, {should_be_released}, '{release_folder_name}') ON CONFLICT DO NOTHING"
             )
             execute_query(pg_conn, query_insert)
 
