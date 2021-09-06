@@ -314,7 +314,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         for(GetOrCreateAccessionWrapper<IClusteredVariant,String,Long> accessionWrapper : accessionWrappers) {
             Long originalClusteredAccession = submittedVariantEntitiesGeneratingNewRS.get(accessionWrapper.getHash()).getClusteredVariantAccession();
             ClusteredVariantOperationEntity clusteredVariantOperationEntity = new ClusteredVariantOperationEntity();
-            //TODO : create a new EventType and replace this
             clusteredVariantOperationEntity.fill(EventType.RS_SPLIT,
                                                  originalClusteredAccession,
                                                  accessionWrapper.getAccession(),
