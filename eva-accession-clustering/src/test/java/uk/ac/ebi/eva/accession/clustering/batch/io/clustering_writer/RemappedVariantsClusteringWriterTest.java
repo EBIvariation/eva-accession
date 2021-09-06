@@ -462,8 +462,8 @@ public class RemappedVariantsClusteringWriterTest {
 
         ClusteredVariantOperationEntity expectedClusteredVariantOperationEntity = clusteredVariantOperationEntities.get(0);
         assertEquals(Long.valueOf(3000000006L), expectedClusteredVariantOperationEntity.getAccession());
-        assertEquals(Long.valueOf(3000000000L), expectedClusteredVariantOperationEntity.getMergedInto());
-        assertEquals(EventType.MERGED, expectedClusteredVariantOperationEntity.getEventType());
+        assertEquals(Long.valueOf(3000000000L), expectedClusteredVariantOperationEntity.getSplitInto());
+        assertEquals(EventType.RS_SPLIT, expectedClusteredVariantOperationEntity.getEventType());
         assertEquals("Due to RS split new accession id 3000000000 created for remapped accession 3000000006",
                      expectedClusteredVariantOperationEntity.getReason());
     }
