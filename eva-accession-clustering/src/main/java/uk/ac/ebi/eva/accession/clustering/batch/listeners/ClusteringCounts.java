@@ -23,7 +23,7 @@ public class ClusteringCounts {
 
     private long clusteredVariantsMergeOperationsWritten;
 
-    private long clusteredVariantsRemapped;
+    private long clusteredVariantsRSSplit;
 
     private long submittedVariantsClustered;
 
@@ -37,7 +37,7 @@ public class ClusteringCounts {
         this.clusteredVariantsCreated = 0;
         this.clusteredVariantsUpdated = 0;
         this.clusteredVariantsMergeOperationsWritten = 0;
-        this.clusteredVariantsRemapped = 0;
+        this.clusteredVariantsRSSplit = 0;
         this.submittedVariantsKeptUnclustered = 0;
         this.submittedVariantsClustered = 0;
         this.submittedVariantsUpdatedRs = 0;
@@ -80,18 +80,17 @@ public class ClusteringCounts {
         this.clusteredVariantsMergeOperationsWritten = clusteredVariantsMergeOperationsWritten;
     }
 
-    public void addClusteredVariantsRemapped(long clusteredVariantsRemapped) {
-        this.clusteredVariantsRemapped += clusteredVariantsRemapped;
+    public void addClusteredVariantsRSSplit(long clusteredVariantsRSSplit) {
+        this.clusteredVariantsRSSplit += clusteredVariantsRSSplit;
     }
 
-    public long getClusteredVariantsRemapped() {
-        return clusteredVariantsRemapped;
+    public long getClusteredVariantsRSSplit() {
+        return clusteredVariantsRSSplit;
     }
 
-    public void setClusteredVariantsRemapped(long clusteredVariantsRemapped) {
-        this.clusteredVariantsRemapped = clusteredVariantsRemapped;
+    public void setClusteredVariantsRSSplit(long clusteredVariantsRSSplit) {
+        this.clusteredVariantsRSSplit = clusteredVariantsRSSplit;
     }
-
 
     public void addSubmittedVariantsKeptUnclustered(long submittedVariantsKeptUnclustered) {
         this.submittedVariantsKeptUnclustered += submittedVariantsKeptUnclustered;
