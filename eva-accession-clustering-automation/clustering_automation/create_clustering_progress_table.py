@@ -22,7 +22,7 @@ from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
 from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name
 
-logger = logging_config.getLogger(__name__)
+logger = logging_config.get_logger(__name__)
 
 
 def create_table(private_config_xml_file):
@@ -60,7 +60,7 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
         f"where release_version={release_version} "
         "group by taxonomy, scientific_name, assembly_accession")
     with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
-        for sources, taxonomy, scientific_name, assembly_accession, num_ss_id in get_all_results_for_query(pg_conn,
+        for taxonomy, scientific_name, assembly_accession, sources, num_ss_id in get_all_results_for_query(pg_conn,
                                                                                                            query_retrieve_info):
             if num_ss_id == 0:
                 # Do not release species with no data
@@ -68,22 +68,24 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
 
             should_be_clustered = True
             should_be_released = True
-            fasta_path, report_path = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
+            ncbi_assembly = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
+            fasta_path = ncbi_assembly.assembly_fasta_path
+            report_path = ncbi_assembly.assembly_report_path
             tempmongo_instance = next(tempmongo_instances)
             release_folder_name = normalise_taxon_scientific_name(scientific_name)
             query_insert = (
                 'INSERT INTO eva_progress_tracker.clustering_release_tracker '
                 '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
                 'fasta_path, report_path, tempmongo_instance, should_be_released, release_folder_name) '
-                f'VALUES ({sources}, {taxonomy}, {scientific_name}, {assembly_accession}, {release_version}, '
-                f'{should_be_clustered}, {fasta_path}, {report_path}, {tempmongo_instance}, {should_be_released}, '
-                f'{release_folder_name})')
+                f"VALUES ('{sources}', {taxonomy}, '{scientific_name}', '{assembly_accession}', {release_version}, "
+                f"{should_be_clustered}, '{fasta_path}', '{report_path}', '{tempmongo_instance}', {should_be_released}, "
+                f"'{release_folder_name}')")
             execute_query(pg_conn, query_insert)
 
 
 def fill_in_from_previous_inventory(private_config_xml_file, release_version):
     query = ("select taxonomy_id, scientific_name, assembly, sources, total_num_variants, release_folder_name "
-            "from dbsnp_ensembl_species.release_species_inventory where sources='DBSNP - filesystem'")
+            "from dbsnp_ensembl_species.release_species_inventory where sources='DBSNP - filesystem' and release_version=2")
     with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
         for taxonomy, scientific_name, assembly, sources, total_num_variants, release_folder_name in get_all_results_for_query(pg_conn, query):
             should_be_clustered = False
@@ -92,14 +94,14 @@ def fill_in_from_previous_inventory(private_config_xml_file, release_version):
                 'INSERT INTO eva_progress_tracker.clustering_release_tracker '
                 '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
                 'should_be_released, release_folder_name) '
-                f'VALUES ({sources}, {taxonomy}, {scientific_name}, {assembly}, {release_version}, '
-                f'{should_be_clustered}, {should_be_released},  {release_folder_name})'
+                f"VALUES ('{sources}', {taxonomy}, '{scientific_name}', '{assembly}', {release_version}, "
+                f"{should_be_clustered}, {should_be_released}, '{release_folder_name}')"
             )
             execute_query(pg_conn, query_insert)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Create and load the clustering and release tracking table')
+    parser = argparse.ArgumentParser(description='Create and load the clustering and release tracking table', add_help=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", help="version of the release", type=int, required=False)
     parser.add_argument("--reference-directory", help="Directory where the reference genomes exists or should be downloaded", required=False)
