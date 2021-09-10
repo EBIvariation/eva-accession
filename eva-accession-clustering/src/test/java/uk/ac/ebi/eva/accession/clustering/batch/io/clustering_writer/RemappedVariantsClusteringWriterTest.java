@@ -339,134 +339,103 @@ public class RemappedVariantsClusteringWriterTest {
     }
 
     /**
-     * This test is for testing a specific scenario in clustering where an already clustered variant is remapped but the
-     * remapped variant is at a different location or a different variant type.
+     * This test is for testing the detection of RS split candidates. These are already clustered variants, but due to
+     * remapping, the variants with same rs id might end up in two different locations or different types. These needs
+     * to be identified for rectifying later.
      *
      * --------------------Before Clustering--------------------
      *
      *              SubmittedVariantEntity
      * SS	RS	ASM	    STUDY	CONTIG	POS	    REF	    ALT
-     * 501	306	ASM1	PRJEB1	Chr1	1000		    TT  (original)
-     * 500	306	ASM1	PRJEB1	Chr1	1000	A	    AT  (original)
-     * 501	306	ASM2	PRJEB1	Chr1	1500		    TT  (remapped)
-     * 500	306	ASM2	PRJEB1	Chr1	1000		    T   (remapped)
+     * 500	306	ASM1	PRJEB1	Chr1	1000	A	    T  (original)
+     * 501	306	ASM1	PRJEB2	Chr1	1000	A	    T  (original)
+     * 500	306	ASM2	PRJEB1	Chr1	1000	A	    T  (remapped)
+     * 501	306	ASM2	PRJEB2	Chr1	1500	A	    T   (remapped)
      *
      *              ClusteredVariantEntity
      * RS	HASH                ASM	    POS	    CONTIG	TYPE
-     * 306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
+     * 306  ASM1_Chr1_1000_SNV	ASM1	1000	Chr1	SNV
      *
-     * SS id 501 and 500 has same RS because of remapping, but they are now at different positions and can't have same RS id.
-     * RS split needs to be done here, with one retainine old RS id while the other should get a new RS id
+     * SS id 500 and 501 has same RS because of remapping, but they are now at different positions and can't have same RS id.
+     * These needs to be identified and stored in submittedVariantOperationEntity table for rectification.
      *
-     * --------------------After Clustering--------------------
+     * --------------------After Detection--------------------
      *
-     *              SubmittedVariantEntity
-     * SS	RS	ASM	    STUDY	CONTIG	POS	    REF	ALT
-     * 501	306	ASM1	PRJEB1	Chr1	1000		TT  (original)
-     * 500	306	ASM1	PRJEB1	Chr1	1000	A	AT  (original)
-     * 501	400	ASM2	PRJEB1	Chr1	1500		TT  (remapped)
-     * 500	306	ASM2	PRJEB1	Chr1	1000		T   (remapped)
+     *              SubmittedVariantOperationEntity
+     * ACCESSION    EVENT_TYPE          REASON                  INACTIVe_OBJECTS
+     * 306          RS_SPLIT_CANDIDATE  Hash mismatch with 306  {ss-500 and ss-501}
      *
      *              ClusteredVariantEntity
      * RS	HASH                ASM	    POS	    CONTIG	TYPE
      * 306  ASM1_Chr1_1000_INS	ASM1	1000	Chr1	INS
      * 306  ASM2_Chr1_1000_INS	ASM2	1000	Chr1	INS
-     * 400  ASM2_Chr1_1500_INS	ASM2	1500	Chr1	INS
      */
     @Test
     @DirtiesContext
-    public void test_clustered_variant_remapped_RS_split_diff_location() throws Exception {
+    public void test_clustered_variant_remapped_detect_RS_split_Candidate() throws Exception {
         //original submitted variants
-        SubmittedVariantEntity submittedVariantEntity1 = getSubmittedVariantEntity(ASM_1, PROJECT_1, 1000, 3000000006L,
-                                                                                   5000000001L, "", "TT", NOT_REMAPPED);
+        SubmittedVariantEntity submittedVariantEntity1 = getSubmittedVariantEntity(ASM_1, "project_1",
+                1000, 3000000006L, 5000000000L, "A", "T", NOT_REMAPPED);
         mongoTemplate.insert(submittedVariantEntity1, SUBMITTED_VARIANT_COLLECTION);
-        SubmittedVariantEntity submittedVariantEntity2 = getSubmittedVariantEntity(ASM_1, PROJECT_1, 1000, 3000000006L,
-                                                                                   5000000000L, "A", "AT",
-                                                                                   NOT_REMAPPED);
+        SubmittedVariantEntity submittedVariantEntity2 = getSubmittedVariantEntity(ASM_1, "project_2",
+                1000, 3000000006L, 5000000001L, "A", "T", NOT_REMAPPED);
         mongoTemplate.insert(submittedVariantEntity2, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity3 = getSubmittedVariantEntity(ASM_1, "project_3",
+                1000, 3000000006L, 5000000002L, "A", "T", NOT_REMAPPED);
+        mongoTemplate.insert(submittedVariantEntity3, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntity4 = getSubmittedVariantEntity(ASM_1, "project_4",
+                1000, 3000000006L, 5000000003L, "A", "T", NOT_REMAPPED);
+        mongoTemplate.insert(submittedVariantEntity4, SUBMITTED_VARIANT_COLLECTION);
 
         //clustered variants
         ClusteredVariantEntity clusteredVariantEntity1 = getClusteredVariantEntity(ASM_1, 1000, 3000000006L,
-                                                                                   VariantType.INS);
+                VariantType.SNV);
         mongoTemplate.insert(clusteredVariantEntity1, CLUSTERED_VARIANT_COLLECTION);
 
         //submitted variants after remapping
-        SubmittedVariantEntity submittedVariantEntityRemapped1 = getSubmittedVariantEntity(ASM_2, PROJECT_1, 1500, 3000000006L,
-                                                                                   5000000001L, "", "TT", ASM_1);
+        SubmittedVariantEntity submittedVariantEntityRemapped1 = getSubmittedVariantEntity(ASM_2, "project_1",
+                1000, 3000000006L, 5000000000L, "A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped1, SUBMITTED_VARIANT_COLLECTION);
-        SubmittedVariantEntity submittedVariantEntityRemapped2 = getSubmittedVariantEntity(ASM_2, PROJECT_1, 1000, 3000000006L,
-                                                                                   5000000000L, "", "T", ASM_1);
+        SubmittedVariantEntity submittedVariantEntityRemapped2 = getSubmittedVariantEntity(ASM_2, "project_2",
+                1000, 3000000006L, 5000000001L, "A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped2, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntityRemapped3 = getSubmittedVariantEntity(ASM_2, "project_3",
+                2000, 3000000006L, 5000000002L, "A", "T", ASM_1);
+        mongoTemplate.insert(submittedVariantEntityRemapped3, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntityRemapped4 = getSubmittedVariantEntity(ASM_2, "project_4",
+                3000, 3000000006L, 5000000003L, "A", "T", ASM_1);
+        mongoTemplate.insert(submittedVariantEntityRemapped4, SUBMITTED_VARIANT_COLLECTION);
 
         //asm2 clustered
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
         submittedVariantEntityList.add(submittedVariantEntityRemapped1);
         submittedVariantEntityList.add(submittedVariantEntityRemapped2);
+        submittedVariantEntityList.add(submittedVariantEntityRemapped3);
+        submittedVariantEntityList.add(submittedVariantEntityRemapped4);
         clusteringWriter.write(submittedVariantEntityList);
-
-        //assert submittedVariantEntity
-        List<SubmittedVariantEntity> submittedVariantEntities = mongoTemplate.findAll(SubmittedVariantEntity.class);
-        assertEquals(4, submittedVariantEntities.size());
-
-        List<SubmittedVariantEntity> expectedSubmittedVariantEntityNewRS = submittedVariantEntities.stream()
-                .filter(sve->sve.getClusteredVariantAccession().equals(3000000000L))
-                .filter(sve->sve.getReferenceSequenceAccession().equals("asm2"))
-                .collect(Collectors.toList());
-        assertEquals(1, expectedSubmittedVariantEntityNewRS.size());
-        assertEquals(1000, expectedSubmittedVariantEntityNewRS.get(0).getStart());
-
-        List<SubmittedVariantEntity> expectedSubmittedVariantEntityRetainRS = submittedVariantEntities.stream()
-                .filter(sve->sve.getClusteredVariantAccession().equals(3000000006L))
-                .filter(sve->sve.getReferenceSequenceAccession().equals("asm2"))
-                .collect(Collectors.toList());
-        assertEquals(1, expectedSubmittedVariantEntityRetainRS.size());
-        assertEquals(1500, expectedSubmittedVariantEntityRetainRS.get(0).getStart());
 
         //assert clusteredVariantEntity
         List<ClusteredVariantEntity> clusteredVariantEntities = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        assertEquals(3, clusteredVariantEntities.size());
+        assertEquals(2, clusteredVariantEntities.size());
 
-        List<ClusteredVariantEntity> expectedClusteredVariantEntityWithNewRS = clusteredVariantEntities.stream()
-                                        .filter(cls -> cls.getAccession().equals(3000000000L))
-                                        .collect(Collectors.toList());
-        assertEquals(1, expectedClusteredVariantEntityWithNewRS.size());
-        assertEquals(Long.valueOf(3000000000L), expectedClusteredVariantEntityWithNewRS.get(0).getAccession());
-        assertEquals(1000, expectedClusteredVariantEntityWithNewRS.get(0).getStart());
-
-        List<ClusteredVariantEntity> expectedClusteredVariantEntityWithRetainRS = clusteredVariantEntities.stream()
-                                        .filter(cls -> cls.getAccession().equals(3000000006L))
-                                        .filter(cls->cls.getAssemblyAccession().equals("asm2"))
-                                        .collect(Collectors.toList());
-        assertEquals(1, expectedClusteredVariantEntityWithRetainRS.size());
-        assertEquals(Long.valueOf(3000000006L), expectedClusteredVariantEntityWithRetainRS.get(0).getAccession());
-        assertEquals(1500, expectedClusteredVariantEntityWithRetainRS.get(0).getStart());
+        List<ClusteredVariantEntity> expectedClusteredVariantEntity = clusteredVariantEntities.stream()
+                .filter(cls -> cls.getAccession().equals(3000000006L))
+                .filter(cls->cls.getAssemblyAccession().equals("asm2"))
+                .collect(Collectors.toList());
+        assertEquals(1, expectedClusteredVariantEntity.size());
+        assertEquals(Long.valueOf(3000000006L), expectedClusteredVariantEntity.get(0).getAccession());
+        assertEquals(1000, expectedClusteredVariantEntity.get(0).getStart());
 
         //assert submittedVariantOperationEntity
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = mongoTemplate.findAll(
                 SubmittedVariantOperationEntity.class);
         assertEquals(1, submittedVariantOperationEntities.size());
-
-        List<SubmittedVariantOperationEntity> expectedSubmittedOperationEntityWithNewRS =
-                submittedVariantOperationEntities.stream()
-                                                 .filter(sve -> sve.getAccession().equals(5000000000L))
-                                                 .collect(Collectors.toList());
-        assertEquals(1, expectedSubmittedOperationEntityWithNewRS.size());
-        assertEquals(EventType.UPDATED, expectedSubmittedOperationEntityWithNewRS.get(0).getEventType());
-        assertEquals("Original rs3000000006 was merged into rs3000000000.",
-                     expectedSubmittedOperationEntityWithNewRS.get(0).getReason());
-
-        //assert clusteredVariantOperationEntity
-        List<ClusteredVariantOperationEntity> clusteredVariantOperationEntities = mongoTemplate.findAll(
-                ClusteredVariantOperationEntity.class);
-        assertEquals(1, clusteredVariantOperationEntities.size());
-
-        ClusteredVariantOperationEntity expectedClusteredVariantOperationEntity = clusteredVariantOperationEntities.get(0);
-        assertEquals(Long.valueOf(3000000006L), expectedClusteredVariantOperationEntity.getAccession());
-        assertEquals(Long.valueOf(3000000000L), expectedClusteredVariantOperationEntity.getSplitInto());
-        assertEquals(EventType.RS_SPLIT, expectedClusteredVariantOperationEntity.getEventType());
-        assertEquals("Due to RS split new accession id 3000000000 created for remapped accession 3000000006",
-                     expectedClusteredVariantOperationEntity.getReason());
+        SubmittedVariantOperationEntity submittedVariantOperationEntity = submittedVariantOperationEntities.get(0);
+        assertEquals(EventType.RS_SPLIT, submittedVariantOperationEntity.getEventType());
+        assertEquals(3000000006L,submittedVariantOperationEntity.getAccession().longValue());
+        assertEquals("Hash mismatch with 3000000006", submittedVariantOperationEntity.getReason());
     }
+
 
     private SubmittedVariantEntity getSubmittedVariantEntity(String assembly, String project, long start, Long rs,
                                                              long ss, String ref, String alt, String remappedFrom) {
