@@ -194,23 +194,30 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      */
     private Set<SubmittedVariantEntity> processClusteredRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
         List<SubmittedVariantEntity> clusteredRemappedSubmittedVariants = getClusteredAndRemappedVariants(submittedVariants);
-        Set<String> allExistingHashesInDB = getSubmittedVariantsAllExistingHashesInDB(clusteredRemappedSubmittedVariants);
+        if(clusteredRemappedSubmittedVariants.isEmpty()){
+            return Collections.emptySet();
+        }
 
+        Map<String, Long> allExistingHashesInDB = getSubmittedVariantsAllExistingHashesInDB(clusteredRemappedSubmittedVariants);
         Map<Long, Map<String, List<SubmittedVariantEntity>>> submittedVariantsGroupedByRSThenHash =
                 groupSubmittedVariantsByRSThenHash(clusteredRemappedSubmittedVariants);
+
         List<ClusteredVariantEntity> clusteredVariantEntities = new ArrayList<>();
         Map<Long, SubmittedVariantOperationEntity> submittedVariantOperationEntity = new HashMap<>();
+        Map<Long, List<SubmittedVariantEntity>> submittedVariantEntity = new HashMap<>();
 
         String assembly = clusteredRemappedSubmittedVariants.get(0).getReferenceSequenceAccession();
         for (Long accession : submittedVariantsGroupedByRSThenHash.keySet()) {
             Set<String> allHashesForAssemblyAndCurrRS = getAllHashesForRS(assembly, accession);
             for (Map.Entry<String, List<SubmittedVariantEntity>> entry : submittedVariantsGroupedByRSThenHash.get(accession).entrySet()) {
                 String currHash = entry.getKey();
-                if (allExistingHashesInDB.contains(currHash) && !allHashesForAssemblyAndCurrRS.contains(currHash)) {
-                    // TODO : merging case -  hash matches but rs is different,
-                    // update submitted variant with new rs id manually ?
-                    // if rs in clusteredVariant is smaller - can't update submittedVariant with the accession in db as everything with same rs will get updated
-                    // submitted variant rs is earlier - will this case ever occur ?
+                if (allExistingHashesInDB.keySet().contains(currHash) && !allHashesForAssemblyAndCurrRS.contains(currHash)) {
+                    Long accessionInDB = allExistingHashesInDB.get(currHash);
+                    if (accessionInDB < accession) {
+                        submittedVariantEntity.getOrDefault(accession, new ArrayList<>()).addAll(entry.getValue());
+                    }else{
+                        //TODO : update all clustered Variant entries ?
+                    }
                 } else if (allHashesForAssemblyAndCurrRS.isEmpty()) {
                     ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(entry.getValue().get(0));
                     clusteredVariantEntities.add(clusteredVariantEntity);
@@ -234,14 +241,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             }
         }
 
-        mongoTemplate.insert(clusteredVariantEntities, ClusteredVariantEntity.class);
-        for (Map.Entry<Long, SubmittedVariantOperationEntity> entry : submittedVariantOperationEntity.entrySet()) {
-            Query querySubmitted = query(where("eventType").is("RS_SPLIT").and("accession").is(entry.getKey())
-                    .and("reason").is("Hash mismatch with " + entry.getKey()));
-            Update update = new Update();
-            update.set("inactiveObjects", entry.getValue().getInactiveObjects());
-            mongoTemplate.upsert(querySubmitted, update, SubmittedVariantOperationEntity.class);
-        }
+        insertAllEntriesInDB(clusteredVariantEntities, submittedVariantOperationEntity, submittedVariantEntity);
 
         return clusteredRemappedSubmittedVariants.stream()
                 .collect(Collectors.toSet());
@@ -254,13 +254,12 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 .collect(Collectors.toList());
     }
 
-    private Set<String> getSubmittedVariantsAllExistingHashesInDB(List<SubmittedVariantEntity> submittedVariantEntities) {
+    private Map<String, Long> getSubmittedVariantsAllExistingHashesInDB(List<SubmittedVariantEntity> submittedVariantEntities) {
         List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
                 .map(this::toClusteredVariant)
                 .collect(Collectors.toList());
         return clusteredService.get(clusteredVariants).stream()
-                .map(accWrapper -> accWrapper.getHash())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toMap(accWrapper -> accWrapper.getHash(), accWrapper -> accWrapper.getAccession()));
     }
 
     private Map<Long, Map<String, List<SubmittedVariantEntity>>> groupSubmittedVariantsByRSThenHash
@@ -290,6 +289,53 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private List<SubmittedVariantEntity> getAllSubmittedVariantsWithClusteringAccession(String assembly, Long accession) {
         Query querySubmitted = query(where("seq").is(assembly).and("rs").is(accession));
         return mongoTemplate.find(querySubmitted, SubmittedVariantEntity.class);
+    }
+
+    private void insertAllEntriesInDB(List<ClusteredVariantEntity> clusteredVariantEntities,
+                                      Map<Long, SubmittedVariantOperationEntity> submittedVariantOperationEntity,
+                                      Map<Long, List<SubmittedVariantEntity>> submittedVariantEntity) {
+        mongoTemplate.insert(clusteredVariantEntities, ClusteredVariantEntity.class);
+
+        for (Map.Entry<Long, SubmittedVariantOperationEntity> entry : submittedVariantOperationEntity.entrySet()) {
+            Query querySubmitted = query(where("eventType").is("RS_SPLIT").and("accession").is(entry.getKey())
+                    .and("reason").is("Hash mismatch with " + entry.getKey()));
+            Update update = new Update();
+            update.set("inactiveObjects", entry.getValue().getInactiveObjects());
+            mongoTemplate.upsert(querySubmitted, update, SubmittedVariantOperationEntity.class);
+        }
+
+        for(Map.Entry<Long,List<SubmittedVariantEntity>> entry: submittedVariantEntity.entrySet()) {
+            updateSubmittedVariantsWithNewlyGeneratedRS(entry.getValue(), entry.getKey(), SubmittedVariantEntity.class,
+                    SubmittedVariantOperationEntity.class);
+            updateSubmittedVariantsWithNewlyGeneratedRS(entry.getValue(), entry.getKey(), DbsnpSubmittedVariantEntity.class,
+                    DbsnpSubmittedVariantOperationEntity.class);
+        }
+    }
+
+    private void updateSubmittedVariantsWithNewlyGeneratedRS(List<SubmittedVariantEntity> submittedVariantEntities,
+                                                             Long newAccession,
+                                                             Class<? extends SubmittedVariantEntity> submittedVariantCollection,
+                                                             Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                                                                     submittedOperationCollection) {
+        List<String> ids = submittedVariantEntities.stream().map(sve->sve.getHashedMessage())
+                .collect(Collectors.toList());
+        Query querySubmitted = query(where(ID).in(ids));
+        List<? extends SubmittedVariantEntity> svToUpdate =
+                mongoTemplate.find(querySubmitted, submittedVariantCollection);
+
+        Update update = new Update();
+        update.set(RS_KEY, newAccession);
+        mongoTemplate.upsert(querySubmitted, update, submittedVariantCollection);
+        clusteringCounts.addSubmittedVariantsUpdatedRs(svToUpdate.size());
+
+        if (!svToUpdate.isEmpty()) {
+            List<SubmittedVariantOperationEntity> operations =
+                    svToUpdate.stream()
+                            .map(sv -> buildSubmittedOperation(sv, newAccession))
+                            .collect(Collectors.toList());
+            mongoTemplate.insert(operations, submittedOperationCollection);
+            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(operations.size());
+        }
     }
 
     private ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
