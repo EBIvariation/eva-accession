@@ -35,7 +35,7 @@ public class SubmittedVariantOperationEntity extends EventDocument<ISubmittedVar
 
     @Override
     public String toString() {
-        return "ClusteredVariantOperationEntity{"
+        return "SubmittedVariantOperationEntity{"
                 + "id='" + getId() + '\''
                 + ", eventType=" + getEventType()
                 + ", accession=" + getAccession()

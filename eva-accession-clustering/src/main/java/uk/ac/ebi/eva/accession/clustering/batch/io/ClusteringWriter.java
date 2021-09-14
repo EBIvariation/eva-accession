@@ -91,6 +91,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     public static final String RS_KEY = "rs";
 
+    public static final String ID = "_id";
+
     private MongoTemplate mongoTemplate;
 
     private ClusteredVariantAccessioningService clusteredService;
@@ -447,7 +449,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    private void merge(Long providedAccession, String hash, Long accessionInDatabase) {
+    protected void merge(Long providedAccession, String hash, Long accessionInDatabase) {
         Priority prioritised = prioritise(providedAccession, accessionInDatabase);
 
         Query queryClustered = query(where(ACCESSION_KEY).is(prioritised.accessionToBeMerged));
@@ -663,6 +665,4 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         String hash = clusteredHashingFunction.apply(clusteredVariant);
         return hash;
     }
-
-
 }

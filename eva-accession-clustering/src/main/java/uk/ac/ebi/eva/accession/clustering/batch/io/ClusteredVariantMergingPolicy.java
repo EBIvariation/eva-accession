@@ -33,7 +33,7 @@ public class ClusteredVariantMergingPolicy {
     /**
      * At the moment, the priority is just to keep the oldest accession, but other policies might apply, like choosing
      * the accession with clinical relevance (which we don't store at the moment of writing).
-     *
+     * TODO: Use clinical relevance also as a priority determinant if that is available
      * @see <a href="https://ncbijira.ncbi.nlm.nih.gov/secure/attachment/95534/95534_VAR-RSIDAssignment-100220-1039-34.pdf">
      *     dbSNP policies for assigning RS IDs</a>
      */
