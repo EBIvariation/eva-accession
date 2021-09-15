@@ -138,6 +138,9 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         variant.setValidated(isValidated());
         variant.setCreatedDate(getCreatedDate());
         variant.setMapWeight(getMapWeight());
+        variant.setRemappedFrom(getRemappedFrom());
+        variant.setRemappedDate(getRemappedDate());
+        variant.setRemappingId(getRemappingId());
         return variant;
     }
 
