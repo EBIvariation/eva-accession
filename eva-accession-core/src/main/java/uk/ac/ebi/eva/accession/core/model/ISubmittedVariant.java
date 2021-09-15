@@ -82,4 +82,10 @@ public interface ISubmittedVariant {
 
     LocalDateTime getCreatedDate();
 
+    String getRemappedFrom();
+
+    LocalDateTime getRemappedDate();
+
+    String getRemappingId();
+
 }
