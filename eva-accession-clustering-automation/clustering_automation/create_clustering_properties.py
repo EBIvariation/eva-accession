@@ -32,6 +32,7 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
     with open(path, 'w') as properties_file:
         add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file)
         add_accessioning_properties(properties_file, instance)
+        add_count_service_properties(properties_file, properties)
         add_mongo_properties(properties_file, properties)
         add_job_tracker_properties(properties_file, properties)
         add_spring_properties(properties_file)
@@ -116,6 +117,18 @@ mongodb.read-preference=primary
     """).format(database=mongo_database, username=mongo_username, password=mongo_password, host=mongo_host,
                 port=mongo_port)
     properties_file.write(mongo_properties)
+
+def add_count_service_properties(properties_file, properties):
+    count_service_url = str(properties['eva.count-stats.url'])
+    count_service_username = str(properties['eva.count-stats.username'])
+    count_service_password = str(properties['eva.count-stats.password'])
+
+    count_service_properties = ("""
+    eva.count-stats.url={url}
+    eva.count-stats.username={username}
+    eva.count-stats.password={password}
+        """).format(url=count_service_url, username=count_service_username, password=count_service_password)
+        properties_file.write(count_service_properties)
 
 
 def get_mongo_primary_host_and_port(mongo_hosts_and_ports):
