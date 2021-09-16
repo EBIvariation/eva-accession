@@ -197,7 +197,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         Map<String, Long> allExistingHashesInDB = getSubmittedVariantsAllExistingHashesInDB(clusteredRemappedSubmittedVariants);
         Map<String, SubmittedVariantOperationEntity> mergeCandidateSVOE = new HashMap<>();
         Map<Long, SubmittedVariantOperationEntity> rsSplitCandidateSVOE = new HashMap<>();
-        for(SubmittedVariantOperationEntity svoe: getSVOEWithMergeAndRSSplitCandidates()){
+        for(SubmittedVariantOperationEntity svoe: getSVOEWithMergeAndRSSplitCandidates(assembly)){
             if (svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES)) {
                 mergeCandidateSVOE.put(getClusteredVariantHash(svoe.getInactiveObjects().get(0).getModel()), svoe);
             } else if (svoe.getEventType().equals(EventType.RS_SPLIT_CANDIDATES)) {
@@ -260,9 +260,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return Collections.emptySet();
     }
 
-    private List<SubmittedVariantOperationEntity> getSVOEWithMergeAndRSSplitCandidates() {
-        List<String> MERGE_AND_SPLIT_EVENTS = Arrays.asList(EventType.RS_MERGE_CANDIDATES.name(), EventType.RS_SPLIT_CANDIDATES.name());
-        Query querySubmitted = query(where("eventType").in(MERGE_AND_SPLIT_EVENTS));
+    private List<SubmittedVariantOperationEntity> getSVOEWithMergeAndRSSplitCandidates(String assembly) {
+        List<String> MERGE_AND_SPLIT_EVENTS = Arrays.asList(EventType.RS_MERGE_CANDIDATES.name(),
+                EventType.RS_SPLIT_CANDIDATES.name());
+        Query querySubmitted = query(where("eventType").in(MERGE_AND_SPLIT_EVENTS)
+                .and("inactiveObjects").elemMatch(where("seq").is(assembly)));
         return mongoTemplate.find(querySubmitted, SubmittedVariantOperationEntity.class);
     }
 
