@@ -381,26 +381,40 @@ public class RemappedVariantsClusteringWriterTest {
         submittedVariantEntityList.add(submittedVariantEntityRemapped3);
         clusteringWriter.write(submittedVariantEntityList);
 
-        //Batch 2 - split events
+        //Batch 2 - split event
         SubmittedVariantEntity submittedVariantEntityRemapped2 = getSubmittedVariantEntity(ASM_2, "project_2",
                 5000000002L, 3000000001L, 3000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped2, SUBMITTED_VARIANT_COLLECTION);
+
+        submittedVariantEntityList.clear();
+        submittedVariantEntityList.add(submittedVariantEntityRemapped2);
+        clusteringWriter.write(submittedVariantEntityList);
+
+        //Batch 3 - split event
         SubmittedVariantEntity submittedVariantEntityRemapped4 = getSubmittedVariantEntity(ASM_2, "project_4",
                 5000000004L, 3000000001L, 4000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped4, SUBMITTED_VARIANT_COLLECTION);
 
         submittedVariantEntityList.clear();
-        submittedVariantEntityList.add(submittedVariantEntityRemapped2);
         submittedVariantEntityList.add(submittedVariantEntityRemapped4);
         clusteringWriter.write(submittedVariantEntityList);
 
-        //Batch 3 - merge event
+        //Batch 4 - merge event
         SubmittedVariantEntity submittedVariantEntityRemapped5 = getSubmittedVariantEntity(ASM_2, "project_5",
                 5000000005L, 3000000002L, 2000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped5, SUBMITTED_VARIANT_COLLECTION);
 
         submittedVariantEntityList.clear();
         submittedVariantEntityList.add(submittedVariantEntityRemapped5);
+        clusteringWriter.write(submittedVariantEntityList);
+
+        //Batch 5 - merge event
+        SubmittedVariantEntity submittedVariantEntityRemapped6 = getSubmittedVariantEntity(ASM_2, "project_6",
+                5000000006L, 3000000002L, 2000,"A", "T", ASM_1);
+        mongoTemplate.insert(submittedVariantEntityRemapped6, SUBMITTED_VARIANT_COLLECTION);
+
+        submittedVariantEntityList.clear();
+        submittedVariantEntityList.add(submittedVariantEntityRemapped6);
         clusteringWriter.write(submittedVariantEntityList);
 
 
@@ -415,8 +429,9 @@ public class RemappedVariantsClusteringWriterTest {
                 mongoTemplate.findAll(SubmittedVariantOperationEntity.class).stream()
                 .filter(svoe->svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES))
                 .collect(Collectors.toList()).get(0);
+        assertEquals(2, submittedVariantOperationEntityMerge.getInactiveObjects().size());
         assertEquals(EventType.RS_MERGE_CANDIDATES, submittedVariantOperationEntityMerge.getEventType());
-        assertEquals(3000000002L,submittedVariantOperationEntityMerge.getAccession().longValue());
+        assertEquals(3000000003L,submittedVariantOperationEntityMerge.getAccession().longValue());
         //assertEquals("RS mismatch between variants", submittedVariantOperationEntityMerge.getReason());
 
         //assert split event
@@ -424,6 +439,7 @@ public class RemappedVariantsClusteringWriterTest {
                 mongoTemplate.findAll(SubmittedVariantOperationEntity.class).stream()
                 .filter(svoe->svoe.getEventType().equals(EventType.RS_SPLIT_CANDIDATES))
                 .collect(Collectors.toList()).get(0);
+        assertEquals(3, submittedVariantOperationEntitySplit.getInactiveObjects().size());
         assertEquals(EventType.RS_SPLIT_CANDIDATES, submittedVariantOperationEntitySplit.getEventType());
         assertEquals(3000000001L,submittedVariantOperationEntitySplit.getAccession().longValue());
         assertEquals("Hash mismatch with 3000000001", submittedVariantOperationEntitySplit.getReason());
@@ -447,6 +463,9 @@ public class RemappedVariantsClusteringWriterTest {
         SubmittedVariantEntity submittedVariantEntityRemapped5 = getSubmittedVariantEntity(ASM_2, "project_5",
                 5000000005L, 3000000002L, 2000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped5, SUBMITTED_VARIANT_COLLECTION);
+        SubmittedVariantEntity submittedVariantEntityRemapped6 = getSubmittedVariantEntity(ASM_2, "project_6",
+                5000000006L, 3000000002L, 2000,"A", "T", ASM_1);
+        mongoTemplate.insert(submittedVariantEntityRemapped6, SUBMITTED_VARIANT_COLLECTION);
 
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
         submittedVariantEntityList.add(submittedVariantEntityRemapped1);
@@ -454,6 +473,7 @@ public class RemappedVariantsClusteringWriterTest {
         submittedVariantEntityList.add(submittedVariantEntityRemapped2);
         submittedVariantEntityList.add(submittedVariantEntityRemapped4);
         submittedVariantEntityList.add(submittedVariantEntityRemapped5);
+        submittedVariantEntityList.add(submittedVariantEntityRemapped6);
         clusteringWriter.write(submittedVariantEntityList);
 
         //assert clusteredVariantEntity
@@ -467,8 +487,9 @@ public class RemappedVariantsClusteringWriterTest {
                 mongoTemplate.findAll(SubmittedVariantOperationEntity.class).stream()
                         .filter(svoe->svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES))
                         .collect(Collectors.toList()).get(0);
+        assertEquals(2, submittedVariantOperationEntityMerge.getInactiveObjects().size());
         assertEquals(EventType.RS_MERGE_CANDIDATES, submittedVariantOperationEntityMerge.getEventType());
-        assertEquals(3000000002L,submittedVariantOperationEntityMerge.getAccession().longValue());
+        assertEquals(3000000003L,submittedVariantOperationEntityMerge.getAccession().longValue());
         //assertEquals("RS mismatch between variants", submittedVariantOperationEntityMerge.getReason());
 
         //assert split event
@@ -476,6 +497,7 @@ public class RemappedVariantsClusteringWriterTest {
                 mongoTemplate.findAll(SubmittedVariantOperationEntity.class).stream()
                         .filter(svoe->svoe.getEventType().equals(EventType.RS_SPLIT_CANDIDATES))
                         .collect(Collectors.toList()).get(0);
+        assertEquals(3, submittedVariantOperationEntitySplit.getInactiveObjects().size());
         assertEquals(EventType.RS_SPLIT_CANDIDATES, submittedVariantOperationEntitySplit.getEventType());
         assertEquals(3000000001L,submittedVariantOperationEntitySplit.getAccession().longValue());
         assertEquals("Hash mismatch with 3000000001", submittedVariantOperationEntitySplit.getReason());

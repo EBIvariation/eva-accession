@@ -199,7 +199,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         Map<Long, SubmittedVariantOperationEntity> rsSplitCandidateSVOE = new HashMap<>();
         for(SubmittedVariantOperationEntity svoe: getSVOEWithMergeAndRSSplitCandidates()){
             if (svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES)) {
-                mergeCandidateSVOE.put(svoe.getInactiveObjects().get(0).getHashedMessage(), svoe);
+                mergeCandidateSVOE.put(getClusteredVariantHash(svoe.getInactiveObjects().get(0).getModel()), svoe);
             } else if (svoe.getEventType().equals(EventType.RS_SPLIT_CANDIDATES)) {
                 rsSplitCandidateSVOE.put(svoe.getAccession(), svoe);
             }
@@ -287,8 +287,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 List<SubmittedVariantInactiveEntity> inactiveObjects =
                         Collections.singletonList(new SubmittedVariantInactiveEntity(submittedVariantEntity));
-                String reason = "RS mismatch between variants";
-                submittedVariantOperationEntity.fill(EventType.MERGED, variantAccession, accessionInDB, reason, inactiveObjects);
+                submittedVariantOperationEntity.fill(EventType.RS_MERGE_CANDIDATES, accessionInDB,
+                        "RS mismatch with " + accessionInDB, inactiveObjects);
 
                 mergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             }
@@ -322,7 +322,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         getAllSubmittedVariantsWithClusteringAccession(assembly, variantAccession).stream()
                                 .map(svoe -> new SubmittedVariantInactiveEntity(svoe))
                                 .collect(Collectors.toList());
-                submittedVariantOperationEntity.fill(EventType.RS_SPLIT, variantAccession, variantAccession,
+                submittedVariantOperationEntity.fill(EventType.RS_SPLIT_CANDIDATES, variantAccession,
                         "Hash mismatch with " + variantAccession, inactiveEntities);
 
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
@@ -375,16 +375,16 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 toClusteredVariant(submittedVariantEntity));
     }
 
-    private ClusteredVariant toClusteredVariant(SubmittedVariantEntity submittedVariantEntity) {
-        ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariantEntity.getReferenceSequenceAccession(),
-                                                                 submittedVariantEntity.getTaxonomyAccession(),
-                                                                 submittedVariantEntity.getContig(),
-                                                                 submittedVariantEntity.getStart(),
+    private ClusteredVariant toClusteredVariant(ISubmittedVariant submittedVariant) {
+        ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariant.getReferenceSequenceAccession(),
+                                                                 submittedVariant.getTaxonomyAccession(),
+                                                                 submittedVariant.getContig(),
+                                                                 submittedVariant.getStart(),
                                                                  getVariantType(
-                                                                         submittedVariantEntity.getReferenceAllele(),
-                                                                         submittedVariantEntity.getAlternateAllele()),
-                                                                 submittedVariantEntity.isValidated(),
-                                                                 submittedVariantEntity.getCreatedDate());
+                                                                         submittedVariant.getReferenceAllele(),
+                                                                         submittedVariant.getAlternateAllele()),
+                                                                 submittedVariant.isValidated(),
+                                                                 submittedVariant.getCreatedDate());
         return clusteredVariant;
     }
 
@@ -618,9 +618,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return assignedAccessions.get(hash);
     }
 
-    private String getClusteredVariantHash(SubmittedVariantEntity submittedVariantEntity) {
-        ClusteredVariant clusteredVariant = toClusteredVariant(submittedVariantEntity);
+    private String getClusteredVariantHash(ISubmittedVariant submittedVariant) {
+        ClusteredVariant clusteredVariant = toClusteredVariant(submittedVariant);
         String hash = clusteredHashingFunction.apply(clusteredVariant);
         return hash;
     }
+
+
 }
