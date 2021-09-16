@@ -40,6 +40,7 @@ public class SubmittedVariantOperationEntity extends EventDocument<ISubmittedVar
                 + ", eventType=" + getEventType()
                 + ", accession=" + getAccession()
                 + ", mergedInto=" + getMergedInto()
+                + ", mergedInto=" + getSplitInto()
                 + ", reason='" + getReason() + '\''
                 + ", createdDate=" + getCreatedDate()
                 + ", inactiveObjects=" + getInactiveObjects()

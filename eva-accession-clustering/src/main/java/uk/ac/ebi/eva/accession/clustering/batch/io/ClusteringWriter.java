@@ -320,7 +320,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 List<SubmittedVariantInactiveEntity> inactiveEntities =
                         getAllSubmittedVariantsWithClusteringAccession(assembly, variantAccession).stream()
-                                .map(svoe -> new SubmittedVariantInactiveEntity(svoe))
+                                .map(sve -> new SubmittedVariantInactiveEntity(sve))
                                 .collect(Collectors.toList());
                 submittedVariantOperationEntity.fill(EventType.RS_SPLIT_CANDIDATES, variantAccession,
                         "Hash mismatch with " + variantAccession, inactiveEntities);
@@ -353,7 +353,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
         for (Map.Entry<String, SubmittedVariantOperationEntity> entry : mergeSVOE.entrySet()) {
             Query querySubmitted = query(where("eventType").is(EventType.RS_MERGE_CANDIDATES)
-                    .and("accession").is(entry.getValue().getAccession()));
+                    .and("accession").is(entry.getValue().getAccession())
+                    .and("reason").is("RS mismatch with " + entry.getValue().getAccession()));
             Update update = new Update();
             update.set("inactiveObjects", entry.getValue().getInactiveObjects());
             mongoTemplate.upsert(querySubmitted, update, SubmittedVariantOperationEntity.class);
