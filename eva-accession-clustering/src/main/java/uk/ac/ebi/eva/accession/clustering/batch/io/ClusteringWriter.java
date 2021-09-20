@@ -207,6 +207,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
         Map<Long, Set<String>> allExistingHashesGroupByRS = new HashMap<>();
         List<ClusteredVariantEntity> clusteredVariantEntities = new ArrayList<>();
+        List<ClusteredVariantEntity> dbsnpClusteredVariantEntities = new ArrayList<>();
 
         for (SubmittedVariantEntity submittedVariantEntity : submittedVariants) {
             ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(submittedVariantEntity);
@@ -220,14 +221,18 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                     assembly, allExistingHashesGroupByRS, rsSplitCandidateSVOE);
 
             if (!isMergeCandidate) {
-                clusteredVariantEntities.add(clusteredVariantEntity);
+                if(clusteredVariantEntity.getAccession() >= accessioningMonotonicInitRs){
+                    clusteredVariantEntities.add(clusteredVariantEntity);
+                }else{
+                    dbsnpClusteredVariantEntities.add(clusteredVariantEntity);
+                }
                 allExistingHashesGroupByRS.get(clusteredVariantEntity.getAccession())
                         .add(clusteredVariantEntity.getHashedMessage());
                 allExistingHashesInDB.put(clusteredVariantEntity.getHashedMessage(), clusteredVariantEntity.getAccession());
             }
         }
 
-        insertAllEntriesInDB(clusteredVariantEntities, mergeCandidateSVOE, rsSplitCandidateSVOE);
+        insertAllEntriesInDB(clusteredVariantEntities, dbsnpClusteredVariantEntities, mergeCandidateSVOE, rsSplitCandidateSVOE);
 
         return clusteredRemappedSubmittedVariants.stream()
                 .collect(Collectors.toSet());
@@ -263,9 +268,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private List<SubmittedVariantOperationEntity> getSVOEWithMergeAndRSSplitCandidates(String assembly) {
         List<String> MERGE_AND_SPLIT_EVENTS = Arrays.asList(EventType.RS_MERGE_CANDIDATES.name(),
                 EventType.RS_SPLIT_CANDIDATES.name());
-        Query querySubmitted = query(where("eventType").in(MERGE_AND_SPLIT_EVENTS)
+        Query queryOperations = query(where("eventType").in(MERGE_AND_SPLIT_EVENTS)
                 .and("inactiveObjects").elemMatch(where("seq").is(assembly)));
-        return mongoTemplate.find(querySubmitted, SubmittedVariantOperationEntity.class);
+        return mongoTemplate.find(queryOperations, SubmittedVariantOperationEntity.class);
     }
 
     private List<SubmittedVariantEntity> getAllSubmittedVariantsWithClusteringAccession(String assembly, Long accession) {
@@ -348,10 +353,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private void insertAllEntriesInDB(List<ClusteredVariantEntity> clusteredVariantEntities,
+                                      List<ClusteredVariantEntity> dbsnpClusteredVariantEntities,
                                       Map<String, SubmittedVariantOperationEntity> mergeSVOE,
                                       Map<Long, SubmittedVariantOperationEntity> rsSplitSVOE) {
-
         mongoTemplate.insert(clusteredVariantEntities, ClusteredVariantEntity.class);
+        mongoTemplate.insert(dbsnpClusteredVariantEntities, DbsnpClusteredVariantEntity.class);
 
         for (Map.Entry<String, SubmittedVariantOperationEntity> entry : mergeSVOE.entrySet()) {
             Query querySubmitted = query(where("eventType").is(EventType.RS_MERGE_CANDIDATES)
