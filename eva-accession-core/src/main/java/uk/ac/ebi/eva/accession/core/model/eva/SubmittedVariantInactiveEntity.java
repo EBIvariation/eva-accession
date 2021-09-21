@@ -25,6 +25,8 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 
+import java.time.LocalDateTime;
+
 @Document
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmittedVariant, Long>
         implements ISubmittedVariant {
@@ -66,6 +68,12 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     private Boolean validated;
 
     private Integer mapWeight;
+
+    private String remappedFrom;
+
+    private LocalDateTime remappedDate;
+
+    private String remappingId;
 
     public SubmittedVariantInactiveEntity() {
     }
@@ -149,6 +157,21 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     @Override
     public Integer getMapWeight() {
         return mapWeight;
+    }
+
+    @Override
+    public String getRemappedFrom() {
+        return remappedFrom;
+    }
+
+    @Override
+    public LocalDateTime getRemappedDate() {
+        return remappedDate;
+    }
+
+    @Override
+    public String getRemappingId() {
+        return remappingId;
     }
 
     @Override

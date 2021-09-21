@@ -50,6 +50,12 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private LocalDateTime createdDate;
 
+    private String remappedFrom;
+
+    private LocalDateTime remappedDate;
+
+    private String remappingId;
+
     SubmittedVariant() {
     }
 
@@ -74,6 +80,10 @@ public class SubmittedVariant implements ISubmittedVariant {
              variant.getContig(), variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(),
              variant.getClusteredVariantAccession(), variant.isSupportedByEvidence(), variant.isAssemblyMatch(),
              variant.isAllelesMatch(), variant.isValidated(), variant.getCreatedDate());
+        this.setMapWeight(variant.getMapWeight());
+        this.setRemappedFrom(variant.getRemappedFrom());
+        this.setRemappedDate(variant.getRemappedDate());
+        this.setRemappingId(variant.getRemappingId());
     }
 
     /**
@@ -224,6 +234,33 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     @Override
+    public String getRemappedFrom() {
+        return remappedFrom;
+    }
+
+    public void setRemappedFrom(String remappedFrom) {
+        this.remappedFrom = remappedFrom;
+    }
+
+    @Override
+    public LocalDateTime getRemappedDate() {
+        return remappedDate;
+    }
+
+    public void setRemappedDate(LocalDateTime remappedDate) {
+        this.remappedDate = remappedDate;
+    }
+
+    @Override
+    public String getRemappingId() {
+        return remappingId;
+    }
+
+    public void setRemappingId(String remappingId) {
+        this.remappingId = remappingId;
+    }
+
+    @Override
     public Boolean isAllelesMatch() {
         return allelesMatch;
     }
@@ -257,14 +294,17 @@ public class SubmittedVariant implements ISubmittedVariant {
                 Objects.equals(supportedByEvidence, that.supportedByEvidence) &&
                 Objects.equals(assemblyMatch, that.assemblyMatch) &&
                 Objects.equals(allelesMatch, that.allelesMatch) &&
-                Objects.equals(validated, that.validated);
+                Objects.equals(validated, that.validated) &&
+                Objects.equals(remappedFrom, that.remappedFrom) &&
+                Objects.equals(remappedDate, that.remappedDate) &&
+                Objects.equals(remappingId, that.remappingId);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
                             referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
-                            assemblyMatch, allelesMatch, validated);
+                            assemblyMatch, allelesMatch, validated, remappedFrom, remappedDate, remappingId);
     }
 
     @Override
@@ -284,6 +324,9 @@ public class SubmittedVariant implements ISubmittedVariant {
                 ", validated=" + validated +
                 ", mapWeight=" + mapWeight +
                 ", createdDate=" + createdDate +
+                ", remappedFrom=" + remappedFrom +
+                ", remappedDate=" + remappedDate +
+                ", remappingId=" + remappingId +
                 '}';
     }
 }
