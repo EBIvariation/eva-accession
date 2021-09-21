@@ -365,14 +365,14 @@ public class RemappedVariantsClusteringWriterTest {
                 5000000001L, 3000000001L, 1000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped1, SUBMITTED_VARIANT_COLLECTION);
         SubmittedVariantEntity submittedVariantEntityRemapped2 = getSubmittedVariantEntity(ASM_2, "project_2",
-                5000000003L, 3000000003L, 2000,"A", "T", ASM_1);
+                5000000002L, 3000000003L, 2000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped2, SUBMITTED_VARIANT_COLLECTION);
 
         clusteringWriter.write(Arrays.asList(submittedVariantEntityRemapped1,submittedVariantEntityRemapped2));
 
         //Batch 2 - split event
         SubmittedVariantEntity submittedVariantEntityRemapped3 = getSubmittedVariantEntity(ASM_2, "project_3",
-                5000000002L, 3000000001L, 3000,"A", "T", ASM_1);
+                5000000003L, 3000000001L, 3000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped3, SUBMITTED_VARIANT_COLLECTION);
 
         clusteringWriter.write(Arrays.asList(submittedVariantEntityRemapped3));
@@ -411,10 +411,10 @@ public class RemappedVariantsClusteringWriterTest {
                 5000000001L, 3000000001L, 1000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped1, SUBMITTED_VARIANT_COLLECTION);
         SubmittedVariantEntity submittedVariantEntityRemapped2 = getSubmittedVariantEntity(ASM_2, "project_2",
-                5000000003L, 3000000003L, 2000,"A", "T", ASM_1);
+                5000000002L, 3000000003L, 2000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped2, SUBMITTED_VARIANT_COLLECTION);
         SubmittedVariantEntity submittedVariantEntityRemapped3 = getSubmittedVariantEntity(ASM_2, "project_3",
-                5000000002L, 3000000001L, 3000,"A", "T", ASM_1);
+                5000000003L, 3000000001L, 3000,"A", "T", ASM_1);
         mongoTemplate.insert(submittedVariantEntityRemapped3, SUBMITTED_VARIANT_COLLECTION);
         SubmittedVariantEntity submittedVariantEntityRemapped4 = getSubmittedVariantEntity(ASM_2, "project_4",
                 5000000004L, 3000000001L, 4000,"A", "T", ASM_1);
@@ -458,9 +458,10 @@ public class RemappedVariantsClusteringWriterTest {
         assertEquals(EventType.RS_MERGE_CANDIDATES, submittedVariantOperationEntityMerge.getEventType());
         assertEquals(3000000003L,submittedVariantOperationEntityMerge.getAccession().longValue());
         assertEquals("RS mismatch with 3000000003", submittedVariantOperationEntityMerge.getReason());
-        assertEquals(2, submittedVariantOperationEntityMerge.getInactiveObjects().size());
+        assertEquals(3, submittedVariantOperationEntityMerge.getInactiveObjects().size());
         assertTrue(submittedVariantOperationEntityMerge.getInactiveObjects().containsAll(
-                Arrays.asList(new SubmittedVariantInactiveEntity(submittedVariantEntities.get(4)),
+                Arrays.asList(new SubmittedVariantInactiveEntity(submittedVariantEntities.get(1)),
+                        new SubmittedVariantInactiveEntity(submittedVariantEntities.get(4)),
                 new SubmittedVariantInactiveEntity(submittedVariantEntities.get(5)))));
 
         //assert split event

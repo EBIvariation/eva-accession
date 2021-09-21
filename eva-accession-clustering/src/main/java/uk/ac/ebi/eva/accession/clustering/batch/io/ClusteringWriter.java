@@ -29,6 +29,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -213,7 +214,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(submittedVariantEntity);
 
             boolean isMergeCandidate = checkIfCandidateForMerge(submittedVariantEntity, clusteredVariantEntity,
-                    allExistingHashesInDB, mergeCandidateSVOE);
+                    assembly, allExistingHashesInDB, mergeCandidateSVOE);
 
             updateAllExistingHashesGroupByRS(allExistingHashesGroupByRS, assembly, clusteredVariantEntity.getAccession());
 
@@ -234,8 +235,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
         insertAllEntriesInDB(clusteredVariantEntities, dbsnpClusteredVariantEntities, mergeCandidateSVOE, rsSplitCandidateSVOE);
 
-        return clusteredRemappedSubmittedVariants.stream()
-                .collect(Collectors.toSet());
+        return new HashSet<>(clusteredRemappedSubmittedVariants);
     }
 
     private List<SubmittedVariantEntity> getClusteredAndRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
@@ -250,14 +250,14 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 .map(this::toClusteredVariant)
                 .collect(Collectors.toList());
         return clusteredService.get(clusteredVariants).stream()
-                .collect(Collectors.toMap(accWrapper -> accWrapper.getHash(), accWrapper -> accWrapper.getAccession()));
+                .collect(Collectors.toMap(AccessionWrapper::getHash, AccessionWrapper::getAccession));
     }
 
     private Set<String> getAllHashesForAssemblyAndRS(String assembly, Long accession) {
         try {
             return clusteredService.getAllByAccession(accession).stream()
                     .filter(accWrapper -> accWrapper.getData().getAssemblyAccession().equals(assembly))
-                    .map(accWrapper -> accWrapper.getHash())
+                    .map(AccessionWrapper::getHash)
                     .collect(Collectors.toSet());
         } catch (AccessionMergedException | AccessionDoesNotExistException | AccessionDeprecatedException ex) {
             logger.error("exception occurred while getting variants with accession ID {}", accession, ex);
@@ -280,6 +280,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private boolean checkIfCandidateForMerge(SubmittedVariantEntity submittedVariantEntity,
                                              ClusteredVariantEntity clusteredVariantEntity,
+                                             String assembly,
                                              Map<String, Long> allExistingHashesInDB,
                                              Map<String, SubmittedVariantOperationEntity> mergeCandidateSVOE) {
         Long variantAccession = clusteredVariantEntity.getAccession();
@@ -291,9 +292,13 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 mergeCandidateSVOE.get(variantHash).getInactiveObjects()
                         .add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
             } else {
-                SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 List<SubmittedVariantInactiveEntity> inactiveObjects =
-                        Collections.singletonList(new SubmittedVariantInactiveEntity(submittedVariantEntity));
+                        getAllSubmittedVariantsWithClusteringAccession(assembly, accessionInDB).stream()
+                                .filter(sve-> toClusteredVariantEntity(sve).getHashedMessage().equals(variantHash))
+                                .map(SubmittedVariantInactiveEntity::new)
+                                .collect(Collectors.toList());
+                inactiveObjects.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
+                SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 submittedVariantOperationEntity.fill(EventType.RS_MERGE_CANDIDATES, accessionInDB,
                         "RS mismatch with " + accessionInDB, inactiveObjects);
 
@@ -318,7 +323,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 List<SubmittedVariantInactiveEntity> inactiveEntities = rsSplitCandidateSVOE.get(variantAccession)
                         .getInactiveObjects();
                 boolean submittedVariantAlreadyExist = inactiveEntities.stream()
-                        .map(inactiveObject -> inactiveObject.getModel())
+                        .map(SubmittedVariantInactiveEntity::getModel)
                         .anyMatch(sv -> sv.equals(submittedVariantEntity.getModel()));
                 if (!submittedVariantAlreadyExist) {
                     inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
@@ -327,7 +332,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 List<SubmittedVariantInactiveEntity> inactiveEntities =
                         getAllSubmittedVariantsWithClusteringAccession(assembly, variantAccession).stream()
-                                .map(sve -> new SubmittedVariantInactiveEntity(sve))
+                                .map(SubmittedVariantInactiveEntity::new)
                                 .collect(Collectors.toList());
                 submittedVariantOperationEntity.fill(EventType.RS_SPLIT_CANDIDATES, variantAccession,
                         "Hash mismatch with " + variantAccession, inactiveEntities);
@@ -359,23 +364,42 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.insert(clusteredVariantEntities, ClusteredVariantEntity.class);
         mongoTemplate.insert(dbsnpClusteredVariantEntities, DbsnpClusteredVariantEntity.class);
 
+        List<SubmittedVariantOperationEntity> mergeSVOEInsertEntries = new ArrayList<>();
+        List<SubmittedVariantOperationEntity> rsSplitSVOEInsertEntries = new ArrayList<>();
+
         for (Map.Entry<String, SubmittedVariantOperationEntity> entry : mergeSVOE.entrySet()) {
-            Query querySubmitted = query(where("eventType").is(EventType.RS_MERGE_CANDIDATES)
-                    .and("accession").is(entry.getValue().getAccession())
-                    .and("reason").is("RS mismatch with " + entry.getValue().getAccession()));
+            SubmittedVariantOperationEntity svoe = entry.getValue();
+            if(Objects.isNull(svoe.getId())){
+                mergeSVOEInsertEntries.add(svoe);
+                continue;
+            }
+            Query querySubmitted = query(where("_id").is(svoe.getId())
+                    .and("eventType").is(EventType.RS_MERGE_CANDIDATES)
+                    .and("accession").is(svoe.getAccession())
+                    .and("reason").is("RS mismatch with " + svoe.getAccession()));
             Update update = new Update();
-            update.set("inactiveObjects", entry.getValue().getInactiveObjects());
+            update.set("inactiveObjects", svoe.getInactiveObjects());
             mongoTemplate.upsert(querySubmitted, update, SubmittedVariantOperationEntity.class);
         }
 
         for (Map.Entry<Long, SubmittedVariantOperationEntity> entry : rsSplitSVOE.entrySet()) {
-            Query querySubmitted = query(where("eventType").is(EventType.RS_SPLIT_CANDIDATES)
-                    .and("accession").is(entry.getKey())
-                    .and("reason").is("Hash mismatch with " + entry.getKey()));
+            Long accession = entry.getKey();
+            SubmittedVariantOperationEntity svoe = entry.getValue();
+            if(Objects.isNull(svoe.getId())){
+                rsSplitSVOEInsertEntries.add(svoe);
+                continue;
+            }
+            Query querySubmitted = query(where("_id").is(svoe.getId())
+                    .and("eventType").is(EventType.RS_SPLIT_CANDIDATES)
+                    .and("accession").is(accession)
+                    .and("reason").is("Hash mismatch with " + accession));
             Update update = new Update();
-            update.set("inactiveObjects", entry.getValue().getInactiveObjects());
+            update.set("inactiveObjects", svoe.getInactiveObjects());
             mongoTemplate.upsert(querySubmitted, update, SubmittedVariantOperationEntity.class);
         }
+
+        mongoTemplate.insert(mergeSVOEInsertEntries, SubmittedVariantOperationEntity.class);
+        mongoTemplate.insert(rsSplitSVOEInsertEntries, SubmittedVariantOperationEntity.class);
     }
 
     private ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
