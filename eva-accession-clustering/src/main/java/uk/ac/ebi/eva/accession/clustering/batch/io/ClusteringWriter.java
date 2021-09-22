@@ -50,6 +50,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
@@ -96,6 +97,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private Function<IClusteredVariant, String> clusteredHashingFunction;
 
+    private Function<ISubmittedVariant, String> submittedHashingFunction;
+
     private Map<String, Long> assignedAccessions;
 
     private Long accessioningMonotonicInitSs;
@@ -115,6 +118,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         this.mongoTemplate = mongoTemplate;
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        this.submittedHashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.assignedAccessions = new HashMap<>();
         Assert.notNull(accessioningMonotonicInitSs, "accessioningMonotonicInitSs must not be null. Check autowiring.");
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
@@ -323,8 +327,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 List<SubmittedVariantInactiveEntity> inactiveEntities = rsSplitCandidateSVOE.get(variantAccession)
                         .getInactiveObjects();
                 boolean submittedVariantAlreadyExist = inactiveEntities.stream()
-                        .map(SubmittedVariantInactiveEntity::getModel)
-                        .anyMatch(sv -> sv.equals(submittedVariantEntity.getModel()));
+                        .anyMatch(sv -> submittedHashingFunction.apply(sv).equals(
+                                submittedVariantEntity.getHashedMessage()) &&
+                                sv.getAccession().equals(submittedVariantEntity.getAccession()));
                 if (!submittedVariantAlreadyExist) {
                     inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
                 }
