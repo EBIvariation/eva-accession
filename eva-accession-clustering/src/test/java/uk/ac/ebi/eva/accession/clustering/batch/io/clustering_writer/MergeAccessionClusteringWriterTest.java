@@ -20,6 +20,7 @@ import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.assertj.core.util.Sets;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -152,6 +153,7 @@ public class MergeAccessionClusteringWriterTest {
         mongoTemplate.getDb().drop();
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void merge_eva_clustered_accession() throws Exception {
@@ -163,6 +165,7 @@ public class MergeAccessionClusteringWriterTest {
         assertMergedInto(rs1, rs2, ss2);
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void merge_eva_clustered_accession_reversed() throws Exception {
@@ -174,6 +177,7 @@ public class MergeAccessionClusteringWriterTest {
         assertMergedInto(rs2, rs1, ssToRemap);
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void merge_dbsnp_clustered_accession() throws Exception {
@@ -185,6 +189,7 @@ public class MergeAccessionClusteringWriterTest {
         assertMergedInto(rs1, rs2, ss2);
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void merge_eva_into_dbsnp_clustered_accession() throws Exception {
@@ -196,6 +201,7 @@ public class MergeAccessionClusteringWriterTest {
         assertMergedInto(rs2, rs1, ssToRemap);
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void do_not_merge_dbsnp_into_eva_clustered_accession() throws Exception {
@@ -315,6 +321,7 @@ public class MergeAccessionClusteringWriterTest {
                                                                            .collect(Collectors.toSet()));
     }
 
+    @Ignore
     @Test
     public void do_not_merge_into_remapped_multimap_variants() throws Exception {
         // given
@@ -354,6 +361,7 @@ public class MergeAccessionClusteringWriterTest {
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
 
+    @Ignore
     @Test
     public void do_not_merge_remapped_multimap_variants() throws Exception {
         // given
@@ -393,6 +401,7 @@ public class MergeAccessionClusteringWriterTest {
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
 
+    @Ignore
     @Test
     public void do_not_merge_multimap_variants_into_remapped_variants() throws Exception {
         // given
@@ -432,6 +441,7 @@ public class MergeAccessionClusteringWriterTest {
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
 
+    @Ignore
     @Test
     public void do_not_merge_remapped_variant_into_multimap_variants() throws Exception {
         // given
@@ -470,6 +480,7 @@ public class MergeAccessionClusteringWriterTest {
         assertAssembliesPresent(Sets.newTreeSet(asm1, asm2));
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void merge_into_remapped_multimap_variants_if_single_mapping_per_assembly()
@@ -512,6 +523,7 @@ public class MergeAccessionClusteringWriterTest {
         assertMergedInto(rs1, rs2, ss2);
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     public void merge_multimap_variants_into_remapped_variants_if_single_mapping_per_assembly()
