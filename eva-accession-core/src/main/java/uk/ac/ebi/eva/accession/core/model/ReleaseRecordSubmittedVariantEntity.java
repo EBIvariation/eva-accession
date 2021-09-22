@@ -34,11 +34,19 @@ public class ReleaseRecordSubmittedVariantEntity {
 
     private final long start;
 
+    // Retain original ref/alt for traceability
+    // Add separate fields for ref/alt with context bases
     @Field("ref")
     private final String referenceAllele;
 
     @Field("alt")
     private final String alternateAllele;
+
+    @Field("refWithCtxBase")
+    private final String referenceAlleleWithContextBase;
+
+    @Field("altWithCtxBase")
+    private final String alternateAlleleWithContextBase;
 
     @Field("evidence")
     private final Boolean supportedByEvidence;
@@ -54,7 +62,8 @@ public class ReleaseRecordSubmittedVariantEntity {
 
     public ReleaseRecordSubmittedVariantEntity(long accession, String hashedMessage, String projectAccession,
                                                String contig, long start, String referenceAllele,
-                                               String alternateAllele, Boolean supportedByEvidence,
+                                               String alternateAllele, String referenceAlleleWithContextBase,
+                                               String alternateAlleleWithContextBase, Boolean supportedByEvidence,
                                                Boolean assemblyMatch, Boolean allelesMatch, Boolean validated) {
         this.accession = accession;
         this.hashedMessage = hashedMessage;
@@ -63,6 +72,8 @@ public class ReleaseRecordSubmittedVariantEntity {
         this.start = start;
         this.referenceAllele = referenceAllele;
         this.alternateAllele = alternateAllele;
+        this.referenceAlleleWithContextBase = referenceAlleleWithContextBase;
+        this.alternateAlleleWithContextBase = alternateAlleleWithContextBase;
         this.supportedByEvidence = supportedByEvidence;
         this.assemblyMatch = assemblyMatch;
         this.allelesMatch = allelesMatch;
@@ -95,6 +106,14 @@ public class ReleaseRecordSubmittedVariantEntity {
 
     public String getAlternateAllele() {
         return alternateAllele;
+    }
+
+    public String getReferenceAlleleWithContextBase() {
+        return referenceAlleleWithContextBase;
+    }
+
+    public String getAlternateAlleleWithContextBase() {
+        return alternateAlleleWithContextBase;
     }
 
     public Boolean getSupportedByEvidence() {
