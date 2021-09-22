@@ -152,7 +152,7 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
     /**
      * Get both SS and RS information (termed as a "release record") given a set of SS IDs
      * @param ssIds - List of SS IDs
-     * @return A dictionary of RS and its constituent SS - keyed by the RS ID
+     * @return A list of release records - objects with RS IDs and their constituent SS IDs
      */
     private List<ReleaseRecordEntity> getReleaseRecords(List<Long> ssIds) {
         List<SubmittedVariantEntity> submittedVariantEntities =

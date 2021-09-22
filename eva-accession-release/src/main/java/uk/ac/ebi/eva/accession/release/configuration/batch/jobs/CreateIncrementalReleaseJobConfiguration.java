@@ -26,9 +26,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import uk.ac.ebi.eva.accession.release.configuration.batch.steps.*;
+import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateIncrementalReleaseStepConfiguration;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.*;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CREATE_INCREMENTAL_ACCESSION_RELEASE_STEP;
+
 
 // This class reads SS accessions from an accession report and creates an incremental release document from that
 
@@ -41,11 +43,6 @@ public class CreateIncrementalReleaseJobConfiguration {
     @Qualifier(CREATE_INCREMENTAL_ACCESSION_RELEASE_STEP)
     private Step createIncrementalAccessionReleaseStep;
 
-    /**
-     * Note that we are just concatenating the DBSNP and EVA steps one after the other. We could configure them to run
-     * in parallel if we want to. See ParallelStatisticsAndAnnotationFlowConfiguration in eva-pipeline for an example
-     * of asynchronous parallel flows.
-     */
     @Bean(CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB)
     public Job createIncrementalAccessionReleaseJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB)

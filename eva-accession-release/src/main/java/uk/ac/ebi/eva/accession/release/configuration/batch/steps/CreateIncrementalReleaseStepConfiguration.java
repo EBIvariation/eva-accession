@@ -22,7 +22,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemStreamReader;
-import org.springframework.batch.item.ItemStreamWriter;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -44,7 +43,12 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.io.File;
 import java.io.IOException;
 
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.*;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EXCLUDE_VARIANTS_LISTENER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CREATE_INCREMENTAL_ACCESSION_RELEASE_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.INCREMENTAL_RELEASE_WRITER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.PROGRESS_LISTENER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
+
 
 @Configuration
 @Import({AccessionedVariantMongoReaderConfiguration.class,
