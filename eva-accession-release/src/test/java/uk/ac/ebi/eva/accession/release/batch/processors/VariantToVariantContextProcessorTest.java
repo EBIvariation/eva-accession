@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
@@ -67,7 +68,7 @@ public class VariantToVariantContextProcessorTest {
     public void setUp() throws Exception {
         ContigMapping contigMapping = new ContigMapping(Collections.singletonList(
                 new ContigSynonyms(SEQUENCE_NAME_1, "A", "A", GENBANK_ACCESSION_1, "A", "A", true)));
-        variantConverter = new VariantToVariantContextProcessor(contigMapping);
+        variantConverter = new VariantToVariantContextProcessor(contigMapping, ContigNaming.SEQUENCE_NAME);
     }
 
     @Test

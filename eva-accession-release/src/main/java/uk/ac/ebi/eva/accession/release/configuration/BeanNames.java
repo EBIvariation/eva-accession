@@ -20,7 +20,11 @@ public class BeanNames {
 // common beans
     public static final String ACCESSION_RELEASE_JOB = "ACCESSION_RELEASE_JOB";
 
+    public static final String CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB = "CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB";
+
     public static final String RELEASE_PROCESSOR = "RELEASE_PROCESSOR";
+
+    public static final String INCREMENTAL_RELEASE_WRITER = "INCREMENTAL_RELEASE_WRITER";
 
     public static final String EXCLUDE_VARIANTS_LISTENER = "EXCLUDE_VARIANTS_LISTENER";
 
@@ -28,6 +32,8 @@ public class BeanNames {
 
     // dbsnp beans
     public static final String DBSNP_FLOW = "DBSNP_FLOW";
+
+    public static final String CREATE_INCREMENTAL_ACCESSION_RELEASE_STEP = "CREATE_INCREMENTAL_ACCESSION_RELEASE_STEP";
 
     public static final String RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP = "RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP";
 

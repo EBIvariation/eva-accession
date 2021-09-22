@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
@@ -145,7 +146,7 @@ public class VariantContextWriterTest {
                 new ContigSynonyms(SEQUENCE_NAME_1, "A", "A", GENBANK_ACCESSION_1, "A", "A", true)));
 
         VariantToVariantContextProcessor variantToVariantContextProcessor =
-                new VariantToVariantContextProcessor(contigMapping);
+                new VariantToVariantContextProcessor(contigMapping, ContigNaming.SEQUENCE_NAME);
 
         List<VariantContext> variantContexts =
                 Stream.of(variants).map(variantToVariantContextProcessor::process).collect(Collectors.toList());
