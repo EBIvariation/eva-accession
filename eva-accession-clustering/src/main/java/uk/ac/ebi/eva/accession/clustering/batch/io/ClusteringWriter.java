@@ -384,7 +384,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                     .and("reason").is("RS mismatch with " + svoe.getAccession()));
             Update update = new Update();
             update.set("inactiveObjects", svoe.getInactiveObjects());
-            mongoTemplate.upsert(querySubmitted, update, SubmittedVariantOperationEntity.class);
+            // Since we are updating one specific record in SVOE, update first will be sufficient
+            mongoTemplate.updateFirst(querySubmitted, update, SubmittedVariantOperationEntity.class);
         }
 
         for (Map.Entry<Long, SubmittedVariantOperationEntity> entry : rsSplitSVOE.entrySet()) {
@@ -400,7 +401,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                     .and("reason").is("Hash mismatch with " + accession));
             Update update = new Update();
             update.set("inactiveObjects", svoe.getInactiveObjects());
-            mongoTemplate.upsert(querySubmitted, update, SubmittedVariantOperationEntity.class);
+            // Since we are updating one specific record in SVOE, update first will be sufficient
+            mongoTemplate.updateFirst(querySubmitted, update, SubmittedVariantOperationEntity.class);
         }
 
         mongoTemplate.insert(mergeSVOEInsertEntries, SubmittedVariantOperationEntity.class);
