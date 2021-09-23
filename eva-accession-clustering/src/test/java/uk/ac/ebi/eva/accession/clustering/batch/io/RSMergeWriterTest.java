@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -35,18 +36,19 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeWriterConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantOperationRepository;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
 import java.util.ArrayList;
@@ -55,13 +57,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_CANDIDATES_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_CANDIDATES_READER;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:merge-split-test.properties")
-@ContextConfiguration(classes = {RSMergeAndSplitCandidatesReaderConfiguration.class, RSMergeWriterConfiguration.class,
+@ContextConfiguration(classes = {RSMergeAndSplitCandidatesReaderConfiguration.class, RSMergeAndSplitWriterConfiguration.class,
         MongoTestConfiguration.class, BatchTestConfiguration.class})
 public class RSMergeWriterTest {
 
@@ -69,15 +74,14 @@ public class RSMergeWriterTest {
 
     private static final String ASSEMBLY = "GCA_000000001.1";
 
-    private static final String DBSNP_CLUSTERED_VARIANT_COLLECTION = "dbsnpClusteredVariantEntity";
-
-    private static final String CLUSTERED_VARIANT_COLLECTION = "clusteredVariantEntity";
-
     private static final String DBSNP_SUBMITTED_VARIANT_COLLECTION = "dbsnpSubmittedVariantEntity";
 
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
     private static final String SUBMITTED_VARIANT_OPERATION_COLLECTION = "submittedVariantOperationEntity";
+
+    @Rule
+    public final ExpectedException thrown = ExpectedException.none();
 
     @Autowired
     private MongoClient mongoClient;
@@ -88,6 +92,10 @@ public class RSMergeWriterTest {
     @Autowired
     @Qualifier(RS_MERGE_CANDIDATES_READER)
     private ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
+
+    @Autowired
+    @Qualifier(RS_SPLIT_CANDIDATES_READER)
+    private ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
 
     @Autowired
     @Qualifier(RS_MERGE_WRITER)
@@ -105,7 +113,10 @@ public class RSMergeWriterTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    private SubmittedVariantEntity ss1, ss2, ss4, ss5;
+    private SubmittedVariantEntity ss1, ss2, ss4, ss5, ss6, ss7, ss8, ss9;
+
+    @Autowired
+    private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     @Autowired
     private SubmittedVariantAccessioningService submittedVariantAccessioningService;
@@ -124,15 +135,23 @@ public class RSMergeWriterTest {
                                           false, 1);
     }
 
-    private void createMergeCandidateEntries() {
+    private void createMergeAndSplitCandidateEntries() {
         /*
          * SS   RS  LOC
          * 1    1   chr1/100/SNV
          * 4    4   chr1/100/SNV
          * 2    2   chr1/103/SNV
          * 5    5   chr1/103/SNV
-         *
+         * 6    4   chr1/104/SNV
+         * 7    4   chr1/105/SNV
+         * 8    2   chr1/106/SNV
+         * 9    5   chr1/107/SNV
          * RS1, RS4 and RS2, RS5 are marked as merge candidate entries since these RS pairs share the same locus
+         * Following are split candidate entries since these SS share the same RS but differ in loci:
+         *      SS2,SS8
+         *      SS4,SS6,SS7
+         *      SS5,SS9
+         *
          */
 
         //ss1 will be inserted to dbsnpSubmittedVariantEntity and ss4 to submittedVariantEntity collections respectively
@@ -158,23 +177,38 @@ public class RSMergeWriterTest {
                              null, "Different RS with matching loci",
                              Arrays.asList(ssInactive2, ssInactive5));
 
+        //Candidates for split are entries with same RS but different locus
+        ss6 = createSS(6L, 4L, 104L, "G", "A");
+        ss7 = createSS(7L, 4L, 105L, "T", "G");
+        ss8 = createSS(8L, 2L, 106L, "A", "G");
+        ss9 = createSS(9L, 5L, 107L, "C", "T");
+        SubmittedVariantInactiveEntity ssInactive6 = new SubmittedVariantInactiveEntity(ss6);
+        SubmittedVariantInactiveEntity ssInactive7 = new SubmittedVariantInactiveEntity(ss7);
+        SubmittedVariantInactiveEntity ssInactive8 = new SubmittedVariantInactiveEntity(ss8);
+        SubmittedVariantInactiveEntity ssInactive9 = new SubmittedVariantInactiveEntity(ss9);
+
+        SubmittedVariantOperationEntity splitOperation1 = new SubmittedVariantOperationEntity();
+        SubmittedVariantOperationEntity splitOperation2 = new SubmittedVariantOperationEntity();
+        SubmittedVariantOperationEntity splitOperation3 = new SubmittedVariantOperationEntity();
+        splitOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                             ss2.getAccession(), "Hash mismatch with " + ss2.getClusteredVariantAccession(),
+                             Arrays.asList(ssInactive2, ssInactive8));
+        splitOperation2.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                             ss4.getAccession(), "Hash mismatch with " + ss4.getClusteredVariantAccession(),
+                             Arrays.asList(ssInactive4, ssInactive6, ssInactive7));
+        splitOperation3.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                             ss5.getAccession(), "Hash mismatch with " + ss5.getClusteredVariantAccession(),
+                             Arrays.asList(ssInactive5, ssInactive9));
+
         List<SubmittedVariantEntity> ssToInsertToDbsnpSVE = Arrays.asList(ss1, ss2);
-        List<SubmittedVariantEntity> ssToInsertToSVE = Arrays.asList(ss4, ss5);
-        List<ClusteredVariantEntity> rsToInsertToDbsnpCVE =
-                ssToInsertToDbsnpSVE.stream().map(clusteringWriter::toClusteredVariantEntity)
-                                    .collect(Collectors.toList());
-        List<ClusteredVariantEntity> rsToInsertToCVE =
-                ssToInsertToSVE.stream().map(clusteringWriter::toClusteredVariantEntity)
-                               .collect(Collectors.toList());
+        List<SubmittedVariantEntity> ssToInsertToSVE = Arrays.asList(ss4, ss5, ss6, ss7, ss8, ss9);
 
         mongoTemplate.insert(ssToInsertToDbsnpSVE, DBSNP_SUBMITTED_VARIANT_COLLECTION);
         mongoTemplate.insert(ssToInsertToSVE, SUBMITTED_VARIANT_COLLECTION);
-        mongoTemplate.insert(rsToInsertToDbsnpCVE, DBSNP_CLUSTERED_VARIANT_COLLECTION);
-        mongoTemplate.insert(rsToInsertToCVE, CLUSTERED_VARIANT_COLLECTION);
-        mongoTemplate.insert(mergeOperation1, SUBMITTED_VARIANT_OPERATION_COLLECTION);
-        mongoTemplate.insert(mergeOperation2, SUBMITTED_VARIANT_OPERATION_COLLECTION);
+        mongoTemplate.insert(Arrays.asList(mergeOperation1, mergeOperation2,
+                                           splitOperation1, splitOperation2, splitOperation3),
+                             SUBMITTED_VARIANT_OPERATION_COLLECTION);
     }
-
 
     private void cleanupDB() {
         mongoClient.dropDatabase(TEST_DB);
@@ -198,28 +232,30 @@ public class RSMergeWriterTest {
     }
 
     @Test
-    public void writeRSMerges() throws Exception {
+    public void testWriteRSMerges() throws Exception {
         /*
          * SS   RS  LOC
          * 1    1   chr1/100/SNV
          * 4    4   chr1/100/SNV
          * 2    2   chr1/103/SNV
          * 5    5   chr1/103/SNV
-         *
+         * 6    4   chr1/104/SNV
+         * 7    4   chr1/105/SNV
+         * 8    2   chr1/106/SNV
+         * 9    5   chr1/107/SNV
          * RS1, RS4 and RS2, RS5 are marked as merge candidate entries since these RS pairs share the same locus
+         * Following are split candidate entries since these SS share the same RS but differ in loci:
+         *      SS2,SS8
+         *      SS4,SS6,SS7
+         *      SS5,SS9
+         *
          */
-        createMergeCandidateEntries();
+        createMergeAndSplitCandidateEntries();
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
         SubmittedVariantOperationEntity submittedVariantOperationEntity;
         while ((submittedVariantOperationEntity = rsMergeCandidatesReader.read()) != null) {
             submittedVariantOperationEntities.add(submittedVariantOperationEntity);
         }
-
-        //Before merge SS-RS associations: ss1-rs1, ss2-rs2, ss4-rs4, ss5-rs5
-        assertRSAssociatedWithSS(1L, ss1);
-        assertRSAssociatedWithSS(2L, ss2);
-        assertRSAssociatedWithSS(4L, ss4);
-        assertRSAssociatedWithSS(5L, ss5);
 
         //Perform merge
         rsMergeWriter.write(submittedVariantOperationEntities);
@@ -234,10 +270,75 @@ public class RSMergeWriterTest {
         assertEquals("Original rs5 was merged into rs2.",
                      submittedVariantOperationRepository.findAllByAccession(5L).get(0).getReason());
 
-        //After merge SS-RS associations: ss1-rs1, ss2-rs2, ss4-rs1, ss5-rs2 since rs4 merged to rs1 & rs5 merged to rs2
+        // Ensure that RS1 and RS2 are present in the clustered variant collection post merge
+        assertEquals(Long.valueOf(1L), clusteredVariantAccessioningService.getByAccession(1L).getAccession());
+        assertEquals(Long.valueOf(2L), clusteredVariantAccessioningService.getByAccession(2L).getAccession());
+
+        thrown.expect(AccessionMergedException.class);
+        clusteredVariantAccessioningService.getByAccession(4L);
+        thrown.expect(AccessionMergedException.class);
+        clusteredVariantAccessioningService.getByAccession(5L);
+
+        //After merge SS-RS associations: rs4 merged to rs1 & rs5 merged to rs2
+        /*
+         * SS   RS  LOC
+         * 1    1   chr1/100/SNV
+         * 4    1   chr1/100/SNV
+         * 2    2   chr1/103/SNV
+         * 5    2   chr1/103/SNV
+         * 6    1   chr1/104/SNV
+         * 7    1   chr1/105/SNV
+         * 8    2   chr1/106/SNV
+         * 9    2   chr1/107/SNV
+         */
         assertRSAssociatedWithSS(1L, ss1);
         assertRSAssociatedWithSS(2L, ss2);
         assertRSAssociatedWithSS(1L, ss4);
         assertRSAssociatedWithSS(2L, ss5);
+        assertRSAssociatedWithSS(1L, ss6);
+        assertRSAssociatedWithSS(1L, ss7);
+        assertRSAssociatedWithSS(2L, ss8);
+        assertRSAssociatedWithSS(2L, ss9);
+
+        // After rs4 merge to rs1 and rs5 merge to rs2
+        // split candidates operations involving rs4 and rs5 should no longer be present
+        assertFalse(submittedVariantOperationRepository
+                        .findAllByAccession(4L).stream()
+                        .anyMatch(event -> event.getEventType().equals(
+                                RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE)));
+        assertFalse(submittedVariantOperationRepository
+                            .findAllByAccession(5L).stream()
+                            .anyMatch(event -> event.getEventType().equals(
+                                    RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE)));
+        // Post-merge SS1, SS4, SS6 and SS7 all share rs1 but have different locus
+        // and hence generate one split candidate event
+        // Post-merge SS2, SS5, SS8 and SS9 all share rs2 but have different locus
+        // and hence generate a split candidate event
+        assertSplitCandidateEvents(1L, Arrays.asList(1L, 4L, 6L, 7L));
+        assertSplitCandidateEvents(2L, Arrays.asList(2L, 5L, 8L, 9L));
+    }
+
+    // Check if a given RS has the participating SS listed in the split candidates event
+    private void assertSplitCandidateEvents(Long rsAccession, List<Long> expectedParticipatingSS) throws Exception {
+
+        List<SubmittedVariantOperationEntity> splitEvents = new ArrayList<>();
+        SubmittedVariantOperationEntity submittedVariantOperationEntity;
+        while ((submittedVariantOperationEntity = rsSplitCandidatesReader.read()) != null) {
+            splitEvents.add(submittedVariantOperationEntity);
+        }
+
+        assertEquals(1, splitEvents.size());
+        SubmittedVariantOperationEntity splitEvent = splitEvents.get(0);
+        assertEquals("Hash mismatch with " + rsAccession, splitEvent.getReason());
+        List<SubmittedVariantInactiveEntity> participatingSSInSplitEvent = splitEvent.getInactiveObjects();
+
+        assertEquals(expectedParticipatingSS.size(), participatingSSInSplitEvent.size());
+        assertTrue(participatingSSInSplitEvent.stream()
+                                              .map(InactiveSubDocument::getAccession)
+                                              .collect(Collectors.toSet())
+                                              .containsAll(expectedParticipatingSS));
+        // Ensure that all the inactive objects have the same RS
+        assertFalse(participatingSSInSplitEvent.stream()
+                                               .anyMatch(e -> !e.getClusteredVariantAccession().equals(rsAccession)));
     }
 }

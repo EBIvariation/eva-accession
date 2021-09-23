@@ -34,6 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
@@ -59,6 +60,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -120,6 +122,9 @@ public class MergeAccessionClusteringWriterTest {
     private ClusteringCounts clusteringCounts;
 
     @Autowired
+    private SubmittedVariantAccessioningService submittedVariantAccessioningService;
+
+    @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     @Autowired
@@ -142,8 +147,11 @@ public class MergeAccessionClusteringWriterTest {
     @Before
     public void setUp() {
         mongoTemplate.getDb().drop();
-        clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts, true);
+        clusteringWriter = new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
+                                                submittedVariantAccessioningService,
+                                                clusteredVariantAccessioningService,
+                                                EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START,
+                                                clusteringCounts, true);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
@@ -484,7 +492,7 @@ public class MergeAccessionClusteringWriterTest {
     @Test
     @DirtiesContext
     public void merge_into_remapped_multimap_variants_if_single_mapping_per_assembly()
-            throws AccessionCouldNotBeGeneratedException {
+            throws AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
         // given
         Long rs1 = 3000000000L;
         Long rs2 = 3100000000L;
@@ -527,7 +535,7 @@ public class MergeAccessionClusteringWriterTest {
     @Test
     @DirtiesContext
     public void merge_multimap_variants_into_remapped_variants_if_single_mapping_per_assembly()
-            throws AccessionCouldNotBeGeneratedException {
+            throws AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
         // given
         Long rs1 = 3000000000L;
         Long rs2 = 3100000000L;

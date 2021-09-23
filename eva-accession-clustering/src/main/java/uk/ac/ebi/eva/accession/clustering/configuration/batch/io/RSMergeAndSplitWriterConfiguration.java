@@ -15,26 +15,44 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
+import org.apache.catalina.Cluster;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
+import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.RSMergeWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
 
 @Configuration
 @Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
-        MongoConfiguration.class})
-public class RSMergeWriterConfiguration {
+        ClusteringWriterConfiguration.class, MongoConfiguration.class})
+public class RSMergeAndSplitWriterConfiguration {
 
     @Bean(RS_MERGE_WRITER)
-    public ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter() {
-        return new RSMergeWriter();
+    public ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter(
+            @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
+            MongoTemplate mongoTemplate) {
+        return new RSMergeWriter(clusteringWriter, mongoTemplate);
+    }
+
+    @Bean(RS_SPLIT_WRITER)
+    public ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter(
+            @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
+            ClusteredVariantAccessioningService clusteredVariantAccessioningService,
+            MongoTemplate mongoTemplate) {
+        return new RSSplitWriter(clusteringWriter, clusteredVariantAccessioningService, mongoTemplate);
     }
 }

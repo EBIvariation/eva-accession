@@ -21,10 +21,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
@@ -36,21 +38,33 @@ public class ClusteringWriterConfiguration {
 
     @Bean(CLUSTERED_CLUSTERING_WRITER)
     public ClusteringWriter clusteredClusteringWriter(MongoTemplate mongoTemplate,
-                                                      ClusteredVariantAccessioningService accessioningService,
+                                                      InputParameters inputParameters,
+                                                      SubmittedVariantAccessioningService
+                                                                  submittedVariantAccessioningService,
+                                                      ClusteredVariantAccessioningService
+                                                                  clusteredVariantAccessioningService,
                                                       Long accessioningMonotonicInitSs,
                                                       Long accessioningMonotonicInitRs,
                                                       ClusteringCounts clusteringCounts) {
-        return new ClusteringWriter(mongoTemplate, accessioningService, accessioningMonotonicInitSs,
-                accessioningMonotonicInitRs, clusteringCounts, true);
+        return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
+                                    submittedVariantAccessioningService,
+                                    clusteredVariantAccessioningService,
+                                    accessioningMonotonicInitSs, accessioningMonotonicInitRs, clusteringCounts, true);
     }
 
     @Bean(NON_CLUSTERED_CLUSTERING_WRITER)
     public ClusteringWriter nonClusteredClusteringWriter(MongoTemplate mongoTemplate,
-                                             ClusteredVariantAccessioningService accessioningService,
-                                             Long accessioningMonotonicInitSs,
-                                             Long accessioningMonotonicInitRs,
-                                             ClusteringCounts clusteringCounts) {
-        return new ClusteringWriter(mongoTemplate, accessioningService, accessioningMonotonicInitSs,
-                                    accessioningMonotonicInitRs, clusteringCounts,false);
+                                                         InputParameters inputParameters,
+                                                         SubmittedVariantAccessioningService
+                                                                     submittedVariantAccessioningService,
+                                                         ClusteredVariantAccessioningService
+                                                                     clusteredVariantAccessioningService,
+                                                         Long accessioningMonotonicInitSs,
+                                                         Long accessioningMonotonicInitRs,
+                                                         ClusteringCounts clusteringCounts) {
+        return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
+                                    submittedVariantAccessioningService,
+                                    clusteredVariantAccessioningService,
+                                    accessioningMonotonicInitSs, accessioningMonotonicInitRs, clusteringCounts, false);
     }
 }

@@ -49,10 +49,20 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
     private static final String EVENT_TYPE_FIELD = "eventType";
 
     //TODO: Update this with the event type RS_SPLIT_CANDIDATES after that type is introduced in accession-commons
-    public static final EventType SPLIT_CANDIDATES_EVENT_TYPE = EventType.RS_SPLIT;
+    public static final EventType SPLIT_CANDIDATES_EVENT_TYPE = EventType.RS_SPLIT_CANDIDATES;
 
     //TODO: Update this with the event type RS_MERGE_CANDIDATES after that type is introduced in accession-commons
-    public static final EventType MERGE_CANDIDATES_EVENT_TYPE = EventType.MERGED;
+    public static final EventType MERGE_CANDIDATES_EVENT_TYPE = EventType.RS_MERGE_CANDIDATES;
+
+    public static Query getSplitCandidatesQuery(String assemblyAccession) {
+        return Query.query(where(ASSEMBLY_FIELD).is(assemblyAccession))
+                    .addCriteria(where(EVENT_TYPE_FIELD).is(SPLIT_CANDIDATES_EVENT_TYPE));
+    }
+
+    public static Query getMergeCandidatesQuery(String assemblyAccession) {
+        return Query.query(where(ASSEMBLY_FIELD).is(assemblyAccession))
+                    .addCriteria(where(EVENT_TYPE_FIELD).is(MERGE_CANDIDATES_EVENT_TYPE));
+    }
 
     @Bean(RS_SPLIT_CANDIDATES_READER)
     public ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader(MongoTemplate mongoTemplate, InputParameters parameters) {
@@ -62,8 +72,7 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
         mongoItemReader.setCollection(SUBMITTED_VARIANT_OPERATIONS_COLLECTION);
 
         //See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/#rangeid=1213746442
-        Query query = Query.query(where(ASSEMBLY_FIELD).is(parameters.getAssemblyAccession()))
-                .addCriteria(where(EVENT_TYPE_FIELD).is(SPLIT_CANDIDATES_EVENT_TYPE));
+        Query query = getSplitCandidatesQuery(parameters.getAssemblyAccession());
         mongoItemReader.setQuery(query);
         mongoItemReader.setPageSize(parameters.getChunkSize());
         mongoItemReader.setSort(Collections.singletonMap(SORT_FIELD, Sort.Direction.ASC));
@@ -78,8 +87,7 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
         mongoItemReader.setCollection(SUBMITTED_VARIANT_OPERATIONS_COLLECTION);
 
         //See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/#rangeid=1213746442
-        Query query = Query.query(where(ASSEMBLY_FIELD).is(parameters.getAssemblyAccession()))
-                .addCriteria(where(EVENT_TYPE_FIELD).is(MERGE_CANDIDATES_EVENT_TYPE));
+        Query query = getMergeCandidatesQuery(parameters.getAssemblyAccession());
         mongoItemReader.setQuery(query);
         mongoItemReader.setPageSize(parameters.getChunkSize());
         mongoItemReader.setSort(Collections.singletonMap(SORT_FIELD, Sort.Direction.ASC));
