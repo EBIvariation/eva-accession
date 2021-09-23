@@ -17,19 +17,11 @@
  */
 package uk.ac.ebi.eva.accession.core.repository.nonhuman.eva;
 
-import java.util.stream.Stream;
-
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
-
 import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 @Repository
 public interface SubmittedVariantOperationRepository extends IHistoryRepository<Long, SubmittedVariantOperationEntity, String> {
-    @Query("{ 'inactiveObjects.seq': ?0, 'eventType': ?1 } }")
-    Stream<SubmittedVariantOperationEntity> findByAssemblyAccessionAndEventType(String referenceSequenceAccession,
-                                                                                String eventType, Sort sort);
 }
