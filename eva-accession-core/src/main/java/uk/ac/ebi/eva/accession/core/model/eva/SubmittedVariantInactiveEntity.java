@@ -179,6 +179,11 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
         return new SubmittedVariant(this);
     }
 
+    public SubmittedVariantEntity toSubmittedVariantEntity() {
+        return new SubmittedVariantEntity(this.getAccession(), this.getHashedMessage(), this.getModel(),
+                                          this.getVersion());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

@@ -41,6 +41,7 @@ import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfigurat
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
@@ -108,7 +109,7 @@ public class RSSplitWriterTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    private SubmittedVariantEntity ss1, ss2, ss3, ss4;
+    private SubmittedVariantEntity ss1, ss2, ss3, ss4, ss5, ss6;
 
     @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
@@ -147,15 +148,16 @@ public class RSSplitWriterTest {
     @Test
     public void testSplitsWithUnequalNumberOfDistinctHashes() throws Exception {
         Long sameRSAccessionToBeUsedForDifferentLoci = 1L;
-        // In the following
+        // Create SS with the same RS with ss2 and ss3 sharing the same locus (chr + start + type)
         ss1 = createSS(1L, sameRSAccessionToBeUsedForDifferentLoci, 100L, "C", "T");
-        ss2 = createSS(2L, sameRSAccessionToBeUsedForDifferentLoci, 100L, "A", "T");
+        ss2 = createSS(2L, sameRSAccessionToBeUsedForDifferentLoci, 101L, "A", "T");
         ss3 = createSS(3L, sameRSAccessionToBeUsedForDifferentLoci, 101L, "A", "G");
         ss4 = createSS(4L, sameRSAccessionToBeUsedForDifferentLoci, 102L, "A", "C");
 
         ClusteredVariantEntity rs1 = clusteringWriter.toClusteredVariantEntity(ss1);
 
-        mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3, ss4), SubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3), DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(ss4), SubmittedVariantEntity.class);
         mongoTemplate.insert(Collections.singletonList(rs1), ClusteredVariantEntity.class);
         SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
         splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
@@ -165,11 +167,48 @@ public class RSSplitWriterTest {
         );
         rsSplitWriter.write(Collections.singletonList(splitOperation));
 
-        // Ensure that SS1 and SS2 gets to retain the old RS because the RS hash
-        // for start position 100 is supported in these 2 variants
+        // Per splitting policy, ensure that SS2 and SS3 get to retain the old RS
+        // because the RS hash for start position 101 is supported in these 2 variants
         List<AccessionWrapper<ISubmittedVariant, String, Long>> ssAssociatedWithRS1 =
         submittedVariantAccessioningService.getByClusteredVariantAccessionIn(
                 Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci));
+        assertEquals(2, ssAssociatedWithRS1.size());
+        assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
+                                      .containsAll(Arrays.asList(ss2.getAccession(), ss3.getAccession())));
+
+    }
+
+    @Test
+    public void testSplitsWithEqualNumberOfDistinctHashes() throws Exception {
+        Long sameRSAccessionToBeUsedForDifferentLoci = 1L;
+        // Each RS locus (chr + start + type) is supported by two SS
+        ss1 = createSS(1L, sameRSAccessionToBeUsedForDifferentLoci, 100L, "C", "T");
+        ss2 = createSS(2L, sameRSAccessionToBeUsedForDifferentLoci, 100L, "C", "A");
+        ss3 = createSS(3L, sameRSAccessionToBeUsedForDifferentLoci, 101L, "A", "T");
+        ss4 = createSS(4L, sameRSAccessionToBeUsedForDifferentLoci, 101L, "A", "G");
+        ss5 = createSS(5L, sameRSAccessionToBeUsedForDifferentLoci, 102L, "G", "T");
+        ss6 = createSS(6L, sameRSAccessionToBeUsedForDifferentLoci, 102L, "G", "C");
+
+        ClusteredVariantEntity rs1 = clusteringWriter.toClusteredVariantEntity(ss1);
+
+        mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3), DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(ss4), SubmittedVariantEntity.class);
+        mongoTemplate.insert(Collections.singletonList(rs1), ClusteredVariantEntity.class);
+        SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
+        splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                            ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
+                            Stream.of(ss1, ss2, ss3, ss4).map(SubmittedVariantInactiveEntity::new)
+                                  .collect(Collectors.toList())
+        );
+        rsSplitWriter.write(Collections.singletonList(splitOperation));
+
+        // Per splitting policy, ensure that SS1 and SS2 get to retain the old RS
+        // Even though locus with start 100, 101 and 102 have equal number of supporting variants
+        // the lexicographic ordering of hash components (chr + start + type) breaks the tie
+        // in favor of associating RS1 with the locus 100
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> ssAssociatedWithRS1 =
+                submittedVariantAccessioningService.getByClusteredVariantAccessionIn(
+                        Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci));
         assertEquals(2, ssAssociatedWithRS1.size());
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss1.getAccession(), ss2.getAccession())));

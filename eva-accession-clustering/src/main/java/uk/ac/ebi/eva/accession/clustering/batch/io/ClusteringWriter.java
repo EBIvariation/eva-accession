@@ -59,7 +59,6 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -433,7 +432,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.insert(rsSplitSVOEInsertEntries, SubmittedVariantOperationEntity.class);
     }
 
-    private ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
+    protected ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
         return new ClusteredVariantEntity(submittedVariantEntity.getClusteredVariantAccession(),
                 getClusteredVariantHash(submittedVariantEntity),
                 toClusteredVariant(submittedVariantEntity));

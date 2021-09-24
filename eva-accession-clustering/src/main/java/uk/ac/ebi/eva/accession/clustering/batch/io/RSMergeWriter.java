@@ -80,7 +80,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 submittedVariantOperationEntity.getInactiveObjects()
                                                .stream()
                                                .map(entity -> clusteringWriter.toClusteredVariantEntity(
-                                                       toSubmittedVariantEntity(entity)))
+                                                       entity.toSubmittedVariantEntity()))
                                                .filter(distinctByKey(AccessionedDocument::getAccession))
                                                .collect(Collectors.toList());
         // From among the participating RS in a merge,
@@ -133,13 +133,5 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                                                                .equals(targetRSAccession))
                                                               .collect(Collectors.toList());
         return new ImmutablePair<>(targetRS, mergees);
-    }
-
-    private SubmittedVariantEntity toSubmittedVariantEntity(SubmittedVariantInactiveEntity
-                                                                    submittedVariantInactiveEntity) {
-        return new SubmittedVariantEntity(submittedVariantInactiveEntity.getAccession(),
-                                          submittedVariantInactiveEntity.getHashedMessage(),
-                                          submittedVariantInactiveEntity.getModel(),
-                                          submittedVariantInactiveEntity.getVersion());
     }
 }

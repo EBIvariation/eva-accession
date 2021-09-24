@@ -24,8 +24,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -38,7 +38,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -53,15 +52,15 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private final ClusteringWriter clusteringWriter;
 
-    private final ClusteredVariantAccessioningService clusteredVariantAccessioningService;
+    private final MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator;
 
     private final MongoTemplate mongoTemplate;
 
     public RSSplitWriter(ClusteringWriter clusteringWriter,
-                         ClusteredVariantAccessioningService clusteredVariantAccessioningService,
+                         MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator,
                          MongoTemplate mongoTemplate) {
         this.clusteringWriter = clusteringWriter;
-        this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
+        this.clusteredVariantAccessionGenerator = clusteredVariantAccessionGenerator;
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -93,7 +92,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                         .stream()
                         .map(submittedVariantInactiveEntity ->
                                      clusteringWriter.toClusteredVariantEntity(
-                                             toSubmittedVariantEntity(submittedVariantInactiveEntity)))
+                                             submittedVariantInactiveEntity.toSubmittedVariantEntity()))
                         .collect(Collectors.groupingBy(ClusteredVariantEntity::getHashedMessage))
                         .entrySet().stream().map(hashAndCorrespondingClusteredVariants ->
                                 new ImmutableTriple<>(hashAndCorrespondingClusteredVariants.getValue().get(0),
@@ -111,13 +110,11 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
             throws AccessionCouldNotBeGeneratedException {
         for (SubmittedVariantInactiveEntity inactiveEntity: submittedVariantInactiveEntities) {
             ClusteredVariantEntity clusteredVariantEntity =
-                    clusteringWriter.toClusteredVariantEntity(toSubmittedVariantEntity(inactiveEntity));
+                    clusteringWriter.toClusteredVariantEntity(inactiveEntity.toSubmittedVariantEntity());
             Long oldRSAccession = clusteredVariantEntity.getAccession();
             if (hashesThatShouldGetNewRS.contains(clusteredVariantEntity.getHashedMessage())) {
                 Long newRSAccession =
-                        this.clusteredVariantAccessioningService
-                                .getOrCreate(Collections.singletonList(clusteredVariantEntity))
-                                .stream().map(AccessionWrapper::getAccession).findFirst().get();
+                        this.clusteredVariantAccessionGenerator.generateAccessions(1)[0];
                 associateNewRSToSS(newRSAccession, inactiveEntity);
                 writeRSUpdateOperation(oldRSAccession, newRSAccession, clusteredVariantEntity);
                 writeSSUpdateOperation(oldRSAccession, newRSAccession, inactiveEntity);
@@ -131,7 +128,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         final String assemblyAttribute = "seq";
         final String clusteredVariantAttribute = "rs";
 
-        SubmittedVariantEntity submittedVariantEntity = toSubmittedVariantEntity(submittedVariantInactiveEntity);
+        SubmittedVariantEntity submittedVariantEntity = submittedVariantInactiveEntity.toSubmittedVariantEntity();
         Class<? extends SubmittedVariantEntity> submittedVariantClass =
                 clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity) ?
                         SubmittedVariantEntity.class : DbsnpSubmittedVariantEntity.class;
@@ -156,7 +153,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private void writeSSUpdateOperation(Long oldRSAccession, Long newRSAccession,
                                         SubmittedVariantInactiveEntity submittedVariantInactiveEntity) {
-        SubmittedVariantEntity submittedVariantEntity = toSubmittedVariantEntity(submittedVariantInactiveEntity);
+        SubmittedVariantEntity submittedVariantEntity = submittedVariantInactiveEntity.toSubmittedVariantEntity();
         // Choose which operation collection to write to: EVA or dbSNP
         Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                 operationClass = clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity) ?
@@ -193,13 +190,5 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                                       hashThatShouldRetainOldRS.getMiddle())))
                               .map(Triple::getMiddle)
                               .collect(Collectors.toList());
-    }
-
-    private SubmittedVariantEntity toSubmittedVariantEntity(SubmittedVariantInactiveEntity
-                                                                    submittedVariantInactiveEntity) {
-        return new SubmittedVariantEntity(submittedVariantInactiveEntity.getAccession(),
-                                          submittedVariantInactiveEntity.getHashedMessage(),
-                                          submittedVariantInactiveEntity.getModel(),
-                                          submittedVariantInactiveEntity.getVersion());
     }
 }
