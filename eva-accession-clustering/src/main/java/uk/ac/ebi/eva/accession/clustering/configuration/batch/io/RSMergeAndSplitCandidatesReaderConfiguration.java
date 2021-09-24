@@ -48,10 +48,8 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
 
     private static final String EVENT_TYPE_FIELD = "eventType";
 
-    //TODO: Update this with the event type RS_SPLIT_CANDIDATES after that type is introduced in accession-commons
     public static final EventType SPLIT_CANDIDATES_EVENT_TYPE = EventType.RS_SPLIT_CANDIDATES;
 
-    //TODO: Update this with the event type RS_MERGE_CANDIDATES after that type is introduced in accession-commons
     public static final EventType MERGE_CANDIDATES_EVENT_TYPE = EventType.RS_MERGE_CANDIDATES;
 
     public static Query getSplitCandidatesQuery(String assemblyAccession) {
