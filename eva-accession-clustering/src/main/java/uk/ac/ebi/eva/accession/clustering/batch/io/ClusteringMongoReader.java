@@ -16,12 +16,10 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -31,9 +29,10 @@ import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
+
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
-import static org.bson.BSON.NULL;
 
 public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantEntity> {
 
@@ -43,15 +42,11 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
 
-    private static final String SUBMITTED_VARIANT_ENTITY = "submittedVariantEntity";
-
-    private MongoClient mongoClient;
-
-    private String database;
-
     private String assembly;
 
-    private MongoCursor<Document> cursor;
+    private MongoCursor<Document> evaCursor;
+
+    private MongoCursor<Document> dbsnpCursor;
 
     private MongoConverter converter;
 
@@ -62,10 +57,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     //decides whether already clustered or non clustered variants will be read by mongo reader
     private boolean readOnlyClusteredVariants;
 
-    public ClusteringMongoReader(MongoClient mongoClient, String database, MongoTemplate mongoTemplate,
-                                 String assembly, int chunkSize, boolean readOnlyClusteredVariants) {
-        this.mongoClient = mongoClient;
-        this.database = database;
+    public ClusteringMongoReader(MongoTemplate mongoTemplate, String assembly, int chunkSize,
+                                 boolean readOnlyClusteredVariants) {
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.chunkSize = chunkSize;
@@ -74,7 +67,10 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     @Override
     public SubmittedVariantEntity read() {
-        return cursor.hasNext() ? getSubmittedVariantEntity(cursor.next()) : null;
+        // Read from dbsnp collection first and subsequently EVA collection
+        Document nextElement = dbsnpCursor.hasNext() ? dbsnpCursor.next() :
+                (evaCursor.hasNext() ? evaCursor.next() : null);
+        return (nextElement != null) ? getSubmittedVariantEntity(nextElement) : null;
     }
 
     private SubmittedVariantEntity getSubmittedVariantEntity(Document notClusteredSubmittedVariants) {
@@ -83,16 +79,25 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        MongoDatabase db = mongoClient.getDatabase(database);
-        MongoCollection<Document> collection = db.getCollection(SUBMITTED_VARIANT_ENTITY);
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
                 Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
         logger.info("Issuing find: {}", query);
-        FindIterable<Document> notClusteredSubmittedVariants = collection.find(query)
-                                                                         .noCursorTimeout(true)
-                                                                         .batchSize(chunkSize);
-        cursor = notClusteredSubmittedVariants.iterator();
+
+        FindIterable<Document> notClusteredSubmittedVariantsDbsnp =
+                getNotClusteredSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
+        dbsnpCursor = notClusteredSubmittedVariantsDbsnp.iterator();
+        FindIterable<Document> notClusteredSubmittedVariantsEVA =
+                getNotClusteredSubmittedVariants(query, SubmittedVariantEntity.class);
+        evaCursor = notClusteredSubmittedVariantsEVA.iterator();
+
         converter = mongoTemplate.getConverter();
+    }
+
+    private FindIterable<Document> getNotClusteredSubmittedVariants(Bson query, Class<?> entityClass) {
+        return mongoTemplate.getCollection(mongoTemplate.getCollectionName(entityClass))
+                            .find(query)
+                            .noCursorTimeout(true)
+                            .batchSize(chunkSize);
     }
 
     @Override
@@ -102,6 +107,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     @Override
     public void close() throws ItemStreamException {
-        cursor.close();
+        dbsnpCursor.close();
+        evaCursor.close();
     }
 }

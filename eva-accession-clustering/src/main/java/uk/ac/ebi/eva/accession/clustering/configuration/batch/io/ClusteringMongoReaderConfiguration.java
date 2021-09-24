@@ -15,9 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
-import com.mongodb.MongoClient;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -37,23 +35,22 @@ public class ClusteringMongoReaderConfiguration {
 
     @Bean(CLUSTERED_VARIANTS_MONGO_READER)
     @StepScope
-    public ClusteringMongoReader clusteredVariantsMongoReader(MongoClient mongoClient, MongoProperties mongoProperties,
-                                                              MongoTemplate mongoTemplate, InputParameters parameters) {
+    public ClusteringMongoReader clusteredVariantsMongoReader(MongoTemplate mongoTemplate, InputParameters parameters) {
         if (parameters.getAssemblyAccession() == null || parameters.getAssemblyAccession().isEmpty()) {
             throw new IllegalArgumentException("Please provide an assembly");
         }
-        return new ClusteringMongoReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate,
-                parameters.getAssemblyAccession(), parameters.getChunkSize(), true);
+        return new ClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getChunkSize(),
+                                         true);
     }
 
     @Bean(NON_CLUSTERED_VARIANTS_MONGO_READER)
     @StepScope
-    public ClusteringMongoReader nonClusteredVariantsMongoReader(MongoClient mongoClient, MongoProperties mongoProperties,
-                                                                 MongoTemplate mongoTemplate, InputParameters parameters) {
+    public ClusteringMongoReader nonClusteredVariantsMongoReader(MongoTemplate mongoTemplate,
+                                                                 InputParameters parameters) {
         if (parameters.getAssemblyAccession() == null || parameters.getAssemblyAccession().isEmpty()) {
             throw new IllegalArgumentException("Please provide an assembly");
         }
-        return new ClusteringMongoReader(mongoClient, mongoProperties.getDatabase(), mongoTemplate,
-                parameters.getAssemblyAccession(), parameters.getChunkSize(), false);
+        return new ClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getChunkSize(),
+                                         false);
     }
 }
