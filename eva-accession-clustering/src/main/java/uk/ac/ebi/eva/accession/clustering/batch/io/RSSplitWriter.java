@@ -69,6 +69,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         for (SubmittedVariantOperationEntity entity: submittedVariantOperationEntities) {
             writeRSSplit(entity);
+            this.mongoTemplate.remove(entity,
+                                      this.mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }
     }
 

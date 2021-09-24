@@ -59,6 +59,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
         for (SubmittedVariantOperationEntity entity: submittedVariantOperationEntities) {
             writeRSMerge(entity);
+            this.mongoTemplate.remove(entity,
+                                      this.mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }
     }
 
