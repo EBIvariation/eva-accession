@@ -165,6 +165,7 @@ public class RSSplitWriterTest {
                             Stream.of(ss1, ss2, ss3, ss4).map(SubmittedVariantInactiveEntity::new)
                                   .collect(Collectors.toList())
         );
+        mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
         rsSplitWriter.write(Collections.singletonList(splitOperation));
 
         // Per splitting policy, ensure that SS2 and SS3 get to retain the old RS
@@ -200,6 +201,7 @@ public class RSSplitWriterTest {
                             Stream.of(ss1, ss2, ss3, ss4).map(SubmittedVariantInactiveEntity::new)
                                   .collect(Collectors.toList())
         );
+        mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
         rsSplitWriter.write(Collections.singletonList(splitOperation));
 
         // Per splitting policy, ensure that SS1 and SS2 get to retain the old RS
