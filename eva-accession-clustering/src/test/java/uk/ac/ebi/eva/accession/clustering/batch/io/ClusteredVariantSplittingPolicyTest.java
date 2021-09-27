@@ -15,12 +15,12 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantSplittingPolicy.SplitDeterminants;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -41,16 +41,14 @@ public class ClusteredVariantSplittingPolicyTest {
 
         // Let's say that hash 1 has three supporting variants (last argument in the triple)
         // and hash 2 has four supporting variants
-        ImmutableTriple<ClusteredVariantEntity, String, Integer> rs1Hash1 =
-                new ImmutableTriple<>(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3);
-        ImmutableTriple<ClusteredVariantEntity, String, Integer> rs1Hash2 =
-                new ImmutableTriple<>(rs1WithHash2, rs1WithHash2.getHashedMessage(), 4);
+        SplitDeterminants rs1Hash1 = new SplitDeterminants(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3, 1L);
+        SplitDeterminants rs1Hash2 = new SplitDeterminants(rs1WithHash2, rs1WithHash2.getHashedMessage(), 4, 2L);
 
         // Hash 2 should keep the RS because it has two supporting variants
-        ImmutableTriple<ClusteredVariantEntity, String, Integer> expectedHashThatKeepsRS1 =
-                new ImmutableTriple<>(rs1WithHash2, rs1WithHash2.getHashedMessage(), 4);
-        ImmutableTriple<ClusteredVariantEntity, String, Integer> expectedHashThatShouldBeSplitFromRS1 =
-                new ImmutableTriple<>(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3);
+        SplitDeterminants expectedHashThatKeepsRS1 =
+                new SplitDeterminants(rs1WithHash2, rs1WithHash2.getHashedMessage(), 4, 2L);
+        SplitDeterminants expectedHashThatShouldBeSplitFromRS1 =
+                new SplitDeterminants(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3, 1L);
         ClusteredVariantSplittingPolicy.SplitPriority splitPriority =
                 ClusteredVariantSplittingPolicy.prioritise(rs1Hash1, rs1Hash2);
         assertEquals(expectedHashThatKeepsRS1, splitPriority.hashThatShouldRetainOldRS);
@@ -63,18 +61,17 @@ public class ClusteredVariantSplittingPolicyTest {
         ClusteredVariantEntity rs1WithHash2 = createRS(1L, "chr1", 2L, VariantType.SNV);
 
         // Let's say that hash 1 and hash 2 both have three supporting variants (last argument in the triple)
-        // The tie-breaker will be the lexicographical ordering of the hash components (chr, start, type)
-        // and therefore hash 1 will get to keep the RS
-        ImmutableTriple<ClusteredVariantEntity, String, Integer> rs1Hash1 =
-                new ImmutableTriple<>(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3);
-        ImmutableTriple<ClusteredVariantEntity, String, Integer> rs1Hash2 =
-                new ImmutableTriple<>(rs1WithHash2, rs1WithHash2.getHashedMessage(), 3);
+        // The tie-breaker will be the RS hash that has the oldest SS ID
+        SplitDeterminants rs1Hash1 =
+                new SplitDeterminants(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3, 1L);
+        SplitDeterminants rs1Hash2 =
+                new SplitDeterminants(rs1WithHash2, rs1WithHash2.getHashedMessage(), 3, 2L);
 
-        // Hash 1 should keep the RS because it has precedence in lexicographical ordering (start position of 1)
-        ImmutableTriple<ClusteredVariantEntity, String, Integer>  expectedHashThatKeepsRS1 =
-                new ImmutableTriple<>(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3);
-        ImmutableTriple<ClusteredVariantEntity, String, Integer> expectedHashThatShouldBeSplitFromRS1 =
-                new ImmutableTriple<>(rs1WithHash2, rs1WithHash2.getHashedMessage(), 3);
+        // Hash 1 should keep the RS because it has the oldest SS ID 1
+        SplitDeterminants  expectedHashThatKeepsRS1 =
+                new SplitDeterminants(rs1WithHash1, rs1WithHash1.getHashedMessage(), 3, 1L);
+        SplitDeterminants expectedHashThatShouldBeSplitFromRS1 =
+                new SplitDeterminants(rs1WithHash2, rs1WithHash2.getHashedMessage(), 3, 2L);
         ClusteredVariantSplittingPolicy.SplitPriority splitPriority =
                 ClusteredVariantSplittingPolicy.prioritise(rs1Hash1, rs1Hash2);
         assertEquals(expectedHashThatKeepsRS1, splitPriority.hashThatShouldRetainOldRS);

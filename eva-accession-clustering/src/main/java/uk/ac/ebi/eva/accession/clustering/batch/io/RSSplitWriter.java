@@ -16,8 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
-import org.apache.commons.lang3.tuple.Triple;
+
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -28,6 +27,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
+import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantSplittingPolicy.SplitDeterminants;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -41,6 +41,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -97,24 +98,30 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         // RS1, hash(LOC1), 1
         // RS1, hash(LOC2), 2
         // RS1, hash(LOC3), 1
-        List<Triple<ClusteredVariantEntity, String, Integer>> splitCandidates =
+        List<SplitDeterminants> splitCandidates =
                 submittedVariantOperationEntity
                         .getInactiveObjects()
                         .stream()
-                        .map(submittedVariantInactiveEntity ->
-                                     clusteringWriter.toClusteredVariantEntity(
-                                             submittedVariantInactiveEntity.toSubmittedVariantEntity()))
-                        .collect(Collectors.groupingBy(ClusteredVariantEntity::getHashedMessage))
-                        .entrySet().stream().map(hashAndCorrespondingClusteredVariants ->
-                                new ImmutableTriple<>(hashAndCorrespondingClusteredVariants.getValue().get(0),
-                                                      hashAndCorrespondingClusteredVariants.getKey(),
-                                                      hashAndCorrespondingClusteredVariants.getValue().size()))
+                        .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                        .collect(Collectors.groupingBy(this::getRSHashForSS))
+                        .entrySet().stream().map(rsHashAndAssociatedSS ->
+                                new SplitDeterminants(
+                                        clusteringWriter.toClusteredVariantEntity(rsHashAndAssociatedSS.getValue()
+                                                                                                       .get(0)),
+                                        rsHashAndAssociatedSS.getKey(),
+                                        rsHashAndAssociatedSS.getValue().size(),
+                                        // Get lowest SS ID associated with a given RS hash
+                                        rsHashAndAssociatedSS.getValue().stream()
+                                                             .map(SubmittedVariantEntity::getAccession)
+                                                             .min(Comparator.naturalOrder()).get()))
                         .collect(Collectors.toList());
         // Based on the split policy, one of the hashes will retain the RS associated with it
         // and the other hashes should be associated with new RS IDs
         List<String> hashesThatShouldGetNewRS =  getHashesThatShouldGetNewRS(splitCandidates);
         issueNewRSForHashes(hashesThatShouldGetNewRS, submittedVariantOperationEntity.getInactiveObjects());
     }
+
+
 
     private void issueNewRSForHashes(List<String> hashesThatShouldGetNewRS,
                                      List<SubmittedVariantInactiveEntity> submittedVariantInactiveEntities)
@@ -200,22 +207,21 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
      *                        3) the number of variants with that hash
      * @return Hashes that should be associated with a new RS
      */
-    private List<String> getHashesThatShouldGetNewRS(List<Triple<ClusteredVariantEntity, String, Integer>>
+    private List<String> getHashesThatShouldGetNewRS(List<SplitDeterminants>
                                                              splitCandidates) {
-        Triple<ClusteredVariantEntity, String, Integer> lastPrioritizedHash = splitCandidates.get(0);
+        SplitDeterminants lastPrioritizedHash = splitCandidates.get(0);
         for (int i = 1; i < splitCandidates.size(); i++) {
             lastPrioritizedHash = ClusteredVariantSplittingPolicy.prioritise(
                     lastPrioritizedHash, splitCandidates.get(i)).hashThatShouldRetainOldRS;
         }
-        final Triple<ClusteredVariantEntity, String, Integer> hashThatShouldRetainOldRS = lastPrioritizedHash;
-        this.mongoTemplate.save(hashThatShouldRetainOldRS.getLeft(),
+        final SplitDeterminants hashThatShouldRetainOldRS = lastPrioritizedHash;
+        this.mongoTemplate.save(hashThatShouldRetainOldRS.getClusteredVariantEntity(),
                                 this.mongoTemplate.getCollectionName(clusteringWriter.getClusteredVariantCollection(
-                                        hashThatShouldRetainOldRS.getLeft().getAccession()))
+                                        hashThatShouldRetainOldRS.getClusteredVariantEntity().getAccession()))
         );
         return splitCandidates.stream()
-                              .filter(candidate -> !(candidate.getMiddle().equals(
-                                      hashThatShouldRetainOldRS.getMiddle())))
-                              .map(Triple::getMiddle)
+                              .map(SplitDeterminants::getRsHash)
+                              .filter(rsHash -> !(rsHash.equals(hashThatShouldRetainOldRS.getRsHash())))
                               .collect(Collectors.toList());
     }
 }

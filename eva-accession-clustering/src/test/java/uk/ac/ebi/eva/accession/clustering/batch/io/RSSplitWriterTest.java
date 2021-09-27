@@ -74,12 +74,6 @@ public class RSSplitWriterTest {
 
     private static final String ASSEMBLY = "GCA_000000001.1";
 
-    private static final String DBSNP_SUBMITTED_VARIANT_COLLECTION = "dbsnpSubmittedVariantEntity";
-
-    private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
-
-    private static final String SUBMITTED_VARIANT_OPERATION_COLLECTION = "submittedVariantOperationEntity";
-
     @Rule
     public final ExpectedException thrown = ExpectedException.none();
 
@@ -206,8 +200,7 @@ public class RSSplitWriterTest {
 
         // Per splitting policy, ensure that SS1 and SS2 get to retain the old RS
         // Even though locus with start 100, 101 and 102 have equal number of supporting variants
-        // the lexicographic ordering of hash components (chr + start + type) breaks the tie
-        // in favor of associating RS1 with the locus 100
+        // the group SS1 and SS2 with locus 100 has the oldest SS ID and gets to keep the old RS ID
         List<AccessionWrapper<ISubmittedVariant, String, Long>> ssAssociatedWithRS1 =
                 submittedVariantAccessioningService.getByClusteredVariantAccessionIn(
                         Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci));

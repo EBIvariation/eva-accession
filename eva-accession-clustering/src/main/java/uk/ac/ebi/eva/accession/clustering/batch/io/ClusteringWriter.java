@@ -749,7 +749,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return assignedAccessions.get(hash);
     }
 
-    private String getClusteredVariantHash(ISubmittedVariant submittedVariant) {
+    protected String getClusteredVariantHash(ISubmittedVariant submittedVariant) {
         ClusteredVariant clusteredVariant = toClusteredVariant(submittedVariant);
         String hash = clusteredHashingFunction.apply(clusteredVariant);
         return hash;

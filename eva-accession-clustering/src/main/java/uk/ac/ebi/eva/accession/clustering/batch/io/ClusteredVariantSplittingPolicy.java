@@ -15,25 +15,69 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
-import org.apache.commons.lang3.tuple.Triple;
-
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+
+import java.util.Objects;
 
 /**
  * This class represents the policy for choosing which RS ID to keep when 2 of them are split.
  */
 public class ClusteredVariantSplittingPolicy {
 
+    public static class SplitDeterminants {
+        private final ClusteredVariantEntity clusteredVariantEntity;
+        private final String rsHash;
+        private final int numSupportingVariants;
+        private final long oldestSSID;
+
+        public SplitDeterminants(ClusteredVariantEntity clusteredVariantEntity, String rsHash,
+                                 int numSupportingVariants,
+                                 long oldestSSID) {
+            this.clusteredVariantEntity = clusteredVariantEntity;
+            this.rsHash = rsHash;
+            this.numSupportingVariants = numSupportingVariants;
+            this.oldestSSID = oldestSSID;
+        }
+
+        public ClusteredVariantEntity getClusteredVariantEntity() {
+            return clusteredVariantEntity;
+        }
+
+        public String getRsHash() {
+            return rsHash;
+        }
+
+        public int getNumSupportingVariants() {
+            return numSupportingVariants;
+        }
+
+        public long getOldestSSID() {
+            return oldestSSID;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SplitDeterminants that = (SplitDeterminants) o;
+            return numSupportingVariants == that.numSupportingVariants && oldestSSID == that.oldestSSID
+                    && clusteredVariantEntity.equals(that.clusteredVariantEntity) && rsHash.equals(that.rsHash);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(clusteredVariantEntity, rsHash, numSupportingVariants, oldestSSID);
+        }
+    }
+
     public static class SplitPriority {
 
         // Triple containing the RS, corresponding hash and the number of variants with that hash
-        public final Triple<ClusteredVariantEntity, String, Integer> hashThatShouldRetainOldRS;
+        public final SplitDeterminants hashThatShouldRetainOldRS;
 
-        public final Triple<ClusteredVariantEntity, String, Integer> hashThatShouldGetNewRS;
+        public final SplitDeterminants hashThatShouldGetNewRS;
 
-        public SplitPriority(Triple<ClusteredVariantEntity, String, Integer> hashThatShouldRetainOldRS,
-                             Triple<ClusteredVariantEntity, String, Integer> hashThatShouldGetNewRS) {
+        public SplitPriority(SplitDeterminants hashThatShouldRetainOldRS, SplitDeterminants hashThatShouldGetNewRS) {
             this.hashThatShouldRetainOldRS = hashThatShouldRetainOldRS;
             this.hashThatShouldGetNewRS = hashThatShouldGetNewRS;
         }
@@ -41,20 +85,18 @@ public class ClusteredVariantSplittingPolicy {
 
     /**
      * At the moment, the priority is just to keep the variant locus with the most support and split the other
-     * Use lexicographic order of hash components (asm, contig, start, type) as the tie-breaker
+     * Use oldest supporting SS ID as the tie-breaker
      * TODO: Use more sophisticated tie-breakers laid out in the document below if/when possible
      *
      * @see
      * <a href="https://www.ebi.ac.uk/seqdb/confluence/pages/worddav/preview.action?fileName=VAR-RSIDAssignment-100220-1039-34.pdf&pageId=115948132">
      * dbSNP policies for assigning RS IDs</a>
      */
-    public static SplitPriority prioritise(Triple<ClusteredVariantEntity, String, Integer>
-                                                   firstRSHashAndNumberOfSupportingVariants,
-                                           Triple<ClusteredVariantEntity, String, Integer>
-                                                   secondRSHashAndNumberOfSupportingVariants) {
+    public static SplitPriority prioritise(SplitDeterminants firstRSHashSplitDeterminants,
+                                           SplitDeterminants secondRSHashSplitDeterminants) {
 
-        ClusteredVariantEntity firstRS = firstRSHashAndNumberOfSupportingVariants.getLeft();
-        ClusteredVariantEntity secondRS = secondRSHashAndNumberOfSupportingVariants.getLeft();
+        ClusteredVariantEntity firstRS = firstRSHashSplitDeterminants.clusteredVariantEntity;
+        ClusteredVariantEntity secondRS = secondRSHashSplitDeterminants.clusteredVariantEntity;
 
         // Split is only valid for variants sharing the same RS
         if (!firstRS.getAccession().equals(secondRS.getAccession())) {
@@ -69,26 +111,23 @@ public class ClusteredVariantSplittingPolicy {
                                                        + firstRS.getHashedMessage());
         }
 
-        Integer numSupportingVariantsForFirstHash = firstRSHashAndNumberOfSupportingVariants.getRight();
-        Integer numSupportingVariantsForSecondHash = secondRSHashAndNumberOfSupportingVariants.getRight();
+        int numSupportingVariantsForFirstHash = firstRSHashSplitDeterminants.numSupportingVariants;
+        int numSupportingVariantsForSecondHash = secondRSHashSplitDeterminants.numSupportingVariants;
 
         if (numSupportingVariantsForFirstHash > numSupportingVariantsForSecondHash) {
-            return new SplitPriority(firstRSHashAndNumberOfSupportingVariants,
-                                     secondRSHashAndNumberOfSupportingVariants);
+            return new SplitPriority(firstRSHashSplitDeterminants,
+                                     secondRSHashSplitDeterminants);
         } else if (numSupportingVariantsForSecondHash > numSupportingVariantsForFirstHash) {
-            return new SplitPriority(secondRSHashAndNumberOfSupportingVariants,
-                                     firstRSHashAndNumberOfSupportingVariants);
+            return new SplitPriority(secondRSHashSplitDeterminants,
+                                     firstRSHashSplitDeterminants);
         } else {
-            // If two RS have equal number of supporting loci,
-            // use lexicographic ordering of hash components as a tie-breaker
-            // https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-
-            ClusteredVariantSummaryFunction summaryFunction = new ClusteredVariantSummaryFunction();
-            if (summaryFunction.apply(firstRS).compareTo(summaryFunction.apply(secondRS)) < 0) {
-                return new SplitPriority(firstRSHashAndNumberOfSupportingVariants,
-                                         secondRSHashAndNumberOfSupportingVariants);
+            // If two hashes have the same number of supporting loci
+            // use the oldest supporting SS ID as the tie-breaker and that gets to retain the RS-hash association
+            // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=686889730
+            if (firstRSHashSplitDeterminants.oldestSSID < secondRSHashSplitDeterminants.oldestSSID) {
+                return new SplitPriority(firstRSHashSplitDeterminants, secondRSHashSplitDeterminants);
             } else {
-                return new SplitPriority(secondRSHashAndNumberOfSupportingVariants,
-                                         firstRSHashAndNumberOfSupportingVariants);
+                return new SplitPriority(secondRSHashSplitDeterminants, firstRSHashSplitDeterminants);
             }
         }
     }
