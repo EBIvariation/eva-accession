@@ -27,19 +27,26 @@ import org.springframework.context.annotation.Configuration;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 
 @Configuration
 @EnableBatchProcessing
 public class ClusteringFromMongoJobConfiguration {
 
     @Bean(CLUSTERING_FROM_MONGO_JOB)
-    public Job clusteringFromMongoJob(@Qualifier(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringClusteredVariantsFromMongoStep,
-                                      @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
-                                      JobBuilderFactory jobBuilderFactory) {
+    public Job clusteringFromMongoJob(
+            @Qualifier(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringClusteredVariantsFromMongoStep,
+            @Qualifier(PROCESS_RS_MERGE_CANDIDATES_STEP) Step processRSMergeCandidatesStep,
+            @Qualifier(PROCESS_RS_SPLIT_CANDIDATES_STEP) Step processRSSplitCandidatesStep,
+            @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
+            JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
-                .incrementer(new RunIdIncrementer())
-                .start(clusteringClusteredVariantsFromMongoStep)
-                .next(clusteringNonClusteredVariantsFromMongoStep)
-                .build();
+                                .incrementer(new RunIdIncrementer())
+                                .start(clusteringClusteredVariantsFromMongoStep)
+                                .next(processRSMergeCandidatesStep)
+                                .next(processRSSplitCandidatesStep)
+                                .next(clusteringNonClusteredVariantsFromMongoStep)
+                                .build();
     }
 }

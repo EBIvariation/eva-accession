@@ -63,7 +63,8 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
     }
 
     @Bean(RS_SPLIT_CANDIDATES_READER)
-    public ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader(MongoTemplate mongoTemplate, InputParameters parameters) {
+    public ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader(MongoTemplate mongoTemplate,
+                                                                               InputParameters parameters) {
         MongoItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoItemReader<>();
         mongoItemReader.setTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);
@@ -78,7 +79,8 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
     }
 
     @Bean(RS_MERGE_CANDIDATES_READER)
-    public ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader(MongoTemplate mongoTemplate, InputParameters parameters) {
+    public ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader(MongoTemplate mongoTemplate,
+                                                                               InputParameters parameters) {
         MongoItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoItemReader<>();
         mongoItemReader.setTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);
