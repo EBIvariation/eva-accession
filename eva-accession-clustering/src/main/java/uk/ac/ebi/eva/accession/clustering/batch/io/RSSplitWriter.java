@@ -42,6 +42,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -53,6 +54,14 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
     private final ClusteringWriter clusteringWriter;
 
     private final MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator;
+
+    private static final String ACCESSION_ATTRIBUTE = "accession";
+
+    private static final String EVENT_TYPE_ATTRIBUTE = "eventType";
+
+    private static final String SPLIT_INTO_ATTRIBUTE = "splitInto";
+
+    private static final String ASSEMBLY_ATTRIBUTE_IN_CLUSTERED_OPERATIONS_COLLECTION = "inactiveObjects.asm";
 
     private final MongoTemplate mongoTemplate;
 
@@ -110,27 +119,37 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
     private void issueNewRSForHashes(List<String> hashesThatShouldGetNewRS,
                                      List<SubmittedVariantInactiveEntity> submittedVariantInactiveEntities)
             throws AccessionCouldNotBeGeneratedException {
-        for (SubmittedVariantInactiveEntity inactiveEntity: submittedVariantInactiveEntities) {
-            ClusteredVariantEntity clusteredVariantEntity =
-                    clusteringWriter.toClusteredVariantEntity(inactiveEntity.toSubmittedVariantEntity());
-            Long oldRSAccession = clusteredVariantEntity.getAccession();
-            if (hashesThatShouldGetNewRS.contains(clusteredVariantEntity.getHashedMessage())) {
+        Map<String, List<SubmittedVariantEntity>> rsHashAndAssociatedSS =
+                submittedVariantInactiveEntities
+                .stream()
+                .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                .collect(Collectors.groupingBy(this::getRSHashForSS));
+        for (String rsHash: rsHashAndAssociatedSS.keySet()) {
+            if (hashesThatShouldGetNewRS.contains(rsHash)) {
                 Long newRSAccession =
                         this.clusteredVariantAccessionGenerator.generateAccessions(1)[0];
-                associateNewRSToSS(newRSAccession, inactiveEntity);
-                writeRSUpdateOperation(oldRSAccession, newRSAccession, clusteredVariantEntity);
-                writeSSUpdateOperation(oldRSAccession, newRSAccession, inactiveEntity);
+                List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);
+                for (SubmittedVariantEntity submittedVariantEntity: associatedSSEntries) {
+                    Long oldRSAccession =  submittedVariantEntity.getClusteredVariantAccession();
+                    associateNewRSToSS(newRSAccession, submittedVariantEntity);
+                    writeRSUpdateOperation(oldRSAccession, newRSAccession,
+                                           clusteringWriter.toClusteredVariantEntity(submittedVariantEntity));
+                    writeSSUpdateOperation(oldRSAccession, newRSAccession, submittedVariantEntity);
+                }
             }
         }
     }
 
+    private String getRSHashForSS(SubmittedVariantEntity submittedVariantEntity) {
+        return clusteringWriter.toClusteredVariantEntity(submittedVariantEntity).getHashedMessage();
+    }
+
     private void associateNewRSToSS(Long newRSAccession,
-                                    SubmittedVariantInactiveEntity submittedVariantInactiveEntity) {
+                                    SubmittedVariantEntity submittedVariantEntity) {
         final String accessionAttribute = "accession";
         final String assemblyAttribute = "seq";
         final String clusteredVariantAttribute = "rs";
 
-        SubmittedVariantEntity submittedVariantEntity = submittedVariantInactiveEntity.toSubmittedVariantEntity();
         Class<? extends SubmittedVariantEntity> submittedVariantClass =
                 clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity) ?
                         SubmittedVariantEntity.class : DbsnpSubmittedVariantEntity.class;
@@ -150,12 +169,18 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 " was issued to split from rs" + oldRSAccession + ".";
         splitOperation.fill(EventType.RS_SPLIT, oldRSAccession, newRSAccession, splitOperationDescription,
                             Collections.singletonList(new ClusteredVariantInactiveEntity(clusteredVariantEntity)));
-        this.mongoTemplate.insert(splitOperation, this.mongoTemplate.getCollectionName(operationClass));
+        Query queryToCheckPreviousRSOperation = query(where(ACCESSION_ATTRIBUTE).is(oldRSAccession))
+                .addCriteria(where(EVENT_TYPE_ATTRIBUTE).is(EventType.RS_SPLIT))
+                .addCriteria(where(SPLIT_INTO_ATTRIBUTE).is(newRSAccession))
+                .addCriteria(where(ASSEMBLY_ATTRIBUTE_IN_CLUSTERED_OPERATIONS_COLLECTION)
+                                     .is(clusteredVariantEntity.getAssemblyAccession()));
+        if (this.mongoTemplate.find(queryToCheckPreviousRSOperation, operationClass).isEmpty()) {
+            this.mongoTemplate.insert(splitOperation, this.mongoTemplate.getCollectionName(operationClass));
+        }
     }
 
     private void writeSSUpdateOperation(Long oldRSAccession, Long newRSAccession,
-                                        SubmittedVariantInactiveEntity submittedVariantInactiveEntity) {
-        SubmittedVariantEntity submittedVariantEntity = submittedVariantInactiveEntity.toSubmittedVariantEntity();
+                                        SubmittedVariantEntity submittedVariantEntity) {
         // Choose which operation collection to write to: EVA or dbSNP
         Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                 operationClass = clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity) ?
@@ -163,8 +188,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         SubmittedVariantOperationEntity updateOperation = new SubmittedVariantOperationEntity();
         String updateOperationDescription = "SS was associated with the split RS rs" + newRSAccession
                 + " that was split from rs" + oldRSAccession + " after remapping.";
-        updateOperation.fill(EventType.UPDATED, updateOperationDescription,
-                             Collections.singletonList(submittedVariantInactiveEntity));
+        updateOperation.fill(EventType.UPDATED, submittedVariantEntity.getAccession(), updateOperationDescription,
+                             Collections.singletonList(new SubmittedVariantInactiveEntity(submittedVariantEntity)));
         this.mongoTemplate.insert(updateOperation, this.mongoTemplate.getCollectionName(operationClass));
     }
 
