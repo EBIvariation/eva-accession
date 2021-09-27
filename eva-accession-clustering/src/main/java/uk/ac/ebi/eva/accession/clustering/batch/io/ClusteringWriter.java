@@ -187,7 +187,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count();
             clusteringCounts.addClusteredVariantsCreated(newAccessions);
         }
-        checkForMerges(submittedVariantEntities);
     }
 
     /**
@@ -459,22 +458,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         VariantType variantType = VariantClassifier.getVariantClassification(reference, alternate);
         return variantType;
     }
-
-    private void checkForMerges(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws AccessionDoesNotExistException {
-        for (SubmittedVariantEntity submittedVariant : submittedVariantEntities) {
-            if (submittedVariant.getClusteredVariantAccession() != null && submittedVariant.getRemappedFrom() != null) {
-                String hash = clusteredHashingFunction.apply(toClusteredVariant(submittedVariant));
-                Long accessionInDatabase = assignedAccessions.get(hash);
-                //accessionInDatabase will be null if it was excluded for being a multimap
-                if (accessionInDatabase != null &&
-                        !submittedVariant.getClusteredVariantAccession().equals(accessionInDatabase)) {
-                    merge(submittedVariant.getClusteredVariantAccession(), hash, accessionInDatabase);
-                }
-            }
-        }
-    }
-
     protected void merge(Long providedAccession, String hash, Long accessionInDatabase)
             throws AccessionDoesNotExistException {
         Priority prioritised = prioritise(providedAccession, accessionInDatabase);
