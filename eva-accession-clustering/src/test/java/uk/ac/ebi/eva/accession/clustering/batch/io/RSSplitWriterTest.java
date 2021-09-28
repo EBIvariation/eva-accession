@@ -24,7 +24,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.springframework.batch.item.ItemReader;
+
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,20 +35,19 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOperationRepository;
-import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantOperationRepository;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
 import java.util.Arrays;
@@ -58,10 +57,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_CANDIDATES_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
 
 @RunWith(SpringRunner.class)
@@ -84,10 +81,6 @@ public class RSSplitWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    @Qualifier(RS_SPLIT_CANDIDATES_READER)
-    private ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
-
-    @Autowired
     @Qualifier(RS_SPLIT_WRITER)
     private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
 
@@ -106,16 +99,10 @@ public class RSSplitWriterTest {
     private SubmittedVariantEntity ss1, ss2, ss3, ss4, ss5, ss6;
 
     @Autowired
-    private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
-
-    @Autowired
     private SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
     @Autowired
-    private ClusteredVariantOperationRepository clusteredVariantOperationRepository;
-
-    @Autowired
-    private SubmittedVariantOperationRepository submittedVariantOperationRepository;
+    private ClusteringCounts clusteringCounts;
 
     @Before
     public void setUp() {
@@ -125,6 +112,7 @@ public class RSSplitWriterTest {
     @After
     public void tearDown() {
         cleanupDB();
+        clusteringCounts = new ClusteringCounts();
     }
 
     private void cleanupDB() {
@@ -148,11 +136,14 @@ public class RSSplitWriterTest {
         ss3 = createSS(3L, sameRSAccessionToBeUsedForDifferentLoci, 101L, "A", "G");
         ss4 = createSS(4L, sameRSAccessionToBeUsedForDifferentLoci, 102L, "A", "C");
 
-        ClusteredVariantEntity rs1 = clusteringWriter.toClusteredVariantEntity(ss1);
+        // Create multiple entries in clustered variant collection - one for each distinct loci but with the same accession
+        List<ClusteredVariantEntity> multipleEntriesWithSameRS = Stream.of(ss1, ss2, ss4)
+                                                                       .map(clusteringWriter::toClusteredVariantEntity)
+                                                                       .collect(Collectors.toList());
 
         mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3), DbsnpSubmittedVariantEntity.class);
-        mongoTemplate.insert(Arrays.asList(ss4), SubmittedVariantEntity.class);
-        mongoTemplate.insert(Collections.singletonList(rs1), ClusteredVariantEntity.class);
+        mongoTemplate.insert(Collections.singletonList(ss4), SubmittedVariantEntity.class);
+        mongoTemplate.insert(multipleEntriesWithSameRS, DbsnpClusteredVariantEntity.class);
         SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
         splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                             ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
@@ -171,6 +162,14 @@ public class RSSplitWriterTest {
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss2.getAccession(), ss3.getAccession())));
 
+        /* Check clustering counts */
+        // 2 new RS IDs created for hashes with start positions 100 and 102
+        assertEquals(2, clusteringCounts.getClusteredVariantsCreated());
+        // 2 RS split events for hashes with start positions 100 and 102
+        assertEquals(2, clusteringCounts.getClusteredVariantsRSSplit());
+        // 2 new RS IDs associated with ss1 and ss4
+        assertEquals(2, clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
+        assertEquals(2, clusteringCounts.getSubmittedVariantsUpdatedRs());
     }
 
     @Test
@@ -184,15 +183,18 @@ public class RSSplitWriterTest {
         ss5 = createSS(5L, sameRSAccessionToBeUsedForDifferentLoci, 102L, "G", "T");
         ss6 = createSS(6L, sameRSAccessionToBeUsedForDifferentLoci, 102L, "G", "C");
 
-        ClusteredVariantEntity rs1 = clusteringWriter.toClusteredVariantEntity(ss1);
+        // Create multiple entries in clustered variant collection - one for each distinct loci but with the same accession
+        List<ClusteredVariantEntity> multipleEntriesWithSameRS = Stream.of(ss1, ss3, ss5)
+                                                                       .map(clusteringWriter::toClusteredVariantEntity)
+                                                                       .collect(Collectors.toList());
 
         mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3), DbsnpSubmittedVariantEntity.class);
-        mongoTemplate.insert(Arrays.asList(ss4), SubmittedVariantEntity.class);
-        mongoTemplate.insert(Collections.singletonList(rs1), ClusteredVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(ss4, ss5, ss6), SubmittedVariantEntity.class);
+        mongoTemplate.insert(multipleEntriesWithSameRS, DbsnpClusteredVariantEntity.class);
         SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
         splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                             ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
-                            Stream.of(ss1, ss2, ss3, ss4).map(SubmittedVariantInactiveEntity::new)
+                            Stream.of(ss1, ss2, ss3, ss4, ss5, ss6).map(SubmittedVariantInactiveEntity::new)
                                   .collect(Collectors.toList())
         );
         mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
@@ -208,5 +210,13 @@ public class RSSplitWriterTest {
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss1.getAccession(), ss2.getAccession())));
 
+        /* Check clustering counts */
+        // 2 entries created for hashes with start positions 100 and 102
+        assertEquals(2, clusteringCounts.getClusteredVariantsCreated());
+        // 2 RS split events for hashes with start positions 100 and 102
+        assertEquals(2, clusteringCounts.getClusteredVariantsRSSplit());
+        // 2 new RS IDs associated with SS groups: ss3,ss4 and ss5,ss6
+        assertEquals(4, clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
+        assertEquals(4, clusteringCounts.getSubmittedVariantsUpdatedRs());
     }
 }

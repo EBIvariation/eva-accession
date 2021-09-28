@@ -17,6 +17,9 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
 
+import com.mongodb.client.result.UpdateResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -24,12 +27,13 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantSplittingPolicy.SplitDeterminants;
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -38,6 +42,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -52,13 +57,17 @@ import static org.springframework.data.mongodb.core.query.Update.update;
 
 public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity> {
 
+    private static final Logger logger = LoggerFactory.getLogger(RSSplitWriter.class);
+
     private final ClusteringWriter clusteringWriter;
 
-    private final MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator;
+    private final ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     private static final String ACCESSION_ATTRIBUTE = "accession";
 
     private static final String EVENT_TYPE_ATTRIBUTE = "eventType";
+
+    private static final String ID_ATTRIBUTE = "_id";
 
     private static final String SPLIT_INTO_ATTRIBUTE = "splitInto";
 
@@ -66,12 +75,16 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private final MongoTemplate mongoTemplate;
 
+    private final ClusteringCounts clusteringCounts;
+
     public RSSplitWriter(ClusteringWriter clusteringWriter,
-                         MonotonicAccessionGenerator<IClusteredVariant> clusteredVariantAccessionGenerator,
-                         MongoTemplate mongoTemplate) {
+                         ClusteredVariantAccessioningService clusteredVariantAccessioningService,
+                         MongoTemplate mongoTemplate,
+                         ClusteringCounts clusteringCounts) {
         this.clusteringWriter = clusteringWriter;
-        this.clusteredVariantAccessionGenerator = clusteredVariantAccessionGenerator;
+        this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
+        this.clusteringCounts = clusteringCounts;
     }
 
     @Override
@@ -133,11 +146,20 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 .collect(Collectors.groupingBy(this::getRSHashForSS));
         for (String rsHash: rsHashAndAssociatedSS.keySet()) {
             if (hashesThatShouldGetNewRS.contains(rsHash)) {
+                // Remove entry in clustered variant collections if hash already exists
+                removeExistingHash(rsHash);
+                // Construct an RS object from "one of the" variants that contain the RS hash
+                ClusteredVariantEntity clusteredVariantEntity = clusteringWriter.toClusteredVariantEntity(
+                        rsHashAndAssociatedSS.get(rsHash).get(0));
                 Long newRSAccession =
-                        this.clusteredVariantAccessionGenerator.generateAccessions(1)[0];
+                        this.clusteredVariantAccessioningService.getOrCreate(
+                                Collections.singletonList(clusteredVariantEntity)).get(0).getAccession();
+                this.clusteringCounts.addClusteredVariantsCreated(1);
                 List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);
                 for (SubmittedVariantEntity submittedVariantEntity: associatedSSEntries) {
                     Long oldRSAccession =  submittedVariantEntity.getClusteredVariantAccession();
+                    logger.info("RS split operation: Associating ss{} to newly issued rs{}...",
+                                submittedVariantEntity.getAccession(), newRSAccession);
                     associateNewRSToSS(newRSAccession, submittedVariantEntity);
                     writeRSUpdateOperation(oldRSAccession, newRSAccession,
                                            clusteringWriter.toClusteredVariantEntity(submittedVariantEntity));
@@ -145,6 +167,12 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 }
             }
         }
+    }
+
+    private void removeExistingHash(String rsHash) {
+        Query hashToLookFor = query(where(ID_ATTRIBUTE).is(rsHash));
+        this.mongoTemplate.remove(hashToLookFor, ClusteredVariantEntity.class);
+        this.mongoTemplate.remove(hashToLookFor, DbsnpClusteredVariantEntity.class);
     }
 
     private String getRSHashForSS(SubmittedVariantEntity submittedVariantEntity) {
@@ -163,7 +191,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         Query queryToFindSS = query(where(assemblyAttribute).is(submittedVariantEntity.getReferenceSequenceAccession()))
                 .addCriteria(where(accessionAttribute).is(submittedVariantEntity.getAccession()));
         Update updateRS = update(clusteredVariantAttribute, newRSAccession);
-        this.mongoTemplate.updateMulti(queryToFindSS, updateRS, submittedVariantClass);
+        UpdateResult result = this.mongoTemplate.updateMulti(queryToFindSS, updateRS, submittedVariantClass);
+        this.clusteringCounts.addSubmittedVariantsUpdatedRs(result.getModifiedCount());
     }
 
     private void writeRSUpdateOperation(Long oldRSAccession, Long newRSAccession,
@@ -183,6 +212,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                                      .is(clusteredVariantEntity.getAssemblyAccession()));
         if (this.mongoTemplate.find(queryToCheckPreviousRSOperation, operationClass).isEmpty()) {
             this.mongoTemplate.insert(splitOperation, this.mongoTemplate.getCollectionName(operationClass));
+            this.clusteringCounts.addClusteredVariantsRSSplit(1);
         }
     }
 
@@ -198,6 +228,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         updateOperation.fill(EventType.UPDATED, submittedVariantEntity.getAccession(), updateOperationDescription,
                              Collections.singletonList(new SubmittedVariantInactiveEntity(submittedVariantEntity)));
         this.mongoTemplate.insert(updateOperation, this.mongoTemplate.getCollectionName(operationClass));
+        this.clusteringCounts.addSubmittedVariantsUpdateOperationWritten(1);
     }
 
     /**
@@ -215,10 +246,14 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                     lastPrioritizedHash, splitCandidates.get(i)).hashThatShouldRetainOldRS;
         }
         final SplitDeterminants hashThatShouldRetainOldRS = lastPrioritizedHash;
-        this.mongoTemplate.save(hashThatShouldRetainOldRS.getClusteredVariantEntity(),
-                                this.mongoTemplate.getCollectionName(clusteringWriter.getClusteredVariantCollection(
-                                        hashThatShouldRetainOldRS.getClusteredVariantEntity().getAccession()))
-        );
+        Class<? extends ClusteredVariantEntity> rsCollectionToUse = clusteringWriter.getClusteredVariantCollection(
+                hashThatShouldRetainOldRS.getClusteredVariantEntity().getAccession());
+        if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashThatShouldRetainOldRS.getRsHash())),
+                                    rsCollectionToUse).isEmpty()) {
+            this.mongoTemplate.insert(hashThatShouldRetainOldRS.getClusteredVariantEntity(),
+                                      this.mongoTemplate.getCollectionName(rsCollectionToUse));
+            this.clusteringCounts.addClusteredVariantsCreated(1);
+        }
         return splitCandidates.stream()
                               .map(SplitDeterminants::getRsHash)
                               .filter(rsHash -> !(rsHash.equals(hashThatShouldRetainOldRS.getRsHash())))
