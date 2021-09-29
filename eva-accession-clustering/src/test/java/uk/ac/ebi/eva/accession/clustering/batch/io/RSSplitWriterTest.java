@@ -106,16 +106,17 @@ public class RSSplitWriterTest {
 
     @Before
     public void setUp() {
-        cleanupDB();
+        cleanup();
     }
 
     @After
     public void tearDown() {
-        cleanupDB();
+        cleanup();
     }
 
-    private void cleanupDB() {
+    private void cleanup() {
         mongoClient.dropDatabase(TEST_DB);
+        clusteringCounts.clearCounts();
     }
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,

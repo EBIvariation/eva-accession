@@ -34,6 +34,10 @@ public class ClusteringCounts {
     private long submittedVariantsUpdateOperationWritten;
 
     public ClusteringCounts() {
+        clearCounts();
+    }
+
+    public void clearCounts() {
         this.clusteredVariantsCreated = 0;
         this.clusteredVariantsUpdated = 0;
         this.clusteredVariantsMergeOperationsWritten = 0;

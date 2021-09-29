@@ -213,6 +213,7 @@ public class RSMergeWriterTest {
 
     private void cleanup() {
         mongoClient.dropDatabase(TEST_DB);
+        clusteringCounts.clearCounts();
     }
 
     @Before
