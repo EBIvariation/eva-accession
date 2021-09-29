@@ -302,8 +302,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private List<SubmittedVariantEntity> getAllSubmittedVariantsWithClusteringAccession(String assembly, Long accession) {
+        List<SubmittedVariantEntity> results = new ArrayList<>();
         Query querySubmitted = query(where("seq").is(assembly).and("rs").is(accession));
-        return mongoTemplate.find(querySubmitted, SubmittedVariantEntity.class);
+        results.addAll(mongoTemplate.find(querySubmitted, SubmittedVariantEntity.class));
+        results.addAll(mongoTemplate.find(querySubmitted, DbsnpSubmittedVariantEntity.class));
+        return results;
     }
 
     private boolean checkIfCandidateForMerge(SubmittedVariantEntity submittedVariantEntity,

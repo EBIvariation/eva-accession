@@ -134,8 +134,6 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         issueNewRSForHashes(hashesThatShouldGetNewRS, submittedVariantOperationEntity.getInactiveObjects());
     }
 
-
-
     private void issueNewRSForHashes(List<String> hashesThatShouldGetNewRS,
                                      List<SubmittedVariantInactiveEntity> submittedVariantInactiveEntities)
             throws AccessionCouldNotBeGeneratedException {

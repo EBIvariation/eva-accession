@@ -34,6 +34,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
@@ -44,13 +45,25 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
 import javax.sql.DataSource;
@@ -64,6 +77,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -83,6 +97,18 @@ public class ClusteringCommandLineRunnerTest {
 
     private static final String TEST_DB = "test-db";
 
+    private static final int TAXONOMY = 60711;
+
+    private static final String ASSEMBLY = "GCA_000000001.1";
+
+    private static final String PROJECT = "PRJ1";
+
+    @Autowired
+    private Long accessioningMonotonicInitSs;
+
+    @Autowired
+    private Long accessioningMonotonicInitRs;
+
     @Autowired
     private InputParameters inputParameters;
 
@@ -100,6 +126,9 @@ public class ClusteringCommandLineRunnerTest {
 
     @Autowired
     private VcfReader vcfReader;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     //Required by nosql-unit
     @Autowired
@@ -120,10 +149,30 @@ public class ClusteringCommandLineRunnerTest {
 
     private boolean originalInputParametersCaptured = false;
 
+    private SubmittedVariantEntity evaSS1, dbsnpSS2, evaSS3, dbsnpSS4, evaSS5, dbsnpSS6, dbsnpSS7, evaSS8, evaSS9;
+
+    private ClusteredVariantEntity dbsnpRS1, evaRS2, dbsnpRS3, evaRS4, dbsnpRS5;
+
     @Autowired
     private RestTemplate restTemplate;
 
     private MockRestServiceServer mockServer;
+
+    private static class RSLocus {
+        String assembly;
+        String contig;
+        long start;
+        VariantType type;
+
+        public RSLocus(String assembly, String contig, long start, VariantType type) {
+            this.assembly = assembly;
+            this.contig = contig;
+            this.start = start;
+            this.type = type;
+        }
+    }
+
+    private RSLocus rsLocus1, rsLocus2, rsLocus3, rsLocus4, rsLocus5;
 
     @Autowired
     private CountParameters countParameters;
@@ -157,13 +206,16 @@ public class ClusteringCommandLineRunnerTest {
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
+        mongoTemplate.getDb().drop();
     }
 
     @After
     public void tearDown() {
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
+        mongoTemplate.getDb().drop();
     }
+
 
     @Test
     @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
@@ -171,6 +223,97 @@ public class ClusteringCommandLineRunnerTest {
         runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    public void runClusteringMongoJobOnRemappedVariantsWithNoErrors() throws JobExecutionException {
+        /*
+         * SS           RS                  RS_LOCUS    Remapped
+         * evaSS1       dbsnpRS1            rsLocus1    Y
+         * dbsnpSS2     evaRS2              rsLocus1    Y
+         * evaSS3       evaRS2              rsLocus2    N
+         * dbsnpSS4     dbsnpRS3            rsLocus3    N
+         * evaSS5       evaRS4              rsLocus3    Y
+         * dbsnpSS6     evaRS4              rsLocus4    N
+         * dbsnpSS7     evaRS4              rsLocus4    Y
+         * evaSS8       Unassigned          rsLocus4    N
+         * evaSS9       dbsnpRS5            rsLocus5    Y
+         */
+        setupRSAndSS();
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        /*
+        See results here: https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=972582890
+        */
+
+    }
+
+    private void setupRSAndSS() {
+        rsLocus1 = new RSLocus(ASSEMBLY, "chr1", 100L,  VariantType.SNV);
+        rsLocus2 = new RSLocus(ASSEMBLY, "chr1", 101L,  VariantType.SNV);
+        rsLocus3 = new RSLocus(ASSEMBLY, "chr1", 102L,  VariantType.SNV);
+        rsLocus4 = new RSLocus(ASSEMBLY, "chr1", 103L,  VariantType.SNV);
+        rsLocus5 = new RSLocus(ASSEMBLY, "chr1", 104L,  VariantType.SNV);
+        dbsnpRS1 = createRS(1L, rsLocus1, true);
+        evaRS2 = createRS(5L, rsLocus2, false);
+        dbsnpRS3 = createRS(2L, rsLocus3, false);
+        evaRS4 = createRS(6L, rsLocus3, true);
+        dbsnpRS5 = createRS(3L, rsLocus5, true);
+
+        evaSS1 = createRemappedSS(5L, dbsnpRS1.getAccession(), rsLocus1, "A", "T", true);
+        dbsnpSS2 = createRemappedSS(1L, evaRS2.getAccession(), rsLocus1, "A", "G", true);
+        evaSS3 = createRemappedSS(6L, evaRS2.getAccession(), rsLocus2, "C", "G", false);
+        dbsnpSS4 = createRemappedSS(2L, dbsnpRS3.getAccession(), rsLocus3, "G", "A", false);
+        evaSS5 = createRemappedSS(7L, evaRS4.getAccession(), rsLocus3, "G", "A", true);
+        dbsnpSS6 = createRemappedSS(3L, evaRS4.getAccession(), rsLocus4, "T", "C", false);
+        dbsnpSS7 = createRemappedSS(4L, evaRS4.getAccession(), rsLocus4, "T", "A", true);
+        evaSS8 = createRemappedSS(8L, null, rsLocus4, "T", "G", false);
+        evaSS9 = createRemappedSS(9L, dbsnpRS5.getAccession(), rsLocus5, "A", "T", true);
+    }
+
+    private SubmittedVariantEntity createRemappedSS(Long ssAccession, Long rsAccession, RSLocus rsLocus, String reference,
+                                                    String alternate, boolean remapped) {
+        Function<ISubmittedVariant, String> hashingFunction =  new SubmittedVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY, TAXONOMY, PROJECT, rsLocus.contig,
+                                                                 rsLocus.start, reference, alternate, rsAccession);
+        String hash = hashingFunction.apply(submittedVariant);
+        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(ssAccession, hash, submittedVariant,
+                                                                                   1);
+        if (remapped) {
+            submittedVariantEntity.setRemappedFrom("ASM1");
+        }
+        if (ssAccession >= accessioningMonotonicInitSs) {
+            mongoTemplate.save(submittedVariantEntity, mongoTemplate.getCollectionName(SubmittedVariantEntity.class));
+        } else {
+            mongoTemplate.save(submittedVariantEntity,
+                               mongoTemplate.getCollectionName(DbsnpSubmittedVariantEntity.class));
+        }
+        return submittedVariantEntity;
+    }
+
+    private ClusteredVariantEntity createRS(Long rsAccession, RSLocus rsLocus, boolean remapped) {
+        Function<IClusteredVariant, String> hashingFunction =  new ClusteredVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        ClusteredVariant clusteredVariant = new ClusteredVariant(rsLocus.assembly, TAXONOMY, rsLocus.contig,
+                                                                 rsLocus.start, rsLocus.type, false, null);
+        String hash = hashingFunction.apply(clusteredVariant);
+        ClusteredVariantEntity clusteredVariantEntity = new ClusteredVariantEntity(rsAccession, hash, clusteredVariant);
+        // Note that only SS ID entries are created post remapping.
+        // If we should simulate that environment,
+        // we should not create RS ID entries in the database for remapped variants
+        // like we did for SS IDs. The RS IDs for the remapped assembly will be created after the clustering process.
+        if (!remapped) {
+            if (rsAccession >= accessioningMonotonicInitRs) {
+                mongoTemplate.save(clusteredVariantEntity, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
+            } else {
+                mongoTemplate.save(clusteredVariantEntity,
+                                   mongoTemplate.getCollectionName(DbsnpClusteredVariantEntity.class));
+            }
+        }
+        return clusteredVariantEntity;
     }
 
     @Test

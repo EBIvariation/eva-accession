@@ -1,0 +1,77 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id": "BAE8C696D28B3173552AF2A5692FE29E65A18024",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "T",
+      "alt": "A",
+      "accession": NumberLong(1),
+      "version": 1
+    },
+    {
+      "_id": "FEC73A53FE19D6E331EC0AF31068B2F028BF47D2",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "T",
+      "alt": "G",
+      "accession": NumberLong(2),
+      "version": 1
+    },
+    {
+      "_id": "C444812E92547CFADB70787FCE0DAFED9720F602",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "",
+      "alt": "A",
+      "accession": NumberLong(3),
+      "version": 1
+    },
+    {
+      "_id": "9CE1B7834D34F546333CD632CB2FE65B8D997685",
+      "seq": "GCA_000000001.1",
+      "tax": 1000,
+      "study": "projectId_1",
+      "contig": "1",
+      "start": NumberLong(1000),
+      "ref": "T",
+      "alt": "",
+      "accession": NumberLong(4),
+      "version": 1
+    },
+    {
+      "_id": "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "projectId_1",
+      "contig": "1",
+      "start": NumberLong(3000),
+      "ref": "C",
+      "alt": "G",
+      "accession": NumberLong(5),
+      "version": 1
+    },
+    {
+      "_id": "C195245DADAA13BB00474F66A57A21718B332B5A",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "projectId_1",
+      "contig": "2",
+      "start": NumberLong(3000),
+      "ref": "T",
+      "alt": "G",
+      "accession": NumberLong(5),
+      "version": 1,
+      "rs": NumberLong(1)
+    }
+  ]
+}
