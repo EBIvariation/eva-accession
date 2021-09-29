@@ -166,6 +166,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             throws AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
         if (processClusteredRemappedVariants) {
             Set<SubmittedVariantEntity> processedSubmittedVariants = processClusteredRemappedVariants(submittedVariantEntities);
+            // Determine the "residual" submitted variant entities to be processed
+            // since remapped variants have been handled above i.e., clustered but non-remapped variants
             submittedVariantEntities = Collections.unmodifiableList(submittedVariantEntities.stream()
                             .filter(sve->!processedSubmittedVariants.contains(sve))
                             .collect(Collectors.toList()));
@@ -391,6 +393,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                       Map<Long, SubmittedVariantOperationEntity> rsSplitSVOE) {
         mongoTemplate.insert(clusteredVariantEntities, ClusteredVariantEntity.class);
         mongoTemplate.insert(dbsnpClusteredVariantEntities, DbsnpClusteredVariantEntity.class);
+        this.clusteringCounts.addClusteredVariantsCreated(clusteredVariantEntities.size() +
+                                                                  dbsnpClusteredVariantEntities.size());
 
         List<SubmittedVariantOperationEntity> mergeSVOEInsertEntries = new ArrayList<>();
         List<SubmittedVariantOperationEntity> rsSplitSVOEInsertEntries = new ArrayList<>();
@@ -569,6 +573,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                              ssClusteredUnderTargetRS);
                 mongoTemplate.insert(Collections.singletonList(newSplitCandidateRecord),
                                      SubmittedVariantOperationEntity.class);
+                this.clusteringCounts.addClusteredVariantsRSSplit(1);
             }
         }
     }

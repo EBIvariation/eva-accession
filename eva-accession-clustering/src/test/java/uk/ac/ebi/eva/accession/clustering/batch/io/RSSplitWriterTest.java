@@ -112,7 +112,6 @@ public class RSSplitWriterTest {
     @After
     public void tearDown() {
         cleanupDB();
-        clusteringCounts = new ClusteringCounts();
     }
 
     private void cleanupDB() {

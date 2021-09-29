@@ -44,8 +44,8 @@ public class RSMergeAndSplitWriterConfiguration {
     @Bean(RS_MERGE_WRITER)
     public ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter(
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
-            MongoTemplate mongoTemplate) {
-        return new RSMergeWriter(clusteringWriter, mongoTemplate);
+            MongoTemplate mongoTemplate, ClusteringCounts clusteringCounts) {
+        return new RSMergeWriter(clusteringWriter, mongoTemplate, clusteringCounts);
     }
 
     @Bean(RS_SPLIT_WRITER)

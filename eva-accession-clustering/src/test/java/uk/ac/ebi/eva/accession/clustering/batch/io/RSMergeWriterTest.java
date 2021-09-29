@@ -22,7 +22,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -38,6 +37,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_CANDIDATES_READER;
@@ -79,9 +80,6 @@ public class RSMergeWriterTest {
     private static final String SUBMITTED_VARIANT_COLLECTION = "submittedVariantEntity";
 
     private static final String SUBMITTED_VARIANT_OPERATION_COLLECTION = "submittedVariantOperationEntity";
-
-    @Rule
-    public final ExpectedException thrown = ExpectedException.none();
 
     @Autowired
     private MongoClient mongoClient;
@@ -126,6 +124,9 @@ public class RSMergeWriterTest {
 
     @Autowired
     private SubmittedVariantOperationRepository submittedVariantOperationRepository;
+
+    @Autowired
+    private ClusteringCounts clusteringCounts;
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,
                                             String alternate) {
@@ -210,18 +211,18 @@ public class RSMergeWriterTest {
                              SUBMITTED_VARIANT_OPERATION_COLLECTION);
     }
 
-    private void cleanupDB() {
+    private void cleanup() {
         mongoClient.dropDatabase(TEST_DB);
     }
 
     @Before
     public void setUp() {
-        cleanupDB();
+        cleanup();
     }
 
     @After
     public void tearDown() {
-        cleanupDB();
+        cleanup();
     }
 
     private void assertRSAssociatedWithSS(Long rsAccession, SubmittedVariantEntity submittedVariantEntity)
@@ -274,10 +275,8 @@ public class RSMergeWriterTest {
         assertEquals(Long.valueOf(1L), clusteredVariantAccessioningService.getByAccession(1L).getAccession());
         assertEquals(Long.valueOf(2L), clusteredVariantAccessioningService.getByAccession(2L).getAccession());
 
-        thrown.expect(AccessionMergedException.class);
-        clusteredVariantAccessioningService.getByAccession(4L);
-        thrown.expect(AccessionMergedException.class);
-        clusteredVariantAccessioningService.getByAccession(5L);
+        assertThrows(AccessionMergedException.class, () -> {clusteredVariantAccessioningService.getByAccession(4L);});
+        assertThrows(AccessionMergedException.class, () -> {clusteredVariantAccessioningService.getByAccession(5L);});
 
         //After merge SS-RS associations: rs4 merged to rs1 & rs5 merged to rs2
         /*
@@ -314,19 +313,30 @@ public class RSMergeWriterTest {
         // and hence generate one split candidate event
         // Post-merge SS2, SS5, SS8 and SS9 all share rs2 but have different locus
         // and hence generate a split candidate event
-        assertSplitCandidateEvents(1L, Arrays.asList(1L, 4L, 6L, 7L));
-        assertSplitCandidateEvents(2L, Arrays.asList(2L, 5L, 8L, 9L));
+        List<SubmittedVariantOperationEntity> splitEvents = new ArrayList<>();
+        SubmittedVariantOperationEntity tempObj;
+        while ((tempObj = rsSplitCandidatesReader.read()) != null) {
+                splitEvents.add(tempObj);
+        }
+        assertSplitCandidateEvents(1L, Arrays.asList(1L, 4L, 6L, 7L), splitEvents);
+        assertSplitCandidateEvents(2L, Arrays.asList(2L, 5L, 8L, 9L), splitEvents);
+
+        /* Check clustering counts **/
+        // Only merge destinations RS1 and RS2 will be created
+        // The other two RSs RS4 and RS5 were identified as mergees and hence won't be created if not already present
+        assertEquals(2, this.clusteringCounts.getClusteredVariantsCreated());
+        assertEquals(2, this.clusteringCounts.getClusteredVariantsMergeOperationsWritten());
+        // 5 SS IDs were updated due to RS4 -> RS1 merge and RS5 -> RS2 merge
+        assertEquals(5, this.clusteringCounts.getSubmittedVariantsUpdatedRs());
+        assertEquals(5, this.clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
     }
 
     // Check if a given RS has the participating SS listed in the split candidates event
-    private void assertSplitCandidateEvents(Long rsAccession, List<Long> expectedParticipatingSS) throws Exception {
-
-        List<SubmittedVariantOperationEntity> splitEvents = new ArrayList<>();
-        SubmittedVariantOperationEntity submittedVariantOperationEntity;
-        while ((submittedVariantOperationEntity = rsSplitCandidatesReader.read()) != null) {
-            splitEvents.add(submittedVariantOperationEntity);
-        }
-
+    private void assertSplitCandidateEvents(Long rsAccession, List<Long> expectedParticipatingSS,
+                                            List<SubmittedVariantOperationEntity> splitEvents) throws Exception {
+        splitEvents = splitEvents.stream().filter(e -> e.getInactiveObjects().get(0)
+                                                        .getClusteredVariantAccession().equals(rsAccession))
+                                 .collect(Collectors.toList());
         assertEquals(1, splitEvents.size());
         SubmittedVariantOperationEntity splitEvent = splitEvents.get(0);
         assertEquals("Hash mismatch with " + rsAccession, splitEvent.getReason());

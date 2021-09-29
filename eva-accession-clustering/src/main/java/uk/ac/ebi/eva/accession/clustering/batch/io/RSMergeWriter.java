@@ -25,12 +25,13 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import javax.annotation.Nonnull;
@@ -42,6 +43,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 
 public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity> {
 
@@ -49,9 +52,19 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private final MongoTemplate mongoTemplate;
 
-    public RSMergeWriter(ClusteringWriter clusteringWriter, MongoTemplate mongoTemplate) {
+    private final ClusteringCounts clusteringCounts;
+
+    private static final String ID_ATTRIBUTE = "_id";
+
+    private static final String ACCESSION_ATTRIBUTE = "accession";
+
+    private static final String MERGE_DESTINATION_ATTRIBUTE = "mergeInto";
+
+    public RSMergeWriter(ClusteringWriter clusteringWriter, MongoTemplate mongoTemplate,
+                         ClusteringCounts clusteringCounts) {
         this.clusteringWriter = clusteringWriter;
         this.mongoTemplate = mongoTemplate;
+        this.clusteringCounts = clusteringCounts;
     }
 
     @Override
@@ -90,11 +103,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         ImmutablePair<ClusteredVariantEntity, List<ClusteredVariantEntity>> mergeDestinationAndMergees =
                 getMergeDestinationAndMergees(mergeCandidates);
         ClusteredVariantEntity mergeDestination = mergeDestinationAndMergees.getLeft();
-        // Upsert RS record for destination RS
-        this.mongoTemplate.save(mergeDestination,
-                                this.mongoTemplate.getCollectionName(
-                                        clusteringWriter.getClusteredVariantCollection(mergeDestination.getAccession()))
-        );
+        // Insert RS record for destination RS if it does not already exist
+        insertRSRecordForMergeDestination(mergeDestination);
 
         List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
         for (ClusteredVariantEntity mergee: mergees) {
@@ -102,14 +112,43 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                    mergee.getAccession());
             // Record merge operation since the merge method above won't write operations
             // for mergees which don't yet have a record in the clustered variant collection (case during remapping)
+            insertMergeOperation(mergeDestination, mergee);
+        }
+    }
+
+    private void insertMergeOperation(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee) {
+        Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+                operationsCollectionToWriteTo = clusteringWriter.getClusteredOperationCollection(
+                mergee.getAccession());
+        List existingOperations =
+                this.mongoTemplate.find(query(where(ACCESSION_ATTRIBUTE).is(mergee.getAccession()))
+                                                .addCriteria(where(MERGE_DESTINATION_ATTRIBUTE)
+                                                                     .is(mergeDestination.getAccession())),
+                                        operationsCollectionToWriteTo);
+        if (existingOperations.isEmpty()) {
             ClusteredVariantOperationEntity operation = new ClusteredVariantOperationEntity();
             operation.fill(EventType.MERGED, mergee.getAccession(), mergeDestination.getAccession(),
                            "After remapping to " + mergee.getAssemblyAccession() +
                                    ", RS IDs mapped to the same locus.",
                            Collections.singletonList(new ClusteredVariantInactiveEntity(mergee)));
             this.mongoTemplate.insert(operation,
-                                      this.mongoTemplate.getCollectionName(
-                                              clusteringWriter.getClusteredOperationCollection(mergee.getAccession())));
+                                      this.mongoTemplate.getCollectionName(operationsCollectionToWriteTo));
+            this.clusteringCounts.addClusteredVariantsMergeOperationsWritten(1);
+        }
+    }
+
+    private void insertRSRecordForMergeDestination(ClusteredVariantEntity mergeDestination) {
+        Class<? extends ClusteredVariantEntity> clusteredVariantCollectionToWriteTo =
+                clusteringWriter.getClusteredVariantCollection(mergeDestination.getAccession());
+        List existingRecords =
+                this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(mergeDestination.getHashedMessage()))
+                                                .addCriteria(where(ACCESSION_ATTRIBUTE).is(
+                                                        mergeDestination.getAccession())),
+                                        clusteredVariantCollectionToWriteTo);
+        if (existingRecords.isEmpty()) {
+            this.mongoTemplate.insert(mergeDestination,
+                                      this.mongoTemplate.getCollectionName(clusteredVariantCollectionToWriteTo));
+            this.clusteringCounts.addClusteredVariantsCreated(1);
         }
     }
 
