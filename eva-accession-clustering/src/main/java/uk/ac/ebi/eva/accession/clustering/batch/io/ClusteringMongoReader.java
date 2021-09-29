@@ -83,17 +83,17 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
                 Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
         logger.info("Issuing find: {}", query);
 
-        FindIterable<Document> notClusteredSubmittedVariantsDbsnp =
-                getNotClusteredSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
-        dbsnpCursor = notClusteredSubmittedVariantsDbsnp.iterator();
-        FindIterable<Document> notClusteredSubmittedVariantsEVA =
-                getNotClusteredSubmittedVariants(query, SubmittedVariantEntity.class);
-        evaCursor = notClusteredSubmittedVariantsEVA.iterator();
+        FindIterable<Document> submittedVariantsDbsnp =
+                getSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
+        dbsnpCursor = submittedVariantsDbsnp.iterator();
+        FindIterable<Document> submittedVariantsEVA =
+                getSubmittedVariants(query, SubmittedVariantEntity.class);
+        evaCursor = submittedVariantsEVA.iterator();
 
         converter = mongoTemplate.getConverter();
     }
 
-    private FindIterable<Document> getNotClusteredSubmittedVariants(Bson query, Class<?> entityClass) {
+    private FindIterable<Document> getSubmittedVariants(Bson query, Class<?> entityClass) {
         return mongoTemplate.getCollection(mongoTemplate.getCollectionName(entityClass))
                             .find(query)
                             .noCursorTimeout(true)
