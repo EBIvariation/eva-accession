@@ -113,6 +113,9 @@ def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_fi
     with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
         for assembly in assembly_list:
             sources, rs_count = get_sources_and_rs_count(cve_res, dbsnp_res, assembly)
+            # Skip if there are no rs present for the assembly in any collection
+            if sources == 'None':
+                continue
             entry_exists = check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly)
             if entry_exists:
                 update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, taxonomy, assembly)
@@ -169,8 +172,6 @@ def get_sources_and_rs_count(cve_res, dbsnp_res, assembly):
     elif assembly not in cve_res and assembly in dbsnp_res:
         return ['DBSNP', dbsnp_res[assembly]]
     else:
-        # if there is an assembly in evapro but there is no clustered variant in any of the collections,
-        # an entry will still be created in clustering tracking table with sources as None and rs count 0
         return ['None', 0]
 
 
@@ -193,8 +194,9 @@ def insert_new_entry_for_taxonomy_assembly(pg_conn, sources, rs_count, release_v
     logger.info(f'inserting rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
     scientific_name = get_scientific_name(pg_conn, taxonomy)
     release_folder_name = normalise_taxon_scientific_name(scientific_name)
-    fasta_path = NCBIAssembly(assembly, scientific_name, reference_directory).assembly_fasta_path
-    report_path = NCBIAssembly(assembly, scientific_name, reference_directory).assembly_report_path
+    ncbi_assembly = NCBIAssembly(assembly, scientific_name, reference_directory)
+    fasta_path = ncbi_assembly.assembly_fasta_path
+    report_path = ncbi_assembly.assembly_report_path
     tempmongo_instance = next(tempmongo_instances)
     should_be_clustered = False
     should_be_released = True
