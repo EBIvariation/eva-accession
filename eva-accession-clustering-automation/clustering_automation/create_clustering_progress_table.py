@@ -102,38 +102,69 @@ def fill_in_from_previous_inventory(private_config_xml_file, release_version):
             execute_query(pg_conn, query_insert)
 
 
-def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_file):
-    group_rs_by_taxonomy_and_assembly = {
+def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_file, release_version, taxonomy):
+    assembly_list = []
+    with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
+        query = f'SELECT assembly_accession from evapro.assembly where taxonomy_id = {taxonomy}'
+        for assembly in get_all_results_for_query(pg_conn, query):
+            assembly_list.append(assembly[0])
+
+    filter_by_taxonomy_and_assembly = {
+        "$match":
+            {
+                "tax": {
+                    "$eq": taxonomy,
+                },
+                "asm": {
+                    "$in": assembly_list,
+                }
+            }
+    }
+    group_by_assembly = {
         "$group":
             {
-                "_id": {"taxonomy": "$tax", "assembly": "$asm"},
+                "_id": {"assembly": "$asm"},
                 "rs_count": {"$sum": 1},
             }
     }
+    pipeline = [filter_by_taxonomy_and_assembly, group_by_assembly]
     cve_collection = mongo_source.mongo_handle[mongo_source.db_name]["clusteredVariantEntity"]
-    aggregated_rs_info = cve_collection.aggregate([group_rs_by_taxonomy_and_assembly], batchSize=0)
-    for agg_info in aggregated_rs_info:
-        with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
-            taxonomy = agg_info["_id"]["taxonomy"]
+    aggregated_rs_info = cve_collection.aggregate(pipeline, batchSize=0)
+
+    with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
+        for agg_info in aggregated_rs_info:
             assembly = agg_info["_id"]["assembly"]
             rs_count = agg_info["rs_count"]
-            logger.info(f'updating rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
-            query_update = (
-                f'UPDATE eva_progress_tracker.clustering_release_tracker SET num_rs_to_release={rs_count} '
-                f'WHERE taxonomy={taxonomy} and assembly_accession=\'{assembly}\'')
-            execute_query(pg_conn, query_update)
+            entry_exists = check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly)
+            if entry_exists:
+                logger.info(f'updating rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
+                query_update = (
+                    f"""UPDATE eva_progress_tracker.clustering_release_tracker SET num_rs_to_release={rs_count}
+                    WHERE taxonomy={taxonomy} and assembly_accession='{assembly}'""")
+                execute_query(pg_conn, query_update)
+            else:
+                logger.info(f'inserting rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
+
+
+def check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly):
+    logger.info(f'check if entry exists for taxonomy({taxonomy}) and assembly({assembly})')
+    query_check = f"""SELECT count(*) from eva_progress_tracker.clustering_release_tracker
+                                 WHERE taxonomy={taxonomy} and assembly_accession='{assembly}'"""
+    result = get_all_results_for_query(pg_conn, query_check)
+    return True if result[0][0] != 0 else False
 
 
 def main():
     parser = argparse.ArgumentParser(description='Create and load the clustering and release tracking table', add_help=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
-    parser.add_argument("--release-version", help="version of the release", type=int, required=False)
+    parser.add_argument("--release-version", help="version of the release", type=int, required=True)
     parser.add_argument("--reference-directory", help="Directory where the reference genomes exists or should be downloaded", required=False)
     parser.add_argument("--mongo-source-uri",
                             help="Mongo Source URI (ex: mongodb://user:@mongos-source-host:27017/admin)", required=False)
     parser.add_argument("--mongo-source-secrets-file",
                             help="Full path to the Mongo Source secrets file (ex: /path/to/mongo/source/secret)",
                             required=False)
+    parser.add_argument("--taxonomy", help="taxonomy id for which rs count needs to be updated", type=int, required=False)
     parser.add_argument('--tasks', required=False, type=str, nargs='+', default=all_tasks, choices=all_tasks,
                             help='Task or set of tasks to perform.')
     parser.add_argument('--help', action='help', help='Show this help message and exit')
@@ -145,19 +176,19 @@ def main():
         args.tasks = all_tasks
 
     if 'create_and_fill_table' in args.tasks:
-        if not args.release_version:
-            raise Exception("For running task 'create_and_fill_table', it is mandatory to provide --release-version' argument")
+        if not args.reference_directory:
+            raise Exception("For running task 'create_and_fill_table', it is mandatory to provide --release-version' and '--reference_directory' argument")
         create_table(args.private_config_xml_file)
         fill_in_from_previous_inventory(args.private_config_xml_file, args.release_version)
         fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
 
     if 'fill_rs_count' in args.tasks:
-        if not args.mongo_source_uri or not args.mongo_source_secrets_file:
+        if not args.mongo_source_uri or not args.mongo_source_secrets_file or not args.taxonomy:
             raise Exception("""For running task 'fill_rs_count', it is mandatory to provide
                             '--mongo-source-uri' and '--mongo-source-secrets-file' arguments""")
         mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
                                      db_name="eva_accession_sharded")
-        fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, args.private_config_xml_file)
+        fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, args.private_config_xml_file, args.release_version, args.taxonomy)
 
 
 if __name__ == '__main__':
