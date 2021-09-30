@@ -158,12 +158,14 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         // Write new Clustered Variants in mongo and get existing ones. May merge clustered variants
         getOrCreateClusteredVariantAccessions(submittedVariantEntities);
 
-        // Update submitted variants "rs" field
-        clusterSubmittedVariants(submittedVariantEntities);
+        // Update submitted variants "rs" field for unclustered variants
+        if (!this.processClusteredRemappedVariants) {
+            clusterSubmittedVariants(submittedVariantEntities);
+        }
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
+            throws AccessionCouldNotBeGeneratedException {
         if (processClusteredRemappedVariants) {
             Set<SubmittedVariantEntity> processedSubmittedVariants = processClusteredRemappedVariants(submittedVariantEntities);
             // Determine the "residual" submitted variant entities to be processed
@@ -171,21 +173,23 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             submittedVariantEntities = Collections.unmodifiableList(submittedVariantEntities.stream()
                             .filter(sve->!processedSubmittedVariants.contains(sve))
                             .collect(Collectors.toList()));
-        }
-        List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
-                                                                           .map(this::toClusteredVariant)
-                                                                           .collect(Collectors.toList());
-        if (!clusteredVariants.isEmpty()) {
-            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
-                    clusteredService.getOrCreate(clusteredVariants);
+        } else {
+            List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
+                                                                               .map(this::toClusteredVariant)
+                                                                               .collect(Collectors.toList());
+            if (!clusteredVariants.isEmpty()) {
+                List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
+                        clusteredService.getOrCreate(clusteredVariants);
 
-            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap =
-                    excludeMultimaps(accessionWrappers);
+                List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap =
+                        excludeMultimaps(accessionWrappers);
 
-            accessionNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+                accessionNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
 
-            long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count();
-            clusteringCounts.addClusteredVariantsCreated(newAccessions);
+                long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession)
+                                                      .count();
+                clusteringCounts.addClusteredVariantsCreated(newAccessions);
+            }
         }
     }
 
@@ -238,26 +242,30 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         List<ClusteredVariantEntity> clusteredVariantEntities = new ArrayList<>();
         List<ClusteredVariantEntity> dbsnpClusteredVariantEntities = new ArrayList<>();
 
-        for (SubmittedVariantEntity submittedVariantEntity : submittedVariants) {
-            ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(submittedVariantEntity);
+        for (SubmittedVariantEntity remappedSubmittedVariantEntity : clusteredRemappedSubmittedVariants) {
+            ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(remappedSubmittedVariantEntity);
 
-            boolean isMergeCandidate = checkIfCandidateForMerge(submittedVariantEntity, clusteredVariantEntity,
-                    assembly, allExistingHashesInDB, mergeCandidateSVOE);
+            boolean isMergeCandidate = checkIfCandidateForMerge(remappedSubmittedVariantEntity, clusteredVariantEntity,
+                                                                assembly, allExistingHashesInDB, mergeCandidateSVOE);
 
-            updateAllExistingHashesGroupByRS(allExistingHashesGroupByRS, assembly, clusteredVariantEntity.getAccession());
+            updateAllExistingHashesGroupByRS(allExistingHashesGroupByRS, assembly,
+                                             clusteredVariantEntity.getAccession());
 
-            boolean isSplitCandidate = checkIfCandidateForRSSplit(submittedVariantEntity, clusteredVariantEntity,
-                    assembly, allExistingHashesGroupByRS, rsSplitCandidateSVOE);
+            boolean isSplitCandidate = checkIfCandidateForRSSplit(remappedSubmittedVariantEntity,
+                                                                  clusteredVariantEntity,
+                                                                  assembly, allExistingHashesGroupByRS,
+                                                                  rsSplitCandidateSVOE);
 
             if (!isMergeCandidate) {
-                if(clusteredVariantEntity.getAccession() >= accessioningMonotonicInitRs){
+                if (clusteredVariantEntity.getAccession() >= accessioningMonotonicInitRs) {
                     clusteredVariantEntities.add(clusteredVariantEntity);
-                }else{
+                } else {
                     dbsnpClusteredVariantEntities.add(clusteredVariantEntity);
                 }
                 allExistingHashesGroupByRS.get(clusteredVariantEntity.getAccession())
-                        .add(clusteredVariantEntity.getHashedMessage());
-                allExistingHashesInDB.put(clusteredVariantEntity.getHashedMessage(), clusteredVariantEntity.getAccession());
+                                          .add(clusteredVariantEntity.getHashedMessage());
+                allExistingHashesInDB.put(clusteredVariantEntity.getHashedMessage(),
+                                          clusteredVariantEntity.getAccession());
             }
         }
 
