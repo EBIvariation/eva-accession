@@ -19,11 +19,13 @@ from ebi_eva_common_pyutils.assembly import NCBIAssembly
 from ebi_eva_common_pyutils.logger import logging_config
 
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_common_pyutils.mongodb import MongoDatabase
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
 from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name
 
 logger = logging_config.get_logger(__name__)
 
+all_tasks = ['create_and_fill_table', 'fill_rs_count']
 
 def create_table(private_config_xml_file):
     query_create_table = (
@@ -100,19 +102,62 @@ def fill_in_from_previous_inventory(private_config_xml_file, release_version):
             execute_query(pg_conn, query_insert)
 
 
+def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_file):
+    group_rs_by_taxonomy_and_assembly = {
+        "$group":
+            {
+                "_id": {"taxonomy": "$tax", "assembly": "$asm"},
+                "rs_count": {"$sum": 1},
+            }
+    }
+    cve_collection = mongo_source.mongo_handle[mongo_source.db_name]["clusteredVariantEntity"]
+    aggregated_rs_info = cve_collection.aggregate([group_rs_by_taxonomy_and_assembly], batchSize=0)
+    for agg_info in aggregated_rs_info:
+        with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
+            taxonomy = agg_info["_id"]["taxonomy"]
+            assembly = agg_info["_id"]["assembly"]
+            rs_count = agg_info["rs_count"]
+            logger.info(f'updating rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
+            query_update = (
+                f'UPDATE eva_progress_tracker.clustering_release_tracker SET num_rs_to_release={rs_count} '
+                f'WHERE taxonomy={taxonomy} and assembly_accession=\'{assembly}\'')
+            execute_query(pg_conn, query_update)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Create and load the clustering and release tracking table', add_help=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", help="version of the release", type=int, required=False)
     parser.add_argument("--reference-directory", help="Directory where the reference genomes exists or should be downloaded", required=False)
+    parser.add_argument("--mongo-source-uri",
+                            help="Mongo Source URI (ex: mongodb://user:@mongos-source-host:27017/admin)", required=False)
+    parser.add_argument("--mongo-source-secrets-file",
+                            help="Full path to the Mongo Source secrets file (ex: /path/to/mongo/source/secret)",
+                            required=False)
+    parser.add_argument('--tasks', required=False, type=str, nargs='+', default=all_tasks, choices=all_tasks,
+                            help='Task or set of tasks to perform.')
     parser.add_argument('--help', action='help', help='Show this help message and exit')
     args = parser.parse_args()
 
     logging_config.add_stdout_handler()
 
-    create_table(args.private_config_xml_file)
-    fill_in_from_previous_inventory(args.private_config_xml_file, args.release_version)
-    fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
+    if not args.tasks:
+        args.tasks = all_tasks
+
+    if 'create_and_fill_table' in args.tasks:
+        if not args.release_version:
+            raise Exception("For running task 'create_and_fill_table', it is mandatory to provide --release-version' argument")
+        create_table(args.private_config_xml_file)
+        fill_in_from_previous_inventory(args.private_config_xml_file, args.release_version)
+        fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
+
+    if 'fill_rs_count' in args.tasks:
+        if not args.mongo_source_uri or not args.mongo_source_secrets_file:
+            raise Exception("""For running task 'fill_rs_count', it is mandatory to provide
+                            '--mongo-source-uri' and '--mongo-source-secrets-file' arguments""")
+        mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
+                                     db_name="eva_accession_sharded")
+        fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, args.private_config_xml_file)
 
 
 if __name__ == '__main__':
