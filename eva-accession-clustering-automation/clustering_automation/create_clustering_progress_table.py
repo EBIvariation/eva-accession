@@ -25,6 +25,9 @@ from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_
 
 logger = logging_config.get_logger(__name__)
 
+# round robin through the instances from 1 to 10
+tempmongo_instances = cycle([f'tempmongo-{instance}' for instance in range(1, 11)])
+
 all_tasks = ['create_and_fill_table', 'fill_rs_count']
 
 def create_table(private_config_xml_file):
@@ -54,8 +57,6 @@ def create_table(private_config_xml_file):
 
 
 def fill_in_table_from_remapping(private_config_xml_file, release_version, reference_directory):
-    # round robin through the instances from 1 to 10
-    tempmongo_instances = cycle([f'tempmongo-{instance}' for instance in range(1, 11)])
     query_retrieve_info = (
         "select taxonomy, scientific_name, assembly_accession, string_agg(distinct source, ', '), sum(num_ss_ids)"
         "from eva_progress_tracker.remapping_tracker "
@@ -102,13 +103,34 @@ def fill_in_from_previous_inventory(private_config_xml_file, release_version):
             execute_query(pg_conn, query_insert)
 
 
-def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_file, release_version, taxonomy):
+def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_file, release_version, taxonomy,
+                                             reference_directory):
+    assembly_list = get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy)
+    pipeline = get_filter_group_count_pipeline(taxonomy, assembly_list)
+    cve_res = get_rs_count_per_assembly_in_collection(mongo_source, 'clusteredVariantEntity', pipeline)
+    dbsnp_res = get_rs_count_per_assembly_in_collection(mongo_source, 'dbsnpClusteredVariantEntity', pipeline)
+
+    with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
+        for assembly in assembly_list:
+            sources, rs_count = get_sources_and_rs_count(cve_res, dbsnp_res, assembly)
+            entry_exists = check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly)
+            if entry_exists:
+                update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, taxonomy, assembly)
+            else:
+                insert_new_entry_for_taxonomy_assembly(pg_conn, sources, rs_count, release_version, taxonomy, assembly,
+                                                       reference_directory)
+
+
+def get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy):
     assembly_list = []
     with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
         query = f'SELECT assembly_accession from evapro.assembly where taxonomy_id = {taxonomy}'
         for assembly in get_all_results_for_query(pg_conn, query):
             assembly_list.append(assembly[0])
+    return assembly_list
 
+
+def get_filter_group_count_pipeline(taxonomy, assembly_list):
     filter_by_taxonomy_and_assembly = {
         "$match":
             {
@@ -127,23 +149,29 @@ def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_fi
                 "rs_count": {"$sum": 1},
             }
     }
-    pipeline = [filter_by_taxonomy_and_assembly, group_by_assembly]
-    cve_collection = mongo_source.mongo_handle[mongo_source.db_name]["clusteredVariantEntity"]
-    aggregated_rs_info = cve_collection.aggregate(pipeline, batchSize=0)
+    return [filter_by_taxonomy_and_assembly, group_by_assembly]
 
-    with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
-        for agg_info in aggregated_rs_info:
-            assembly = agg_info["_id"]["assembly"]
-            rs_count = agg_info["rs_count"]
-            entry_exists = check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly)
-            if entry_exists:
-                logger.info(f'updating rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
-                query_update = (
-                    f"""UPDATE eva_progress_tracker.clustering_release_tracker SET num_rs_to_release={rs_count}
-                    WHERE taxonomy={taxonomy} and assembly_accession='{assembly}'""")
-                execute_query(pg_conn, query_update)
-            else:
-                logger.info(f'inserting rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
+
+def get_rs_count_per_assembly_in_collection(mongo_source, coll_name, pipeline):
+    coll = mongo_source.mongo_handle[mongo_source.db_name][coll_name]
+    agg_result = coll.aggregate(pipeline, batchSize=0)
+    agg_res_dict = {}
+    for entry in agg_result:
+        agg_res_dict[entry['_id']['assembly']] = entry['rs_count']
+    return agg_res_dict
+
+
+def get_sources_and_rs_count(cve_res, dbsnp_res, assembly):
+    if assembly in cve_res and assembly in dbsnp_res:
+        return ['DBSNP, EVA', cve_res[assembly] + dbsnp_res[assembly]]
+    elif assembly in cve_res and assembly not in dbsnp_res:
+        return ['EVA', cve_res[assembly]]
+    elif assembly not in cve_res and assembly in dbsnp_res:
+        return ['DBSNP', dbsnp_res[assembly]]
+    else:
+        # if there is an assembly in evapro but there is no clustered variant in any of the collections,
+        # an entry will still be created in clustering tracking table with sources as None and rs count 0
+        return ['None', 0]
 
 
 def check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly):
@@ -154,11 +182,43 @@ def check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly)
     return True if result[0][0] != 0 else False
 
 
+def update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, taxonomy, assembly):
+    logger.info(f'updating rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
+    query_update = (f"""UPDATE eva_progress_tracker.clustering_release_tracker SET num_rs_to_release={rs_count}
+                        WHERE taxonomy={taxonomy} and assembly_accession='{assembly}'""")
+    execute_query(pg_conn, query_update)
+
+
+def insert_new_entry_for_taxonomy_assembly(pg_conn, sources, rs_count, release_version, taxonomy, assembly, reference_directory):
+    logger.info(f'inserting rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
+    scientific_name = get_scientific_name(pg_conn, taxonomy)
+    release_folder_name = normalise_taxon_scientific_name(scientific_name)
+    fasta_path = NCBIAssembly(assembly, scientific_name, reference_directory).assembly_fasta_path
+    report_path = NCBIAssembly(assembly, scientific_name, reference_directory).assembly_report_path
+    tempmongo_instance = next(tempmongo_instances)
+    should_be_clustered = False
+    should_be_released = True
+    query_insert = (
+        'INSERT INTO eva_progress_tracker.clustering_release_tracker '
+        '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
+        'fasta_path, report_path, tempmongo_instance, should_be_released, release_folder_name) '
+        f"VALUES ('{sources}', {taxonomy}, '{scientific_name}', '{assembly}', {release_version}, "
+        f"{should_be_clustered}, '{fasta_path}', '{report_path}', '{tempmongo_instance}', {should_be_released}, "
+        f"'{release_folder_name}') ON CONFLICT DO NOTHING")
+    execute_query(pg_conn, query_insert)
+
+
+def get_scientific_name(pg_conn, taxonomy):
+    query = f'SELECT scientific_name from evapro.taxonomy where taxonomy_id={taxonomy}'
+    results = get_all_results_for_query(pg_conn, query)
+    return results[0][0]
+
+
 def main():
     parser = argparse.ArgumentParser(description='Create and load the clustering and release tracking table', add_help=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", help="version of the release", type=int, required=True)
-    parser.add_argument("--reference-directory", help="Directory where the reference genomes exists or should be downloaded", required=False)
+    parser.add_argument("--reference-directory", help="Directory where the reference genomes exists or should be downloaded", required=True)
     parser.add_argument("--mongo-source-uri",
                             help="Mongo Source URI (ex: mongodb://user:@mongos-source-host:27017/admin)", required=False)
     parser.add_argument("--mongo-source-secrets-file",
@@ -176,8 +236,6 @@ def main():
         args.tasks = all_tasks
 
     if 'create_and_fill_table' in args.tasks:
-        if not args.reference_directory:
-            raise Exception("For running task 'create_and_fill_table', it is mandatory to provide --release-version' and '--reference_directory' argument")
         create_table(args.private_config_xml_file)
         fill_in_from_previous_inventory(args.private_config_xml_file, args.release_version)
         fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
@@ -188,7 +246,8 @@ def main():
                             '--mongo-source-uri' and '--mongo-source-secrets-file' arguments""")
         mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
                                      db_name="eva_accession_sharded")
-        fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, args.private_config_xml_file, args.release_version, args.taxonomy)
+        fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, args.private_config_xml_file, args.release_version,
+                                                 args.taxonomy, args.reference_directory)
 
 
 if __name__ == '__main__':
