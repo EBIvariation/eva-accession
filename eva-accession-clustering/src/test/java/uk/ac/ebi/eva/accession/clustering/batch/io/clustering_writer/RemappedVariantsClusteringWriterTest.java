@@ -48,7 +48,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -105,9 +104,6 @@ public class RemappedVariantsClusteringWriterTest {
     private ClusteringCounts clusteringCounts;
 
     @Autowired
-    private SubmittedVariantAccessioningService submittedVariantAccessioningService;
-
-    @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     private ClusteringWriter clusteringWriter;
@@ -127,7 +123,7 @@ public class RemappedVariantsClusteringWriterTest {
     @Before
     public void setUp() {
         mongoTemplate.getDb().drop();
-        clusteringWriter = new ClusteringWriter(mongoTemplate, ASM_2, submittedVariantAccessioningService,
+        clusteringWriter = new ClusteringWriter(mongoTemplate,
                                                 clusteredVariantAccessioningService,
                                                 EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START,
                                                 clusteringCounts, true);

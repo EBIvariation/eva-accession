@@ -38,33 +38,23 @@ public class ClusteringWriterConfiguration {
 
     @Bean(CLUSTERED_CLUSTERING_WRITER)
     public ClusteringWriter clusteredClusteringWriter(MongoTemplate mongoTemplate,
-                                                      InputParameters inputParameters,
-                                                      SubmittedVariantAccessioningService
-                                                                  submittedVariantAccessioningService,
                                                       ClusteredVariantAccessioningService
                                                                   clusteredVariantAccessioningService,
                                                       Long accessioningMonotonicInitSs,
                                                       Long accessioningMonotonicInitRs,
                                                       ClusteringCounts clusteringCounts) {
-        return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
-                                    submittedVariantAccessioningService,
-                                    clusteredVariantAccessioningService,
+        return new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
                                     accessioningMonotonicInitSs, accessioningMonotonicInitRs, clusteringCounts, true);
     }
 
     @Bean(NON_CLUSTERED_CLUSTERING_WRITER)
     public ClusteringWriter nonClusteredClusteringWriter(MongoTemplate mongoTemplate,
-                                                         InputParameters inputParameters,
-                                                         SubmittedVariantAccessioningService
-                                                                     submittedVariantAccessioningService,
                                                          ClusteredVariantAccessioningService
                                                                      clusteredVariantAccessioningService,
                                                          Long accessioningMonotonicInitSs,
                                                          Long accessioningMonotonicInitRs,
                                                          ClusteringCounts clusteringCounts) {
-        return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
-                                    submittedVariantAccessioningService,
-                                    clusteredVariantAccessioningService,
+        return new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
                                     accessioningMonotonicInitSs, accessioningMonotonicInitRs, clusteringCounts, false);
     }
 }

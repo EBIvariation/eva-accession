@@ -37,11 +37,9 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
-import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
@@ -60,7 +58,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -113,22 +110,13 @@ public class MergeAccessionClusteringWriterTest {
     public static final String NOT_REMAPPED = null;
 
     @Autowired
-    private InputParameters inputParameters;
-
-    @Autowired
     private MongoTemplate mongoTemplate;
 
     @Autowired
     private ClusteringCounts clusteringCounts;
 
     @Autowired
-    private SubmittedVariantAccessioningService submittedVariantAccessioningService;
-
-    @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
-
-    @Autowired
-    private ContiguousIdBlockRepository contiguousIdBlockRepository;
 
     //Required by nosql-unit
     @Autowired
@@ -147,8 +135,7 @@ public class MergeAccessionClusteringWriterTest {
     @Before
     public void setUp() {
         mongoTemplate.getDb().drop();
-        clusteringWriter = new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
-                                                submittedVariantAccessioningService,
+        clusteringWriter = new ClusteringWriter(mongoTemplate,
                                                 clusteredVariantAccessioningService,
                                                 EVA_SUBMITTED_VARIANT_RANGE_START, EVA_CLUSTERED_VARIANT_RANGE_START,
                                                 clusteringCounts, true);

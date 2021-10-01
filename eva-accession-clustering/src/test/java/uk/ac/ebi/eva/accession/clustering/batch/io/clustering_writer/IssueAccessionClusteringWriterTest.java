@@ -49,7 +49,6 @@ import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -66,7 +65,6 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
@@ -108,13 +106,7 @@ public class IssueAccessionClusteringWriterTest {
     private ClusteringCounts clusteringCounts;
 
     @Autowired
-    private SubmittedVariantAccessioningService submittedVariantAccessioningService;
-
-    @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
-
-    @Autowired
-    private ContiguousIdBlockRepository contiguousIdBlockRepository;
 
     //Required by nosql-unit
     @Autowired
@@ -132,8 +124,7 @@ public class IssueAccessionClusteringWriterTest {
 
     @Before
     public void setUp() {
-        clusteringWriter = new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
-                                                submittedVariantAccessioningService,
+        clusteringWriter = new ClusteringWriter(mongoTemplate,
                                                 clusteredVariantAccessioningService, EVA_SUBMITTED_VARIANT_RANGE_START,
                                                 EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts, true);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
