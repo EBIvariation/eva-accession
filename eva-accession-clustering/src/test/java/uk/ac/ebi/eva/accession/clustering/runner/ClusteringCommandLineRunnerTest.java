@@ -33,8 +33,10 @@ import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
@@ -50,9 +52,12 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
+import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -63,8 +68,12 @@ import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
@@ -86,15 +95,19 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
@@ -111,6 +124,18 @@ public class ClusteringCommandLineRunnerTest {
     private static final String ASM2 = "GCA_000000001.1";
 
     private static final String PROJECT = "PRJ1";
+
+    private static final String ACCESSION_ATTRIBUTE = "accession";
+
+    private static final String MERGE_DESTINATION_ATTRIBUTE = "mergeInto";
+
+    private static final String SPLIT_INTO_ATTRIBUTE = "splitInto";
+
+    private static final String EVENT_TYPE_ATTRIBUTE = "eventType";
+
+    private static final String REASON_ATTRIBUTE = "reason";
+
+    private static final String INACTIVE_OBJECTS_PREFIX = "inactiveObjects";
 
     @Autowired
     private Long accessioningMonotonicInitSs;
@@ -151,6 +176,10 @@ public class ClusteringCommandLineRunnerTest {
 
     @Autowired
     private SubmittedVariantAccessioningService submittedVariantAccessioningService;
+
+    @Autowired
+    @Qualifier(CLUSTERED_CLUSTERING_WRITER)
+    private ClusteringWriter clusteringWriter;
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
@@ -264,7 +293,7 @@ public class ClusteringCommandLineRunnerTest {
         | ASM2     | dbsnpSS7   | evaRS4     | rsLocus4 | Y                              | MC(dbsnpRS3, evaRS4) | dbsnpSS4, dbsnpRS3, rsLocus3 | SC(dbsnpSS4, evaSS5, dbsnpSS6, dbsnpSS7) | evaSS5, dbsnpRS3, rsLocus3                             |                                |                              |
         | ASM2     | evaSS8     | Unassigned | rsLocus4 | Y                              | ===========>         | evaSS5, dbsnpRS3, rsLocus3   | ===========>                             | dbsnpSS6, newRS2, rsLocus4                             | New RS ID assignment to evaSS8 |                              |
         | ASM2     | evaSS9     | dbsnpRS5   | rsLocus5 | Y                              |                      | dbsnpSS6, dbsnpRS3, rsLocus4 |                                          | dbsnpSS7, newRS2, rsLocus4                             | ===========>                   | evaSS8, newRS2, rsLocus4     |
-        | ASM1     | evaSS8_old | Unassigned | rsLocus4 | N                              |                      | dbsnpSS7, dbsnpRS3, rsLocus4 |                                          | evaSS9, dbsnpRS5, rsLocus5                             |                                | evaSS8_old, newRS2, rsLocus4 |
+        | ASM1     | evaSS8_old | Unassigned | rsLocus4 | N                              |                      | dbsnpSS7, dbsnpRS3, rsLocus4 |                                          | evaSS9, dbsnpRS5, rsLocus5                             |Back propagation to evaSS8_old  | evaSS8_old, newRS2, rsLocus4 |
         +----------+------------+------------+----------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+------------------------------+
         */
         setupRSAndSS();
@@ -302,19 +331,127 @@ public class ClusteringCommandLineRunnerTest {
         assertPostMergeRSLocusAssociation(newRS2, rsLocus4);
 
         // Test RS-SS associations
-        assertPostMergeDatabaseStatus(evaSS1, dbsnpRS1, rsLocus1);
-        assertPostMergeDatabaseStatus(dbsnpSS2, dbsnpRS1, rsLocus1);
-        assertPostMergeDatabaseStatus(evaSS3, newRS1, rsLocus2);
-        assertPostMergeDatabaseStatus(dbsnpSS4, dbsnpRS3, rsLocus3);
-        assertPostMergeDatabaseStatus(evaSS5, dbsnpRS3, rsLocus3);
-        assertPostMergeDatabaseStatus(dbsnpSS6, newRS2, rsLocus4);
-        assertPostMergeDatabaseStatus(dbsnpSS7, newRS2, rsLocus4);
-        assertPostMergeDatabaseStatus(evaSS8, newRS2, rsLocus4);
-        assertPostMergeDatabaseStatus(evaSS9, dbsnpRS5, rsLocus5);
+        assertPostMergeSSRSAssociation(evaSS1, dbsnpRS1, rsLocus1);
+        assertPostMergeSSRSAssociation(dbsnpSS2, dbsnpRS1, rsLocus1);
+        assertPostMergeSSRSAssociation(evaSS3, newRS1, rsLocus2);
+        assertPostMergeSSRSAssociation(dbsnpSS4, dbsnpRS3, rsLocus3);
+        assertPostMergeSSRSAssociation(evaSS5, dbsnpRS3, rsLocus3);
+        assertPostMergeSSRSAssociation(dbsnpSS6, newRS2, rsLocus4);
+        assertPostMergeSSRSAssociation(dbsnpSS7, newRS2, rsLocus4);
+        assertPostMergeSSRSAssociation(evaSS8, newRS2, rsLocus4);
+        assertPostMergeSSRSAssociation(evaSS9, dbsnpRS5, rsLocus5);
 
         // Test operations
+        // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1402276771
+        assertPostMergeRSOperation(evaRS2, dbsnpRS1);
+        assertPostMergeSSOperation(dbsnpSS2, evaRS2, dbsnpRS1);
+        assertPostMergeSSOperation(evaSS3, evaRS2, dbsnpRS1);
+        assertPostMergeRSOperation(evaRS4, dbsnpRS3);
+        assertPostMergeSSOperation(evaSS5, evaRS4, dbsnpRS3);
+        assertPostMergeSSOperation(dbsnpSS6, evaRS4, dbsnpRS3);
+        assertPostMergeSSOperation(dbsnpSS7, evaRS4, dbsnpRS3);
 
+        assertPostSplitRSOperation(dbsnpRS1, newRS1);
+        assertPostSplitSSOperation(evaSS3, dbsnpRS1, newRS1);
+        assertPostSplitRSOperation(dbsnpRS3, newRS2);
+        assertPostSplitSSOperation(dbsnpSS6, dbsnpRS3, newRS2);
+        assertPostSplitSSOperation(dbsnpSS7, dbsnpRS3, newRS2);
+
+        // After merge and splits are carried out, ensure that the operation is written
+        // for the evaSS8 clustered with newRS2
+        assertPostMergeAndSplitClusteringOperation(evaSS8, newRS2);
         // Test back-propagation
+    }
+
+    private void assertPostMergeRSOperation(ClusteredVariantEntity mergee, ClusteredVariantEntity mergeDestination) {
+        Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+                collectionToReadFrom = clusteringWriter.getClusteredOperationCollection(mergee.getAccession());
+        Query queryForExistingMergeOperations = query(where(ACCESSION_ATTRIBUTE).is(mergee.getAccession()))
+                .addCriteria(where(MERGE_DESTINATION_ATTRIBUTE)
+                                     .is(mergeDestination.getAccession()))
+                .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
+                                     .is(EventType.MERGED.toString()))
+                .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".asm")
+                                     .is(mergee.getAssemblyAccession()));
+        List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+                existingOperations = this.mongoTemplate.find(queryForExistingMergeOperations, collectionToReadFrom);
+        assertEquals(1, existingOperations.size());
+    }
+
+    private void assertPostMergeSSOperation(SubmittedVariantEntity ssReceivingMergedRS,
+                                            ClusteredVariantEntity mergeeRS, ClusteredVariantEntity destinationRS) {
+        Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                collectionToReadFrom =
+                (clusteringWriter.isEvaSubmittedVariant(ssReceivingMergedRS) ?
+                        SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class);
+        Query queryForExistingMergeOperations = query(
+                where(ACCESSION_ATTRIBUTE).is(ssReceivingMergedRS.getAccession()))
+                .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
+                                     .is(EventType.UPDATED.toString()))
+                .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".seq")
+                                     .is(ssReceivingMergedRS.getReferenceSequenceAccession()))
+                .addCriteria(where(REASON_ATTRIBUTE)
+                                     .regex(String.format(".+rs%s .+ rs%s\\.", mergeeRS.getAccession(),
+                                                          destinationRS.getAccession())));
+        List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                existingOperations = this.mongoTemplate.find(queryForExistingMergeOperations, collectionToReadFrom);
+        assertEquals(1, existingOperations.size());
+    }
+
+    private void assertPostSplitSSOperation(SubmittedVariantEntity ssReceivingSplitRS,
+                                            ClusteredVariantEntity originalRS, ClusteredVariantEntity splitRS) {
+        Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                collectionToReadFrom =
+                (clusteringWriter.isEvaSubmittedVariant(ssReceivingSplitRS) ?
+                        SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class);
+        Query queryForExistingSplitOperations = query(
+                where(ACCESSION_ATTRIBUTE).is(ssReceivingSplitRS.getAccession()))
+                .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
+                                     .is(EventType.UPDATED.toString()))
+                .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".seq")
+                                     .is(ssReceivingSplitRS.getReferenceSequenceAccession()))
+                .addCriteria(where(REASON_ATTRIBUTE)
+                                     .regex(String.format(".+ split RS rs%s .+ split from rs%s .+",
+                                                          splitRS.getAccession(), originalRS.getAccession())));
+        List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                existingOperations = this.mongoTemplate.find(queryForExistingSplitOperations, collectionToReadFrom);
+        assertEquals(1, existingOperations.size());
+    }
+
+    private void assertPostMergeAndSplitClusteringOperation(SubmittedVariantEntity ssClusteredWithNewRS,
+                                                            ClusteredVariantEntity newRS) {
+        Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                collectionToReadFrom =
+                (clusteringWriter.isEvaSubmittedVariant(ssClusteredWithNewRS) ?
+                        SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class);
+        Query queryForExistingClusterOperations = query(
+                where(ACCESSION_ATTRIBUTE).is(ssClusteredWithNewRS.getAccession()))
+                .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
+                                     .is(EventType.UPDATED.toString()))
+                .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".seq")
+                                     .is(ssClusteredWithNewRS.getReferenceSequenceAccession()))
+                .addCriteria(where(REASON_ATTRIBUTE)
+                                     .regex(String.format("Clustering submitted variant %s with rs%s",
+                                                          ssClusteredWithNewRS.getAccession(), newRS.getAccession())));
+        List<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
+                existingOperations = this.mongoTemplate.find(queryForExistingClusterOperations, collectionToReadFrom);
+        assertEquals(1, existingOperations.size());
+    }
+
+    private void assertPostSplitRSOperation(ClusteredVariantEntity original, ClusteredVariantEntity splitInto) {
+        Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+                collectionToReadFrom = clusteringWriter.getClusteredOperationCollection(original.getAccession());
+        Query queryForExistingSplitOperations = query(where(ACCESSION_ATTRIBUTE).is(original.getAccession()))
+                .addCriteria(where(SPLIT_INTO_ATTRIBUTE)
+                                     .is(splitInto.getAccession()))
+                .addCriteria(where(EVENT_TYPE_ATTRIBUTE)
+                                     .is(EventType.RS_SPLIT.toString()))
+                .addCriteria(where(INACTIVE_OBJECTS_PREFIX + ".asm")
+                                     .is(original.getAssemblyAccession()));
+        List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+                existingOperations = this.mongoTemplate.find(queryForExistingSplitOperations, collectionToReadFrom);
+
+        assertEquals(1, existingOperations.size());
     }
 
     private void assertPostMergeRSLocusAssociation(ClusteredVariantEntity expectedRS, RSLocus rsLocus)
@@ -327,7 +464,7 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(rsLocus.type,  rsEntryInDB.getType());
     }
 
-    private void assertPostMergeDatabaseStatus(SubmittedVariantEntity ss, ClusteredVariantEntity rs, RSLocus rsLocus)
+    private void assertPostMergeSSRSAssociation(SubmittedVariantEntity ss, ClusteredVariantEntity rs, RSLocus rsLocus)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         AccessionWrapper<ISubmittedVariant, String, Long> ssInDBWrapper =
                 this.submittedVariantAccessioningService.getByAccession(ss.getAccession());

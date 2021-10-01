@@ -424,7 +424,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                     submittedVariant.getCreatedDate());
     }
 
-    protected Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+    public Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
     getClusteredOperationCollection(Long accession) {
         return isEvaClusteredAccession(accession) ?
                 ClusteredVariantOperationEntity.class : DbsnpClusteredVariantOperationEntity.class;
@@ -532,7 +532,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    protected boolean isEvaSubmittedVariant(SubmittedVariantEntity submittedVariant) {
+    public boolean isEvaSubmittedVariant(SubmittedVariantEntity submittedVariant) {
         return submittedVariant.getAccession() >= accessioningMonotonicInitSs;
     }
 

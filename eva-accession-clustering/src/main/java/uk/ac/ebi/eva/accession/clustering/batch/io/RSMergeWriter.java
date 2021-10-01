@@ -88,7 +88,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private static final String REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_VARIANT_COLLECTION = "seq";
 
-
     public RSMergeWriter(ClusteringWriter clusteringWriter, MongoTemplate mongoTemplate,
                          String assemblyAccession,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
@@ -141,9 +140,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
         List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
         for (ClusteredVariantEntity mergee: mergees) {
-            merge(mergeDestination.getAccession(), mergeDestination.getHashedMessage(), mergee.getAccession());
-            // Record merge operation since the merge method above won't write operations
-            // for mergees which don't yet have a record in the clustered variant collection (case during remapping)
+            merge(mergeDestination.getAccession(), mergee.getAccession());
+            // Record merge operation
             insertMergeOperation(mergeDestination, mergee);
         }
     }
@@ -208,7 +206,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         return new ImmutablePair<>(targetRS, mergees);
     }
 
-    protected void merge(Long providedAccession, String hash, Long accessionInDatabase)
+    protected void merge(Long providedAccession, Long accessionInDatabase)
             throws AccessionDoesNotExistException {
         ClusteredVariantMergingPolicy.Priority prioritised = prioritise(providedAccession, accessionInDatabase);
 
@@ -238,15 +236,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                                              + " does not exist!");
         }
 
-        // write operations for clustered variant being merged
-        List<ClusteredVariantOperationEntity> operations =
-                clusteredVariantToMerge.stream()
-                                       .map(c -> buildClusteredOperation(c, prioritised.accessionToKeep))
-                                       .collect(Collectors.toList());
-        mongoTemplate.insert(operations, clusteringWriter.getClusteredOperationCollection(
-                prioritised.accessionToBeMerged));
-        clusteringCounts.addClusteredVariantsMergeOperationsWritten(clusteredVariantToMerge.size());
-
         // Mergee is no longer valid to be present in the main clustered variant collection
         mongoTemplate.remove(queryForMergee, clusteringWriter.getClusteredVariantCollection(
                 prioritised.accessionToBeMerged));
@@ -261,19 +250,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         // Update currently outstanding split candidate events that involve the RS that was just merged and the target RS
         // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1664799060
         updateSplitCandidates(prioritised);
-    }
-
-    private ClusteredVariantOperationEntity buildClusteredOperation(ClusteredVariantEntity originalClusteredVariant,
-                                                                    Long clusteredVariantMergedInto) {
-        ClusteredVariantInactiveEntity inactiveEntity = new ClusteredVariantInactiveEntity(originalClusteredVariant);
-
-        Long originalAccession = originalClusteredVariant.getAccession();
-        String reason = "Original rs" + originalAccession + " was merged into rs" + clusteredVariantMergedInto + ".";
-
-        ClusteredVariantOperationEntity operation = new ClusteredVariantOperationEntity();
-        operation.fill(EventType.MERGED, originalAccession, clusteredVariantMergedInto, reason,
-                       Collections.singletonList(inactiveEntity));
-        return operation;
     }
 
     private void updateSplitCandidates(ClusteredVariantMergingPolicy.Priority prioritised) {
@@ -361,7 +337,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         SubmittedVariantInactiveEntity inactiveEntity = new SubmittedVariantInactiveEntity(originalSubmittedVariant);
 
         Long originalClusteredVariant = originalSubmittedVariant.getClusteredVariantAccession();
-        String reason = "Original rs" + originalClusteredVariant + " was merged into rs" + clusteredVariantMergedInto + ".";
+        String reason = "Original rs" + originalClusteredVariant + " associated with SS was merged into rs"
+                + clusteredVariantMergedInto + ".";
 
         Long accession = originalSubmittedVariant.getAccession();
         SubmittedVariantOperationEntity operation = new SubmittedVariantOperationEntity();
