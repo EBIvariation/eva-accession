@@ -23,6 +23,14 @@ public class BeanNames {
 
     public static final String NON_CLUSTERED_VARIANTS_MONGO_READER = "NON_CLUSTERED_VARIANTS_MONGO_READER";
 
+    public static final String RS_MERGE_CANDIDATES_READER = "RS_MERGE_CANDIDATES_READER";
+
+    public static final String RS_SPLIT_CANDIDATES_READER = "RS_SPLIT_CANDIDATES_READER";
+
+    public static final String RS_MERGE_WRITER = "RS_MERGE_WRITER";
+
+    public static final String RS_SPLIT_WRITER = "RS_SPLIT_WRITER";
+
     public static final String VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR =
             "VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR";
 

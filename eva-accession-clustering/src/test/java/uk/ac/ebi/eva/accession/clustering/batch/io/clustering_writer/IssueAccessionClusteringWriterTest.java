@@ -54,6 +54,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -107,6 +108,9 @@ public class IssueAccessionClusteringWriterTest {
     private ClusteringCounts clusteringCounts;
 
     @Autowired
+    private SubmittedVariantAccessioningService submittedVariantAccessioningService;
+
+    @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     @Autowired
@@ -128,8 +132,10 @@ public class IssueAccessionClusteringWriterTest {
 
     @Before
     public void setUp() {
-        clusteringWriter = new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService, EVA_SUBMITTED_VARIANT_RANGE_START,
-                EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts, true);
+        clusteringWriter = new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
+                                                submittedVariantAccessioningService,
+                                                clusteredVariantAccessioningService, EVA_SUBMITTED_VARIANT_RANGE_START,
+                                                EVA_CLUSTERED_VARIANT_RANGE_START, clusteringCounts, true);
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
     }
