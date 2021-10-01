@@ -45,7 +45,8 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
-@UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+@UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json",
+        "/test-data/dbsnpSubmittedVariantEntityMongoReader.json"})
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class ClusteringMongoReaderTest {
 
@@ -57,11 +58,15 @@ public class ClusteringMongoReaderTest {
 
     private static final String SUBMITTED_VARIANT_ENTITY = "submittedVariantEntity";
 
+    private static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
+
     // from the json input data. the hash can be computed in bash too:
     // echo -n "GCA_000000001.1_projectId_1_2_3000_T_G" | sha1sum | awk '{ print toupper($1) }'
-    private static final String CLUSTERED_SUBMITTED_VARIANT_ID = "C195245DADAA13BB00474F66A57A21718B332B5A";
+    private static final String CLUSTERED_SUBMITTED_VARIANT_ID_EVA = "C195245DADAA13BB00474F66A57A21718B332B5A";
+    private static final String CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP = "D858606DFC2B560F308FF95B941FFE023473E80B";
 
-    private static final String NOT_CLUSTERED_SUBMITTED_VARIANT_ID = "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB";
+    private static final String NOT_CLUSTERED_SUBMITTED_VARIANT_ID_EVA = "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB";
+    private static final String NOT_CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP = "9F05088C2058BC2AECFF8B904E439E2FD4C67F20";
 
     private ClusteringMongoReader clusteredVariantReader;
 
@@ -84,8 +89,8 @@ public class ClusteringMongoReaderTest {
     @Before
     public void setUp(){
         ExecutionContext executionContext = new ExecutionContext();
-        clusteredVariantReader = new ClusteringMongoReader(mongoClient, TEST_DB, mongoTemplate, ASSEMBLY, CHUNK_SIZE, true);
-        nonClusteredVariantReader = new ClusteringMongoReader(mongoClient, TEST_DB, mongoTemplate, ASSEMBLY, CHUNK_SIZE, false);
+        clusteredVariantReader = new ClusteringMongoReader(mongoTemplate, ASSEMBLY, CHUNK_SIZE, true);
+        nonClusteredVariantReader = new ClusteringMongoReader(mongoTemplate, ASSEMBLY, CHUNK_SIZE, false);
         clusteredVariantReader.open(executionContext);
         nonClusteredVariantReader.open(executionContext);
     }
@@ -100,17 +105,24 @@ public class ClusteringMongoReaderTest {
     @Test
     public void readAllSubmittedVariantsWithRS() {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
+        assertEquals(6, mongoTemplate.getCollection(DBSNP_SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList(clusteredVariantReader);
-        assertEquals(1, variants.size());
-        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), CLUSTERED_SUBMITTED_VARIANT_ID)));
+        assertEquals(2, variants.size());
+        // Clustered submitted variant from EVA collection
+        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), CLUSTERED_SUBMITTED_VARIANT_ID_EVA)));
+        // Clustered submitted variant from dbSNP collection
+        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP)));
     }
 
     @Test
     public void readAllSubmittedVariantsWithoutRS() {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList(nonClusteredVariantReader);
-        assertEquals(5, variants.size());
-        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), NOT_CLUSTERED_SUBMITTED_VARIANT_ID)));
+        // dbSNP and EVA submitted variant collections each have 5 unclustered SS
+        assertEquals(5 + 5, variants.size());
+        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), NOT_CLUSTERED_SUBMITTED_VARIANT_ID_EVA)));
+        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(),
+                                                                  NOT_CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP)));
     }
 
     private List<SubmittedVariantEntity> readIntoList(ClusteringMongoReader reader) {
