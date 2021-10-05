@@ -96,6 +96,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -120,6 +121,8 @@ public class ClusteringCommandLineRunnerTest {
     private static final String TEST_DB = "test-db";
 
     private static final int TAXONOMY = 60711;
+
+    private static final String ASM1 = "ASM1";
 
     private static final String ASM2 = "GCA_000000001.1";
 
@@ -196,7 +199,8 @@ public class ClusteringCommandLineRunnerTest {
 
     private boolean originalInputParametersCaptured = false;
 
-    private SubmittedVariantEntity evaSS1, dbsnpSS2, evaSS3, dbsnpSS4, evaSS5, dbsnpSS6, dbsnpSS7, evaSS8, evaSS9;
+    private SubmittedVariantEntity evaSS1, dbsnpSS2, evaSS3, dbsnpSS4, evaSS5, dbsnpSS6, dbsnpSS7, evaSS8, evaSS8_old,
+            evaSS9;
 
     private ClusteredVariantEntity dbsnpRS1, evaRS2, dbsnpRS3, evaRS4, dbsnpRS5;
 
@@ -219,7 +223,7 @@ public class ClusteringCommandLineRunnerTest {
         }
     }
 
-    private RSLocus rsLocus1, rsLocus2, rsLocus3, rsLocus4, rsLocus5;
+    private RSLocus rsLocus1, rsLocus2, rsLocus3, rsLocus4, rsLocus4_old, rsLocus5;
 
     @Autowired
     private CountParameters countParameters;
@@ -281,20 +285,20 @@ public class ClusteringCommandLineRunnerTest {
         NOTE: SS-RS associations and remapped status are randomly assigned to test that
         1) Both dbSNP and EVA variants participate in merge/split events
         2) Both remapped and non-remapped variants participate in merge/split events
-        +----------+------------+------------+----------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+------------------------------+
-        | Assembly |     SS     |     RS     | RS_LOCUS | Remapped from another assembly |                      |                              |                                          |                                                        |                                |                              |
-        +----------+------------+------------+----------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+------------------------------+
-        | ASM2     | evaSS1     | dbsnpRS1   | rsLocus1 | Y                              |                      | Merge evaRS2 to dbsnpRS1     |                                          | Issue new RS ID for evaSS3 due to split                |                                |                              |
-        | ASM2     | dbsnpSS2   | evaRS2     | rsLocus1 | Y                              | MC(dbsnpRS1, evaRS2) | evaSS1, dbsnpRS1, rsLocus1   | SC(dbsnpSS2, evaSS3)                     | evaSS1, dbsnpRS1, rsLocus1                             |                                |                              |
-        | ASM2     | evaSS3     | evaRS2     | rsLocus2 | N                              | ===========>         | dbsnpSS2, dbsnpRS1, rsLocus1 | ===========>                             | dbsnpSS2, dbsnpRS1, rsLocus1                           |                                |                              |
-        | ASM2     | dbsnpSS4   | dbsnpRS3   | rsLocus3 | N                              |                      | evaSS3, dbsnpRS1, rsLocus2   |                                          | evaSS3, newRS1, rsLocus2                               |                                |                              |
-        | ASM2     | evaSS5     | evaRS4     | rsLocus3 | Y                              |                      |                              |                                          | Issue new RS ID for dbsnpSS6 and dbsnpSS7 due to split |                                |                              |
-        | ASM2     | dbsnpSS6   | evaRS4     | rsLocus4 | N                              |                      | Merge evaRS4 to dbsnpRS3     |                                          | dbsnpSS4, dbsnpRS3, rsLocus3                           |                                |                              |
-        | ASM2     | dbsnpSS7   | evaRS4     | rsLocus4 | Y                              | MC(dbsnpRS3, evaRS4) | dbsnpSS4, dbsnpRS3, rsLocus3 | SC(dbsnpSS4, evaSS5, dbsnpSS6, dbsnpSS7) | evaSS5, dbsnpRS3, rsLocus3                             |                                |                              |
-        | ASM2     | evaSS8     | Unassigned | rsLocus4 | Y                              | ===========>         | evaSS5, dbsnpRS3, rsLocus3   | ===========>                             | dbsnpSS6, newRS2, rsLocus4                             | New RS ID assignment to evaSS8 |                              |
-        | ASM2     | evaSS9     | dbsnpRS5   | rsLocus5 | Y                              |                      | dbsnpSS6, dbsnpRS3, rsLocus4 |                                          | dbsnpSS7, newRS2, rsLocus4                             | ===========>                   | evaSS8, newRS2, rsLocus4     |
-        | ASM1     | evaSS8_old | Unassigned | rsLocus4 | N                              |                      | dbsnpSS7, dbsnpRS3, rsLocus4 |                                          | evaSS9, dbsnpRS5, rsLocus5                             |Back propagation to evaSS8_old  | evaSS8_old, newRS2, rsLocus4 |
-        +----------+------------+------------+----------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+------------------------------+
+        +----------+------------+------------+--------------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+----------------------------------+
+        | Assembly |     SS     |     RS     |   RS_LOCUS   | Remapped from another assembly |                      |                              |                                          |                                                        |                                |                                  |
+        +----------+------------+------------+--------------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+----------------------------------+
+        | ASM2     | evaSS1     | dbsnpRS1   | rsLocus1     | Y                              |                      | Merge evaRS2 to dbsnpRS1     |                                          | Issue new RS ID for evaSS3 due to split                |                                |                                  |
+        | ASM2     | dbsnpSS2   | evaRS2     | rsLocus1     | Y                              | MC(dbsnpRS1, evaRS2) | evaSS1, dbsnpRS1, rsLocus1   | SC(dbsnpSS2, evaSS3)                     | evaSS1, dbsnpRS1, rsLocus1                             |                                |                                  |
+        | ASM2     | evaSS3     | evaRS2     | rsLocus2     | N                              | ===========>         | dbsnpSS2, dbsnpRS1, rsLocus1 | ===========>                             | dbsnpSS2, dbsnpRS1, rsLocus1                           |                                |                                  |
+        | ASM2     | dbsnpSS4   | dbsnpRS3   | rsLocus3     | N                              |                      | evaSS3, dbsnpRS1, rsLocus2   |                                          | evaSS3, newRS1, rsLocus2                               |                                |                                  |
+        | ASM2     | evaSS5     | evaRS4     | rsLocus3     | Y                              |                      |                              |                                          | Issue new RS ID for dbsnpSS6 and dbsnpSS7 due to split |                                |                                  |
+        | ASM2     | dbsnpSS6   | evaRS4     | rsLocus4     | N                              |                      | Merge evaRS4 to dbsnpRS3     |                                          | dbsnpSS4, dbsnpRS3, rsLocus3                           |                                |                                  |
+        | ASM2     | dbsnpSS7   | evaRS4     | rsLocus4     | Y                              | MC(dbsnpRS3, evaRS4) | dbsnpSS4, dbsnpRS3, rsLocus3 | SC(dbsnpSS4, evaSS5, dbsnpSS6, dbsnpSS7) | evaSS5, dbsnpRS3, rsLocus3                             |                                |                                  |
+        | ASM2     | evaSS8     | Unassigned | rsLocus4     | Y                              | ===========>         | evaSS5, dbsnpRS3, rsLocus3   | ===========>                             | dbsnpSS6, newRS2, rsLocus4                             | New RS ID assignment to evaSS8 |                                  |
+        | ASM2     | evaSS9     | dbsnpRS5   | rsLocus5     | Y                              |                      | dbsnpSS6, dbsnpRS3, rsLocus4 |                                          | dbsnpSS7, newRS2, rsLocus4                             | ===========>                   | evaSS8, newRS2, rsLocus4         |
+        | ASM1     | evaSS8_old | Unassigned | rsLocus4_old | N                              |                      | dbsnpSS7, dbsnpRS3, rsLocus4 |                                          | evaSS9, dbsnpRS5, rsLocus5                             | Back propagation to evaSS8_old | evaSS8_old, newRS2, rsLocus4_old |
+        +----------+------------+------------+--------------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+----------------------------------+
         */
         setupRSAndSS();
         runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
@@ -339,6 +343,8 @@ public class ClusteringCommandLineRunnerTest {
         assertPostMergeSSRSAssociation(dbsnpSS6, newRS2, rsLocus4);
         assertPostMergeSSRSAssociation(dbsnpSS7, newRS2, rsLocus4);
         assertPostMergeSSRSAssociation(evaSS8, newRS2, rsLocus4);
+        // Ensure that RS is back-propagated to the old SS from which evaSS8 was remapped
+        assertPostMergeSSRSAssociation(evaSS8_old, newRS2, rsLocus4_old);
         assertPostMergeSSRSAssociation(evaSS9, dbsnpRS5, rsLocus5);
 
         // Test operations
@@ -360,7 +366,6 @@ public class ClusteringCommandLineRunnerTest {
         // After merge and splits are carried out, ensure that the operation is written
         // for the evaSS8 clustered with newRS2
         assertPostMergeAndSplitClusteringOperation(evaSS8, newRS2);
-        // Test back-propagation
     }
 
     private void assertPostMergeRSOperation(ClusteredVariantEntity mergee, ClusteredVariantEntity mergeDestination) {
@@ -467,7 +472,11 @@ public class ClusteringCommandLineRunnerTest {
     private void assertPostMergeSSRSAssociation(SubmittedVariantEntity ss, ClusteredVariantEntity rs, RSLocus rsLocus)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         AccessionWrapper<ISubmittedVariant, String, Long> ssInDBWrapper =
-                this.submittedVariantAccessioningService.getByAccession(ss.getAccession());
+                this.submittedVariantAccessioningService
+                        .getAllByAccession(ss.getAccession())
+                        .stream()
+                        .filter(entity -> entity.getData().getReferenceSequenceAccession().equals(
+                                ss.getReferenceSequenceAccession())).findFirst().get();
         SubmittedVariantEntity ssInDB = new SubmittedVariantEntity(ssInDBWrapper.getAccession(),
                                                                    ssInDBWrapper.getHash(),
                                                                    ssInDBWrapper.getData(),
@@ -485,6 +494,8 @@ public class ClusteringCommandLineRunnerTest {
         rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.SNV);
         rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
         rsLocus4 = new RSLocus(ASM2, "chr1", 103L, VariantType.SNV);
+        rsLocus4_old = new RSLocus(ASM1, "chr1", 103L + ThreadLocalRandom.current().nextLong(10),
+                                   VariantType.SNV);
         rsLocus5 = new RSLocus(ASM2, "chr1", 104L, VariantType.SNV);
         dbsnpRS1 = createRS(1L, rsLocus1, true);
         evaRS2 = createRS(5L, rsLocus2, false);
@@ -500,11 +511,25 @@ public class ClusteringCommandLineRunnerTest {
         dbsnpSS6 = createSS(3L, evaRS4.getAccession(), rsLocus4, "T", "C", false);
         dbsnpSS7 = createSS(4L, evaRS4.getAccession(), rsLocus4, "T", "A", true);
         evaSS8 = createSS(8L, null, rsLocus4, "T", "G", true);
-        //evaSS8_old = createSS(8L, null, rsLocus4, "T", "G", false);
+        SubmittedVariant evaSS8_old_sv_obj = new SubmittedVariant(evaSS8.getRemappedFrom(),
+                                                                  evaSS8.getTaxonomyAccession(),
+                                                                  evaSS8.getProjectAccession(),
+                                                                  evaSS8.getContig(),
+                                                                  rsLocus4_old.start,
+                                                                  evaSS8.getReferenceAllele(),
+                                                                  evaSS8.getAlternateAllele(), null);
+        Function<ISubmittedVariant, String> hashingFunction =
+                new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        evaSS8_old = new SubmittedVariantEntity(evaSS8.getAccession(), hashingFunction.apply(evaSS8_old_sv_obj),
+                                                evaSS8_old_sv_obj, 1);
+        this.mongoTemplate.insert(evaSS8_old, this.mongoTemplate.getCollectionName(SubmittedVariantEntity.class));
         evaSS9 = createSS(9L, dbsnpRS5.getAccession(), rsLocus5, "A", "T", true);
 
         // Reserve at least 10 accessions (by generating them) for existing RS IDs in the setup above
         // so that new RS IDs created are distinctly identifiable
+        // This is the easiest way to exhaust the accessions because
+        // the monotonic accession generator will only create accessions in the EVA collection (ClusteredVariantEntity)
+        // and not the dbSNP collection (DbsnpClusteredVariantEntity)
         clusteredVariantAccessionGenerator.generateAccessions(10);
     }
 
@@ -518,7 +543,7 @@ public class ClusteringCommandLineRunnerTest {
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(ssAccession, hash, submittedVariant,
                                                                                    1);
         if (remappedFromAnotherAssembly) {
-            submittedVariantEntity.setRemappedFrom("ASM1");
+            submittedVariantEntity.setRemappedFrom(ASM1);
         }
         if (ssAccession >= accessioningMonotonicInitSs) {
             mongoTemplate.save(submittedVariantEntity, mongoTemplate.getCollectionName(SubmittedVariantEntity.class));

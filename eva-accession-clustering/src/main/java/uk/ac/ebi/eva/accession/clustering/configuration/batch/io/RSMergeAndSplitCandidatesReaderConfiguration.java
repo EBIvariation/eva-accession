@@ -54,12 +54,12 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
 
     public static Query getSplitCandidatesQuery(String assemblyAccession) {
         return Query.query(where(ASSEMBLY_FIELD).is(assemblyAccession))
-                    .addCriteria(where(EVENT_TYPE_FIELD).is(SPLIT_CANDIDATES_EVENT_TYPE));
+                    .addCriteria(where(EVENT_TYPE_FIELD).is(SPLIT_CANDIDATES_EVENT_TYPE.toString()));
     }
 
     public static Query getMergeCandidatesQuery(String assemblyAccession) {
         return Query.query(where(ASSEMBLY_FIELD).is(assemblyAccession))
-                    .addCriteria(where(EVENT_TYPE_FIELD).is(MERGE_CANDIDATES_EVENT_TYPE));
+                    .addCriteria(where(EVENT_TYPE_FIELD).is(MERGE_CANDIDATES_EVENT_TYPE.toString()));
     }
 
     @Bean(RS_SPLIT_CANDIDATES_READER)

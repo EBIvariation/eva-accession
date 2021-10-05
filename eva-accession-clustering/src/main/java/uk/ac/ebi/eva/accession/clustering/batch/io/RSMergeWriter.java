@@ -135,14 +135,10 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         ImmutablePair<ClusteredVariantEntity, List<ClusteredVariantEntity>> mergeDestinationAndMergees =
                 getMergeDestinationAndMergees(mergeCandidates);
         ClusteredVariantEntity mergeDestination = mergeDestinationAndMergees.getLeft();
-        // Insert RS record for destination RS if it does not already exist
-        insertRSRecordForMergeDestination(mergeDestination);
 
         List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
         for (ClusteredVariantEntity mergee: mergees) {
-            merge(mergeDestination.getAccession(), mergee.getAccession());
-            // Record merge operation
-            insertMergeOperation(mergeDestination, mergee);
+            merge(mergeDestination, mergee, submittedVariantOperationEntity);
         }
     }
 
@@ -170,16 +166,9 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
     private void insertRSRecordForMergeDestination(ClusteredVariantEntity mergeDestination) {
         Class<? extends ClusteredVariantEntity> clusteredVariantCollectionToWriteTo =
                 clusteringWriter.getClusteredVariantCollection(mergeDestination.getAccession());
-        List<? extends ClusteredVariantEntity> existingRecords =
-                this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(mergeDestination.getHashedMessage()))
-                                                .addCriteria(where(ACCESSION_ATTRIBUTE).is(
-                                                        mergeDestination.getAccession())),
-                                        clusteredVariantCollectionToWriteTo);
-        if (existingRecords.isEmpty()) {
-            this.mongoTemplate.insert(mergeDestination,
-                                      this.mongoTemplate.getCollectionName(clusteredVariantCollectionToWriteTo));
-            this.clusteringCounts.addClusteredVariantsCreated(1);
-        }
+        this.mongoTemplate.insert(mergeDestination,
+                                  this.mongoTemplate.getCollectionName(clusteredVariantCollectionToWriteTo));
+        this.clusteringCounts.addClusteredVariantsCreated(1);
     }
 
     /**
@@ -206,45 +195,50 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         return new ImmutablePair<>(targetRS, mergees);
     }
 
-    protected void merge(Long providedAccession, Long accessionInDatabase)
-            throws AccessionDoesNotExistException {
-        ClusteredVariantMergingPolicy.Priority prioritised = prioritise(providedAccession, accessionInDatabase);
+    protected void merge(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee,
+                         SubmittedVariantOperationEntity submittedVariantOperationEntity) {
+        Long accessionToBeMerged = mergee.getAccession();
+        Long accessionToKeep = mergeDestination.getAccession();
 
         //Confine merge updates to the particular assembly where clustering is being performed
-        Query queryForMergee = query(where(ACCESSION_ATTRIBUTE).is(prioritised.accessionToBeMerged))
+        Query queryForMergee = query(where(ACCESSION_ATTRIBUTE).is(accessionToBeMerged))
                 .addCriteria(
                         where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-        Query queryForMergeTarget = query(where(ACCESSION_ATTRIBUTE).is(prioritised.accessionToKeep))
+        Query queryForMergeTarget = query(where(ACCESSION_ATTRIBUTE).is(accessionToKeep))
                 .addCriteria(
                         where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
 
         List<? extends ClusteredVariantEntity> clusteredVariantToMerge =
-                mongoTemplate.find(queryForMergee, clusteringWriter.getClusteredVariantCollection(
-                        prioritised.accessionToBeMerged));
+                mongoTemplate.find(queryForMergee,
+                                   clusteringWriter.getClusteredVariantCollection(accessionToBeMerged));
 
         List<? extends ClusteredVariantEntity> clusteredVariantToKeep =
                 mongoTemplate.find(queryForMergeTarget, clusteringWriter.getClusteredVariantCollection(
-                        prioritised.accessionToKeep));
+                        accessionToKeep));
 
         if (clusteringWriter.isMultimap(clusteredVariantToMerge) || clusteringWriter.isMultimap(clusteredVariantToKeep)) {
             // multimap! don't merge. see isMultimap() below for more details
             return;
         }
 
-        if (clusteredVariantToKeep.isEmpty()) {
-            throw new AccessionDoesNotExistException("Merge destination RS ID: " + prioritised.accessionToKeep
-                                                             + " does not exist!");
-        }
-
         // Mergee is no longer valid to be present in the main clustered variant collection
-        mongoTemplate.remove(queryForMergee, clusteringWriter.getClusteredVariantCollection(
-                prioritised.accessionToBeMerged));
+        mongoTemplate.remove(queryForMergee, clusteringWriter.getClusteredVariantCollection(accessionToBeMerged));
         clusteringCounts.addClusteredVariantsUpdated(clusteredVariantToMerge.size());
+
+        if (clusteredVariantToKeep.isEmpty()) {
+            // Insert RS record for destination RS
+            insertRSRecordForMergeDestination(mergeDestination);
+        }
+        // Record merge operation
+        insertMergeOperation(mergeDestination, mergee);
 
         // Update submitted variants linked to the clustered variant we just merged.
         // This has to happen for both EVA and dbsnp SS because previous cross merges might have happened.
-        updateSubmittedVariants(prioritised, SubmittedVariantEntity.class, SubmittedVariantOperationEntity.class);
-        updateSubmittedVariants(prioritised, DbsnpSubmittedVariantEntity.class,
+        ClusteredVariantMergingPolicy.Priority prioritised =
+                new ClusteredVariantMergingPolicy.Priority(accessionToKeep, accessionToBeMerged);
+        updateSubmittedVariants(prioritised, submittedVariantOperationEntity, SubmittedVariantEntity.class,
+                                SubmittedVariantOperationEntity.class);
+        updateSubmittedVariants(prioritised, submittedVariantOperationEntity, DbsnpSubmittedVariantEntity.class,
                                 DbsnpSubmittedVariantOperationEntity.class);
 
         // Update currently outstanding split candidate events that involve the RS that was just merged and the target RS
@@ -269,6 +263,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 this.submittedVariantAccessioningService
                         .getByClusteredVariantAccessionIn(Collections.singletonList(prioritised.accessionToKeep))
                         .stream()
+                        .filter(result -> result.getData().getReferenceSequenceAccession()
+                                                .equals(this.assemblyAccession))
                         .map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
                                                                   result.getData(), result.getVersion()))
                         .map(SubmittedVariantInactiveEntity::new)
@@ -308,6 +304,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
      */
     private void updateSubmittedVariants(
             ClusteredVariantMergingPolicy.Priority prioritised,
+            SubmittedVariantOperationEntity ssParticipatingInMerge,
             Class<? extends SubmittedVariantEntity> submittedVariantCollection,
             Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                     submittedOperationCollection) {
@@ -322,14 +319,30 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
         clusteringCounts.addSubmittedVariantsUpdatedRs(svToUpdate.size());
 
-        if (!svToUpdate.isEmpty()) {
-            List<SubmittedVariantOperationEntity> operations =
-                    svToUpdate.stream()
-                              .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
-                              .collect(Collectors.toList());
-            mongoTemplate.insert(operations, submittedOperationCollection);
-            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(operations.size());
+        // Sometimes submitted variants that create "SS hash collision" (not RS hash collision)
+        // may not have been ingested into submitted variant collection in the first place - see EVA-2610
+        // In such cases, construct a dummy SubmittedVariant object to record the merge in the operations collection.
+        if (svToUpdate.isEmpty()) {
+            svToUpdate =
+                    ssParticipatingInMerge
+                    .getInactiveObjects()
+                    .stream()
+                    .filter(inactiveEntity -> inactiveEntity.getClusteredVariantAccession()
+                                                         .equals(prioritised.accessionToBeMerged))
+                    .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                    // Construct operations for variants pertaining
+                    // to the operations collection in the submittedOperationCollection variable
+                    .filter(entity -> (clusteringWriter.isEvaSubmittedVariant(entity) ==
+                            submittedOperationCollection.equals(SubmittedVariantOperationEntity.class)))
+                    .collect(Collectors.toList());
         }
+
+        List<SubmittedVariantOperationEntity> operations =
+                svToUpdate.stream()
+                          .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
+                          .collect(Collectors.toList());
+        mongoTemplate.insert(operations, submittedOperationCollection);
+        clusteringCounts.addSubmittedVariantsUpdateOperationWritten(operations.size());
     }
 
     private SubmittedVariantOperationEntity buildSubmittedOperation(SubmittedVariantEntity originalSubmittedVariant,

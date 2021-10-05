@@ -20,6 +20,7 @@ import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,23 +41,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
-import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
-import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -66,12 +60,14 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
-@TestPropertySource("classpath:clustering-pipeline-test.properties")
+@TestPropertySource("classpath:clustering-writer-test.properties")
 public class ClusteringVariantJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
@@ -117,9 +113,11 @@ public class ClusteringVariantJobConfigurationTest {
         mongoTemplate.getDb().drop();
     }
 
+    @Ignore
     @Test
     @DirtiesContext
     @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
+    // TODO: Re-visit during EVA-2611
     public void jobFromVcf() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtilsFromVcf.launchJob();
         List<String> expectedSteps = Collections.singletonList(CLUSTERING_FROM_VCF_STEP);
@@ -129,23 +127,16 @@ public class ClusteringVariantJobConfigurationTest {
 
     @Test
     @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     public void jobFromMongo() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
         List<String> expectedSteps = new ArrayList<>();
         expectedSteps.add(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        expectedSteps.add(PROCESS_RS_MERGE_CANDIDATES_STEP);
+        expectedSteps.add(PROCESS_RS_SPLIT_CANDIDATES_STEP);
         expectedSteps.add(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-    }
-
-    private DbsnpClusteredVariantEntity createClusteredVariantEntity() {
-        ClusteredVariant variant = new ClusteredVariant("GCA_000000001.1", 1000, "1", 3000, VariantType.SNV, false,
-                                                        null);
-        Function<IClusteredVariant, String> clusteredHashingFunction =
-                new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
-        String hash = clusteredHashingFunction.apply(variant);
-        DbsnpClusteredVariantEntity variantEntity = new DbsnpClusteredVariantEntity(30L, hash, variant, 1);
-        return variantEntity;
     }
 
     private void assertStepsExecuted(List<String> expectedSteps, JobExecution jobExecution) {

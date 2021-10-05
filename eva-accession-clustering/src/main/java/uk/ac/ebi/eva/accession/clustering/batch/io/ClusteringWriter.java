@@ -39,6 +39,7 @@ import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -190,7 +191,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      */
     private void processClusteredRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
         List<SubmittedVariantEntity> clusteredRemappedSubmittedVariants = getClusteredAndRemappedVariants(submittedVariants);
-        if(clusteredRemappedSubmittedVariants.isEmpty()){
+        if(clusteredRemappedSubmittedVariants.isEmpty()) {
             return;
         }
 
@@ -213,8 +214,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         for (SubmittedVariantEntity remappedSubmittedVariantEntity : clusteredRemappedSubmittedVariants) {
             ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(remappedSubmittedVariantEntity);
 
-            boolean isMergeCandidate = checkIfCandidateForMerge(remappedSubmittedVariantEntity, clusteredVariantEntity,
-                                                                assembly, allExistingHashesInDB, mergeCandidateSVOE);
+            boolean isExistingRSOrMergeCandidate = checkIfExistingRSOrCandidateForMerge(remappedSubmittedVariantEntity,
+                                                                                        clusteredVariantEntity,
+                                                                                        assembly, allExistingHashesInDB,
+                                                                                        mergeCandidateSVOE);
 
             updateAllExistingHashesGroupByRS(allExistingHashesGroupByRS, assembly,
                                              clusteredVariantEntity.getAccession());
@@ -222,7 +225,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             checkIfCandidateForRSSplit(remappedSubmittedVariantEntity, clusteredVariantEntity, assembly,
                                        allExistingHashesGroupByRS, rsSplitCandidateSVOE);
 
-            if (!isMergeCandidate) {
+            if (!isExistingRSOrMergeCandidate) {
                 if (clusteredVariantEntity.getAccession() >= accessioningMonotonicInitRs) {
                     clusteredVariantEntities.add(clusteredVariantEntity);
                 } else {
@@ -242,6 +245,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return submittedVariants.stream()
                 .filter(sve -> Objects.nonNull(sve.getClusteredVariantAccession()))
                 .filter(sve -> !StringUtil.isBlank(sve.getRemappedFrom()))
+                .filter(sve -> Objects.isNull(sve.getMapWeight()))
                 .collect(Collectors.toList());
     }
 
@@ -250,7 +254,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 .map(this::toClusteredVariant)
                 .collect(Collectors.toList());
         return clusteredService.get(clusteredVariants).stream()
-                .collect(Collectors.toMap(AccessionWrapper::getHash, AccessionWrapper::getAccession));
+                               .collect(Collectors.toMap(AccessionWrapper::getHash, AccessionWrapper::getAccession));
     }
 
     private Set<String> getAllHashesForAssemblyAndRS(String assembly, Long accession) {
@@ -281,16 +285,22 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return results;
     }
 
-    private boolean checkIfCandidateForMerge(SubmittedVariantEntity submittedVariantEntity,
-                                             ClusteredVariantEntity clusteredVariantEntity,
-                                             String assembly,
-                                             Map<String, Long> allExistingHashesInDB,
-                                             Map<String, SubmittedVariantOperationEntity> mergeCandidateSVOE) {
+    private boolean checkIfExistingRSOrCandidateForMerge(SubmittedVariantEntity submittedVariantEntity,
+                                                         ClusteredVariantEntity clusteredVariantEntity,
+                                                         String assembly,
+                                                         Map<String, Long> allExistingHashesInDB,
+                                                         Map<String, SubmittedVariantOperationEntity>
+                                                                 mergeCandidateSVOE) {
         Long variantAccession = clusteredVariantEntity.getAccession();
         String variantHash = clusteredVariantEntity.getHashedMessage();
         Long accessionInDB = allExistingHashesInDB.get(variantHash);
 
-        if (allExistingHashesInDB.containsKey(variantHash) && !Objects.equals(variantAccession, accessionInDB)) {
+        // Existing RS being used for the remapped variant
+        if (Objects.equals(variantAccession, accessionInDB)) {
+            return true;
+        }
+
+        if (allExistingHashesInDB.containsKey(variantHash)) {
             if (mergeCandidateSVOE.containsKey(variantHash)) {
                 mergeCandidateSVOE.get(variantHash).getInactiveObjects()
                         .add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
@@ -494,8 +504,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             }
             // Query to update the RSid in submittedVariantEntity
             Query updateRsQuery = query(where("_id").is(submittedVariantEntity.getId()));
-            Update updateRsUpdate = new Update();
-            updateRsUpdate.set(RS_KEY, rsid);
+            Update updateRS = new Update();
+            updateRS.set(RS_KEY, rsid);
 
             // Query to create the update operation history
             SubmittedVariantOperationEntity updateOperation = new SubmittedVariantOperationEntity();
@@ -508,12 +518,62 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                     Collections.singletonList(inactiveEntity)
             );
 
+            // Back-propagation logic
+            Query queryToFindSSInSourceAssembly = null;
+            SubmittedVariantOperationEntity backPropagationUpdateOperation = null;
+            if (submittedVariantEntity.getRemappedFrom() != null) {
+                // Query to back-propagate RS ID to the original SS (from where the current SS is remapped)
+                queryToFindSSInSourceAssembly =
+                        query(where("accession").is(submittedVariantEntity.getAccession()))
+                                .addCriteria(where("seq").is(submittedVariantEntity.getRemappedFrom()))
+                                .addCriteria(where("rs").exists(false));
+                // Query to record the update operation history with back-propagation
+                backPropagationUpdateOperation = new SubmittedVariantOperationEntity();
+                // Since we don't have the original source SS ID from which we remapped
+                // it can get quite expensive to query the source records for every original SS with just the accession
+                // without bulk-querying. Therefore, we are filling in fake data for the old SS entry in operations
+                // TODO: Find a more efficient way to do this!!
+                SubmittedVariant oldSS = new SubmittedVariant(submittedVariantEntity.getRemappedFrom(),
+                                                              submittedVariantEntity.getTaxonomyAccession(),
+                                                              submittedVariantEntity.getProjectAccession(),
+                                                              "contig-pre-remapping", -1L, "ref-pre-remapping",
+                                                              "alt-pre-remapping", null);
+                SubmittedVariantInactiveEntity inactiveEntityForBackPropagation =
+                        new SubmittedVariantInactiveEntity(
+                                new SubmittedVariantEntity(submittedVariantEntity.getAccession(),
+                                                           submittedHashingFunction.apply(oldSS),
+                                                           oldSS,
+                                                           submittedVariantEntity.getVersion()));
+                backPropagationUpdateOperation.fill(
+                        EventType.UPDATED,
+                        submittedVariantEntity.getAccession(),
+                        null,
+                        "Back-propagating rs" + rsid + " for submitted variant ss" +
+                                submittedVariantEntity.getAccession() + " after remapping to " +
+                                submittedVariantEntity.getReferenceSequenceAccession() + ".",
+                        Collections.singletonList(inactiveEntityForBackPropagation)
+                );
+            }
+
             if (isEvaSubmittedVariant(submittedVariantEntity)) {
-                bulkOperations.updateOne(updateRsQuery, updateRsUpdate);
+                bulkOperations.updateOne(updateRsQuery, updateRS);
+                if (submittedVariantEntity.getRemappedFrom() != null) {
+                    // Due to MongoDB technical limitations,
+                    // updateOne cannot be used when shard key "_id" is not part of the query
+                    // So, use updateMulti even though only one record will be updated
+                    bulkOperations.updateMulti(queryToFindSSInSourceAssembly, updateRS);
+                    bulkHistoryOperations.insert(backPropagationUpdateOperation);
+                    ++numUpdates;
+                }
                 bulkHistoryOperations.insert(updateOperation);
                 ++numUpdates;
             } else {
-                dbsnpBulkOperations.updateOne(updateRsQuery, updateRsUpdate);
+                dbsnpBulkOperations.updateOne(updateRsQuery, updateRS);
+                if (submittedVariantEntity.getRemappedFrom() != null) {
+                    dbsnpBulkOperations.updateMulti(queryToFindSSInSourceAssembly, updateRS);
+                    dbsnpBulkHistoryOperations.insert(backPropagationUpdateOperation);
+                    ++numDbsnpUpdates;
+                }
                 dbsnpBulkHistoryOperations.insert(updateOperation);
                 ++numDbsnpUpdates;
             }
