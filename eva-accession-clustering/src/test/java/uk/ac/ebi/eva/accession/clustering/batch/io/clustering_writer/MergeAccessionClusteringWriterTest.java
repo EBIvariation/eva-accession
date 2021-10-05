@@ -245,7 +245,7 @@ public class MergeAccessionClusteringWriterTest {
         Long rs2 = 3100000000L;
         Long ssToRemap = 50L;
         Long ss2 = 5100000000L;
-        // rs2 is removed from CVE post-merge and rs2 is created in dbSnpCVE post-merge
+        // rs2 is removed from CVE post-merge and rs1 is created in dbSnpCVE post-merge (hence the 1 and -1 in the last 2 arguments)
         mergeClusteredAccession(rs1, rs2, ssToRemap, ss2, 2, 0, 0, 1, 1, 1, 0, 1, 1, -1);
         assertClusteringCounts(clusteringCounts, 1, 1, 1, 0, 0, 1, 1);
         assertMergedInto(rs1, rs2, ss2);
