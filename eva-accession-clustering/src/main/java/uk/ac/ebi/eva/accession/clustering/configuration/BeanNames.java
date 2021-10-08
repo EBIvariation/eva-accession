@@ -27,6 +27,8 @@ public class BeanNames {
 
     public static final String RS_SPLIT_CANDIDATES_READER = "RS_SPLIT_CANDIDATES_READER";
 
+    public static final String CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES = "CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES";
+
     public static final String RS_MERGE_WRITER = "RS_MERGE_WRITER";
 
     public static final String RS_SPLIT_WRITER = "RS_SPLIT_WRITER";
@@ -47,6 +49,8 @@ public class BeanNames {
     public static final String PROCESS_RS_MERGE_CANDIDATES_STEP = "PROCESS_RS_MERGE_CANDIDATES_STEP";
 
     public static final String PROCESS_RS_SPLIT_CANDIDATES_STEP = "PROCESS_RS_SPLIT_CANDIDATES_STEP";
+
+    public static final String CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP = "CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP";
 
     public static final String CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP = "CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP";
 

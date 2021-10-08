@@ -42,12 +42,18 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
+import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +63,7 @@ import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
@@ -90,6 +97,9 @@ public class ClusteringVariantJobConfigurationTest {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private InputParameters inputParameters;
+
     private MockRestServiceServer mockServer;
 
     @Autowired
@@ -102,6 +112,7 @@ public class ClusteringVariantJobConfigurationTest {
 
     @Before
     public void init() throws Exception {
+        mongoTemplate.getDb().drop();
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
@@ -134,6 +145,7 @@ public class ClusteringVariantJobConfigurationTest {
         expectedSteps.add(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
         expectedSteps.add(PROCESS_RS_MERGE_CANDIDATES_STEP);
         expectedSteps.add(PROCESS_RS_SPLIT_CANDIDATES_STEP);
+        expectedSteps.add(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP);
         expectedSteps.add(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
@@ -144,4 +156,66 @@ public class ClusteringVariantJobConfigurationTest {
         List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
     }
+
+    @Test
+    @DirtiesContext
+    public void assertDataThatExceedsChunkSizeIsFullyProcessed() throws Exception {
+        int numOperations = inputParameters.getChunkSize() * 3;
+        createSplitCandidateEntriesThatExceedChunkSize(numOperations);
+        createMergeCandidateEntriesThatExceedChunkSize(numOperations);
+        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
+        assertEquals(numOperations,
+                     jobExecution.getStepExecutions()
+                                 .stream()
+                                 .filter(stepExecution -> stepExecution.getStepName()
+                                                                       .equals(PROCESS_RS_SPLIT_CANDIDATES_STEP))
+                                 .findFirst().get().getReadCount());
+        assertEquals(numOperations,
+                     jobExecution.getStepExecutions()
+                                 .stream()
+                                 .filter(stepExecution -> stepExecution.getStepName()
+                                                                       .equals(PROCESS_RS_MERGE_CANDIDATES_STEP))
+                                 .findFirst().get().getReadCount());
+    }
+
+    private void createMergeCandidateEntriesThatExceedChunkSize(int numSplitCandidateOperations) {
+        //Candidates for merge are entries with same locus but different RS
+        SubmittedVariantInactiveEntity ss1 = new SubmittedVariantInactiveEntity(
+                createSSWithLocus(1L, 1L, 100L, "C", "T"));
+        SubmittedVariantInactiveEntity ss2 = new SubmittedVariantInactiveEntity(
+                createSSWithLocus(2L, 2L, 100L, "C", "A"));
+        for (int i = 0; i < numSplitCandidateOperations; i++) {
+            SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
+            splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
+                                ss1.getAccession(), null, "Mock merge candidate",
+                                Arrays.asList(ss1, ss2));
+            mongoTemplate.insert(splitOperation,
+                                 mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
+        }
+    }
+
+    private void createSplitCandidateEntriesThatExceedChunkSize(int numSplitCandidateOperations) {
+        //Candidates for split are entries with same RS but different locus
+        SubmittedVariantInactiveEntity ss1 = new SubmittedVariantInactiveEntity(
+                createSSWithLocus(1L, 1L, 100L, "C", "T"));
+        SubmittedVariantInactiveEntity ss2 = new SubmittedVariantInactiveEntity(
+                createSSWithLocus(2L, 1L, 101L, "G", "A"));
+        for (int i = 0; i < numSplitCandidateOperations; i++) {
+            SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
+            splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                                ss1.getAccession(), null, "Mock split candidate",
+                                Arrays.asList(ss1, ss2));
+            mongoTemplate.insert(splitOperation,
+                                 mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
+        }
+    }
+
+    private SubmittedVariantEntity createSSWithLocus(Long ssAccession, Long rsAccession, Long start, String reference,
+                                                     String alternate) {
+        return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession, inputParameters.getAssemblyAccession(),
+                                          60711,
+                                          "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
+                                          false, 1);
+    }
+
 }

@@ -31,6 +31,8 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_VARIANTS_MONGO_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
@@ -99,6 +101,34 @@ public class ClusteringFromMongoStepConfiguration {
                                              .listener(progressListener)
                                              .build();
         return step;
+    }
+
+    @Bean(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP)
+    public Step clearRSMergeAndSplitCandidatesStep(
+            @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES) ItemWriter clearRSMergeAndSplitCandidates,
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP)
+                                             .chunk(chunkSizeCompletionPolicy)
+                                             .reader(new SingleItemReader())
+                                             .writer(clearRSMergeAndSplitCandidates)
+                                             .build();
+        return step;
+    }
+
+    // Since Spring Batch won't allow a step to be defined without a reader
+    // we have to resort to this to return a single dummy item
+    // so that the writer to clear RS merge and split candidate entries can proceed
+    public static class SingleItemReader implements ItemReader<Object> {
+        static boolean firstTime = true;
+        @Override
+        public Object read() throws Exception {
+            if (firstTime) {
+                firstTime = false;
+                return new Object();
+            }
+            return null;
+        }
     }
 
     @Bean(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
