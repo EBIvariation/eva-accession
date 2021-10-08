@@ -164,7 +164,7 @@ public class IssueAccessionClusteringWriterTest {
     @DirtiesContext
     public void writer() throws Exception {
         List<SubmittedVariantEntity> submittedVariantEntities = createSubmittedVariantEntities();
-        this.processMergesAndSplits(submittedVariantEntities);
+        this.clusterVariants(submittedVariantEntities);
         assertClusteredVariantsCreated();
         assertSubmittedVariantsUpdated();
         assertSubmittedVariantsOperationInserted();
@@ -282,7 +282,7 @@ public class IssueAccessionClusteringWriterTest {
                 .getClusteredVariantAccession());
 
         // when
-        this.processMergesAndSplits(Collections.singletonList(ssToCluster));
+        this.clusterVariants(Collections.singletonList(ssToCluster));
 
         // then
         assertEquals(rsAccession, mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
@@ -312,7 +312,7 @@ public class IssueAccessionClusteringWriterTest {
                                 .getClusteredVariantAccession());
 
         // when
-        this.processMergesAndSplits(Collections.singletonList(ssToCluster));
+        this.clusterVariants(Collections.singletonList(ssToCluster));
 
         // then
         assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
@@ -339,7 +339,7 @@ public class IssueAccessionClusteringWriterTest {
                 .getClusteredVariantAccession());
 
         // when
-        this.processMergesAndSplits(Collections.singletonList(ssToCluster));
+        this.clusterVariants(Collections.singletonList(ssToCluster));
 
         // then
         assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
@@ -371,7 +371,7 @@ public class IssueAccessionClusteringWriterTest {
         return variantEntity;
     }
 
-    private void processMergesAndSplits(List<SubmittedVariantEntity> submittedVariantEntities)
+    private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
             throws Exception {
         clusteringWriterPreMergeAndSplit.write(submittedVariantEntities);
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();

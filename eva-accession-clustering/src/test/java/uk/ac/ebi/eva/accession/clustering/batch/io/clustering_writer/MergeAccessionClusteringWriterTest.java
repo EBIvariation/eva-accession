@@ -279,7 +279,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(ASM_2, START, rs1, ssToRemap, ASM_1);
-        this.processMergesAndSplits(Collections.singletonList(sve1Remapped));
+        this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
         assertDatabaseCounts(expectedDbsnpCve, expectedCve, expectedDbsnpCvOperations, expectedCvOperations,
@@ -417,7 +417,7 @@ public class MergeAccessionClusteringWriterTest {
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap, asm1);
         sve1Remapped.setMapWeight(3);
-        this.processMergesAndSplits(Collections.singletonList(sve1Remapped));
+        this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
         assertDatabaseCounts(0, 3, 0, 0,
@@ -458,7 +458,7 @@ public class MergeAccessionClusteringWriterTest {
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 100L, rs1, ssToRemap, asm1);
         sve1Remapped.setMapWeight(3);
-        this.processMergesAndSplits(Collections.singletonList(sve1Remapped));
+        this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
         assertDatabaseCounts(0, 3, 0, 0,
@@ -500,7 +500,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
-        this.processMergesAndSplits(Collections.singletonList(sve1Remapped));
+        this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
         assertDatabaseCounts(0, 3, 0, 0,
@@ -539,7 +539,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
-        this.processMergesAndSplits(Collections.singletonList(sve1Remapped));
+        this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
         assertDatabaseCounts(0, 3, 0, 0,
@@ -580,7 +580,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
-        this.processMergesAndSplits(Collections.singletonList(sve1Remapped));
+        this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
         assertDatabaseCounts(0, 3, 0, 1,
@@ -622,7 +622,7 @@ public class MergeAccessionClusteringWriterTest {
 
         // when
         SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(asm2, 200L, rs1, ssToRemap, asm1);
-        this.processMergesAndSplits(Collections.singletonList(sve1Remapped));
+        this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
         // RS2 to RS1 merge will be confined to the ASM2 assembly. Therefore number of CV and SV operations is just 1.
@@ -667,7 +667,7 @@ public class MergeAccessionClusteringWriterTest {
         return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, null);
     }
 
-    private void processMergesAndSplits(List<SubmittedVariantEntity> submittedVariantEntities)
+    private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
             throws Exception {
         clusteringWriterPreMergeAndSplit.write(submittedVariantEntities);
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();

@@ -164,16 +164,16 @@ public class ReuseAccessionClusteringWriterTest {
 
         // keep the RS that a submitted variant already has (RS=existingRs)
         SubmittedVariantEntity sveClustered = createSubmittedVariantEntity(ASM_2, existingRs, 5000000000L);
-        this.processMergesAndSplits(Collections.singletonList(sveClustered));
+        this.clusterVariants(Collections.singletonList(sveClustered));
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         // assign an existing RS to a different submitted variant (that has rs=null)
         SubmittedVariantEntity sveNonClustered = createSubmittedVariantEntity(ASM_2, null, 5100000000L);
-        this.processMergesAndSplits(Collections.singletonList(sveNonClustered));
+        this.clusterVariants(Collections.singletonList(sveNonClustered));
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         // for the same submitted variant without an assigned RS (rs=null), getOrCreate should not create another RS
-        this.processMergesAndSplits(Collections.singletonList(sveNonClustered));
+        this.clusterVariants(Collections.singletonList(sveNonClustered));
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
         assertClusteringCounts(clusteringCounts, 0, 0, 0, 0, 2, 0, 2);
@@ -236,7 +236,7 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
 
         // when
-        this.processMergesAndSplits(Collections.singletonList(sveNonClustered));
+        this.clusterVariants(Collections.singletonList(sveNonClustered));
 
         // then
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
@@ -285,7 +285,7 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
 
         // when
-        this.processMergesAndSplits(Collections.singletonList(sveNonClustered));
+        this.clusterVariants(Collections.singletonList(sveNonClustered));
 
         // then
         assertEquals(1, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
@@ -310,7 +310,7 @@ public class ReuseAccessionClusteringWriterTest {
         assertClusteringCounts(clusteringCounts, 0, 0, 0, 0, 2, 0, 2);
     }
 
-    private void processMergesAndSplits(List<SubmittedVariantEntity> submittedVariantEntities)
+    private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
             throws Exception {
         clusteringWriterPreMergeAndSplit.write(submittedVariantEntities);
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();

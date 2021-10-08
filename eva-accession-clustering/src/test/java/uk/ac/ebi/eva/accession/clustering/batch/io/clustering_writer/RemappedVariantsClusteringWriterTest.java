@@ -173,7 +173,7 @@ public class RemappedVariantsClusteringWriterTest {
         //asm2 clustered
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
         submittedVariantEntityList.add(submittedVariantEntity2);
-        this.processMergesAndSplits(submittedVariantEntityList);
+        this.clusterVariants(submittedVariantEntityList);
 
         //get all submitted variants with assembly asm2 and assert rs id
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class).stream()
@@ -228,7 +228,7 @@ public class RemappedVariantsClusteringWriterTest {
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
         submittedVariantEntityList.add(submittedVariantEntity2);
         submittedVariantEntityList.add(submittedVariantEntity3);
-        this.processMergesAndSplits(submittedVariantEntityList);
+        this.clusterVariants(submittedVariantEntityList);
 
         //get all submitted variants with assembly asm2 and assert rs id
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class).stream()
@@ -279,7 +279,7 @@ public class RemappedVariantsClusteringWriterTest {
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
         submittedVariantEntityList.add(submittedVariantEntity2);
 
-        this.processMergesAndSplits(submittedVariantEntityList);
+        this.clusterVariants(submittedVariantEntityList);
 
 
         //get all submitted variants for assembly asm2 and assert rs id
@@ -339,7 +339,7 @@ public class RemappedVariantsClusteringWriterTest {
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
         submittedVariantEntityList.add(submittedVariantEntity2);
         submittedVariantEntityList.add(submittedVariantEntity3);
-        this.processMergesAndSplits(submittedVariantEntityList);
+        this.clusterVariants(submittedVariantEntityList);
 
         //get all submitted variants with assembly asm2 and check rs id
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class).stream()
@@ -549,7 +549,7 @@ public class RemappedVariantsClusteringWriterTest {
         return new ClusteredVariantEntity(rs, cvHash, assembly, TAXONOMY, CONTIG, start, type, false, null, 1, null);
     }
 
-    private void processMergesAndSplits(List<SubmittedVariantEntity> submittedVariantEntities)
+    private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
             throws Exception {
         clusteringWriterPreMergeAndSplit.write(submittedVariantEntities);
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();
