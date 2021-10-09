@@ -196,15 +196,15 @@ public class ClusteringVariantJobConfigurationTest {
 
     private void createSplitCandidateEntriesThatExceedChunkSize(int numSplitCandidateOperations) {
         //Candidates for split are entries with same RS but different locus
-        SubmittedVariantInactiveEntity ss1 = new SubmittedVariantInactiveEntity(
-                createSSWithLocus(1L, 1L, 100L, "C", "T"));
-        SubmittedVariantInactiveEntity ss2 = new SubmittedVariantInactiveEntity(
-                createSSWithLocus(2L, 1L, 101L, "G", "A"));
+        SubmittedVariantInactiveEntity ss3 = new SubmittedVariantInactiveEntity(
+                createSSWithLocus(3L, 3L, 100L, "C", "T"));
+        SubmittedVariantInactiveEntity ss4 = new SubmittedVariantInactiveEntity(
+                createSSWithLocus(4L, 3L, 101L, "G", "A"));
         for (int i = 0; i < numSplitCandidateOperations; i++) {
             SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
             splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
-                                ss1.getAccession(), null, "Mock split candidate",
-                                Arrays.asList(ss1, ss2));
+                                ss3.getAccession(), null, "Mock split candidate",
+                                Arrays.asList(ss3, ss4));
             mongoTemplate.insert(splitOperation,
                                  mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }

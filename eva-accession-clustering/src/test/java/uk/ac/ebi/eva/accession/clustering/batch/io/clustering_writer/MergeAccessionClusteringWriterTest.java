@@ -76,6 +76,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer.ClusteringAssertions.assertClusteringCounts;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_CANDIDATES_READER;
@@ -154,6 +155,10 @@ public class MergeAccessionClusteringWriterTest {
     @Autowired
     @Qualifier(RS_SPLIT_WRITER)
     private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
+
+    @Autowired
+    @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
+    private ItemWriter clearRSMergeAndSplitCandidates;
 
     //Required by nosql-unit
     @Autowired
@@ -693,5 +698,9 @@ public class MergeAccessionClusteringWriterTest {
         unclusteredVariantsReader.close();
         // Cluster non-clustered variants
         clusteringWriterPostMergeAndSplit.write(unclusteredVariants);
+        // Spring has a mandatory requirement of even small functionality being writers.
+        // To satisfy that, we pass in a dummy object to invoke the writer
+        // which basically clears the merge and split operations after they were processed above
+        clearRSMergeAndSplitCandidates.write(Collections.singletonList(new Object()));
     }
 }

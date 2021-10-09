@@ -101,22 +101,25 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
     @Bean(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
     public NoOpItemWriter
     clearRSMergeAndSplitCandidates(MongoTemplate mongoTemplate, InputParameters parameters) {
-        Query queryToRemoveMergeAndSplitCandidates =
-                Query.query(where(ASSEMBLY_FIELD).is(parameters.getAssemblyAccession()))
-                     .addCriteria(where(EVENT_TYPE_FIELD).in(
-                             Arrays.asList(MERGE_CANDIDATES_EVENT_TYPE.toString(),
-                                           SPLIT_CANDIDATES_EVENT_TYPE.toString()))
-                     );
-        mongoTemplate.remove(queryToRemoveMergeAndSplitCandidates, SUBMITTED_VARIANT_OPERATIONS_COLLECTION);
-        // Satisfy Spring batch's mandatory requirement to have an item writer as part of any step
-        // by returning a dummy writer
-        return new NoOpItemWriter();
+        return new NoOpItemWriter(mongoTemplate, parameters);
     }
 
     public static class NoOpItemWriter implements ItemWriter {
+        private final MongoTemplate mongoTemplate;
+        private final InputParameters parameters;
+        public NoOpItemWriter(MongoTemplate mongoTemplate, InputParameters parameters) {
+            this.mongoTemplate = mongoTemplate;
+            this.parameters = parameters;
+        }
         @Override
         public void write(List items) throws Exception {
-
+            Query queryToRemoveMergeAndSplitCandidates =
+                    Query.query(where(ASSEMBLY_FIELD).is(parameters.getAssemblyAccession()))
+                         .addCriteria(where(EVENT_TYPE_FIELD).in(
+                                 Arrays.asList(MERGE_CANDIDATES_EVENT_TYPE.toString(),
+                                               SPLIT_CANDIDATES_EVENT_TYPE.toString()))
+                         );
+            mongoTemplate.remove(queryToRemoveMergeAndSplitCandidates, SUBMITTED_VARIANT_OPERATIONS_COLLECTION);
         }
     }
 }

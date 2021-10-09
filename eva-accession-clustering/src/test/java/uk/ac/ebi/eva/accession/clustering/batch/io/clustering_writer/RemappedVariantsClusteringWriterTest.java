@@ -57,12 +57,14 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_CANDIDATES_READER;
@@ -130,6 +132,10 @@ public class RemappedVariantsClusteringWriterTest {
     @Autowired
     @Qualifier(RS_SPLIT_WRITER)
     private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
+
+    @Autowired
+    @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
+    private ItemWriter clearRSMergeAndSplitCandidates;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
@@ -575,5 +581,9 @@ public class RemappedVariantsClusteringWriterTest {
         unclusteredVariantsReader.close();
         // Cluster non-clustered variants
         clusteringWriterPostMergeAndSplit.write(unclusteredVariants);
+        // Spring has a mandatory requirement of even small functionality being writers.
+        // To satisfy that, we pass in a dummy object to invoke the writer
+        // which basically clears the merge and split operations after they were processed above
+        clearRSMergeAndSplitCandidates.write(Collections.singletonList(new Object()));
     }
 }
