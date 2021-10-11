@@ -135,6 +135,24 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
         }
     }
 
+    public List<AccessionWrapper<IClusteredVariant, String, Long>>
+    getAllActiveByAssemblyAndAccessionIn(String assembly, List<Long> accessionList) {
+        List<Long> evaAccessions = new ArrayList<>();
+        List<Long> dbsnpAccessions = new ArrayList<>();
+        for (Long accession: accessionList) {
+            if (accession >= accessioningMonotonicInitRs) {
+                evaAccessions.add(accession);
+            } else {
+                dbsnpAccessions.add(accession);
+            }
+        }
+
+        List<AccessionWrapper<IClusteredVariant, String, Long>> result =
+                accessioningService.getAllActiveByAssemblyAndAccessionIn(assembly, evaAccessions);
+        result.addAll(accessioningServiceDbsnp.getAllActiveByAssemblyAndAccessionIn(assembly, dbsnpAccessions));
+        return result;
+    }
+
     @Override
     public AccessionWrapper<IClusteredVariant, String, Long> getByAccessionAndVersion(Long accession, int version)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {

@@ -18,7 +18,6 @@
 
 package uk.ac.ebi.eva.accession.core.service.nonhuman.eva;
 
-import org.springframework.data.mongodb.repository.support.SimpleMongoRepository;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
@@ -30,8 +29,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.services.InactiveAccession
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 
@@ -61,6 +58,13 @@ public class ClusteredVariantAccessioningDatabaseService extends
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         List<ClusteredVariantEntity> entities = this.repository.findByAccession(accession);
         this.checkAccessionIsActive(entities, accession);
+        return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllActiveByAssemblyAndAccessionIn
+            (String assembly, List<Long> accessionList) {
+        List<ClusteredVariantEntity> entities = this.repository.findByAssemblyAccessionAndAccessionIn(assembly,
+                                                                                                      accessionList);
         return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
     }
 
