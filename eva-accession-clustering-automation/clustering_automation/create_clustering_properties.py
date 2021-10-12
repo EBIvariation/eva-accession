@@ -71,7 +71,7 @@ def get_job_name(source):
 
 def add_accessioning_properties(properties_file, instance):
     properties_file.write(f"""
-parameters.chunkSize=100
+parameters.chunkSize=1000
 
 accessioning.instanceId=instance-{instance:02d}
 accessioning.submitted.categoryId=ss
@@ -128,7 +128,7 @@ def add_count_service_properties(properties_file, properties):
     eva.count-stats.username={username}
     eva.count-stats.password={password}
         """).format(url=count_service_url, username=count_service_username, password=count_service_password)
-        properties_file.write(count_service_properties)
+    properties_file.write(count_service_properties)
 
 
 def get_mongo_primary_host_and_port(mongo_hosts_and_ports):
@@ -173,6 +173,8 @@ if __name__ == "__main__":
                         required=False)
     parser.add_argument("--assembly-accession", help="Assembly for which the process has to be run, "
                                                      "e.g. GCA_000002285.2", required=True)
+    parser.add_argument("--instance", help="Accessioning instance id", required=False, default=1,
+                        type=int, choices=range(1, 13))
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
@@ -182,7 +184,7 @@ if __name__ == "__main__":
     try:
         args = parser.parse_args()
         create_properties_file(args.source, args.vcf_file, args.project_accession, args.assembly_accession,
-                               args.private_config_xml_file, args.profile, args.output_directory)
+                               args.private_config_xml_file, args.profile, args.output_directory, args.instance)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)

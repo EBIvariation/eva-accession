@@ -33,7 +33,7 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 def get_assemblies_and_scientific_name_from_taxonomy(taxonomy_id, metadata_connection_handle, clustering_tracking_table, release_version):
     query = (f"SELECT assembly_accession, scientific_name FROM {clustering_tracking_table} "
              f"WHERE taxonomy = '{taxonomy_id}' "
-             f"and release_version = {release_version}")
+             f"and release_version = {release_version} and assembly_accession <> 'Unmapped'")
     results = get_all_results_for_query(metadata_connection_handle, query)
     if len(results) == 0:
         raise Exception("Could not find assemblies pertaining to taxonomy ID: " + taxonomy_id)
@@ -97,7 +97,7 @@ def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, 
     clustering_tracking_table = common_properties["clustering-release-tracker"]
     release_version = common_properties["release-version"]
     clustering_folder = common_properties['clustering-folder']
-    with get_metadata_connection_handle(common_properties["profile"], common_properties["private-config-xml-file"]) as metadata_connection_handle:
+    with get_metadata_connection_handle("development", common_properties["private-config-xml-file"]) as metadata_connection_handle:
         assembly_list, scientific_name = get_assemblies_and_scientific_name_from_taxonomy(taxonomy_id, metadata_connection_handle, clustering_tracking_table, release_version)
         pipeline = generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance)
         pipeline.run_pipeline(
@@ -112,7 +112,8 @@ if __name__ == "__main__":
     parser.add_argument("--taxonomy-id", help="Taxonomy id", required=True)
     parser.add_argument("--common-clustering-properties-file", help="ex: /path/to/clustering/properties.yml", required=True)
     parser.add_argument("--memory", help="Amount of memory jobs will use", required=False, default=8192)
-    parser.add_argument("--instance", help="Accessioning instance id", required=False, default=1, choices=range(1, 13))
+    parser.add_argument("--instance", help="Accessioning instance id", required=False, default=1,
+                        type=int, choices=range(1, 13))
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
