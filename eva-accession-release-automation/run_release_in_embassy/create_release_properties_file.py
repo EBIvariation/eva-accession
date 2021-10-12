@@ -95,8 +95,6 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
         # spring.data.mongodb.authentication-database=admin
         mongodb.read-preference=primaryPreferred
         
-        spring.main.web-environment=false
-        
         logging.level.uk.ac.ebi.eva.accession.release=INFO
         
         # as this is a spring batch application, disable the embedded tomcat. This is the new way to do that for spring 2.
