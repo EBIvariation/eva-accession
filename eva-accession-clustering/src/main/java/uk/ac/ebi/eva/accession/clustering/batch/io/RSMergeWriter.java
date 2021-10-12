@@ -18,6 +18,8 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 import com.mongodb.MongoBulkWriteException;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -57,10 +59,11 @@ import java.util.stream.Collectors;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.data.mongodb.core.query.Update.update;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergingPolicy.prioritise;
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getSplitCandidatesQuery;
 
 public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity> {
+
+    private static final Logger logger = LoggerFactory.getLogger(RSMergeWriter.class);
 
     private final ClusteringWriter clusteringWriter;
 
@@ -136,6 +139,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
         List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
         for (ClusteredVariantEntity mergee: mergees) {
+            logger.info("RS merge operation: Merging rs{} to rs{} due to hash collision...",
+                        mergee.getAccession(), mergeDestination.getAccession());
             merge(mergeDestination, mergee, submittedVariantOperationEntity);
         }
     }
