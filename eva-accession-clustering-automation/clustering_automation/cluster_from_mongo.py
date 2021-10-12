@@ -76,7 +76,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
         # Needed for process_directives
         pipeline._add_new_process(NextFlowProcess(
             process_name=f'cluster_{suffix}',
-            command_to_run=f'java -jar {clustering_artifact} --spring.config.location=file:{properties_path}',
+            command_to_run=f'java -Xmx{memory}m -jar {clustering_artifact} --spring.config.location=file:{properties_path}',
             process_directives={'memory': f'{memory} MB',
                                 'clusterOptions': (f'-o {output_directory}/cluster_{timestamp}.log '
                                                    f'-e {output_directory}/cluster_{timestamp}.err')}
