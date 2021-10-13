@@ -28,6 +28,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_R
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 
@@ -47,6 +49,37 @@ public class ClusteringFromMongoJobConfiguration {
                                 .incrementer(new RunIdIncrementer())
                                 .start(clusteringClusteredVariantsFromMongoStep)
                                 .next(processRSMergeCandidatesStep)
+                                .next(processRSSplitCandidatesStep)
+                                .next(clearRSMergeAndSplitCandidatesStep)
+                                .next(clusteringNonClusteredVariantsFromMongoStep)
+                                .build();
+    }
+
+    // Deal with remapped variants with an existing RS and create split or merge candidates as needed
+    // Can be parallelized across multiple species
+    @Bean(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB)
+    public Job processRemappedVariantsWithRSJob(
+            @Qualifier(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringClusteredVariantsFromMongoStep,
+            JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
+                                .incrementer(new RunIdIncrementer())
+                                .start(clusteringClusteredVariantsFromMongoStep)
+                                .build();
+    }
+
+    // Process split or merge candidates created in the above step and then proceed to cluster
+    // as-yet unclustered variants
+    // This job should NOT be run in parallel for multiple species due to EVA-2178.
+    @Bean(CLUSTER_UNCLUSTERED_VARIANTS_JOB)
+    public Job clusteringFromMongoJob(
+            @Qualifier(PROCESS_RS_MERGE_CANDIDATES_STEP) Step processRSMergeCandidatesStep,
+            @Qualifier(PROCESS_RS_SPLIT_CANDIDATES_STEP) Step processRSSplitCandidatesStep,
+            @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP) Step clearRSMergeAndSplitCandidatesStep,
+            @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
+            JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
+                                .incrementer(new RunIdIncrementer())
+                                .start(processRSMergeCandidatesStep)
                                 .next(processRSSplitCandidatesStep)
                                 .next(clearRSMergeAndSplitCandidatesStep)
                                 .next(clusteringNonClusteredVariantsFromMongoStep)

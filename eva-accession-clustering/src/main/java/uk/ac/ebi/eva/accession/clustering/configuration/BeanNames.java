@@ -58,4 +58,7 @@ public class BeanNames {
 
     public static final String CLUSTERING_FROM_MONGO_JOB = "CLUSTERING_FROM_MONGO_JOB";
 
+    public static final String PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB = "INSERT_REMAPPED_VARIANTS_WITH_RS_JOB";
+
+    public static final String CLUSTER_UNCLUSTERED_VARIANTS_JOB = "CLUSTER_UNCLUSTERED_VARIANTS_JOB";
 }
