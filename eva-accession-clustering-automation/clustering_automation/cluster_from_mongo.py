@@ -75,8 +75,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
         )
 
         process_directives_for_java_pipelines = {'memory': f'{memory} MB',
-                                                 'clusterOptions': (f'-g /accession/{instance:02d} '
-                                                                    f'-o {output_directory}/cluster_{timestamp}.log '
+                                                 'clusterOptions': (f'-o {output_directory}/cluster_{timestamp}.log '
                                                                     f'-e {output_directory}/cluster_{timestamp}.err')}
         # Needed for process_directives
         # Refer to ClusteringFromMongoJobConfiguration.java for descriptions and rationale for 2 separate jobs
