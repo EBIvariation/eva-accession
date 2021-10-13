@@ -277,6 +277,7 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
+    @DirtiesContext
     public void runClusteringMongoJobOnRemappedVariantsWithNoErrors() throws JobExecutionException,
             AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException,
             AccessionMergedException, AccessionDeprecatedException {
