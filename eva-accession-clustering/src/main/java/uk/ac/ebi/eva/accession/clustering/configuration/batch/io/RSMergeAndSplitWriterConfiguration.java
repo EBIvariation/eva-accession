@@ -26,11 +26,13 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.RSMergeWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
@@ -44,8 +46,11 @@ public class RSMergeAndSplitWriterConfiguration {
     @Bean(RS_MERGE_WRITER)
     public ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter(
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
-            MongoTemplate mongoTemplate, ClusteringCounts clusteringCounts) {
-        return new RSMergeWriter(clusteringWriter, mongoTemplate, clusteringCounts);
+            MongoTemplate mongoTemplate, InputParameters parameters,
+            SubmittedVariantAccessioningService submittedVariantAccessioningService,
+            ClusteringCounts clusteringCounts) {
+        return new RSMergeWriter(clusteringWriter, mongoTemplate, parameters.getAssemblyAccession(),
+                                 submittedVariantAccessioningService, clusteringCounts);
     }
 
     @Bean(RS_SPLIT_WRITER)

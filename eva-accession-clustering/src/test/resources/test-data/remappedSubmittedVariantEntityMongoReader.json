@@ -71,8 +71,7 @@
       "alt": "G",
       "accession": NumberLong(5),
       "version": 1,
-      "rs": NumberLong(1),
-      "remappedFrom": "asm1"
+      "rs": NumberLong(1)
     }
   ]
 }

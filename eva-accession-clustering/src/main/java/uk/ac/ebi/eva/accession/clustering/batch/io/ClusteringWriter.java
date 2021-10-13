@@ -34,12 +34,12 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -51,16 +51,14 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
-import uk.ac.ebi.eva.commons.core.models.VariantType;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -72,10 +70,6 @@ import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
-import static org.springframework.data.mongodb.core.query.Update.update;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergingPolicy.Priority;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantMergingPolicy.prioritise;
-import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getSplitCandidatesQuery;
 
 /**
  * This writer has two parts:
@@ -92,53 +86,33 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeA
 public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private static final Logger logger = LoggerFactory.getLogger(ClusteringWriter.class);
 
-    public static final String ACCESSION_KEY = "accession";
+    private static final String RS_KEY = "rs";
 
-    public static final String REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION = "asm";
+    private final MongoTemplate mongoTemplate;
 
-    public static final String REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_VARIANT_COLLECTION = "seq";
+    private final ClusteredVariantAccessioningService clusteredService;
 
-    public static final String RS_KEY = "rs";
+    private final Function<ISubmittedVariant, String> submittedHashingFunction;
 
-    public static final String INACTIVE_OBJECT_ATTRIBUTE = "inactiveObjects";
+    private final Function<IClusteredVariant, String> clusteredHashingFunction;
 
-    public static final String RS_KEY_IN_OPERATIONS_COLLECTION = INACTIVE_OBJECT_ATTRIBUTE + "." + RS_KEY;
+    private final Map<String, Long> assignedAccessions;
 
-    public static final String ID = "_id";
+    private final Long accessioningMonotonicInitSs;
 
-    private MongoTemplate mongoTemplate;
+    private final Long accessioningMonotonicInitRs;
 
-    private String assemblyAccession;
+    private final ClusteringCounts clusteringCounts;
 
-    private ClusteredVariantAccessioningService clusteredService;
-
-    private SubmittedVariantAccessioningService submittedService;
-
-    private Function<ISubmittedVariant, String> submittedHashingFunction;
-
-    private Function<IClusteredVariant, String> clusteredHashingFunction;
-
-    private Map<String, Long> assignedAccessions;
-
-    private Long accessioningMonotonicInitSs;
-
-    private Long accessioningMonotonicInitRs;
-
-    private ClusteringCounts clusteringCounts;
-
-    private boolean processClusteredRemappedVariants;
+    private final boolean processClusteredRemappedVariants;
 
     public ClusteringWriter(MongoTemplate mongoTemplate,
-                            String assemblyAccession,
-                            SubmittedVariantAccessioningService submittedVariantAccessioningService,
                             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                             Long accessioningMonotonicInitSs,
                             Long accessioningMonotonicInitRs,
                             ClusteringCounts clusteringCounts,
                             boolean processClusteredRemappedVariants) {
         this.mongoTemplate = mongoTemplate;
-        this.assemblyAccession = assemblyAccession;
-        this.submittedService = submittedVariantAccessioningService;
         this.submittedHashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         this.clusteredService = clusteredVariantAccessioningService;
         this.clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -151,43 +125,41 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     @Override
-    public void write(List<? extends SubmittedVariantEntity> submittedVariantEntities)
+    public void write(@Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
         assignedAccessions.clear();
 
         // Write new Clustered Variants in mongo and get existing ones. May merge clustered variants
         getOrCreateClusteredVariantAccessions(submittedVariantEntities);
 
-        // Update submitted variants "rs" field
-        clusterSubmittedVariants(submittedVariantEntities);
+        // Update submitted variants "rs" field for unclustered variants
+        if (!this.processClusteredRemappedVariants) {
+            clusterSubmittedVariants(submittedVariantEntities);
+        }
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
+            throws AccessionCouldNotBeGeneratedException {
         if (processClusteredRemappedVariants) {
-            Set<SubmittedVariantEntity> processedSubmittedVariants = processClusteredRemappedVariants(submittedVariantEntities);
-            // Determine the "residual" submitted variant entities to be processed
-            // since remapped variants have been handled above i.e., clustered but non-remapped variants
-            submittedVariantEntities = Collections.unmodifiableList(submittedVariantEntities.stream()
-                            .filter(sve->!processedSubmittedVariants.contains(sve))
-                            .collect(Collectors.toList()));
+            processClusteredRemappedVariants(submittedVariantEntities);
+        } else {
+            List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
+                                                                               .map(this::toClusteredVariant)
+                                                                               .collect(Collectors.toList());
+            if (!clusteredVariants.isEmpty()) {
+                List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
+                        clusteredService.getOrCreate(clusteredVariants);
+
+                List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap =
+                        excludeMultimaps(accessionWrappers);
+
+                accessionNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
+
+                long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession)
+                                                      .count();
+                clusteringCounts.addClusteredVariantsCreated(newAccessions);
+            }
         }
-        List<ClusteredVariant> clusteredVariants = submittedVariantEntities.stream()
-                                                                           .map(this::toClusteredVariant)
-                                                                           .collect(Collectors.toList());
-        if (!clusteredVariants.isEmpty()) {
-            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
-                    clusteredService.getOrCreate(clusteredVariants);
-
-            List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap =
-                    excludeMultimaps(accessionWrappers);
-
-            accessionNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
-
-            long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count();
-            clusteringCounts.addClusteredVariantsCreated(newAccessions);
-        }
-        checkForMerges(submittedVariantEntities);
     }
 
     /**
@@ -217,10 +189,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * ACCESSION    EVENT_TYPE          REASON                  INACTIVe_OBJECTS
      * 306          RS_SPLIT_CANDIDATE  Hash mismatch with 306  {ss-500 and ss-501}
      */
-    private Set<SubmittedVariantEntity> processClusteredRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
+    private void processClusteredRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
         List<SubmittedVariantEntity> clusteredRemappedSubmittedVariants = getClusteredAndRemappedVariants(submittedVariants);
-        if(clusteredRemappedSubmittedVariants.isEmpty()){
-            return Collections.emptySet();
+        if(clusteredRemappedSubmittedVariants.isEmpty()) {
+            return;
         }
 
         String assembly = clusteredRemappedSubmittedVariants.get(0).getReferenceSequenceAccession();
@@ -239,38 +211,41 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         List<ClusteredVariantEntity> clusteredVariantEntities = new ArrayList<>();
         List<ClusteredVariantEntity> dbsnpClusteredVariantEntities = new ArrayList<>();
 
-        for (SubmittedVariantEntity submittedVariantEntity : submittedVariants) {
-            ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(submittedVariantEntity);
+        for (SubmittedVariantEntity remappedSubmittedVariantEntity : clusteredRemappedSubmittedVariants) {
+            ClusteredVariantEntity clusteredVariantEntity = toClusteredVariantEntity(remappedSubmittedVariantEntity);
 
-            boolean isMergeCandidate = checkIfCandidateForMerge(submittedVariantEntity, clusteredVariantEntity,
-                    assembly, allExistingHashesInDB, mergeCandidateSVOE);
+            boolean isExistingRSOrMergeCandidate = checkIfExistingRSOrCandidateForMerge(remappedSubmittedVariantEntity,
+                                                                                        clusteredVariantEntity,
+                                                                                        assembly, allExistingHashesInDB,
+                                                                                        mergeCandidateSVOE);
 
-            updateAllExistingHashesGroupByRS(allExistingHashesGroupByRS, assembly, clusteredVariantEntity.getAccession());
+            updateAllExistingHashesGroupByRS(allExistingHashesGroupByRS, assembly,
+                                             clusteredVariantEntity.getAccession());
 
-            boolean isSplitCandidate = checkIfCandidateForRSSplit(submittedVariantEntity, clusteredVariantEntity,
-                    assembly, allExistingHashesGroupByRS, rsSplitCandidateSVOE);
+            checkIfCandidateForRSSplit(remappedSubmittedVariantEntity, clusteredVariantEntity, assembly,
+                                       allExistingHashesGroupByRS, rsSplitCandidateSVOE);
 
-            if (!isMergeCandidate) {
-                if(clusteredVariantEntity.getAccession() >= accessioningMonotonicInitRs){
+            if (!isExistingRSOrMergeCandidate) {
+                if (clusteredVariantEntity.getAccession() >= accessioningMonotonicInitRs) {
                     clusteredVariantEntities.add(clusteredVariantEntity);
-                }else{
+                } else {
                     dbsnpClusteredVariantEntities.add(clusteredVariantEntity);
                 }
                 allExistingHashesGroupByRS.get(clusteredVariantEntity.getAccession())
-                        .add(clusteredVariantEntity.getHashedMessage());
-                allExistingHashesInDB.put(clusteredVariantEntity.getHashedMessage(), clusteredVariantEntity.getAccession());
+                                          .add(clusteredVariantEntity.getHashedMessage());
+                allExistingHashesInDB.put(clusteredVariantEntity.getHashedMessage(),
+                                          clusteredVariantEntity.getAccession());
             }
         }
 
         insertAllEntriesInDB(clusteredVariantEntities, dbsnpClusteredVariantEntities, mergeCandidateSVOE, rsSplitCandidateSVOE);
-
-        return new HashSet<>(clusteredRemappedSubmittedVariants);
     }
 
     private List<SubmittedVariantEntity> getClusteredAndRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
         return submittedVariants.stream()
                 .filter(sve -> Objects.nonNull(sve.getClusteredVariantAccession()))
                 .filter(sve -> !StringUtil.isBlank(sve.getRemappedFrom()))
+                .filter(sve -> Objects.isNull(sve.getMapWeight()))
                 .collect(Collectors.toList());
     }
 
@@ -279,7 +254,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 .map(this::toClusteredVariant)
                 .collect(Collectors.toList());
         return clusteredService.get(clusteredVariants).stream()
-                .collect(Collectors.toMap(AccessionWrapper::getHash, AccessionWrapper::getAccession));
+                               .collect(Collectors.toMap(AccessionWrapper::getHash, AccessionWrapper::getAccession));
     }
 
     private Set<String> getAllHashesForAssemblyAndRS(String assembly, Long accession) {
@@ -303,20 +278,29 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private List<SubmittedVariantEntity> getAllSubmittedVariantsWithClusteringAccession(String assembly, Long accession) {
+        List<SubmittedVariantEntity> results = new ArrayList<>();
         Query querySubmitted = query(where("seq").is(assembly).and("rs").is(accession));
-        return mongoTemplate.find(querySubmitted, SubmittedVariantEntity.class);
+        results.addAll(mongoTemplate.find(querySubmitted, SubmittedVariantEntity.class));
+        results.addAll(mongoTemplate.find(querySubmitted, DbsnpSubmittedVariantEntity.class));
+        return results;
     }
 
-    private boolean checkIfCandidateForMerge(SubmittedVariantEntity submittedVariantEntity,
-                                             ClusteredVariantEntity clusteredVariantEntity,
-                                             String assembly,
-                                             Map<String, Long> allExistingHashesInDB,
-                                             Map<String, SubmittedVariantOperationEntity> mergeCandidateSVOE) {
+    private boolean checkIfExistingRSOrCandidateForMerge(SubmittedVariantEntity submittedVariantEntity,
+                                                         ClusteredVariantEntity clusteredVariantEntity,
+                                                         String assembly,
+                                                         Map<String, Long> allExistingHashesInDB,
+                                                         Map<String, SubmittedVariantOperationEntity>
+                                                                 mergeCandidateSVOE) {
         Long variantAccession = clusteredVariantEntity.getAccession();
         String variantHash = clusteredVariantEntity.getHashedMessage();
         Long accessionInDB = allExistingHashesInDB.get(variantHash);
 
-        if (allExistingHashesInDB.containsKey(variantHash) && variantAccession != accessionInDB) {
+        // Existing RS being used for the remapped variant
+        if (Objects.equals(variantAccession, accessionInDB)) {
+            return true;
+        }
+
+        if (allExistingHashesInDB.containsKey(variantHash)) {
             if (mergeCandidateSVOE.containsKey(variantHash)) {
                 mergeCandidateSVOE.get(variantHash).getInactiveObjects()
                         .add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
@@ -338,7 +322,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return false;
     }
 
-    private boolean checkIfCandidateForRSSplit(SubmittedVariantEntity submittedVariantEntity,
+    private void checkIfCandidateForRSSplit(SubmittedVariantEntity submittedVariantEntity,
                                                ClusteredVariantEntity clusteredVariantEntity,
                                                String assembly,
                                                Map<Long, Set<String>> allExistingHashesGroupByRS,
@@ -369,10 +353,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             }
-            return true;
         }
-
-        return false;
     }
 
     private void updateAllExistingHashesGroupByRS(Map<Long, Set<String>> allExistingHashesGroupByRS, String assembly,
@@ -443,139 +424,20 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private ClusteredVariant toClusteredVariant(ISubmittedVariant submittedVariant) {
-        ClusteredVariant clusteredVariant = new ClusteredVariant(submittedVariant.getReferenceSequenceAccession(),
-                                                                 submittedVariant.getTaxonomyAccession(),
-                                                                 submittedVariant.getContig(),
-                                                                 submittedVariant.getStart(),
-                                                                 getVariantType(
-                                                                         submittedVariant.getReferenceAllele(),
-                                                                         submittedVariant.getAlternateAllele()),
-                                                                 submittedVariant.isValidated(),
-                                                                 submittedVariant.getCreatedDate());
-        return clusteredVariant;
+        return new ClusteredVariant(submittedVariant.getReferenceSequenceAccession(),
+                                    submittedVariant.getTaxonomyAccession(),
+                                    submittedVariant.getContig(),
+                                    submittedVariant.getStart(),
+                                    VariantClassifier.getVariantClassification(submittedVariant.getReferenceAllele(),
+                                                                               submittedVariant.getAlternateAllele()),
+                                    submittedVariant.isValidated(),
+                                    submittedVariant.getCreatedDate());
     }
 
-    private VariantType getVariantType(String reference, String alternate) {
-        VariantType variantType = VariantClassifier.getVariantClassification(reference, alternate);
-        return variantType;
-    }
-
-    private void checkForMerges(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws AccessionDoesNotExistException {
-        for (SubmittedVariantEntity submittedVariant : submittedVariantEntities) {
-            if (submittedVariant.getClusteredVariantAccession() != null && submittedVariant.getRemappedFrom() != null) {
-                String hash = clusteredHashingFunction.apply(toClusteredVariant(submittedVariant));
-                Long accessionInDatabase = assignedAccessions.get(hash);
-                //accessionInDatabase will be null if it was excluded for being a multimap
-                if (accessionInDatabase != null &&
-                        !submittedVariant.getClusteredVariantAccession().equals(accessionInDatabase)) {
-                    merge(submittedVariant.getClusteredVariantAccession(), hash, accessionInDatabase);
-                }
-            }
-        }
-    }
-
-    protected void merge(Long providedAccession, String hash, Long accessionInDatabase)
-            throws AccessionDoesNotExistException {
-        Priority prioritised = prioritise(providedAccession, accessionInDatabase);
-
-        //Confine merge updates to the particular assembly where clustering is being performed
-        Query queryForMergee = query(where(ACCESSION_KEY).is(prioritised.accessionToBeMerged))
-                .addCriteria(
-                        where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-        Query queryForMergeTarget = query(where(ACCESSION_KEY).is(prioritised.accessionToKeep))
-                .addCriteria(
-                        where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-
-        List<? extends ClusteredVariantEntity> clusteredVariantToMerge =
-                mongoTemplate.find(queryForMergee, getClusteredVariantCollection(prioritised.accessionToBeMerged));
-
-        List<? extends ClusteredVariantEntity> clusteredVariantToKeep =
-                mongoTemplate.find(queryForMergeTarget, getClusteredVariantCollection(prioritised.accessionToKeep));
-
-        if (isMultimap(clusteredVariantToMerge) || isMultimap(clusteredVariantToKeep)) {
-            // multimap! don't merge. see isMultimap() below for more details
-            return;
-        }
-
-        if (clusteredVariantToKeep.isEmpty()) {
-            throw new AccessionDoesNotExistException("Merge destination RS ID: " + prioritised.accessionToKeep
-                                                             + " does not exist!");
-        }
-
-        assignedAccessions.put(hash, prioritised.accessionToKeep);
-
-        // write operations for clustered variant being merged
-        List<ClusteredVariantOperationEntity> operations =
-                clusteredVariantToMerge.stream()
-                                       .map(c -> buildClusteredOperation(c, prioritised.accessionToKeep))
-                                       .collect(Collectors.toList());
-        mongoTemplate.insert(operations, getClusteredOperationCollection(prioritised.accessionToBeMerged));
-        clusteringCounts.addClusteredVariantsMergeOperationsWritten(clusteredVariantToMerge.size());
-
-        // Mergee is no longer valid to be present in the main clustered variant collection
-        mongoTemplate.remove(queryForMergee, getClusteredVariantCollection(prioritised.accessionToBeMerged));
-        clusteringCounts.addClusteredVariantsUpdated(clusteredVariantToMerge.size());
-
-        // Update submitted variants linked to the clustered variant we just merged.
-        // This has to happen for both EVA and dbsnp SS because previous cross merges might have happened.
-        updateSubmittedVariants(prioritised, SubmittedVariantEntity.class, SubmittedVariantOperationEntity.class);
-        updateSubmittedVariants(prioritised, DbsnpSubmittedVariantEntity.class,
-                                DbsnpSubmittedVariantOperationEntity.class);
-
-        // Update currently outstanding split candidate events that involve the RS that was just merged and the target RS
-        // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1664799060
-        updateSplitCandidates(prioritised);
-    }
-
-    private void updateSplitCandidates(Priority prioritised) {
-        Query queryForSplitCandidatesInvolvingTargetRS = getSplitCandidatesQuery(this.assemblyAccession)
-                .addCriteria(where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToKeep));
-        Query queryForSplitCandidatesInvolvingMergee = getSplitCandidatesQuery(this.assemblyAccession)
-                .addCriteria(where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToBeMerged));
-        // Since the mergee has been merged into the target RS,
-        // the split candidates record for mergee are no longer valid - so, delete them!
-        mongoTemplate.remove(queryForSplitCandidatesInvolvingMergee, SubmittedVariantOperationEntity.class);
-
-        // There should only be one split candidate record per RS
-        SubmittedVariantOperationEntity splitCandidateInvolvingTargetRS =
-                mongoTemplate.findOne(queryForSplitCandidatesInvolvingTargetRS, SubmittedVariantOperationEntity.class);
-
-        List<SubmittedVariantInactiveEntity> ssClusteredUnderTargetRS =
-                this.submittedService
-                        .getByClusteredVariantAccessionIn(Collections.singletonList(prioritised.accessionToKeep))
-                        .stream()
-                        .map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
-                                                                  result.getData(), result.getVersion()))
-                        .map(SubmittedVariantInactiveEntity::new)
-                        .collect(Collectors.toList());
-
-        //Update existing split candidates record for target RS if it exists. Else, create a new record!
-        if (Objects.nonNull(splitCandidateInvolvingTargetRS)) {
-            mongoTemplate.updateFirst(query(where(ID).is(splitCandidateInvolvingTargetRS.getId())),
-                                      update(INACTIVE_OBJECT_ATTRIBUTE, ssClusteredUnderTargetRS),
-                                      SubmittedVariantOperationEntity.class);
-        } else {
-            Set<String> targetRSDistinctLoci = ssClusteredUnderTargetRS.stream()
-                                                                       .map(entity -> getClusteredVariantHash(
-                                                                               entity.getModel()))
-                                                                       .collect(Collectors.toSet());
-            // Condition for generating split operation: ensure that there is more than one locus sharing the target RS
-            if (targetRSDistinctLoci.size() > 1) {
-                // Use a convention of lowest SS for testability
-                Long lowestSS = ssClusteredUnderTargetRS.stream().map(InactiveSubDocument::getAccession)
-                                                        .min(Comparator.naturalOrder()).get();
-                SubmittedVariantOperationEntity newSplitCandidateRecord = new SubmittedVariantOperationEntity();
-                // TODO: Refactor to use common fill method for split candidates generation
-                // to avoid duplicating reason text and call semantics
-                newSplitCandidateRecord.fill(EventType.RS_SPLIT_CANDIDATES, lowestSS,
-                                             "Hash mismatch with " + prioritised.accessionToKeep,
-                                             ssClusteredUnderTargetRS);
-                mongoTemplate.insert(Collections.singletonList(newSplitCandidateRecord),
-                                     SubmittedVariantOperationEntity.class);
-                this.clusteringCounts.addClusteredVariantsRSSplit(1);
-            }
-        }
+    public Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
+    getClusteredOperationCollection(Long accession) {
+        return isEvaClusteredAccession(accession) ?
+                ClusteredVariantOperationEntity.class : DbsnpClusteredVariantOperationEntity.class;
     }
 
     protected Class<? extends ClusteredVariantEntity> getClusteredVariantCollection(Long accession) {
@@ -594,77 +456,12 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * Note that for submitted variants the test is not this simple, as 1:1000:A:T and 1:1000:A:G can be present in the
      * same assembly and still not classify as multimap.
      */
-    private boolean isMultimap(List<? extends IClusteredVariant> clusteredVariants) {
+    protected boolean isMultimap(List<? extends IClusteredVariant> clusteredVariants) {
         return clusteredVariants.stream().anyMatch(cv -> cv.getMapWeight() != null && cv.getMapWeight() > 1);
     }
 
-    private boolean isMultimap(IClusteredVariant clusteredVariant) {
+    protected boolean isMultimap(IClusteredVariant clusteredVariant) {
         return isMultimap(Collections.singletonList(clusteredVariant));
-    }
-
-    protected Class<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
-    getClusteredOperationCollection(Long accession) {
-        return isEvaClusteredAccession(accession) ?
-                ClusteredVariantOperationEntity.class : DbsnpClusteredVariantOperationEntity.class;
-    }
-
-    private ClusteredVariantOperationEntity buildClusteredOperation(ClusteredVariantEntity originalClusteredVariant,
-                                                                    Long clusteredVariantMergedInto) {
-        ClusteredVariantInactiveEntity inactiveEntity = new ClusteredVariantInactiveEntity(originalClusteredVariant);
-
-        Long originalAccession = originalClusteredVariant.getAccession();
-        String reason = "Original rs" + originalAccession + " was merged into rs" + clusteredVariantMergedInto + ".";
-
-        ClusteredVariantOperationEntity operation = new ClusteredVariantOperationEntity();
-        operation.fill(EventType.MERGED, originalAccession, clusteredVariantMergedInto, reason,
-                       Collections.singletonList(inactiveEntity));
-        return operation;
-    }
-
-    /**
-     * This function updates the clustered variant accession (rs) of submitted variants when the rs makes a
-     * collision with another rs and they have to be merged.
-     */
-    private void updateSubmittedVariants(
-            Priority prioritised,
-            Class<? extends SubmittedVariantEntity> submittedVariantCollection,
-            Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
-                    submittedOperationCollection) {
-        Query querySubmitted = query(where(RS_KEY).is(prioritised.accessionToBeMerged))
-                .addCriteria(
-                        where(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_VARIANT_COLLECTION).is(this.assemblyAccession));
-        List<? extends SubmittedVariantEntity> svToUpdate =
-                mongoTemplate.find(querySubmitted, submittedVariantCollection);
-
-        Update update = new Update();
-        update.set(RS_KEY, prioritised.accessionToKeep);
-        mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
-        clusteringCounts.addSubmittedVariantsUpdatedRs(svToUpdate.size());
-
-        if (!svToUpdate.isEmpty()) {
-            List<SubmittedVariantOperationEntity> operations =
-                    svToUpdate.stream()
-                              .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
-                              .collect(Collectors.toList());
-            mongoTemplate.insert(operations, submittedOperationCollection);
-            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(operations.size());
-        }
-    }
-
-    private SubmittedVariantOperationEntity buildSubmittedOperation(SubmittedVariantEntity originalSubmittedVariant,
-                                                                    Long clusteredVariantMergedInto) {
-        SubmittedVariantInactiveEntity inactiveEntity = new SubmittedVariantInactiveEntity(originalSubmittedVariant);
-
-        Long originalClusteredVariant = originalSubmittedVariant.getClusteredVariantAccession();
-        String reason = "Original rs" + originalClusteredVariant + " was merged into rs" + clusteredVariantMergedInto + ".";
-
-        Long accession = originalSubmittedVariant.getAccession();
-        SubmittedVariantOperationEntity operation = new SubmittedVariantOperationEntity();
-
-        // Note the next null in accessionIdDestiny. We are not merging the submitted variant into
-        // anything. We are updating the submitted variant, changing its rs field
-        operation.fill(EventType.UPDATED, accession, null, reason, Collections.singletonList(inactiveEntity));
-        return operation;
     }
 
     /**
@@ -707,8 +504,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             }
             // Query to update the RSid in submittedVariantEntity
             Query updateRsQuery = query(where("_id").is(submittedVariantEntity.getId()));
-            Update updateRsUpdate = new Update();
-            updateRsUpdate.set(RS_KEY, rsid);
+            Update updateRS = new Update();
+            updateRS.set(RS_KEY, rsid);
 
             // Query to create the update operation history
             SubmittedVariantOperationEntity updateOperation = new SubmittedVariantOperationEntity();
@@ -721,12 +518,62 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                     Collections.singletonList(inactiveEntity)
             );
 
+            // Back-propagation logic
+            Query queryToFindSSInSourceAssembly = null;
+            SubmittedVariantOperationEntity backPropagationUpdateOperation = null;
+            if (submittedVariantEntity.getRemappedFrom() != null) {
+                // Query to back-propagate RS ID to the original SS (from where the current SS is remapped)
+                queryToFindSSInSourceAssembly =
+                        query(where("accession").is(submittedVariantEntity.getAccession()))
+                                .addCriteria(where("seq").is(submittedVariantEntity.getRemappedFrom()))
+                                .addCriteria(where("rs").exists(false));
+                // Query to record the update operation history with back-propagation
+                backPropagationUpdateOperation = new SubmittedVariantOperationEntity();
+                // Since we don't have the original source SS ID from which we remapped
+                // it can get quite expensive to query the source records for every original SS with just the accession
+                // without bulk-querying. Therefore, we are filling in fake data for the old SS entry in operations
+                // TODO: Find a more efficient way to do this!!
+                SubmittedVariant oldSS = new SubmittedVariant(submittedVariantEntity.getRemappedFrom(),
+                                                              submittedVariantEntity.getTaxonomyAccession(),
+                                                              submittedVariantEntity.getProjectAccession(),
+                                                              "contig-pre-remapping", -1L, "ref-pre-remapping",
+                                                              "alt-pre-remapping", null);
+                SubmittedVariantInactiveEntity inactiveEntityForBackPropagation =
+                        new SubmittedVariantInactiveEntity(
+                                new SubmittedVariantEntity(submittedVariantEntity.getAccession(),
+                                                           submittedHashingFunction.apply(oldSS),
+                                                           oldSS,
+                                                           submittedVariantEntity.getVersion()));
+                backPropagationUpdateOperation.fill(
+                        EventType.UPDATED,
+                        submittedVariantEntity.getAccession(),
+                        null,
+                        "Back-propagating rs" + rsid + " for submitted variant ss" +
+                                submittedVariantEntity.getAccession() + " after remapping to " +
+                                submittedVariantEntity.getReferenceSequenceAccession() + ".",
+                        Collections.singletonList(inactiveEntityForBackPropagation)
+                );
+            }
+
             if (isEvaSubmittedVariant(submittedVariantEntity)) {
-                bulkOperations.updateOne(updateRsQuery, updateRsUpdate);
+                bulkOperations.updateOne(updateRsQuery, updateRS);
+                if (submittedVariantEntity.getRemappedFrom() != null) {
+                    // Due to MongoDB technical limitations,
+                    // updateOne cannot be used when shard key "_id" is not part of the query
+                    // So, use updateMulti even though only one record will be updated
+                    bulkOperations.updateMulti(queryToFindSSInSourceAssembly, updateRS);
+                    bulkHistoryOperations.insert(backPropagationUpdateOperation);
+                    ++numUpdates;
+                }
                 bulkHistoryOperations.insert(updateOperation);
                 ++numUpdates;
             } else {
-                dbsnpBulkOperations.updateOne(updateRsQuery, updateRsUpdate);
+                dbsnpBulkOperations.updateOne(updateRsQuery, updateRS);
+                if (submittedVariantEntity.getRemappedFrom() != null) {
+                    dbsnpBulkOperations.updateMulti(queryToFindSSInSourceAssembly, updateRS);
+                    dbsnpBulkHistoryOperations.insert(backPropagationUpdateOperation);
+                    ++numDbsnpUpdates;
+                }
                 dbsnpBulkHistoryOperations.insert(updateOperation);
                 ++numDbsnpUpdates;
             }
@@ -745,7 +592,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    protected boolean isEvaSubmittedVariant(SubmittedVariantEntity submittedVariant) {
+    public boolean isEvaSubmittedVariant(SubmittedVariantEntity submittedVariant) {
         return submittedVariant.getAccession() >= accessioningMonotonicInitSs;
     }
 
@@ -756,7 +603,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     protected String getClusteredVariantHash(ISubmittedVariant submittedVariant) {
         ClusteredVariant clusteredVariant = toClusteredVariant(submittedVariant);
-        String hash = clusteredHashingFunction.apply(clusteredVariant);
-        return hash;
+        return clusteredHashingFunction.apply(clusteredVariant);
     }
 }

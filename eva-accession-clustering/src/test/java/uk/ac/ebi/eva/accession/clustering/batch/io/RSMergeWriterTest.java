@@ -267,9 +267,9 @@ public class RSMergeWriterTest {
                                                                           .getMergedInto());
         assertEquals(Long.valueOf(2L), clusteredVariantOperationRepository.findAllByAccession(5L).get(0)
                                                                           .getMergedInto());
-        assertEquals("Original rs4 was merged into rs1.",
+        assertEquals ("Original rs4 associated with SS was merged into rs1.",
                      submittedVariantOperationRepository.findAllByAccession(4L).get(0).getReason());
-        assertEquals("Original rs5 was merged into rs2.",
+        assertEquals("Original rs5 associated with SS was merged into rs2.",
                      submittedVariantOperationRepository.findAllByAccession(5L).get(0).getReason());
 
         // Ensure that RS1 and RS2 are present in the clustered variant collection post merge

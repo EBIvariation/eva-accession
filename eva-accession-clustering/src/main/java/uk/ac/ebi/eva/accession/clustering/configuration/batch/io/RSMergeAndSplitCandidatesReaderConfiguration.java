@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.data.MongoItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,9 +31,12 @@ import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_CANDIDATES_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_CANDIDATES_READER;
 
@@ -54,16 +58,17 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
 
     public static Query getSplitCandidatesQuery(String assemblyAccession) {
         return Query.query(where(ASSEMBLY_FIELD).is(assemblyAccession))
-                    .addCriteria(where(EVENT_TYPE_FIELD).is(SPLIT_CANDIDATES_EVENT_TYPE));
+                    .addCriteria(where(EVENT_TYPE_FIELD).is(SPLIT_CANDIDATES_EVENT_TYPE.toString()));
     }
 
     public static Query getMergeCandidatesQuery(String assemblyAccession) {
         return Query.query(where(ASSEMBLY_FIELD).is(assemblyAccession))
-                    .addCriteria(where(EVENT_TYPE_FIELD).is(MERGE_CANDIDATES_EVENT_TYPE));
+                    .addCriteria(where(EVENT_TYPE_FIELD).is(MERGE_CANDIDATES_EVENT_TYPE.toString()));
     }
 
     @Bean(RS_SPLIT_CANDIDATES_READER)
-    public ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader(MongoTemplate mongoTemplate, InputParameters parameters) {
+    public ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader(MongoTemplate mongoTemplate,
+                                                                               InputParameters parameters) {
         MongoItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoItemReader<>();
         mongoItemReader.setTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);
@@ -78,7 +83,8 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
     }
 
     @Bean(RS_MERGE_CANDIDATES_READER)
-    public ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader(MongoTemplate mongoTemplate, InputParameters parameters) {
+    public ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader(MongoTemplate mongoTemplate,
+                                                                               InputParameters parameters) {
         MongoItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoItemReader<>();
         mongoItemReader.setTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);
@@ -90,5 +96,30 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
         mongoItemReader.setPageSize(parameters.getChunkSize());
         mongoItemReader.setSort(Collections.singletonMap(SORT_FIELD, Sort.Direction.ASC));
         return mongoItemReader;
+    }
+
+    @Bean(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
+    public NoOpItemWriter
+    clearRSMergeAndSplitCandidates(MongoTemplate mongoTemplate, InputParameters parameters) {
+        return new NoOpItemWriter(mongoTemplate, parameters);
+    }
+
+    public static class NoOpItemWriter implements ItemWriter {
+        private final MongoTemplate mongoTemplate;
+        private final InputParameters parameters;
+        public NoOpItemWriter(MongoTemplate mongoTemplate, InputParameters parameters) {
+            this.mongoTemplate = mongoTemplate;
+            this.parameters = parameters;
+        }
+        @Override
+        public void write(List items) throws Exception {
+            Query queryToRemoveMergeAndSplitCandidates =
+                    Query.query(where(ASSEMBLY_FIELD).is(parameters.getAssemblyAccession()))
+                         .addCriteria(where(EVENT_TYPE_FIELD).in(
+                                 Arrays.asList(MERGE_CANDIDATES_EVENT_TYPE.toString(),
+                                               SPLIT_CANDIDATES_EVENT_TYPE.toString()))
+                         );
+            mongoTemplate.remove(queryToRemoveMergeAndSplitCandidates, SUBMITTED_VARIANT_OPERATIONS_COLLECTION);
+        }
     }
 }

@@ -79,8 +79,12 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
+        initializeReader();
+    }
+
+    public void initializeReader() {
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
+                                 Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
         logger.info("Issuing find: {}", query);
 
         FindIterable<Document> submittedVariantsDbsnp =
