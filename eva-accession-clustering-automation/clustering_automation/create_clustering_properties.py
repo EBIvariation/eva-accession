@@ -47,26 +47,16 @@ def get_properties_path(source, vcf_file, project_accession, assembly_accession,
     return path
 
 
-def add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file):
-    job_name = get_job_name(source)
+def add_clustering_properties(properties_file, assembly_accession, project_accession, vcf_file):
     vcf = vcf_file or ''
     project = project_accession or ''
 
     clustering_properties = ("""
-spring.batch.job.names={job_name}
-
 parameters.assemblyAccession={assembly_accession}
 parameters.vcf={vcf}
 parameters.projectAccession={project}
-    """).format(job_name=job_name, assembly_accession=assembly_accession, vcf=vcf, project=project)
+    """).format(assembly_accession=assembly_accession, vcf=vcf, project=project)
     properties_file.write(clustering_properties)
-
-
-def get_job_name(source):
-    if source.upper() == 'MONGO':
-        return 'CLUSTERING_FROM_MONGO_JOB'
-    elif source.upper() == 'VCF':
-        return 'CLUSTERING_FROM_VCF_JOB'
 
 
 def add_accessioning_properties(properties_file, instance):

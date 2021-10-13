@@ -73,13 +73,26 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
             process_name=f'start_{suffix}',
             command_to_run=status_update_template.format(status='Started'),
         )
+
+        process_directives_for_java_pipelines = {'memory': f'{memory} MB',
+                                                 'clusterOptions': (f'-g /accession/{instance:02d} '
+                                                                    f'-o {output_directory}/cluster_{timestamp}.log '
+                                                                    f'-e {output_directory}/cluster_{timestamp}.err')}
         # Needed for process_directives
+        # Refer to ClusteringFromMongoJobConfiguration.java for descriptions and rationale for 2 separate jobs
         pipeline._add_new_process(NextFlowProcess(
             process_name=f'cluster_{suffix}',
-            command_to_run=f'java -Xmx{memory}m -jar {clustering_artifact} --spring.config.location=file:{properties_path}',
-            process_directives={'memory': f'{memory} MB',
-                                'clusterOptions': (f'-o {output_directory}/cluster_{timestamp}.log '
-                                                   f'-e {output_directory}/cluster_{timestamp}.err')}
+            command_to_run=f'java -Xmx{memory}m -jar {clustering_artifact} --spring.config.location=file:{properties_path} '
+                           f'--spring.batch.job.names=PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB',
+            process_directives=process_directives_for_java_pipelines
+        ))
+        pipeline._add_new_process(NextFlowProcess(
+            process_name=f'cluster_{suffix}',
+            command_to_run=f'java -Xmx{memory}m -jar {clustering_artifact} --spring.config.location=file:{properties_path} '
+                           f'--spring.batch.job.names=CLUSTER_UNCLUSTERED_VARIANTS_JOB',
+            process_directives={'memory': process_directives_for_java_pipelines['memory'],
+                                'clusterOptions': process_directives_for_java_pipelines['clusterOptions'] +
+                                                  ' -g /accession/{instance:02d} '} # needed to serialize accessioning
         ))
         pipeline.add_process(
             process_name=f'end_{suffix}',
