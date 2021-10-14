@@ -77,10 +77,11 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
         process_directives_for_java_pipelines = {'memory': f'{memory} MB',
                                                  'clusterOptions': (f'-o {output_directory}/cluster_{timestamp}.log '
                                                                     f'-e {output_directory}/cluster_{timestamp}.err')}
-        # Needed for process_directives
-        # Refer to ClusteringFromMongoJobConfiguration.java for descriptions and rationale for 2 separate jobs
+        # Refer to ProcessRemappedVariantsWithRSJobConfiguration.java and ClusterUnclusteredVariantsJobConfiguration.java
+        # for descriptions and rationale for 2 separate jobs
+        # Access to internal method _add_new_process needed for process_directives
         pipeline._add_new_process(NextFlowProcess(
-            process_name=f'cluster_{suffix}',
+            process_name=f'process_remapped_variants_with_rs_{suffix}',
             command_to_run=f'java -Xmx{memory}m -jar {clustering_artifact} --spring.config.location=file:{properties_path} '
                            f'--spring.batch.job.names=PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB',
             process_directives=process_directives_for_java_pipelines

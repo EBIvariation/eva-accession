@@ -30,7 +30,7 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
     properties = get_properties_from_xml_file(profile, private_config_xml_file)
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
     with open(path, 'w') as properties_file:
-        add_clustering_properties(properties_file, assembly_accession, project_accession, source, vcf_file)
+        add_clustering_properties(properties_file, assembly_accession, project_accession, source)
         add_accessioning_properties(properties_file, instance)
         add_count_service_properties(properties_file, properties)
         add_mongo_properties(properties_file, properties)
