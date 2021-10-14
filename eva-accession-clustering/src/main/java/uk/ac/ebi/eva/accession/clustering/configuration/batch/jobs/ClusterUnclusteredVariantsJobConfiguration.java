@@ -25,28 +25,27 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 
 @Configuration
 @EnableBatchProcessing
-public class ClusteringFromMongoJobConfiguration {
-
-    @Bean(CLUSTERING_FROM_MONGO_JOB)
+public class ClusterUnclusteredVariantsJobConfiguration {
+    // Should be run after split or merge candidates have been processed in the step @see PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB
+    // In this step, proceed to cluster as-yet unclustered variants in a given assembly
+    // This job should NOT be run in parallel for multiple species due to EVA-2178 but the previous step can be run in parallel.
+    @Bean(CLUSTER_UNCLUSTERED_VARIANTS_JOB)
     public Job clusteringFromMongoJob(
-            @Qualifier(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringClusteredVariantsFromMongoStep,
             @Qualifier(PROCESS_RS_MERGE_CANDIDATES_STEP) Step processRSMergeCandidatesStep,
             @Qualifier(PROCESS_RS_SPLIT_CANDIDATES_STEP) Step processRSSplitCandidatesStep,
             @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP) Step clearRSMergeAndSplitCandidatesStep,
             @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
             JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
+        return jobBuilderFactory.get(CLUSTER_UNCLUSTERED_VARIANTS_JOB)
                                 .incrementer(new RunIdIncrementer())
-                                .start(clusteringClusteredVariantsFromMongoStep)
-                                .next(processRSMergeCandidatesStep)
+                                .start(processRSMergeCandidatesStep)
                                 .next(processRSSplitCandidatesStep)
                                 .next(clearRSMergeAndSplitCandidatesStep)
                                 .next(clusteringNonClusteredVariantsFromMongoStep)

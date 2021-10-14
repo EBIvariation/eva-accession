@@ -112,6 +112,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes={BatchTestConfiguration.class})
@@ -267,11 +269,26 @@ public class ClusteringCommandLineRunnerTest {
         mongoTemplate.getDb().drop();
     }
 
+    @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    public void runFullClusteringFromMongoJobWithNoErrors() throws JobExecutionException {
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
 
     @Test
     @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
-    public void runMongoJobWithNoErrors() throws JobExecutionException {
-        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+    public void runProcessRemappedRSJobWithNoErrors() throws JobExecutionException {
+        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    public void runClusterUnclusteredVariantsJobWithNoErrors() throws JobExecutionException {
+        runner.setJobNames(CLUSTER_UNCLUSTERED_VARIANTS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
