@@ -26,9 +26,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
-import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
@@ -207,7 +205,14 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             }
         }
 
-        Map<Long, Set<String>> allExistingHashesGroupByRS = new HashMap<>();
+        Set<Long> rsIDs = clusteredRemappedSubmittedVariants.stream()
+                                                            .map(SubmittedVariantEntity::getClusteredVariantAccession)
+                                                            .collect(Collectors.toSet());
+        // Initialize a map of "RS -> list of associated hashes" with hashes for RS IDs already present in the database
+        // We will keep updating this map when we encounter new RS IDs present in the remapped variants SS record
+        // but with no corresponding RS record in the database
+        Map<Long, Set<String>> allExistingHashesGroupByRS = getAllHashesForAssemblyAndRSInDB(assembly,
+                                                                                             new ArrayList<>(rsIDs));
         List<ClusteredVariantEntity> clusteredVariantEntities = new ArrayList<>();
         List<ClusteredVariantEntity> dbsnpClusteredVariantEntities = new ArrayList<>();
 
@@ -218,10 +223,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                                                                         clusteredVariantEntity,
                                                                                         assembly, allExistingHashesInDB,
                                                                                         mergeCandidateSVOE);
-
-            updateAllExistingHashesGroupByRS(allExistingHashesGroupByRS, assembly,
-                                             clusteredVariantEntity.getAccession());
-
+            allExistingHashesGroupByRS.putIfAbsent(clusteredVariantEntity.getAccession(), new HashSet<>());
             checkIfCandidateForRSSplit(remappedSubmittedVariantEntity, clusteredVariantEntity, assembly,
                                        allExistingHashesGroupByRS, rsSplitCandidateSVOE);
 
@@ -257,16 +259,18 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                .collect(Collectors.toMap(AccessionWrapper::getHash, AccessionWrapper::getAccession));
     }
 
-    private Set<String> getAllHashesForAssemblyAndRS(String assembly, Long accession) {
-        try {
-            return clusteredService.getAllByAccession(accession).stream()
-                    .filter(accWrapper -> accWrapper.getData().getAssemblyAccession().equals(assembly))
-                    .map(AccessionWrapper::getHash)
-                    .collect(Collectors.toSet());
-        } catch (AccessionMergedException | AccessionDoesNotExistException | AccessionDeprecatedException ex) {
-            logger.error("exception occurred while getting variants with accession ID {}", accession, ex);
+    private Map<Long, Set<String>> getAllHashesForAssemblyAndRSInDB(String assembly, List<Long> accessionList) {
+        Map<Long, Set<String>> allHashesForAssemblyAndRSInDB = new HashMap<>();
+        List<AccessionWrapper<IClusteredVariant, String, Long>> allRSRecordsInDBWithTheGivenAccessions =
+                clusteredService.getAllActiveByAssemblyAndAccessionIn(assembly, accessionList);
+        // Construct a map of RS ID and the corresponding set of hashes
+        for (AccessionWrapper<IClusteredVariant, String, Long> clusteredVariantWrapper :
+                allRSRecordsInDBWithTheGivenAccessions) {
+            Long rsID = clusteredVariantWrapper.getAccession();
+            allHashesForAssemblyAndRSInDB.putIfAbsent(rsID, new HashSet<>());
+            allHashesForAssemblyAndRSInDB.get(rsID).add(clusteredVariantWrapper.getHash());
         }
-        return Collections.emptySet();
+        return allHashesForAssemblyAndRSInDB;
     }
 
     private List<SubmittedVariantOperationEntity> getSVOEWithMergeAndRSSplitCandidates(String assembly) {
@@ -352,18 +356,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         "Hash mismatch with " + variantAccession, inactiveEntities);
 
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
-            }
-        }
-    }
-
-    private void updateAllExistingHashesGroupByRS(Map<Long, Set<String>> allExistingHashesGroupByRS, String assembly,
-                                                  Long variantAccession) {
-        if (!allExistingHashesGroupByRS.containsKey(variantAccession)) {
-            Set<String> allHashForRS = getAllHashesForAssemblyAndRS(assembly, variantAccession);
-            if(allHashForRS.isEmpty()) {
-                allExistingHashesGroupByRS.put(variantAccession, new HashSet<>());
-            }else{
-                allExistingHashesGroupByRS.put(variantAccession, allHashForRS);
             }
         }
     }

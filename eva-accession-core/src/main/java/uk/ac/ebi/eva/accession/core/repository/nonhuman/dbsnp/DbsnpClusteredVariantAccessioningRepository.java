@@ -22,8 +22,12 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IAccessionedO
 
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 
+import java.util.List;
+
 @Repository
 public interface DbsnpClusteredVariantAccessioningRepository extends
         IAccessionedObjectRepository<DbsnpClusteredVariantEntity, Long> {
 
+    List<DbsnpClusteredVariantEntity> findByAssemblyAccessionAndAccessionIn(String referenceSequenceAccession,
+                                                                            List<Long> accession);
 }

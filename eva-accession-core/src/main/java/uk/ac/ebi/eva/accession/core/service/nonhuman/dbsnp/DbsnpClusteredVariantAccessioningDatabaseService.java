@@ -34,7 +34,6 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVari
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class DbsnpClusteredVariantAccessioningDatabaseService
@@ -65,6 +64,13 @@ public class DbsnpClusteredVariantAccessioningDatabaseService
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         List<DbsnpClusteredVariantEntity> entities = this.repository.findByAccession(accession);
         this.checkAccessionIsActive(entities, accession);
+        return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllActiveByAssemblyAndAccessionIn
+            (String assembly, List<Long> accessionList) {
+        List<DbsnpClusteredVariantEntity> entities = this.repository
+                .findByAssemblyAccessionAndAccessionIn(assembly, accessionList);
         return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
     }
 

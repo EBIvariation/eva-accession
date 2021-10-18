@@ -112,6 +112,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes={BatchTestConfiguration.class})
@@ -267,16 +269,35 @@ public class ClusteringCommandLineRunnerTest {
         mongoTemplate.getDb().drop();
     }
 
-
     @Test
     @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
-    public void runMongoJobWithNoErrors() throws JobExecutionException {
+    @DirtiesContext
+    public void runFullClusteringFromMongoJobWithNoErrors() throws JobExecutionException {
         runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
     @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    @DirtiesContext
+    public void runProcessRemappedRSJobWithNoErrors() throws JobExecutionException {
+        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    @DirtiesContext
+    public void runClusterUnclusteredVariantsJobWithNoErrors() throws JobExecutionException {
+        runner.setJobNames(CLUSTER_UNCLUSTERED_VARIANTS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    @DirtiesContext
     public void runClusteringMongoJobOnRemappedVariantsWithNoErrors() throws JobExecutionException,
             AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException,
             AccessionMergedException, AccessionDeprecatedException {
@@ -305,6 +326,8 @@ public class ClusteringCommandLineRunnerTest {
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
+        this.mongoTemplate.findAll(ClusteredVariantEntity.class).forEach(
+                result -> System.out.println(result.getAccession() + " " + result));
         // Ensure that the total number of SS IDs and RS IDs are as postulated above
         // newRS1 and newRS2 post-merge
         assertEquals(2, this.mongoTemplate.findAll(ClusteredVariantEntity.class).size());
@@ -494,7 +517,7 @@ public class ClusteringCommandLineRunnerTest {
         rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.SNV);
         rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
         rsLocus4 = new RSLocus(ASM2, "chr1", 103L, VariantType.SNV);
-        rsLocus4_old = new RSLocus(ASM1, "chr1", 103L + ThreadLocalRandom.current().nextLong(10),
+        rsLocus4_old = new RSLocus(ASM1, "chr1", 113L + 1 + ThreadLocalRandom.current().nextLong(10),
                                    VariantType.SNV);
         rsLocus5 = new RSLocus(ASM2, "chr1", 104L, VariantType.SNV);
         dbsnpRS1 = createRS(1L, rsLocus1, true);
@@ -578,12 +601,14 @@ public class ClusteringCommandLineRunnerTest {
 
     @Test
     @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
+    @DirtiesContext
     public void runJobWithNoErrors() throws JobExecutionException {
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
     }
 
     @Test
+    @DirtiesContext
     public void runJobWithNoName() throws JobExecutionException {
         runner.setJobNames(null);
         runner.run();
@@ -591,6 +616,7 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
+    @DirtiesContext
     public void runNonExistentJob() throws JobExecutionException {
         runner.setJobNames("NOT_EXISTENT_JOB");
         runner.run();

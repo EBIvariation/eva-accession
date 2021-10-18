@@ -56,6 +56,11 @@ public class ClusteredVariantMonotonicAccessioningService
         return dbService.getAllByAccession(accession);
     }
 
+    public List<AccessionWrapper<IClusteredVariant, String, Long>>
+    getAllActiveByAssemblyAndAccessionIn(String assembly, List<Long> accessionList) {
+        return dbService.getAllActiveByAssemblyAndAccessionIn(assembly, accessionList);
+    }
+
     public AccessionWrapper<IClusteredVariant, String, Long> getLastInactive(Long accession) {
         return dbService.getLastInactive(accession);
     }

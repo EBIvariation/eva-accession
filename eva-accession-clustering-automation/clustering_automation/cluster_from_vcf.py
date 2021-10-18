@@ -46,7 +46,7 @@ def generate_bsub_command(assembly_accession, properties_path, logs_directory, c
 
     command = 'bsub {dependency_param}-J {job_name} -o {log_file} -e {error_file} -M {memory_amount} ' \
               '-R "rusage[mem={memory_amount}]" java -jar {clustering_artifact} ' \
-              '--spring.config.location=file:{properties_path}'\
+              '--spring.config.location=file:{properties_path} --spring.batch.job.names=CLUSTERING_FROM_VCF_JOB'\
         .format(dependency_param=dependency_param, job_name=job_name, log_file=log_file, error_file=error_file,
                 memory_amount=memory_amount, clustering_artifact=clustering_artifact, properties_path=properties_path)
 
