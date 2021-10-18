@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 import java.util.Objects;
 
@@ -126,8 +127,19 @@ public class ClusteredVariantSplittingPolicy {
             // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=686889730
             if (firstRSHashSplitDeterminants.oldestSSID < secondRSHashSplitDeterminants.oldestSSID) {
                 return new SplitPriority(firstRSHashSplitDeterminants, secondRSHashSplitDeterminants);
-            } else {
+            } else if (secondRSHashSplitDeterminants.oldestSSID < firstRSHashSplitDeterminants.oldestSSID) {
                 return new SplitPriority(secondRSHashSplitDeterminants, firstRSHashSplitDeterminants);
+            } else {
+                // If two RS have equal number of supporting loci AND the same SS ID
+                // (can happen in some cases - see https://www.ebi.ac.uk/panda/jira/browse/EVA-2630),
+                // use lexicographic ordering of hash components as a tie-breaker
+                // https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-
+                ClusteredVariantSummaryFunction summaryFunction = new ClusteredVariantSummaryFunction();
+                if (summaryFunction.apply(firstRS).compareTo(summaryFunction.apply(secondRS)) < 0) {
+                    return new SplitPriority(firstRSHashSplitDeterminants, secondRSHashSplitDeterminants);
+                } else {
+                    return new SplitPriority(secondRSHashSplitDeterminants, firstRSHashSplitDeterminants);
+                }
             }
         }
     }

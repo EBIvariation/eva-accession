@@ -34,6 +34,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
@@ -42,6 +43,7 @@ import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfigurat
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -49,14 +51,17 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
@@ -121,10 +126,11 @@ public class RSSplitWriterTest {
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,
                                             String alternate) {
-
-        return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession, ASSEMBLY, 60711,
-                                          "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
-                                          false, 1);
+        Function<ISubmittedVariant, String> hashingFunction = new SubmittedVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        SubmittedVariant temp = new SubmittedVariant(ASSEMBLY, 60711, "PRJ1", "chr1", start, reference, alternate,
+                                                     rsAccession);
+        return new SubmittedVariantEntity(ssAccession, hashingFunction.apply(temp), temp, 1);
     }
 
     @Test
@@ -218,5 +224,92 @@ public class RSSplitWriterTest {
         // 2 new RS IDs associated with SS groups: ss3,ss4 and ss5,ss6
         assertEquals(4, clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
         assertEquals(4, clusteringCounts.getSubmittedVariantsUpdatedRs());
+    }
+
+    @Test
+    // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=231697699
+    public void testSplitsInvolvingSameSSWithSameRS_Scenario1() throws Exception {
+        Long rs1Accession = 1L;
+        ss1 = createSS(1L, rs1Accession, 100L, "C", "T");
+        ss2 = createSS(2L, rs1Accession, 101L, "T", "A");
+        // Another SS with the same accession as SS2 but different REF/ALT
+        SubmittedVariantEntity ss2_another = createSS(ss2.getAccession(), rs1Accession, 102L,
+                                                      "T", "");
+
+        // Create multiple entries in clustered variant collection - one for each distinct loci but with the same accession
+        List<ClusteredVariantEntity> multipleEntriesWithSameRS = Stream.of(ss1, ss2, ss2_another)
+                                                                       .map(clusteringWriter::toClusteredVariantEntity)
+                                                                       .collect(Collectors.toList());
+
+        mongoTemplate.insert(Arrays.asList(ss1, ss2, ss2_another), DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.insert(multipleEntriesWithSameRS, DbsnpClusteredVariantEntity.class);
+        SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
+        splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                            ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
+                            Stream.of(ss1, ss2, ss2_another).map(SubmittedVariantInactiveEntity::new)
+                                  .collect(Collectors.toList())
+        );
+        mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
+        rsSplitWriter.write(Collections.singletonList(splitOperation));
+
+        // Even though both SS2 and SS2_another happen to have the same ID and the same RS but different locus
+        // (can happen, see https://www.ebi.ac.uk/panda/jira/browse/EVA-2630),
+        // a split operation should assign different RS IDs per SS ID/hash combination.
+        // Here SS1-rsLocus1 gets to keep the old RS ID because SS1 is the older SS ID
+        // SS2 and SS2_another get two different newly issued RS IDs respectively even though they have the same accession
+        Long newRSForSS1 = submittedVariantAccessioningService.get(Collections.singletonList(ss1)).get(0).getData()
+                                                              .getClusteredVariantAccession();
+        Long newRSForSS2 = submittedVariantAccessioningService.get(Collections.singletonList(ss2)).get(0).getData()
+                                                              .getClusteredVariantAccession();
+        Long newRSForSS2_another = submittedVariantAccessioningService.get(Collections.singletonList(ss2_another))
+                                                                      .get(0)
+                                                                      .getData()
+                                                                      .getClusteredVariantAccession();
+        assertEquals(rs1Accession, newRSForSS1);
+        assertNotEquals(rs1Accession, newRSForSS2);
+        assertNotEquals(rs1Accession, newRSForSS2_another);
+        assertNotEquals(newRSForSS2, newRSForSS2_another);
+    }
+
+    @Test
+    // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1639249574
+    public void testSplitsInvolvingSameSSWithSameRS_Scenario2() throws Exception {
+        Long rs1Accession = 1L;
+        ss1 = createSS(1L, rs1Accession, 100L, "C", "T");
+        // Another SS with the same accession as SS1 but different REF/ALT
+        SubmittedVariantEntity ss1_another = createSS(ss1.getAccession(), rs1Accession, 101L,
+                                                      "T", "");
+
+        // Create multiple entries in clustered variant collection - one for each distinct loci but with the same accession
+        List<ClusteredVariantEntity> multipleEntriesWithSameRS = Stream.of(ss1, ss1_another)
+                                                                       .map(clusteringWriter::toClusteredVariantEntity)
+                                                                       .collect(Collectors.toList());
+
+        mongoTemplate.insert(Arrays.asList(ss1, ss1_another), DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.insert(multipleEntriesWithSameRS, DbsnpClusteredVariantEntity.class);
+        SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
+        splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                            ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
+                            Stream.of(ss1, ss1_another).map(SubmittedVariantInactiveEntity::new)
+                                  .collect(Collectors.toList())
+        );
+        mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
+        rsSplitWriter.write(Collections.singletonList(splitOperation));
+
+
+        // Even though the number of supporting variants for rsLocus2 (ss1) and rsLocus3 (ss1_another) are same
+        // and the supporting SS IDs are the same,
+        // rsLocus2 gets to keep rs1 because the lexicographical representation of rsLocus2
+        // takes priority over that of rsLocus3.
+        // RS locus representation of SS1 - 1_chr1_100_SNV
+        // RS locus representation of SS1_another - 1_chr1_101_DEL
+        // See ClusteredVariantSplittingPolicy.java
+        Long newRSForSS1 = submittedVariantAccessioningService.get(Collections.singletonList(ss1)).get(0).getData()
+                                                              .getClusteredVariantAccession();
+        Long newRSForSS1_another = submittedVariantAccessioningService.get(Collections.singletonList(ss1_another))
+                                                                      .get(0).getData()
+                                                                      .getClusteredVariantAccession();
+        assertEquals(rs1Accession, newRSForSS1);
+        assertNotEquals(rs1Accession, newRSForSS1_another);
     }
 }
