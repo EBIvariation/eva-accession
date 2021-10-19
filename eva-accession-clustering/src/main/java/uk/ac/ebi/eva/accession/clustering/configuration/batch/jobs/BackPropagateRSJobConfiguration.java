@@ -30,7 +30,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PR
 @Configuration
 @EnableBatchProcessing
 public class BackPropagateRSJobConfiguration {
-    // Deal with remapped variants with an existing RS and create split or merge candidates as needed
+    // Deal with back-propagation of RS, that were assigned to SS in the remapped assembly, to the original assembly
     // Can be parallelized across multiple species
     @Bean(BACK_PROPAGATE_RS_JOB)
     public Job processRemappedVariantsWithRSJob(
