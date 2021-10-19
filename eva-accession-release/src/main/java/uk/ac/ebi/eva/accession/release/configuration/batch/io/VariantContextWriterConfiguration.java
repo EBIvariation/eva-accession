@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 
 import org.springframework.data.mongodb.core.MongoOperations;
 
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.release.batch.io.ReleaseRecordWriter;
@@ -28,6 +29,7 @@ import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.active.VariantContextWriter;
+import uk.ac.ebi.eva.accession.release.batch.processors.ContextNucleotideAdditionProcessor;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 
@@ -102,9 +104,12 @@ public class VariantContextWriterConfiguration {
     public ReleaseRecordWriter incrementalReleaseWriter(MongoOperations mongoOperations,
                                                         SubmittedVariantAccessioningRepository submittedVariantAccessioningRepository,
                                                         ClusteredVariantAccessioningRepository clusteredVariantAccessioningRepository,
+                                                        FastaSynonymSequenceReader fastaSynonymSequenceReader,
                                                         InputParameters parameters) {
+        ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor =
+                new ContextNucleotideAdditionProcessor(fastaSynonymSequenceReader);
         return new ReleaseRecordWriter(mongoOperations, submittedVariantAccessioningRepository,
-                                       clusteredVariantAccessioningRepository, parameters.getAssemblyAccession());
+                clusteredVariantAccessioningRepository, contextNucleotideAdditionProcessor, parameters.getAssemblyAccession());
     }
 
 }

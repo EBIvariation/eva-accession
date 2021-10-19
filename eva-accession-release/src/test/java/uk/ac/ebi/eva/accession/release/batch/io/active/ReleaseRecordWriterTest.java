@@ -34,6 +34,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.batch.io.AccessionedVcfLineMapper;
+import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ReleaseRecordEntity;
 import uk.ac.ebi.eva.accession.core.model.ReleaseRecordSubmittedVariantEntity;
@@ -42,19 +43,21 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.release.batch.io.ReleaseRecordWriter;
+import uk.ac.ebi.eva.accession.release.batch.processors.ContextNucleotideAdditionProcessor;
 import uk.ac.ebi.eva.accession.release.configuration.batch.processors.ReleaseProcessorConfiguration;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
+import uk.ac.ebi.eva.commons.core.models.VariantCoreFields;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,9 +78,9 @@ public class ReleaseRecordWriterTest {
 
     private List<VariantContext> study1Variants, study2Variants;
 
-    private SubmittedVariantEntity evaSS1, evaSS2, evaSS3, evaSS4, evaSS5, evaSS6;
+    private SubmittedVariantEntity evaSS1, evaSS2, evaSS3, evaSS4, evaSS5, evaSS6, evaSS7;
 
-    private ClusteredVariantEntity evaRS1, evaRS2, evaRS3, evaRS4;
+    private ClusteredVariantEntity evaRS1, evaRS2, evaRS3, evaRS4, evaRS5;
 
     private ExecutionContext executionContext;
 
@@ -101,30 +104,44 @@ public class ReleaseRecordWriterTest {
     @Autowired
     private SubmittedVariantAccessioningRepository submittedVariantAccessioningRepository;
 
+    @Autowired
+    private FastaSynonymSequenceReader fastaSynonymSequenceReader;
+
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     private SubmittedVariantEntity createSSFromVariant(VariantContext variant, Long rsAccession) {
         Long ssAccession = Long.parseLong(variant.getID().substring(2));
+        VariantCoreFields variantCoreFields = new VariantCoreFields(variant.getContig(), variant.getStart(),
+                variant.getReference().getBaseString(), variant.getAlternateAllele(0).getBaseString());
+        // Use VariantCoreFields object above as a
+        // convenient way to remove context bases read from the VCF
+
         return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession, ASSEMBLY_ACCESSION, 60711,
-                                          "PRJ1", variant.getContig(),
-                                          variant.getStart(), variant.getReference().getBaseString(),
-                                          variant.getAlternateAllele(0).getBaseString(),
-                                          rsAccession, false, false, false, false, 1);
+                "PRJ1", variant.getContig(),
+                variantCoreFields.getStart(), variantCoreFields.getReference(), variantCoreFields.getAlternate(),
+                rsAccession, false, false, false, false, 1);
     }
 
     private ClusteredVariantEntity createRSFromVariant(VariantContext variant, Long rsAccession) {
+        Map<VariantContext.Type, VariantType> typeMapping = new HashMap<>();
+        typeMapping.put(VariantContext.Type.INDEL, VariantType.INDEL);
+        typeMapping.put(VariantContext.Type.SNP, VariantType.SNV);
+        typeMapping.put(VariantContext.Type.MNP, VariantType.MNV);
+
         return new ClusteredVariantEntity(rsAccession, "hash" + rsAccession, ASSEMBLY_ACCESSION, 60711,
-                                          variant.getContig(), variant.getStart(), VariantType.SNV, false, null, 1);
+                variant.getContig(), variant.getStart(), typeMapping.get(variant.getType()), false, null, 1);
     }
 
     private List<VariantContext> getVariants(String accessionedVcfFilePath) throws Exception {
         VcfReader vcfReader = new VcfReader(new AccessionedVcfLineMapper(), new File(accessionedVcfFilePath));
         vcfReader.open(executionContext);
-        List<Variant> variants = vcfReader.read();
-        variants.addAll(vcfReader.read());
-        variants.addAll(vcfReader.read());
+        List<Variant> variants = new ArrayList<>();
+        List<Variant> temp = new ArrayList<>();
+        while ((temp = vcfReader.read()) != null) {
+            variants.addAll(temp);
+        };
         vcfReader.close();
         List<VariantContext> results = new ArrayList<>();
         for (Variant variant: variants) {
@@ -161,9 +178,12 @@ public class ReleaseRecordWriterTest {
         evaSS4 = createSSFromVariant(study2Variants.get(0), evaRS4_accession);
         evaSS5 = createSSFromVariant(study2Variants.get(1), evaRS2_accession);
         evaSS6 = createSSFromVariant(study2Variants.get(2), evaRS3_accession);
+        Long evaRS5_accession = 3000000005L;
+        evaRS5 = createRSFromVariant(study2Variants.get(0), evaRS5_accession);
+        evaSS7 = createSSFromVariant(study2Variants.get(3), evaRS5_accession);
 
-        clusteredVariantAccessioningRepository.saveAll(Collections.singletonList(evaRS4));
-        submittedVariantAccessioningRepository.saveAll(Arrays.asList(evaSS4, evaSS5, evaSS6));
+        clusteredVariantAccessioningRepository.saveAll(Arrays.asList(evaRS4, evaRS5));
+        submittedVariantAccessioningRepository.saveAll(Arrays.asList(evaSS4, evaSS5, evaSS6, evaSS7));
     }
 
     @After
@@ -177,7 +197,9 @@ public class ReleaseRecordWriterTest {
     public void testReleaseRecordWriter() throws Exception {
         ReleaseRecordWriter releaseRecordWriter = new ReleaseRecordWriter(this.mongoOperations, 
                                                                           this.submittedVariantAccessioningRepository, 
-                                                                          this.clusteredVariantAccessioningRepository, 
+                                                                          this.clusteredVariantAccessioningRepository,
+                                                                          new ContextNucleotideAdditionProcessor(
+                                                                                  fastaSynonymSequenceReader),
                                                                           ASSEMBLY_ACCESSION);
         /*
          * Study 1 variants: see study1.accessioned.vcf and setup() above for the RS-SS associations
@@ -196,6 +218,7 @@ public class ReleaseRecordWriterTest {
          * evaSS4 -> evaRS4
          * evaSS5 -> evaRS2
          * evaSS6 -> evaRS3
+         * evaSS7 -> evaRS5
          */
 
         releaseRecordWriter.write(study2Variants);
@@ -205,17 +228,28 @@ public class ReleaseRecordWriterTest {
          * evaRS2 - evaSS2, evaSS5
          * evaRS4 - evaSS4
          * evaRS3 - evaSS3, evaSS6
+         * evaRS5 - evaSS7
          */
         Map<Long, ReleaseRecordEntity> releaseRecordsAfterStudy2Ingestion =
                 this.mongoOperations.findAll(ReleaseRecordEntity.class).stream()
                                     .collect(Collectors.toMap(ReleaseRecordEntity::getAccession, entity -> entity));
-        assertEquals(4, releaseRecordsAfterStudy2Ingestion.size());
+        assertEquals(5, releaseRecordsAfterStudy2Ingestion.size());
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS1, evaRS1));
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS2, evaRS2));
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS5, evaRS2));
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS4, evaRS4));
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS3, evaRS3));
         assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS6, evaRS3));
+        assertTrue(isSSAssociatedWithRS(releaseRecordsAfterStudy2Ingestion, evaSS7, evaRS5));
+
+        // Ensure that the context base is added in the release record for insertions or deletions
+        ReleaseRecordSubmittedVariantEntity releaseRecordSubmittedVariantEntity =
+                releaseRecordsAfterStudy2Ingestion.get(evaRS5.getAccession())
+                        .getAssociatedSubmittedVariantEntities().get(0);
+        assertEquals("A", releaseRecordSubmittedVariantEntity.getReferenceAllele());
+        assertEquals("", releaseRecordSubmittedVariantEntity.getAlternateAllele());
+        assertEquals("CA", releaseRecordSubmittedVariantEntity.getReferenceAlleleWithContextBase());
+        assertEquals("C", releaseRecordSubmittedVariantEntity.getAlternateAlleleWithContextBase());
     }
 
     private boolean isSSAssociatedWithRS(Map<Long, ReleaseRecordEntity> releaseRecordEntityMap,

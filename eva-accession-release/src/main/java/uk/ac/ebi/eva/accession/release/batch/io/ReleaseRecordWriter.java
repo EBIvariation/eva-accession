@@ -33,6 +33,10 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
+import uk.ac.ebi.eva.accession.release.batch.processors.ContextNucleotideAdditionProcessor;
+import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.commons.core.models.VariantCoreFields;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +65,8 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
 
     private final ClusteredVariantAccessioningRepository clusteredVariantAccessioningRepository;
 
+    private final ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor;
+
     private final String assemblyAccession;
 
     public static final String RELEASE_RECORD_COLLECTION_NAME = "releaseRecordEntity";
@@ -68,10 +74,12 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
     public ReleaseRecordWriter(MongoOperations mongoOperations,
                                SubmittedVariantAccessioningRepository submittedVariantAccessioningRepository,
                                ClusteredVariantAccessioningRepository clusteredVariantAccessioningRepository,
+                               ContextNucleotideAdditionProcessor contextNucleotideAdditionProcessor,
                                String assemblyAccession) {
         this.mongoOperations = mongoOperations;
         this.submittedVariantAccessioningRepository = submittedVariantAccessioningRepository;
         this.clusteredVariantAccessioningRepository = clusteredVariantAccessioningRepository;
+        this.contextNucleotideAdditionProcessor = contextNucleotideAdditionProcessor;
         this.assemblyAccession = assemblyAccession;
     }
 
@@ -104,24 +112,16 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
     }
 
     private ReleaseRecordEntity constructReleaseRecord(Pair<ClusteredVariantEntity, List<SubmittedVariantEntity>>
-                                                               variantRecord) {
+                                                               variantRecord) throws Exception {
         ClusteredVariantEntity clusteredVariantEntity = variantRecord.getLeft();
         String releaseRecordID = String.format("%s_%s", this.assemblyAccession, clusteredVariantEntity.getAccession());
         List<ReleaseRecordSubmittedVariantEntity> releaseRecordSubmittedVariantEntities =
-                variantRecord.getRight()
-                             .stream()
-                             .map(entity -> new ReleaseRecordSubmittedVariantEntity(entity.getAccession(),
-                                                                                    entity.getHashedMessage(),
-                                                                                    entity.getProjectAccession(),
-                                                                                    entity.getContig(),
-                                                                                    entity.getStart(),
-                                                                                    entity.getReferenceAllele(),
-                                                                                    entity.getAlternateAllele(),
-                                                                                    entity.isSupportedByEvidence(),
-                                                                                    entity.isAssemblyMatch(),
-                                                                                    entity.isAllelesMatch(),
-                                                                                    entity.isValidated()))
-                        .collect(Collectors.toList());
+                new ArrayList<>();
+        for (SubmittedVariantEntity submittedVariantEntity : variantRecord.getRight()) {
+            ReleaseRecordSubmittedVariantEntity releaseRecordSubmittedVariantEntity =
+                    constructReleaseRecordSubmittedVariantEntity(submittedVariantEntity);
+            releaseRecordSubmittedVariantEntities.add(releaseRecordSubmittedVariantEntity);
+        }
         return new ReleaseRecordEntity(releaseRecordID,
                                        clusteredVariantEntity.getAccession(),
                                        clusteredVariantEntity.getHashedMessage(),
@@ -130,6 +130,32 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
                                        clusteredVariantEntity.getContig(), clusteredVariantEntity.getStart(),
                                        clusteredVariantEntity.getType(), clusteredVariantEntity.isValidated(),
                                        clusteredVariantEntity.getMapWeight(), releaseRecordSubmittedVariantEntities);
+    }
+
+    private ReleaseRecordSubmittedVariantEntity constructReleaseRecordSubmittedVariantEntity(
+            SubmittedVariantEntity entity) throws Exception {
+        VariantCoreFields variantCoreFields = new VariantCoreFields(entity.getContig(), entity.getStart(),
+                entity.getReferenceAllele(), entity.getAlternateAllele());
+        // We only lean on the VariantCoreFields object above for automatic end coordinate calculation
+        IVariant variantWithContextBaseAdded =
+                this.contextNucleotideAdditionProcessor.process(new Variant(variantCoreFields.getChromosome(),
+                        variantCoreFields.getStart(), variantCoreFields.getEnd(), variantCoreFields.getReference(),
+                        variantCoreFields.getAlternate()));
+
+        return new ReleaseRecordSubmittedVariantEntity(entity.getAccession(),
+                entity.getHashedMessage(),
+                entity.getProjectAccession(),
+                entity.getContig(),
+                entity.getStart(),
+                entity.getReferenceAllele(),
+                entity.getAlternateAllele(),
+                variantWithContextBaseAdded.getReference(),
+                variantWithContextBaseAdded.getAlternate(),
+                entity.isSupportedByEvidence(),
+                entity.isAssemblyMatch(),
+                entity.isAllelesMatch(),
+                entity.isValidated());
+
     }
 
     private Map<Long, Pair<ClusteredVariantEntity, List<SubmittedVariantEntity>>> joinRSWithSSInfo(
@@ -154,7 +180,7 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
      * @param ssIds - List of SS IDs
      * @return A list of release records - objects with RS IDs and their constituent SS IDs
      */
-    private List<ReleaseRecordEntity> getReleaseRecords(List<Long> ssIds) {
+    private List<ReleaseRecordEntity> getReleaseRecords(List<Long> ssIds) throws Exception {
         List<SubmittedVariantEntity> submittedVariantEntities =
                 submittedVariantAccessioningRepository.findByReferenceSequenceAccessionAndAccessionIn(
                         this.assemblyAccession, ssIds);
@@ -172,8 +198,13 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
                         .findByAssemblyAccessionAndAccessionIn(this.assemblyAccession, rsIdsToLookFor)
                         .stream()
                         .collect(Collectors.toMap(ClusteredVariantEntity::getAccession, entity -> entity));
-        return joinRSWithSSInfo(clusteredVariantEntityMap, submittedVariantEntities)
-                .values().stream().map(this::constructReleaseRecord).collect(Collectors.toList());
+        List<ReleaseRecordEntity> releaseRecords = new ArrayList<>();
+        for (Pair<ClusteredVariantEntity, List<SubmittedVariantEntity>> clusteredVariantEntityListPair :
+                joinRSWithSSInfo(clusteredVariantEntityMap, submittedVariantEntities).values()) {
+            ReleaseRecordEntity releaseRecord = constructReleaseRecord(clusteredVariantEntityListPair);
+            releaseRecords.add(releaseRecord);
+        }
+        return releaseRecords;
     }
 
     private void upsertReleaseRecordToMongo(BulkOperations bulkOperations, ReleaseRecordEntity releaseRecordEntity) {
