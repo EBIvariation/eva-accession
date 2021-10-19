@@ -38,6 +38,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
@@ -64,6 +65,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
@@ -93,9 +95,9 @@ public class RemappedVariantsClusteringWriterTest {
 
     private static final String CONTIG = "chr1";
 
-    private static final String ASM_1 = "asm1";
+    private static String ASM_1;
 
-    private static final String ASM_2 = "asm2";
+    private static String ASM_2;
 
     private static final String PROJECT_1 = "project_1";
 
@@ -105,6 +107,9 @@ public class RemappedVariantsClusteringWriterTest {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private InputParameters inputParameters;
 
     // Current clustering sequence is:
     // generate merge split candidates from clustered variants -> perform merge
@@ -137,6 +142,10 @@ public class RemappedVariantsClusteringWriterTest {
     @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
     private ItemWriter clearRSMergeAndSplitCandidates;
 
+    @Autowired
+    @Qualifier(BACK_PROPAGATED_RS_WRITER)
+    private ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter;
+
     private Function<ISubmittedVariant, String> hashingFunction;
 
     private Function<IClusteredVariant, String> clusteredHashingFunction;
@@ -151,6 +160,8 @@ public class RemappedVariantsClusteringWriterTest {
 
     @Before
     public void setUp() {
+        ASM_1 = inputParameters.getRemappedFrom();
+        ASM_2 = inputParameters.getAssemblyAccession();
         mongoTemplate.getDb().drop();
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -290,15 +301,14 @@ public class RemappedVariantsClusteringWriterTest {
 
         //get all submitted variants for assembly asm2 and assert rs id
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
-        // Two clustered variants: One remapped variant clustered with a new RS and the new RS is back-propagated
-        // to the original variant in the old assembly
         assertEquals(2, submittedVariants.size());
         assertEquals(3000000000L, submittedVariants.get(0).getClusteredVariantAccession().longValue());
         assertEquals(3000000000L, submittedVariants.get(1).getClusteredVariantAccession().longValue());
 
         //get all clusteredVariantEntity and check rs id for all
         List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        assertEquals(1, clusteredVariants.size());
+        // Two records: Newly generated RS in the new assembly and the same RS back-propagated to the older assembly
+        assertEquals(2, clusteredVariants.size());
         assertEquals(3000000000L, clusteredVariants.get(0).getAccession().longValue());
 
         //assert submittedVariationOperationEntity
@@ -358,7 +368,8 @@ public class RemappedVariantsClusteringWriterTest {
 
         //get all clusteredVariantEntity and check rs id for all
         List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        assertEquals(1, clusteredVariants.size());
+        // Two records: Newly generated RS in the new assembly and the same RS back-propagated to the older assembly
+        assertEquals(2, clusteredVariants.size());
         assertEquals(3000000006L, clusteredVariants.get(0).getAccession().longValue());
 
         //assert submittedVariationOperationEntity
@@ -585,5 +596,11 @@ public class RemappedVariantsClusteringWriterTest {
         // To satisfy that, we pass in a dummy object to invoke the writer
         // which basically clears the merge and split operations after they were processed above
         clearRSMergeAndSplitCandidates.write(Collections.singletonList(new Object()));
+        ClusteringMongoReader originalAssemblyUnclusteredVariantsReader =
+                new ClusteringMongoReader(this.mongoTemplate, ASM_1, 100, false);
+        originalAssemblyUnclusteredVariantsReader.initializeReader();
+        while((tempSV = originalAssemblyUnclusteredVariantsReader.read()) != null) {
+            backPropagatedRSWriter.write(Collections.singletonList(tempSV));
+        }
     }
 }

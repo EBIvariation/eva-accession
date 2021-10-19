@@ -161,4 +161,11 @@ public class DbsnpSubmittedVariantAccessioningDatabaseService
         this.checkAccessionIsActive(entities, accession);
         return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
     }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllActiveByAssemblyAndAccessionIn
+            (String assembly, List<Long> accessionList) {
+        List<DbsnpSubmittedVariantEntity> entities = this.repository
+                .findByReferenceSequenceAccessionAndAccessionIn(assembly, accessionList);
+        return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
+    }
 }

@@ -22,6 +22,8 @@ public class InputParameters {
 
     private String vcf;
 
+    private String remappedFrom;
+
     private String projectAccession;
 
     private String assemblyAccession;
@@ -77,5 +79,13 @@ public class InputParameters {
                 .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();
+    }
+
+    public String getRemappedFrom() {
+        return remappedFrom;
+    }
+
+    public void setRemappedFrom(String remappedFrom) {
+        this.remappedFrom = remappedFrom;
     }
 }

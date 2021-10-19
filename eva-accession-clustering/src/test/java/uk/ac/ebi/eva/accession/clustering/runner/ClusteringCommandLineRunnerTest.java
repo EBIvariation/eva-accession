@@ -108,6 +108,7 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
@@ -124,9 +125,9 @@ public class ClusteringCommandLineRunnerTest {
 
     private static final int TAXONOMY = 60711;
 
-    private static final String ASM1 = "ASM1";
+    private static String ASM1;
 
-    private static final String ASM2 = "GCA_000000001.1";
+    private static String ASM2;
 
     private static final String PROJECT = "PRJ1";
 
@@ -249,6 +250,8 @@ public class ClusteringCommandLineRunnerTest {
             writeToTempVCFFile(originalVcfContent);
             originalInputParametersCaptured = true;
         }
+        ASM1 = inputParameters.getRemappedFrom();
+        ASM2 = inputParameters.getAssemblyAccession();
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
         runner.setJobNames(CLUSTERING_FROM_VCF_JOB);
         jobRepositoryTestUtils.removeJobExecutions();
@@ -297,6 +300,47 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    @DirtiesContext
+    /*
+      @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=717877299"/>
+     */
+    public void runBackPropagateRSJobWithNoErrors() throws JobExecutionException, AccessionDoesNotExistException,
+            AccessionMergedException, AccessionDeprecatedException {
+        rsLocus1 = new RSLocus(ASM2, "chr1", 100L, VariantType.SNV);
+        rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.SNV);
+        rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
+        rsLocus4 = new RSLocus(ASM1, "chr1", 103L, VariantType.SNV);
+
+        ClusteredVariantEntity rs1 = createRS(1L, rsLocus1, true);
+        ClusteredVariantEntity newRS2 = createRS(5L, rsLocus1, true);
+
+        createSS(1L, rs1.getAccession(), rsLocus1, "A", "T", false, ASM1);
+        createSS(1L, rs1.getAccession(), rsLocus2, "A", "T", true);
+        createSS(1L, newRS2.getAccession(), rsLocus3, "A", "G", true);
+
+        SubmittedVariantEntity ss3 = createSS(2L, null, rsLocus4, "A", "T", false, ASM1);
+        createSS(2L, rs1.getAccession(), rsLocus2, "A", "T", true);
+        createSS(2L, newRS2.getAccession(), rsLocus3, "A", "G", true);
+
+        runner.setJobNames(BACK_PROPAGATE_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        assertSSRSAssociation(ss3, newRS2, rsLocus4);
+        List<AccessionWrapper<IClusteredVariant, String, Long>> backPropagatedRSRecords =
+                clusteredVariantAccessioningService
+                        .getAllActiveByAssemblyAndAccessionIn(ASM1, Collections.singletonList(newRS2.getAccession()));
+        assertEquals(1, backPropagatedRSRecords.size());
+        ClusteredVariantEntity backPropagatedRS =
+                new ClusteredVariantEntity(backPropagatedRSRecords.get(0).getAccession(),
+                                           backPropagatedRSRecords.get(0).getHash(),
+                                           backPropagatedRSRecords.get(0).getData(),
+                                           backPropagatedRSRecords.get(0).getVersion());
+        assertRSLocusAssociation(backPropagatedRS, rsLocus4);
+    }
+
+    @Test
     @DirtiesContext
     public void runClusteringMongoJobOnRemappedVariantsWithNoErrors() throws JobExecutionException,
             AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException,
@@ -326,20 +370,18 @@ public class ClusteringCommandLineRunnerTest {
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
-        this.mongoTemplate.findAll(ClusteredVariantEntity.class).forEach(
-                result -> System.out.println(result.getAccession() + " " + result));
         // Ensure that the total number of SS IDs and RS IDs are as postulated above
-        // newRS1 and newRS2 post-merge
-        assertEquals(2, this.mongoTemplate.findAll(ClusteredVariantEntity.class).size());
+        // newRS1 and newRS2 post-merge in the remapped assembly, back-propagated newRS2 in the original assembly
+        assertEquals(3, this.mongoTemplate.findAll(ClusteredVariantEntity.class).size());
         // dbsnpRS1, dbsnpRS3 and dbsnpRS5 post-merge
         assertEquals(3, this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class).size());
         // Ensure that the number of SS records don't change
         assertEquals(4, this.mongoTemplate.findAll(DbsnpSubmittedVariantEntity.class).size());
 
         // Test RS-locus associations
-        assertPostMergeRSLocusAssociation(dbsnpRS1, rsLocus1);
-        assertPostMergeRSLocusAssociation(dbsnpRS3, rsLocus3);
-        assertPostMergeRSLocusAssociation(dbsnpRS5, rsLocus5);
+        assertRSLocusAssociation(dbsnpRS1, rsLocus1);
+        assertRSLocusAssociation(dbsnpRS3, rsLocus3);
+        assertRSLocusAssociation(dbsnpRS5, rsLocus5);
         AccessionWrapper<IClusteredVariant, String, Long> newRS1Wrapper =
                 clusteredVariantAccessioningService.getByAccession(
                         submittedVariantAccessioningService.getByAccession(evaSS3.getAccession()).getData()
@@ -347,28 +389,29 @@ public class ClusteringCommandLineRunnerTest {
         ClusteredVariantEntity newRS1 = new ClusteredVariantEntity(newRS1Wrapper.getAccession(),
                                                                    newRS1Wrapper.getHash(),
                                                                    newRS1Wrapper.getData());
+        Long newRS2Accession = submittedVariantAccessioningService.getByAccession(evaSS8.getAccession()).getData()
+                                                                  .getClusteredVariantAccession();
         AccessionWrapper<IClusteredVariant, String, Long> newRS2Wrapper =
-                clusteredVariantAccessioningService.getByAccession(
-                        submittedVariantAccessioningService.getByAccession(evaSS8.getAccession()).getData()
-                                                           .getClusteredVariantAccession());
+                clusteredVariantAccessioningService
+                        .getAllActiveByAssemblyAndAccessionIn(ASM2, Collections.singletonList(newRS2Accession)).get(0);
         ClusteredVariantEntity newRS2 = new ClusteredVariantEntity(newRS2Wrapper.getAccession(),
                                                                    newRS2Wrapper.getHash(),
                                                                    newRS2Wrapper.getData());
-        assertPostMergeRSLocusAssociation(newRS1, rsLocus2);
-        assertPostMergeRSLocusAssociation(newRS2, rsLocus4);
+        assertRSLocusAssociation(newRS1, rsLocus2);
+        assertRSLocusAssociation(newRS2, rsLocus4);
 
         // Test RS-SS associations
-        assertPostMergeSSRSAssociation(evaSS1, dbsnpRS1, rsLocus1);
-        assertPostMergeSSRSAssociation(dbsnpSS2, dbsnpRS1, rsLocus1);
-        assertPostMergeSSRSAssociation(evaSS3, newRS1, rsLocus2);
-        assertPostMergeSSRSAssociation(dbsnpSS4, dbsnpRS3, rsLocus3);
-        assertPostMergeSSRSAssociation(evaSS5, dbsnpRS3, rsLocus3);
-        assertPostMergeSSRSAssociation(dbsnpSS6, newRS2, rsLocus4);
-        assertPostMergeSSRSAssociation(dbsnpSS7, newRS2, rsLocus4);
-        assertPostMergeSSRSAssociation(evaSS8, newRS2, rsLocus4);
+        assertSSRSAssociation(evaSS1, dbsnpRS1, rsLocus1);
+        assertSSRSAssociation(dbsnpSS2, dbsnpRS1, rsLocus1);
+        assertSSRSAssociation(evaSS3, newRS1, rsLocus2);
+        assertSSRSAssociation(dbsnpSS4, dbsnpRS3, rsLocus3);
+        assertSSRSAssociation(evaSS5, dbsnpRS3, rsLocus3);
+        assertSSRSAssociation(dbsnpSS6, newRS2, rsLocus4);
+        assertSSRSAssociation(dbsnpSS7, newRS2, rsLocus4);
+        assertSSRSAssociation(evaSS8, newRS2, rsLocus4);
         // Ensure that RS is back-propagated to the old SS from which evaSS8 was remapped
-        assertPostMergeSSRSAssociation(evaSS8_old, newRS2, rsLocus4_old);
-        assertPostMergeSSRSAssociation(evaSS9, dbsnpRS5, rsLocus5);
+        assertSSRSAssociation(evaSS8_old, newRS2, rsLocus4_old);
+        assertSSRSAssociation(evaSS9, dbsnpRS5, rsLocus5);
 
         // Test operations
         // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1402276771
@@ -482,17 +525,21 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(1, existingOperations.size());
     }
 
-    private void assertPostMergeRSLocusAssociation(ClusteredVariantEntity expectedRS, RSLocus rsLocus)
+    private void assertRSLocusAssociation(ClusteredVariantEntity expectedRS, RSLocus rsLocus)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
-        IClusteredVariant rsEntryInDB =
-                clusteredVariantAccessioningService.getByAccession(expectedRS.getAccession()).getData();
+        List<AccessionWrapper<IClusteredVariant, String, Long>> rsEntriesInDB =
+                clusteredVariantAccessioningService
+                        .getAllActiveByAssemblyAndAccessionIn(expectedRS.getAssemblyAccession(),
+                                                              Collections.singletonList(expectedRS.getAccession()));
+        assertEquals(1, rsEntriesInDB.size());
+        IClusteredVariant rsEntryInDB = rsEntriesInDB.get(0).getData();
         assertEquals(rsLocus.assembly,  rsEntryInDB.getAssemblyAccession());
         assertEquals(rsLocus.contig,  rsEntryInDB.getContig());
         assertEquals(rsLocus.start,  rsEntryInDB.getStart());
         assertEquals(rsLocus.type,  rsEntryInDB.getType());
     }
 
-    private void assertPostMergeSSRSAssociation(SubmittedVariantEntity ss, ClusteredVariantEntity rs, RSLocus rsLocus)
+    private void assertSSRSAssociation(SubmittedVariantEntity ss, ClusteredVariantEntity rs, RSLocus rsLocus)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         AccessionWrapper<ISubmittedVariant, String, Long> ssInDBWrapper =
                 this.submittedVariantAccessioningService
@@ -558,9 +605,16 @@ public class ClusteringCommandLineRunnerTest {
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, RSLocus rsLocus, String reference,
                                             String alternate, boolean remappedFromAnotherAssembly) {
+        return createSS(ssAccession, rsAccession, rsLocus, reference, alternate, remappedFromAnotherAssembly, null);
+    }
+
+    private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, RSLocus rsLocus, String reference,
+                                            String alternate, boolean remappedFromAnotherAssembly,
+                                            String sourceAssembly) {
         Function<ISubmittedVariant, String> hashingFunction =  new SubmittedVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
-        SubmittedVariant submittedVariant = new SubmittedVariant(ASM2, TAXONOMY, PROJECT, rsLocus.contig,
+        String assemblyToUse = (sourceAssembly == null) ? ASM2 : sourceAssembly;
+        SubmittedVariant submittedVariant = new SubmittedVariant(assemblyToUse, TAXONOMY, PROJECT, rsLocus.contig,
                                                                  rsLocus.start, reference, alternate, rsAccession);
         String hash = hashingFunction.apply(submittedVariant);
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(ssAccession, hash, submittedVariant,

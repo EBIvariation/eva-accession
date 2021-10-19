@@ -33,6 +33,10 @@ public class BeanNames {
 
     public static final String RS_SPLIT_WRITER = "RS_SPLIT_WRITER";
 
+    public static final String BACK_PROPAGATED_RS_READER = "BACK_PROPAGATED_RS_READER";
+
+    public static final String BACK_PROPAGATED_RS_WRITER = "BACK_PROPAGATED_RS_WRITER";
+
     public static final String VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR =
             "VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR";
 
@@ -54,6 +58,8 @@ public class BeanNames {
 
     public static final String CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP = "CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP";
 
+    public static final String BACK_PROPAGATE_RS_STEP = "BACK_PROPAGATE_RS_STEP";
+
     public static final String CLUSTERING_FROM_VCF_JOB = "CLUSTERING_FROM_VCF_JOB";
 
     public static final String CLUSTERING_FROM_MONGO_JOB = "CLUSTERING_FROM_MONGO_JOB";
@@ -61,4 +67,6 @@ public class BeanNames {
     public static final String PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB = "PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB";
 
     public static final String CLUSTER_UNCLUSTERED_VARIANTS_JOB = "CLUSTER_UNCLUSTERED_VARIANTS_JOB";
+
+    public static final String BACK_PROPAGATE_RS_JOB = "BACK_PROPAGATE_RS_JOB";
 }

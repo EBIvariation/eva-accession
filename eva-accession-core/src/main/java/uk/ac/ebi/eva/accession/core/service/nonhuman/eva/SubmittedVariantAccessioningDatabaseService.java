@@ -108,4 +108,11 @@ public class SubmittedVariantAccessioningDatabaseService
             default:
         }
     }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllActiveByAssemblyAndAccessionIn
+            (String assembly, List<Long> accessionList) {
+        List<SubmittedVariantEntity> entities = this.repository
+                .findByReferenceSequenceAccessionAndAccessionIn(assembly, accessionList);
+        return entities.stream().map(this::toModelWrapper).collect(Collectors.toList());
+    }
 }
