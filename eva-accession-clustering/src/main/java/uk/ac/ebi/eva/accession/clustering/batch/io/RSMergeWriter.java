@@ -35,6 +35,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -64,6 +65,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeA
 public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(RSMergeWriter.class);
+
+    public static final String EVENT_TYPE_ATTRIBUTE = "eventType";
 
     private final ClusteringWriter clusteringWriter;
 
@@ -191,11 +194,45 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         ClusteredVariantEntity targetRS = mergeCandidates.stream().filter(rs -> rs.getAccession()
                                                                                   .equals(targetRSAccession))
                                                          .findFirst().get();
+        // If the target RS has already been merged into another RS due to a previous merge, get that RS
+        targetRS = getFinalMergeDestination(targetRS);
         List<ClusteredVariantEntity> mergees = mergeCandidates.stream()
                                                               .filter(rs -> !rs.getAccession()
                                                                                .equals(targetRSAccession))
                                                               .collect(Collectors.toList());
         return new ImmutablePair<>(targetRS, mergees);
+    }
+
+    private ClusteredVariantEntity getFinalMergeDestination(ClusteredVariantEntity originalRS) {
+        Query queryToFindMergeDestination = query(
+                where(ACCESSION_ATTRIBUTE).is(originalRS.getAccession())).addCriteria(
+                where(EVENT_TYPE_ATTRIBUTE).is(EventType.MERGED.toString())).addCriteria(
+                where(INACTIVE_OBJECT_ATTRIBUTE + "." +
+                              REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION)
+                        .is(this.assemblyAccession));
+        ClusteredVariantOperationEntity mergeOperationsWithRSAsMergeeInCVOE =
+                this.mongoTemplate.findOne(queryToFindMergeDestination, ClusteredVariantOperationEntity.class);
+        DbsnpClusteredVariantOperationEntity mergeOperationsWithRSAsMergeeInDbsnpCVOE =
+                this.mongoTemplate.findOne(queryToFindMergeDestination, DbsnpClusteredVariantOperationEntity.class);
+        if (Objects.nonNull(mergeOperationsWithRSAsMergeeInCVOE)) {
+            ClusteredVariantEntity mergee =
+                    getMergedClusteredVariantEntityFromOperation(mergeOperationsWithRSAsMergeeInCVOE);
+            return getFinalMergeDestination(mergee);
+        }
+        if (Objects.nonNull(mergeOperationsWithRSAsMergeeInDbsnpCVOE)) {
+            ClusteredVariantEntity mergee =
+                    getMergedClusteredVariantEntityFromOperation(mergeOperationsWithRSAsMergeeInDbsnpCVOE);
+            return getFinalMergeDestination(mergee);
+        }
+        return originalRS;
+    }
+
+    private ClusteredVariantEntity getMergedClusteredVariantEntityFromOperation(
+            EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>
+                    clusteredVariantOperationEntity) {
+        ClusteredVariantInactiveEntity mergee = clusteredVariantOperationEntity.getInactiveObjects().get(0);
+        return new ClusteredVariantEntity(clusteredVariantOperationEntity.getMergedInto(),
+                                          mergee.getHashedMessage(), mergee.getModel(), mergee.getVersion());
     }
 
     protected void merge(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee,
