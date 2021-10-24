@@ -408,7 +408,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.insert(rsSplitSVOEInsertEntries, SubmittedVariantOperationEntity.class);
     }
 
-    protected ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
+    public ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
         return new ClusteredVariantEntity(submittedVariantEntity.getClusteredVariantAccession(),
                 getClusteredVariantHash(submittedVariantEntity),
                 toClusteredVariant(submittedVariantEntity));
