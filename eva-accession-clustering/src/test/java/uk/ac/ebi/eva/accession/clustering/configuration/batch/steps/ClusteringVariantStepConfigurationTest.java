@@ -42,11 +42,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
-
-import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
@@ -55,6 +52,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
+import uk.ac.ebi.eva.metrics.util.MetricUtil;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -101,13 +100,10 @@ public class ClusteringVariantStepConfigurationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @Autowired
-    private RestTemplate restTemplate;
-
     private MockRestServiceServer mockServer;
 
     @Autowired
-    private CountParameters countParameters;
+    private CountServiceParameters countServiceParameters;
 
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
@@ -121,10 +117,10 @@ public class ClusteringVariantStepConfigurationTest {
 
     @Before
     public void init() throws Exception {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
-                  .andExpect(method(HttpMethod.POST))
-                  .andRespond(withStatus(HttpStatus.OK));
+        mockServer = MockRestServiceServer.createServer(MetricUtil.getRestTemplate(countServiceParameters));
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK));
     }
 
     @After

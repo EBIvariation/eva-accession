@@ -46,7 +46,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -58,7 +57,6 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
-import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -83,6 +81,8 @@ import uk.ac.ebi.eva.commons.batch.io.VcfReader;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
+import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
+import uk.ac.ebi.eva.metrics.util.MetricUtil;
 
 import javax.sql.DataSource;
 import java.io.BufferedReader;
@@ -208,9 +208,6 @@ public class ClusteringCommandLineRunnerTest {
 
     private ClusteredVariantEntity dbsnpRS1, evaRS2, dbsnpRS3, evaRS4, dbsnpRS5;
 
-    @Autowired
-    private RestTemplate restTemplate;
-
     private MockRestServiceServer mockServer;
 
     private static class RSLocus {
@@ -230,7 +227,7 @@ public class ClusteringCommandLineRunnerTest {
     private RSLocus rsLocus1, rsLocus2, rsLocus3, rsLocus4, rsLocus4_old, rsLocus5;
 
     @Autowired
-    private CountParameters countParameters;
+    private CountServiceParameters countServiceParameters;
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     @BeforeClass
@@ -259,8 +256,8 @@ public class ClusteringCommandLineRunnerTest {
         inputParameters.setForceRestart(false);
         useOriginalVcfFile();
 
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+        mockServer = MockRestServiceServer.createServer(MetricUtil.getRestTemplate(countServiceParameters));
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
         mongoTemplate.getDb().drop();

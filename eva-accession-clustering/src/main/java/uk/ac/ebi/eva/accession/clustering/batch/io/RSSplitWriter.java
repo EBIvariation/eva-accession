@@ -30,7 +30,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteredVariantSplittingPolicy.SplitDeterminants;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
@@ -43,6 +42,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -75,16 +76,16 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private final MongoTemplate mongoTemplate;
 
-    private final ClusteringCounts clusteringCounts;
+    private final MetricCompute metricCompute;
 
     public RSSplitWriter(ClusteringWriter clusteringWriter,
                          ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                          MongoTemplate mongoTemplate,
-                         ClusteringCounts clusteringCounts) {
+                         MetricCompute metricCompute) {
         this.clusteringWriter = clusteringWriter;
         this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
-        this.clusteringCounts = clusteringCounts;
+        this.metricCompute = metricCompute;
     }
 
     @Override
@@ -150,7 +151,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 Long newRSAccession =
                         this.clusteredVariantAccessioningService.getOrCreate(
                                 Collections.singletonList(clusteredVariantEntity)).get(0).getAccession();
-                this.clusteringCounts.addClusteredVariantsCreated(1);
+                metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
                 List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);
                 for (SubmittedVariantEntity submittedVariantEntity: associatedSSEntries) {
                     Long oldRSAccession =  submittedVariantEntity.getClusteredVariantAccession();
@@ -191,6 +192,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         Update updateRS = update(clusteredVariantAttribute, newRSAccession);
         UpdateResult result = this.mongoTemplate.updateFirst(queryToFindSS, updateRS, submittedVariantClass);
         this.clusteringCounts.addSubmittedVariantsUpdatedRs(result.getModifiedCount());
+        UpdateResult result = this.mongoTemplate.updateMulti(queryToFindSS, updateRS, submittedVariantClass);
+        metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS, result.getModifiedCount());
     }
 
     private void writeRSUpdateOperation(Long oldRSAccession, Long newRSAccession,
@@ -210,7 +213,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                                      .is(clusteredVariantEntity.getAssemblyAccession()));
         if (this.mongoTemplate.find(queryToCheckPreviousRSOperation, operationClass).isEmpty()) {
             this.mongoTemplate.insert(splitOperation, this.mongoTemplate.getCollectionName(operationClass));
-            this.clusteringCounts.addClusteredVariantsRSSplit(1);
+            metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT, 1);
         }
     }
 
@@ -226,7 +229,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         updateOperation.fill(EventType.UPDATED, submittedVariantEntity.getAccession(), updateOperationDescription,
                              Collections.singletonList(new SubmittedVariantInactiveEntity(submittedVariantEntity)));
         this.mongoTemplate.insert(updateOperation, this.mongoTemplate.getCollectionName(operationClass));
-        this.clusteringCounts.addSubmittedVariantsUpdateOperationWritten(1);
+        metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS, 1);
     }
 
     /**
@@ -249,8 +252,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashThatShouldRetainOldRS.getRsHash())),
                                     rsCollectionToUse).isEmpty()) {
             this.mongoTemplate.insert(hashThatShouldRetainOldRS.getClusteredVariantEntity(),
-                                      this.mongoTemplate.getCollectionName(rsCollectionToUse));
-            this.clusteringCounts.addClusteredVariantsCreated(1);
+                    this.mongoTemplate.getCollectionName(rsCollectionToUse));
+            metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
         }
         return splitCandidates.stream()
                               .map(SplitDeterminants::getRsHash)

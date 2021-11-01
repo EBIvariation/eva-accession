@@ -43,7 +43,6 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -59,6 +58,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,7 +108,7 @@ public class IssueAccessionClusteringWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private ClusteringCounts clusteringCounts;
+    private MetricCompute metricCompute;
 
     //Required by nosql-unit
     @Autowired
@@ -162,6 +162,7 @@ public class IssueAccessionClusteringWriterTest {
     @After
     public void tearDown() {
         mongoTemplate.getDb().drop();
+        metricCompute.clearCount();
     }
 
     @Test
@@ -173,7 +174,7 @@ public class IssueAccessionClusteringWriterTest {
         assertClusteredVariantsCreated();
         assertSubmittedVariantsUpdated();
         assertSubmittedVariantsOperationInserted();
-        assertClusteringCounts(clusteringCounts, 4, 0, 0, 0, 5, 0, 5);
+        assertClusteringCounts(metricCompute, 4, 0, 0, 0, 5, 0, 5);
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {
@@ -292,7 +293,7 @@ public class IssueAccessionClusteringWriterTest {
         // then
         assertEquals(rsAccession, mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
                 .getClusteredVariantAccession());
-        assertClusteringCounts(clusteringCounts, 0, 0, 0, 0, 1, 0, 1);
+        assertClusteringCounts(metricCompute, 0, 0, 0, 0, 1, 0, 1);
     }
 
     @Test
@@ -322,7 +323,7 @@ public class IssueAccessionClusteringWriterTest {
         // then
         assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
                                 .getClusteredVariantAccession());
-        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 0, 0);
+        assertClusteringCounts(metricCompute, 0, 0, 0, 1, 0, 0, 0);
     }
 
     @Test
@@ -349,7 +350,7 @@ public class IssueAccessionClusteringWriterTest {
         // then
         assertNull(mongoTemplate.find(querySsToCluster, SubmittedVariantEntity.class).get(0)
                 .getClusteredVariantAccession());
-        assertClusteringCounts(clusteringCounts, 0, 0, 0, 1, 0, 0, 0);
+        assertClusteringCounts(metricCompute, 0, 0, 0, 1, 0, 0, 0);
     }
 
     private ClusteredVariant createClusteredVariant(String assemblyAccession, String contig) {

@@ -1,14 +1,12 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners;
 
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
-
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
-import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
+import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
+import uk.ac.ebi.eva.metrics.metric.ClusteringMetricComputeImpl;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRESS_LISTENER;
 
@@ -16,20 +14,17 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRES
 public class ListenersConfiguration {
 
     @Bean(PROGRESS_LISTENER)
-    public ClusteringProgressListener clusteringProgressListener(InputParameters parameters,
-                                                                 ClusteringCounts clusteringCounts,
-                                                                 CountParameters countParameters,
-                                                                 RestTemplate restTemplate) {
-        return new ClusteringProgressListener(parameters, clusteringCounts, restTemplate, countParameters.getUrl());
+    public ClusteringProgressListener clusteringProgressListener(InputParameters parameters, MetricCompute metricCompute) {
+        return new ClusteringProgressListener(parameters, metricCompute);
     }
 
     @Bean
-    public ClusteringCounts importCounts() {
-        return new ClusteringCounts();
+    public CountServiceParameters countServiceParameters() {
+        return new CountServiceParameters();
     }
 
     @Bean
-    public RestTemplate restTemplate(RestTemplateBuilder builder, CountParameters countParameters) {
-        return builder.basicAuthentication(countParameters.getUserName(), countParameters.getPassword()).build();
+    public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters, InputParameters inputParameters) {
+        return new ClusteringMetricComputeImpl(countServiceParameters, inputParameters.getAssemblyAccession());
     }
 }

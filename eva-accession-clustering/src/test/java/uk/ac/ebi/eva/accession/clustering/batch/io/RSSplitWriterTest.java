@@ -36,7 +36,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -52,6 +51,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -107,7 +108,7 @@ public class RSSplitWriterTest {
     private SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
     @Autowired
-    private ClusteringCounts clusteringCounts;
+    private MetricCompute metricCompute;
 
     @Before
     public void setUp() {
@@ -121,7 +122,7 @@ public class RSSplitWriterTest {
 
     private void cleanup() {
         mongoClient.dropDatabase(TEST_DB);
-        clusteringCounts.clearCounts();
+        metricCompute.clearCount();
     }
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,
@@ -167,15 +168,12 @@ public class RSSplitWriterTest {
         assertEquals(2, ssAssociatedWithRS1.size());
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss2.getAccession(), ss3.getAccession())));
-
-        /* Check clustering counts */
-        // 2 new RS IDs created for hashes with start positions 100 and 102
-        assertEquals(2, clusteringCounts.getClusteredVariantsCreated());
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED));
         // 2 RS split events for hashes with start positions 100 and 102
-        assertEquals(2, clusteringCounts.getClusteredVariantsRSSplit());
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT));
         // 2 new RS IDs associated with ss1 and ss4
-        assertEquals(2, clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
-        assertEquals(2, clusteringCounts.getSubmittedVariantsUpdatedRs());
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS));
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS));
     }
 
     @Test
@@ -215,15 +213,12 @@ public class RSSplitWriterTest {
         assertEquals(2, ssAssociatedWithRS1.size());
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss1.getAccession(), ss2.getAccession())));
-
-        /* Check clustering counts */
-        // 2 entries created for hashes with start positions 100 and 102
-        assertEquals(2, clusteringCounts.getClusteredVariantsCreated());
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED));
         // 2 RS split events for hashes with start positions 100 and 102
-        assertEquals(2, clusteringCounts.getClusteredVariantsRSSplit());
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT));
         // 2 new RS IDs associated with SS groups: ss3,ss4 and ss5,ss6
-        assertEquals(4, clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
-        assertEquals(4, clusteringCounts.getSubmittedVariantsUpdatedRs());
+        assertEquals(4, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS));
+        assertEquals(4, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS));
     }
 
     @Test

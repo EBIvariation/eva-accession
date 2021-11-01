@@ -25,6 +25,10 @@
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>variation-commons-batch</artifactId>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>eva-metrics</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>

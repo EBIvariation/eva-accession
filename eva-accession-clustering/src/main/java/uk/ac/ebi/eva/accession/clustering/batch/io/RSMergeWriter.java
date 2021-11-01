@@ -31,8 +31,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
-
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -44,6 +42,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -78,7 +78,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private final SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
-    private final ClusteringCounts clusteringCounts;
+    private final MetricCompute metricCompute;
 
     private static final String ID_ATTRIBUTE = "_id";
 
@@ -115,12 +115,12 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
     public RSMergeWriter(ClusteringWriter clusteringWriter, MongoTemplate mongoTemplate,
                          String assemblyAccession,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
-                         ClusteringCounts clusteringCounts) {
+                         MetricCompute metricCompute) {
         this.clusteringWriter = clusteringWriter;
         this.mongoTemplate = mongoTemplate;
         this.assemblyAccession = assemblyAccession;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
-        this.clusteringCounts = clusteringCounts;
+        this.metricCompute = metricCompute;
     }
 
     @Override
@@ -205,8 +205,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                    ", RS IDs mapped to the same locus.",
                            Collections.singletonList(new ClusteredVariantInactiveEntity(mergee)));
             this.mongoTemplate.insert(operation,
-                                      this.mongoTemplate.getCollectionName(operationsCollectionToWriteTo));
-            this.clusteringCounts.addClusteredVariantsMergeOperationsWritten(1);
+                    this.mongoTemplate.getCollectionName(operationsCollectionToWriteTo));
+            metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_MERGE_OPERATIONS, 1);
         }
     }
 
@@ -214,8 +214,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         Class<? extends ClusteredVariantEntity> clusteredVariantCollectionToWriteTo =
                 clusteringWriter.getClusteredVariantCollection(mergeDestination.getAccession());
         this.mongoTemplate.insert(mergeDestination,
-                                  this.mongoTemplate.getCollectionName(clusteredVariantCollectionToWriteTo));
-        this.clusteringCounts.addClusteredVariantsCreated(1);
+                this.mongoTemplate.getCollectionName(clusteredVariantCollectionToWriteTo));
+        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
     }
 
     /**
@@ -270,7 +270,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
         // Mergee is no longer valid to be present in the main clustered variant collection
         mongoTemplate.remove(queryForMergee, clusteringWriter.getClusteredVariantCollection(accessionToBeMerged));
-        clusteringCounts.addClusteredVariantsUpdated(clusteredVariantToMerge.size());
+        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED, clusteredVariantToMerge.size());
 
         if (clusteredVariantToKeep.isEmpty()) {
             // Insert RS record for destination RS
@@ -407,8 +407,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                              "Hash mismatch with " + prioritised.accessionToKeep,
                                              ssClusteredUnderTargetRS);
                 mongoTemplate.insert(Collections.singletonList(newSplitCandidateRecord),
-                                     SubmittedVariantOperationEntity.class);
-                this.clusteringCounts.addClusteredVariantsRSSplit(1);
+                        SubmittedVariantOperationEntity.class);
+                metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT, 1);
             }
         }
     }
@@ -432,7 +432,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         Update update = new Update();
         update.set(RS_KEY, prioritised.accessionToKeep);
         mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
-        clusteringCounts.addSubmittedVariantsUpdatedRs(svToUpdate.size());
+        metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS, svToUpdate.size());
 
         // Sometimes submitted variants that create "SS hash collision" (not RS hash collision)
         // may not have been ingested into submitted variant collection in the first place - see EVA-2610
@@ -457,7 +457,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                           .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
                           .collect(Collectors.toList());
         mongoTemplate.insert(operations, submittedOperationCollection);
-        clusteringCounts.addSubmittedVariantsUpdateOperationWritten(operations.size());
+        metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS, operations.size());
     }
 
     private SubmittedVariantOperationEntity buildSubmittedOperation(SubmittedVariantEntity originalSubmittedVariant,

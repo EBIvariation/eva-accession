@@ -15,8 +15,9 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer;
 
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
+import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import static org.junit.Assert.assertEquals;
 
@@ -26,22 +27,21 @@ public class ClusteringAssertions {
      * Clustering counts are used by the listener {@link ClusteringProgressListener} to summarize the counts after
      * the step is finished
      */
-    static void assertClusteringCounts(ClusteringCounts clusteringCounts,
-                                        long expectedClusteredVariantsCreated,
-                                        long expectedClusteredVariantsUpdated,
-                                        long expectedClusteredVariantsMergeOperationsWritten,
-                                        long expectedSubmittedVariantsKeptUnclustered,
-                                        long expectedSubmittedVariantsNewRs,
-                                        long expectedSubmittedVariantsUpdatedRs,
-                                        long expectedSubmittedVariantsUpdateOperationWritten) {
-        assertEquals(expectedClusteredVariantsCreated, clusteringCounts.getClusteredVariantsCreated());
-        assertEquals(expectedClusteredVariantsUpdated, clusteringCounts.getClusteredVariantsUpdated());
+    static void assertClusteringCounts(MetricCompute metricCompute,
+                                       long expectedClusteredVariantsCreated,
+                                       long expectedClusteredVariantsUpdated,
+                                       long expectedClusteredVariantsMergeOperationsWritten,
+                                       long expectedSubmittedVariantsKeptUnclustered,
+                                       long expectedSubmittedVariantsNewRs,
+                                       long expectedSubmittedVariantsUpdatedRs,
+                                       long expectedSubmittedVariantsUpdateOperationWritten) {
+        assertEquals(expectedClusteredVariantsCreated, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED));
+        assertEquals(expectedClusteredVariantsUpdated, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED));
         assertEquals(expectedClusteredVariantsMergeOperationsWritten,
-                clusteringCounts.getClusteredVariantsMergeOperationsWritten());
-        assertEquals(expectedSubmittedVariantsKeptUnclustered, clusteringCounts.getSubmittedVariantsKeptUnclustered());
-        assertEquals(expectedSubmittedVariantsNewRs, clusteringCounts.getSubmittedVariantsClustered());
-        assertEquals(expectedSubmittedVariantsUpdatedRs, clusteringCounts.getSubmittedVariantsUpdatedRs());
-        assertEquals(expectedSubmittedVariantsUpdateOperationWritten,
-                clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
+                metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_MERGE_OPERATIONS));
+        assertEquals(expectedSubmittedVariantsKeptUnclustered, ClusteringMetric.SUBMITTED_VARIANTS_KEPT_UNCLUSTERED.getCount());
+        assertEquals(expectedSubmittedVariantsNewRs, ClusteringMetric.SUBMITTED_VARIANTS_CLUSTERED.getCount());
+        assertEquals(expectedSubmittedVariantsUpdatedRs, ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS.getCount());
+        assertEquals(expectedSubmittedVariantsUpdateOperationWritten, ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS.getCount());
     }
 }
