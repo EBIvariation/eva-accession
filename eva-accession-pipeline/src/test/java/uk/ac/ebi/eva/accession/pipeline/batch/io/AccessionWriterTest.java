@@ -43,8 +43,11 @@ import uk.ac.ebi.eva.accession.core.contig.ContigSynonyms;
 import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
+import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -69,7 +72,7 @@ import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankR
 
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, ListenersConfiguration.class, InputParametersConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
@@ -121,6 +124,9 @@ public class AccessionWriterTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Autowired
+    private MetricCompute metricCompute;
+
     private ContigMapping contigMapping;
 
     @Rule
@@ -150,7 +156,7 @@ public class AccessionWriterTest {
                                                                                 contigMapping,
                                                                                 ContigNaming.SEQUENCE_NAME);
         variantConverter = new VariantConverter("assembly", TAXONOMY, "project");
-        accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter);
+        accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute);
         accessionReportWriter.open(new ExecutionContext());
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }

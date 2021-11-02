@@ -17,6 +17,7 @@
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps;
 
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
@@ -36,6 +37,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.COMPOSITE_VARIANT_PROCESSOR;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.PROGRESS_LISTENER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 
 @Configuration
@@ -55,6 +57,10 @@ public class CreateSubsnpAccessionsStepConfiguration {
     private AccessionWriter accessionWriter;
 
     @Autowired
+    @Qualifier(PROGRESS_LISTENER)
+    private StepExecutionListener progressListener;
+
+    @Autowired
     private InvalidVariantSkipPolicy invalidVariantSkipPolicy;
 
     @Bean(CREATE_SUBSNP_ACCESSION_STEP)
@@ -67,6 +73,7 @@ public class CreateSubsnpAccessionsStepConfiguration {
                 .writer(accessionWriter)
                 .faultTolerant()
                 .skipPolicy(invalidVariantSkipPolicy)
+                .listener(progressListener)
                 .build();
         return step;
     }

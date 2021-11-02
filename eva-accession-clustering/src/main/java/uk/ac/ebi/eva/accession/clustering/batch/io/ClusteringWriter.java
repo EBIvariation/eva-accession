@@ -32,6 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -49,7 +50,6 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
-import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;

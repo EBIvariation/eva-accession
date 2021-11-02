@@ -33,4 +33,6 @@ public class BeanNames {
     public static final String BUILD_REPORT_STEP = "BUILD_REPORT_STEP";
 
     public static final String CREATE_SUBSNP_ACCESSION_JOB = "CREATE_SUBSNP_ACCESSION_JOB";
+
+    public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 }

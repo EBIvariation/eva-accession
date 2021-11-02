@@ -27,6 +27,7 @@ import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.HashSet;
 import java.util.List;
@@ -43,11 +44,14 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
 
     private VariantConverter variantConverter;
 
+    private MetricCompute metricCompute;
+
     public AccessionWriter(SubmittedVariantAccessioningService service, AccessionReportWriter accessionReportWriter,
-                           VariantConverter variantConverter) {
+                           VariantConverter variantConverter, MetricCompute metricCompute) {
         this.service = service;
         this.accessionReportWriter = accessionReportWriter;
         this.variantConverter = variantConverter;
+        this.metricCompute = metricCompute;
     }
 
     @Override

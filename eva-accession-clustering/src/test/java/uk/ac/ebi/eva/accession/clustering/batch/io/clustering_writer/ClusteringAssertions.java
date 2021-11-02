@@ -16,7 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io.clustering_writer;
 
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
-import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import static org.junit.Assert.assertEquals;

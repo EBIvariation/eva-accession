@@ -40,6 +40,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -50,7 +51,6 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOper
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.ArrayList;
