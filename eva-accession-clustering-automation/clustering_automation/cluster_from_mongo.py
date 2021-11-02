@@ -33,7 +33,9 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 def get_assemblies_and_scientific_name_from_taxonomy(taxonomy_id, metadata_connection_handle, clustering_tracking_table, release_version):
     query = (f"SELECT assembly_accession, scientific_name FROM {clustering_tracking_table} "
              f"WHERE taxonomy = '{taxonomy_id}' "
-             f"and release_version = {release_version} and assembly_accession <> 'Unmapped'")
+             f"and release_version = {release_version} "
+             f"and assembly_accession <> 'Unmapped' "
+             f"and should_be_clustered = 't'")
     results = get_all_results_for_query(metadata_connection_handle, query)
     if len(results) == 0:
         raise Exception("Could not find assemblies pertaining to taxonomy ID: " + taxonomy_id)

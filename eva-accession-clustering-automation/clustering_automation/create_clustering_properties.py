@@ -74,7 +74,7 @@ accessioning.monotonic.ss.nextBlockInterval=1000000000
 accessioning.monotonic.rs.blockSize=100000
 accessioning.monotonic.rs.blockStartValue=3000000000
 accessioning.monotonic.rs.nextBlockInterval=1000000000
-    """)
+""")
 
 
 def add_spring_properties(properties_file):
@@ -115,9 +115,9 @@ def add_count_service_properties(properties_file, properties):
     count_service_password = str(properties['eva.count-stats.password'])
 
     count_service_properties = ("""
-    eva.count-stats.url={url}
-    eva.count-stats.username={username}
-    eva.count-stats.password={password}
+eva.count-stats.url={url}
+eva.count-stats.username={username}
+eva.count-stats.password={password}
         """).format(url=count_service_url, username=count_service_username, password=count_service_password)
     properties_file.write(count_service_properties)
 
