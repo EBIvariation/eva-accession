@@ -53,6 +53,7 @@ def add_clustering_properties(properties_file, assembly_accession, project_acces
 
     clustering_properties = ("""
 parameters.assemblyAccession={assembly_accession}
+parameters.remappedFrom=
 parameters.vcf={vcf}
 parameters.projectAccession={project}
     """).format(assembly_accession=assembly_accession, vcf=vcf, project=project)
