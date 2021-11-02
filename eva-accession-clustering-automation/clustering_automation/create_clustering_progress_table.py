@@ -16,6 +16,7 @@ import argparse
 from itertools import cycle
 
 from ebi_eva_common_pyutils.assembly import NCBIAssembly
+from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile
 from ebi_eva_common_pyutils.logger import logging_config
 
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
@@ -221,11 +222,6 @@ def main():
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", help="version of the release", type=int, required=True)
     parser.add_argument("--reference-directory", help="Directory where the reference genomes exists or should be downloaded", required=True)
-    parser.add_argument("--mongo-source-uri",
-                            help="Mongo Source URI (ex: mongodb://user:@mongos-source-host:27017/admin)", required=False)
-    parser.add_argument("--mongo-source-secrets-file",
-                            help="Full path to the Mongo Source secrets file (ex: /path/to/mongo/source/secret)",
-                            required=False)
     parser.add_argument("--taxonomy", help="taxonomy id for which rs count needs to be updated", type=int, required=False)
     parser.add_argument('--tasks', required=False, type=str, nargs='+', default=all_tasks, choices=all_tasks,
                             help='Task or set of tasks to perform.')
@@ -243,11 +239,10 @@ def main():
         fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
 
     if 'fill_rs_count' in args.tasks:
-        if not args.mongo_source_uri or not args.mongo_source_secrets_file or not args.taxonomy:
-            raise Exception("""For running task 'fill_rs_count', it is mandatory to provide
-                            '--mongo-source-uri' and '--mongo-source-secrets-file' arguments""")
-        mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
-                                     db_name="eva_accession_sharded")
+        if not args.taxonomy:
+            raise Exception("For running task 'fill_rs_count', it is mandatory to provide taxonomy arguments")
+        mongo_source_uri = get_mongo_uri_for_eva_profile('production', args.private_config_xml_file)
+        mongo_source = MongoDatabase(uri=mongo_source_uri, db_name="eva_accession_sharded")
         fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, args.private_config_xml_file, args.release_version,
                                                  args.taxonomy, args.reference_directory)
 
