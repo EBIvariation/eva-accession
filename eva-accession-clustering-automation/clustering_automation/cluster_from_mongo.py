@@ -61,7 +61,6 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
                                                  private_config_xml_file, profile, output_directory, instance)
         status_update_template = (f'{python} -m clustering_automation.update_clustering_status '
                                   f'--private-config-xml-file {private_config_xml_file} '
-                                  f'--profile {profile} '
                                   f'--clustering-tracking-table {clustering_tracking_table} '
                                   f'--release {release_version} '
                                   f'--assembly {assembly} '
