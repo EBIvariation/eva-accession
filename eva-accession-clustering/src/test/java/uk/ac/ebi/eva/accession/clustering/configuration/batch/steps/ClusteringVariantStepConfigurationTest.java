@@ -42,6 +42,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -105,6 +106,9 @@ public class ClusteringVariantStepConfigurationTest {
     @Autowired
     private CountServiceParameters countServiceParameters;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     //Required by nosql-unit
@@ -117,7 +121,7 @@ public class ClusteringVariantStepConfigurationTest {
 
     @Before
     public void init() throws Exception {
-        mockServer = MockRestServiceServer.createServer(MetricUtil.getRestTemplate(countServiceParameters));
+        mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));

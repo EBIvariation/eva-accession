@@ -1,5 +1,6 @@
 package uk.ac.ebi.eva.accession.pipeline.metric;
 
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.Metric;
 import uk.ac.ebi.eva.metrics.metric.MetricComputeImpl;
@@ -14,7 +15,9 @@ public class AccessioningMetricComputeImpl extends MetricComputeImpl {
     private final String assembly;
     private final String study;
 
-    public AccessioningMetricComputeImpl(String assembly, String study) {
+    public AccessioningMetricComputeImpl(CountServiceParameters countServiceParameters, RestTemplate restTemplate,
+                                         String assembly, String study) {
+        super(countServiceParameters, restTemplate);
         this.assembly = assembly;
         this.study = study;
     }

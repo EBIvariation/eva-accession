@@ -46,6 +46,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -82,7 +83,6 @@ import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
-import uk.ac.ebi.eva.metrics.util.MetricUtil;
 
 import javax.sql.DataSource;
 import java.io.BufferedReader;
@@ -228,6 +228,10 @@ public class ClusteringCommandLineRunnerTest {
 
     @Autowired
     private CountServiceParameters countServiceParameters;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     @BeforeClass
@@ -256,7 +260,7 @@ public class ClusteringCommandLineRunnerTest {
         inputParameters.setForceRestart(false);
         useOriginalVcfFile();
 
-        mockServer = MockRestServiceServer.createServer(MetricUtil.getRestTemplate(countServiceParameters));
+        mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
