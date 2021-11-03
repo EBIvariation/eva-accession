@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.pipeline.batch.io;
 
 import org.hamcrest.Matchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +46,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.metric.AccessioningMetric;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
@@ -66,6 +68,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankReplacerProcessor.ORIGINAL_CHROMOSOME;
@@ -161,6 +164,11 @@ public class AccessionWriterTest {
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
+    @After
+    public void tearDown(){
+        metricCompute.clearCount();
+    }
+
     @Test
     @DirtiesContext
     public void saveSingleAccession() throws Exception {
@@ -172,6 +180,7 @@ public class AccessionWriterTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
                 .get(Collections.singletonList(submittedVariant));
         assertEquals(1, accessions.size());
+        assertEquals(1, metricCompute.getCount(AccessioningMetric.ACCESSIONED_VARIANTS));
         assertEquals(EXPECTED_ACCESSION, (long) accessions.iterator().next().getAccession());
 
         assertEquals(submittedVariant, accessions.iterator().next().getData());
@@ -190,6 +199,7 @@ public class AccessionWriterTest {
 
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.get(convert(variants));
         assertEquals(2, accessions.size());
+        assertEquals(2, metricCompute.getCount(AccessioningMetric.ACCESSIONED_VARIANTS));
 
         Iterator<AccessionWrapper<ISubmittedVariant, String, Long>> iterator = accessions.iterator();
         ISubmittedVariant firstSavedVariant = iterator.next().getData();
@@ -250,6 +260,9 @@ public class AccessionWriterTest {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = service
                 .get(Collections.singletonList(submittedVariant));
         assertEquals(1, accessions.size());
+        assertEquals(1, metricCompute.getCount(AccessioningMetric.ACCESSIONED_VARIANTS));
+        assertEquals(1, metricCompute.getCount(AccessioningMetric.DISTINCT_VARIANTS));
+        assertEquals(1, metricCompute.getCount(AccessioningMetric.DUPLICATE_VARIANTS));
 
         assertEquals(submittedVariant, accessions.iterator().next().getData());
     }

@@ -26,6 +26,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrappe
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
+import uk.ac.ebi.eva.accession.pipeline.metric.AccessioningMetric;
 import uk.ac.ebi.eva.commons.core.models.IVariant;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
@@ -59,6 +60,8 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
         List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
                                                             .collect(Collectors.toList());
         List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants);
+        metricCompute.addCount(AccessioningMetric.SUBMITTED_VARIANTS, variants.size());
+        metricCompute.addCount(AccessioningMetric.ACCESSIONED_VARIANTS, accessions.size());
         accessionReportWriter.write(variants, accessions);
         checkCountsMatch(submittedVariants, accessions);
     }
@@ -71,6 +74,8 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
                                                                    .collect(Collectors.toSet());
             HashSet<ISubmittedVariant> distinctVariants = new HashSet<>(variants);
             int duplicateCount = variants.size() - distinctVariants.size();
+            metricCompute.addCount(AccessioningMetric.DISTINCT_VARIANTS, distinctVariants.size());
+            metricCompute.addCount(AccessioningMetric.DUPLICATE_VARIANTS, duplicateCount);
             if (duplicateCount != 0) {
                 logger.warn("A variant chunk contains {} repeated variants. This is not an error, but please check " +
                                     "it's expected.", duplicateCount);
@@ -80,6 +85,7 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
                                                                                .filter(v -> !accessionedVariants
                                                                                        .contains(v))
                                                                                .collect(Collectors.toList());
+            metricCompute.addCount(AccessioningMetric.DISCARDED_VARIANTS, variantsWithoutAccession.size());
             if (variantsWithoutAccession.size() != 0) {
                 logger.error("A problem occurred while accessioning a chunk. Total num variants = {}, distinct = {}, " +
                                      "duplicate = {}, accessioned = {}, not accessioned = {}",
