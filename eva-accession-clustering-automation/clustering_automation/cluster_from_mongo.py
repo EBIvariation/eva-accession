@@ -126,7 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("--taxonomy-id", help="Taxonomy id", required=True)
     parser.add_argument("--common-clustering-properties-file", help="ex: /path/to/clustering/properties.yml", required=True)
     parser.add_argument("--memory", help="Amount of memory jobs will use", required=False, default=8192)
-    parser.add_argument("--instance", help="Accessioning instance id", required=False, default=1,
+    parser.add_argument("--instance", help="Accessioning instance id", required=False, default=6,
                         type=int, choices=range(1, 13))
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
