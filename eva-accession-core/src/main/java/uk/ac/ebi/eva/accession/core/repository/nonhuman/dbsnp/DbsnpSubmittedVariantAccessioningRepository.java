@@ -29,4 +29,6 @@ public interface DbsnpSubmittedVariantAccessioningRepository extends
 
     List<DbsnpSubmittedVariantEntity> findByClusteredVariantAccessionIn(List<Long> clusteredVariantAccession);
 
+    List<DbsnpSubmittedVariantEntity> findByReferenceSequenceAccessionAndAccessionIn(String referenceSequenceAccession,
+                                                                                     List<Long> accession);
 }

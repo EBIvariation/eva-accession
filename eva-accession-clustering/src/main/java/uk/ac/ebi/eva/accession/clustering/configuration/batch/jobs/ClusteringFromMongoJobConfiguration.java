@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
@@ -42,6 +43,7 @@ public class ClusteringFromMongoJobConfiguration {
             @Qualifier(PROCESS_RS_SPLIT_CANDIDATES_STEP) Step processRSSplitCandidatesStep,
             @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP) Step clearRSMergeAndSplitCandidatesStep,
             @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
+            @Qualifier(BACK_PROPAGATE_RS_STEP) Step backPropagateRSStep,
             JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
                                 .incrementer(new RunIdIncrementer())
@@ -50,6 +52,7 @@ public class ClusteringFromMongoJobConfiguration {
                                 .next(processRSSplitCandidatesStep)
                                 .next(clearRSMergeAndSplitCandidatesStep)
                                 .next(clusteringNonClusteredVariantsFromMongoStep)
+                                .next(backPropagateRSStep)
                                 .build();
     }
 }

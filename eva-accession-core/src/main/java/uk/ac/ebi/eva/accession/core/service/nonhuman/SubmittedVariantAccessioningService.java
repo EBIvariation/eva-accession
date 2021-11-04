@@ -214,4 +214,21 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
             return accessioningServiceDbsnp.getLastInactive(accession);
         }
     }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>>
+    getAllActiveByAssemblyAndAccessionIn(String assembly, List<Long> accessionList) {
+        List<Long> evaAccessions = new ArrayList<>();
+        List<Long> dbsnpAccessions = new ArrayList<>();
+        for (Long accession : accessionList) {
+            if (accession >= accessioningMonotonicInitSs) {
+                evaAccessions.add(accession);
+            } else {
+                dbsnpAccessions.add(accession);
+            }
+        }
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> result =
+                accessioningService.getAllActiveByAssemblyAndAccessionIn(assembly, evaAccessions);
+        result.addAll(accessioningServiceDbsnp.getAllActiveByAssemblyAndAccessionIn(assembly, dbsnpAccessions));
+        return result;
+    }
 }

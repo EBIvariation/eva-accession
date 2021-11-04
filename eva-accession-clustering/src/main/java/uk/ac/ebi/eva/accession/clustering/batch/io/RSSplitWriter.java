@@ -154,8 +154,9 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);
                 for (SubmittedVariantEntity submittedVariantEntity: associatedSSEntries) {
                     Long oldRSAccession =  submittedVariantEntity.getClusteredVariantAccession();
-                    logger.info("RS split operation: Associating ss{} to newly issued rs{}...",
-                                submittedVariantEntity.getAccession(), newRSAccession);
+                    logger.info("RS split operation: Associating ss{} with hash {} to newly issued rs{}...",
+                                submittedVariantEntity.getAccession(), submittedVariantEntity.getHashedMessage(),
+                                newRSAccession);
                     associateNewRSToSS(newRSAccession, submittedVariantEntity);
                     writeRSUpdateOperation(oldRSAccession, newRSAccession,
                                            clusteringWriter.toClusteredVariantEntity(submittedVariantEntity));
@@ -177,17 +178,18 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private void associateNewRSToSS(Long newRSAccession,
                                     SubmittedVariantEntity submittedVariantEntity) {
-        final String accessionAttribute = "accession";
-        final String assemblyAttribute = "seq";
+        final String idAttribute = "_id";
         final String clusteredVariantAttribute = "rs";
 
         Class<? extends SubmittedVariantEntity> submittedVariantClass =
                 clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity) ?
                         SubmittedVariantEntity.class : DbsnpSubmittedVariantEntity.class;
-        Query queryToFindSS = query(where(assemblyAttribute).is(submittedVariantEntity.getReferenceSequenceAccession()))
-                .addCriteria(where(accessionAttribute).is(submittedVariantEntity.getAccession()));
+        // No need to filter for the assembly because the calculated hash already takes the assembly into account
+        // SS hash-based update is needed instead of SS accession-based update to avoid the infinite-splitting
+        // situation on successive clustering runs: https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=231697699
+        Query queryToFindSS = query(where(idAttribute).is(submittedVariantEntity.getHashedMessage()));
         Update updateRS = update(clusteredVariantAttribute, newRSAccession);
-        UpdateResult result = this.mongoTemplate.updateMulti(queryToFindSS, updateRS, submittedVariantClass);
+        UpdateResult result = this.mongoTemplate.updateFirst(queryToFindSS, updateRS, submittedVariantClass);
         this.clusteringCounts.addSubmittedVariantsUpdatedRs(result.getModifiedCount());
     }
 

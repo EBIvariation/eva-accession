@@ -37,7 +37,6 @@ import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -409,7 +408,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         mongoTemplate.insert(rsSplitSVOEInsertEntries, SubmittedVariantOperationEntity.class);
     }
 
-    protected ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
+    public ClusteredVariantEntity toClusteredVariantEntity(SubmittedVariantEntity submittedVariantEntity) {
         return new ClusteredVariantEntity(submittedVariantEntity.getClusteredVariantAccession(),
                 getClusteredVariantHash(submittedVariantEntity),
                 toClusteredVariant(submittedVariantEntity));
@@ -510,62 +509,12 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                     Collections.singletonList(inactiveEntity)
             );
 
-            // Back-propagation logic
-            Query queryToFindSSInSourceAssembly = null;
-            SubmittedVariantOperationEntity backPropagationUpdateOperation = null;
-            if (submittedVariantEntity.getRemappedFrom() != null) {
-                // Query to back-propagate RS ID to the original SS (from where the current SS is remapped)
-                queryToFindSSInSourceAssembly =
-                        query(where("accession").is(submittedVariantEntity.getAccession()))
-                                .addCriteria(where("seq").is(submittedVariantEntity.getRemappedFrom()))
-                                .addCriteria(where("rs").exists(false));
-                // Query to record the update operation history with back-propagation
-                backPropagationUpdateOperation = new SubmittedVariantOperationEntity();
-                // Since we don't have the original source SS ID from which we remapped
-                // it can get quite expensive to query the source records for every original SS with just the accession
-                // without bulk-querying. Therefore, we are filling in fake data for the old SS entry in operations
-                // TODO: Find a more efficient way to do this!!
-                SubmittedVariant oldSS = new SubmittedVariant(submittedVariantEntity.getRemappedFrom(),
-                                                              submittedVariantEntity.getTaxonomyAccession(),
-                                                              submittedVariantEntity.getProjectAccession(),
-                                                              "contig-pre-remapping", -1L, "ref-pre-remapping",
-                                                              "alt-pre-remapping", null);
-                SubmittedVariantInactiveEntity inactiveEntityForBackPropagation =
-                        new SubmittedVariantInactiveEntity(
-                                new SubmittedVariantEntity(submittedVariantEntity.getAccession(),
-                                                           submittedHashingFunction.apply(oldSS),
-                                                           oldSS,
-                                                           submittedVariantEntity.getVersion()));
-                backPropagationUpdateOperation.fill(
-                        EventType.UPDATED,
-                        submittedVariantEntity.getAccession(),
-                        null,
-                        "Back-propagating rs" + rsid + " for submitted variant ss" +
-                                submittedVariantEntity.getAccession() + " after remapping to " +
-                                submittedVariantEntity.getReferenceSequenceAccession() + ".",
-                        Collections.singletonList(inactiveEntityForBackPropagation)
-                );
-            }
-
             if (isEvaSubmittedVariant(submittedVariantEntity)) {
                 bulkOperations.updateOne(updateRsQuery, updateRS);
-                if (submittedVariantEntity.getRemappedFrom() != null) {
-                    // Due to MongoDB technical limitations,
-                    // updateOne cannot be used when shard key "_id" is not part of the query
-                    // So, use updateMulti even though only one record will be updated
-                    bulkOperations.updateMulti(queryToFindSSInSourceAssembly, updateRS);
-                    bulkHistoryOperations.insert(backPropagationUpdateOperation);
-                    ++numUpdates;
-                }
                 bulkHistoryOperations.insert(updateOperation);
                 ++numUpdates;
             } else {
                 dbsnpBulkOperations.updateOne(updateRsQuery, updateRS);
-                if (submittedVariantEntity.getRemappedFrom() != null) {
-                    dbsnpBulkOperations.updateMulti(queryToFindSSInSourceAssembly, updateRS);
-                    dbsnpBulkHistoryOperations.insert(backPropagationUpdateOperation);
-                    ++numDbsnpUpdates;
-                }
                 dbsnpBulkHistoryOperations.insert(updateOperation);
                 ++numDbsnpUpdates;
             }

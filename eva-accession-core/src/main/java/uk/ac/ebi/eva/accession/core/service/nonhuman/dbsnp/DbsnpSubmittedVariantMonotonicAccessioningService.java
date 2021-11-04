@@ -60,4 +60,9 @@ public class DbsnpSubmittedVariantMonotonicAccessioningService
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         return dbService.getAllByAccession(accession);
     }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>>
+    getAllActiveByAssemblyAndAccessionIn(String assembly, List<Long> accessionList) {
+        return dbService.getAllActiveByAssemblyAndAccessionIn(assembly, accessionList);
+    }
 }

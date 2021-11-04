@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -53,8 +54,10 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessionin
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -111,7 +114,7 @@ public class RSMergeWriterTest {
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
-    private SubmittedVariantEntity ss1, ss2, ss4, ss5, ss6, ss7, ss8, ss9;
+    private SubmittedVariantEntity ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8, ss9;
 
     @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
@@ -234,6 +237,7 @@ public class RSMergeWriterTest {
     }
 
     @Test
+    @DirtiesContext
     public void testWriteRSMerges() throws Exception {
         /*
          * SS   RS  LOC
@@ -351,5 +355,68 @@ public class RSMergeWriterTest {
         // Ensure that all the inactive objects have the same RS
         assertFalse(participatingSSInSplitEvent.stream()
                                                .anyMatch(e -> !e.getClusteredVariantAccession().equals(rsAccession)));
+    }
+
+    @Test
+    @DirtiesContext
+    public void testMultiLevelRSMerges() throws Exception {
+        /*
+         * SS   RS  LOC
+         * 1    1   chr1/100/SNV
+         * 2    2   chr1/100/SNV
+         * 3    2   chr1/103/SNV
+         * 4    3   chr1/103/SNV
+         * SS1/RS1 and SS2/RS2, SS3/RS2 and SS4/RS3 are marked as merge candidate entries since these RS pairs share the same locus
+         * SS2/RS2 and SS3/RS2 are split candidate entries because the same RS has different loci
+         */
+        createMultiLevelMergeScenario();
+        List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
+        SubmittedVariantOperationEntity temp;
+        while ((temp = rsMergeCandidatesReader.read()) != null) {
+            submittedVariantOperationEntities.add(temp);
+        }
+
+        //Perform merge
+        rsMergeWriter.write(submittedVariantOperationEntities);
+
+        //After merge SS-RS associations: rs2 merged to rs1, Merge target for rs3 inferred as: rs3 -> rs2 -> rs1
+        /*
+         * SS   RS  LOC
+         * 1    1   chr1/100/SNV
+         * 2    1   chr1/100/SNV
+         * 3    1   chr1/103/SNV
+         * 4    1   chr1/103/SNV
+         *
+         */
+        assertRSAssociatedWithSS(1L, ss1);
+        assertRSAssociatedWithSS(1L, ss2);
+        assertRSAssociatedWithSS(1L, ss3);
+        assertRSAssociatedWithSS(1L, ss4);
+    }
+
+    public void createMultiLevelMergeScenario() {
+        //ss1 will be inserted to dbsnpSubmittedVariantEntity and ss4 to submittedVariantEntity collections respectively
+        ss1 = createSS(1L, 1L, 100L, "C", "T");
+        ss2 = createSS(2L, 2L, 100L, "C", "A");
+        ss3 = createSS(3L, 2L, 103L, "A", "G");
+        ss4 = createSS(4L, 3L, 103L, "T", "C");
+        this.mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3), DBSNP_SUBMITTED_VARIANT_COLLECTION);
+        this.mongoTemplate.insert(Collections.singletonList(ss4), SUBMITTED_VARIANT_COLLECTION);
+
+        SubmittedVariantOperationEntity mergeOperation1 = new SubmittedVariantOperationEntity();
+        mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
+                             ss1.getAccession(), null, "Different RS with matching loci",
+                             Stream.of(ss1, ss2).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+        SubmittedVariantOperationEntity mergeOperation2 = new SubmittedVariantOperationEntity();
+        mergeOperation2.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
+                             ss3.getAccession(), null, "Different RS with matching loci",
+                             Stream.of(ss3, ss4).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+        SubmittedVariantOperationEntity splitOperation1 = new SubmittedVariantOperationEntity();
+        splitOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                             ss2.getAccession(), null, "Hash mismatch with " + ss2.getClusteredVariantAccession(),
+                             Stream.of(ss2, ss3).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+
+        this.mongoTemplate.insert(Arrays.asList(mergeOperation1, mergeOperation2, splitOperation1),
+                                  SUBMITTED_VARIANT_OPERATION_COLLECTION);
     }
 }

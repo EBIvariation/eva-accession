@@ -27,11 +27,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSReaderConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.BackPropagateRSJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusterUnclusteredVariantsJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromMongoJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromVcfJobConfiguration;
@@ -54,6 +58,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
         ClusteringFromMongoJobConfiguration.class,
         ProcessRemappedVariantsWithRSJobConfiguration.class,
         ClusterUnclusteredVariantsJobConfiguration.class,
+        BackPropagateRSJobConfiguration.class,
         ClusteringFromVcfStepConfiguration.class,
         ClusteringFromMongoStepConfiguration.class,
         VcfReaderConfiguration.class,
@@ -62,6 +67,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
         ClusteringMongoReaderConfiguration.class,
         ClusteringVariantProcessorConfiguration.class,
         ClusteringWriterConfiguration.class,
+        BackPropagatedRSReaderConfiguration.class,
+        BackPropagatedRSWriterConfiguration.class,
         ListenersConfiguration.class,
         ClusteringCommandLineRunner.class,
         ChunkSizeCompletionPolicyConfiguration.class})
