@@ -46,11 +46,11 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
 
     private static final String SUBMITTED_VARIANT_OPERATIONS_COLLECTION = "submittedVariantOperationEntity";
 
-    private static final String ASSEMBLY_FIELD = "inactiveObjects.seq";
+    public static final String ASSEMBLY_FIELD = "inactiveObjects.seq";
 
     private static final String SORT_FIELD = "accession";
 
-    private static final String EVENT_TYPE_FIELD = "eventType";
+    public static final String EVENT_TYPE_FIELD = "eventType";
 
     public static final EventType SPLIT_CANDIDATES_EVENT_TYPE = EventType.RS_SPLIT_CANDIDATES;
 
