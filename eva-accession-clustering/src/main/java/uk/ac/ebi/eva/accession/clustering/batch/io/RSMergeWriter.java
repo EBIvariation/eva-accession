@@ -290,6 +290,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
         // Update other merge candidate operations involving the mergee
         // by replacing references to mergee RS ID with the target RS ID
+        // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1454412665
         updateMergeCandidatesInvolvingMergee(prioritised, currentOperation);
 
         // Update currently outstanding split candidate events that involve the RS that was just merged and the target RS
