@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringProgressListener;
-import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetricComputeImpl;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetricCompute;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.metrics.configuration.MetricConfiguration;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
@@ -25,6 +25,6 @@ public class ListenersConfiguration {
     @Bean
     public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters, RestTemplate restTemplate,
                                                     InputParameters inputParameters) {
-        return new ClusteringMetricComputeImpl(countServiceParameters, restTemplate, inputParameters.getAssemblyAccession());
+        return new ClusteringMetricCompute(countServiceParameters, restTemplate, inputParameters.getAssemblyAccession());
     }
 }
