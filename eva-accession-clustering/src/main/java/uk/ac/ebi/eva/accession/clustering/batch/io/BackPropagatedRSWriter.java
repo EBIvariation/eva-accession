@@ -27,8 +27,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
-
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
@@ -37,6 +36,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -68,18 +68,18 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
 
     private final MongoTemplate mongoTemplate;
 
-    private final ClusteringCounts clusteringCounts;
+    private final MetricCompute metricCompute;
 
     public BackPropagatedRSWriter(String originalAssembly, String remappedAssembly, ClusteringWriter clusteringWriter,
                                   SubmittedVariantAccessioningService submittedVariantAccessioningService,
                                   MongoTemplate mongoTemplate,
-                                  ClusteringCounts clusteringCounts) {
+                                  MetricCompute metricCompute) {
         this.originalAssembly = originalAssembly;
         this.remappedAssembly = remappedAssembly;
         this.clusteringWriter = clusteringWriter;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
-        this.clusteringCounts = clusteringCounts;
+        this.metricCompute = metricCompute;
     }
 
     @Override
@@ -164,15 +164,15 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                     numDbsnpRSInserts += 1;
                 }
                 bulkCVEInserts.insert(newRSRecordForOriginalAssembly);
-                clusteringCounts.addClusteredVariantsCreated(1);
+                metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
 
                 Query queryToLookUpSSHash = query(where(ID_ATTRIBUTE).is(submittedVariantEntity.getHashedMessage()));
                 Update updateRSInOriginalAssembly = Update.update(RS_ATTRIBUTE, rsToAssign);
                 bulkSVEUpdates.updateOne(queryToLookUpSSHash, updateRSInOriginalAssembly);
-                clusteringCounts.addSubmittedVariantsClustered(1);
+                metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_CLUSTERED, 1);
 
                 bulkSVOEInserts.insert(getUpdateOperation(submittedVariantEntity, rsToAssign));
-                clusteringCounts.addSubmittedVariantsUpdateOperationWritten(1);
+                metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS, 1);
             }
         }
 

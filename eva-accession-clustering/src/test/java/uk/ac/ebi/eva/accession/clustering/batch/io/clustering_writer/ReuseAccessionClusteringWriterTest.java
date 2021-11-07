@@ -39,7 +39,6 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -201,6 +200,7 @@ public class ReuseAccessionClusteringWriterTest {
         // and another for back-propagating that new RS to the original assembly
         assertClusteringCounts(clusteringCounts, 1, 0, 0, 0, 2, 0, 2);
         assertClusteringCounts(metricCompute, 0, 0, 0, 0, 2, 0, 2);
+        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -289,6 +289,7 @@ public class ReuseAccessionClusteringWriterTest {
         // One newly created RS due to back-propagation of rs1 to the SS in the older assembly
         assertClusteringCounts(clusteringCounts, 1, 0, 0, 0, 2, 0, 2);
         assertClusteringCounts(metricCompute, 0, 0, 0, 0, 2, 0, 2);
+        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
     @Test
@@ -344,6 +345,7 @@ public class ReuseAccessionClusteringWriterTest {
         // One RS expected to be created due to back-propagated RS1
         assertClusteringCounts(clusteringCounts, 1, 0, 0, 0, 2, 0, 2);
         assertClusteringCounts(metricCompute, 0, 0, 0, 0, 2, 0, 2);
+        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
     private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
