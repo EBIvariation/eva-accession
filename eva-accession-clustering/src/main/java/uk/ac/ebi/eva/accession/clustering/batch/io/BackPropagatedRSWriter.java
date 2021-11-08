@@ -256,7 +256,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
             // it means that, for some reason, SS1 was not clustered with RS1 when ASM1 underwent clustering.
             // It is better to flag such issues for later analysis.
             extractUniqueHashesForDuplicateKeyError(writeException)
-                    .forEach(hash -> logger.error("Attempted to insert RS record with already existing hash " + hash +
+                    .forEach(hash -> logger.warn("Attempted to insert RS record with already existing hash " + hash +
                                                          "during RS ID back-propagation! This could be symptomatic " +
                                                          "of clustering issues with the original assembly "
                                                          + this.originalAssembly + "."));
