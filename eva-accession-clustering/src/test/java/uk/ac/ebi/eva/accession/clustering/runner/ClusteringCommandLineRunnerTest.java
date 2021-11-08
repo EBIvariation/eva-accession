@@ -343,6 +343,34 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    @DirtiesContext
+    /*
+    https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1618907977
+     */
+    public void doNotBackPropagateRSWhenSuitableRSPresentInCurrentAssembly() throws JobExecutionException,
+            AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
+        rsLocus1 = new RSLocus(ASM1, "chr1", 100L, VariantType.SNV);
+        rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.SNV);
+        rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
+
+        ClusteredVariantEntity rs1 = createRS(1L, rsLocus1, false);
+        ClusteredVariantEntity rs2 = createRS(2L, rsLocus2, true);
+        ClusteredVariantEntity rs3 = createRS(3L, rsLocus3, true);
+
+        createSS(1L, rs1.getAccession(), rsLocus1, "A", "T", false, ASM1);
+        SubmittedVariantEntity ss2 = createSS(2L, null, rsLocus1, "A", "G", false, ASM1);
+        createSS(1L, rs2.getAccession(), rsLocus2, "A", "T", true);
+        createSS(2L, rs3.getAccession(), rsLocus3, "C", "G", true);
+
+        runner.setJobNames(BACK_PROPAGATE_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        assertSSRSAssociation(ss2, rs1, rsLocus1);
+    }
+
+    @Test
     @DirtiesContext
     /*
         @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1454412665"/>
