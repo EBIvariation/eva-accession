@@ -1,16 +1,16 @@
 package uk.ac.ebi.eva.accession.clustering.metric;
 
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.BaseMetricCompute;
-import uk.ac.ebi.eva.metrics.metric.Metric;
-import uk.ac.ebi.eva.metrics.util.MetricUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ClusteringMetricCompute extends BaseMetricCompute {
+public class ClusteringMetricCompute extends BaseMetricCompute<ClusteringMetric> {
     private static final String PROCESS = "clustering";
     private final String assembly;
 
@@ -23,19 +23,25 @@ public class ClusteringMetricCompute extends BaseMetricCompute {
         return PROCESS;
     }
 
-    public List<Metric> getMetrics() {
+    public List<ClusteringMetric> getMetrics() {
         return Arrays.stream(ClusteringMetric.values()).collect(Collectors.toList());
     }
 
     public String getIdentifier() {
-        return MetricUtil.createClusteringIdentifier(this.assembly);
+        try {
+            JSONObject identifier = new JSONObject();
+            identifier.put("assembly", assembly);
+            return identifier.toString();
+        } catch (JSONException jsonException) {
+            throw new RuntimeException("Could not create Identifier for Clustering Counts. Error ", jsonException);
+        }
     }
 
-    public long getCount(Metric metric) {
+    public long getCount(ClusteringMetric metric) {
         return metric.getCount();
     }
 
-    public void addCount(Metric metric, long count) {
+    public void addCount(ClusteringMetric metric, long count) {
         metric.addCount(count);
     }
 

@@ -54,7 +54,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
-import uk.ac.ebi.eva.metrics.util.MetricUtil;
 
 import java.net.URI;
 import java.util.ArrayList;

@@ -1,16 +1,16 @@
 package uk.ac.ebi.eva.accession.pipeline.metric;
 
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.BaseMetricCompute;
-import uk.ac.ebi.eva.metrics.metric.Metric;
-import uk.ac.ebi.eva.metrics.util.MetricUtil;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AccessioningMetricCompute extends BaseMetricCompute {
+public class AccessioningMetricCompute extends BaseMetricCompute<AccessioningMetric> {
     private static final String PROCESS = "accessioning_warehouse_ingestion";
     private final String assembly;
     private final String study;
@@ -26,19 +26,26 @@ public class AccessioningMetricCompute extends BaseMetricCompute {
         return PROCESS;
     }
 
-    public List<Metric> getMetrics() {
+    public List<AccessioningMetric> getMetrics() {
         return Arrays.stream(AccessioningMetric.values()).collect(Collectors.toList());
     }
 
     public String getIdentifier() {
-        return MetricUtil.createAccessionIdentifier(this.assembly, this.study);
+        try {
+            JSONObject identifier = new JSONObject();
+            identifier.put("assembly", assembly);
+            identifier.put("study", study);
+            return identifier.toString();
+        } catch (JSONException jsonException) {
+            throw new RuntimeException("Could not create Identifier for Accessioning Counts. Error ", jsonException);
+        }
     }
 
-    public long getCount(Metric metric) {
+    public long getCount(AccessioningMetric metric) {
         return metric.getCount();
     }
 
-    public void addCount(Metric metric, long count) {
+    public void addCount(AccessioningMetric metric, long count) {
         metric.addCount(count);
     }
 
