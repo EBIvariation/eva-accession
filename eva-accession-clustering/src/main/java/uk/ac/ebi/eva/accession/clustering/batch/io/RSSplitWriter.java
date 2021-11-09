@@ -76,12 +76,12 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private final MongoTemplate mongoTemplate;
 
-    private final MetricCompute metricCompute;
+    private final MetricCompute<ClusteringMetric> metricCompute;
 
     public RSSplitWriter(ClusteringWriter clusteringWriter,
                          ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                          MongoTemplate mongoTemplate,
-                         MetricCompute metricCompute) {
+                         MetricCompute<ClusteringMetric> metricCompute) {
         this.clusteringWriter = clusteringWriter;
         this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
@@ -191,8 +191,6 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         Query queryToFindSS = query(where(idAttribute).is(submittedVariantEntity.getHashedMessage()));
         Update updateRS = update(clusteredVariantAttribute, newRSAccession);
         UpdateResult result = this.mongoTemplate.updateFirst(queryToFindSS, updateRS, submittedVariantClass);
-        this.clusteringCounts.addSubmittedVariantsUpdatedRs(result.getModifiedCount());
-        UpdateResult result = this.mongoTemplate.updateMulti(queryToFindSS, updateRS, submittedVariantClass);
         metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS, result.getModifiedCount());
     }
 

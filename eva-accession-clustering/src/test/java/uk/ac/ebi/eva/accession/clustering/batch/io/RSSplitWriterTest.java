@@ -52,7 +52,6 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
-import uk.ac.ebi.eva.metrics.metric.ClusteringMetric;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.Arrays;
@@ -109,7 +108,7 @@ public class RSSplitWriterTest {
     private SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
     @Autowired
-    private MetricCompute metricCompute;
+    private MetricCompute<ClusteringMetric> metricCompute;
 
     @Before
     public void setUp() {
