@@ -105,9 +105,10 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                         .map(AccessionedDocument::getAccession).collect(Collectors.toList());
 
         // There may be some unclustered SS left behind which could potentially be assigned
-        // an existing RS in the current assembly
-        Map<SubmittedVariantEntity, ClusteredVariantEntity> ssWithSuitableRSInCurrentAssembly =
-                getRSPresentInCurrentAssembly(submittedVariantEntitiesInOriginalAssemblyWithNoRS);
+        // an existing RS in the original assembly - try this before reaching for
+        // back-propagated RS from the remapped assembly
+        Map<SubmittedVariantEntity, ClusteredVariantEntity> ssWithSuitableRSInOriginalAssembly =
+                getRSPresentInOriginalAssembly(submittedVariantEntitiesInOriginalAssemblyWithNoRS);
 
         Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID =
                 submittedVariantAccessioningService
@@ -118,17 +119,17 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                                                                   entity.getVersion()))
                         .filter(entity -> Objects.nonNull(entity.getClusteredVariantAccession()))
                         .collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
-        assignRSToSS(submittedVariantEntitiesInOriginalAssemblyWithNoRS, ssWithSuitableRSInCurrentAssembly,
+        assignRSToSS(submittedVariantEntitiesInOriginalAssemblyWithNoRS, ssWithSuitableRSInOriginalAssembly,
                      ssInRemappedAssemblyGroupedByID);
     }
 
-    private Map<SubmittedVariantEntity, ClusteredVariantEntity> getRSPresentInCurrentAssembly(
+    private Map<SubmittedVariantEntity, ClusteredVariantEntity> getRSPresentInOriginalAssembly(
             List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS) {
         Map<SubmittedVariantEntity, ClusteredVariantEntity> ssAndAssociatedCVE =
                 submittedVariantEntitiesInOriginalAssemblyWithNoRS
                         .stream()
                         .collect(Collectors.toMap(ss -> ss, clusteringWriter::toClusteredVariantEntity));
-        Map<String, ClusteredVariantEntity> rsPresentInCurrentAssembly =
+        Map<String, ClusteredVariantEntity> rsPresentInOriginalAssembly =
                 clusteredVariantAccessioningService
                         .get(new ArrayList<>(ssAndAssociatedCVE.values()))
                         .stream().collect(Collectors.toMap(AccessionWrapper::getHash,
@@ -136,15 +137,15 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                                                                                            e.getHash(), e.getData(),
                                                                                            e.getVersion())));
         return ssAndAssociatedCVE.entrySet().stream()
-                                 .filter(e -> rsPresentInCurrentAssembly.containsKey(e.getValue().getHashedMessage()))
+                                 .filter(e -> rsPresentInOriginalAssembly.containsKey(e.getValue().getHashedMessage()))
                                  .collect(Collectors.toMap(Map.Entry::getKey,
-                                                           e -> rsPresentInCurrentAssembly
+                                                           e -> rsPresentInOriginalAssembly
                                                                    .get(e.getValue().getHashedMessage())));
     }
 
     private void assignRSToSS(
             @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS,
-            Map<SubmittedVariantEntity, ClusteredVariantEntity> ssWithSuitableRSInCurrentAssembly,
+            Map<SubmittedVariantEntity, ClusteredVariantEntity> ssWithSuitableRSInOriginalAssembly,
             Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID) {
 
         // Inserts to create RS record for back-propagated RS in the original assembly
@@ -176,11 +177,11 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
             Long rsToAssign = null;
             ClusteredVariantEntity newRSRecordForOriginalAssembly = null;
 
-            if (ssWithSuitableRSInCurrentAssembly.containsKey(submittedVariantEntity)) {
-                rsToAssign = ssWithSuitableRSInCurrentAssembly.get(submittedVariantEntity).getAccession();
+            if (ssWithSuitableRSInOriginalAssembly.containsKey(submittedVariantEntity)) {
+                rsToAssign = ssWithSuitableRSInOriginalAssembly.get(submittedVariantEntity).getAccession();
             }
             /*
-                Back-propagate RS from the remapped assembly if no suitable RS found in the current assembly
+                Back-propagate RS from the remapped assembly if no suitable RS found in the original assembly
                 @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=717877299"/>
             */
             else if (ssInRemappedAssemblyGroupedByID.containsKey(ssIDToBeClustered)) {
