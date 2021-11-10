@@ -22,6 +22,10 @@
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.eva</groupId>
+            <artifactId>eva-metrics</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.postgresql</groupId>

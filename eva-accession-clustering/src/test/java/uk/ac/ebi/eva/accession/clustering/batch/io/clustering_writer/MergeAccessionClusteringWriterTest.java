@@ -42,7 +42,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocu
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
@@ -63,6 +62,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -127,7 +127,7 @@ public class MergeAccessionClusteringWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
-    private ClusteringCounts clusteringCounts;
+    private MetricCompute metricCompute;
 
     // Current clustering sequence is:
     // generate merge split candidates from clustered variants -> perform merge
@@ -182,6 +182,7 @@ public class MergeAccessionClusteringWriterTest {
     @After
     public void tearDown() {
         mongoTemplate.getDb().drop();
+        metricCompute.clearCount();
     }
 
     @Test
@@ -194,7 +195,7 @@ public class MergeAccessionClusteringWriterTest {
         mergeClusteredAccession(rs1, rs2, ssToRemap, ss2, 0, 2, 0, 1, 0, 2, 0, 1);
         // NOTE: the clustered variant record for RS1 in ASM2 will be created during merge (accounted for in expectedClusteredVariantsCreated)
         // and the existing RS2 record in ASM2 will be removed (accounted for in expectedClusteredVariantsUpdated)
-        assertClusteringCounts(clusteringCounts, 1, 1, 1, 0, 0, 1, 1);
+        assertClusteringCounts(metricCompute, 1, 1, 1, 0, 0, 1, 1);
         assertMergedInto(rs1, rs2, ss2);
     }
 
@@ -209,7 +210,7 @@ public class MergeAccessionClusteringWriterTest {
         // No new clustering variant record will be created or no existing RS will be updated
         // since the remapped submitted variant is clustered into an existing RS (rs2)
         // Merge is recorded only in the clustered and submitted operations tables
-        assertClusteringCounts(clusteringCounts, 0, 0, 1, 0, 0, 0, 1);
+        assertClusteringCounts(metricCompute, 0, 0, 1, 0, 0, 0, 1);
         assertMergedInto(rs2, rs1, ssToRemap);
     }
 
@@ -224,7 +225,7 @@ public class MergeAccessionClusteringWriterTest {
         // NOTE: the clustered variant record for RS1 in ASM2 will be created during merge (accounted for in expectedClusteredVariantsCreated)
         // and the existing RS2 record in ASM2 will be removed (accounted for in expectedClusteredVariantsUpdated)
         // Existing SS2 will be updated (accounted for in expectedSubmittedVariantsUpdatedRs and expectedSubmittedVariantOperationsWritten)
-        assertClusteringCounts(clusteringCounts, 1, 1, 1, 0, 0, 1, 1);
+        assertClusteringCounts(metricCompute, 1, 1, 1, 0, 0, 1, 1);
         assertMergedInto(rs1, rs2, ss2);
     }
 
@@ -239,7 +240,7 @@ public class MergeAccessionClusteringWriterTest {
         // No new clustering variant record will be created or no existing RS will be updated
         // since the remapped submitted variant is clustered into an existing RS (rs2)
         // Merge is recorded only in the clustered and submitted operations tables
-        assertClusteringCounts(clusteringCounts, 0, 0, 1, 0, 0, 0, 1);
+        assertClusteringCounts(metricCompute, 0, 0, 1, 0, 0, 0, 1);
         assertMergedInto(rs2, rs1, ssToRemap);
     }
 
@@ -252,7 +253,7 @@ public class MergeAccessionClusteringWriterTest {
         Long ss2 = 5100000000L;
         // rs2 is removed from CVE post-merge and rs1 is created in dbSnpCVE post-merge (hence the 1 and -1 in the last 2 arguments)
         mergeClusteredAccession(rs1, rs2, ssToRemap, ss2, 2, 0, 0, 1, 1, 1, 0, 1, 1, -1);
-        assertClusteringCounts(clusteringCounts, 1, 1, 1, 0, 0, 1, 1);
+        assertClusteringCounts(metricCompute, 1, 1, 1, 0, 0, 1, 1);
         assertMergedInto(rs1, rs2, ss2);
     }
 

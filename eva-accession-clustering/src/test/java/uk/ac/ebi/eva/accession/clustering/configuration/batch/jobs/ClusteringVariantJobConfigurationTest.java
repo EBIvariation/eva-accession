@@ -40,16 +40,16 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
-import uk.ac.ebi.eva.accession.clustering.parameters.CountParameters;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -96,15 +96,16 @@ public class ClusteringVariantJobConfigurationTest {
     private ApplicationContext applicationContext;
 
     @Autowired
-    private RestTemplate restTemplate;
-
-    @Autowired
     private InputParameters inputParameters;
 
     private MockRestServiceServer mockServer;
 
     @Autowired
-    private CountParameters countParameters;
+    private CountServiceParameters countServiceParameters;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     @Rule
@@ -115,7 +116,7 @@ public class ClusteringVariantJobConfigurationTest {
     public void init() throws Exception {
         mongoTemplate.getDb().drop();
         mockServer = MockRestServiceServer.createServer(restTemplate);
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
     }

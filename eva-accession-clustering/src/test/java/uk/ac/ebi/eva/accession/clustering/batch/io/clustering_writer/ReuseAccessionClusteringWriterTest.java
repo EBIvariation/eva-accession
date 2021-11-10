@@ -39,7 +39,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -58,6 +58,7 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,7 +104,7 @@ public class ReuseAccessionClusteringWriterTest {
     private InputParameters inputParameters;
 
     @Autowired
-    private ClusteringCounts clusteringCounts;
+    private MetricCompute<ClusteringMetric> metricCompute;
 
     @Autowired
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
@@ -167,6 +168,7 @@ public class ReuseAccessionClusteringWriterTest {
     @After
     public void tearDown() {
         mongoTemplate.getDb().drop();
+        metricCompute.clearCount();
     }
 
     @Test
@@ -197,7 +199,7 @@ public class ReuseAccessionClusteringWriterTest {
 
         // Two RS - one reused for clustering the non-clustered variant sveNonClustered in the remapped assembly
         // and another for back-propagating that new RS to the original assembly
-        assertClusteringCounts(clusteringCounts, 1, 0, 0, 0, 2, 0, 2);
+        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -284,7 +286,7 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
         // One newly created RS due to back-propagation of rs1 to the SS in the older assembly
-        assertClusteringCounts(clusteringCounts, 1, 0, 0, 0, 2, 0, 2);
+        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
     @Test
@@ -338,7 +340,7 @@ public class ReuseAccessionClusteringWriterTest {
         assertEquals(sveNonClusteredRemappedAssembly.getAccession(), afterClusteringOperation.getAccession());
 
         // One RS expected to be created due to back-propagated RS1
-        assertClusteringCounts(clusteringCounts, 1, 0, 0, 0, 2, 0, 2);
+        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
     private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)

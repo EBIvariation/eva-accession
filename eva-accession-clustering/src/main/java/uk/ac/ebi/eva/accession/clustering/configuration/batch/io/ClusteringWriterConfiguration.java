@@ -20,16 +20,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
-import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
 
 @Configuration
 @Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
@@ -42,9 +40,9 @@ public class ClusteringWriterConfiguration {
                                                                   clusteredVariantAccessioningService,
                                                       Long accessioningMonotonicInitSs,
                                                       Long accessioningMonotonicInitRs,
-                                                      ClusteringCounts clusteringCounts) {
+                                                      MetricCompute metricCompute) {
         return new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                                    accessioningMonotonicInitSs, accessioningMonotonicInitRs, clusteringCounts, true);
+                accessioningMonotonicInitSs, accessioningMonotonicInitRs, metricCompute, true);
     }
 
     @Bean(NON_CLUSTERED_CLUSTERING_WRITER)
@@ -53,8 +51,8 @@ public class ClusteringWriterConfiguration {
                                                                      clusteredVariantAccessioningService,
                                                          Long accessioningMonotonicInitSs,
                                                          Long accessioningMonotonicInitRs,
-                                                         ClusteringCounts clusteringCounts) {
+                                                         MetricCompute metricCompute) {
         return new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                                    accessioningMonotonicInitSs, accessioningMonotonicInitRs, clusteringCounts, false);
+                accessioningMonotonicInitSs, accessioningMonotonicInitRs, metricCompute, false);
     }
 }

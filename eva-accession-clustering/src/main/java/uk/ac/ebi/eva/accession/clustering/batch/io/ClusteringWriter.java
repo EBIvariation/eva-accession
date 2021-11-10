@@ -32,8 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
-
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -51,6 +50,7 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -99,7 +99,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private final Long accessioningMonotonicInitRs;
 
-    private final ClusteringCounts clusteringCounts;
+    private final MetricCompute metricCompute;
 
     private final boolean processClusteredRemappedVariants;
 
@@ -107,7 +107,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                             Long accessioningMonotonicInitSs,
                             Long accessioningMonotonicInitRs,
-                            ClusteringCounts clusteringCounts,
+                            MetricCompute metricCompute,
                             boolean processClusteredRemappedVariants) {
         this.mongoTemplate = mongoTemplate;
         this.submittedHashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
@@ -117,7 +117,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         Assert.notNull(accessioningMonotonicInitSs, "accessioningMonotonicInitSs must not be null. Check autowiring.");
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
-        this.clusteringCounts = clusteringCounts;
+        this.metricCompute = metricCompute;
         this.processClusteredRemappedVariants = processClusteredRemappedVariants;
     }
 
@@ -153,8 +153,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 accessionNoMultimap.forEach(x -> assignedAccessions.put(x.getHash(), x.getAccession()));
 
                 long newAccessions = accessionWrappers.stream().filter(GetOrCreateAccessionWrapper::isNewAccession)
-                                                      .count();
-                clusteringCounts.addClusteredVariantsCreated(newAccessions);
+                        .count();
+                metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, newAccessions);
             }
         }
     }
@@ -365,8 +365,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                       Map<Long, SubmittedVariantOperationEntity> rsSplitSVOE) {
         mongoTemplate.insert(clusteredVariantEntities, ClusteredVariantEntity.class);
         mongoTemplate.insert(dbsnpClusteredVariantEntities, DbsnpClusteredVariantEntity.class);
-        this.clusteringCounts.addClusteredVariantsCreated(clusteredVariantEntities.size() +
-                                                                  dbsnpClusteredVariantEntities.size());
+        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, clusteredVariantEntities.size() + dbsnpClusteredVariantEntities.size());
 
         List<SubmittedVariantOperationEntity> mergeSVOEInsertEntries = new ArrayList<>();
         List<SubmittedVariantOperationEntity> rsSplitSVOEInsertEntries = new ArrayList<>();
@@ -490,7 +489,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             Long rsid = getClusteredVariantAccession(submittedVariantEntity);
             if (rsid == null) {
                 // no candidate for clustering. e.g. the candidate is a multimap clustered variant (EVA-2071)
-                clusteringCounts.addSubmittedVariantsKeptUnclustered(1);
+                metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_KEPT_UNCLUSTERED, 1);
                 continue;
             }
             // Query to update the RSid in submittedVariantEntity
@@ -521,15 +520,15 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
         if (numUpdates > 0) {
             bulkOperations.execute();
-            clusteringCounts.addSubmittedVariantsClustered(numUpdates);
+            metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_CLUSTERED, numUpdates);
             bulkHistoryOperations.execute();
-            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(numUpdates);
+            metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS, numUpdates);
         }
         if (numDbsnpUpdates > 0) {
             dbsnpBulkOperations.execute();
-            clusteringCounts.addSubmittedVariantsClustered(numDbsnpUpdates);
+            metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_CLUSTERED, numDbsnpUpdates);
             dbsnpBulkHistoryOperations.execute();
-            clusteringCounts.addSubmittedVariantsUpdateOperationWritten(numDbsnpUpdates);
+            metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS, numDbsnpUpdates);
         }
     }
 

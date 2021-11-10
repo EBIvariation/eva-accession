@@ -25,7 +25,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.RSMergeWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
@@ -33,6 +32,7 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAcces
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
@@ -48,9 +48,9 @@ public class RSMergeAndSplitWriterConfiguration {
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
             MongoTemplate mongoTemplate, InputParameters parameters,
             SubmittedVariantAccessioningService submittedVariantAccessioningService,
-            ClusteringCounts clusteringCounts) {
+            MetricCompute metricCompute) {
         return new RSMergeWriter(clusteringWriter, mongoTemplate, parameters.getAssemblyAccession(),
-                                 submittedVariantAccessioningService, clusteringCounts);
+                                 submittedVariantAccessioningService, metricCompute);
     }
 
     @Bean(RS_SPLIT_WRITER)
@@ -58,8 +58,8 @@ public class RSMergeAndSplitWriterConfiguration {
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
             MongoTemplate mongoTemplate,
-            ClusteringCounts clusteringCounts) {
+            MetricCompute metricCompute) {
         return new RSSplitWriter(clusteringWriter, clusteredVariantAccessioningService, mongoTemplate,
-                                 clusteringCounts);
+                                 metricCompute);
     }
 }

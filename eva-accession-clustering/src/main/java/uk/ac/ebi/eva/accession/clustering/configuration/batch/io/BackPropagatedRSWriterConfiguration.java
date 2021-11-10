@@ -24,13 +24,13 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.BackPropagatedRSWriter;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
@@ -45,9 +45,9 @@ public class BackPropagatedRSWriterConfiguration {
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
             MongoTemplate mongoTemplate, InputParameters parameters,
             SubmittedVariantAccessioningService submittedVariantAccessioningService,
-            ClusteringCounts clusteringCounts) {
+            MetricCompute metricCompute) {
         return new BackPropagatedRSWriter(parameters.getRemappedFrom(), parameters.getAssemblyAccession(),
-                                          clusteringWriter, submittedVariantAccessioningService, mongoTemplate,
-                                          clusteringCounts);
+                clusteringWriter, submittedVariantAccessioningService, mongoTemplate,
+                metricCompute);
     }
 }

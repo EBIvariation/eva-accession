@@ -28,6 +28,8 @@ import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.ListenersConfiguration;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,14 +42,14 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION
  * Configuration to inject a VcfReader as a Variant Reader bean.
  */
 @Configuration
-@Import({SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class})
+@Import({SubmittedVariantAccessioningConfiguration.class, InputParametersConfiguration.class, ListenersConfiguration.class})
 public class AccessionWriterConfiguration {
 
     @Bean(ACCESSION_WRITER)
     public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service,
                                            AccessionReportWriter accessionReportWriter,
-                                           VariantConverter variantConverter) throws IOException {
-        return new AccessionWriter(service, accessionReportWriter, variantConverter);
+                                           VariantConverter variantConverter, MetricCompute metricCompute){
+        return new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute);
     }
 
     @Bean

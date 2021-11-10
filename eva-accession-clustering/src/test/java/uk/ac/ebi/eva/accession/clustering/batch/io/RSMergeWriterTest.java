@@ -38,9 +38,9 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
-import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -51,6 +51,7 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOper
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,7 +130,7 @@ public class RSMergeWriterTest {
     private SubmittedVariantOperationRepository submittedVariantOperationRepository;
 
     @Autowired
-    private ClusteringCounts clusteringCounts;
+    private MetricCompute metricCompute;
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,
                                             String alternate) {
@@ -216,7 +217,7 @@ public class RSMergeWriterTest {
 
     private void cleanup() {
         mongoClient.dropDatabase(TEST_DB);
-        clusteringCounts.clearCounts();
+        metricCompute.clearCount();
     }
 
     @Before
@@ -329,11 +330,11 @@ public class RSMergeWriterTest {
         /* Check clustering counts **/
         // Only merge destinations RS1 and RS2 will be created
         // The other two RSs RS4 and RS5 were identified as mergees and hence won't be created if not already present
-        assertEquals(2, this.clusteringCounts.getClusteredVariantsCreated());
-        assertEquals(2, this.clusteringCounts.getClusteredVariantsMergeOperationsWritten());
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED));
+        assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_MERGE_OPERATIONS));
         // 5 SS IDs were updated due to RS4 -> RS1 merge and RS5 -> RS2 merge
-        assertEquals(5, this.clusteringCounts.getSubmittedVariantsUpdatedRs());
-        assertEquals(5, this.clusteringCounts.getSubmittedVariantsUpdateOperationWritten());
+        assertEquals(5, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS));
+        assertEquals(5, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS));
     }
 
     // Check if a given RS has the participating SS listed in the split candidates event
