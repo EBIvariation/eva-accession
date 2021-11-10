@@ -93,7 +93,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
     public void write(
             @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
-        List<Long> ssIDsToLookupInRemappedAssembly =
+        List<SubmittedVariantEntity> ssToLookupInRemappedAssembly =
                 submittedVariantEntitiesInOriginalAssemblyWithNoRS
                         .stream()
                         // Some dbSNP imported variants might have been explicitly de-clustered
@@ -102,13 +102,16 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                         // See ss68617665 in GCA_000181335.3 for example.
                         // Don't bring such variants in for clustering again.
                         .filter(SubmittedVariantEntity::isAllelesMatch)
-                        .map(AccessionedDocument::getAccession).collect(Collectors.toList());
+                        .collect(Collectors.toList());
+        List<Long> ssIDsToLookupInRemappedAssembly =
+                ssToLookupInRemappedAssembly.stream().map(AccessionedDocument::getAccession)
+                                            .collect(Collectors.toList());
 
         // There may be some unclustered SS left behind which could potentially be assigned
         // an existing RS in the original assembly - try this before reaching for
         // back-propagated RS from the remapped assembly
         Map<SubmittedVariantEntity, ClusteredVariantEntity> ssWithSuitableRSInOriginalAssembly =
-                getRSPresentInOriginalAssembly(submittedVariantEntitiesInOriginalAssemblyWithNoRS);
+                getRSPresentInOriginalAssembly(ssToLookupInRemappedAssembly);
 
         Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID =
                 submittedVariantAccessioningService
@@ -119,7 +122,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                                                                   entity.getVersion()))
                         .filter(entity -> Objects.nonNull(entity.getClusteredVariantAccession()))
                         .collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
-        assignRSToSS(submittedVariantEntitiesInOriginalAssemblyWithNoRS, ssWithSuitableRSInOriginalAssembly,
+        assignRSToSS(ssToLookupInRemappedAssembly, ssWithSuitableRSInOriginalAssembly,
                      ssInRemappedAssemblyGroupedByID);
     }
 
