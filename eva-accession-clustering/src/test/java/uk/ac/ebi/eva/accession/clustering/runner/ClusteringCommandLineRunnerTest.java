@@ -98,6 +98,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -342,6 +343,43 @@ public class ClusteringCommandLineRunnerTest {
 
     @Test
     @DirtiesContext
+    /*
+        @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1454412665"/>
+     */
+    public void runClusteringMongoJobWithOverlappingMergesAndSplits() throws JobExecutionException,
+            AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
+        rsLocus1 = new RSLocus(ASM2, "chr1", 100L, VariantType.SNV);
+        rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.DEL);
+        rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
+
+        ClusteredVariantEntity rs1 = createRS(1L, rsLocus1, true);
+        ClusteredVariantEntity rs2 = createRS(2L, rsLocus2, true);
+        ClusteredVariantEntity rs3 = createRS(3L, rsLocus3, true);
+
+        SubmittedVariantEntity ss1 = createSS(1L, rs1.getAccession(), rsLocus1, "A", "T", true);
+        SubmittedVariantEntity ss2 = createSS(2L, rs3.getAccession(), rsLocus1, "A", "G", true);
+        SubmittedVariantEntity ss2_another = createSS(2L, rs3.getAccession(), rsLocus2, "A", "", true);
+        SubmittedVariantEntity ss3 = createSS(3L, rs2.getAccession(), rsLocus2, "C", "", true);
+
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        List<Long> existingRS = Arrays.asList(rs1.getAccession(), rs2.getAccession(), rs3.getAccession());
+        List<ClusteredVariantEntity> newRSIDs = this.mongoTemplate.findAll(ClusteredVariantEntity.class)
+                                                                  .stream()
+                                                                  .filter(e -> !existingRS.contains(e.getAccession()))
+                                                                  .collect(Collectors.toList());
+        assertEquals(1, newRSIDs.size());
+        ClusteredVariantEntity rsNew = newRSIDs.get(0);
+        assertSSRSAssociation(ss1, rs1, rsLocus1);
+        assertSSRSAssociation(ss2, rs1, rsLocus1);
+        assertSSRSAssociation(ss2_another, rsNew, rsLocus2);
+        assertSSRSAssociation(ss3, rsNew, rsLocus2);
+    }
+
+    @Test
+    @DirtiesContext
     public void runClusteringMongoJobOnRemappedVariantsWithNoErrors() throws JobExecutionException,
             AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException,
             AccessionMergedException, AccessionDeprecatedException {
@@ -545,8 +583,7 @@ public class ClusteringCommandLineRunnerTest {
                 this.submittedVariantAccessioningService
                         .getAllByAccession(ss.getAccession())
                         .stream()
-                        .filter(entity -> entity.getData().getReferenceSequenceAccession().equals(
-                                ss.getReferenceSequenceAccession())).findFirst().get();
+                        .filter(entity -> entity.getHash().equals(ss.getHashedMessage())).findFirst().get();
         SubmittedVariantEntity ssInDB = new SubmittedVariantEntity(ssInDBWrapper.getAccession(),
                                                                    ssInDBWrapper.getHash(),
                                                                    ssInDBWrapper.getData(),

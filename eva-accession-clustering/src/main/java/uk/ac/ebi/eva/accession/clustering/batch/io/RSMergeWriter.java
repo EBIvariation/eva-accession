@@ -35,7 +35,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 import uk.ac.ebi.eva.accession.clustering.batch.listeners.ClusteringCounts;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -47,9 +46,13 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,13 +63,12 @@ import java.util.stream.Collectors;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.data.mongodb.core.query.Update.update;
+import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getMergeCandidatesQuery;
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getSplitCandidatesQuery;
 
 public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(RSMergeWriter.class);
-
-    public static final String EVENT_TYPE_ATTRIBUTE = "eventType";
 
     private final ClusteringWriter clusteringWriter;
 
@@ -94,6 +96,22 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private static final String REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_VARIANT_COLLECTION = "seq";
 
+    private int currentlyProcessingOperationIndex;
+
+    private List<SubmittedVariantOperationEntity> allMergeCandidateOperations;
+
+    private static class OperationWithIndex {
+        int operationIndex;
+        SubmittedVariantOperationEntity operation;
+
+        public OperationWithIndex(int operationIndex, SubmittedVariantOperationEntity operation) {
+            this.operationIndex = operationIndex;
+            this.operation = operation;
+        }
+    }
+
+    private Map<Long, List<OperationWithIndex>> rsIDIndexedOperations;
+
     public RSMergeWriter(ClusteringWriter clusteringWriter, MongoTemplate mongoTemplate,
                          String assemblyAccession,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
@@ -108,8 +126,31 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
     @Override
     public void write(@Nonnull List<? extends SubmittedVariantOperationEntity> submittedVariantOperationEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
-        for (SubmittedVariantOperationEntity entity: submittedVariantOperationEntities) {
-            writeRSMerge(entity);
+        allMergeCandidateOperations = new ArrayList<>(submittedVariantOperationEntities);
+        // Create a map of all merge candidate operations keyed by RS ID to facilitate quick random lookups
+        populateOperationsIndex(allMergeCandidateOperations);
+        for (int i = 0; i < allMergeCandidateOperations.size(); i++) {
+            this.currentlyProcessingOperationIndex = i;
+            writeRSMerge(allMergeCandidateOperations.get(i));
+        }
+    }
+
+    private void populateOperationsIndex
+            (List<? extends SubmittedVariantOperationEntity> allMergeCandidateOperations) {
+        rsIDIndexedOperations = new HashMap<>();
+        for (int i = 0; i < allMergeCandidateOperations.size(); i++) {
+            SubmittedVariantOperationEntity operation = allMergeCandidateOperations.get(i);
+            for (Long rsID:
+                    operation.getInactiveObjects().stream()
+                             .map(SubmittedVariantInactiveEntity::getClusteredVariantAccession)
+                             .collect(Collectors.toSet())) {
+                OperationWithIndex obj = new OperationWithIndex(i, operation);
+                if (rsIDIndexedOperations.containsKey(rsID)) {
+                    rsIDIndexedOperations.get(rsID).add(obj);
+                } else {
+                    rsIDIndexedOperations.put(rsID, new ArrayList<>(Arrays.asList(obj)));
+                }
+            }
         }
     }
 
@@ -120,7 +161,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         return t -> seen.add(keyExtractor.apply(t));
     }
 
-    public void writeRSMerge(SubmittedVariantOperationEntity submittedVariantOperationEntity)
+    public void writeRSMerge(SubmittedVariantOperationEntity currentOperation)
             throws AccessionDoesNotExistException {
         // Given a merge candidate event with many SS: https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=267493761
         // get the corresponding RS involved - involves de-duplication using distinctByKey for RS accessions
@@ -128,7 +169,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         // Note that we cannot just use distinct after the map() below for de-duplication
         // because ClusteredVariantEntity "equals" method does NOT involve comparing accessions
         List<ClusteredVariantEntity> mergeCandidates =
-                submittedVariantOperationEntity.getInactiveObjects()
+                currentOperation.getInactiveObjects()
                                                .stream()
                                                .map(entity -> clusteringWriter.toClusteredVariantEntity(
                                                        entity.toSubmittedVariantEntity()))
@@ -144,7 +185,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         for (ClusteredVariantEntity mergee: mergees) {
             logger.info("RS merge operation: Merging rs{} to rs{} due to hash collision...",
                         mergee.getAccession(), mergeDestination.getAccession());
-            merge(mergeDestination, mergee, submittedVariantOperationEntity);
+            merge(mergeDestination, mergee, currentOperation);
         }
     }
 
@@ -194,8 +235,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         ClusteredVariantEntity targetRS = mergeCandidates.stream().filter(rs -> rs.getAccession()
                                                                                   .equals(targetRSAccession))
                                                          .findFirst().get();
-        // If the target RS has already been merged into another RS due to a previous merge, get that RS
-        targetRS = getFinalMergeDestination(targetRS);
         List<ClusteredVariantEntity> mergees = mergeCandidates.stream()
                                                               .filter(rs -> !rs.getAccession()
                                                                                .equals(targetRSAccession))
@@ -203,40 +242,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         return new ImmutablePair<>(targetRS, mergees);
     }
 
-    private ClusteredVariantEntity getFinalMergeDestination(ClusteredVariantEntity originalRS) {
-        Query queryToFindMergeDestination = query(
-                where(ACCESSION_ATTRIBUTE).is(originalRS.getAccession())).addCriteria(
-                where(EVENT_TYPE_ATTRIBUTE).is(EventType.MERGED.toString())).addCriteria(
-                where(INACTIVE_OBJECT_ATTRIBUTE + "." +
-                              REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION)
-                        .is(this.assemblyAccession));
-        ClusteredVariantOperationEntity mergeOperationsWithRSAsMergeeInCVOE =
-                this.mongoTemplate.findOne(queryToFindMergeDestination, ClusteredVariantOperationEntity.class);
-        DbsnpClusteredVariantOperationEntity mergeOperationsWithRSAsMergeeInDbsnpCVOE =
-                this.mongoTemplate.findOne(queryToFindMergeDestination, DbsnpClusteredVariantOperationEntity.class);
-        if (Objects.nonNull(mergeOperationsWithRSAsMergeeInCVOE)) {
-            ClusteredVariantEntity mergee =
-                    getMergedClusteredVariantEntityFromOperation(mergeOperationsWithRSAsMergeeInCVOE);
-            return getFinalMergeDestination(mergee);
-        }
-        if (Objects.nonNull(mergeOperationsWithRSAsMergeeInDbsnpCVOE)) {
-            ClusteredVariantEntity mergee =
-                    getMergedClusteredVariantEntityFromOperation(mergeOperationsWithRSAsMergeeInDbsnpCVOE);
-            return getFinalMergeDestination(mergee);
-        }
-        return originalRS;
-    }
-
-    private ClusteredVariantEntity getMergedClusteredVariantEntityFromOperation(
-            EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>
-                    clusteredVariantOperationEntity) {
-        ClusteredVariantInactiveEntity mergee = clusteredVariantOperationEntity.getInactiveObjects().get(0);
-        return new ClusteredVariantEntity(clusteredVariantOperationEntity.getMergedInto(),
-                                          mergee.getHashedMessage(), mergee.getModel(), mergee.getVersion());
-    }
-
     protected void merge(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee,
-                         SubmittedVariantOperationEntity submittedVariantOperationEntity) {
+                         SubmittedVariantOperationEntity currentOperation) {
         Long accessionToBeMerged = mergee.getAccession();
         Long accessionToKeep = mergeDestination.getAccession();
 
@@ -276,14 +283,82 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         // This has to happen for both EVA and dbsnp SS because previous cross merges might have happened.
         ClusteredVariantMergingPolicy.Priority prioritised =
                 new ClusteredVariantMergingPolicy.Priority(accessionToKeep, accessionToBeMerged);
-        updateSubmittedVariants(prioritised, submittedVariantOperationEntity, SubmittedVariantEntity.class,
+        updateSubmittedVariants(prioritised, currentOperation, SubmittedVariantEntity.class,
                                 SubmittedVariantOperationEntity.class);
-        updateSubmittedVariants(prioritised, submittedVariantOperationEntity, DbsnpSubmittedVariantEntity.class,
+        updateSubmittedVariants(prioritised, currentOperation, DbsnpSubmittedVariantEntity.class,
                                 DbsnpSubmittedVariantOperationEntity.class);
+
+        // Update other merge candidate operations involving the mergee
+        // by replacing references to mergee RS ID with the target RS ID
+        // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1454412665
+        updateMergeCandidatesInvolvingMergee(prioritised, currentOperation);
 
         // Update currently outstanding split candidate events that involve the RS that was just merged and the target RS
         // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1664799060
         updateSplitCandidates(prioritised);
+    }
+
+    private void updateMergeCandidatesInvolvingMergee(ClusteredVariantMergingPolicy.Priority prioritised,
+                                                      SubmittedVariantOperationEntity currentMergeOperation) {
+        updateOperationsInDB(prioritised, currentMergeOperation);
+        // Update the upcoming in-memory objects in this batch as well
+        updateOperationsInMemory(prioritised, currentMergeOperation);
+    }
+
+    private void updateOperationsInDB(ClusteredVariantMergingPolicy.Priority prioritised,
+                           SubmittedVariantOperationEntity currentMergeOperation) {
+        Query queryForMergeCandidatesInvolvingMergee = getMergeCandidatesQuery(this.assemblyAccession)
+                .addCriteria(where(ID_ATTRIBUTE).ne(currentMergeOperation.getId()))
+                .addCriteria(where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToBeMerged));
+        List<SubmittedVariantOperationEntity> operationsInDBInvolvingMergee =
+                mongoTemplate.find(queryForMergeCandidatesInvolvingMergee, SubmittedVariantOperationEntity.class);
+        for (SubmittedVariantOperationEntity operation: operationsInDBInvolvingMergee) {
+            List<SubmittedVariantInactiveEntity> submittedVariantInactiveEntitiesWithMergeeRSReplaced =
+                    operation.getInactiveObjects().stream()
+                             .map(entity -> replaceRSInSubmittedVariantInactiveEntity(
+                                     entity, prioritised.accessionToBeMerged, prioritised.accessionToKeep)
+                             ).collect(Collectors.toList());
+            mongoTemplate.updateFirst(query(where(ID_ATTRIBUTE).is(operation.getId())),
+                                      update(INACTIVE_OBJECT_ATTRIBUTE,
+                                             submittedVariantInactiveEntitiesWithMergeeRSReplaced),
+                                      SubmittedVariantOperationEntity.class);
+        }
+    }
+
+    private void updateOperationsInMemory(ClusteredVariantMergingPolicy.Priority prioritised,
+                           SubmittedVariantOperationEntity currentMergeOperation) {
+        if (rsIDIndexedOperations.containsKey(prioritised.accessionToBeMerged)) {
+            List<OperationWithIndex> operationsInMemoryInvolvingMergee =
+                    rsIDIndexedOperations.get(prioritised.accessionToBeMerged)
+                                         .stream()
+                                         // Filter for upcoming operations only
+                                         .filter(e -> (e.operationIndex > this.currentlyProcessingOperationIndex)
+                                                 && !(e.operation.equals(currentMergeOperation)))
+                                         .collect(Collectors.toList());
+            for (OperationWithIndex operationWithIndex: operationsInMemoryInvolvingMergee) {
+                SubmittedVariantOperationEntity operation = operationWithIndex.operation;
+                List<SubmittedVariantInactiveEntity> inactiveEntities =
+                        operation.getInactiveObjects().stream()
+                                 .map(entity -> replaceRSInSubmittedVariantInactiveEntity
+                                         (entity, prioritised.accessionToBeMerged, prioritised.accessionToKeep))
+                                 .collect(Collectors.toList());
+                SubmittedVariantOperationEntity updatedOperation =
+                        new SubmittedVariantOperationEntity();
+                updatedOperation.fill(operation.getEventType(), operation.getAccession(), operation.getReason(),
+                                      inactiveEntities);
+                allMergeCandidateOperations.set(operationWithIndex.operationIndex, updatedOperation);
+            }            
+        }
+    }
+
+    private SubmittedVariantInactiveEntity replaceRSInSubmittedVariantInactiveEntity(
+            SubmittedVariantInactiveEntity inactiveEntity, Long rsAccessionToReplace, Long replacementRSAccession) {
+        if (inactiveEntity.getClusteredVariantAccession().equals(rsAccessionToReplace)) {
+            SubmittedVariantEntity temp = inactiveEntity.toSubmittedVariantEntity();
+            temp.setClusteredVariantAccession(replacementRSAccession);
+            return new SubmittedVariantInactiveEntity(temp);
+        }
+        return inactiveEntity;
     }
 
     private void updateSplitCandidates(ClusteredVariantMergingPolicy.Priority prioritised) {
