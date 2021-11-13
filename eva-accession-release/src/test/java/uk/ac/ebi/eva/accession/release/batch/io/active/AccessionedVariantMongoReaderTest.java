@@ -36,7 +36,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
@@ -414,5 +413,17 @@ public class AccessionedVariantMongoReaderTest {
 
         assertTrue(isVariantPresent(allVariants, "CM001642.1", 7356604L, "",
                                     "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC"));
+    }
+
+    /*
+    For a given SS ID ss1 and release assembly ASM2, if ss1 has entries in both ASM1 and ASM2,
+    ensure that the variant list only uses the ss1 entry in ASM1
+     */
+    @Test
+    public void ensureOnlySSInReleaseAssemblyIsUsed() throws Exception {
+        Variant variantInTwoAssemblies = readIntoList().stream().filter(e -> e.getIds().contains("rs8181"))
+                                                       .findFirst().get();
+        // Ensure that only one SS entry is available in the variant that was read
+        assertEquals(1, variantInTwoAssemblies.getSourceEntries().size());
     }
 }
