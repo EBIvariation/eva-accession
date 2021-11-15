@@ -100,7 +100,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
             command_to_run=status_update_template.format(status='Completed')  # TODO: how to choose completed/failed?
         )
         # TODO add QA process
-    return pipeline
+    return pipeline, output_directory
 
 
 def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, memory, instance):
@@ -113,11 +113,12 @@ def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, 
     clustering_folder = common_properties['clustering-folder']
     with get_metadata_connection_handle("development", common_properties["private-config-xml-file"]) as metadata_connection_handle:
         assembly_list, scientific_name = get_assemblies_and_scientific_name_from_taxonomy(taxonomy_id, metadata_connection_handle, clustering_tracking_table, release_version)
-        pipeline = generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance)
+        pipeline, output_directory = generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance)
         pipeline.run_pipeline(
             workflow_file_path=os.path.join(clustering_folder, f'{taxonomy_id}_clustering_workflow_{timestamp}.nf'),
             nextflow_binary_path=common_properties['nextflow-binary-path'],
-            nextflow_config_path=common_properties['nextflow-config-path']
+            nextflow_config_path=common_properties['nextflow-config-path'],
+            working_dir=output_directory
         )
 
 
