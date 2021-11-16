@@ -92,8 +92,8 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
             command_to_run=f'java -Xmx{memory}m -jar {clustering_artifact} --spring.config.location=file:{properties_path} '
                            f'--spring.batch.job.names=CLUSTER_UNCLUSTERED_VARIANTS_JOB',
             process_directives={'memory': process_directives_for_java_pipelines['memory'],
-                                'clusterOptions': process_directives_for_java_pipelines['clusterOptions'] +
-                                                  ' -g /accession/{instance:02d} '} # needed to serialize accessioning
+                                'clusterOptions': f"{process_directives_for_java_pipelines['clusterOptions']}"
+                                                  f" -g /accession/{instance} "}  # needed to serialize accessioning
         ))
         pipeline.add_process(
             process_name=f'end_{suffix}',
