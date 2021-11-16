@@ -42,6 +42,10 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
 
+    private static final String ALLELE_MATCH_FIELD = "alleleMatch";
+
+    private static final String ASSEMBLY_MATCH_FIELD = "assemblyMatch";
+
     private String assembly;
 
     private MongoCursor<Document> evaCursor;
@@ -85,10 +89,17 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     public void initializeReader() {
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
                                  Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
+        Bson query_dbsnp = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
+                                       Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants),
+                                       Filters.or(Filters.exists(ALLELE_MATCH_FIELD, false),
+                                                  Filters.eq(ALLELE_MATCH_FIELD, true)),
+                                       Filters.or(Filters.exists(ASSEMBLY_MATCH_FIELD, false),
+                                                  Filters.eq(ASSEMBLY_MATCH_FIELD, true)),
+                                       );
         logger.info("Issuing find: {}", query);
 
         FindIterable<Document> submittedVariantsDbsnp =
-                getSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
+                getSubmittedVariants(query_dbsnp, DbsnpSubmittedVariantEntity.class);
         dbsnpCursor = submittedVariantsDbsnp.iterator();
         FindIterable<Document> submittedVariantsEVA =
                 getSubmittedVariants(query, SubmittedVariantEntity.class);

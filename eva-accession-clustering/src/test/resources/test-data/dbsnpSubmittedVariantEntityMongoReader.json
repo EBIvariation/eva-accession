@@ -72,6 +72,32 @@
       "accession": NumberLong(11),
       "version": 1,
       "rs": NumberLong(2)
+    },
+    {
+      "_id": "86D6915BC472ADCD85157BEAB31CE70EDD3CEB7C",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "projectId_2",
+      "contig": "2",
+      "start": NumberLong(3001),
+      "ref": "C",
+      "alt": "T",
+      "accession": NumberLong(12),
+      "version": 1,
+      "alleleMatch": false
+    },
+    {
+      "_id": "7A9A000D1E7983A971A268258B2EE66D0CAF2F0F",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "projectId_2",
+      "contig": "2",
+      "start": NumberLong(3002),
+      "ref": "T",
+      "alt": "G",
+      "accession": NumberLong(13),
+      "version": 1,
+      "assemblyMatch": false
     }
   ]
 }
