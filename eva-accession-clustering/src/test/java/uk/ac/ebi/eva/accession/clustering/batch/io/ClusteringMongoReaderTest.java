@@ -105,7 +105,7 @@ public class ClusteringMongoReaderTest {
     @Test
     public void readAllSubmittedVariantsWithRS() {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
-        assertEquals(6, mongoTemplate.getCollection(DBSNP_SUBMITTED_VARIANT_ENTITY).countDocuments());
+        assertEquals(8, mongoTemplate.getCollection(DBSNP_SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList(clusteredVariantReader);
         assertEquals(2, variants.size());
         // Clustered submitted variant from EVA collection

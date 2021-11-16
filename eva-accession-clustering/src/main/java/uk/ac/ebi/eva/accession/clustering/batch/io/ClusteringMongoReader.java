@@ -94,7 +94,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
                                        Filters.or(Filters.exists(ALLELE_MATCH_FIELD, false),
                                                   Filters.eq(ALLELE_MATCH_FIELD, true)),
                                        Filters.or(Filters.exists(ASSEMBLY_MATCH_FIELD, false),
-                                                  Filters.eq(ASSEMBLY_MATCH_FIELD, true)),
+                                                  Filters.eq(ASSEMBLY_MATCH_FIELD, true))
                                        );
         logger.info("Issuing find: {}", query);
 
