@@ -56,8 +56,9 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
     clustering_tracking_table = common_properties['clustering-release-tracker']
 
     pipeline = LinearNextFlowPipeline()
+    species_directory = os.path.join(clustering_folder, f"{scientific_name.lower().replace(' ', '_')}_{taxonomy_id}")
     for assembly in assembly_list:
-        output_directory = os.path.join(clustering_folder, f"{scientific_name.lower().replace(' ', '_')}_{taxonomy_id}", assembly)
+        output_directory = os.path.join(species_directory, assembly)
         os.makedirs(output_directory, exist_ok=True)
         properties_path = create_properties_file('MONGO', None, None, assembly,
                                                  private_config_xml_file, profile, output_directory, instance)
@@ -100,7 +101,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
             command_to_run=status_update_template.format(status='Completed')  # TODO: how to choose completed/failed?
         )
         # TODO add QA process
-    return pipeline, output_directory
+    return pipeline, species_directory
 
 
 def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, memory, instance):
