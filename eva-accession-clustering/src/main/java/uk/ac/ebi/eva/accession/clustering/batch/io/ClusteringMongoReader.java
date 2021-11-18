@@ -18,8 +18,6 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoIterable;
-import com.mongodb.client.internal.MongoIterableImpl;
 import com.mongodb.client.model.Filters;
 
 import org.bson.Document;
@@ -35,8 +33,6 @@ import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
-import java.util.Collections;
-
 
 public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantEntity> {
 
@@ -45,8 +41,6 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     private static final String ASSEMBLY_FIELD = "seq";
 
     private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
-
-    private static final String ALLELE_MATCH_FIELD = "alleleMatch";
 
     private String assembly;
 
