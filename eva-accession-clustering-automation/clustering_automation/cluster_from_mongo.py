@@ -93,7 +93,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
                            f'--spring.batch.job.names=CLUSTER_UNCLUSTERED_VARIANTS_JOB',
             process_directives={'memory': process_directives_for_java_pipelines['memory'],
                                 'clusterOptions': f"{process_directives_for_java_pipelines['clusterOptions']}"
-                                                  f" -g /accession/{instance} "}  # needed to serialize accessioning
+                                                  f" -g /accession/instance-{instance} "}  # needed to serialize accessioning
         ))
         pipeline.add_process(
             process_name=f'end_{suffix}',
