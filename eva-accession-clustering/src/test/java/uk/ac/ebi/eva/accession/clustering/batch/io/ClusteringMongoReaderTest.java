@@ -105,7 +105,7 @@ public class ClusteringMongoReaderTest {
     @Test
     public void readAllSubmittedVariantsWithRS() {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
-        assertEquals(8, mongoTemplate.getCollection(DBSNP_SUBMITTED_VARIANT_ENTITY).countDocuments());
+        assertEquals(6, mongoTemplate.getCollection(DBSNP_SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList(clusteredVariantReader);
         assertEquals(2, variants.size());
         // Clustered submitted variant from EVA collection
@@ -119,9 +119,9 @@ public class ClusteringMongoReaderTest {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList(nonClusteredVariantReader);
         // dbSNP and EVA submitted variant collections each have 5 unclustered SS
-        assertEquals(5 + 5, variants.size());
+        assertEquals(5, variants.size());
         assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), NOT_CLUSTERED_SUBMITTED_VARIANT_ID_EVA)));
-        assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(),
+        assertTrue(variants.stream().noneMatch(x -> Objects.equals(x.getId(),
                                                                   NOT_CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP)));
     }
 
