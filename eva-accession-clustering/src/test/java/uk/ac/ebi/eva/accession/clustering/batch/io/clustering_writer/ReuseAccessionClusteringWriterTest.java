@@ -289,60 +289,6 @@ public class ReuseAccessionClusteringWriterTest {
         assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
-    @Test
-    @DirtiesContext
-    public void reuse_eva_clustered_accession_when_clustering_a_dbsnp_submitted_variant() throws Exception {
-        // given
-        Long rs1 = 3000000000L;
-        long ss = 51L;
-
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
-
-        mongoTemplate.insert(createClusteredVariantEntity(ASM_2, rs1));
-
-        SubmittedVariantEntity sveNonClusteredOriginalAssembly = createDbsnpSubmittedVariantEntity(ASM_1, null, ss,
-                                                                                                   null);
-        SubmittedVariantEntity sveNonClusteredRemappedAssembly = createDbsnpSubmittedVariantEntity(ASM_2, null, ss,
-                                                                                                   ASM_1);
-
-        assertEquals(2, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
-        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
-
-        // when
-        this.clusterVariants(Collections.singletonList(sveNonClusteredRemappedAssembly));
-
-        // then
-        assertEquals(2, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
-        // Two records: Newly generated RS in the new assembly and the same RS back-propagated to the older assembly
-        assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
-        assertEquals(0, mongoTemplate.count(new Query(), SubmittedVariantOperationEntity.class));
-        // Two operations: one for clustering SS in the remapped assembly with rs1 and another
-        // for back-propagating rs1 to the SS in the older assembly
-        assertEquals(2, mongoTemplate.count(new Query(), DbsnpSubmittedVariantOperationEntity.class));
-
-        DbsnpSubmittedVariantOperationEntity operation = mongoTemplate.findOne(new Query(where("accession").is(ss)),
-                DbsnpSubmittedVariantOperationEntity.class);
-        assertNotNull(operation.getCreatedDate());
-
-        SubmittedVariantEntity afterClustering = mongoTemplate.findOne(new Query(), DbsnpSubmittedVariantEntity.class);
-        assertEquals(rs1, afterClustering.getClusteredVariantAccession());
-        DbsnpSubmittedVariantOperationEntity afterClusteringOperation = mongoTemplate.findOne(
-                new Query(), DbsnpSubmittedVariantOperationEntity.class);
-        assertEquals(sveNonClusteredRemappedAssembly.getAccession(), afterClusteringOperation.getAccession());
-
-        // One RS expected to be created due to back-propagated RS1
-        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
-    }
-
     private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)
             throws Exception {
         clusteringWriterPreMergeAndSplit.write(submittedVariantEntities);
