@@ -321,9 +321,9 @@ public class ClusteringCommandLineRunnerTest {
         createSS(1L, rs1.getAccession(), rsLocus2, "A", "T", true);
         createSS(1L, newRS2.getAccession(), rsLocus3, "A", "G", true);
 
-        SubmittedVariantEntity ss3 = createSS(2L, null, rsLocus4, "A", "T", false, ASM1);
-        createSS(2L, rs1.getAccession(), rsLocus2, "A", "T", true);
-        createSS(2L, newRS2.getAccession(), rsLocus3, "A", "G", true);
+        SubmittedVariantEntity ss3 = createSS(5L, null, rsLocus4, "A", "T", false, ASM1);
+        createSS(5L, rs1.getAccession(), rsLocus2, "A", "T", true);
+        createSS(5L, newRS2.getAccession(), rsLocus3, "A", "G", true);
 
         runner.setJobNames(BACK_PROPAGATE_RS_JOB);
         runner.run();

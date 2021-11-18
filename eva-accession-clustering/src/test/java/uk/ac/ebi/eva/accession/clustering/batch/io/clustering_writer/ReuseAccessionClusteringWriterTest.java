@@ -163,6 +163,7 @@ public class ReuseAccessionClusteringWriterTest {
         mongoTemplate.getDb().drop();
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        metricCompute.clearCount();
     }
 
     @After
