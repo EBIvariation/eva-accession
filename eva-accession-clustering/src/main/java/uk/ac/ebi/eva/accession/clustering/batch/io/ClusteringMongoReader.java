@@ -68,7 +68,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     @Override
     public SubmittedVariantEntity read() {
         // Read from dbsnp collection first and subsequently EVA collection
-        Document nextElement = dbsnpCursor.hasNext() ? dbsnpCursor.next() :
+        Document nextElement = (dbsnpCursor != null && dbsnpCursor.hasNext()) ? dbsnpCursor.next() :
                 (evaCursor.hasNext() ? evaCursor.next() : null);
         return (nextElement != null) ? getSubmittedVariantEntity(nextElement) : null;
     }
@@ -85,9 +85,6 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     public void initializeReader() {
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
                                  Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
-        // When clustering variant that do not have any RSID we do not want to retrieve any dbSNP submitted variants
-        // We use this filters that should never return any results, for this purpose
-        Bson query_no_results = Filters.eq("_id", "-1");
         logger.info("Issuing find: {}", query);
 
         if (readOnlyClusteredVariants){
@@ -95,9 +92,9 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
                     getSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
             dbsnpCursor = submittedVariantsDbsnp.iterator();
         } else {
-            FindIterable<Document> submittedVariantsDbsnp =
-                    getSubmittedVariants(query_no_results, DbsnpSubmittedVariantEntity.class);
-            dbsnpCursor = submittedVariantsDbsnp.iterator();
+            // When clustering variant that do not have any RSID we do not want to retrieve any dbSNP submitted variants
+            // We set the cursor for this purpose
+            dbsnpCursor = null;
         }
         FindIterable<Document> submittedVariantsEVA =
                 getSubmittedVariants(query, SubmittedVariantEntity.class);
@@ -120,7 +117,9 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     @Override
     public void close() throws ItemStreamException {
-        dbsnpCursor.close();
+        if (dbsnpCursor != null) {
+            dbsnpCursor.close();
+        }
         evaCursor.close();
     }
 }
