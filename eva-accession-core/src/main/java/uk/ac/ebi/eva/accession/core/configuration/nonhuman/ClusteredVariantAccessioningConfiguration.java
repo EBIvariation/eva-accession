@@ -28,7 +28,6 @@ import uk.ac.ebi.ampt2d.commons.accession.autoconfigure.EnableSpringDataContiguo
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
-
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
@@ -42,6 +41,7 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.dbsnp.DbsnpClusteredVari
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantOperationService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantAccessioningDatabaseService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
@@ -138,6 +138,11 @@ public class ClusteredVariantAccessioningConfiguration {
     public DbsnpClusteredVariantAccessioningDatabaseService dbsnpClusteredVariantAccessioningDatabaseService() {
         return new DbsnpClusteredVariantAccessioningDatabaseService(dbsnpRepository,
                                                                     dbsnpClusteredVariantInactiveService());
+    }
+
+    @Bean
+    public ClusteredVariantOperationService clusteredVariantHistoryService() {
+        return new ClusteredVariantOperationService(dbsnpClusteredVariantInactiveService(), clusteredVariantInactiveService());
     }
 
     @Bean

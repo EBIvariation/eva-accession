@@ -63,8 +63,8 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAcce
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantOperationService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
@@ -192,6 +192,9 @@ public class ClusteredVariantsRestControllerTest {
     private DbsnpClusteredVariantEntity clusteredHumanVariantEntity3;
 
     @Mock
+    private ClusteredVariantOperationService clusteredVariantOperationService;
+
+    @Mock
     private SubmittedVariantAccessioningService mockService;
 
     @Mock
@@ -219,7 +222,7 @@ public class ClusteredVariantsRestControllerTest {
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockHumanService)
                .getByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV);
         mockController = new ClusteredVariantsRestController(mockService, mockBeaconService, mockHumanService,
-                clusteredService
+                clusteredService, clusteredVariantOperationService
         );
     }
 
