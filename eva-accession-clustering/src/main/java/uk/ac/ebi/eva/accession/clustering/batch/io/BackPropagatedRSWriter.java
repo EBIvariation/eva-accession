@@ -15,16 +15,17 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
-import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoBulkWriteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
@@ -35,10 +36,12 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -60,6 +63,8 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
 
     private final ClusteringWriter clusteringWriter;
 
+    private final ClusteredVariantAccessioningService clusteredVariantAccessioningService;
+
     private final SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
     private static final String ID_ATTRIBUTE = "_id";
@@ -71,12 +76,14 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
     private final MetricCompute metricCompute;
 
     public BackPropagatedRSWriter(String originalAssembly, String remappedAssembly, ClusteringWriter clusteringWriter,
+                                  ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                                   SubmittedVariantAccessioningService submittedVariantAccessioningService,
                                   MongoTemplate mongoTemplate,
                                   MetricCompute metricCompute) {
         this.originalAssembly = originalAssembly;
         this.remappedAssembly = remappedAssembly;
         this.clusteringWriter = clusteringWriter;
+        this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
         this.metricCompute = metricCompute;
@@ -86,7 +93,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
     public void write(
             @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
-        List<Long> ssIDsToLookupInRemappedAssembly =
+        List<SubmittedVariantEntity> ssToLookupInRemappedAssembly =
                 submittedVariantEntitiesInOriginalAssemblyWithNoRS
                         .stream()
                         // Some dbSNP imported variants might have been explicitly de-clustered
@@ -95,7 +102,17 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                         // See ss68617665 in GCA_000181335.3 for example.
                         // Don't bring such variants in for clustering again.
                         .filter(SubmittedVariantEntity::isAllelesMatch)
-                        .map(AccessionedDocument::getAccession).collect(Collectors.toList());
+                        .collect(Collectors.toList());
+        List<Long> ssIDsToLookupInRemappedAssembly =
+                ssToLookupInRemappedAssembly.stream().map(AccessionedDocument::getAccession)
+                                            .collect(Collectors.toList());
+
+        // There may be some unclustered SS left behind which could potentially be assigned
+        // an existing RS in the original assembly - try this before reaching for
+        // back-propagated RS from the remapped assembly
+        Map<SubmittedVariantEntity, ClusteredVariantEntity> ssWithSuitableRSInOriginalAssembly =
+                getRSPresentInOriginalAssembly(ssToLookupInRemappedAssembly);
+
         Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID =
                 submittedVariantAccessioningService
                         .getAllActiveByAssemblyAndAccessionIn(remappedAssembly, ssIDsToLookupInRemappedAssembly)
@@ -105,14 +122,33 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                                                                   entity.getVersion()))
                         .filter(entity -> Objects.nonNull(entity.getClusteredVariantAccession()))
                         .collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
-        backPropagateRS(submittedVariantEntitiesInOriginalAssemblyWithNoRS, ssInRemappedAssemblyGroupedByID);
+        assignRSToSS(ssToLookupInRemappedAssembly, ssWithSuitableRSInOriginalAssembly,
+                     ssInRemappedAssemblyGroupedByID);
     }
 
-    /*
-      @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=717877299"/>
-     */
-    private void backPropagateRS(
+    private Map<SubmittedVariantEntity, ClusteredVariantEntity> getRSPresentInOriginalAssembly(
+            List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS) {
+        Map<SubmittedVariantEntity, ClusteredVariantEntity> ssAndAssociatedCVE =
+                submittedVariantEntitiesInOriginalAssemblyWithNoRS
+                        .stream()
+                        .collect(Collectors.toMap(ss -> ss, clusteringWriter::toClusteredVariantEntity));
+        Map<String, ClusteredVariantEntity> rsPresentInOriginalAssembly =
+                clusteredVariantAccessioningService
+                        .get(new ArrayList<>(ssAndAssociatedCVE.values()))
+                        .stream().collect(Collectors.toMap(AccessionWrapper::getHash,
+                                                           e -> new ClusteredVariantEntity(e.getAccession(),
+                                                                                           e.getHash(), e.getData(),
+                                                                                           e.getVersion())));
+        return ssAndAssociatedCVE.entrySet().stream()
+                                 .filter(e -> rsPresentInOriginalAssembly.containsKey(e.getValue().getHashedMessage()))
+                                 .collect(Collectors.toMap(Map.Entry::getKey,
+                                                           e -> rsPresentInOriginalAssembly
+                                                                   .get(e.getValue().getHashedMessage())));
+    }
+
+    private void assignRSToSS(
             @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS,
+            Map<SubmittedVariantEntity, ClusteredVariantEntity> ssWithSuitableRSInOriginalAssembly,
             Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID) {
 
         // Inserts to create RS record for back-propagated RS in the original assembly
@@ -140,8 +176,24 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
         int numDbsnpRSInserts = 0;
 
         for (SubmittedVariantEntity submittedVariantEntity: submittedVariantEntitiesInOriginalAssemblyWithNoRS) {
-            Long ssIDToAssignRS = submittedVariantEntity.getAccession();
-            if (ssInRemappedAssemblyGroupedByID.containsKey(ssIDToAssignRS)) {
+            Long ssIDToBeClustered = submittedVariantEntity.getAccession();
+            Long rsToAssign = null;
+            ClusteredVariantEntity newRSRecordForOriginalAssembly = null;
+
+            if (ssWithSuitableRSInOriginalAssembly.containsKey(submittedVariantEntity)) {
+                rsToAssign = ssWithSuitableRSInOriginalAssembly.get(submittedVariantEntity).getAccession();
+            }
+            /*
+                Back-propagate RS from the remapped assembly if no suitable RS found in the original assembly
+                @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=717877299"/>
+            */
+            else if (ssInRemappedAssemblyGroupedByID.containsKey(ssIDToBeClustered)) {
+                newRSRecordForOriginalAssembly =
+                        getSuitableRSFromRemappedSS(ssInRemappedAssemblyGroupedByID, submittedVariantEntity);
+                rsToAssign = newRSRecordForOriginalAssembly.getAccession();
+            }
+
+            if (Objects.nonNull(rsToAssign)) {
                 BulkOperations bulkSVEUpdates, bulkSVOEInserts, bulkCVEInserts;
                 if (clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity)) {
                     bulkSVEUpdates = evaSVEUpdates;
@@ -152,19 +204,19 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                     bulkSVOEInserts = dbsnpSVOEInserts;
                     numDbsnpRSAssignments += 1;
                 }
-                ClusteredVariantEntity newRSRecordForOriginalAssembly =
-                        getSuitableRSFromRemappedSS(ssInRemappedAssemblyGroupedByID, submittedVariantEntity);
-                Long rsToAssign = newRSRecordForOriginalAssembly.getAccession();
 
-                if (clusteringWriter.getClusteredVariantCollection(rsToAssign).equals(ClusteredVariantEntity.class)) {
-                    bulkCVEInserts = evaCVEInserts;
-                    numEVARSInserts += 1;
-                } else {
-                    bulkCVEInserts = dbsnpCVEInserts;
-                    numDbsnpRSInserts += 1;
+                if (Objects.nonNull(newRSRecordForOriginalAssembly)) {
+                    if (clusteringWriter.getClusteredVariantCollection(rsToAssign).equals(
+                            ClusteredVariantEntity.class)) {
+                        bulkCVEInserts = evaCVEInserts;
+                        numEVARSInserts += 1;
+                    } else {
+                        bulkCVEInserts = dbsnpCVEInserts;
+                        numDbsnpRSInserts += 1;
+                    }
+                    bulkCVEInserts.insert(newRSRecordForOriginalAssembly);
+                    metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
                 }
-                bulkCVEInserts.insert(newRSRecordForOriginalAssembly);
-                metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
 
                 Query queryToLookUpSSHash = query(where(ID_ATTRIBUTE).is(submittedVariantEntity.getHashedMessage()));
                 Update updateRSInOriginalAssembly = Update.update(RS_ATTRIBUTE, rsToAssign);
@@ -219,7 +271,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
             Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID,
             SubmittedVariantEntity submittedVariantEntity) {
         // Currently if there is more than one entry for the SS accession in the remapped assembly,
-        // we choose the minimum RS ID as a hack since we don't have a way to map between the
+        // we choose the maximum RS ID as a hack since we don't have a way to map between the
         // remapped SS and the original SS in such cases
         // TODO: Re-visit during EVA-2612
         ClusteredVariantEntity rsFromRemappedAssembly =

@@ -197,8 +197,8 @@ public class ReuseAccessionClusteringWriterTest {
         this.clusterVariants(Collections.singletonList(sveNonClustered));
         assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
 
-        // Two RS - one reused for clustering the non-clustered variant sveNonClustered in the remapped assembly
-        // and another for back-propagating that new RS to the original assembly
+        // Two RS - one reused (but not created) for clustering the non-clustered variant sveNonClustered in the remapped assembly
+        // and another back-propagated RS created for the original assembly
         assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
     }
 
