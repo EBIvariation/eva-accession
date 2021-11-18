@@ -32,18 +32,19 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.HistoryEvent;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
-import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+import uk.ac.ebi.ampt2d.commons.accession.rest.dto.HistoryEventDTO;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantOperationService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
+import uk.ac.ebi.eva.accession.ws.dto.VariantHistory;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -67,16 +68,20 @@ public class ClusteredVariantsRestController {
 
     private ClusteredVariantAccessioningService nonHumanActiveService;
 
+    private ClusteredVariantOperationService clusteredVariantOperationService;
+
     public ClusteredVariantsRestController(
             SubmittedVariantAccessioningService submittedVariantsService,
             ClusteredVariantsBeaconService beaconService,
             @Qualifier("humanService") HumanDbsnpClusteredVariantAccessioningService humanService,
-            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService
+            @Qualifier("nonhumanActiveService") ClusteredVariantAccessioningService nonHumanActiveService,
+            ClusteredVariantOperationService clusterdVariantOperationService
     ) {
         this.submittedVariantsService = submittedVariantsService;
         this.beaconService = beaconService;
         this.humanService = humanService;
         this.nonHumanActiveService = nonHumanActiveService;
+        this.clusteredVariantOperationService = clusterdVariantOperationService;
     }
 
     /**
@@ -110,6 +115,37 @@ public class ClusteredVariantsRestController {
         }
     }
 
+    @ApiOperation(value = "Find clustered variant (RS) history", notes = "This endpoint returns the history of clustered "
+            + "variants (RS) represented by the given identifier. ")
+    @GetMapping(value = "/{identifier}/history", produces = "application/json")
+    public ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantHistory(
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
+                    required = true) Long identifier) throws AccessionDoesNotExistException {
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
+                new ArrayList<>();
+        try {
+            allVariants.addAll(getNonHumanClusteredVariants(identifier));
+            allVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
+                    .collect(Collectors.toList()));
+        } catch (AccessionDeprecatedException | AccessionMergedException e) {
+
+        }
+
+        List<HistoryEventDTO<Long, ClusteredVariant>> allOperations = clusteredVariantOperationService.getAllOperations(identifier)
+                .stream().map(this::toHistoryEventDTO).collect(Collectors.toList());
+
+        if (allVariants.isEmpty() && allOperations.isEmpty()) {
+            throw new AccessionDoesNotExistException(identifier);
+        }
+        return ResponseEntity.ok(new VariantHistory<>(allVariants, allOperations));
+    }
+
+    public HistoryEventDTO<Long, ClusteredVariant> toHistoryEventDTO(IEvent<? extends IClusteredVariant, Long> operation) {
+        HistoryEvent<IClusteredVariant, Long> historyEvent = new HistoryEvent<IClusteredVariant, Long>(operation.getEventType(), operation.getAccession(),
+                operation.getInactiveObjects().get(0).getVersion(), operation.getResultInto(), operation.getCreatedDate(), operation.getInactiveObjects().get(0).getModel());
+        return new HistoryEventDTO<Long, ClusteredVariant>(historyEvent, ClusteredVariant::new);
+    }
+
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
             Long identifier) throws AccessionDeprecatedException, AccessionMergedException {
         try {
@@ -129,7 +165,7 @@ public class ClusteredVariantsRestController {
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getDeprecatedClusteredVariant(
             Long identifier) {
         return Collections.singletonList(new AccessionResponseDTO<>(nonHumanActiveService.getLastInactive(identifier),
-                        ClusteredVariant::new));
+                ClusteredVariant::new));
     }
 
     @ApiOperation(value = "Find submitted variants (SS) by clustered variant identifier (RS)", notes = "Given a "
@@ -148,8 +184,8 @@ public class ClusteredVariantsRestController {
                 submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
 
         return submittedVariants.stream()
-                                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                                .collect(Collectors.toList());
+                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                .collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "
@@ -205,8 +241,8 @@ public class ClusteredVariantsRestController {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);
             return beaconService.getBeaconResponseObjectWithError(chromosome, start, assembly, variantType,
-                                                                  responseStatus,
-                                                                  "Unexpected Error: " + ex.getMessage());
+                    responseStatus,
+                    "Unexpected Error: " + ex.getMessage());
         }
     }
 }
