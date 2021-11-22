@@ -19,7 +19,6 @@ package uk.ac.ebi.eva.accession.ws;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.item.ItemWriter;
@@ -358,7 +357,6 @@ public class ClusteredVariantHistoryEndPointTest {
         assertEquals(8L, allOperations.get(1).getMergedInto().longValue());
     }
 
-    @Ignore
     @Test
     @DirtiesContext
     public void testVariantHistoryServiceEndPoint() throws Exception {
@@ -376,16 +374,24 @@ public class ClusteredVariantHistoryEndPointTest {
         int fetchHistoryOfRS = 1;
         String getVariantsUrl = String.format(URL, fetchHistoryOfRS);
 
-        //TODO: Currently failing because jackson wrongly complains about not finding the field "resultInto" in HistoryEventDto
-        //      looks like it is expecting the method getResultInto to correspond to a field "resultInto" and fails when not able to find it
-        //      ObjectMapper objectMapper = new ObjectMapper();
-        //      objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-
         ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse =
                 testRestTemplate.exchange(getVariantsUrl, HttpMethod.GET, null, new ClusteredVariantType());
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
-        VariantHistory<ClusteredVariant, IClusteredVariant, String, Long> wsResponseBody =
+        VariantHistory<ClusteredVariant, IClusteredVariant, String, Long> variantHistory =
                 getVariantsResponse.getBody();
+
+        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants = variantHistory.getVariants();
+        List<HistoryEventDTO<Long, ClusteredVariant>> allOperations = variantHistory.getOperations();
+
+        assertEquals(2, allVariants.size());
+        assertEquals(3, allOperations.size());
+        assertTrue(allVariants.stream().allMatch(v -> v.getAccession().equals(1L)));
+        //Variant with RS 1 present in both ASM1 and ASM2
+        assertTrue(allVariants.stream().allMatch(v -> Arrays.asList("ASM1", "ASM2").contains(v.getData().getAssemblyAccession())));
+        assertTrue(allOperations.stream().allMatch(o -> o.getType().equals(EventType.RS_SPLIT)));
+        // Every split operation from RS 1
+        assertTrue(allOperations.stream().allMatch(o -> o.getAccession().equals(1L)));
+        assertTrue(allOperations.stream().allMatch(o -> Arrays.asList(3000000000L, 3000000001L, 3000000002L).contains(o.getSplitInto())));
     }
 
     private void mergeRS(List<SubmittedVariantEntity> submittedVariantEntities) throws Exception {
