@@ -60,7 +60,6 @@
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-clustering</artifactId>
-            <version>0.6.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
