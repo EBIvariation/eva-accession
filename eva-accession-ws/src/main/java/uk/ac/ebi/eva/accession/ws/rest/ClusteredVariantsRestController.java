@@ -141,9 +141,9 @@ public class ClusteredVariantsRestController {
     }
 
     public HistoryEventDTO<Long, ClusteredVariant> toHistoryEventDTO(IEvent<? extends IClusteredVariant, Long> operation) {
-        HistoryEvent<IClusteredVariant, Long> historyEvent = new HistoryEvent<IClusteredVariant, Long>(operation.getEventType(), operation.getAccession(),
-                operation.getInactiveObjects().get(0).getVersion(), operation.getResultInto(), operation.getCreatedDate(), operation.getInactiveObjects().get(0).getModel());
-        return new HistoryEventDTO<Long, ClusteredVariant>(historyEvent, ClusteredVariant::new);
+        HistoryEvent<IClusteredVariant, Long> historyEvent = new HistoryEvent<>(operation.getEventType(), operation.getAccession(),
+                operation.getInactiveObjects().get(0).getVersion(), operation.getDestinationAccession(), operation.getCreatedDate(), operation.getInactiveObjects().get(0).getModel());
+        return new HistoryEventDTO<>(historyEvent, ClusteredVariant::new);
     }
 
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
