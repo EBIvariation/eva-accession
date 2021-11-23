@@ -142,7 +142,8 @@ public class ClusteredVariantsRestController {
 
     public HistoryEventDTO<Long, ClusteredVariant> toHistoryEventDTO(IEvent<? extends IClusteredVariant, Long> operation) {
         HistoryEvent<IClusteredVariant, Long> historyEvent = new HistoryEvent<>(operation.getEventType(), operation.getAccession(),
-                operation.getInactiveObjects().get(0).getVersion(), operation.getDestinationAccession(), operation.getCreatedDate(), operation.getInactiveObjects().get(0).getModel());
+                operation.getInactiveObjects().get(0).getVersion(), operation.getDestinationAccession(), operation.getCreatedDate(),
+                operation.getInactiveObjects().get(0).getModel());
         return new HistoryEventDTO<>(historyEvent, ClusteredVariant::new);
     }
 
