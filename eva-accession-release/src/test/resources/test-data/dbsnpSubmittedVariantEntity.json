@@ -33,6 +33,20 @@
       )
     },
     {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750CCCD",
+      "seq": "GCA_000409795.1",
+      "tax": 60711,
+      "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(151),
+      "ref": "",
+      "alt": "T",
+      "rs": NumberLong(8181),
+      "accession": NumberLong(8283),
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
+    },
+    {
       "_id": "81901D6C149D283D8E00859E8BADC1C89750F111",
       "seq": "GCA_000409795.2",
       "tax": 60711,

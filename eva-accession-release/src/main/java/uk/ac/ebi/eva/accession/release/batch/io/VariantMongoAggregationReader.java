@@ -66,6 +66,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected static final String REFERENCE_ASSEMBLY_FIELD = "asm";
 
+    protected static final String REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS = "seq";
+
     protected static final String STUDY_FIELD = "study";
 
     protected static final String CONTIG_FIELD = "contig";

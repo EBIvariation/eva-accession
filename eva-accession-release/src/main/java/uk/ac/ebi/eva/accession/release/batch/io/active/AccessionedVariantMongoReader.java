@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
 
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
@@ -43,6 +45,8 @@ import java.util.Map;
 import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
+import static org.springframework.data.mongodb.core.aggregation.ArrayOperators.Filter.filter;
+import static org.springframework.data.mongodb.core.aggregation.ComparisonOperators.Eq.valueOf;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
@@ -66,9 +70,25 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
+        String tempArrayName = "ssArray";
         Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), ACCESSION_FIELD,
-                                        CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
-        List<Bson> aggregation = Arrays.asList(match, sort, singlemap, lookup);
+                                        CLUSTERED_VARIANT_ACCESSION_FIELD, tempArrayName);
+        // Filter out ss entries not belonging to the release assembly from ssArray field
+        // created above from the lookup
+        AggregationOperation addFieldsOperation =
+                aggregationContext -> new Document("$addFields",
+                                    new Document(SS_INFO_FIELD,
+                                                 filter(tempArrayName)
+                                                         .as(SS_INFO_FIELD)
+                                                         .by(valueOf(SS_INFO_FIELD + "." +
+                                                                     REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS)
+                                                                     .equalToValue(assemblyAccession))
+                                                         .toDocument(Aggregation.DEFAULT_CONTEXT)));
+        Bson addSSInfoField = addFieldsOperation.toDocument(Aggregation.DEFAULT_CONTEXT);
+        Bson removeTempArrayFromOutput = Aggregates.project(new Document(tempArrayName, 0));
+        // We only need the SS info field with the entries in the temp array filtered by the release assembly
+        List<Bson> aggregation = Arrays.asList(match, sort, singlemap, lookup, addSSInfoField,
+                                               removeTempArrayFromOutput);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
