@@ -41,6 +41,8 @@ public class SSReader implements ItemStreamReader<SubmittedVariantEntity> {
 
     private static final String ASSEMBLY_FIELD = "seq";
 
+    private static final String MAPPING_WEIGHT_FIELD = "mapWeight";
+
     private final String assembly;
 
     private MongoCursor<Document> evaCursor;
@@ -77,7 +79,8 @@ public class SSReader implements ItemStreamReader<SubmittedVariantEntity> {
     }
 
     public void initializeReader() {
-        Bson query = Filters.in(ASSEMBLY_FIELD, assembly);
+        Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
+                                 Filters.not(Filters.exists(MAPPING_WEIGHT_FIELD)));
         logger.info("Issuing find: {}", query);
 
         FindIterable<Document> submittedVariantsDbsnp =
