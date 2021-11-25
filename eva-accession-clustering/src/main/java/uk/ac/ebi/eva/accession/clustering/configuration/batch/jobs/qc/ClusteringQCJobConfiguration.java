@@ -69,8 +69,8 @@ public class ClusteringQCJobConfiguration {
     }
 
     @Bean(REPORT_UNCLUSTERED_SS_PROCESSOR)
-    public ReportUnclusteredSSProcessor reportUnclusteredSSProcessor() {
-        return new ReportUnclusteredSSProcessor();
+    public ReportUnclusteredSSProcessor reportUnclusteredSSProcessor(Long accessioningMonotonicInitSs) {
+        return new ReportUnclusteredSSProcessor(accessioningMonotonicInitSs);
     }
 
     @Bean(PENDING_MERGE_AND_SPLIT_REPORTER)
