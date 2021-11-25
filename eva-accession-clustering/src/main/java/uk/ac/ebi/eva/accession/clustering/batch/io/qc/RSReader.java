@@ -40,6 +40,8 @@ public class RSReader implements ItemStreamReader<ClusteredVariantEntity> {
 
     private static final String ASSEMBLY_FIELD = "asm";
 
+    private static final String MAPPING_WEIGHT_FIELD = "mapWeight";
+
     private final String assembly;
 
     private MongoCursor<Document> evaCursor;
@@ -76,7 +78,8 @@ public class RSReader implements ItemStreamReader<ClusteredVariantEntity> {
     }
 
     public void initializeReader() {
-        Bson query = Filters.in(ASSEMBLY_FIELD, assembly);
+        Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
+                                 Filters.not(Filters.exists(MAPPING_WEIGHT_FIELD)));
         logger.info("Issuing find: {}", query);
 
         FindIterable<Document> clusteredVariantsDbsnp =
