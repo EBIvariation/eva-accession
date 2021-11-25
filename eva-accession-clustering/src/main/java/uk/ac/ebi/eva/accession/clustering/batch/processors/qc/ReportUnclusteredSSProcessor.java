@@ -27,14 +27,22 @@ public class ReportUnclusteredSSProcessor implements ItemProcessor<SubmittedVari
 
     private static final Logger logger = LoggerFactory.getLogger(ReportUnclusteredSSProcessor.class);
 
+    private final Long accessioningMonotonicInitSs;
+
+    public ReportUnclusteredSSProcessor(Long accessioningMonotonicInitSs) {
+        this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
+    }
+
     @Override
     public SubmittedVariantEntity process(SubmittedVariantEntity submittedVariantEntity) {
-           if (submittedVariantEntity.isAssemblyMatch() && Objects.isNull(
-                   submittedVariantEntity.getClusteredVariantAccession())) {
-               logger.error("SS record {} in assembly {} was not clustered",
-                            submittedVariantEntity, submittedVariantEntity.getReferenceSequenceAccession());
-               return null;
-           }
-           return submittedVariantEntity;
+        // Consider only non-dbSNP SS when reporting unclustered variants
+        // because unclustered SS in dbSNP are not valid variants and should not be clustered
+        if (submittedVariantEntity.getAccession() >= this.accessioningMonotonicInitSs
+                && Objects.isNull(submittedVariantEntity.getClusteredVariantAccession())) {
+            logger.error("SS ID {} with record {} in assembly {} was not clustered",
+                         submittedVariantEntity.getAccession(), submittedVariantEntity, submittedVariantEntity.getReferenceSequenceAccession());
+            return null;
+        }
+        return submittedVariantEntity;
     }
 }
