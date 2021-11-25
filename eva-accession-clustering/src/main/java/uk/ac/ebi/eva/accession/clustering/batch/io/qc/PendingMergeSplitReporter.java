@@ -87,7 +87,7 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
         rsAndAssociatedHash.forEach((key, value) -> bulkIDInsert.insert(new qcRSIdInSS(key, value)));
 
         try {
-            if (hashAndAssociatedRS.size() > 1) {
+            if (hashAndAssociatedRS.size() > 0) {
                 bulkHashInsert.execute();
             }
         }
@@ -103,7 +103,7 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
         }
 
         try {
-            if (rsAndAssociatedHash.size() > 1) {
+            if (rsAndAssociatedHash.size() > 0) {
                 bulkIDInsert.execute();
             }
         }
