@@ -16,6 +16,7 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.steps;
 
+import com.mongodb.MongoCursorNotFoundException;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -28,6 +29,8 @@ import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.backoff.BackOffPolicy;
+
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
@@ -60,11 +63,16 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
-            SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+            SimpleCompletionPolicy chunkSizeCompletionPolicy,
+            BackOffPolicy backOffPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
                 .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
                 .reader(mongoReader)
                 .writer(submittedVariantWriter)
+                .faultTolerant()
+                .retry(MongoCursorNotFoundException.class)
+                .retryLimit(5)  // TODO parameter?
+                .backOffPolicy(backOffPolicy)
                 .listener(progressListener)
                 .build();
         return step;

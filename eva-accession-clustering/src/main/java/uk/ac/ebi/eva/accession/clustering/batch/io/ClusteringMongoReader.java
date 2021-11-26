@@ -19,6 +19,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -41,6 +42,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     private static final String ASSEMBLY_FIELD = "seq";
 
     private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
+
+    private static final String ID_FIELD = "_id";
 
     private String assembly;
 
@@ -106,6 +109,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     private FindIterable<Document> getSubmittedVariants(Bson query, Class<?> entityClass) {
         return mongoTemplate.getCollection(mongoTemplate.getCollectionName(entityClass))
                             .find(query)
+                            .sort(Sorts.ascending(ID_FIELD))
                             .noCursorTimeout(true)
                             .batchSize(chunkSize);
     }

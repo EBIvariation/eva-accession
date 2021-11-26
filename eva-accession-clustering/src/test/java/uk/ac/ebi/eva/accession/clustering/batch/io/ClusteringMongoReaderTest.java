@@ -37,8 +37,11 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -112,6 +115,9 @@ public class ClusteringMongoReaderTest {
         assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), CLUSTERED_SUBMITTED_VARIANT_ID_EVA)));
         // Clustered submitted variant from dbSNP collection
         assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP)));
+        // check results ordered: dbSNP variants first, then EVA
+        assertEquals(Arrays.asList(CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP, CLUSTERED_SUBMITTED_VARIANT_ID_EVA),
+                     variants.stream().map(SubmittedVariantEntity::getId).collect(Collectors.toList()));
     }
 
     @Test
@@ -123,6 +129,9 @@ public class ClusteringMongoReaderTest {
         assertTrue(variants.stream().anyMatch(x -> Objects.equals(x.getId(), NOT_CLUSTERED_SUBMITTED_VARIANT_ID_EVA)));
         assertTrue(variants.stream().noneMatch(x -> Objects.equals(x.getId(),
                                                                   NOT_CLUSTERED_SUBMITTED_VARIANT_ID_DBSNP)));
+        // check results ordered by id
+        assertEquals(variants.stream().sorted(Comparator.comparing(SubmittedVariantEntity::getId))
+                             .collect(Collectors.toList()), variants);
     }
 
     private List<SubmittedVariantEntity> readIntoList(ClusteringMongoReader reader) {
