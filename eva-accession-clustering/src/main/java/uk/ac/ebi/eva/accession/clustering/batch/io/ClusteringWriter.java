@@ -195,7 +195,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         String assembly = clusteredRemappedSubmittedVariants.get(0).getReferenceSequenceAccession();
         Map<String, Long> allExistingHashesInDB = getSubmittedVariantsAllExistingHashesInDB(clusteredRemappedSubmittedVariants);
         Map<String, SubmittedVariantOperationEntity> mergeCandidateSVOE = new HashMap<>();
+        Map<String, SubmittedVariantOperationEntity> updateMergeCandidateSVOE = new HashMap<>();
         Map<Long, SubmittedVariantOperationEntity> rsSplitCandidateSVOE = new HashMap<>();
+        Map<Long, SubmittedVariantOperationEntity> updateRsSplitCandidateSVOE = new HashMap<>();
         for(SubmittedVariantOperationEntity svoe: getSVOEWithMergeAndRSSplitCandidates(assembly)){
             if (svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES)) {
                 mergeCandidateSVOE.put(getClusteredVariantHash(svoe.getInactiveObjects().get(0).getModel()), svoe);
@@ -221,10 +223,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             boolean isExistingRSOrMergeCandidate = checkIfExistingRSOrCandidateForMerge(remappedSubmittedVariantEntity,
                                                                                         clusteredVariantEntity,
                                                                                         assembly, allExistingHashesInDB,
-                                                                                        mergeCandidateSVOE);
+                                                                                        mergeCandidateSVOE,
+                                                                                        updateMergeCandidateSVOE);
             allExistingHashesGroupByRS.putIfAbsent(clusteredVariantEntity.getAccession(), new HashSet<>());
             checkIfCandidateForRSSplit(remappedSubmittedVariantEntity, clusteredVariantEntity, assembly,
-                                       allExistingHashesGroupByRS, rsSplitCandidateSVOE);
+                                       allExistingHashesGroupByRS, rsSplitCandidateSVOE, updateRsSplitCandidateSVOE);
 
             if (!isExistingRSOrMergeCandidate) {
                 if (clusteredVariantEntity.getAccession() >= accessioningMonotonicInitRs) {
@@ -238,8 +241,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                           clusteredVariantEntity.getAccession());
             }
         }
-
-        insertAllEntriesInDB(clusteredVariantEntities, dbsnpClusteredVariantEntities, mergeCandidateSVOE, rsSplitCandidateSVOE);
+        insertAllEntriesInDB(clusteredVariantEntities, dbsnpClusteredVariantEntities, updateMergeCandidateSVOE,
+                             updateRsSplitCandidateSVOE);
     }
 
     private List<SubmittedVariantEntity> getClusteredAndRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
@@ -293,7 +296,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                                          String assembly,
                                                          Map<String, Long> allExistingHashesInDB,
                                                          Map<String, SubmittedVariantOperationEntity>
-                                                                 mergeCandidateSVOE) {
+                                                                 mergeCandidateSVOE,
+                                                         Map<String, SubmittedVariantOperationEntity>
+                                                                 updateMergeCandidateSVOE) {
         Long variantAccession = clusteredVariantEntity.getAccession();
         String variantHash = clusteredVariantEntity.getHashedMessage();
         Long accessionInDB = allExistingHashesInDB.get(variantHash);
@@ -318,6 +323,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 submittedVariantOperationEntity.fill(EventType.RS_MERGE_CANDIDATES, accessionInDB,
                         "RS mismatch with " + accessionInDB, inactiveObjects);
 
+                updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
                 mergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             }
             return true;
@@ -326,10 +332,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     private void checkIfCandidateForRSSplit(SubmittedVariantEntity submittedVariantEntity,
-                                               ClusteredVariantEntity clusteredVariantEntity,
-                                               String assembly,
-                                               Map<Long, Set<String>> allExistingHashesGroupByRS,
-                                               Map<Long, SubmittedVariantOperationEntity> rsSplitCandidateSVOE) {
+                                            ClusteredVariantEntity clusteredVariantEntity,
+                                            String assembly,
+                                            Map<Long, Set<String>> allExistingHashesGroupByRS,
+                                            Map<Long, SubmittedVariantOperationEntity> rsSplitCandidateSVOE,
+                                            Map<Long, SubmittedVariantOperationEntity>  updateRsSplitCandidateSVOE) {
         Long variantAccession = clusteredVariantEntity.getAccession();
         String variantHash = clusteredVariantEntity.getHashedMessage();
 
@@ -355,6 +362,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         "Hash mismatch with " + variantAccession, inactiveEntities);
 
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
+                updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             }
         }
     }
