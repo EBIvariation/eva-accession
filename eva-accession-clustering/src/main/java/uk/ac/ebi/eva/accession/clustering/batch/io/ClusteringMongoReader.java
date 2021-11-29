@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Filters;
@@ -30,6 +31,8 @@ import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
@@ -57,6 +60,14 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     private int chunkSize;
 
+    // Used for execution context and recovery
+    private static final String CURRENT_ID_KEY = "currentId";
+    private static final String CURRENT_COLLECTION_KEY = "currentCollection";
+    private static final String DBSNP_COLLECTION = "dbsnp";
+    private static final String EVA_COLLECTION = "eva";
+    private String currentId;
+    private String currentCollection;  // dbSNP or EVA
+
     //decides whether already clustered or non clustered variants will be read by mongo reader
     private boolean readOnlyClusteredVariants;
 
@@ -69,11 +80,31 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     }
 
     @Override
+    @Retryable(value = MongoCursorNotFoundException.class, maxAttempts = 1)
     public SubmittedVariantEntity read() {
         // Read from dbsnp collection first and subsequently EVA collection
-        Document nextElement = (dbsnpCursor != null && dbsnpCursor.hasNext()) ? dbsnpCursor.next() :
-                (evaCursor.hasNext() ? evaCursor.next() : null);
-        return (nextElement != null) ? getSubmittedVariantEntity(nextElement) : null;
+        Document nextElement = null;
+        if (dbsnpCursor != null && dbsnpCursor.hasNext()) {
+            currentCollection = DBSNP_COLLECTION;
+            nextElement = dbsnpCursor.next();
+        }
+        else if (evaCursor.hasNext()) {
+            currentCollection = EVA_COLLECTION;
+            nextElement = evaCursor.next();
+        }
+        if (nextElement != null) {
+            SubmittedVariantEntity submittedVariantEntity = getSubmittedVariantEntity(nextElement);
+            currentId = submittedVariantEntity.getId();
+            return submittedVariantEntity;
+        }
+        return null;
+    }
+
+    @Recover
+    public SubmittedVariantEntity recover(MongoCursorNotFoundException exception) {
+        logger.info("Recovering from: {}", exception);
+        initializeReader();
+        return read();
     }
 
     private SubmittedVariantEntity getSubmittedVariantEntity(Document notClusteredSubmittedVariants) {
@@ -82,24 +113,34 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
+        if (executionContext.containsKey(CURRENT_ID_KEY)) {
+            this.currentId = executionContext.getString(CURRENT_ID_KEY);
+            this.currentCollection = executionContext.getString(CURRENT_COLLECTION_KEY);
+        }
         initializeReader();
     }
 
     public void initializeReader() {
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
                                  Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
+        Bson queryWithCurrentId = null;
+        if (currentId != null) {
+            queryWithCurrentId = Filters.and(query, Filters.gte(ID_FIELD, CURRENT_ID_KEY));
+        }
         logger.info("Issuing find: {}", query);
 
         if (readOnlyClusteredVariants){
-            FindIterable<Document> submittedVariantsDbsnp =
-                    getSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
+            FindIterable<Document> submittedVariantsDbsnp = DBSNP_COLLECTION.equals(currentCollection) ?
+                getSubmittedVariants(queryWithCurrentId, DbsnpSubmittedVariantEntity.class) :
+                getSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
             dbsnpCursor = submittedVariantsDbsnp.iterator();
         } else {
             // When clustering variant that do not have any RSID we do not want to retrieve any dbSNP submitted variants
             // We set the cursor for this purpose
             dbsnpCursor = null;
         }
-        FindIterable<Document> submittedVariantsEVA =
+        FindIterable<Document> submittedVariantsEVA = EVA_COLLECTION.equals(currentCollection) ?
+                getSubmittedVariants(queryWithCurrentId, SubmittedVariantEntity.class) :
                 getSubmittedVariants(query, SubmittedVariantEntity.class);
         evaCursor = submittedVariantsEVA.iterator();
 
@@ -116,7 +157,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
-
+        executionContext.put(CURRENT_COLLECTION_KEY, currentCollection);
+        executionContext.put(CURRENT_ID_KEY, currentId);
     }
 
     @Override
