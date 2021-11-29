@@ -310,8 +310,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
         if (allExistingHashesInDB.containsKey(variantHash)) {
             if (mergeCandidateSVOE.containsKey(variantHash)) {
-                mergeCandidateSVOE.get(variantHash).getInactiveObjects()
+                SubmittedVariantOperationEntity submittedVariantOperationEntity = mergeCandidateSVOE.get(variantHash);
+                submittedVariantOperationEntity.getInactiveObjects()
                         .add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
+                updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             } else {
                 List<SubmittedVariantInactiveEntity> inactiveObjects =
                         getAllSubmittedVariantsWithClusteringAccession(assembly, accessionInDB).stream()
@@ -343,8 +345,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         if (!allExistingHashesGroupByRS.get(variantAccession).isEmpty() &&
                 !allExistingHashesGroupByRS.get(variantAccession).contains(variantHash)) {
             if (rsSplitCandidateSVOE.containsKey(variantAccession)) {
-                List<SubmittedVariantInactiveEntity> inactiveEntities = rsSplitCandidateSVOE.get(variantAccession)
-                        .getInactiveObjects();
+                SubmittedVariantOperationEntity submittedVariantOperationEntity = rsSplitCandidateSVOE.get(variantAccession);
+                List<SubmittedVariantInactiveEntity> inactiveEntities = submittedVariantOperationEntity.getInactiveObjects();
                 boolean submittedVariantAlreadyExist = inactiveEntities.stream()
                         .anyMatch(sv -> submittedHashingFunction.apply(sv).equals(
                                 submittedVariantEntity.getHashedMessage()) &&
@@ -352,6 +354,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 if (!submittedVariantAlreadyExist) {
                     inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
                 }
+                updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             } else {
                 SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 List<SubmittedVariantInactiveEntity> inactiveEntities =
