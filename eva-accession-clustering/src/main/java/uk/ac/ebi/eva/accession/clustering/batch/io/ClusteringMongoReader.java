@@ -31,11 +31,15 @@ import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.RetryContext;
+import org.springframework.retry.backoff.ExponentialRandomBackOffPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+
+import java.util.Collections;
 
 
 public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantEntity> {
@@ -68,6 +72,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     private String currentId;
     private String currentCollection;  // dbSNP or EVA
 
+    private RetryTemplate retryTemplate;
+
     //decides whether already clustered or non clustered variants will be read by mongo reader
     private boolean readOnlyClusteredVariants;
 
@@ -77,18 +83,21 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
         this.assembly = assembly;
         this.chunkSize = chunkSize;
         this.readOnlyClusteredVariants = readOnlyClusteredVariants;
+//        this.retryTemplate = retryTemplate;
     }
 
     @Override
-    @Retryable(value = MongoCursorNotFoundException.class, maxAttempts = 1)
     public SubmittedVariantEntity read() {
+        return retryTemplate.execute(retryContext -> doRead());
+    }
+
+    public SubmittedVariantEntity doRead() {
         // Read from dbsnp collection first and subsequently EVA collection
         Document nextElement = null;
         if (dbsnpCursor != null && dbsnpCursor.hasNext()) {
             currentCollection = DBSNP_COLLECTION;
             nextElement = dbsnpCursor.next();
-        }
-        else if (evaCursor.hasNext()) {
+        } else if (evaCursor.hasNext()) {
             currentCollection = EVA_COLLECTION;
             nextElement = evaCursor.next();
         }
@@ -98,13 +107,6 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
             return submittedVariantEntity;
         }
         return null;
-    }
-
-    @Recover
-    public SubmittedVariantEntity recover(MongoCursorNotFoundException exception) {
-        logger.info("Recovering from: {}", exception);
-        initializeReader();
-        return read();
     }
 
     private SubmittedVariantEntity getSubmittedVariantEntity(Document notClusteredSubmittedVariants) {
@@ -117,7 +119,20 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
             this.currentId = executionContext.getString(CURRENT_ID_KEY);
             this.currentCollection = executionContext.getString(CURRENT_COLLECTION_KEY);
         }
+        initializeRetryTemplate();
         initializeReader();
+    }
+
+    private void initializeRetryTemplate() {
+        retryTemplate = new RetryTemplate();
+        MongoRetryPolicy retryPolicy = new MongoRetryPolicy();
+        retryTemplate.setRetryPolicy(retryPolicy);
+
+        ExponentialRandomBackOffPolicy backOffPolicy = new ExponentialRandomBackOffPolicy();
+        backOffPolicy.setInitialInterval(100L);
+        backOffPolicy.setMaxInterval(30000L);
+        backOffPolicy.setMultiplier(2.0);
+        retryTemplate.setBackOffPolicy(backOffPolicy);
     }
 
     public void initializeReader() {
@@ -167,5 +182,22 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
             dbsnpCursor.close();
         }
         evaCursor.close();
+    }
+
+     class MongoRetryPolicy extends SimpleRetryPolicy {
+
+        public MongoRetryPolicy() {
+            // TODO parameter for maxAttempts?
+            super(5, Collections.singletonMap(MongoCursorNotFoundException.class, true));
+        }
+
+        @Override
+        public void registerThrowable(RetryContext context, Throwable throwable) {
+            if (canRetry(context) && context.getRetryCount() < getMaxAttempts()-1
+                    && throwable instanceof MongoCursorNotFoundException) {
+                initializeReader();
+            }
+            super.registerThrowable(context, throwable);
+        }
     }
 }
