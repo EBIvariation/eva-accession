@@ -314,7 +314,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 submittedVariantOperationEntity = mergeCandidateSVOE.get(variantHash);
                 submittedVariantOperationEntity.getInactiveObjects()
                         .add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
-                updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             } else {
                 List<SubmittedVariantInactiveEntity> inactiveObjects =
                         getAllSubmittedVariantsWithClusteringAccession(assembly, accessionInDB).stream()
@@ -356,7 +355,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 if (!submittedVariantAlreadyExist) {
                     inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
                 }
-                updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             } else {
                 submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 List<SubmittedVariantInactiveEntity> inactiveEntities =
