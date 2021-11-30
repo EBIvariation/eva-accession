@@ -309,8 +309,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         }
 
         if (allExistingHashesInDB.containsKey(variantHash)) {
+            SubmittedVariantOperationEntity submittedVariantOperationEntity;
             if (mergeCandidateSVOE.containsKey(variantHash)) {
-                SubmittedVariantOperationEntity submittedVariantOperationEntity = mergeCandidateSVOE.get(variantHash);
+                submittedVariantOperationEntity = mergeCandidateSVOE.get(variantHash);
                 submittedVariantOperationEntity.getInactiveObjects()
                         .add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
                 updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
@@ -321,13 +322,13 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                 .map(SubmittedVariantInactiveEntity::new)
                                 .collect(Collectors.toList());
                 inactiveObjects.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
-                SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
+                submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 submittedVariantOperationEntity.fill(EventType.RS_MERGE_CANDIDATES, accessionInDB,
                         "RS mismatch with " + accessionInDB, inactiveObjects);
 
-                updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
                 mergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             }
+            updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             return true;
         }
         return false;
@@ -344,8 +345,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
         if (!allExistingHashesGroupByRS.get(variantAccession).isEmpty() &&
                 !allExistingHashesGroupByRS.get(variantAccession).contains(variantHash)) {
+            SubmittedVariantOperationEntity submittedVariantOperationEntity;
             if (rsSplitCandidateSVOE.containsKey(variantAccession)) {
-                SubmittedVariantOperationEntity submittedVariantOperationEntity = rsSplitCandidateSVOE.get(variantAccession);
+                submittedVariantOperationEntity = rsSplitCandidateSVOE.get(variantAccession);
                 List<SubmittedVariantInactiveEntity> inactiveEntities = submittedVariantOperationEntity.getInactiveObjects();
                 boolean submittedVariantAlreadyExist = inactiveEntities.stream()
                         .anyMatch(sv -> submittedHashingFunction.apply(sv).equals(
@@ -356,7 +358,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 }
                 updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             } else {
-                SubmittedVariantOperationEntity submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
+                submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 List<SubmittedVariantInactiveEntity> inactiveEntities =
                         getAllSubmittedVariantsWithClusteringAccession(assembly, variantAccession).stream()
                                 .map(SubmittedVariantInactiveEntity::new)
@@ -365,8 +367,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         "Hash mismatch with " + variantAccession, inactiveEntities);
 
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
-                updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             }
+            updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
         }
     }
 
