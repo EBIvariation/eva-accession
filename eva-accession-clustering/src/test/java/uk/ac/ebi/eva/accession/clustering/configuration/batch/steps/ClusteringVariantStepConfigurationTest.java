@@ -200,8 +200,6 @@ public class ClusteringVariantStepConfigurationTest {
         List<SubmittedVariantOperationEntity> operations = mongoTemplate.findAll(SubmittedVariantOperationEntity.class);
         assertEquals(1, operations.size());
         assertEquals(EventType.RS_MERGE_CANDIDATES, operations.get(0).getEventType());
-
-        // TODO test retries (this step only, for now at least)
     }
 
     private int getSubmittedVariantsWithRS() {

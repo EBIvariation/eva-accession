@@ -83,7 +83,6 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
         this.assembly = assembly;
         this.chunkSize = chunkSize;
         this.readOnlyClusteredVariants = readOnlyClusteredVariants;
-//        this.retryTemplate = retryTemplate;
     }
 
     @Override
@@ -125,14 +124,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     private void initializeRetryTemplate() {
         retryTemplate = new RetryTemplate();
-        MongoRetryPolicy retryPolicy = new MongoRetryPolicy();
-        retryTemplate.setRetryPolicy(retryPolicy);
-
-        ExponentialRandomBackOffPolicy backOffPolicy = new ExponentialRandomBackOffPolicy();
-        backOffPolicy.setInitialInterval(100L);
-        backOffPolicy.setMaxInterval(30000L);
-        backOffPolicy.setMultiplier(2.0);
-        retryTemplate.setBackOffPolicy(backOffPolicy);
+        retryTemplate.setRetryPolicy(new MongoReaderRetryPolicy());
+        retryTemplate.setBackOffPolicy(new ExponentialRandomBackOffPolicy());
     }
 
     public void initializeReader() {
@@ -184,10 +177,13 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
         evaCursor.close();
     }
 
-     class MongoRetryPolicy extends SimpleRetryPolicy {
 
-        public MongoRetryPolicy() {
-            // TODO parameter for maxAttempts?
+    /**
+     * Retry policy for handling MongoCursorNotFoundException during reads.
+     */
+    class MongoReaderRetryPolicy extends SimpleRetryPolicy {
+
+        public MongoReaderRetryPolicy() {
             super(5, Collections.singletonMap(MongoCursorNotFoundException.class, true));
         }
 
