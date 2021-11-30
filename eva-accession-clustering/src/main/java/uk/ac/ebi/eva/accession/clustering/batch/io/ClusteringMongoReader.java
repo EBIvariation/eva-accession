@@ -74,6 +74,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     private RetryTemplate retryTemplate;
 
+    public static final int MAX_RETRIES = 5;
+
     //decides whether already clustered or non clustered variants will be read by mongo reader
     private boolean readOnlyClusteredVariants;
 
@@ -122,7 +124,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
         initializeReader();
     }
 
-    private void initializeRetryTemplate() {
+    public void initializeRetryTemplate() {
         retryTemplate = new RetryTemplate();
         retryTemplate.setRetryPolicy(new MongoReaderRetryPolicy());
         retryTemplate.setBackOffPolicy(new ExponentialRandomBackOffPolicy());
@@ -184,7 +186,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     class MongoReaderRetryPolicy extends SimpleRetryPolicy {
 
         public MongoReaderRetryPolicy() {
-            super(5, Collections.singletonMap(MongoCursorNotFoundException.class, true));
+            super(MAX_RETRIES, Collections.singletonMap(MongoCursorNotFoundException.class, true));
         }
 
         @Override

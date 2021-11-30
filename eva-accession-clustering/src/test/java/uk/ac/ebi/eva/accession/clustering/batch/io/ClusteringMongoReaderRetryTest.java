@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.clustering.batch.io;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCursor;
@@ -34,16 +35,20 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader.MAX_RETRIES;
 
 @RunWith(SpringRunner.class)
 public class ClusteringMongoReaderRetryTest {
@@ -70,15 +75,21 @@ public class ClusteringMongoReaderRetryTest {
     @Test
     public void readSucceedsWhenCursorExceptionThrownOnce() {
         MongoCursor mockCursor = mock(MongoCursor.class);
-        // TODO do this properly: three variants to read
         when(mockCursor.hasNext()).thenReturn(true, true, true, true, false);
-        Document doc = new Document();
-        when(mockCursor.next()).thenThrow(MongoCursorNotFoundException.class)
-                               .thenReturn(doc, doc, doc);
+        Document doc1 = new Document("id_", "1");
+        Document doc2 = new Document("id_", "2");
+        Document doc3 = new Document("id_", "3");
+        when(mockCursor.next()).thenReturn(doc1)
+                               .thenThrow(MongoCursorNotFoundException.class)
+                               .thenReturn(doc2, doc3);
         openReaderWithMockCursor(mockCursor);
 
         List<SubmittedVariantEntity> variants = readIntoList(nonClusteredVariantReader);
-        assertEquals(3, variants.size());
+        assertEquals(variants.stream().map(sve -> sve.getId()).collect(Collectors.toList()),
+                     Arrays.asList("1", "2", "3"));
+        // next() called once per document, plus 1 with a failure
+        verify(mockCursor, times(4)).next();
+        // initializeReader() called once at the start and once during the retry
         verify(nonClusteredVariantReader, times(2)).initializeReader();
     }
 
@@ -86,13 +97,18 @@ public class ClusteringMongoReaderRetryTest {
     public void readFailsWhenOtherExceptionThrownOnce() {
         MongoCursor mockCursor = mock(MongoCursor.class);
         when(mockCursor.hasNext()).thenReturn(true, true, true, true, false);
-        Document doc = new Document();
-        when(mockCursor.next()).thenThrow(MongoException.class)
-                               .thenReturn(doc, doc, doc);
+        Document doc1 = new Document("id_", "1");
+        Document doc2 = new Document("id_", "2");
+        Document doc3 = new Document("id_", "3");
+        when(mockCursor.next()).thenReturn(doc1)
+                               .thenThrow(MongoException.class)
+                               .thenReturn(doc2, doc3);
         openReaderWithMockCursor(mockCursor);
 
         assertThrows(MongoException.class, () -> readIntoList(nonClusteredVariantReader));
-        verify(mockCursor, times(1)).next();
+        // next() called twice and fails
+        verify(mockCursor, times(2)).next();
+        // initializeReader() called only at start (no retry)
         verify(nonClusteredVariantReader, times(1)).initializeReader();
     }
 
@@ -104,15 +120,17 @@ public class ClusteringMongoReaderRetryTest {
         openReaderWithMockCursor(mockCursor);
 
         assertThrows(MongoCursorNotFoundException.class, () -> readIntoList(nonClusteredVariantReader));
-        verify(mockCursor, times(5)).next();
-        verify(nonClusteredVariantReader, times(5)).initializeReader();
+        // next() and initializeReader() called as many times as retry attempts allowed
+        verify(mockCursor, times(MAX_RETRIES)).next();
+        verify(nonClusteredVariantReader, times(MAX_RETRIES)).initializeReader();
     }
 
     private void openReaderWithMockCursor(MongoCursor mockCursor) {
         ExecutionContext executionContext = new ExecutionContext();
 
         MongoConverter mockConverter = mock(MongoConverter.class);
-        when(mockConverter.read(any(), any())).thenReturn(mock(SubmittedVariantEntity.class));
+        when(mockConverter.read(eq(SubmittedVariantEntity.class), any(BasicDBObject.class)))
+                .thenAnswer(invocation -> createSSWithId(((BasicDBObject)invocation.getArgument(1)).getString("id_")));
         when(mongoTemplate.getConverter()).thenReturn(mockConverter);
         when(mongoTemplate.getCollection(any())
                           .find(any(Bson.class))
@@ -123,6 +141,10 @@ public class ClusteringMongoReaderRetryTest {
                 .thenReturn(mockCursor);
 
         nonClusteredVariantReader.open(executionContext);
+    }
+
+    private SubmittedVariantEntity createSSWithId(String id) {
+        return new SubmittedVariantEntity(1L, id, "", 1, "PRJ1", "chr1", 0, "", "", 5L, false, false, false, false, 1);
     }
 
     private List<SubmittedVariantEntity> readIntoList(ClusteringMongoReader reader) {
