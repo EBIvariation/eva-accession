@@ -136,6 +136,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
         Bson queryWithCurrentId = null;
         if (currentId != null) {
             queryWithCurrentId = Filters.and(query, Filters.gte(ID_FIELD, CURRENT_ID_KEY));
+            logger.info("Issuing find in {} collection: {}", currentCollection, queryWithCurrentId);
         }
         logger.info("Issuing find: {}", query);
 
