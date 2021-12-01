@@ -1,0 +1,25 @@
+{
+  "dbsnpClusteredVariantEntity": [
+    {  "_id" : "206B82DD7151520B1C05C9714DFB869C9A31E45A",  "asm" : "ASM1",  "tax" : 60711,  "contig" : "chr1",  "start" : NumberLong(100),  "type" : "SNV",  "accession" : NumberLong(10),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.410Z") },
+    {  "_id" : "9BFB72EEB241243D8A511C72D632C40D01BAFAA4",  "asm" : "ASM2",  "tax" : 60711,  "contig" : "chr1",  "start" : NumberLong(100),  "type" : "SNV",  "accession" : NumberLong(9),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.452Z") },
+    {  "_id" : "43E49C848B1735E43B391FE56EC4C9FA607339B3",  "asm" : "ASM3",  "tax" : 60711,  "contig" : "chr1",  "start" : NumberLong(100),  "type" : "SNV",  "accession" : NumberLong(8),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.540Z") }
+  ],
+
+  "dbsnpClusteredVariantOperationEntity": [
+    {  "_id" : ObjectId("61a7c5d191a001964b2d9ba0"),  "eventType" : "MERGED",  "accession" : NumberLong(10),  "mergeInto" : NumberLong(9),  "reason" : "After remapping to ASM2, RS IDs mapped to the same locus.",  "inactiveObjects" : [ { "asm" : "ASM2", "tax" : 60711, "contig" : "chr1", "start" : NumberLong(100), "type" : "SNV", "validated" : false, "hashedMessage" : "9BFB72EEB241243D8A511C72D632C40D01BAFAA4", "accession" : NumberLong(10), "version" : 1, "createdDate" : ISODate("2021-12-01T18:58:25.414Z") } ],  "createdDate" : ISODate("2021-12-01T18:58:25.459Z") },
+    {  "_id" : ObjectId("61a7c5d191a001964b2d9ba2"),  "eventType" : "MERGED",  "accession" : NumberLong(9),  "mergeInto" : NumberLong(8),  "reason" : "After remapping to ASM3, RS IDs mapped to the same locus.",  "inactiveObjects" : [ { "asm" : "ASM3", "tax" : 60711, "contig" : "chr1", "start" : NumberLong(100), "type" : "SNV", "validated" : false, "hashedMessage" : "43E49C848B1735E43B391FE56EC4C9FA607339B3", "accession" : NumberLong(9), "version" : 1, "createdDate" : ISODate("2021-12-01T18:58:25.534Z") } ],  "createdDate" : ISODate("2021-12-01T18:58:25.542Z") }
+  ],
+
+  "dbsnpSubmittedVariantEntity": [
+    {  "_id" : "73EE7DC27EACE0A7273B8255F82A8D07E37DFD61",  "seq" : "ASM1",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(100),  "ref" : "C",  "alt" : "T",  "rs" : NumberLong(10),  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.383Z") },
+    {  "_id" : "F29743775F9C54AC11D8E2E0B0104032E8056426",  "seq" : "ASM2",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(100),  "ref" : "C",  "alt" : "T",  "rs" : NumberLong(10),  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.414Z") },
+    {  "_id" : "2E3877ADD7F5D111AC614D5E5CB69B5C242B7E5D",  "seq" : "ASM2",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(100),  "ref" : "C",  "alt" : "A",  "rs" : NumberLong(9),  "accession" : NumberLong(2),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.416Z") },
+    {  "_id" : "9BBA0D61DD2E03E3578D0C7476FCCF85FAF09B69",  "seq" : "ASM3",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(100),  "ref" : "C",  "alt" : "T",  "rs" : NumberLong(9),  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.534Z") },
+    {  "_id" : "59227AF5E67E46EDA718F25D2D350D06C3B1990B",  "seq" : "ASM3",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(100),  "ref" : "C",  "alt" : "A",  "rs" : NumberLong(8),  "accession" : NumberLong(3),  "version" : 1,  "createdDate" : ISODate("2021-12-01T18:58:25.535Z") }
+  ],
+
+  "dbsnpSubmittedVariantOperationEntity,": [
+    {  "_id" : ObjectId("61a7c5d191a001964b2d9ba1"),  "eventType" : "UPDATED",  "accession" : NumberLong(1),  "reason" : "Original rs10 associated with SS was merged into rs9.",  "inactiveObjects" : [ { "seq" : "ASM2", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(100), "ref" : "C", "alt" : "T", "rs" : NumberLong(10), "evidence" : true, "asmMatch" : true, "allelesMatch" : true, "validated" : false, "hashedMessage" : "F29743775F9C54AC11D8E2E0B0104032E8056426", "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T18:58:25.414Z") } ],  "createdDate" : ISODate("2021-12-01T18:58:25.487Z") },
+    {  "_id" : ObjectId("61a7c5d191a001964b2d9ba3"),  "eventType" : "UPDATED",  "accession" : NumberLong(1),  "reason" : "Original rs9 associated with SS was merged into rs8.",  "inactiveObjects" : [ { "seq" : "ASM3", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(100), "ref" : "C", "alt" : "T", "rs" : NumberLong(9), "evidence" : true, "asmMatch" : true, "allelesMatch" : true, "validated" : false, "hashedMessage" : "9BBA0D61DD2E03E3578D0C7476FCCF85FAF09B69", "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T18:58:25.534Z") } ],  "createdDate" : ISODate("2021-12-01T18:58:25.548Z") }
+  ]
+}
