@@ -246,7 +246,7 @@ public class ClusteringVariantStepConfigurationTest {
 
     private void assertSubmittedVariantsUpdated() {
         assertTrue(allSubmittedVariantsClustered());
-        List<Long> expectedAccessions = Arrays.asList(3000000000L, 3000000000L, 3000000001L, 3000000002L, 3000000003L);
+        List<Long> expectedAccessions = Arrays.asList(3000000000L, 3000000001L, 3000000002L, 3000000002L, 3000000003L);
         assertGeneratedAccessions(SUBMITTED_VARIANT_COLLECTION, "rs", expectedAccessions);
     }
 
