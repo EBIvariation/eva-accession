@@ -1,0 +1,36 @@
+{
+  "clusteredVariantEntity": [
+    {  "_id" : "4D85026A730FD4CBFDDF9A6C5ACC4BFE56C94FFB",  "asm" : "ASM2",  "tax" : 60711,  "contig" : "chr1",  "start" : NumberLong(101),  "type" : "SNV",  "accession" : NumberLong("3000000000"),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.300Z") }
+  ],
+
+  "clusteredVariantOperationEntity": [
+    {  "_id" : ObjectId("61a7c78f91a00197eabafe39"),  "eventType" : "MERGED",  "accession" : NumberLong("3000000000"),  "mergeInto" : NumberLong(8),  "reason" : "After remapping to ASM3, RS IDs mapped to the same locus.",  "inactiveObjects" : [ { "asm" : "ASM3", "tax" : 60711, "contig" : "chr1", "start" : NumberLong(101), "type" : "SNV", "validated" : false, "hashedMessage" : "60C684EE6A2832C846768AEAA55CB99CDA9E6447", "accession" : NumberLong("3000000000"), "version" : 1, "createdDate" : ISODate("2021-12-01T19:05:51.345Z") } ],  "createdDate" : ISODate("2021-12-01T19:05:51.356Z") }
+  ],
+
+  "dbsnpClusteredVariantEntity": [
+    {  "_id" : "206B82DD7151520B1C05C9714DFB869C9A31E45A",  "asm" : "ASM1",  "tax" : 60711,  "contig" : "chr1",  "start" : NumberLong(100),  "type" : "SNV",  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.189Z") }
+    {  "_id" : "9BFB72EEB241243D8A511C72D632C40D01BAFAA4",  "asm" : "ASM2",  "tax" : 60711,  "contig" : "chr1",  "start" : NumberLong(100),  "type" : "SNV",  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.194Z") },
+    {  "_id" : "60C684EE6A2832C846768AEAA55CB99CDA9E6447",  "asm" : "ASM3",  "tax" : 60711,  "contig" : "chr1",  "start" : NumberLong(101),  "type" : "SNV",  "accession" : NumberLong(8),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.354Z") }
+  ],
+
+  "dbsnpClusteredVariantOperationEntity": [
+    {  "_id" : ObjectId("61a7c78f91a00197eabafe37"),  "eventType" : "RS_SPLIT",  "accession" : NumberLong(1),  "splitInto" : NumberLong("3000000000"),  "reason" : "Due to hash mismatch, rs3000000000 was issued to split from rs1.",  "inactiveObjects" : [ { "asm" : "ASM2", "tax" : 60711, "contig" : "chr1", "start" : NumberLong(101), "type" : "SNV", "validated" : false, "hashedMessage" : "4D85026A730FD4CBFDDF9A6C5ACC4BFE56C94FFB", "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T19:05:51.192Z") } ],  "createdDate" : ISODate("2021-12-01T19:05:51.335Z") }
+  ],
+
+  "dbsnpSubmittedVariantEntity": [
+    {  "_id" : "73EE7DC27EACE0A7273B8255F82A8D07E37DFD61",  "seq" : "ASM1",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(100),  "ref" : "C",  "alt" : "T",  "rs" : NumberLong(1),  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.165Z") },
+    {  "_id" : "F29743775F9C54AC11D8E2E0B0104032E8056426",  "seq" : "ASM2",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(100),  "ref" : "C",  "alt" : "T",  "rs" : NumberLong(1),  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.191Z") },
+    {  "_id" : "A11929B23E3E6E8130F33BF3D28A79C66777CFCB",  "seq" : "ASM2",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(101),  "ref" : "T",  "alt" : "A",  "rs" : NumberLong("3000000000"),  "accession" : NumberLong(2),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.192Z") },
+    {  "_id" : "7C9AE88D95529EA73E1DAB6B8A71252665A4FAC5",  "seq" : "ASM3",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(101),  "ref" : "C",  "alt" : "T",  "rs" : NumberLong("3000000000"),  "accession" : NumberLong(1),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.345Z") },
+    {  "_id" : "DD0A31E7E1F5C05E7D2A325F8B1E810669368935",  "seq" : "ASM3",  "tax" : 60711,  "study" : "PRJ1",  "contig" : "chr1",  "start" : NumberLong(101),  "ref" : "C",  "alt" : "A",  "rs" : NumberLong(8),  "accession" : NumberLong(3),  "version" : 1,  "createdDate" : ISODate("2021-12-01T19:05:51.346Z") }
+  ],
+
+  "dbsnpSubmittedVariantOperationEntity": [
+    {  "_id" : ObjectId("61a7c78f91a00197eabafe38"),  "eventType" : "UPDATED",  "accession" : NumberLong(2),  "reason" : "SS was associated with the split RS rs3000000000 that was split from rs1 after remapping.",  "inactiveObjects" : [ { "seq" : "ASM2", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(101), "ref" : "T", "alt" : "A", "rs" : NumberLong(1), "evidence" : true, "asmMatch" : true, "allelesMatch" : true, "validated" : false, "hashedMessage" : "A11929B23E3E6E8130F33BF3D28A79C66777CFCB", "accession" : NumberLong(2), "version" : 1, "createdDate" : ISODate("2021-12-01T19:05:51.192Z") } ],  "createdDate" : ISODate("2021-12-01T19:05:51.342Z") },
+    {  "_id" : ObjectId("61a7c78f91a00197eabafe3a"),  "eventType" : "UPDATED",  "accession" : NumberLong(1),  "reason" : "Original rs3000000000 associated with SS was merged into rs8.",  "inactiveObjects" : [ { "seq" : "ASM3", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(101), "ref" : "C", "alt" : "T", "rs" : NumberLong("3000000000"), "evidence" : true, "asmMatch" : true, "allelesMatch" : true, "validated" : false, "hashedMessage" : "7C9AE88D95529EA73E1DAB6B8A71252665A4FAC5", "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T19:05:51.345Z") } ],  "createdDate" : ISODate("2021-12-01T19:05:51.367Z") }
+  ],
+
+  "submittedVariantOperationEntity": [
+    {  "_id" : ObjectId("61a7c78f91a00197eabafe36"),  "eventType" : "RS_SPLIT_CANDIDATES",  "accession" : NumberLong(1),  "reason" : "Hash mismatch with 1",  "inactiveObjects" : [ { "seq" : "ASM2", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(100), "ref" : "C", "alt" : "T", "rs" : NumberLong(1), "evidence" : true, "asmMatch" : true, "allelesMatch" : true, "validated" : false, "hashedMessage" : "F29743775F9C54AC11D8E2E0B0104032E8056426", "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T19:05:51.191Z") }, { "seq" : "ASM2", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(101), "ref" : "T", "alt" : "A", "rs" : NumberLong(1), "evidence" : true, "asmMatch" : true, "allelesMatch" : true, "validated" : false, "hashedMessage" : "A11929B23E3E6E8130F33BF3D28A79C66777CFCB", "accession" : NumberLong(2), "version" : 1, "createdDate" : ISODate("2021-12-01T19:05:51.192Z") } ],  "createdDate" : ISODate("2021-12-01T19:05:51.201Z") }
+  ]
+}
