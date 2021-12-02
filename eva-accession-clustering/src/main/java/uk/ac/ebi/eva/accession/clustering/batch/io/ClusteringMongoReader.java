@@ -135,7 +135,7 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
                                  Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
         Bson queryWithCurrentId = null;
         if (currentId != null) {
-            queryWithCurrentId = Filters.and(query, Filters.gte(ID_FIELD, CURRENT_ID_KEY));
+            queryWithCurrentId = Filters.and(query, Filters.gt(ID_FIELD, currentId));
             logger.info("Issuing find in {} collection: {}", currentCollection, queryWithCurrentId);
         }
         logger.info("Issuing find: {}", query);
