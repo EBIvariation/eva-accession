@@ -312,8 +312,11 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             SubmittedVariantOperationEntity submittedVariantOperationEntity;
             if (mergeCandidateSVOE.containsKey(variantHash)) {
                 submittedVariantOperationEntity = mergeCandidateSVOE.get(variantHash);
-                submittedVariantOperationEntity.getInactiveObjects()
-                        .add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
+                List<SubmittedVariantInactiveEntity> inactiveEntities =
+                        submittedVariantOperationEntity.getInactiveObjects();
+                if (!doesSubmittedVariantAlreadyExistInSVOE(submittedVariantEntity, inactiveEntities)) {
+                    inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
+                }
             } else {
                 List<SubmittedVariantInactiveEntity> inactiveObjects =
                         getAllSubmittedVariantsWithClusteringAccession(assembly, accessionInDB).stream()
@@ -347,12 +350,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             SubmittedVariantOperationEntity submittedVariantOperationEntity;
             if (rsSplitCandidateSVOE.containsKey(variantAccession)) {
                 submittedVariantOperationEntity = rsSplitCandidateSVOE.get(variantAccession);
-                List<SubmittedVariantInactiveEntity> inactiveEntities = submittedVariantOperationEntity.getInactiveObjects();
-                boolean submittedVariantAlreadyExist = inactiveEntities.stream()
-                        .anyMatch(sv -> submittedHashingFunction.apply(sv).equals(
-                                submittedVariantEntity.getHashedMessage()) &&
-                                sv.getAccession().equals(submittedVariantEntity.getAccession()));
-                if (!submittedVariantAlreadyExist) {
+                List<SubmittedVariantInactiveEntity> inactiveEntities =
+                        submittedVariantOperationEntity.getInactiveObjects();
+                if (!doesSubmittedVariantAlreadyExistInSVOE(submittedVariantEntity, inactiveEntities)) {
                     inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
                 }
             } else {
@@ -368,6 +368,13 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             }
             updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
         }
+    }
+
+    private boolean doesSubmittedVariantAlreadyExistInSVOE(SubmittedVariantEntity submittedVariantEntity, List<SubmittedVariantInactiveEntity> inactiveEntities) {
+        return inactiveEntities.stream()
+                .anyMatch(sv -> submittedHashingFunction.apply(sv).equals(
+                        submittedVariantEntity.getHashedMessage()) &&
+                        sv.getAccession().equals(submittedVariantEntity.getAccession()));
     }
 
     private void insertAllEntriesInDB(List<ClusteredVariantEntity> clusteredVariantEntities,
