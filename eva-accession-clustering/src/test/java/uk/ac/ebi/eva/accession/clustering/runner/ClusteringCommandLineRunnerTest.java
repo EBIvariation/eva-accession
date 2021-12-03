@@ -93,9 +93,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -104,6 +106,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -222,6 +225,14 @@ public class ClusteringCommandLineRunnerTest {
             this.start = start;
             this.type = type;
         }
+
+        public String getHash() {
+            Function<IClusteredVariant, String> hashingFunction =
+                    new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+            return hashingFunction.apply(
+                    new ClusteredVariant(this.assembly, -1, this.contig, this.start, this.type, null,
+                                         null));
+        }
     }
 
     private RSLocus rsLocus1, rsLocus2, rsLocus3, rsLocus4, rsLocus4_old, rsLocus5;
@@ -290,6 +301,124 @@ public class ClusteringCommandLineRunnerTest {
         runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
+    @DirtiesContext
+    /*
+        @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=2023161403/>
+     */
+    public void runProcessRemappedRSJobMultipleTimes() throws JobExecutionException {
+        rsLocus1 = new RSLocus(ASM2, "chr1", 100L, VariantType.SNV);
+        rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.DEL);
+        rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.INS);
+        rsLocus4 = new RSLocus(ASM2, "chr1", 103L, VariantType.SNV);
+        rsLocus5 = new RSLocus(ASM2, "chr1", 104L, VariantType.INS);
+
+        List<List<SubmittedVariantEntity>> mergeOperations = new ArrayList<>();
+        List<List<SubmittedVariantEntity>> splitOperations = new ArrayList<>();
+        List<String> insertedRSHashes = new ArrayList<>();
+        // First run
+        SubmittedVariantEntity ss1 = createSS(1L, 1L, rsLocus1, "A", "T", true);
+        SubmittedVariantEntity ss2 = createSS(2L, 2L, rsLocus1, "A", "G", true);
+        SubmittedVariantEntity ss3 = createSS(3L, 3L, rsLocus2, "T", "", true);
+        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        mergeOperations.add(Arrays.asList(ss1, ss2));
+        insertedRSHashes.addAll(Arrays.asList(rsLocus1.getHash(), rsLocus2.getHash()));
+        assertDatabaseState(mergeOperations, splitOperations, insertedRSHashes);
+
+        // Second run
+        SubmittedVariantEntity ss4 = createSS(4L, 3L, rsLocus3, "", "T", true);
+        SubmittedVariantEntity ss5 = createSS(5L, 4L, rsLocus4, "A", "G", true);
+        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        splitOperations.add(Arrays.asList(ss3, ss4));
+        insertedRSHashes.addAll(Arrays.asList(rsLocus3.getHash(), rsLocus4.getHash()));
+        assertDatabaseState(mergeOperations, splitOperations, insertedRSHashes);
+
+        // Third run
+        SubmittedVariantEntity ss6 = createSS(6L, 5L, rsLocus4, "G", "A", true);
+        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        mergeOperations.add(Arrays.asList(ss5, ss6));
+        assertDatabaseState(mergeOperations, splitOperations, insertedRSHashes);
+
+        // Fourth run
+        createSS(7L, 6L, rsLocus5, "", "A", true);
+        runner.setJobNames(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        insertedRSHashes.add(rsLocus5.getHash());
+        assertDatabaseState(mergeOperations, splitOperations, insertedRSHashes);
+    }
+
+    private void assertDatabaseState(List<List<SubmittedVariantEntity>> expectedSSListInMergeOps,
+                                     List<List<SubmittedVariantEntity>> expectedSSListInSplitOps,
+                                     List<String> expectedInsertedRSHashes) {
+        List<SubmittedVariantOperationEntity> allOperationsInDB =
+                this.mongoTemplate.findAll(SubmittedVariantOperationEntity.class);
+        List<SubmittedVariantOperationEntity> mergeOperationsInDB = allOperationsInDB.stream().filter(
+                op -> op.getEventType().equals(EventType.RS_MERGE_CANDIDATES)).collect(Collectors.toList());
+        List<SubmittedVariantOperationEntity> splitOperationsInDB = allOperationsInDB.stream().filter(
+                op -> op.getEventType().equals(EventType.RS_SPLIT_CANDIDATES)).collect(Collectors.toList());
+        assertEquals(expectedSSListInMergeOps.size() , mergeOperationsInDB.size());
+        assertEquals(splitOperationsInDB.size() , splitOperationsInDB.size());
+        if (expectedSSListInMergeOps.size() > 0) {
+            assertTrue(expectedSSListInMergeOps.stream()
+                                              .allMatch(participantSSList ->
+                                                                areAllSSPresentInOperation(participantSSList,
+                                                                                           mergeOperationsInDB)
+                                              ));
+        }
+        if (expectedSSListInSplitOps.size() > 0) {
+            assertTrue(expectedSSListInSplitOps.stream()
+                                              .allMatch(participantSSList ->
+                                                                areAllSSPresentInOperation(participantSSList,
+                                                                                           splitOperationsInDB)
+                                              ));
+        }
+        List<ClusteredVariantEntity> clusteredVariantEntities =
+                this.mongoTemplate.findAll(ClusteredVariantEntity.class);
+        clusteredVariantEntities.addAll(this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class));
+        assertEquals(expectedInsertedRSHashes.size(), clusteredVariantEntities.size());
+        assertTrue(expectedInsertedRSHashes.containsAll(clusteredVariantEntities.stream()
+                                                                      .map(ClusteredVariantEntity::getHashedMessage)
+                                                                      .collect(Collectors.toList())));
+    }
+
+    private boolean areAllSSPresentInOperation(List<SubmittedVariantEntity> expectedParticipantSS,
+                                               List<SubmittedVariantOperationEntity> operationsInDB) {
+        List<Long> expectedParticipantSSAccessions = expectedParticipantSS
+                .stream().map(SubmittedVariantEntity::getAccession).collect(Collectors.toList());
+        List<String> expectedParticipantSSHashes = expectedParticipantSS
+                .stream().map(SubmittedVariantEntity::getHashedMessage).collect(Collectors.toList());
+        SubmittedVariantOperationEntity matchingOperation =
+                operationsInDB.stream().filter(op -> op.getInactiveObjects().stream()
+                                                   .anyMatch(inactiveEntity ->
+                                                                     expectedParticipantSSHashes.contains(
+                                                                             inactiveEntity.toSubmittedVariantEntity()
+                                                                                     .getHashedMessage())))
+                          .findFirst().get();
+        // Match both SS hashes and accessions because SS hash equality does not check for accessions
+        boolean result = (expectedParticipantSSHashes.size() == matchingOperation.getInactiveObjects().size());
+        result = result && expectedParticipantSSHashes.containsAll(
+                matchingOperation.getInactiveObjects()
+                                 .stream()
+                                 .map(SubmittedVariantInactiveEntity::
+                                              getHashedMessage)
+                                 .collect(Collectors.toList()));
+        result = result && expectedParticipantSSAccessions.containsAll(
+                matchingOperation.getInactiveObjects()
+                                 .stream()
+                                 .map(SubmittedVariantInactiveEntity::
+                                              getAccession)
+                                 .collect(Collectors.toList()));
+        return result;
+
     }
 
     @Test
