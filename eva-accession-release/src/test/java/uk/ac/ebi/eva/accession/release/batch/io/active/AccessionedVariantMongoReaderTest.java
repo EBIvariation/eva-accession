@@ -62,7 +62,8 @@ import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariant
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpSubmittedVariantEntity.json"})
+        "/test-data/dbsnpSubmittedVariantEntity.json",
+        "/test-data/submittedVariantEntityMongoReader.json"})  // includes 1 variant with dbsnp rsid
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class AccessionedVariantMongoReaderTest {
 
@@ -102,7 +103,7 @@ public class AccessionedVariantMongoReaderTest {
 
     private static final String RS_3_G_C = "CP002685.1_4758626_G_C";
 
-    private static final int EXPECTED_LINES = 8;
+    private static final int EXPECTED_LINES = 9;
 
     private static final int CHUNK_SIZE = 5;
 
@@ -168,7 +169,7 @@ public class AccessionedVariantMongoReaderTest {
     public void linkedSubmittedVariants() throws Exception {
         Map<String, Variant> variants = readIntoMap();
         assertEquals(EXPECTED_LINES, variants.size());
-        assertEquals(2, variants.values().stream().filter(v -> v.getMainId().equals(RS_1)).count());
+        assertEquals(3, variants.values().stream().filter(v -> v.getMainId().equals(RS_1)).count());
         assertEquals(1, variants.values().stream().filter(v -> v.getMainId().equals(RS_2)).count());
         assertEquals(1, variants.get(RS_1_G_A).getSourceEntries().size());
         assertEquals(2, variants.get(RS_1_G_T).getSourceEntries().size());

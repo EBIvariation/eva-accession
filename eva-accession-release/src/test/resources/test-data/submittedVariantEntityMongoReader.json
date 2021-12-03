@@ -1,0 +1,32 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id": "C9D7D10B4DCF08C13FAFE2C974CA0698F0222394",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB7924",
+      "contig": "CM001954.1",
+      "start": NumberLong(5),
+      "ref": "G",
+      "alt": "C",
+      "rs": NumberLong(869808637),
+      "accession": NumberLong(5259673695),
+      "version": 1,
+      "createdDate": ISODate("2016-05-05T13:43:00Z")
+    },
+    {
+      "_id": "46E8DD84642226210462CBF39E3C64E2",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB22988",
+      "contig": "CM001954.1",
+      "start": NumberLong(2),
+      "ref": "A",
+      "alt": "G",
+      "accession": NumberLong(5259673694),
+      "rs": NumberLong(3000000000),
+      "version": 1,
+      "createdDate": ISODate("2019-07-07T08:41:28.928Z")
+    }
+  ]
+}
