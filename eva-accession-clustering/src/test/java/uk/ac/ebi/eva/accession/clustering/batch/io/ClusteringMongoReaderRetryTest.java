@@ -76,9 +76,9 @@ public class ClusteringMongoReaderRetryTest {
     public void readSucceedsWhenCursorExceptionThrownOnce() {
         MongoCursor mockCursor = mock(MongoCursor.class);
         when(mockCursor.hasNext()).thenReturn(true, true, true, true, false);
-        Document doc1 = new Document("id_", "1");
-        Document doc2 = new Document("id_", "2");
-        Document doc3 = new Document("id_", "3");
+        Document doc1 = new Document("_id", "1");
+        Document doc2 = new Document("_id", "2");
+        Document doc3 = new Document("_id", "3");
         when(mockCursor.next()).thenReturn(doc1)
                                .thenThrow(MongoCursorNotFoundException.class)
                                .thenReturn(doc2, doc3);
@@ -97,9 +97,9 @@ public class ClusteringMongoReaderRetryTest {
     public void readFailsWhenOtherExceptionThrownOnce() {
         MongoCursor mockCursor = mock(MongoCursor.class);
         when(mockCursor.hasNext()).thenReturn(true, true, true, true, false);
-        Document doc1 = new Document("id_", "1");
-        Document doc2 = new Document("id_", "2");
-        Document doc3 = new Document("id_", "3");
+        Document doc1 = new Document("_id", "1");
+        Document doc2 = new Document("_id", "2");
+        Document doc3 = new Document("_id", "3");
         when(mockCursor.next()).thenReturn(doc1)
                                .thenThrow(MongoException.class)
                                .thenReturn(doc2, doc3);
@@ -130,7 +130,7 @@ public class ClusteringMongoReaderRetryTest {
 
         MongoConverter mockConverter = mock(MongoConverter.class);
         when(mockConverter.read(eq(SubmittedVariantEntity.class), any(BasicDBObject.class)))
-                .thenAnswer(invocation -> createSSWithId(((BasicDBObject)invocation.getArgument(1)).getString("id_")));
+                .thenAnswer(invocation -> createSSWithId(((BasicDBObject)invocation.getArgument(1)).getString("_id")));
         when(mongoTemplate.getConverter()).thenReturn(mockConverter);
         when(mongoTemplate.getCollection(any())
                           .find(any(Bson.class))
