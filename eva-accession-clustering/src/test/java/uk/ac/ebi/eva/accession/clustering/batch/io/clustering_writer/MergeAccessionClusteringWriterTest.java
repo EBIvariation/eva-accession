@@ -690,6 +690,7 @@ public class MergeAccessionClusteringWriterTest {
 
         ClusteringMongoReader unclusteredVariantsReader = new ClusteringMongoReader(this.mongoTemplate, ASM_2, 100,
                                                                                     false);
+        unclusteredVariantsReader.initializeRetryTemplate();
         unclusteredVariantsReader.initializeReader();
         List<SubmittedVariantEntity> unclusteredVariants = new ArrayList<>();
         SubmittedVariantEntity tempSV;
