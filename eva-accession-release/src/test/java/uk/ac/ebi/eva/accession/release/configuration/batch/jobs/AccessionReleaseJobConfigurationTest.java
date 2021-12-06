@@ -80,7 +80,7 @@ public class AccessionReleaseJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_LINES = 5;
+    private static final long EXPECTED_LINES = 6;
 
     private static final long EXPECTED_EVA_LINES = 2;
 

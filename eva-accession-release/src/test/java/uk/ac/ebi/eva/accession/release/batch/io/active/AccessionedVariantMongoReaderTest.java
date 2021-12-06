@@ -63,7 +63,7 @@ import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariant
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json",
-        "/test-data/submittedVariantEntityMongoReader.json"})  // includes 1 variant with dbsnp rsid
+        "/test-data/submittedVariantEntity.json"})  // includes 1 variant with dbsnp rsid
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class AccessionedVariantMongoReaderTest {
 

@@ -78,10 +78,10 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
         List<Bson> aggregation = new ArrayList<>(Arrays.asList(match, sort, singlemap));
         String tempArrayName = "ssArray";
-        for (String submittedVariantCollection : allSubmittedVariantCollectionNames) {
-            Bson lookup = Aggregates.lookup(submittedVariantCollection, ACCESSION_FIELD,
+        for (String submittedVariantCollectionName : allSubmittedVariantCollectionNames) {
+            Bson lookup = Aggregates.lookup(submittedVariantCollectionName, ACCESSION_FIELD,
                                             CLUSTERED_VARIANT_ACCESSION_FIELD,
-                                            submittedVariantCollection);
+                                            submittedVariantCollectionName);
             aggregation.add(lookup);
         }
         // Concat ss entries from all submitted variant collections
@@ -101,11 +101,12 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
                                                                      .equalToValue(assemblyAccession))
                                                          .toDocument(Aggregation.DEFAULT_CONTEXT)));
         Bson addSSInfoField = addFieldsOperation.toDocument(Aggregation.DEFAULT_CONTEXT);
-        Map<String, Object> removalMap = allSubmittedVariantCollectionNames.stream().collect(Collectors.toMap(Function.identity(), v -> 0));
+        Map<String, Object> removalMap = allSubmittedVariantCollectionNames
+                .stream().collect(Collectors.toMap(Function.identity(), v -> 0));
         removalMap.put(tempArrayName, 0);
-        Bson removeTempArrayFromOutput = Aggregates.project(new Document(removalMap));
+        Bson removeTempArraysFromOutput = Aggregates.project(new Document(removalMap));
         // We only need the SS info field with the entries in the temp array filtered by the release assembly
-        aggregation.addAll(Arrays.asList(concat, addSSInfoField, removeTempArrayFromOutput));
+        aggregation.addAll(Arrays.asList(concat, addSSInfoField, removeTempArraysFromOutput));
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }

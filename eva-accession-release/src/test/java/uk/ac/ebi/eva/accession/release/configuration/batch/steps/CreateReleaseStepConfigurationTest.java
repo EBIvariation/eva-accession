@@ -67,7 +67,7 @@ public class CreateReleaseStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
-    private static final long EXPECTED_DBSNP_LINES = 5;
+    private static final long EXPECTED_DBSNP_LINES = 6;
 
     private static final long EXPECTED_EVA_LINES = 2;
 
