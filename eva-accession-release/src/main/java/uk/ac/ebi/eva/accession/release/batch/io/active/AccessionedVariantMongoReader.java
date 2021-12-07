@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.release.batch.io.active;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -41,6 +42,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Sorts.ascending;
@@ -56,6 +59,9 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
 
+    private static final List<String> allSubmittedVariantCollectionNames = Arrays.asList("submittedVariantEntity",
+                                                                                         "dbsnpSubmittedVariantEntity");
+
     public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
                                          int chunkSize, CollectionNames names) {
         super(assemblyAccession, mongoClient, database, chunkSize, names);
@@ -70,9 +76,19 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         Bson match = Aggregates.match(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
+        List<Bson> aggregation = new ArrayList<>(Arrays.asList(match, sort, singlemap));
         String tempArrayName = "ssArray";
-        Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), ACCESSION_FIELD,
-                                        CLUSTERED_VARIANT_ACCESSION_FIELD, tempArrayName);
+        for (String submittedVariantCollectionName : allSubmittedVariantCollectionNames) {
+            Bson lookup = Aggregates.lookup(submittedVariantCollectionName, ACCESSION_FIELD,
+                                            CLUSTERED_VARIANT_ACCESSION_FIELD,
+                                            submittedVariantCollectionName);
+            aggregation.add(lookup);
+        }
+        // Concat ss entries from all submitted variant collections
+        Bson concat = Aggregates.addFields(new Field<>(tempArrayName,
+                                                       new Document("$concatArrays", allSubmittedVariantCollectionNames
+                                                               .stream().map(v -> "$" + v)
+                                                               .collect(Collectors.toList()))));
         // Filter out ss entries not belonging to the release assembly from ssArray field
         // created above from the lookup
         AggregationOperation addFieldsOperation =
@@ -85,10 +101,12 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
                                                                      .equalToValue(assemblyAccession))
                                                          .toDocument(Aggregation.DEFAULT_CONTEXT)));
         Bson addSSInfoField = addFieldsOperation.toDocument(Aggregation.DEFAULT_CONTEXT);
-        Bson removeTempArrayFromOutput = Aggregates.project(new Document(tempArrayName, 0));
+        Map<String, Object> removalMap = allSubmittedVariantCollectionNames
+                .stream().collect(Collectors.toMap(Function.identity(), v -> 0));
+        removalMap.put(tempArrayName, 0);
+        Bson removeTempArraysFromOutput = Aggregates.project(new Document(removalMap));
         // We only need the SS info field with the entries in the temp array filtered by the release assembly
-        List<Bson> aggregation = Arrays.asList(match, sort, singlemap, lookup, addSSInfoField,
-                                               removeTempArrayFromOutput);
+        aggregation.addAll(Arrays.asList(concat, addSSInfoField, removeTempArraysFromOutput));
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
