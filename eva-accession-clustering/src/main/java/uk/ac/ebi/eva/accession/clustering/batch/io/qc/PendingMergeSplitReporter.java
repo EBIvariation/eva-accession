@@ -59,7 +59,9 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
     @Override
     public void write(@Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
-        reportPendingSplitsAndMerges(submittedVariantEntities);
+        if (submittedVariantEntities.size() > 0) {
+            reportPendingSplitsAndMerges(submittedVariantEntities);
+        }
     }
 
     private void reportPendingSplitsAndMerges(List<? extends SubmittedVariantEntity> submittedVariantEntities) {
@@ -68,11 +70,13 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
         String assemblyAccessionPrefix = QCMongoCollections.getAssemblyAccessionPrefix(this.assemblyAccession);
         for (SubmittedVariantEntity submittedVariantEntity :submittedVariantEntities) {
             Long rsID = submittedVariantEntity.getClusteredVariantAccession();
-            String rsHash = clusteringWriter.toClusteredVariantEntity(submittedVariantEntity).getHashedMessage();
-            reportMultipleRSWithSameHash(hashAndAssociatedRS, assemblyAccessionPrefix, rsID, rsHash);
-            hashAndAssociatedRS.put(assemblyAccessionPrefix + rsHash, rsID);
-            reportSameRSWithMultipleHashes(rsAndAssociatedHash, assemblyAccessionPrefix, rsID, rsHash);
-            rsAndAssociatedHash.put(assemblyAccessionPrefix + rsID, rsHash);
+            if (Objects.nonNull(rsID)) {
+                String rsHash = clusteringWriter.toClusteredVariantEntity(submittedVariantEntity).getHashedMessage();
+                reportMultipleRSWithSameHash(hashAndAssociatedRS, assemblyAccessionPrefix, rsID, rsHash);
+                hashAndAssociatedRS.put(assemblyAccessionPrefix + rsHash, rsID);
+                reportSameRSWithMultipleHashes(rsAndAssociatedHash, assemblyAccessionPrefix, rsID, rsHash);
+                rsAndAssociatedHash.put(assemblyAccessionPrefix + rsID, rsHash);
+            }
         }
 
         BulkOperations bulkHashInsert = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
@@ -83,7 +87,9 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
         rsAndAssociatedHash.forEach((key, value) -> bulkIDInsert.insert(new qcRSIdInSS(key, value)));
 
         try {
-            bulkHashInsert.execute();
+            if (hashAndAssociatedRS.size() > 0) {
+                bulkHashInsert.execute();
+            }
         }
         catch (DuplicateKeyException duplicateKeyException) {
             MongoBulkWriteException writeException = ((MongoBulkWriteException) duplicateKeyException.getCause());
@@ -97,7 +103,9 @@ public class PendingMergeSplitReporter implements ItemWriter<SubmittedVariantEnt
         }
 
         try {
-            bulkIDInsert.execute();
+            if (rsAndAssociatedHash.size() > 0) {
+                bulkIDInsert.execute();
+            }
         }
         catch (DuplicateKeyException duplicateKeyException) {
             MongoBulkWriteException writeException = ((MongoBulkWriteException) duplicateKeyException.getCause());
