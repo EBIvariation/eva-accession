@@ -57,9 +57,10 @@ public class RSMergeAndSplitWriterConfiguration {
     public ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter(
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
+            SubmittedVariantAccessioningService submittedVariantAccessioningService,
             MongoTemplate mongoTemplate,
             MetricCompute metricCompute) {
-        return new RSSplitWriter(clusteringWriter, clusteredVariantAccessioningService, mongoTemplate,
-                                 metricCompute);
+        return new RSSplitWriter(clusteringWriter, clusteredVariantAccessioningService,
+                                 submittedVariantAccessioningService, mongoTemplate, metricCompute);
     }
 }
