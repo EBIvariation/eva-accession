@@ -434,24 +434,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
         metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS, svToUpdate.size());
 
-        // Sometimes submitted variants that create "SS hash collision" (not RS hash collision)
-        // may not have been ingested into submitted variant collection in the first place - see EVA-2610
-        // In such cases, construct a dummy SubmittedVariant object to record the merge in the operations collection.
-        if (svToUpdate.isEmpty()) {
-            svToUpdate =
-                    ssParticipatingInMerge
-                    .getInactiveObjects()
-                    .stream()
-                    .filter(inactiveEntity -> inactiveEntity.getClusteredVariantAccession()
-                                                         .equals(prioritised.accessionToBeMerged))
-                    .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
-                    // Construct operations for variants pertaining
-                    // to the operations collection in the submittedOperationCollection variable
-                    .filter(entity -> (clusteringWriter.isEvaSubmittedVariant(entity) ==
-                            submittedOperationCollection.equals(SubmittedVariantOperationEntity.class)))
-                    .collect(Collectors.toList());
-        }
-
         List<SubmittedVariantOperationEntity> operations =
                 svToUpdate.stream()
                           .map(sv -> buildSubmittedOperation(sv, prioritised.accessionToKeep))
