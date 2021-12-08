@@ -36,6 +36,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
@@ -44,6 +45,12 @@ import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -57,6 +64,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -419,5 +428,123 @@ public class RSMergeWriterTest {
 
         this.mongoTemplate.insert(Arrays.asList(mergeOperation1, mergeOperation2, splitOperation1),
                                   SUBMITTED_VARIANT_OPERATION_COLLECTION);
+    }
+
+    @Test
+    @DirtiesContext
+    public void testMultipleMergeProcessing() throws Exception {
+        /*
+         * SS   RS  LOC
+         * 1    1   chr1/100/SNV
+         * 2    2   chr1/100/SNV
+         * 3    2   chr1/103/SNV
+         * 4    3   chr1/103/SNV
+         * SS1/RS1 and SS2/RS2, SS3/RS2 and SS4/RS3 are marked as merge candidate entries since these RS pairs share the same locus
+         * SS2/RS2 and SS3/RS2 are split candidate entries because the same RS has different loci
+         */
+        createMultiLevelMergeScenario();
+        List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
+        SubmittedVariantOperationEntity temp;
+        while ((temp = rsMergeCandidatesReader.read()) != null) {
+            submittedVariantOperationEntities.add(temp);
+        }
+
+        //First run of RS Merges
+        rsMergeWriter.write(submittedVariantOperationEntities);
+        DatabaseState databaseStateAfterFirstMergeRun = getCurrentDatabaseState();
+        rsMergeWriter.write(submittedVariantOperationEntities);
+        DatabaseState databaseStateAfterSecondMergeRun = getCurrentDatabaseState();
+
+        assertEquals(databaseStateAfterSecondMergeRun, databaseStateAfterFirstMergeRun);
+    }
+
+    private DatabaseState getCurrentDatabaseState() {
+        List<ClusteredVariantEntity> tempCVEArray = this.mongoTemplate.findAll(ClusteredVariantEntity.class);
+        tempCVEArray.addAll(this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class));
+        Map<Long, List<ClusteredVariantEntity>> cveDbsnpCveEntries =
+                tempCVEArray.stream().collect(Collectors.groupingBy(ClusteredVariantEntity::getAccession));
+        List<SubmittedVariantEntity> tempSVEArray = this.mongoTemplate.findAll(SubmittedVariantEntity.class);
+        tempSVEArray.addAll(this.mongoTemplate.findAll(DbsnpSubmittedVariantEntity.class));
+        Map<Long, List<SubmittedVariantEntity>> sveDbsnpSveEntries =
+                tempSVEArray.stream().collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
+        Map<String, List<ClusteredVariantOperationEntity>> cvoeEntries =
+                this.mongoTemplate.findAll(ClusteredVariantOperationEntity.class)
+                                  .stream().collect(Collectors.groupingBy(ClusteredVariantOperationEntity::getId));
+        Map<String, List<DbsnpClusteredVariantOperationEntity>> dbsnpCvoeEntries =
+                this.mongoTemplate.findAll(DbsnpClusteredVariantOperationEntity.class)
+                                  .stream().collect(Collectors.groupingBy(DbsnpClusteredVariantOperationEntity::getId));
+        Map<String, List<SubmittedVariantOperationEntity>> svoeEntries =
+                this.mongoTemplate.findAll(SubmittedVariantOperationEntity.class)
+                                  .stream().collect(Collectors.groupingBy(SubmittedVariantOperationEntity::getId));
+        Map<String, List<DbsnpSubmittedVariantOperationEntity>> dbsnpSvoeEntries =
+                this.mongoTemplate.findAll(DbsnpSubmittedVariantOperationEntity.class)
+                                  .stream().collect(Collectors.groupingBy(DbsnpSubmittedVariantOperationEntity::getId));
+
+        return new DatabaseState(cveDbsnpCveEntries, sveDbsnpSveEntries, cvoeEntries, dbsnpCvoeEntries,
+                                 svoeEntries, dbsnpSvoeEntries);
+    }
+
+    static class DatabaseState {
+        Map<Long, List<ClusteredVariantEntity>> cveDbsnpCveEntries;
+        Map<Long, List<SubmittedVariantEntity>> sveDbsnpSveEntries;
+        Map<String, List<ClusteredVariantOperationEntity>> cvoeEntries;
+        Map<String, List<DbsnpClusteredVariantOperationEntity>> dbsnpCvoeEntries;
+        Map<String, List<SubmittedVariantOperationEntity>> svoeEntries;
+        Map<String, List<DbsnpSubmittedVariantOperationEntity>> dbsnpSvoeEntries;
+
+        public DatabaseState(
+                Map<Long, List<ClusteredVariantEntity>> cveDbsnpCveEntries,
+                Map<Long, List<SubmittedVariantEntity>> sveDbsnpSveEntries,
+                Map<String, List<ClusteredVariantOperationEntity>> cvoeEntries,
+                Map<String, List<DbsnpClusteredVariantOperationEntity>> dbsnpCvoeEntries,
+                Map<String, List<SubmittedVariantOperationEntity>> svoeEntries,
+                Map<String, List<DbsnpSubmittedVariantOperationEntity>> dbsnpSvoeEntries) {
+            this.cveDbsnpCveEntries = cveDbsnpCveEntries;
+            this.sveDbsnpSveEntries = sveDbsnpSveEntries;
+            this.cvoeEntries = cvoeEntries;
+            this.dbsnpCvoeEntries = dbsnpCvoeEntries;
+            this.svoeEntries = svoeEntries;
+            this.dbsnpSvoeEntries = dbsnpSvoeEntries;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DatabaseState that = (DatabaseState) o;
+            return Objects.equals(cveDbsnpCveEntries, that.cveDbsnpCveEntries) && Objects.equals(
+                    sveDbsnpSveEntries, that.sveDbsnpSveEntries) && areOperationMapsEqual(cvoeEntries, that.cvoeEntries)
+                    && areOperationMapsEqual(dbsnpCvoeEntries, that.dbsnpCvoeEntries) &&
+                    areOperationMapsEqual(svoeEntries, that.svoeEntries) &&
+                    areOperationMapsEqual(dbsnpSvoeEntries, that.dbsnpSvoeEntries);
+        }
+
+        private <T> boolean areOperationMapsEqual(Map<String, List<T>> operation1, Map<String, List<T>> operation2) {
+            boolean sameSize = (operation1.size() == operation2.size()) &&
+                    operation1.keySet().equals(operation2.keySet());
+            if (!sameSize) {
+                return false;
+            }
+            for(String key: operation1.keySet()) {
+                // Getting just the first document is fine because the keys are "_id" in op collections
+                // Therefore, there will only be one document per ID
+                if (!areOperationsEqual((EventDocument) operation1.get(key).get(0),
+                                        (EventDocument) operation2.get(key).get(0))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean areOperationsEqual(EventDocument operation1, EventDocument operation2) {
+            return Objects.equals(operation1.getId(), operation2.getId()) &&
+                    operation1.getEventType() == operation2.getEventType() &&
+                    Objects.equals(operation1.getAccession(), operation2.getAccession()) &&
+                    Objects.equals(operation1.getMergedInto(), operation2.getMergedInto()) &&
+                    Objects.equals(operation1.getSplitInto(), operation2.getSplitInto()) &&
+                    Objects.equals(operation1.getReason(), operation2.getReason()) &&
+                    Objects.equals(operation1.getInactiveObjects(), operation2.getInactiveObjects()) &&
+                    Objects.equals(operation1.getCreatedDate(), operation2.getCreatedDate());
+        }
     }
 }
