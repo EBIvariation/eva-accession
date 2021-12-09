@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 import com.mongodb.MongoBulkWriteException;
 
 import com.mongodb.client.result.UpdateResult;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -132,9 +133,9 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 submittedVariantOperationEntity
                         .getInactiveObjects()
                         .stream()
-                        .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
                         // Ensure duplicates inside inactiveObjects are tolerated
-                        .filter(distinctByKey(SubmittedVariantEntity::getHashedMessage))
+                        .filter(distinctByKey(this::getHashedMessageAndAccessionForSVIE))
+                        .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
                         .collect(Collectors.groupingBy(this::getRSHashForSS))
                         .entrySet().stream().map(rsHashAndAssociatedSS ->
                                 new SplitDeterminants(
@@ -151,6 +152,10 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         // and the other hashes should be associated with new RS IDs
         List<String> hashesThatShouldGetNewRS =  getHashesThatShouldGetNewRS(splitCandidates);
         issueNewRSForHashes(hashesThatShouldGetNewRS, submittedVariantOperationEntity.getInactiveObjects());
+    }
+
+    private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
+        return new ImmutablePair<>(svie.getHashedMessage(), svie.getAccession());
     }
 
     private void issueNewRSForHashes(List<String> hashesThatShouldGetNewRS,

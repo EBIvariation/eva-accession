@@ -172,7 +172,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 currentOperation.getInactiveObjects()
                                 .stream()
                                 // Ensure duplicates inside inactiveObjects are tolerated
-                                .filter(distinctByKey(SubmittedVariantInactiveEntity::getHashedMessage))
+                                .filter(distinctByKey(this::getHashedMessageAndAccessionForSVIE))
                                 .map(entity -> clusteringWriter.toClusteredVariantEntity(
                                         entity.toSubmittedVariantEntity()))
                                 .filter(distinctByKey(AccessionedDocument::getAccession))
@@ -189,6 +189,10 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                         mergee.getAccession(), mergeDestination.getAccession());
             merge(mergeDestination, mergee, currentOperation);
         }
+    }
+
+    private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
+        return new ImmutablePair<>(svie.getHashedMessage(), svie.getAccession());
     }
 
     private void insertMergeOperation(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee) {
