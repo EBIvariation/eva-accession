@@ -384,9 +384,14 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                                                   result.getData(), result.getVersion()))
                         .map(SubmittedVariantInactiveEntity::new)
                         .collect(Collectors.toList());
+        Map<String, List<ClusteredVariantEntity>> distinctLociInDBForTargetRS =
+                ssClusteredUnderTargetRS.stream()
+                                .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                                .map(clusteringWriter::toClusteredVariantEntity)
+                                .collect(Collectors.groupingBy(ClusteredVariantEntity::getHashedMessage));
 
         //Update existing split candidates record for target RS if it exists. Else, create a new record!
-        if (Objects.nonNull(splitCandidateInvolvingTargetRS)) {
+        if (Objects.nonNull(splitCandidateInvolvingTargetRS) && distinctLociInDBForTargetRS.size() > 1) {
             mongoTemplate.updateFirst(query(where(ID_ATTRIBUTE).is(splitCandidateInvolvingTargetRS.getId())),
                                       update(INACTIVE_OBJECT_ATTRIBUTE, ssClusteredUnderTargetRS),
                                       SubmittedVariantOperationEntity.class);
