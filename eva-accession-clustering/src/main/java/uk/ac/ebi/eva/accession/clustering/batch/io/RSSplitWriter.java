@@ -53,6 +53,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -103,6 +107,13 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         }
     }
 
+    // Get distinct objects based on an object attribute
+    // https://stackoverflow.com/a/27872852
+    private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
+    }
+
     public void writeRSSplit(SubmittedVariantOperationEntity submittedVariantOperationEntity)
             throws AccessionCouldNotBeGeneratedException {
         // For each sets of RS hashes among the split candidates
@@ -122,6 +133,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                         .getInactiveObjects()
                         .stream()
                         .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                        // Ensure duplicates inside inactiveObjects are tolerated
+                        .filter(distinctByKey(SubmittedVariantEntity::getHashedMessage))
                         .collect(Collectors.groupingBy(this::getRSHashForSS))
                         .entrySet().stream().map(rsHashAndAssociatedSS ->
                                 new SplitDeterminants(

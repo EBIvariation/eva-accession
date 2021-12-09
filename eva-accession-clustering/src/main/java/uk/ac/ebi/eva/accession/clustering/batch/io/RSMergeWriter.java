@@ -170,11 +170,13 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         // because ClusteredVariantEntity "equals" method does NOT involve comparing accessions
         List<ClusteredVariantEntity> mergeCandidates =
                 currentOperation.getInactiveObjects()
-                                               .stream()
-                                               .map(entity -> clusteringWriter.toClusteredVariantEntity(
-                                                       entity.toSubmittedVariantEntity()))
-                                               .filter(distinctByKey(AccessionedDocument::getAccession))
-                                               .collect(Collectors.toList());
+                                .stream()
+                                // Ensure duplicates inside inactiveObjects are tolerated
+                                .filter(distinctByKey(SubmittedVariantInactiveEntity::getHashedMessage))
+                                .map(entity -> clusteringWriter.toClusteredVariantEntity(
+                                        entity.toSubmittedVariantEntity()))
+                                .filter(distinctByKey(AccessionedDocument::getAccession))
+                                .collect(Collectors.toList());
         // From among the participating RS in a merge,
         // use the current RS prioritization policy to get the target RS into which the rest of the RS will be merged
         ImmutablePair<ClusteredVariantEntity, List<ClusteredVariantEntity>> mergeDestinationAndMergees =
