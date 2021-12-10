@@ -58,6 +58,11 @@
             <artifactId>hsqldb</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.lordofthejars</groupId>
+            <artifactId>nosqlunit-mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

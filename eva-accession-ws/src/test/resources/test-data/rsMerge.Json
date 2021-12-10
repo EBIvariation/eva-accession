@@ -1,0 +1,20 @@
+{
+  "dbsnpClusteredVariantEntity": [
+    { "_id" : "206B82DD7151520B1C05C9714DFB869C9A31E45A", "asm" : "ASM1", "tax" : 60711, "contig" : "chr1", "start" : NumberLong(100), "type" : "SNV", "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T18:28:07.840Z") },
+    { "_id" : "9BFB72EEB241243D8A511C72D632C40D01BAFAA4", "asm" : "ASM2", "tax" : 60711, "contig" : "chr1", "start" : NumberLong(100), "type" : "SNV", "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T18:28:07.880Z") }
+  ],
+
+  "dbsnpClusteredVariantOperationEntity": [
+    { "_id" : ObjectId("61a7beb791a0018f3f6e5cca"), "eventType" : "MERGED", "accession" : NumberLong(2), "mergeInto" : NumberLong(1), "reason" : "After remapping to ASM2, RS IDs mapped to the same locus.", "inactiveObjects" : [ { "asm" : "ASM2", "tax" : 60711, "contig" : "chr1", "start" : NumberLong(100), "type" : "SNV", "validated" : false, "hashedMessage" : "9BFB72EEB241243D8A511C72D632C40D01BAFAA4", "accession" : NumberLong(2), "version" : 1, "createdDate" : ISODate("2021-12-01T18:28:07.845Z") } ], "createdDate" : ISODate("2021-12-01T18:28:07.886Z") }
+  ],
+
+  "dbsnpSubmittedVariantOperationEntity": [
+    { "_id" : ObjectId("61a7beb791a0018f3f6e5ccb"), "eventType" : "UPDATED", "accession" : NumberLong(2), "reason" : "Original rs2 associated with SS was merged into rs1.", "inactiveObjects" : [ { "seq" : "ASM2", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(100), "ref" : "C", "alt" : "A", "rs" : NumberLong(2), "evidence" : true, "asmMatch" : true, "allelesMatch" : true, "validated" : false, "hashedMessage" : "2E3877ADD7F5D111AC614D5E5CB69B5C242B7E5D", "accession" : NumberLong(2), "version" : 1, "createdDate" : ISODate("2021-12-01T18:28:07.845Z") } ], "createdDate" : ISODate("2021-12-01T18:28:07.913Z") }
+  ],
+
+  "dbsnpSubmittedVariantEntity": [
+    { "_id" : "73EE7DC27EACE0A7273B8255F82A8D07E37DFD61", "seq" : "ASM1", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(100), "ref" : "C", "alt" : "T", "rs" : NumberLong(1), "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T18:28:07.813Z") },
+    { "_id" : "F29743775F9C54AC11D8E2E0B0104032E8056426", "seq" : "ASM2", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(100), "ref" : "C", "alt" : "T", "rs" : NumberLong(1), "accession" : NumberLong(1), "version" : 1, "createdDate" : ISODate("2021-12-01T18:28:07.844Z") },
+    { "_id" : "2E3877ADD7F5D111AC614D5E5CB69B5C242B7E5D", "seq" : "ASM2", "tax" : 60711, "study" : "PRJ1", "contig" : "chr1", "start" : NumberLong(100), "ref" : "C", "alt" : "A", "rs" : NumberLong(2), "accession" : NumberLong(2), "version" : 1, "createdDate" : ISODate("2021-12-01T18:28:07.845Z") }
+  ]
+}

@@ -168,6 +168,8 @@ public class RSSplitWriterTest {
         assertEquals(2, ssAssociatedWithRS1.size());
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss2.getAccession(), ss3.getAccession())));
+        /* Check clustering counts */
+        // 2 new RS IDs created for hashes with start positions 100 and 102
         assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED));
         // 2 RS split events for hashes with start positions 100 and 102
         assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT));
@@ -213,6 +215,8 @@ public class RSSplitWriterTest {
         assertEquals(2, ssAssociatedWithRS1.size());
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss1.getAccession(), ss2.getAccession())));
+        /* Check clustering counts */
+        // 2 entries created for hashes with start positions 100 and 102
         assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED));
         // 2 RS split events for hashes with start positions 100 and 102
         assertEquals(2, metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT));
