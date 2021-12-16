@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_properties_file(source, vcf_file, project_accession, assembly_accession, private_config_xml_file, profile,
-                           output_directory, instance):
+                           output_directory, instance, enable_retryalbe=False):
     """
     This method creates the application properties file
     """
@@ -30,7 +30,7 @@ def create_properties_file(source, vcf_file, project_accession, assembly_accessi
     properties = get_properties_from_xml_file(profile, private_config_xml_file)
     path = get_properties_path(source, vcf_file, project_accession, assembly_accession, output_directory)
     with open(path, 'w') as properties_file:
-        add_clustering_properties(properties_file, assembly_accession, project_accession, source)
+        add_clustering_properties(properties_file, assembly_accession, project_accession, source, enable_retryalbe)
         add_accessioning_properties(properties_file, instance)
         add_count_service_properties(properties_file, properties)
         add_mongo_properties(properties_file, properties)
@@ -47,16 +47,17 @@ def get_properties_path(source, vcf_file, project_accession, assembly_accession,
     return path
 
 
-def add_clustering_properties(properties_file, assembly_accession, project_accession, vcf_file):
+def add_clustering_properties(properties_file, assembly_accession, project_accession, vcf_file, enable_retryalbe):
     vcf = vcf_file or ''
     project = project_accession or ''
 
-    clustering_properties = ("""
+    clustering_properties = (f"""
 parameters.assemblyAccession={assembly_accession}
 parameters.remappedFrom=
 parameters.vcf={vcf}
 parameters.projectAccession={project}
-    """).format(assembly_accession=assembly_accession, vcf=vcf, project=project)
+parameters.allowRetry={str(enable_retryalbe).lower()}
+""")
     properties_file.write(clustering_properties)
 
 
@@ -169,13 +170,16 @@ if __name__ == "__main__":
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
+    parser.add_argument("--enable-retryalbe", help="Set the clustering to use the retryable reader", default=False,
+                        action='store_true')
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
     try:
         args = parser.parse_args()
         create_properties_file(args.source, args.vcf_file, args.project_accession, args.assembly_accession,
-                               args.private_config_xml_file, args.profile, args.output_directory, args.instance)
+                               args.private_config_xml_file, args.profile, args.output_directory, args.instance,
+                               args.enable_retryalbe)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)
