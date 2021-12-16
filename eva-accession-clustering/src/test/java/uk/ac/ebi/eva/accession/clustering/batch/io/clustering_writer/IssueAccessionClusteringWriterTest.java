@@ -397,7 +397,6 @@ public class IssueAccessionClusteringWriterTest {
                                           inputParameters.getAssemblyAccession(),
                                           100,
                                           false);
-        unclusteredVariantsReader.initializeRetryTemplate();
         unclusteredVariantsReader.initializeReader();
         List<SubmittedVariantEntity> unclusteredVariants = new ArrayList<>();
         SubmittedVariantEntity tempSV;

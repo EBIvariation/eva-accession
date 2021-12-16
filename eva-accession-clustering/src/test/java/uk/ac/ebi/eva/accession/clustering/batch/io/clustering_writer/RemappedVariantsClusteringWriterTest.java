@@ -594,7 +594,6 @@ public class RemappedVariantsClusteringWriterTest {
 
         ClusteringMongoReader unclusteredVariantsReader = new ClusteringMongoReader(this.mongoTemplate, ASM_2, 100,
                                                                                     false);
-        unclusteredVariantsReader.initializeRetryTemplate();
         unclusteredVariantsReader.initializeReader();
         List<SubmittedVariantEntity> unclusteredVariants = new ArrayList<>();
         SubmittedVariantEntity tempSV;
@@ -610,7 +609,6 @@ public class RemappedVariantsClusteringWriterTest {
         clearRSMergeAndSplitCandidates.write(Collections.singletonList(new Object()));
         ClusteringMongoReader originalAssemblyUnclusteredVariantsReader =
                 new ClusteringMongoReader(this.mongoTemplate, ASM_1, 100, false);
-        originalAssemblyUnclusteredVariantsReader.initializeRetryTemplate();
         originalAssemblyUnclusteredVariantsReader.initializeReader();
         while((tempSV = originalAssemblyUnclusteredVariantsReader.read()) != null) {
             backPropagatedRSWriter.write(Collections.singletonList(tempSV));
