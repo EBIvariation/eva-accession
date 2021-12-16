@@ -130,7 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--memory", help="Amount of memory jobs will use", required=False, default=8192)
     parser.add_argument("--instance", help="Accessioning instance id", required=False, default=6,
                         type=int, choices=range(1, 13))
-    parser.add_argument("--enable-retryalbe", help="Set the clustering to use the retryable reader", default=False,
+    parser.add_argument("--enable-retryable", help="Set the clustering to use the retryable reader", default=False,
                             action='store_true')
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 

@@ -170,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--profile", help="Profile to get the properties, e.g.production", required=True)
     parser.add_argument("--output-directory", help="Output directory for the properties file", required=False)
-    parser.add_argument("--enable-retryalbe", help="Set the clustering to use the retryable reader", default=False,
+    parser.add_argument("--enable-retryable", help="Set the clustering to use the retryable reader", default=False,
                         action='store_true')
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
