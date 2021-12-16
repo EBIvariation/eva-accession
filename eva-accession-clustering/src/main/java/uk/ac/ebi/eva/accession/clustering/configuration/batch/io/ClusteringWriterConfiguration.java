@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
@@ -36,23 +37,27 @@ public class ClusteringWriterConfiguration {
 
     @Bean(CLUSTERED_CLUSTERING_WRITER)
     public ClusteringWriter clusteredClusteringWriter(MongoTemplate mongoTemplate,
+                                                      InputParameters inputParameters,
                                                       ClusteredVariantAccessioningService
                                                                   clusteredVariantAccessioningService,
                                                       Long accessioningMonotonicInitSs,
                                                       Long accessioningMonotonicInitRs,
                                                       MetricCompute metricCompute) {
-        return new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                accessioningMonotonicInitSs, accessioningMonotonicInitRs, metricCompute, true);
+        return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
+                                    clusteredVariantAccessioningService, accessioningMonotonicInitSs,
+                                    accessioningMonotonicInitRs, metricCompute, true);
     }
 
     @Bean(NON_CLUSTERED_CLUSTERING_WRITER)
     public ClusteringWriter nonClusteredClusteringWriter(MongoTemplate mongoTemplate,
+                                                         InputParameters inputParameters,
                                                          ClusteredVariantAccessioningService
                                                                      clusteredVariantAccessioningService,
                                                          Long accessioningMonotonicInitSs,
                                                          Long accessioningMonotonicInitRs,
                                                          MetricCompute metricCompute) {
-        return new ClusteringWriter(mongoTemplate, clusteredVariantAccessioningService,
-                accessioningMonotonicInitSs, accessioningMonotonicInitRs, metricCompute, false);
+        return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
+                                    clusteredVariantAccessioningService, accessioningMonotonicInitSs,
+                                    accessioningMonotonicInitRs, metricCompute, false);
     }
 }
