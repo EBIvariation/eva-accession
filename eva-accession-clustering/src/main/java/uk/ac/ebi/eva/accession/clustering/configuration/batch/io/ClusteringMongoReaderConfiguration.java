@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
+import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReaderRetryable;
 import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
@@ -38,8 +39,14 @@ public class ClusteringMongoReaderConfiguration {
         if (parameters.getAssemblyAccession() == null || parameters.getAssemblyAccession().isEmpty()) {
             throw new IllegalArgumentException("Please provide an assembly");
         }
-        return new ClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getChunkSize(),
-                                         true);
+
+        if (parameters.isAllowRetry()) {
+            return new ClusteringMongoReaderRetryable(mongoTemplate, parameters.getAssemblyAccession(),
+                                                      parameters.getChunkSize(), true);
+        } else {
+            return new ClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getChunkSize(),
+                                             true);
+        }
     }
 
     @Bean(NON_CLUSTERED_VARIANTS_MONGO_READER)
@@ -49,7 +56,13 @@ public class ClusteringMongoReaderConfiguration {
         if (parameters.getAssemblyAccession() == null || parameters.getAssemblyAccession().isEmpty()) {
             throw new IllegalArgumentException("Please provide an assembly");
         }
-        return new ClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getChunkSize(),
-                                         false);
+
+        if (parameters.isAllowRetry()) {
+            return new ClusteringMongoReaderRetryable(mongoTemplate, parameters.getAssemblyAccession(),
+                                                      parameters.getChunkSize(), false);
+        } else {
+            return new ClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getChunkSize(),
+                                             false);
+        }
     }
 }

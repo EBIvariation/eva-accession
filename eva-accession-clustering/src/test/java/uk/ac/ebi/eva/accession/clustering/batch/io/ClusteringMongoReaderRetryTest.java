@@ -48,7 +48,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader.MAX_RETRIES;
+import static uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReaderRetryable.MAX_RETRIES;
 
 @RunWith(SpringRunner.class)
 public class ClusteringMongoReaderRetryTest {
@@ -64,7 +64,7 @@ public class ClusteringMongoReaderRetryTest {
 
     @Before
     public void setUp(){
-        nonClusteredVariantReader = spy(new ClusteringMongoReader(mongoTemplate, ASSEMBLY, CHUNK_SIZE, false));
+        nonClusteredVariantReader = spy(new ClusteringMongoReaderRetryable(mongoTemplate, ASSEMBLY, CHUNK_SIZE, false));
     }
 
     @After

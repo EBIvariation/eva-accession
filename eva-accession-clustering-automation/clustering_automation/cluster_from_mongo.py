@@ -46,7 +46,7 @@ def get_common_clustering_properties(common_clustering_properties_file):
     return yaml.load(open(common_clustering_properties_file), Loader=yaml.FullLoader)
 
 
-def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance):
+def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance, enable_retryable):
     private_config_xml_file = common_properties["private-config-xml-file"]
     profile = common_properties["profile"]
     clustering_artifact = common_properties["clustering-jar-path"]
@@ -61,7 +61,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
         output_directory = os.path.join(species_directory, assembly)
         os.makedirs(output_directory, exist_ok=True)
         properties_path = create_properties_file('MONGO', None, None, assembly,
-                                                 private_config_xml_file, profile, output_directory, instance)
+                                                 private_config_xml_file, profile, output_directory, instance, enable_retryable)
         status_update_template = (f'{python} -m clustering_automation.update_clustering_status '
                                   f'--private-config-xml-file {private_config_xml_file} '
                                   f'--clustering-tracking-table {clustering_tracking_table} '
@@ -104,7 +104,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
     return pipeline, species_directory
 
 
-def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, memory, instance):
+def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, memory, instance, enable_retryable):
     """
     Generates and runs a Nextflow pipeline to cluster all assemblies for a given taxonomy.
     """
@@ -114,7 +114,7 @@ def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, 
     clustering_folder = common_properties['clustering-folder']
     with get_metadata_connection_handle("development", common_properties["private-config-xml-file"]) as metadata_connection_handle:
         assembly_list, scientific_name = get_assemblies_and_scientific_name_from_taxonomy(taxonomy_id, metadata_connection_handle, clustering_tracking_table, release_version)
-        pipeline, output_directory = generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance)
+        pipeline, output_directory = generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance, enable_retryable)
         pipeline.run_pipeline(
             workflow_file_path=os.path.join(clustering_folder, f'{taxonomy_id}_clustering_workflow_{timestamp}.nf'),
             nextflow_binary_path=common_properties['nextflow-binary-path'],
@@ -130,12 +130,15 @@ if __name__ == "__main__":
     parser.add_argument("--memory", help="Amount of memory jobs will use", required=False, default=8192)
     parser.add_argument("--instance", help="Accessioning instance id", required=False, default=6,
                         type=int, choices=range(1, 13))
+    parser.add_argument("--enable-retryable", help="Set the clustering to use the retryable reader", default=False,
+                            action='store_true')
     parser.add_argument('--help', action='help', help='Show this help message and exit')
 
     args = {}
     try:
         args = parser.parse_args()
-        cluster_multiple_from_mongo(args.taxonomy_id, args.common_clustering_properties_file, args.memory, args.instance)
+        cluster_multiple_from_mongo(args.taxonomy_id, args.common_clustering_properties_file, args.memory,
+                                    args.instance, args.enable_retryable)
     except Exception as ex:
         logger.exception(ex)
         sys.exit(1)

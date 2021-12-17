@@ -32,6 +32,8 @@ public class InputParameters {
 
     private boolean forceRestart;
 
+    private boolean allowRetry;
+
     public String getVcf() {
         return vcf;
     }
@@ -70,6 +72,14 @@ public class InputParameters {
 
     public void setForceRestart(boolean forceRestart) {
         this.forceRestart = forceRestart;
+    }
+
+    public boolean isAllowRetry() {
+        return allowRetry;
+    }
+
+    public void setAllowRetry(boolean allowRetry) {
+        this.allowRetry = allowRetry;
     }
 
     public JobParameters toJobParameters() {
