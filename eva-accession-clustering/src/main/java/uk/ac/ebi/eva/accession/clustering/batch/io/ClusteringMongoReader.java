@@ -66,8 +66,16 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     @Override
     public SubmittedVariantEntity read() {
         // Read from dbsnp collection first and subsequently EVA collection
-        Document nextElement = (dbsnpCursor != null && dbsnpCursor.hasNext()) ? dbsnpCursor.next() :
-                (evaCursor.hasNext() ? evaCursor.next() : null);
+        Document nextElement;
+        if (dbsnpCursor != null && dbsnpCursor.hasNext()) {
+            nextElement = dbsnpCursor.next();
+        } else {
+            if (evaCursor == null) {
+                evaCursor = initializeCursor(SubmittedVariantEntity.class);
+            }
+            nextElement = evaCursor.tryNext();
+        }
+
         return (nextElement != null) ? getSubmittedVariantEntity(nextElement) : null;
     }
 
@@ -81,24 +89,24 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
     }
 
     public void initializeReader() {
-        Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                                 Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
-        logger.info("Issuing find: {}", query);
-
         if (readOnlyClusteredVariants){
-            FindIterable<Document> submittedVariantsDbsnp =
-                    getSubmittedVariants(query, DbsnpSubmittedVariantEntity.class);
-            dbsnpCursor = submittedVariantsDbsnp.iterator();
+            dbsnpCursor = initializeCursor(DbsnpSubmittedVariantEntity.class);
         } else {
             // When clustering variant that do not have any RSID we do not want to retrieve any dbSNP submitted variants
             // We set the cursor for this purpose
             dbsnpCursor = null;
+            evaCursor = initializeCursor(SubmittedVariantEntity.class);
         }
-        FindIterable<Document> submittedVariantsEVA =
-                getSubmittedVariants(query, SubmittedVariantEntity.class);
-        evaCursor = submittedVariantsEVA.iterator();
-
         converter = mongoTemplate.getConverter();
+    }
+
+    private MongoCursor<Document> initializeCursor(Class<?> entityClass) {
+        Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
+                                 Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
+        logger.info("Issuing find: {}", query);
+
+        FindIterable<Document> submittedVariants = getSubmittedVariants(query, entityClass);
+        return submittedVariants.iterator();
     }
 
     private FindIterable<Document> getSubmittedVariants(Bson query, Class<?> entityClass) {
@@ -118,6 +126,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
         if (dbsnpCursor != null) {
             dbsnpCursor.close();
         }
-        evaCursor.close();
+        if (evaCursor != null) {
+            evaCursor.close();
+        }
     }
 }
