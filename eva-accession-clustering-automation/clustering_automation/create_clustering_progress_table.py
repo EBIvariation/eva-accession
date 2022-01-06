@@ -31,6 +31,21 @@ tempmongo_instances = cycle([f'tempmongo-{instance}' for instance in range(1, 11
 
 all_tasks = ['create_and_fill_table', 'fill_rs_count']
 
+taxonomy_tempmongo_instance = {}
+
+def get_tempmongo_instance(pg_conn, taxonomy_id):
+    if not taxonomy_tempmongo_instance:
+        query = "select taxonomy, tempmongo_instance from eva_progress_tracker.clustering_release_tracker where tempmongo_instance is not null"
+        for taxonomy, tempmongo_instance in get_all_results_for_query(pg_conn, query):
+            taxonomy_tempmongo_instance[taxonomy] = tempmongo_instance
+
+    if taxonomy_id in taxonomy_tempmongo_instance.keys():
+        return taxonomy_tempmongo_instance[taxonomy_id]
+    else:
+        new_tempmongo_instance = next(tempmongo_instances)
+        taxonomy_tempmongo_instance[taxonomy_id] = new_tempmongo_instance
+        return new_tempmongo_instance
+
 def create_table(private_config_xml_file):
     query_create_table = (
         'create table if not exists eva_progress_tracker.clustering_release_tracker('
@@ -75,7 +90,7 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
             ncbi_assembly = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
             fasta_path = ncbi_assembly.assembly_fasta_path
             report_path = ncbi_assembly.assembly_report_path
-            tempmongo_instance = next(tempmongo_instances)
+            tempmongo_instance = get_tempmongo_instance(pg_conn, taxonomy)
             release_folder_name = normalise_taxon_scientific_name(scientific_name)
             query_insert = (
                 'INSERT INTO eva_progress_tracker.clustering_release_tracker '
@@ -198,7 +213,7 @@ def insert_new_entry_for_taxonomy_assembly(pg_conn, sources, rs_count, release_v
     ncbi_assembly = NCBIAssembly(assembly, scientific_name, reference_directory)
     fasta_path = ncbi_assembly.assembly_fasta_path
     report_path = ncbi_assembly.assembly_report_path
-    tempmongo_instance = next(tempmongo_instances)
+    tempmongo_instance = get_tempmongo_instance(pg_conn, taxonomy)
     should_be_clustered = False
     should_be_released = True
     query_insert = (
