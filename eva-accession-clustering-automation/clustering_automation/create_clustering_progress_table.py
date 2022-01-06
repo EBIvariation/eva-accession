@@ -39,12 +39,9 @@ def get_tempmongo_instance(pg_conn, taxonomy_id):
         for taxonomy, tempmongo_instance in get_all_results_for_query(pg_conn, query):
             taxonomy_tempmongo_instance[taxonomy] = tempmongo_instance
 
-    if taxonomy_id in taxonomy_tempmongo_instance.keys():
-        return taxonomy_tempmongo_instance[taxonomy_id]
-    else:
-        new_tempmongo_instance = next(tempmongo_instances)
-        taxonomy_tempmongo_instance[taxonomy_id] = new_tempmongo_instance
-        return new_tempmongo_instance
+    if taxonomy_id not in taxonomy_tempmongo_instance:
+        taxonomy_tempmongo_instance[taxonomy_id] = next(tempmongo_instances)
+    return taxonomy_tempmongo_instance[taxonomy_id]
 
 def create_table(private_config_xml_file):
     query_create_table = (
