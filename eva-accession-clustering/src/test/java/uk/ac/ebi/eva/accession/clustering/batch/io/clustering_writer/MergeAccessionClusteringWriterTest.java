@@ -45,6 +45,7 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -97,7 +98,8 @@ import static uk.ac.ebi.eva.accession.clustering.test.VariantAssertions.assertRe
  */
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration
-@ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, BatchTestConfiguration.class})
+@ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class,
+        SubmittedVariantAccessioningConfiguration.class, BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-writer-test.properties")
 public class MergeAccessionClusteringWriterTest {
 
@@ -160,6 +162,9 @@ public class MergeAccessionClusteringWriterTest {
     @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
     private ItemWriter clearRSMergeAndSplitCandidates;
 
+    @Autowired
+    private Long accessioningMonotonicInitSs;
+
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
@@ -171,6 +176,10 @@ public class MergeAccessionClusteringWriterTest {
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
+
+    private static final String defaultReferenceAlleleForTesting = "T";
+
+    private static final String defaultAlternateAlleleForTesting = "A";
 
     @Before
     public void setUp() {
@@ -210,7 +219,9 @@ public class MergeAccessionClusteringWriterTest {
         // No new clustering variant record will be created or no existing RS will be updated
         // since the remapped submitted variant is clustered into an existing RS (rs2)
         // Merge is recorded only in the clustered and submitted operations tables
-        assertClusteringCounts(metricCompute, 0, 0, 1, 0, 0, 0, 1);
+        // ssToRemap being in EVA SNP collection will be clustered and the relevant update operation will be created
+        // Hence expectedSubmittedVariantsUpdatedRs and expectedSubmittedVariantOperationsWritten will be 1 each
+        assertClusteringCounts(metricCompute, 0, 0, 1, 0, 0, 1, 1);
         assertMergedInto(rs2, rs1, ssToRemap);
     }
 
@@ -240,7 +251,9 @@ public class MergeAccessionClusteringWriterTest {
         // No new clustering variant record will be created or no existing RS will be updated
         // since the remapped submitted variant is clustered into an existing RS (rs2)
         // Merge is recorded only in the clustered and submitted operations tables
-        assertClusteringCounts(metricCompute, 0, 0, 1, 0, 0, 0, 1);
+        // ssToRemap being in EVA SNP collection will be clustered and the relevant update operation will be created
+        // Hence expectedSubmittedVariantsUpdatedRs and expectedSubmittedVariantOperationsWritten will be 1 each
+        assertClusteringCounts(metricCompute, 0, 0, 1, 0, 0, 1, 1);
         assertMergedInto(rs2, rs1, ssToRemap);
     }
 
@@ -284,7 +297,18 @@ public class MergeAccessionClusteringWriterTest {
                              expectedDbsnpSve, expectedSve, 0, 0);
 
         // when
-        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(ASM_2, START, rs1, ssToRemap, ASM_1);
+        SubmittedVariantEntity sve1Remapped = createSubmittedVariantEntity(ASM_2, START, rs1, ssToRemap, ASM_1,
+                                                                           defaultAlternateAlleleForTesting,
+                                                                           defaultReferenceAlleleForTesting);
+        // To ensure that we don't create collision with ss2,
+        // use alleles other than defaultAlternateAlleleForTesting or defaultReferenceAlleleForTesting
+        mongoTemplate.insert(sve1Remapped, getSubmittedCollection(sve1Remapped.getAccession()));
+        // Include the insertion above for number of expected SVE or DbsnpSVE
+        if (ssToRemap >= accessioningMonotonicInitSs) {
+            expectedSve += 1;
+        } else {
+            expectedDbsnpSve += 1;
+        }
         this.clusterVariants(Collections.singletonList(sve1Remapped));
 
         // then
@@ -658,8 +682,9 @@ public class MergeAccessionClusteringWriterTest {
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
-                                                                String remappedFrom, Integer mapWeight) {
-        SubmittedVariant submittedClustered = new SubmittedVariant(assembly, 1000, "project", "1", start, "T", "A", rs);
+                                                                String remappedFrom, Integer mapWeight,
+                                                                String reference, String alternate) {
+        SubmittedVariant submittedClustered = new SubmittedVariant(assembly, 1000, "project", "1", start, reference, alternate, rs);
         String hash1 = hashingFunction.apply(submittedClustered);
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(ss, hash1, submittedClustered, 1,
                                                                                    remappedFrom, LocalDateTime.now(),
@@ -669,8 +694,22 @@ public class MergeAccessionClusteringWriterTest {
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
+                                                                String remappedFrom, Integer mapWeight) {
+        return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, mapWeight,
+                                            defaultReferenceAlleleForTesting, defaultAlternateAlleleForTesting);
+    }
+
+    private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
                                                                 String remappedFrom) {
-        return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, null);
+        return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, null,
+                                            defaultReferenceAlleleForTesting, defaultAlternateAlleleForTesting);
+    }
+
+    private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long start, Long rs, Long ss,
+                                                                String remappedFrom, String reference,
+                                                                String alternate) {
+        return createSubmittedVariantEntity(assembly, start, rs, ss, remappedFrom, null,
+                                            reference, alternate);
     }
 
     private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)

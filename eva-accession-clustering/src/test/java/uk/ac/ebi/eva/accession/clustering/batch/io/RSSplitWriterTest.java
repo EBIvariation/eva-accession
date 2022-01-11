@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -39,6 +40,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
+import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -278,21 +280,8 @@ public class RSSplitWriterTest {
         // Another SS with the same accession as SS1 but different REF/ALT
         SubmittedVariantEntity ss1_another = createSS(ss1.getAccession(), rs1Accession, 101L,
                                                       "T", "");
-
-        // Create multiple entries in clustered variant collection - one for each distinct loci but with the same accession
-        List<ClusteredVariantEntity> multipleEntriesWithSameRS = Stream.of(ss1, ss1_another)
-                                                                       .map(clusteringWriter::toClusteredVariantEntity)
-                                                                       .collect(Collectors.toList());
-
-        mongoTemplate.insert(Arrays.asList(ss1, ss1_another), DbsnpSubmittedVariantEntity.class);
-        mongoTemplate.insert(multipleEntriesWithSameRS, DbsnpClusteredVariantEntity.class);
-        SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
-        splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
-                            ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
-                            Stream.of(ss1, ss1_another).map(SubmittedVariantInactiveEntity::new)
-                                  .collect(Collectors.toList())
-        );
-        mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
+        SubmittedVariantOperationEntity splitOperation =
+                createScenario2_SplitsInvolvingSameSSWithSameRS(ss1, ss1_another, rs1Accession);
         rsSplitWriter.write(Collections.singletonList(splitOperation));
 
 
@@ -310,5 +299,51 @@ public class RSSplitWriterTest {
                                                                       .getClusteredVariantAccession();
         assertEquals(rs1Accession, newRSForSS1);
         assertNotEquals(rs1Accession, newRSForSS1_another);
+    }
+
+    private SubmittedVariantOperationEntity createScenario2_SplitsInvolvingSameSSWithSameRS
+            (SubmittedVariantEntity ss1, SubmittedVariantEntity ss1_another, Long rs1Accession) {
+        // Create multiple entries in clustered variant collection - one for each distinct loci but with the same accession
+        List<ClusteredVariantEntity> multipleEntriesWithSameRS = Stream.of(ss1, ss1_another)
+                                                                       .map(clusteringWriter::toClusteredVariantEntity)
+                                                                       .collect(Collectors.toList());
+
+        mongoTemplate.insert(Arrays.asList(ss1, ss1_another), DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.insert(multipleEntriesWithSameRS, DbsnpClusteredVariantEntity.class);
+        SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
+        splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                            ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
+                            Stream.of(ss1, ss1_another).map(SubmittedVariantInactiveEntity::new)
+                                  .collect(Collectors.toList())
+        );
+        mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
+
+        return splitOperation;
+    }
+
+    @Test
+    @DirtiesContext
+    // Chosen scenario for testing:
+    // https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1639249574
+    // There is no specific reason for choosing this scenario for testing other than the fact
+    // there is a convenience method createScenario2_SplitsInvolvingSameSSWithSameRS above to set up this scenario.
+    public void testIdempotentSplitWrites() throws Exception {
+        Long rs1Accession = 1L;
+        ss1 = createSS(1L, rs1Accession, 100L, "C", "T");
+        // Another SS with the same accession as SS1 but different REF/ALT
+        SubmittedVariantEntity ss1_another = createSS(ss1.getAccession(), rs1Accession, 101L,
+                                                      "T", "");
+        SubmittedVariantOperationEntity splitOperation =
+                createScenario2_SplitsInvolvingSameSSWithSameRS(ss1, ss1_another, rs1Accession);
+
+        rsSplitWriter.write(Collections.singletonList(splitOperation));
+        DatabaseState databaseStateAfterFirstSplitWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+        rsSplitWriter.write(Collections.singletonList(splitOperation));
+        DatabaseState databaseStateAfterSecondSplitWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+        rsSplitWriter.write(Collections.singletonList(splitOperation));
+        DatabaseState databaseStateAfterThirdSplitWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+
+        assertEquals(databaseStateAfterSecondSplitWrite, databaseStateAfterFirstSplitWrite);
+        assertEquals(databaseStateAfterThirdSplitWrite, databaseStateAfterFirstSplitWrite);
     }
 }

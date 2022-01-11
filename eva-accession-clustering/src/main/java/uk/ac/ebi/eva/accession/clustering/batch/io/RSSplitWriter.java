@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 import com.mongodb.MongoBulkWriteException;
 
 import com.mongodb.client.result.UpdateResult;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
@@ -26,6 +27,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
@@ -43,6 +45,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
@@ -50,6 +53,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -63,6 +71,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
     private final ClusteringWriter clusteringWriter;
 
     private final ClusteredVariantAccessioningService clusteredVariantAccessioningService;
+
+    private final SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
     private static final String ACCESSION_ATTRIBUTE = "accession";
 
@@ -80,10 +90,12 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     public RSSplitWriter(ClusteringWriter clusteringWriter,
                          ClusteredVariantAccessioningService clusteredVariantAccessioningService,
+                         SubmittedVariantAccessioningService submittedVariantAccessioningService,
                          MongoTemplate mongoTemplate,
                          MetricCompute<ClusteringMetric> metricCompute) {
         this.clusteringWriter = clusteringWriter;
         this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
+        this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
         this.metricCompute = metricCompute;
     }
@@ -94,6 +106,13 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         for (SubmittedVariantOperationEntity entity: submittedVariantOperationEntities) {
             writeRSSplit(entity);
         }
+    }
+
+    // Get distinct objects based on an object attribute
+    // https://stackoverflow.com/a/27872852
+    private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = ConcurrentHashMap.newKeySet();
+        return t -> seen.add(keyExtractor.apply(t));
     }
 
     public void writeRSSplit(SubmittedVariantOperationEntity submittedVariantOperationEntity)
@@ -114,6 +133,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 submittedVariantOperationEntity
                         .getInactiveObjects()
                         .stream()
+                        // Ensure duplicates inside inactiveObjects are tolerated
+                        .filter(distinctByKey(this::getHashedMessageAndAccessionForSVIE))
                         .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
                         .collect(Collectors.groupingBy(this::getRSHashForSS))
                         .entrySet().stream().map(rsHashAndAssociatedSS ->
@@ -133,6 +154,10 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         issueNewRSForHashes(hashesThatShouldGetNewRS, submittedVariantOperationEntity.getInactiveObjects());
     }
 
+    private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
+        return new ImmutablePair<>(svie.getHashedMessage(), svie.getAccession());
+    }
+
     private void issueNewRSForHashes(List<String> hashesThatShouldGetNewRS,
                                      List<SubmittedVariantInactiveEntity> submittedVariantInactiveEntities)
             throws AccessionCouldNotBeGeneratedException {
@@ -140,6 +165,9 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 submittedVariantInactiveEntities
                 .stream()
                 .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                // If the split was processed multiple times due to multiple runs of the clustering pipeline
+                // ensure that the SS was not already assigned a new RS
+                .filter(ss -> !this.doesSSAlreadyHaveANewRS(ss))
                 .collect(Collectors.groupingBy(this::getRSHashForSS));
         for (String rsHash: rsHashAndAssociatedSS.keySet()) {
             if (hashesThatShouldGetNewRS.contains(rsHash)) {
@@ -165,6 +193,23 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 }
             }
         }
+    }
+
+    private boolean doesSSAlreadyHaveANewRS(SubmittedVariantEntity ssMarkedToReceiveNewRS) {
+        Optional<ISubmittedVariant> ssInDBOption = this.submittedVariantAccessioningService.getAllByIdFields(
+                ssMarkedToReceiveNewRS.getReferenceSequenceAccession(), ssMarkedToReceiveNewRS.getContig(),
+                Collections.singletonList(ssMarkedToReceiveNewRS.getProjectAccession()),
+                ssMarkedToReceiveNewRS.getStart(), ssMarkedToReceiveNewRS.getReferenceAllele(),
+                ssMarkedToReceiveNewRS.getAlternateAllele()
+                // Look at the database to check if the SS that is marked
+                // to get a new RS during a split already was assigned a new RS during a previous run.
+        ).stream().findFirst().map(AccessionWrapper::getData);
+        if (ssInDBOption.isPresent()) {
+            ISubmittedVariant ssInDB = ssInDBOption.get();
+            return !(ssInDB.getClusteredVariantAccession()
+                         .equals(ssMarkedToReceiveNewRS.getClusteredVariantAccession()));
+        }
+        return false;
     }
 
     private void removeExistingHash(String rsHash) {

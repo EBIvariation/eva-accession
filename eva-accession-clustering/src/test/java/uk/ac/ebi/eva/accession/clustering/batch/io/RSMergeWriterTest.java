@@ -41,6 +41,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
+import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -419,5 +420,36 @@ public class RSMergeWriterTest {
 
         this.mongoTemplate.insert(Arrays.asList(mergeOperation1, mergeOperation2, splitOperation1),
                                   SUBMITTED_VARIANT_OPERATION_COLLECTION);
+    }
+
+    @Test
+    @DirtiesContext
+    public void testIdempotentMergeWrites() throws Exception {
+        /*
+         * SS   RS  LOC
+         * 1    1   chr1/100/SNV
+         * 2    2   chr1/100/SNV
+         * 3    2   chr1/103/SNV
+         * 4    3   chr1/103/SNV
+         * SS1/RS1 and SS2/RS2, SS3/RS2 and SS4/RS3 are marked as merge candidate entries since these RS pairs share the same locus
+         * SS2/RS2 and SS3/RS2 are split candidate entries because the same RS has different loci
+         */
+        createMultiLevelMergeScenario();
+        List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
+        SubmittedVariantOperationEntity temp;
+        while ((temp = rsMergeCandidatesReader.read()) != null) {
+            submittedVariantOperationEntities.add(temp);
+        }
+
+        //First run of RS Merges
+        rsMergeWriter.write(submittedVariantOperationEntities);
+        DatabaseState databaseStateAfterFirstMergeWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+        rsMergeWriter.write(submittedVariantOperationEntities);
+        DatabaseState databaseStateAfterSecondMergeWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+        rsMergeWriter.write(submittedVariantOperationEntities);
+        DatabaseState databaseStateAfterThirdMergeWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+
+        assertEquals(databaseStateAfterSecondMergeWrite, databaseStateAfterFirstMergeWrite);
+        assertEquals(databaseStateAfterThirdMergeWrite, databaseStateAfterFirstMergeWrite);
     }
 }

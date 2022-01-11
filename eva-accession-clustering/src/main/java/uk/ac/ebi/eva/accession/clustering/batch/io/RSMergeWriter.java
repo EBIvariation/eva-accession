@@ -170,11 +170,13 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         // because ClusteredVariantEntity "equals" method does NOT involve comparing accessions
         List<ClusteredVariantEntity> mergeCandidates =
                 currentOperation.getInactiveObjects()
-                                               .stream()
-                                               .map(entity -> clusteringWriter.toClusteredVariantEntity(
-                                                       entity.toSubmittedVariantEntity()))
-                                               .filter(distinctByKey(AccessionedDocument::getAccession))
-                                               .collect(Collectors.toList());
+                                .stream()
+                                // Ensure duplicates inside inactiveObjects are tolerated
+                                .filter(distinctByKey(this::getHashedMessageAndAccessionForSVIE))
+                                .map(entity -> clusteringWriter.toClusteredVariantEntity(
+                                        entity.toSubmittedVariantEntity()))
+                                .filter(distinctByKey(AccessionedDocument::getAccession))
+                                .collect(Collectors.toList());
         // From among the participating RS in a merge,
         // use the current RS prioritization policy to get the target RS into which the rest of the RS will be merged
         ImmutablePair<ClusteredVariantEntity, List<ClusteredVariantEntity>> mergeDestinationAndMergees =
@@ -187,6 +189,10 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                         mergee.getAccession(), mergeDestination.getAccession());
             merge(mergeDestination, mergee, currentOperation);
         }
+    }
+
+    private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
+        return new ImmutablePair<>(svie.getHashedMessage(), svie.getAccession());
     }
 
     private void insertMergeOperation(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee) {
@@ -384,9 +390,14 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                                                   result.getData(), result.getVersion()))
                         .map(SubmittedVariantInactiveEntity::new)
                         .collect(Collectors.toList());
+        Map<String, List<ClusteredVariantEntity>> distinctLociInDBForTargetRS =
+                ssClusteredUnderTargetRS.stream()
+                                .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
+                                .map(clusteringWriter::toClusteredVariantEntity)
+                                .collect(Collectors.groupingBy(ClusteredVariantEntity::getHashedMessage));
 
         //Update existing split candidates record for target RS if it exists. Else, create a new record!
-        if (Objects.nonNull(splitCandidateInvolvingTargetRS)) {
+        if (Objects.nonNull(splitCandidateInvolvingTargetRS) && distinctLociInDBForTargetRS.size() > 1) {
             mongoTemplate.updateFirst(query(where(ID_ATTRIBUTE).is(splitCandidateInvolvingTargetRS.getId())),
                                       update(INACTIVE_OBJECT_ATTRIBUTE, ssClusteredUnderTargetRS),
                                       SubmittedVariantOperationEntity.class);
@@ -433,24 +444,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         update.set(RS_KEY, prioritised.accessionToKeep);
         mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
         metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS, svToUpdate.size());
-
-        // Sometimes submitted variants that create "SS hash collision" (not RS hash collision)
-        // may not have been ingested into submitted variant collection in the first place - see EVA-2610
-        // In such cases, construct a dummy SubmittedVariant object to record the merge in the operations collection.
-        if (svToUpdate.isEmpty()) {
-            svToUpdate =
-                    ssParticipatingInMerge
-                    .getInactiveObjects()
-                    .stream()
-                    .filter(inactiveEntity -> inactiveEntity.getClusteredVariantAccession()
-                                                         .equals(prioritised.accessionToBeMerged))
-                    .map(SubmittedVariantInactiveEntity::toSubmittedVariantEntity)
-                    // Construct operations for variants pertaining
-                    // to the operations collection in the submittedOperationCollection variable
-                    .filter(entity -> (clusteringWriter.isEvaSubmittedVariant(entity) ==
-                            submittedOperationCollection.equals(SubmittedVariantOperationEntity.class)))
-                    .collect(Collectors.toList());
-        }
 
         List<SubmittedVariantOperationEntity> operations =
                 svToUpdate.stream()

@@ -31,6 +31,9 @@ import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -58,7 +61,9 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
@@ -97,7 +102,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -114,11 +118,16 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes={BatchTestConfiguration.class})
@@ -190,6 +199,33 @@ public class ClusteringCommandLineRunnerTest {
     @Autowired
     @Qualifier(CLUSTERED_CLUSTERING_WRITER)
     private ClusteringWriter clusteringWriter;
+
+    @Autowired
+    @Qualifier(JOB_LAUNCHER_FROM_MONGO)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
+
+    // Current clustering sequence is:
+    // generate merge split candidates from clustered variants -> perform merge
+    // -> perform split -> cluster new variants
+    @Autowired
+    @Qualifier(CLUSTERED_CLUSTERING_WRITER)
+    private ClusteringWriter clusteringWriterPreMergeAndSplit;
+
+    @Autowired
+    @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER)
+    private ClusteringWriter clusteringWriterPostMergeAndSplit;
+
+    private ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
+
+    private ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
+
+    @Autowired
+    @Qualifier(RS_MERGE_WRITER)
+    private ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter;
+
+    @Autowired
+    @Qualifier(RS_SPLIT_WRITER)
+    private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
@@ -1041,5 +1077,45 @@ public class ClusteringCommandLineRunnerTest {
         return (int) Arrays.stream(vcfString.split(System.lineSeparator()))
                            .filter(line -> !line.startsWith("#"))
                            .count();
+    }
+
+    @Test
+    @DirtiesContext
+    // See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=972582890
+    // for scenario used in this test
+    // There is no specific reason for choosing this scenario for testing other than the fact
+    // there is a convenience method setupRSAndSS above to set up this scenario.
+    public void testIdempotentSplitAndMergeIdentificationAndHandling() throws Exception {
+        setupRSAndSS();
+
+        runSplitAndMergeIdentificationAndHandlingSteps();
+        DatabaseState databaseStateAfterFirstRun = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+        runSplitAndMergeIdentificationAndHandlingSteps();
+        DatabaseState databaseStateAfterSecondRun = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+        runSplitAndMergeIdentificationAndHandlingSteps();
+        DatabaseState databaseStateAfterThirdRun = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
+
+        assertEquals(databaseStateAfterSecondRun, databaseStateAfterFirstRun);
+        assertEquals(databaseStateAfterThirdRun, databaseStateAfterFirstRun);
+    }
+
+    private void runSplitAndMergeIdentificationAndHandlingSteps()
+            throws Exception {
+        jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();
+        List<SubmittedVariantOperationEntity> splitCandidates = new ArrayList<>();
+        SubmittedVariantOperationEntity tempSVO;
+        rsMergeCandidatesReader = new RSMergeAndSplitCandidatesReaderConfiguration()
+                .rsMergeCandidatesReader(this.mongoTemplate, this.inputParameters);
+        while((tempSVO = rsMergeCandidatesReader.read()) != null) {
+            mergeCandidates.add(tempSVO);
+        }
+        rsMergeWriter.write(mergeCandidates);
+        rsSplitCandidatesReader = new RSMergeAndSplitCandidatesReaderConfiguration()
+                .rsSplitCandidatesReader(this.mongoTemplate, this.inputParameters);
+        while((tempSVO = rsSplitCandidatesReader.read()) != null) {
+            splitCandidates.add(tempSVO);
+        }
+        rsSplitWriter.write(splitCandidates);
     }
 }
