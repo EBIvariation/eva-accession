@@ -109,7 +109,12 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
                                     submittedVariant.getStart(),
                                     submittedVariant.getReferenceAllele(),
                                     submittedVariant.getAlternateAllele(),
-                                    null);
+                                    null,
+                                    submittedVariant.isSupportedByEvidence(),
+                                    submittedVariant.isAssemblyMatch(),
+                                    submittedVariant.isAllelesMatch(),
+                                    submittedVariant.isValidated(),
+                                    submittedVariant.getCreatedDate());
     }
 
     @Override
