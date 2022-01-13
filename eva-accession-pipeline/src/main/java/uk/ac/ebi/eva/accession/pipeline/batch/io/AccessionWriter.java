@@ -24,6 +24,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.metric.AccessioningMetric;
@@ -71,6 +72,7 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
         if (variants.size() != accessions.size()) {
             Set<ISubmittedVariant> accessionedVariants = accessions.stream()
                                                                    .map(AccessionWrapper::getData)
+                                                                   .map(this::getSubmittedVariantWithoutClusteredVariantAccession)
                                                                    .collect(Collectors.toSet());
             HashSet<ISubmittedVariant> distinctVariants = new HashSet<>(variants);
             int duplicateCount = variants.size() - distinctVariants.size();
@@ -81,10 +83,10 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
                                     "it's expected.", duplicateCount);
             }
 
-            List<ISubmittedVariant> variantsWithoutAccession = distinctVariants.stream()
-                                                                               .filter(v -> !accessionedVariants
-                                                                                       .contains(v))
-                                                                               .collect(Collectors.toList());
+            Set<ISubmittedVariant> variantsWithoutAccession = distinctVariants.stream()
+                                                                              .filter(v -> !accessionedVariants
+                                                                                      .contains(v))
+                                                                              .collect(Collectors.toSet());
             metricCompute.addCount(AccessioningMetric.DISCARDED_VARIANTS, variantsWithoutAccession.size());
             if (variantsWithoutAccession.size() != 0) {
                 logger.error("A problem occurred while accessioning a chunk. Total num variants = {}, distinct = {}, " +
@@ -97,6 +99,17 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
                         "A problem occurred while accessioning a chunk. See log for details.");
             }
         }
+    }
+
+    private ISubmittedVariant getSubmittedVariantWithoutClusteredVariantAccession(ISubmittedVariant submittedVariant) {
+        return new SubmittedVariant(submittedVariant.getReferenceSequenceAccession(),
+                                    submittedVariant.getTaxonomyAccession(),
+                                    submittedVariant.getProjectAccession(),
+                                    submittedVariant.getContig(),
+                                    submittedVariant.getStart(),
+                                    submittedVariant.getReferenceAllele(),
+                                    submittedVariant.getAlternateAllele(),
+                                    null);
     }
 
     @Override
