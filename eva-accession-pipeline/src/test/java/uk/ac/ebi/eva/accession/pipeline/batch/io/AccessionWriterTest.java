@@ -109,6 +109,8 @@ public class AccessionWriterTest {
 
     private static final Long CLUSTERED_VARIANT = null;
 
+    private static final Long NONNULL_CLUSTERED_VARIANT = 5L;
+
     private static final Boolean SUPPORTED_BY_EVIDENCE = true;
 
     private static final Boolean MATCHES_ASSEMBLY = true;
@@ -329,6 +331,21 @@ public class AccessionWriterTest {
     }
 
     @Test
+    public void shouldNotThrowIfVariantsDifferOnlyByClusteredVariantAccession() {
+        SubmittedVariant variant = getSubmittedVariantWithClusteredVariant(CLUSTERED_VARIANT);
+        SubmittedVariant variantWithRs = getSubmittedVariantWithClusteredVariant(NONNULL_CLUSTERED_VARIANT);
+        List<SubmittedVariant> variants = Arrays.asList(variant, variant);
+        AccessionWrapper<ISubmittedVariant, String, Long> accession = new AccessionWrapper<>(EXPECTED_ACCESSION,
+                                                                                             "hashedMessage",
+                                                                                             variantWithRs);
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = Collections.singletonList(accession);
+
+        accessionWriter.checkCountsMatch(variants,
+                                         GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                                 accessions));
+    }
+
+    @Test
     public void shouldSortReport() throws Exception {
         // given
         List<Variant> variants = Arrays.asList(buildMockVariant(CONTIG_2, CHROMOSOME_2, START_1),
@@ -355,6 +372,12 @@ public class AccessionWriterTest {
         assertThat(line, Matchers.startsWith(CHROMOSOME_1 + "\t" + START_2));
         line = fileInputStream.readLine();
         assertThat(line, Matchers.startsWith(CHROMOSOME_3 + "\t" + START_1));
+    }
+
+    private SubmittedVariant getSubmittedVariantWithClusteredVariant(Long clusteredVariant) {
+        return new SubmittedVariant("assembly", TAXONOMY, "project", "contig", START_1,
+                             REFERENCE, ALTERNATE, clusteredVariant, false,
+                             MATCHES_ASSEMBLY, ALLELES_MATCH, VALIDATED, null);
     }
 
     private Variant buildMockVariant(String contig, int start) {
