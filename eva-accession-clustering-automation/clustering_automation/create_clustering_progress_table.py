@@ -118,7 +118,7 @@ def fill_in_from_previous_inventory(private_config_xml_file, release_version):
 
 def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_file, release_version, taxonomy,
                                              reference_directory):
-    assembly_list = get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy)
+    assembly_list = get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy, release_version)
     pipeline = get_filter_group_count_pipeline(taxonomy, assembly_list)
     cve_res = get_rs_count_per_assembly_in_collection(mongo_source, 'clusteredVariantEntity', pipeline)
     dbsnp_res = get_rs_count_per_assembly_in_collection(mongo_source, 'dbsnpClusteredVariantEntity', pipeline)
@@ -137,13 +137,18 @@ def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_fi
                                                        reference_directory)
 
 
-def get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy):
-    assembly_list = []
+def get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy, release_version):
+    assembly_list = set()
     with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
         query = f'SELECT assembly_accession from evapro.assembly where taxonomy_id = {taxonomy}'
         for assembly in get_all_results_for_query(pg_conn, query):
-            assembly_list.append(assembly[0])
-    return assembly_list
+            assembly_list.add(assembly[0])
+        query = (f"SELECT distinct assembly_accession "
+                 f"from eva_progress_tracker.clustering_release_tracker "
+                 f"where taxonomy={taxonomy} and release_version={release_version} and assembly_accession!='Unmapped'")
+        for assembly in get_all_results_for_query(pg_conn, query):
+            assembly_list.add(assembly[0])
+    return list(assembly_list)
 
 
 def get_filter_group_count_pipeline(taxonomy, assembly_list):
