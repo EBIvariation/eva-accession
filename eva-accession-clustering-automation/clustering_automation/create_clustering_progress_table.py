@@ -137,7 +137,7 @@ def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_fi
                                                        reference_directory)
 
 
-def get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy):
+def get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy, release_version):
     assembly_list = set()
     with get_metadata_connection_handle("development", private_config_xml_file) as pg_conn:
         query = f'SELECT assembly_accession from evapro.assembly where taxonomy_id = {taxonomy}'
