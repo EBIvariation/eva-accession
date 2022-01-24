@@ -145,7 +145,7 @@ def get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy):
             assembly_list.add(assembly[0])
         query = (f"SELECT distinct assembly_accession "
                  f"from eva_progress_tracker.clustering_release_tracker "
-                 f"where taxonomy={taxonomy} and assembly_accession!='Unmapped'")
+                 f"where taxonomy={taxonomy} and release_version={release_version} and assembly_accession!='Unmapped'")
         for assembly in get_all_results_for_query(pg_conn, query):
             assembly_list.add(assembly[0])
     return list(assembly_list)
