@@ -127,8 +127,11 @@ public class ClusteredVariantsRestController {
             allVariants.addAll(getNonHumanClusteredVariants(identifier));
             allVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
                     .collect(Collectors.toList()));
-        } catch (AccessionDeprecatedException | AccessionMergedException e) {
-
+        } catch (AccessionDeprecatedException e) {
+            allVariants.addAll(getDeprecatedClusteredVariant(identifier));
+        }catch (AccessionMergedException e){
+            // if accession has been merged into several other accessions, we are not getting those accessions
+            // we will rely on operations to provide info about those rs ids in which the given rs has been merged
         }
 
         List<HistoryEventDTO<Long, ClusteredVariant>> allOperations = clusteredVariantOperationService.getAllOperations(identifier)
@@ -141,10 +144,12 @@ public class ClusteredVariantsRestController {
     }
 
     public HistoryEventDTO<Long, ClusteredVariant> toHistoryEventDTO(IEvent<? extends IClusteredVariant, Long> operation) {
-        HistoryEvent<IClusteredVariant, Long> historyEvent = new HistoryEvent<>(operation.getEventType(), operation.getAccession(),
-                operation.getInactiveObjects().get(0).getVersion(), operation.getDestinationAccession(), operation.getCreatedDate(),
-                operation.getInactiveObjects().get(0).getModel());
-        return new HistoryEventDTO<>(historyEvent, ClusteredVariant::new);
+        HistoryEvent<IClusteredVariant, Long> historyEvent = new HistoryEvent<>(operation.getEventType(),
+                operation.getAccession(), operation.getInactiveObjects().get(0).getVersion(),
+                operation.getDestinationAccession(), operation.getReason(), operation.getCreatedDate(),
+                operation.getInactiveObjects().stream().map(obj -> obj.getModel()).collect(Collectors.toList()));
+        return new HistoryEventDTO<>(historyEvent,
+                (list) -> list.stream().map(event -> (ClusteredVariant) event).collect(Collectors.toList()));
     }
 
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
