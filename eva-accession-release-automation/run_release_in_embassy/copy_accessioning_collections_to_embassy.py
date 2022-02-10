@@ -87,31 +87,29 @@ def get_collections_to_copy(collections_to_copy, sources="EVA,DBSNP"):
     return collections_to_copy_map
 
 
-def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id,
+def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir):
     port_forwarding_process_id, mongo_port, exit_code = None, None, None
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
-                                                                              release_species_inventory_table,
+                                                                              assembly_accession, release_species_inventory_table,
                                                                               release_version)
         with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
                               user="evadev") as \
                 metadata_connection_handle:
-            assemblies = get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_table,
-                                                             release_version, metadata_connection_handle)
             # To be idempotent, clear destination tempmongo database
             destination_db_name = get_release_db_name_in_tempmongo_instance(taxonomy_id)
             MongoClient(port=mongo_port).drop_database(destination_db_name)
-            for assembly_accession in assemblies:
-                release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
-                                                                       release_species_inventory_table,
-                                                                       release_version, metadata_connection_handle)
-                logger.info("Beginning data copy to remote MongoDB host {0} on port {1}..."
-                            .format(release_info["tempmongo_instance"], mongo_port))
-                collections_to_copy_map = get_collections_to_copy(collections_to_copy, sources=release_info["sources"])
-                mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file, profile, assembly_accession,
-                                               collections_to_copy_map, dump_dir, destination_db_name)
+
+            release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
+                                                                   release_species_inventory_table,
+                                                                   release_version, metadata_connection_handle)
+            logger.info("Beginning data copy to remote MongoDB host {0} on port {1}..."
+                        .format(release_info["tempmongo_instance"], mongo_port))
+            collections_to_copy_map = get_collections_to_copy(collections_to_copy, sources=release_info["sources"])
+            mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file, profile, assembly_accession,
+                                           collections_to_copy_map, dump_dir, destination_db_name)
             exit_code = 0
     except Exception as ex:
         logger.error("Encountered an error while copying species data to Embassy for assemblies in "
@@ -126,6 +124,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
 @click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
+@click.option("--assembly", help="ex: GCA_000003055.3", required=True)
 @click.option("--collections-to-copy", "-c", default=collections_assembly_attribute_map.keys(),
               help="ex: dbsnpSubmittedVariantEntity,dbsnpSubmittedVariantOperationEntity", multiple=True,
               required=False)
@@ -134,9 +133,9 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--dump-dir", help="ex: /path/to/dump", required=True)
 @click.command()
-def main(private_config_xml_file, profile, taxonomy_id, collections_to_copy, release_species_inventory_table,
+def main(private_config_xml_file, profile, taxonomy_id, assembly, collections_to_copy, release_species_inventory_table,
          release_version, dump_dir):
-    copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id,
+    copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id, assembly,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir)
 

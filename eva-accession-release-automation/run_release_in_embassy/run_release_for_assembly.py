@@ -30,7 +30,7 @@ def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, asse
     exit_code = 0
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
-                                                                              release_species_inventory_table,
+                                                                              assembly_accession, release_species_inventory_table,
                                                                               release_version)
         release_properties_file = create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id,
                                                                               assembly_accession,

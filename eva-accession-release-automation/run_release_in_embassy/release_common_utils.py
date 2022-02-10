@@ -18,7 +18,7 @@ import psycopg2
 import signal
 import traceback
 
-from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_taxonomy
+from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_assembly
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 from ebi_eva_common_pyutils.network_utils import get_available_local_port, forward_remote_port_to_local_port
 from ebi_eva_common_pyutils.taxonomy import taxonomy
@@ -26,15 +26,15 @@ from ebi_eva_common_pyutils.taxonomy import taxonomy
 logger = logging.getLogger(__name__)
 
 
-def open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id, release_species_inventory_table,
-                                 release_version):
+def open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id, assembly,
+                                 release_species_inventory_table, release_version):
     MONGO_PORT = 27017
     local_forwarded_port = get_available_local_port(MONGO_PORT)
     try:
         with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
                               user="evadev") as \
                 metadata_connection_handle:
-            tempmongo_instance = get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table,
+            tempmongo_instance = get_target_mongo_instance_for_assembly(taxonomy_id, assembly, release_species_inventory_table,
                                                                         release_version, metadata_connection_handle)
             logger.info("Forwarding remote MongoDB port 27017 to local port {0}...".format(local_forwarded_port))
             port_forwarding_process_id = forward_remote_port_to_local_port(tempmongo_instance, MONGO_PORT,
