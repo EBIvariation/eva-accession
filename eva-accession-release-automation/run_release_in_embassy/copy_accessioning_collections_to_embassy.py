@@ -124,7 +124,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
 @click.option("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
 @click.option("--profile", help="Maven profile to use, ex: internal", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
-@click.option("--assembly", help="ex: GCA_000003055.3", required=True)
+@click.option("--assembly-accession", help="ex: GCA_000003055.3", required=True)
 @click.option("--collections-to-copy", "-c", default=collections_assembly_attribute_map.keys(),
               help="ex: dbsnpSubmittedVariantEntity,dbsnpSubmittedVariantOperationEntity", multiple=True,
               required=False)
@@ -133,9 +133,9 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
 @click.option("--release-version", help="ex: 2", type=int, required=True)
 @click.option("--dump-dir", help="ex: /path/to/dump", required=True)
 @click.command()
-def main(private_config_xml_file, profile, taxonomy_id, assembly, collections_to_copy, release_species_inventory_table,
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, collections_to_copy, release_species_inventory_table,
          release_version, dump_dir):
-    copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id, assembly,
+    copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir)
 
