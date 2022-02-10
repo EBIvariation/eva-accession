@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from argparse import ArgumentParser
 
-import click
 import collections
 import copy
 import datetime
@@ -87,7 +87,7 @@ def get_release_properties_for_current_assembly(species_release_properties, asse
     release_properties = {
         "assembly-accession": assembly_accession,
         "assembly-release-folder": os.path.join(species_release_properties["species-release-folder"], assembly_accession),
-        "release-log-file": "{species-release-folder}/release_{taxonomy-id}_{assembly_accession}{timestamp}.log".format(**species_release_properties, assembly_accession=assembly_accession)
+        "release-log-file": "{species-release-folder}/{assembly_accession}/release_{taxonomy-id}_{assembly_accession}_{timestamp}.log".format(**species_release_properties, assembly_accession=assembly_accession)
     }
     os.makedirs(release_properties["assembly-release-folder"], exist_ok=True)
     return release_properties
@@ -122,7 +122,7 @@ def prepare_release_workflow_file_for_species(common_release_properties, taxonom
     # as "python3 -m run_release_in_embassy.<script_name>"
     release_assembly_properties["script-path"] = os.environ["PYTHONPATH"]
     workflow_file_name = os.path.join(
-        release_assembly_properties["species-release-folder"],
+        release_assembly_properties["species-release-folder"], release_assembly_properties["assembly-accession"],
         "{taxonomy-id}_{assembly-accession}_release_workflow_{timestamp}.nf".format(**release_assembly_properties)
     )
 
@@ -165,7 +165,6 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, release
             workflow_file_name, release_log_file = prepare_release_workflow_file_for_species(common_release_properties,
                                                                                              taxonomy_id,
                                                                                              assembly_accession,
-                                                                                             release_assemblies,
                                                                                              memory)
             workflow_report_file_name = workflow_file_name.replace(".nf", ".report.html")
             if os.path.exists(workflow_report_file_name):
@@ -181,13 +180,14 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, release
             os.system(workflow_command)
 
 
-@click.option("--common-release-properties-file", help="ex: /path/to/release/properties.yml", required=True)
-@click.option("--taxonomy-id", help="ex: 9913", required=True)
-@click.option("--assembly-accessions", nargs='+', help="ex: GCA_000003055.3")
-@click.option("--memory",  help="Memory in GB. ex: 8", default=8, type=int, required=False)
-@click.command()
-def main(common_release_properties_file, taxonomy_id, assembly_accessions, memory):
-    run_release_for_species(common_release_properties_file, taxonomy_id, assembly_accessions, memory)
+def main():
+    argparse = ArgumentParser()
+    argparse.add_argument("--common-release-properties-file", help="ex: /path/to/release/properties.yml", required=True)
+    argparse.add_argument("--taxonomy-id", help="ex: 9913", required=True)
+    argparse.add_argument("--assembly-accessions", nargs='+', help="ex: GCA_000003055.3")
+    argparse.add_argument("--memory", help="Memory in GB. ex: 8", default=8, type=int, required=False)
+    args = argparse.parse_args()
+    run_release_for_species(args.common_release_properties_file, args.taxonomy_id, args.assembly_accessions, args.memory)
 
 
 if __name__ == "__main__":
