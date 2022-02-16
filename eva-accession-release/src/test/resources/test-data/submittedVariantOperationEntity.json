@@ -20,6 +20,28 @@
           "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("5d4bd7e256ccf06f703798cc"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(181942290),
+      "reason" : "Original 258660892 was merged into 244942338.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001635.4",
+          "tax" : 10090,
+          "study" : "UNISTS_SUBMISSION_08-24-2009",
+          "contig" : "CM000996.2",
+          "start" : NumberLong(121461812),
+          "ref" : "T",
+          "alt" : "C",
+          "rs" : NumberLong(258660892),
+          "hashedMessage" : "29E8AA6153CEB07AA14CFCFC56BDC144DFA1A476",
+          "accession" : NumberLong(5259673693),
+          "version" : 1,
+          "createdDate" : ISODate("2009-12-15T15:28:00.000+0000")
+        }
+      ]
     }
   ]
 }

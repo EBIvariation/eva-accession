@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.orderBy;
@@ -92,13 +93,13 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchMerged, sort));
         for (String submittedVariantOperationCollectionName : allSubmittedVariantOperationCollectionNames) {
             Bson lookup = Aggregates.lookup(submittedVariantOperationCollectionName, ACCESSION_FIELD,
-                                            CLUSTERED_VARIANT_ACCESSION_FIELD,
+                                            getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
                                             submittedVariantOperationCollectionName);
             aggregation.add(lookup);
         }
-        // Concat ss entries from all submitted variant collections
+        // Concat entries from all submitted variant operation collections
         Bson concat = Aggregates.addFields(new Field<>(SS_INFO_FIELD,
-                                                       new Document("$concatArrays", allSubmittedVariantCollectionNames
+                                                       new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
                                                                .stream().map(v -> "$" + v)
                                                                .collect(Collectors.toList()))));
         aggregation.add(concat);
