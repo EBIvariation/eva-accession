@@ -42,6 +42,19 @@ def get_assemblies_to_import_for_dbsnp_species(metadata_connection_handle, dbsnp
     return []
 
 
+def get_target_mongo_instance_for_assembly(taxonomy_id, assembly, release_species_inventory_table, release_version,
+                                           metadata_connection_handle):
+    query = (f"select distinct tempmongo_instance from {release_species_inventory_table} "
+             f"where taxonomy = '{taxonomy_id}' and assembly_accession='{assembly}' and "
+             f"release_version = {release_version} and should_be_released and num_rs_to_release > 0")
+    results = get_all_results_for_query(metadata_connection_handle, query)
+    if len(results) == 0:
+        raise Exception(f"Could not find target Mongo instance in Embassy "
+                        f"for taxonomy {taxonomy_id} and assembly {assembly}")
+
+    return results[0][0]
+
+
 def get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table, release_version,
                                            metadata_connection_handle):
     results = get_all_results_for_query(metadata_connection_handle, "select distinct tempmongo_instance from {0} "
