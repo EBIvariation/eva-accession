@@ -414,6 +414,28 @@
           "createdDate" : ISODate("2012-07-06T10:59:47.290+0000")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("61de29ce47abea7f2397efb7"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(3091764863),
+      "mergeInto" : NumberLong(393745096),
+      "reason" : "After remapping to GCA_002863925.1, RS IDs mapped to the same locus.",
+      "inactiveObjects" : [
+        {
+          "asm" : "GCA_002863925.1",
+          "tax" : 9796,
+          "contig" : "CM009157.1",
+          "start" : NumberLong(21631965),
+          "type" : "SNV",
+          "validated" : false,
+          "hashedMessage" : "C34C589EB2910ACAADAEC713966C0E0C6850D8C8",
+          "accession" : NumberLong("3091764863"),
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-14T07:19:08.660Z")
+        }
+      ],
+      "createdDate" : ISODate("2022-01-12T01:07:26.980Z")
     }
   ]
 }
