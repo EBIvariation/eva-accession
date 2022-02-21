@@ -68,7 +68,8 @@ import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongo
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantOperationEntity.json",
         "/test-data/submittedVariantOperationEntity.json",  // includes 1 update involving dbSNP RS merge
-        "/test-data/dbsnpClusteredVariantEntity.json"
+        "/test-data/dbsnpClusteredVariantEntity.json",
+        "/test-data/clusteredVariantEntity.json"  // includes 1 RS that was a merge target for a dbSNP RS
 })
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class MergedVariantMongoReaderTest {
@@ -365,6 +366,20 @@ public class MergedVariantMongoReaderTest {
     @Test
     public void noExceptionIfSsFromDifferentCollectionUpdated() throws Exception {
         MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.4", mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE, new DbsnpCollectionNames());
+        Map<String, Variant> allVariants = readIntoMap(reader);
+        assertEquals(1, allVariants.size());
+    }
+
+    /**
+     * This test will use a different defaultReader for assembly GCA_002863925.1 to evaluate this specific scenario:
+     * - One merge operation for clustered variants (dbSNP rs3091764863 merged into EVA rs393745096)
+     *
+     * In this case we should successfully find the merged dbSNP clustered variant.
+     */
+    @Test
+    public void rsMergedWithRsFromDifferentCollection() throws Exception {
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_002863925.1", mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());

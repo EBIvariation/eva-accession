@@ -42,6 +42,33 @@
           "createdDate" : ISODate("2009-12-15T15:28:00.000+0000")
         }
       ]
+    },
+    {
+      "_id" : ObjectId("61de29cf47abea7f2397efb8"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong("5327034575"),
+      "reason" : "Original rs3091764863 associated with SS was merged into rs393745096.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_002863925.1",
+          "tax" : 9796,
+          "study" : "PRJEB30116",
+          "contig" : "CM009157.1",
+          "start" : NumberLong(21631965),
+          "ref" : "C",
+          "alt" : "A",
+          "rs" : NumberLong("3091764863"),
+          "evidence" : true,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "73C89DD1FE09466807AB6D666564DE643B0ABB4D",
+          "accession" : NumberLong("5327034575"),
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-14T07:19:08.660Z")
+        }
+      ],
+      "createdDate" : ISODate("2022-01-12T01:07:27.057Z")
     }
   ]
 }

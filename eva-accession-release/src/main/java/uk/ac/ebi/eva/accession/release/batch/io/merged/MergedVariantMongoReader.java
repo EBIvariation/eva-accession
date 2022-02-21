@@ -75,6 +75,11 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
             "dbsnpSubmittedVariantOperationEntity"
     );
 
+    private static final List<String> allClusteredVariantCollectionNames = Arrays.asList(
+            "clusteredVariantEntity",
+            "dbsnpClusteredVariantEntity"
+    );
+
     public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize,
                                     CollectionNames names) {
         super(assemblyAccession, mongoClient, database, chunkSize, names);
@@ -91,6 +96,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchMerged, sort));
+
         for (String submittedVariantOperationCollectionName : allSubmittedVariantOperationCollectionNames) {
             Bson lookup = Aggregates.lookup(submittedVariantOperationCollectionName, ACCESSION_FIELD,
                                             getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
@@ -98,14 +104,23 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
             aggregation.add(lookup);
         }
         // Concat entries from all submitted variant operation collections
-        Bson concat = Aggregates.addFields(new Field<>(SS_INFO_FIELD,
-                                                       new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
+        Bson ssConcat = Aggregates.addFields(new Field<>(SS_INFO_FIELD,
+                                                         new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
                                                                .stream().map(v -> "$" + v)
                                                                .collect(Collectors.toList()))));
-        aggregation.add(concat);
-        Bson lookupClusteredVariants = Aggregates.lookup(names.getClusteredVariantEntity(), MERGE_INTO_FIELD,
-                                                         ACCESSION_FIELD, ACTIVE_RS);
-        aggregation.add(lookupClusteredVariants);
+        aggregation.add(ssConcat);
+
+        // Similarly look in both clustered variant collections for active RS
+        for (String clusteredVariantCollectionName : allClusteredVariantCollectionNames) {
+            Bson lookupClusteredVariants = Aggregates.lookup(clusteredVariantCollectionName, MERGE_INTO_FIELD,
+                                                             ACCESSION_FIELD, clusteredVariantCollectionName);
+            aggregation.add(lookupClusteredVariants);
+        }
+        Bson rsConcat = Aggregates.addFields(new Field<>(ACTIVE_RS,
+                                                         new Document("$concatArrays", allClusteredVariantCollectionNames
+                                                                 .stream().map(v -> "$" + v)
+                                                                 .collect(Collectors.toList()))));
+        aggregation.add(rsConcat);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
