@@ -31,7 +31,7 @@ from run_release_in_embassy.release_metadata import release_vcf_file_categories,
 
 by_assembly_folder_name = "by_assembly"
 by_species_folder_name = "by_species"
-release_file_types_to_be_checksummed = ("vcf.gz", "txt.gz", "tbi")
+release_file_types_to_be_checksummed = ("vcf.gz", "txt.gz", "csi")
 readme_general_info_file = "README_release_general_info.txt"
 readme_known_issues_file = "README_release_known_issues.txt"
 release_top_level_files_to_copy = ("README_release_known_issues.txt", readme_general_info_file,
@@ -57,7 +57,7 @@ class ReleaseProperties:
                                                                "release_{0}".format(self.release_version - 1))
 
 
-def get_current_and_previous_release_folders_for_taxonomy(taxonomy_id, release_properties, metadata_connection_handle):
+def get_current_release_folder_for_taxonomy(taxonomy_id, release_properties, metadata_connection_handle):
     """
     Get info on current and previous release assemblies for the given taxonomy
     """
@@ -65,16 +65,15 @@ def get_current_and_previous_release_folders_for_taxonomy(taxonomy_id, release_p
     def info_for_release_version(version):
         results = get_all_results_for_query(metadata_connection_handle,
                                             "select distinct release_folder_name from {0} "
-                                            "where taxonomy_id = '{1}' "
+                                            "where taxonomy = '{1}' "
                                             "and release_version = {2}"
                                             .format(release_properties.release_species_inventory_table, taxonomy_id,
                                                     version))
         return results[0][0] if len(results) > 0 else None
 
     current_release_folder = info_for_release_version(release_properties.release_version)
-    previous_release_folder = info_for_release_version(release_properties.release_version - 1)
 
-    return current_release_folder, previous_release_folder
+    return current_release_folder
 
 
 def get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties, metadata_connection_handle):
@@ -83,7 +82,7 @@ def get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties, me
     """
     results = get_all_results_for_query(metadata_connection_handle, "select row_to_json(row) from "
                                                                     "(select * from {0} "
-                                                                    "where taxonomy_id = '{1}' "
+                                                                    "where taxonomy = '{1}' "
                                                                     "and release_version in ({2}, {2} - 1)) row"
                                         .format(release_properties.release_species_inventory_table, taxonomy_id,
                                                 release_properties.release_version))
@@ -97,11 +96,11 @@ def get_release_file_list_for_assembly(release_assembly_info):
     Get list of release files at assembly level
     for example, see here, ftp://ftp.ebi.ac.uk/pub/databases/eva/rs_releases/release_1/by_assembly/GCA_000001515.4/)
     """
-    assembly_accession = release_assembly_info["assembly"]
+    assembly_accession = release_assembly_info["assembly_accession"]
     vcf_files = ["{0}_{1}.vcf.gz".format(assembly_accession, category) for category in release_vcf_file_categories]
     text_files = ["{0}_{1}.txt.gz".format(assembly_accession, category) for category in release_text_file_categories]
-    tbi_files = ["{0}.tbi".format(filename) for filename in vcf_files]
-    release_file_list = vcf_files + text_files + tbi_files + ["README_rs_ids_counts.txt"]
+    csi_files = ["{0}.csi".format(filename) for filename in vcf_files]
+    release_file_list = vcf_files + text_files + csi_files + ["README_rs_ids_counts.txt"]
     return sorted(release_file_list)
 
 
@@ -120,7 +119,7 @@ def create_symlink_to_assembly_folder_from_species_folder(current_release_assemb
     See FTP layout linkage between by_assembly and by_species folders in the link below:
     https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
     """
-    assembly_accession = current_release_assembly_info["assembly"]
+    assembly_accession = current_release_assembly_info["assembly_accession"]
     species_release_folder_name = current_release_assembly_info["release_folder_name"]
     public_release_species_folder = os.path.join(release_properties.public_ftp_current_release_folder,
                                                  by_species_folder_name, species_release_folder_name)
@@ -140,7 +139,7 @@ def recreate_public_release_assembly_folder(assembly_accession, public_release_a
 
 def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
                                       public_release_assembly_folder):
-    assembly_accession = current_release_assembly_info["assembly"]
+    assembly_accession = current_release_assembly_info["assembly_accession"]
     species_release_folder_name = current_release_assembly_info["release_folder_name"]
     md5sum_output_file = os.path.join(public_release_assembly_folder, "md5checksums.txt")
     run_command_with_output("Removing md5 checksum file {0} for assembly if it exists...".format(md5sum_output_file),
@@ -161,7 +160,7 @@ def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_pro
 
 
 def hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_info, release_properties):
-    assembly_accession = current_release_assembly_info["assembly"]
+    assembly_accession = current_release_assembly_info["assembly_accession"]
     public_current_release_assembly_folder = \
         get_folder_path_for_assembly(release_properties.public_ftp_current_release_folder, assembly_accession)
     public_previous_release_assembly_folder = \
@@ -184,12 +183,12 @@ def hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_
 
 
 def publish_assembly_release_files_to_ftp(current_release_assembly_info, release_properties):
-    assembly_accession = current_release_assembly_info["assembly"]
+    assembly_accession = current_release_assembly_info["assembly_accession"]
     public_release_assembly_folder = \
         get_folder_path_for_assembly(release_properties.public_ftp_current_release_folder, assembly_accession)
     # If a species was processed during this release, copy current release data to FTP
-    if current_release_assembly_info["should_be_processed"] and \
-            current_release_assembly_info["number_variants_to_process"] > 0:
+    if current_release_assembly_info["should_be_released"] and \
+            current_release_assembly_info["num_rs_to_release"] > 0:
         copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
                                           public_release_assembly_folder)
     else:
@@ -255,8 +254,7 @@ def copy_unmapped_files(source_folder_to_copy_from, species_current_release_fold
                                                      species_level_files_to_copy[2])))
 
 
-def publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name,
-                                       species_previous_release_folder_name, species_has_unmapped_data):
+def publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name):
     species_staging_release_folder_path = os.path.join(release_properties.staging_release_folder,
                                                        species_current_release_folder_name)
     species_current_release_folder_path = \
@@ -264,7 +262,7 @@ def publish_species_level_files_to_ftp(release_properties, species_current_relea
                                     species_current_release_folder_name)
     species_previous_release_folder_path = \
         get_folder_path_for_species(release_properties.public_ftp_previous_release_folder,
-                                    species_previous_release_folder_name)
+                                    species_current_release_folder_name)
 
     # Determine if the unmapped data should be copied from the current or a previous release
     copy_from_current_release = len(glob.glob(os.path.join(species_staging_release_folder_path,
@@ -317,28 +315,24 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
                           user="evadev", password=metadata_password) as metadata_connection_handle:
         assemblies_to_process = get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties,
                                                                          metadata_connection_handle)
-        species_has_unmapped_data = "Unmapped" in set([assembly_info["assembly"] for assembly_info in
+        species_has_unmapped_data = "Unmapped" in set([assembly_info["assembly_accession"] for assembly_info in
                                                        assemblies_to_process])
 
         # Publish species level data
-        species_current_release_folder_name, species_previous_release_folder_name = \
-            get_current_and_previous_release_folders_for_taxonomy(taxonomy_id, release_properties,
-                                                                  metadata_connection_handle)
+        species_current_release_folder_name = get_current_release_folder_for_taxonomy(taxonomy_id, release_properties,
+                                                                                      metadata_connection_handle)
 
         create_species_folder(release_properties, species_current_release_folder_name)
 
         # Unmapped variant data is published at the species level
         # because they are not mapped to any assemblies (duh!)
         if species_has_unmapped_data:
-            publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name,
-                                               species_previous_release_folder_name, species_has_unmapped_data)
-
-
+            publish_species_level_files_to_ftp(release_properties, species_current_release_folder_name)
 
         # Publish assembly level data
         for current_release_assembly_info in \
                 get_release_assemblies_for_release_version(assemblies_to_process, release_properties.release_version):
-            if current_release_assembly_info["assembly"] != "Unmapped":
+            if current_release_assembly_info["assembly_accession"] != "Unmapped":
                 publish_assembly_release_files_to_ftp(current_release_assembly_info, release_properties)
 
         # Symlinks with assembly names in the species folder ex: Sorbi1 -> GCA_000003195.1
