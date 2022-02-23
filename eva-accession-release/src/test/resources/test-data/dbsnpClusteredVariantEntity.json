@@ -303,6 +303,29 @@
       "2016-05-16T13:07:00Z"
       ),
       "mapWeight": 2
+    },
+    {
+      "_id" : "A3B87BE803AD7528981BB50459E0827A58440EA4",
+      "asm" : "GCA_000001635.4",
+      "tax" : 10090,
+      "contig" : "CM000996.2",
+      "start" : NumberLong(2715437),
+      "type" : "SNV",
+      "validated" : true,
+      "accession" : NumberLong(244942338),
+      "version" : 1,
+      "createdDate" : ISODate("2010-12-28T04:25:00.000Z")
+    },
+    {
+      "_id" : "227464329061B5D4B05D43842B2C30523169E485",
+      "asm" : "GCA_000002305.1",
+      "tax" : 9796,
+      "contig" : "CM000386.2",
+      "start" : NumberLong(21319652),
+      "type" : "SNV",
+      "accession" : NumberLong(3091764863),
+      "version" : 1,
+      "createdDate" : ISODate("2020-09-29T08:39:16.933Z")
     }
   ]
 }
