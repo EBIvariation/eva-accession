@@ -7,8 +7,14 @@ variables:
     WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
     CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
     ACCESSIONING_ARTIFACT_PATH: eva-accession-pipeline/target/eva-accession-pipeline-*.jar
+    RELEASE_ARTIFACT_PATH: eva-accession-release/target/eva-accession-release-*.jar
+    REMAPPING_GET_SOURCE_ARTIFACT_PATH: eva-remapping-get-source/target/eva-remapping-get-source-*.jar
+    REMAPPING_INGEST_ARTIFACT_PATH: eva-remapping-ingest/target/eva-remapping-ingest-*.jar
     CLUSTERING_SYMLINK_NAME: "eva-accession-clustering.jar"
     ACCESSIONING_SYMLINK_NAME: "eva-accession-pipeline.jar"
+    RELEASE_SYMLINK_NAME: "eva-accession-release.jar"
+    REMAPPING_GET_SOURCE_SYMLINK_NAME: "eva-remapping-get-source.jar"
+    REMAPPING_INGEST_SYMLINK_NAME: "eva-remapping-ingest.jar"
     MAVEN_SETTINGS: maven-settings.xml
     URL_MAVEN_SETTINGS: https://api.github.com/repos/EBIvariation/configuration/contents/eva-maven-settings.xml
     MEDIA_TYPE: application/vnd.github.raw
@@ -20,7 +26,7 @@ test:
         - mongo:4.0.18
     script:
         # Gitlab exposes services under their own hostnames. So test host should be "mongo" instead of "localhost".
-        - mvn clean test --projects 'eva-accession-core,eva-accession-ws,eva-remapping-get-source,eva-accession-clustering,eva-accession-pipeline' -Deva.mongo.host.test=mongo
+        - mvn clean test --projects 'eva-accession-core,eva-accession-ws,eva-remapping-get-source,eva-accession-clustering,eva-accession-pipeline,eva-accession-release,eva-remapping-ingest' -Deva.mongo.host.test=mongo
     environment:
         name: test-env
     only:
@@ -38,7 +44,7 @@ test:
         - apk add --update curl
         - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $URL_MAVEN_SETTINGS > $MAVEN_SETTINGS
     script:
-        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-remapping-get-source,eva-accession-clustering,eva-accession-pipeline' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
+        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-remapping-get-source,eva-accession-clustering,eva-accession-pipeline,eva-accession-release,eva-remapping-ingest' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
         - cp eva-accession-ws/target/eva*.war $WS_ARTIFACT_PATH
     after_script:
         - rm $MAVEN_SETTINGS
@@ -47,6 +53,9 @@ test:
             - $WS_ARTIFACT_PATH
             - $CLUSTERING_ARTIFACT_PATH
             - $ACCESSIONING_ARTIFACT_PATH
+            - $RELEASE_ARTIFACT_PATH
+            - $REMAPPING_GET_SOURCE_ARTIFACT_PATH
+            - $REMAPPING_INGEST_ARTIFACT_PATH
 
 package-internal:
     extends: .package
@@ -147,15 +156,17 @@ deploy-tomcat-production-fallback:
         - echo "$EVA_ETL_PRIVATE_KEY" | tr -d '\r' | ssh-add -
         - TMP_NAME=$(basename $(ls $ARTIFACT_PATH))
         - ARTIFACT_NAME=${TMP_NAME%%.jar}-${ENVIRONMENT_NAME}.jar
-        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE}:${DEPLOY_DIRECTORY_PATH}/${ARTIFACT_NAME}
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE} "ln -fns ${DEPLOY_DIRECTORY_PATH}/${ARTIFACT_NAME} ${DEPLOY_DIRECTORY_PATH}/${SYMLINK_NAME}"
+        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE}:${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME}
+        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE} "ln -fns ${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME} ${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${SYMLINK_NAME}"
+        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE_CODON}:${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME}
+        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE_CODON} "ln -fns ${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME} ${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${SYMLINK_NAME}"
 
 deploy-clustering-jar-development:
     extends: .deploy-jar
     variables:
         ENVIRONMENT_NAME: development
         ARTIFACT_PATH: $CLUSTERING_ARTIFACT_PATH
-        DEPLOY_DIRECTORY_PATH: $CLUSTERING_DEVELOPMENT_PATH
+        DEPLOY_DIRECTORY: clustering_development
         SYMLINK_NAME: $CLUSTERING_SYMLINK_NAME
     dependencies:
         - package-development
@@ -167,8 +178,44 @@ deploy-accessioning-jar-development:
     variables:
         ENVIRONMENT_NAME: development
         ARTIFACT_PATH: $ACCESSIONING_ARTIFACT_PATH
-        DEPLOY_DIRECTORY_PATH: $ACCESSIONING_DEVELOPMENT_PATH
+        DEPLOY_DIRECTORY: accessioning_development
         SYMLINK_NAME: $ACCESSIONING_SYMLINK_NAME
+    dependencies:
+        - package-development
+    only:
+        - master
+
+deploy-release-jar-development:
+    extends: .deploy-jar
+    variables:
+        ENVIRONMENT_NAME: development
+        ARTIFACT_PATH: $RELEASE_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: release_development
+        SYMLINK_NAME: $RELEASE_SYMLINK_NAME
+    dependencies:
+        - package-development
+    only:
+        - master
+
+deploy-remapping-ingestion-jar-development:
+    extends: .deploy-jar
+    variables:
+        ENVIRONMENT_NAME: development
+        ARTIFACT_PATH: $REMAPPING_INGESTION_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: remapping_ingestion_development
+        SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
+    dependencies:
+        - package-development
+    only:
+        - master
+
+deploy-remapping-get-source-jar-development:
+    extends: .deploy-jar
+    variables:
+        ENVIRONMENT_NAME: development
+        ARTIFACT_PATH: $REMAPPING_GET_SOURCE_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: remapping_get_source_development
+        SYMLINK_NAME: $REMAPPING_GET_SOURCE_SYMLINK_NAME
     dependencies:
         - package-development
     only:
@@ -180,7 +227,7 @@ deploy-clustering-jar-production:
     variables:
         ENVIRONMENT_NAME: production
         ARTIFACT_PATH: $CLUSTERING_ARTIFACT_PATH
-        DEPLOY_DIRECTORY_PATH: $CLUSTERING_PRODUCTION_PATH
+        DEPLOY_DIRECTORY: clustering_production
         SYMLINK_NAME: $CLUSTERING_SYMLINK_NAME
     dependencies:
         - package-production
@@ -192,8 +239,47 @@ deploy-accessioning-jar-production:
     when: manual
     variables:
         ARTIFACT_PATH: $ACCESSIONING_ARTIFACT_PATH
-        DEPLOY_DIRECTORY_PATH: $ACCESSIONING_PRODUCTION_PATH
+        DEPLOY_DIRECTORY: accessioning_production
         SYMLINK_NAME: $ACCESSIONING_SYMLINK_NAME
+    dependencies:
+        - package-production
+    only:
+        - tags
+
+deploy-release-jar-production:
+    extends: .deploy-jar
+    when: manual
+    variables:
+        ENVIRONMENT_NAME: production
+        ARTIFACT_PATH: $RELEASE_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: release_production
+        SYMLINK_NAME: $RELEASE_SYMLINK_NAME
+    dependencies:
+        - package-production
+    only:
+        - tags
+
+deploy-remapping-ingestion-jar-production:
+    extends: .deploy-jar
+    when: manual
+    variables:
+        ENVIRONMENT_NAME: production
+        ARTIFACT_PATH: $REMAPPING_INGESTION_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: remapping_ingestion_production
+        SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
+    dependencies:
+        - package-production
+    only:
+        - tags
+
+deploy-remapping-get-source-jar-production:
+    extends: .deploy-jar
+    when: manual
+    variables:
+        ENVIRONMENT_NAME: production
+        ARTIFACT_PATH: $REMAPPING_GET_SOURCE_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: remapping_get_source_production
+        SYMLINK_NAME: $REMAPPING_GET_SOURCE_SYMLINK_NAME
     dependencies:
         - package-production
     only:
