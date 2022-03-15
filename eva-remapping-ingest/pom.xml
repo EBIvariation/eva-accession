@@ -71,4 +71,8 @@
         </resources>
     </build>
 
+    <properties>
+        <eva.mongo.host.test>localhost</eva.mongo.host.test>
+    </properties>
+
 </project>
