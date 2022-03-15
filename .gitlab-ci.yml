@@ -73,6 +73,7 @@ package-development:
         MAVEN_PROFILE: development
     only:
         - master
+        - test_release_deployment
 
 package-production:
     extends: .package
@@ -173,6 +174,7 @@ deploy-clustering-jar-development:
         - package-development
     only:
         - master
+        - test_release_deployment
 
 deploy-accessioning-jar-development:
     extends: .deploy-jar
@@ -185,6 +187,7 @@ deploy-accessioning-jar-development:
         - package-development
     only:
         - master
+        - test_release_deployment
 
 deploy-release-jar-development:
     extends: .deploy-jar
@@ -197,6 +200,7 @@ deploy-release-jar-development:
         - package-development
     only:
         - master
+        - test_release_deployment
 
 deploy-remapping-ingestion-jar-development:
     extends: .deploy-jar
@@ -209,6 +213,7 @@ deploy-remapping-ingestion-jar-development:
         - package-development
     only:
         - master
+        - test_release_deployment
 
 deploy-remapping-get-source-jar-development:
     extends: .deploy-jar
@@ -221,6 +226,7 @@ deploy-remapping-get-source-jar-development:
         - package-development
     only:
         - master
+        - test_release_deployment
 
 deploy-clustering-jar-production:
     extends: .deploy-jar
