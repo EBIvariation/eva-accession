@@ -23,10 +23,6 @@
         </dependency>
         <dependency>
             <groupId>uk.ac.ebi.eva</groupId>
-            <artifactId>variation-commons-batch</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>uk.ac.ebi.eva</groupId>
             <artifactId>eva-accession-core</artifactId>
             <type>test-jar</type>
             <version>${project.version}</version>
@@ -66,13 +62,9 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>repackage</id>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
-                        <configuration>
-                            <classifier>exec</classifier>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
