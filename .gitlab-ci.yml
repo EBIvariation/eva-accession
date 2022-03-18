@@ -206,7 +206,7 @@ deploy-remapping-ingestion-jar-development:
     extends: .deploy-jar
     variables:
         ENVIRONMENT_NAME: development
-        ARTIFACT_PATH: $REMAPPING_INGESTION_ARTIFACT_PATH
+        ARTIFACT_PATH: $REMAPPING_INGEST_ARTIFACT_PATH
         DEPLOY_DIRECTORY: remapping_ingestion_development
         SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
     dependencies:
@@ -271,7 +271,7 @@ deploy-remapping-ingestion-jar-production:
     when: manual
     variables:
         ENVIRONMENT_NAME: production
-        ARTIFACT_PATH: $REMAPPING_INGESTION_ARTIFACT_PATH
+        ARTIFACT_PATH: $REMAPPING_INGEST_ARTIFACT_PATH
         DEPLOY_DIRECTORY: remapping_ingestion_production
         SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
     dependencies:
