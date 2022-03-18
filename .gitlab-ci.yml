@@ -31,7 +31,6 @@ test:
         name: test-env
     only:
         - master
-        - test_release_deployment
         - tags
 
 # Not executed, parent job definition for package
