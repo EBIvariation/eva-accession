@@ -207,7 +207,7 @@ deploy-remapping-ingestion-jar-development:
         ENVIRONMENT_NAME: development
         ARTIFACT_PATH: $REMAPPING_INGEST_ARTIFACT_PATH
         DEPLOY_DIRECTORY: remapping_ingestion_development
-        SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
+        SYMLINK_NAME: $REMAPPING_INGEST_SYMLINK_NAME
     dependencies:
         - package-development
     only:
@@ -272,7 +272,7 @@ deploy-remapping-ingestion-jar-production:
         ENVIRONMENT_NAME: production
         ARTIFACT_PATH: $REMAPPING_INGEST_ARTIFACT_PATH
         DEPLOY_DIRECTORY: remapping_ingestion_production
-        SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
+        SYMLINK_NAME: $REMAPPING_INGEST_SYMLINK_NAME
     dependencies:
         - package-production
     only:
