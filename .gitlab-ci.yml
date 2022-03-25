@@ -8,7 +8,7 @@ variables:
     CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
     ACCESSIONING_ARTIFACT_PATH: eva-accession-pipeline/target/eva-accession-pipeline-*.jar
     RELEASE_ARTIFACT_PATH: eva-accession-release/target/eva-accession-release-*.jar
-    REMAPPING_GET_SOURCE_ARTIFACT_PATH: eva-remapping-get-source/target/eva-remapping-get-source-*.jar
+    REMAPPING_GET_SOURCE_ARTIFACT_PATH: eva-remapping-get-source/target/eva-remapping-get-source-*exec.jar
     REMAPPING_INGEST_ARTIFACT_PATH: eva-remapping-ingest/target/eva-remapping-ingest-*.jar
     CLUSTERING_SYMLINK_NAME: "eva-accession-clustering.jar"
     ACCESSIONING_SYMLINK_NAME: "eva-accession-pipeline.jar"
@@ -201,9 +201,9 @@ deploy-remapping-ingestion-jar-development:
     extends: .deploy-jar
     variables:
         ENVIRONMENT_NAME: development
-        ARTIFACT_PATH: $REMAPPING_INGESTION_ARTIFACT_PATH
+        ARTIFACT_PATH: $REMAPPING_INGEST_ARTIFACT_PATH
         DEPLOY_DIRECTORY: remapping_ingestion_development
-        SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
+        SYMLINK_NAME: $REMAPPING_INGEST_SYMLINK_NAME
     dependencies:
         - package-development
     only:
@@ -214,7 +214,7 @@ deploy-remapping-get-source-jar-development:
     variables:
         ENVIRONMENT_NAME: development
         ARTIFACT_PATH: $REMAPPING_GET_SOURCE_ARTIFACT_PATH
-        DEPLOY_DIRECTORY: remapping_get_source_development
+        DEPLOY_DIRECTORY: remapping_exporter_development
         SYMLINK_NAME: $REMAPPING_GET_SOURCE_SYMLINK_NAME
     dependencies:
         - package-development
@@ -264,9 +264,9 @@ deploy-remapping-ingestion-jar-production:
     when: manual
     variables:
         ENVIRONMENT_NAME: production
-        ARTIFACT_PATH: $REMAPPING_INGESTION_ARTIFACT_PATH
+        ARTIFACT_PATH: $REMAPPING_INGEST_ARTIFACT_PATH
         DEPLOY_DIRECTORY: remapping_ingestion_production
-        SYMLINK_NAME: $REMAPPING_INGESTION_SYMLINK_NAME
+        SYMLINK_NAME: $REMAPPING_INGEST_SYMLINK_NAME
     dependencies:
         - package-production
     only:
@@ -278,7 +278,7 @@ deploy-remapping-get-source-jar-production:
     variables:
         ENVIRONMENT_NAME: production
         ARTIFACT_PATH: $REMAPPING_GET_SOURCE_ARTIFACT_PATH
-        DEPLOY_DIRECTORY: remapping_get_source_production
+        DEPLOY_DIRECTORY: remapping_exporter_production
         SYMLINK_NAME: $REMAPPING_GET_SOURCE_SYMLINK_NAME
     dependencies:
         - package-production
