@@ -20,6 +20,8 @@ package uk.ac.ebi.eva.accession.core.contigalias;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 
@@ -58,12 +60,13 @@ public class ContigAliasService {
                 throw new NoSuchElementException("Not data returned for " + url + " from the contig alias service");
             }
             String translatedContig = getTranslatedContig(contigAliasResponse, contigAliasNaming);
-            allByAccessionAfterContigAlias.add(createAccessionWrapperWithNewContig(submittedVariant, translatedContig));
+            allByAccessionAfterContigAlias.add(createSubmittedVariantAccessionWrapperWithNewContig(submittedVariant,
+                                                                                                   translatedContig));
         }
         return allByAccessionAfterContigAlias;
     }
 
-    private AccessionWrapper<ISubmittedVariant, String, Long> createAccessionWrapperWithNewContig(
+    private AccessionWrapper<ISubmittedVariant, String, Long> createSubmittedVariantAccessionWrapperWithNewContig(
             AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper, String newContig) {
         ISubmittedVariant data = accessionWrapper.getData();
         ISubmittedVariant dataAfterContigAlias = new SubmittedVariant(data.getReferenceSequenceAccession(),
@@ -114,5 +117,41 @@ public class ContigAliasService {
            throw new NoSuchElementException("Contig " + contigAliasChromosome.getGenbank() +
                                                     " could not be translated to " + contigAliasNaming);
        }
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getClusteredVariantsWithTranslatedContig(
+        List<AccessionWrapper<IClusteredVariant, String, Long>> allByAccession, ContigAliasNaming contigAliasNaming) {
+        if (contigAliasNaming == null || contigAliasNaming.equals(ContigAliasNaming.INSDC) ||
+                contigAliasNaming.equals(ContigAliasNaming.NO_REPLACEMENT)) {
+            //Contigs are stored in INSDC naming convention in the accessioning database so no need for translation
+            return allByAccession;
+        }
+
+        List<AccessionWrapper<IClusteredVariant, String, Long>> allByAccessionAfterContigAlias = new ArrayList<>();
+        for (AccessionWrapper<IClusteredVariant, String, Long> clusteredVariant : allByAccession) {
+            String genbankContig = clusteredVariant.getData().getContig();
+            String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
+            ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
+            if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
+                throw new NoSuchElementException("Not data returned for " + url + " from the contig alias service");
+            }
+            String translatedContig = getTranslatedContig(contigAliasResponse, contigAliasNaming);
+            allByAccessionAfterContigAlias.add(createClusteredVariantAccessionWrapperWithNewContig(clusteredVariant,
+                                                                                                   translatedContig));
+        }
+        return allByAccessionAfterContigAlias;
+    }
+
+    private AccessionWrapper<IClusteredVariant, String, Long> createClusteredVariantAccessionWrapperWithNewContig(
+            AccessionWrapper<IClusteredVariant, String, Long> accessionWrapper, String newContig) {
+        IClusteredVariant data = accessionWrapper.getData();
+        IClusteredVariant dataAfterContigAlias = new ClusteredVariant(data.getAssemblyAccession(),
+                                                                      data.getTaxonomyAccession(),
+                                                                      newContig,
+                                                                      data.getStart(),
+                                                                      data.getType(),
+                                                                      data.isValidated(),
+                                                                      data.getCreatedDate());
+        return new AccessionWrapper<>(accessionWrapper.getAccession(), accessionWrapper.getHash(), dataAfterContigAlias);
     }
 }

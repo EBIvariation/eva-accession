@@ -48,6 +48,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -518,7 +519,7 @@ public class ClusteredVariantsRestControllerTest {
             throws AccessionMergedException, AccessionDoesNotExistException {
         for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
             ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
-                    getVariantsResponse = controller.get(generatedAccession.getAccession());
+                    getVariantsResponse = controller.get(generatedAccession.getAccession(), ContigAliasNaming.INSDC);
             checkClusteredVariantsOutput(getVariantsResponse.getBody(), generatedAccession.getAccession());
         }
     }
@@ -542,7 +543,7 @@ public class ClusteredVariantsRestControllerTest {
                                                                            expectedSubmittedVariants)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantsResponse =
-                controller.getSubmittedVariants(clusteredVariantIds);
+                controller.getSubmittedVariants(clusteredVariantIds, ContigAliasNaming.INSDC);
         assertVariantsAreContainedInControllerResponse(getVariantsResponse,
                                                        expectedSubmittedVariants,
                                                        SubmittedVariant::new);
