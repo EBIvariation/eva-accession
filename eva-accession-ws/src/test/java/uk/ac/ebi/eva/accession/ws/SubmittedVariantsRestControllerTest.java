@@ -45,6 +45,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrappe
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
@@ -202,7 +203,7 @@ public class SubmittedVariantsRestControllerTest {
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
-                    getVariantsResponse = controller.get(generatedAccession.getAccession(), null);
+                    getVariantsResponse = controller.get(generatedAccession.getAccession(), ContigAliasNaming.INSDC);
 
             assertEquals(1, getVariantsResponse.getBody().size());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
