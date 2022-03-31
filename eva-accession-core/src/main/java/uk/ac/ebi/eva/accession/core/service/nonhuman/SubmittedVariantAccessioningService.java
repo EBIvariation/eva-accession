@@ -168,9 +168,9 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
-            List<Long> clusteredVariantAccessions) {
-        return joinLists(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
-                         accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions));
+            List<Long> clusteredVariantAccessions, ContigAliasNaming contigAliasNaming) {
+        return joinLists(contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions), contigAliasNaming),
+                         contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions),contigAliasNaming));
     }
 
     @Override

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
@@ -36,6 +37,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.HistoryEvent;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.HistoryEventDTO;
+
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -53,6 +56,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -95,19 +99,23 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                    required = true) Long identifier)
+                    required = true) Long identifier,
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
+                    ContigAliasNaming contigAliasNaming)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                     new ArrayList<>();
-            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
-            clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
+            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier, contigAliasNaming));
+            clusteredVariants.addAll(humanService.getAllByAccession(identifier, contigAliasNaming).stream().map(this::toDTO)
                     .collect(Collectors.toList()));
 
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
             }
             return ResponseEntity.ok(clusteredVariants);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (AccessionDeprecatedException e) {
             // not done with an exception handler because the only way to get the accession parameter would be parsing
             // the exception message
@@ -120,13 +128,17 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}/history", produces = "application/json")
     public ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantHistory(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                    required = true) Long identifier) throws AccessionDoesNotExistException {
+                    required = true) Long identifier,
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
+                    ContigAliasNaming contigAliasNaming) throws AccessionDoesNotExistException {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 new ArrayList<>();
         try {
-            allVariants.addAll(getNonHumanClusteredVariants(identifier));
-            allVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
+            allVariants.addAll(getNonHumanClusteredVariants(identifier, contigAliasNaming));
+            allVariants.addAll(humanService.getAllByAccession(identifier, contigAliasNaming).stream().map(this::toDTO)
                     .collect(Collectors.toList()));
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (AccessionDeprecatedException e) {
             allVariants.addAll(getDeprecatedClusteredVariant(identifier));
         }catch (AccessionMergedException e){
@@ -153,9 +165,9 @@ public class ClusteredVariantsRestController {
     }
 
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
-            Long identifier) throws AccessionDeprecatedException, AccessionMergedException {
+            Long identifier, ContigAliasNaming contigAliasNaming) throws AccessionDeprecatedException, AccessionMergedException {
         try {
-            return nonHumanActiveService.getAllByAccession(identifier).stream().map(this::toDTO)
+            return nonHumanActiveService.getAllByAccession(identifier, contigAliasNaming).stream().map(this::toDTO)
                     .collect(Collectors.toList());
         } catch (AccessionDoesNotExistException e) {
             return Collections.emptyList();
@@ -181,17 +193,24 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
-                    required = true) Long identifier)
+                    required = true) Long identifier,
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
+                    ContigAliasNaming contigAliasNaming)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
-        // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
-        nonHumanActiveService.getAllByAccession(identifier);
+        try {
+            // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
+            nonHumanActiveService.getAllByAccession(identifier, contigAliasNaming);
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
-                submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
+            List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
+                    submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier),
+                                                                              ContigAliasNaming.INSDC);
 
-        return submittedVariants.stream()
-                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                .collect(Collectors.toList());
+            return submittedVariants.stream()
+                                    .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                                    .collect(Collectors.toList());
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
 
     @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "

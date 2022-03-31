@@ -39,6 +39,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrappe
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
@@ -123,6 +124,6 @@ public class ClusteredVariantAccessioningServiceTest {
     @UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json"})
     @Test
     public void getAllByAccession() throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        assertEquals(2, service.getAllByAccession(1314L).size());
+        assertEquals(2, service.getAllByAccession(1314L, ContigAliasNaming.INSDC).size());
     }
 }
