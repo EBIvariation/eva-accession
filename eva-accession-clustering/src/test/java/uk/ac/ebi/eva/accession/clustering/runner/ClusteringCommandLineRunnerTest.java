@@ -116,17 +116,7 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 
 @RunWith(SpringRunner.class)
@@ -238,6 +228,8 @@ public class ClusteringCommandLineRunnerTest {
 
     private static String originalVcfContent;
 
+    private static String originalRemappedFrom;
+
     private static File tempVcfInputFileToTestFailingJobs;
 
     private boolean originalInputParametersCaptured = false;
@@ -296,6 +288,7 @@ public class ClusteringCommandLineRunnerTest {
         if (!originalInputParametersCaptured) {
             originalVcfInputFilePath = inputParameters.getVcf();
             originalVcfContent = getOriginalVcfContent(originalVcfInputFilePath);
+            originalRemappedFrom = inputParameters.getRemappedFrom();
             writeToTempVCFFile(originalVcfContent);
             originalInputParametersCaptured = true;
         }
@@ -305,6 +298,7 @@ public class ClusteringCommandLineRunnerTest {
         runner.setJobNames(CLUSTERING_FROM_VCF_JOB);
         jobRepositoryTestUtils.removeJobExecutions();
         inputParameters.setForceRestart(false);
+        inputParameters.setRemappedFrom(originalRemappedFrom);
         useOriginalVcfFile();
 
         mockServer = MockRestServiceServer.createServer(restTemplate);
@@ -328,6 +322,48 @@ public class ClusteringCommandLineRunnerTest {
         runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        JobInstance currentJobInstance =
+                CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_MONGO_JOB,
+                        jobExplorer, inputParameters.toJobParameters()).getJobInstance();
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                PROCESS_RS_MERGE_CANDIDATES_STEP));
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                PROCESS_RS_SPLIT_CANDIDATES_STEP));
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                BACK_PROPAGATE_RS_STEP));
+    }
+
+    @Test
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
+    @DirtiesContext
+    public void runPartialClusteringFromMongoJobWithoutRemapping() throws JobExecutionException {
+        inputParameters.setRemappedFrom(null);
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+
+        JobInstance currentJobInstance =
+                CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_MONGO_JOB,
+                                jobExplorer, inputParameters.toJobParameters()).getJobInstance();
+        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
+                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
+                PROCESS_RS_MERGE_CANDIDATES_STEP));
+        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
+                PROCESS_RS_SPLIT_CANDIDATES_STEP));
+        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
+                CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
+                BACK_PROPAGATE_RS_STEP));
     }
 
     @Test
