@@ -147,7 +147,9 @@ public class ClusteredVariantAccessioningConfiguration {
 
     @Bean
     public ClusteredVariantOperationService clusteredVariantHistoryService() {
-        return new ClusteredVariantOperationService(dbsnpClusteredVariantInactiveService(), clusteredVariantInactiveService());
+        return new ClusteredVariantOperationService(dbsnpClusteredVariantInactiveService(),
+                                                    clusteredVariantInactiveService(),
+                                                    contigAliasService);
     }
 
     @Bean

@@ -146,7 +146,8 @@ public class ClusteredVariantsRestController {
             // we will rely on operations to provide info about those rs ids in which the given rs has been merged
         }
 
-        List<HistoryEventDTO<Long, ClusteredVariant>> allOperations = clusteredVariantOperationService.getAllOperations(identifier)
+        List<HistoryEventDTO<Long, ClusteredVariant>> allOperations =
+                clusteredVariantOperationService.getAllOperations(identifier, contigAliasNaming)
                 .stream().map(this::toHistoryEventDTO).collect(Collectors.toList());
 
         if (allVariants.isEmpty() && allOperations.isEmpty()) {
@@ -203,7 +204,7 @@ public class ClusteredVariantsRestController {
 
             List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
                     submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier),
-                                                                              ContigAliasNaming.INSDC);
+                                                                              contigAliasNaming);
 
             return submittedVariants.stream()
                                     .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
