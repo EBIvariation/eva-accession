@@ -29,13 +29,15 @@ import java.util.NoSuchElementException;
 
 public class ContigAliasService {
 
-    public static final String CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT =
-            "https://wwwdev.ebi.ac.uk/eva/webservices/contig-alias/v1/chromosomes/genbank/";
+    public static final String CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT = "/v1/chromosomes/genbank/";
 
     private final RestTemplate restTemplate;
 
-    public ContigAliasService(RestTemplate restTemplate) {
+    private final String contigAliasUrl;
+
+    public ContigAliasService(RestTemplate restTemplate, String contigAliasUrl) {
         this.restTemplate = restTemplate;
+        this.contigAliasUrl = contigAliasUrl;
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getSubmittedVariantsWithTranslatedContig(
@@ -50,7 +52,7 @@ public class ContigAliasService {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> allByAccessionAfterContigAlias = new ArrayList<>();
         for (AccessionWrapper<ISubmittedVariant, String, Long> submittedVariant : allByAccession) {
             String genbankContig = submittedVariant.getData().getContig();
-            String url = CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
+            String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
             ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
             if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
                 throw new NoSuchElementException("Not data returned for " + url + " from the contig alias service");
