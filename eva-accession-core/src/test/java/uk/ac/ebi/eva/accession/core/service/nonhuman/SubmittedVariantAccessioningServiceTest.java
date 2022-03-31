@@ -281,7 +281,7 @@ public class SubmittedVariantAccessioningServiceTest {
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
     public void getAllByAccession() throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        assertEquals(2, service.getAllByAccession(2200000002L).size());
+        assertEquals(2, service.getAllByAccession(2200000002L, null).size());
     }
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})

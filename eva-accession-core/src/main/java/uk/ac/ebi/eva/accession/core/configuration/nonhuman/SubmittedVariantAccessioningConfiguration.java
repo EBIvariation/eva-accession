@@ -31,6 +31,8 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContigAliasConfiguration;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
@@ -52,7 +54,7 @@ import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 
 @Configuration
 @EnableSpringDataContiguousIdService
-@Import({ApplicationPropertiesConfiguration.class, MongoConfiguration.class})
+@Import({ApplicationPropertiesConfiguration.class, MongoConfiguration.class, ContigAliasConfiguration.class})
 public class SubmittedVariantAccessioningConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(SubmittedVariantAccessioningConfiguration.class);
@@ -81,6 +83,9 @@ public class SubmittedVariantAccessioningConfiguration {
     @Autowired
     private ApplicationProperties applicationProperties;
 
+    @Autowired
+    private ContigAliasService contigAliasService;
+
     @Value("${accessioning.submitted.categoryId}")
     private String categoryId;
 
@@ -93,7 +98,7 @@ public class SubmittedVariantAccessioningConfiguration {
     public SubmittedVariantAccessioningService submittedVariantAccessioningService() {
         return new SubmittedVariantAccessioningService(submittedVariantMonotonicAccessioningService(),
                                                        dbsnpSubmittedVariantMonotonicAccessioningService(),
-                                                       accessioningMonotonicInitSs());
+                                                       accessioningMonotonicInitSs(), contigAliasService);
     }
 
     private SubmittedVariantMonotonicAccessioningService submittedVariantMonotonicAccessioningService() {

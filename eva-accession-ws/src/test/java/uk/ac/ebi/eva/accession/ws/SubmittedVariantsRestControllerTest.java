@@ -202,7 +202,7 @@ public class SubmittedVariantsRestControllerTest {
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
-                    getVariantsResponse = controller.get(generatedAccession.getAccession());
+                    getVariantsResponse = controller.get(generatedAccession.getAccession(), null);
 
             assertEquals(1, getVariantsResponse.getBody().size());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
