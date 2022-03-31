@@ -19,11 +19,16 @@ package uk.ac.ebi.eva.accession.core.contigalias;
 
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -153,5 +158,53 @@ public class ContigAliasService {
                                                                       data.isValidated(),
                                                                       data.getCreatedDate());
         return new AccessionWrapper<>(accessionWrapper.getAccession(), accessionWrapper.getHash(), dataAfterContigAlias);
+    }
+
+    public List<? extends IEvent<IClusteredVariant, Long>> getEventsWithTranslatedContig(
+            List<? extends IEvent<IClusteredVariant, Long>> events, ContigAliasNaming contigAliasNaming) {
+        if (contigAliasNaming == null || contigAliasNaming.equals(ContigAliasNaming.INSDC) ||
+                contigAliasNaming.equals(ContigAliasNaming.NO_REPLACEMENT)) {
+            //Contigs are stored in INSDC naming convention in the accessioning database so no need for translation
+            return events;
+        }
+
+        List<ClusteredVariantOperationEntity> allEventsAfterContigAlias = new ArrayList<>();
+        for (IEvent<? extends IClusteredVariant, Long> event : events) {
+            List<? extends IAccessionedObject<? extends IClusteredVariant, ?, Long>> inactiveObjects =
+                    event.getInactiveObjects();
+            List<ClusteredVariantInactiveEntity> inactiveObjectsAfterContigAlias = new ArrayList<>();
+            for (IAccessionedObject<? extends IClusteredVariant, ?, Long> inactiveObject : inactiveObjects) {
+                IClusteredVariant clusteredVariant = inactiveObject.getModel();
+                String genbankContig = clusteredVariant.getContig();
+                String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
+                ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
+                if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
+                    throw new NoSuchElementException("Not data returned for " + url + " from the contig alias service");
+                }
+                String translatedContig = getTranslatedContig(contigAliasResponse, contigAliasNaming);
+                ClusteredVariantEntity clusteredVariantEntity = new ClusteredVariantEntity(
+                        inactiveObject.getAccession(),
+                        (String) inactiveObject.getHashedMessage(),
+                        clusteredVariant.getAssemblyAccession(),
+                        clusteredVariant.getTaxonomyAccession(),
+                        translatedContig,
+                        clusteredVariant.getStart(),
+                        clusteredVariant.getType(),
+                        clusteredVariant.isValidated(),
+                        clusteredVariant.getCreatedDate(),
+                        inactiveObject.getVersion(),
+                        clusteredVariant.getMapWeight());
+                ClusteredVariantInactiveEntity clusteredVariantInactiveEntity =
+                        new ClusteredVariantInactiveEntity(clusteredVariantEntity);
+                inactiveObjectsAfterContigAlias.add(clusteredVariantInactiveEntity);
+            }
+            ClusteredVariantOperationEntity clusteredVariantOperationEntity = new ClusteredVariantOperationEntity();
+            clusteredVariantOperationEntity.fill(event.getEventType(), event.getAccession(),
+                                                 event.getDestinationAccession(), event.getReason(),
+                                                 inactiveObjectsAfterContigAlias);
+            clusteredVariantOperationEntity.setCreatedDate(event.getCreatedDate());
+            allEventsAfterContigAlias.add(clusteredVariantOperationEntity);
+        }
+        return allEventsAfterContigAlias;
     }
 }
