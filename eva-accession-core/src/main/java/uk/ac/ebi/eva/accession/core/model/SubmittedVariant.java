@@ -56,6 +56,8 @@ public class SubmittedVariant implements ISubmittedVariant {
 
     private String remappingId;
 
+    private Long backPropagatedVariantAccession;
+
     SubmittedVariant() {
     }
 
@@ -84,6 +86,7 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.setRemappedFrom(variant.getRemappedFrom());
         this.setRemappedDate(variant.getRemappedDate());
         this.setRemappingId(variant.getRemappingId());
+        this.setBackPropagatedVariantAccession(variant.getBackPropagatedVariantAccession());
     }
 
     /**
@@ -256,6 +259,15 @@ public class SubmittedVariant implements ISubmittedVariant {
         return remappingId;
     }
 
+    @Override
+    public Long getBackPropagatedVariantAccession() {
+        return backPropagatedVariantAccession;
+    }
+
+    public void setBackPropagatedVariantAccession(Long backPropagatedVariantAccession) {
+        this.backPropagatedVariantAccession = backPropagatedVariantAccession;
+    }
+
     public void setRemappingId(String remappingId) {
         this.remappingId = remappingId;
     }
@@ -297,14 +309,16 @@ public class SubmittedVariant implements ISubmittedVariant {
                 Objects.equals(validated, that.validated) &&
                 Objects.equals(remappedFrom, that.remappedFrom) &&
                 Objects.equals(remappedDate, that.remappedDate) &&
-                Objects.equals(remappingId, that.remappingId);
+                Objects.equals(remappingId, that.remappingId) &&
+                Objects.equals(backPropagatedVariantAccession, that.backPropagatedVariantAccession);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
-                            assemblyMatch, allelesMatch, validated, remappedFrom, remappedDate, remappingId);
+                referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
+                assemblyMatch, allelesMatch, validated, remappedFrom, remappedDate, remappingId,
+                backPropagatedVariantAccession);
     }
 
     @Override
@@ -327,6 +341,7 @@ public class SubmittedVariant implements ISubmittedVariant {
                 ", remappedFrom=" + remappedFrom +
                 ", remappedDate=" + remappedDate +
                 ", remappingId=" + remappingId +
+                ", backPropagatedVariantAccession=" + backPropagatedVariantAccession +
                 '}';
     }
 }

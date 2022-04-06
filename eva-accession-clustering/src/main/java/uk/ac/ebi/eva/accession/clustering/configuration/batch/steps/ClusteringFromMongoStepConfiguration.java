@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_TARGET_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
@@ -152,8 +152,8 @@ public class ClusteringFromMongoStepConfiguration {
 
     @Bean(BACK_PROPAGATE_RS_STEP)
     public Step backPropagateRSStep(
-            @Qualifier(BACK_PROPAGATED_RS_READER)
-                    ItemStreamReader<SubmittedVariantEntity> backPropagatedRSReader,
+            @Qualifier(BACK_PROPAGATED_RS_TARGET_READER)
+                    ItemStreamReader<SubmittedVariantEntity> backPropagatedRSTargetReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
@@ -161,7 +161,7 @@ public class ClusteringFromMongoStepConfiguration {
         TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_RS_STEP)
                                              .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(
                                                      chunkSizeCompletionPolicy)
-                                             .reader(backPropagatedRSReader)
+                                             .reader(backPropagatedRSTargetReader)
                                              .writer(backPropagatedRSWriter)
                                              .listener(progressListener)
                                              .build();

@@ -156,7 +156,8 @@ public class ClusteringVariantJobConfigurationTest {
 
     private void assertStepsExecuted(List<String> expectedSteps, JobExecution jobExecution) {
         Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
-        List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
+        List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).
+                filter(stepName -> !stepName.contains("dummyStep")).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
     }
 

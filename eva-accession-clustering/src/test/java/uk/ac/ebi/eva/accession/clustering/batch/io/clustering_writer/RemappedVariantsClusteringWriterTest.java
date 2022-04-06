@@ -61,6 +61,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -303,19 +304,23 @@ public class RemappedVariantsClusteringWriterTest {
         //get all submitted variants for assembly asm2 and assert rs id
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
         assertEquals(2, submittedVariants.size());
-        assertEquals(3000000000L, submittedVariants.get(0).getClusteredVariantAccession().longValue());
-        assertEquals(3000000000L, submittedVariants.get(1).getClusteredVariantAccession().longValue());
+        assertEquals(new HashSet<>(Collections.singletonList(3000000000L)),
+                submittedVariants.stream().map(SubmittedVariantEntity::getClusteredVariantAccession)
+                        .filter(Objects::nonNull).collect(Collectors.toSet())
+                );
+        assertEquals(new HashSet<>(Collections.singletonList(3000000000L)),
+                submittedVariants.stream().map(SubmittedVariantEntity::getBackPropagatedVariantAccession)
+                        .filter(Objects::nonNull).collect(Collectors.toSet())
+        );
         assertTrue(submittedVariants.stream().map(SubmittedVariantEntity::getReferenceSequenceAccession).collect(
                                  Collectors.toList()).containsAll(Arrays.asList(ASM_1, ASM_2)));
 
         //get all clusteredVariantEntity and check rs id for all
         List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        // Two records: Newly generated RS in the new assembly and the same RS back-propagated to the older assembly
-        assertEquals(2, clusteredVariants.size());
+        // One record: Newly generated RS in the new assembly
+        // No record created for the RS back-propagated to the older assembly
+        assertEquals(1, clusteredVariants.size());
         assertEquals(3000000000L, clusteredVariants.get(0).getAccession().longValue());
-        assertEquals(3000000000L, clusteredVariants.get(1).getAccession().longValue());
-        assertTrue(clusteredVariants.stream().map(ClusteredVariantEntity::getAssemblyAccession).collect(
-                Collectors.toList()).containsAll(Arrays.asList(ASM_1, ASM_2)));
 
         //assert submittedVariationOperationEntity
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = mongoTemplate.findAll(
@@ -366,22 +371,25 @@ public class RemappedVariantsClusteringWriterTest {
         //get all submitted variants
         List<SubmittedVariantEntity> submittedVariants = mongoTemplate.findAll(SubmittedVariantEntity.class);
         // submittedVariantEntity2 and submittedVariantEntity3 will get the same RS in ASM2
-        // submittedVariantEntity1 will receive the back-propagated RS
         assertEquals(3, submittedVariants.size());
+        // submittedVariantEntity1 will receive the back-propagated RS
         assertEquals(submittedVariants.stream().map(SubmittedVariantEntity::getClusteredVariantAccession)
-                                      .collect(Collectors.toSet()),
+                        .filter(Objects::nonNull).collect(Collectors.toSet()),
                      new HashSet<>(Collections.singletonList(3000000006L)));
+        assertEquals(submittedVariants.stream().map(SubmittedVariantEntity::getBackPropagatedVariantAccession)
+                        .filter(Objects::nonNull).collect(Collectors.toSet()),
+                new HashSet<>(Collections.singletonList(3000000006L)));
         assertTrue(submittedVariants.stream().map(SubmittedVariantEntity::getReferenceSequenceAccession).collect(
                 Collectors.toList()).containsAll(Arrays.asList(ASM_1, ASM_2)));
 
         //get all clusteredVariantEntity and check rs id for all
         List<ClusteredVariantEntity> clusteredVariants = mongoTemplate.findAll(ClusteredVariantEntity.class);
-        // Two records: Newly generated RS in the new assembly and the same RS back-propagated to the older assembly
-        assertEquals(2, clusteredVariants.size());
+        // Two records: Newly generated RS in the new assembly
+        // No RS entries are created for back-propagated RS to the older assembly
+        assertEquals(1, clusteredVariants.size());
         assertEquals(3000000006L, clusteredVariants.get(0).getAccession().longValue());
-        assertEquals(3000000006L, clusteredVariants.get(1).getAccession().longValue());
         assertTrue(clusteredVariants.stream().map(ClusteredVariantEntity::getAssemblyAccession).collect(
-                Collectors.toList()).containsAll(Arrays.asList(ASM_1, ASM_2)));
+                Collectors.toList()).containsAll(Arrays.asList(ASM_2)));
 
         //assert submittedVariationOperationEntity
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = mongoTemplate.findAll(
