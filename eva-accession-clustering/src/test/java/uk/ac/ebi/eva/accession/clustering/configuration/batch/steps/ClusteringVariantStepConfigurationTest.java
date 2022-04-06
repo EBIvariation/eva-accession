@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -70,8 +71,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
-import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
-import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.*;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
@@ -96,6 +96,10 @@ public class ClusteringVariantStepConfigurationTest {
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_MONGO)
     private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
+
+    @Autowired
+    @Qualifier(JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromMongoOnlyFirstStep;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -187,13 +191,19 @@ public class ClusteringVariantStepConfigurationTest {
     @DirtiesContext
     @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json",
             "/test-data/clusteredVariantEntityMongoReader.json"})
-    public void clusteredVariantStepFromMongo() {
+    public void clusteredVariantStepFromMongo() throws Exception {
         assertEquals(6, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertEquals(1, getSubmittedVariantsWithRS());
 
-        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(
-                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        // Due to a bug in launching individual steps from a flow - https://github.com/spring-projects/spring-batch/issues/1311
+        // the following cannot be executed directly, therefore we launch the entire job and ensure that the
+        // CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP step was completed
+        //JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(
+                //CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        JobExecution jobExecution = jobLauncherTestUtilsFromMongoOnlyFirstStep.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        assertTrue(jobExecution.getStepExecutions().stream().map(StepExecution::getStepName)
+                .anyMatch(s -> s.equals(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP)));
 
         // Clustered variants from Mongo step only collects RS merge or split candidates
         // which are later processed by RS Merge and Split writers - consult tests for those writers for post-merge scenarios

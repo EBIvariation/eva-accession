@@ -33,7 +33,7 @@ public class BeanNames {
 
     public static final String RS_SPLIT_WRITER = "RS_SPLIT_WRITER";
 
-    public static final String BACK_PROPAGATED_RS_READER = "BACK_PROPAGATED_RS_READER";
+    public static final String BACK_PROPAGATED_RS_TARGET_READER = "BACK_PROPAGATED_RS_TARGET_READER";
 
     public static final String BACK_PROPAGATED_RS_WRITER = "BACK_PROPAGATED_RS_WRITER";
 

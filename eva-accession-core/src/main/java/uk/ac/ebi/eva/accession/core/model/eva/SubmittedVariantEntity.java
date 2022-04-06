@@ -75,6 +75,11 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
 
     private Integer mapWeight;
 
+    @Field(backPropagatedRSAttribute)
+    private Long backPropagatedVariantAccession;
+
+    public static final String backPropagatedRSAttribute = "backPropRS";
+
     protected SubmittedVariantEntity() {
     }
 
@@ -302,6 +307,14 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         this.mapWeight = mapWeight;
     }
 
+    public Long getBackPropagatedVariantAccession() {
+        return this.backPropagatedVariantAccession;
+    }
+
+    public void setBackPropagatedVariantAccession(Long accession) {
+        this.backPropagatedVariantAccession = accession;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -321,14 +334,16 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
                 Objects.equals(validated, that.validated) &&
                 Objects.equals(remappedFrom, that.remappedFrom) &&
                 Objects.equals(remappedDate, that.remappedDate) &&
-                Objects.equals(mapWeight, that.mapWeight);
+                Objects.equals(mapWeight, that.mapWeight) &&
+                Objects.equals(backPropagatedVariantAccession, that.backPropagatedVariantAccession);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(referenceSequenceAccession, taxonomyAccession, projectAccession, contig, start,
-                            referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
-                            assemblyMatch, allelesMatch, validated, remappedFrom, remappedDate, mapWeight);
+                referenceAllele, alternateAllele, clusteredVariantAccession, supportedByEvidence,
+                assemblyMatch, allelesMatch, validated, remappedFrom, remappedDate, mapWeight,
+                backPropagatedVariantAccession);
     }
 
     @Override
@@ -349,6 +364,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
                 ", remappedFrom='" + remappedFrom + '\'' +
                 ", remappedDate='" + remappedDate + '\'' +
                 ", mapWeight=" + mapWeight +
+                ", backPropagatedVariantAccession=" + backPropagatedVariantAccession +
                 '}';
     }
 }

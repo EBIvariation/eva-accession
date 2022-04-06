@@ -25,14 +25,14 @@ import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfigura
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_TARGET_READER;
 
 @Configuration
 @Import({MongoConfiguration.class, InputParametersConfiguration.class})
-public class BackPropagatedRSReaderConfiguration {
+public class BackPropagatedRSTargetReaderConfiguration {
 
-    @Bean(BACK_PROPAGATED_RS_READER)
-    public ClusteringMongoReader backPropagatedRSReader(MongoTemplate mongoTemplate, InputParameters parameters) {
+    @Bean(BACK_PROPAGATED_RS_TARGET_READER)
+    public ClusteringMongoReader backPropagatedRSTargetReader(MongoTemplate mongoTemplate, InputParameters parameters) {
         String remappedFromAssembly = parameters.getRemappedFrom();
         if (remappedFromAssembly == null) {
             throw new IllegalArgumentException("Assembly remapped from attribute must be provided!");

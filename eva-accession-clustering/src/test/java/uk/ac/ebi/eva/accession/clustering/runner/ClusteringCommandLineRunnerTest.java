@@ -102,6 +102,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -118,6 +119,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes={BatchTestConfiguration.class})
@@ -193,6 +195,10 @@ public class ClusteringCommandLineRunnerTest {
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_MONGO)
     private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
+
+    @Autowired
+    @Qualifier(JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromMongoOnlyFirstStep;
 
     // Current clustering sequence is:
     // generate merge split candidates from clustered variants -> perform merge
@@ -343,7 +349,9 @@ public class ClusteringCommandLineRunnerTest {
     @Test
     @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     @DirtiesContext
-    public void runPartialClusteringFromMongoJobWithoutRemapping() throws JobExecutionException {
+    // For a clustering job involving non-remapped variants, only one step i.e.,
+    // CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP should be executed
+    public void runPartialClusteringFromMongoJobForNonRemappedVariants() throws JobExecutionException {
         inputParameters.setRemappedFrom(null);
         runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
@@ -530,45 +538,11 @@ public class ClusteringCommandLineRunnerTest {
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
-        assertSSRSAssociation(ss3, newRS2, rsLocus4);
-        List<AccessionWrapper<IClusteredVariant, String, Long>> backPropagatedRSRecords =
-                clusteredVariantAccessioningService
-                        .getAllActiveByAssemblyAndAccessionIn(ASM1, Collections.singletonList(newRS2.getAccession()));
-        assertEquals(1, backPropagatedRSRecords.size());
-        ClusteredVariantEntity backPropagatedRS =
-                new ClusteredVariantEntity(backPropagatedRSRecords.get(0).getAccession(),
-                                           backPropagatedRSRecords.get(0).getHash(),
-                                           backPropagatedRSRecords.get(0).getData(),
-                                           backPropagatedRSRecords.get(0).getVersion());
-        assertRSLocusAssociation(backPropagatedRS, rsLocus4);
-    }
-
-    @Test
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
-    @DirtiesContext
-    /*
-    https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1618907977
-     */
-    public void doNotBackPropagateRSWhenSuitableRSPresentInCurrentAssembly() throws JobExecutionException,
-            AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
-        rsLocus1 = new RSLocus(ASM1, "chr1", 100L, VariantType.SNV);
-        rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.SNV);
-        rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
-
-        ClusteredVariantEntity rs1 = createRS(1L, rsLocus1, false);
-        ClusteredVariantEntity rs2 = createRS(2L, rsLocus2, true);
-        ClusteredVariantEntity rs3 = createRS(3L, rsLocus3, true);
-
-        createSS(5L, rs1.getAccession(), rsLocus1, "A", "T", false, ASM1);
-        SubmittedVariantEntity ss2 = createSS(6L, null, rsLocus1, "A", "G", false, ASM1);
-        createSS(5L, rs2.getAccession(), rsLocus2, "A", "T", true);
-        createSS(6L, rs3.getAccession(), rsLocus3, "C", "G", true);
-
-        runner.setJobNames(BACK_PROPAGATE_RS_JOB);
-        runner.run();
-        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-
-        assertSSRSAssociation(ss2, rs1, rsLocus1);
+        Long backPropagatedRS =
+                submittedVariantAccessioningService.getAllByAccession(ss3.getAccession())
+                        .stream().filter(e -> e.getData().getReferenceSequenceAccession().equals(ASM1))
+                        .findFirst().get().getData().getBackPropagatedVariantAccession();
+        assertEquals(newRS2.getAccession(), backPropagatedRS);
     }
 
     @Test
@@ -615,23 +589,6 @@ public class ClusteringCommandLineRunnerTest {
             AccessionMergedException, AccessionDeprecatedException {
          /*
         Initial state and expected results here (marked in green): https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=972582890
-        NOTE: SS-RS associations and remapped status are randomly assigned to test that
-        1) Both dbSNP and EVA variants participate in merge/split events
-        2) Both remapped and non-remapped variants participate in merge/split events
-        +----------+------------+------------+--------------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+----------------------------------+
-        | Assembly |     SS     |     RS     |   RS_LOCUS   | Remapped from another assembly |                      |                              |                                          |                                                        |                                |                                  |
-        +----------+------------+------------+--------------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+----------------------------------+
-        | ASM2     | evaSS1     | dbsnpRS1   | rsLocus1     | Y                              |                      | Merge evaRS2 to dbsnpRS1     |                                          | Issue new RS ID for evaSS3 due to split                |                                |                                  |
-        | ASM2     | dbsnpSS2   | evaRS2     | rsLocus1     | Y                              | MC(dbsnpRS1, evaRS2) | evaSS1, dbsnpRS1, rsLocus1   | SC(dbsnpSS2, evaSS3)                     | evaSS1, dbsnpRS1, rsLocus1                             |                                |                                  |
-        | ASM2     | evaSS3     | evaRS2     | rsLocus2     | N                              | ===========>         | dbsnpSS2, dbsnpRS1, rsLocus1 | ===========>                             | dbsnpSS2, dbsnpRS1, rsLocus1                           |                                |                                  |
-        | ASM2     | dbsnpSS4   | dbsnpRS3   | rsLocus3     | N                              |                      | evaSS3, dbsnpRS1, rsLocus2   |                                          | evaSS3, newRS1, rsLocus2                               |                                |                                  |
-        | ASM2     | evaSS5     | evaRS4     | rsLocus3     | Y                              |                      |                              |                                          | Issue new RS ID for dbsnpSS6 and dbsnpSS7 due to split |                                |                                  |
-        | ASM2     | dbsnpSS6   | evaRS4     | rsLocus4     | N                              |                      | Merge evaRS4 to dbsnpRS3     |                                          | dbsnpSS4, dbsnpRS3, rsLocus3                           |                                |                                  |
-        | ASM2     | dbsnpSS7   | evaRS4     | rsLocus4     | Y                              | MC(dbsnpRS3, evaRS4) | dbsnpSS4, dbsnpRS3, rsLocus3 | SC(dbsnpSS4, evaSS5, dbsnpSS6, dbsnpSS7) | evaSS5, dbsnpRS3, rsLocus3                             |                                |                                  |
-        | ASM2     | evaSS8     | Unassigned | rsLocus4     | Y                              | ===========>         | evaSS5, dbsnpRS3, rsLocus3   | ===========>                             | dbsnpSS6, newRS2, rsLocus4                             | New RS ID assignment to evaSS8 |                                  |
-        | ASM2     | evaSS9     | dbsnpRS5   | rsLocus5     | Y                              |                      | dbsnpSS6, dbsnpRS3, rsLocus4 |                                          | dbsnpSS7, newRS2, rsLocus4                             | ===========>                   | evaSS8, newRS2, rsLocus4         |
-        | ASM1     | evaSS8_old | Unassigned | rsLocus4_old | N                              |                      | dbsnpSS7, dbsnpRS3, rsLocus4 |                                          | evaSS9, dbsnpRS5, rsLocus5                             | Back propagation to evaSS8_old | evaSS8_old, newRS2, rsLocus4_old |
-        +----------+------------+------------+--------------+--------------------------------+----------------------+------------------------------+------------------------------------------+--------------------------------------------------------+--------------------------------+----------------------------------+
         */
         setupRSAndSS();
         runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
@@ -639,12 +596,16 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
         // Ensure that the total number of SS IDs and RS IDs are as postulated above
-        // newRS1 and newRS2 post-merge in the remapped assembly, back-propagated newRS2 in the original assembly
-        assertEquals(3, this.mongoTemplate.findAll(ClusteredVariantEntity.class).size());
+        // newRS1 and newRS2 post-merge in the remapped assembly,
+        // no RS created for back-propagated newRS2 in the original assembly
+        assertEquals(2, this.mongoTemplate.findAll(ClusteredVariantEntity.class).size());
         // dbsnpRS1, dbsnpRS3 and dbsnpRS5 post-merge
         assertEquals(3, this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class).size());
         // Ensure that the number of SS records don't change
         assertEquals(4, this.mongoTemplate.findAll(DbsnpSubmittedVariantEntity.class).size());
+        // Ensure that there is one SS record with the backpropagated RS
+        assertEquals(1, this.mongoTemplate.findAll(SubmittedVariantEntity.class).
+                stream().filter(a -> Objects.nonNull(a.getBackPropagatedVariantAccession())).count());
 
         // Test RS-locus associations
         assertRSLocusAssociation(dbsnpRS1, rsLocus1);
@@ -657,8 +618,8 @@ public class ClusteringCommandLineRunnerTest {
         ClusteredVariantEntity newRS1 = new ClusteredVariantEntity(newRS1Wrapper.getAccession(),
                                                                    newRS1Wrapper.getHash(),
                                                                    newRS1Wrapper.getData());
-        Long newRS2Accession = submittedVariantAccessioningService.getByAccession(evaSS8.getAccession()).getData()
-                                                                  .getClusteredVariantAccession();
+        Long newRS2Accession = submittedVariantAccessioningService.getAllActiveByAssemblyAndAccessionIn(
+                ASM2, Collections.singletonList(evaSS8.getAccession())).get(0).getData().getClusteredVariantAccession();
         AccessionWrapper<IClusteredVariant, String, Long> newRS2Wrapper =
                 clusteredVariantAccessioningService
                         .getAllActiveByAssemblyAndAccessionIn(ASM2, Collections.singletonList(newRS2Accession)).get(0);
@@ -678,7 +639,10 @@ public class ClusteringCommandLineRunnerTest {
         assertSSRSAssociation(dbsnpSS7, newRS2, rsLocus4);
         assertSSRSAssociation(evaSS8, newRS2, rsLocus4);
         // Ensure that RS is back-propagated to the old SS from which evaSS8 was remapped
-        assertSSRSAssociation(evaSS8_old, newRS2, rsLocus4_old);
+        assertEquals(newRS2Accession,
+                submittedVariantAccessioningService.getAllActiveByAssemblyAndAccessionIn(ASM1,
+                Collections.singletonList(evaSS8_old.getAccession())).get(0).getData()
+                        .getBackPropagatedVariantAccession());
         assertSSRSAssociation(evaSS9, dbsnpRS5, rsLocus5);
 
         // Test operations
@@ -1137,7 +1101,10 @@ public class ClusteringCommandLineRunnerTest {
 
     private void runSplitAndMergeIdentificationAndHandlingSteps()
             throws Exception {
-        jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        // Due to a bug in launching individual steps from a flow - https://github.com/spring-projects/spring-batch/issues/1311
+        // the following cannot be executed directly, therefore we launch the entire job
+        // jobLauncherTestUtilsFromMongo.launchStep(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
+        jobLauncherTestUtilsFromMongoOnlyFirstStep.launchJob();
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();
         List<SubmittedVariantOperationEntity> splitCandidates = new ArrayList<>();
         SubmittedVariantOperationEntity tempSVO;
