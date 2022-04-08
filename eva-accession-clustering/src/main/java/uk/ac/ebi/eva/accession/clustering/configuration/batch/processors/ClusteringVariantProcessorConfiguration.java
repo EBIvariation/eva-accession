@@ -17,9 +17,13 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.processors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import uk.ac.ebi.eva.accession.clustering.batch.processors.ClusteredOpToSubmittedVariantEntityProcessor;
 import uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantEntityProcessor;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_OPERATION_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR;
 
 @Configuration
@@ -29,5 +33,13 @@ public class ClusteringVariantProcessorConfiguration {
     public VariantToSubmittedVariantEntityProcessor variantToSubmittedVariantProcessor(InputParameters inputParameters) {
         return new VariantToSubmittedVariantEntityProcessor(inputParameters.getAssemblyAccession()
         );
+    }
+
+    @Bean(CLUSTERED_OPERATION_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR)
+    public ClusteredOpToSubmittedVariantEntityProcessor submittedOpToSubmittedVariantEntityProcessor
+            (InputParameters inputParameters, SubmittedVariantAccessioningService
+                    submittedVariantAccessioningService) {
+        return new ClusteredOpToSubmittedVariantEntityProcessor(inputParameters.getAssemblyAccession(),
+                                                                submittedVariantAccessioningService);
     }
 }

@@ -25,7 +25,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_MERGED_RS_STEP;
 
 @Configuration
 @EnableBatchProcessing
@@ -34,11 +35,15 @@ public class BackPropagateRSJobConfiguration {
     // Can be parallelized across multiple species
     @Bean(BACK_PROPAGATE_RS_JOB)
     public Job processRemappedVariantsWithRSJob(
-            @Qualifier(BACK_PROPAGATE_RS_STEP) Step backPropagateRSStep,
+            // Back-propagate RS that were newly created in the remapped assembly
+            @Qualifier(BACK_PROPAGATE_NEW_RS_STEP) Step backPropagateNewRSStep,
+            // Back-propagate RS in the remapped assembly that were split or merged
+            @Qualifier(BACK_PROPAGATE_SPLIT_MERGED_RS_STEP) Step backPropagateSplitMergedRSStep,
             JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(BACK_PROPAGATE_RS_JOB)
-                                .incrementer(new RunIdIncrementer())
-                                .start(backPropagateRSStep)
-                                .build();
+                .incrementer(new RunIdIncrementer())
+                .start(backPropagateNewRSStep)
+                .next(backPropagateSplitMergedRSStep)
+                .build();
     }
 }

@@ -127,6 +127,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
 
         for (SubmittedVariantEntity submittedVariantEntity: submittedVariantEntitiesInOriginalAssemblyWithNoRS) {
             Long ssIDToBeClustered = submittedVariantEntity.getAccession();
+            Long rsInOriginalAssembly = submittedVariantEntity.getClusteredVariantAccession();
             Long rsToBackPropagate = null;
 
             // Back-propagate RS from the remapped assembly
@@ -135,7 +136,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                         getSuitableRSFromRemappedSS(ssInRemappedAssemblyGroupedByID, submittedVariantEntity);
             }
 
-            if (Objects.nonNull(rsToBackPropagate)) {
+            if (Objects.nonNull(rsToBackPropagate) && !rsToBackPropagate.equals(rsInOriginalAssembly)) {
                 BulkOperations bulkSVEUpdates, bulkSVOEInserts;
                 if (clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity)) {
                     bulkSVEUpdates = evaSVEUpdates;
