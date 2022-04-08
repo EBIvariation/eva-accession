@@ -36,10 +36,12 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_MERGED_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
@@ -53,17 +55,19 @@ public class ClusteringFromMongoJobConfiguration {
     private JobExecutionDecider isRemappedAssemblyPresent(InputParameters inputParameters) {
         return new JobExecutionDecider() {
             @Override
-            public FlowExecutionStatus decide(JobExecution jobExecution, StepExecution stepExecution) {
+            @NonNull
+            public FlowExecutionStatus decide(@NonNull JobExecution jobExecution, StepExecution stepExecution) {
                 String status = (!StringUtil.isBlank(inputParameters.getRemappedFrom())) ? "TRUE": "FALSE";
                 return new FlowExecutionStatus(status);
             }
         };
     }
 
-    private Step dummyStep(StepBuilderFactory stepBuilderFactory, String arg) {
-        return stepBuilderFactory.get("step_" + arg).tasklet(new Tasklet() {
+    private Step dummyStep(StepBuilderFactory stepBuilderFactory) {
+        return stepBuilderFactory.get("step_" + "dummyStep").tasklet(new Tasklet() {
             @Override
-            public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+            public RepeatStatus execute(@NonNull StepContribution stepContribution,
+                                        @NonNull ChunkContext chunkContext) {
                 return RepeatStatus.FINISHED;
             }
         }).build();
@@ -75,12 +79,16 @@ public class ClusteringFromMongoJobConfiguration {
                                       @Qualifier(PROCESS_RS_SPLIT_CANDIDATES_STEP) Step processRSSplitCandidatesStep,
                                       @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP) Step clearRSMergeAndSplitCandidatesStep,
                                       @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
-                                      @Qualifier(BACK_PROPAGATE_RS_STEP) Step backPropagateRSStep,
+                                      // Back-propagate RS that were newly created in the remapped assembly
+                                      @Qualifier(BACK_PROPAGATE_NEW_RS_STEP) Step backPropagateNewRSStep,
+                                      // Back-propagate RS in the remapped assembly that were split or merged
+                                      @Qualifier(BACK_PROPAGATE_SPLIT_MERGED_RS_STEP)
+                                                  Step backPropagateSplitMergedRSStep,
                                       StepBuilderFactory stepBuilderFactory,
                                       JobBuilderFactory jobBuilderFactory,
                                       InputParameters inputParameters) {
         JobExecutionDecider jobExecutionDecider = isRemappedAssemblyPresent(inputParameters);
-        Step dummyStep = dummyStep(stepBuilderFactory, "dummyStep");
+        Step dummyStep = dummyStep(stepBuilderFactory);
         return jobBuilderFactory.get(CLUSTERING_FROM_MONGO_JOB)
                 .incrementer(new RunIdIncrementer())
                 //We need the dummy step here because Spring won't conditionally start the first step
@@ -93,7 +101,8 @@ public class ClusteringFromMongoJobConfiguration {
                             .next(processRSSplitCandidatesStep)
                             .next(clearRSMergeAndSplitCandidatesStep)
                             .next(clusteringNonClusteredVariantsFromMongoStep)
-                            .next(backPropagateRSStep).build())
+                            .next(backPropagateNewRSStep)
+                            .next(backPropagateSplitMergedRSStep).build())
                     .on("*").end()
                 .from(jobExecutionDecider)
                     .on("FALSE")

@@ -111,6 +111,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
@@ -331,19 +332,22 @@ public class ClusteringCommandLineRunnerTest {
 
         JobInstance currentJobInstance =
                 CommandLineRunnerUtils.getLastJobExecution(CLUSTERING_FROM_MONGO_JOB,
-                        jobExplorer, inputParameters.toJobParameters()).getJobInstance();
+                                                           jobExplorer, inputParameters.toJobParameters())
+                                      .getJobInstance();
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+                                                            CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                PROCESS_RS_MERGE_CANDIDATES_STEP));
+                                                            PROCESS_RS_MERGE_CANDIDATES_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                PROCESS_RS_SPLIT_CANDIDATES_STEP));
+                                                            PROCESS_RS_SPLIT_CANDIDATES_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
+                                                            CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
+                                                            CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                BACK_PROPAGATE_RS_STEP));
+                                                            BACK_PROPAGATE_NEW_RS_STEP));
+        assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
+                                                            BACK_PROPAGATE_SPLIT_MERGED_RS_STEP));
     }
 
     @Test
@@ -371,7 +375,9 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
                 CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP));
         assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                BACK_PROPAGATE_RS_STEP));
+                BACK_PROPAGATE_NEW_RS_STEP));
+        assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
+                                                            BACK_PROPAGATE_SPLIT_MERGED_RS_STEP));
     }
 
     @Test
@@ -511,38 +517,29 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
-    @UsingDataSet(locations = {"/test-data/submittedVariantEntityMongoReader.json"})
     @DirtiesContext
     /*
-      @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=717877299"/>
+      @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1510337153"/>
      */
-    public void runBackPropagateRSJobWithNoErrors() throws JobExecutionException, AccessionDoesNotExistException,
-            AccessionMergedException, AccessionDeprecatedException {
-        rsLocus1 = new RSLocus(ASM2, "chr1", 100L, VariantType.SNV);
-        rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.SNV);
-        rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
-        rsLocus4 = new RSLocus(ASM1, "chr1", 103L, VariantType.SNV);
-
-        ClusteredVariantEntity rs1 = createRS(1L, rsLocus1, true);
-        ClusteredVariantEntity newRS2 = createRS(5L, rsLocus1, true);
-
-        createSS(1L, rs1.getAccession(), rsLocus1, "A", "T", false, ASM1);
-        createSS(1L, rs1.getAccession(), rsLocus2, "A", "T", true);
-        createSS(1L, newRS2.getAccession(), rsLocus3, "A", "G", true);
-
-        SubmittedVariantEntity ss3 = createSS(5L, null, rsLocus4, "A", "T", false, ASM1);
-        createSS(5L, rs1.getAccession(), rsLocus2, "A", "T", true);
-        createSS(5L, newRS2.getAccession(), rsLocus3, "A", "G", true);
-
-        runner.setJobNames(BACK_PROPAGATE_RS_JOB);
+    public void runBackPropagateRSJobWithNoErrors() throws JobExecutionException,
+            AccessionCouldNotBeGeneratedException {
+        setupRSAndSSInNewAndRemappedAssemblies();
+        runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
-        Long backPropagatedRS =
-                submittedVariantAccessioningService.getAllByAccession(ss3.getAccession())
-                        .stream().filter(e -> e.getData().getReferenceSequenceAccession().equals(ASM1))
-                        .findFirst().get().getData().getBackPropagatedVariantAccession();
-        assertEquals(newRS2.getAccession(), backPropagatedRS);
+        // Ensure that no back-propagation was performed when SS-RS association was preserved after remapping to ASM2
+        assertSSBackPropRSAssociation(evaSS1.getAccession(), null, ASM1);
+        assertSSBackPropRSAssociation(evaSS9.getAccession(), null, ASM1);
+
+        // Ensure that no back-propagation was performed when SS-RS association
+        // was NOT preserved after remapping to ASM2 due to splits or merges
+        assertSSBackPropRSAssociation(dbsnpSS2.getAccession(), dbsnpRS1.getAccession(), ASM1);
+        Long newRS2InASM2 = this.submittedVariantAccessioningService
+                .getAllActiveByAssemblyAndAccessionIn(ASM2, Collections.singletonList(dbsnpSS7.getAccession()))
+                .stream().findFirst().get().getData().getClusteredVariantAccession();
+        assertSSBackPropRSAssociation(dbsnpSS7.getAccession(), newRS2InASM2, ASM1);
+        assertSSBackPropRSAssociation(evaSS8.getAccession(), newRS2InASM2, ASM1);
     }
 
     @Test
@@ -591,6 +588,8 @@ public class ClusteringCommandLineRunnerTest {
         Initial state and expected results here (marked in green): https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=972582890
         */
         setupRSAndSS();
+        createEVASS8InASM1WithUnassignedRS();
+
         runner.setJobNames(CLUSTERING_FROM_MONGO_JOB);
         runner.run();
         assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
@@ -771,6 +770,20 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(rsLocus.type,  rsEntryInDB.getType());
     }
 
+    private void assertSSBackPropRSAssociation(Long ssID, Long expectedBackPropRS, String originalAssembly) {
+        List<ISubmittedVariant> ssInOriginalAssembly =
+                this.submittedVariantAccessioningService
+                        .getAllActiveByAssemblyAndAccessionIn(originalAssembly, Collections.singletonList(ssID))
+                        .stream().map(AccessionWrapper::getData).collect(Collectors.toList());
+        assertEquals(1, ssInOriginalAssembly.size());
+        Long actualBackPropRS = ssInOriginalAssembly.get(0).getBackPropagatedVariantAccession();
+        if (Objects.isNull(expectedBackPropRS)) {
+            assertNull(actualBackPropRS);
+        } else {
+            assertEquals(expectedBackPropRS, actualBackPropRS);
+        }
+    }
+
     private void assertSSRSAssociation(SubmittedVariantEntity ss, ClusteredVariantEntity rs, RSLocus rsLocus)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         AccessionWrapper<ISubmittedVariant, String, Long> ssInDBWrapper =
@@ -812,6 +825,17 @@ public class ClusteringCommandLineRunnerTest {
         dbsnpSS6 = createSS(3L, evaRS4.getAccession(), rsLocus4, "T", "C", false);
         dbsnpSS7 = createSS(4L, evaRS4.getAccession(), rsLocus4, "T", "A", true);
         evaSS8 = createSS(8L, null, rsLocus4, "T", "G", true);
+        evaSS9 = createSS(9L, dbsnpRS5.getAccession(), rsLocus5, "A", "T", true);
+
+        // Reserve at least 10 accessions (by generating them) for existing RS IDs in the setup above
+        // so that new RS IDs created are distinctly identifiable
+        // This is the easiest way to exhaust the accessions because
+        // the monotonic accession generator will only create accessions in the EVA collection (ClusteredVariantEntity)
+        // and not the dbSNP collection (DbsnpClusteredVariantEntity)
+        clusteredVariantAccessionGenerator.generateAccessions(10);
+    }
+
+    private void createEVASS8InASM1WithUnassignedRS() {
         SubmittedVariant evaSS8_old_sv_obj = new SubmittedVariant(evaSS8.getRemappedFrom(),
                                                                   evaSS8.getTaxonomyAccession(),
                                                                   evaSS8.getProjectAccession(),
@@ -824,14 +848,24 @@ public class ClusteringCommandLineRunnerTest {
         evaSS8_old = new SubmittedVariantEntity(evaSS8.getAccession(), hashingFunction.apply(evaSS8_old_sv_obj),
                                                 evaSS8_old_sv_obj, 1);
         this.mongoTemplate.insert(evaSS8_old, this.mongoTemplate.getCollectionName(SubmittedVariantEntity.class));
-        evaSS9 = createSS(9L, dbsnpRS5.getAccession(), rsLocus5, "A", "T", true);
+    }
 
-        // Reserve at least 10 accessions (by generating them) for existing RS IDs in the setup above
-        // so that new RS IDs created are distinctly identifiable
-        // This is the easiest way to exhaust the accessions because
-        // the monotonic accession generator will only create accessions in the EVA collection (ClusteredVariantEntity)
-        // and not the dbSNP collection (DbsnpClusteredVariantEntity)
-        clusteredVariantAccessionGenerator.generateAccessions(10);
+    private void setupRSAndSSInNewAndRemappedAssemblies() throws AccessionCouldNotBeGeneratedException {
+        setupRSAndSS();
+        List<SubmittedVariantEntity> variantsInRemappedAssembly =
+                Arrays.asList(evaSS1, dbsnpSS2, evaSS5, dbsnpSS7, evaSS8, evaSS9);
+        for (SubmittedVariantEntity variantInRemappedAssembly: variantsInRemappedAssembly) {
+            RSLocus rsLocusObj = new RSLocus(ASM1, variantInRemappedAssembly.getContig(),
+                                             variantInRemappedAssembly.getStart() + ThreadLocalRandom.current()
+                                                                                                     .nextLong(10),
+                                             VariantType.SNV);
+            ClusteredVariantEntity rsObj = createRS(variantInRemappedAssembly.getClusteredVariantAccession(),
+                                                    rsLocusObj, false);
+            createSS(variantInRemappedAssembly.getAccession(),
+                     variantInRemappedAssembly.getClusteredVariantAccession(), rsLocusObj,
+                     variantInRemappedAssembly.getReferenceAllele(), variantInRemappedAssembly.getAlternateAllele(),
+                     false, ASM1);
+        }
     }
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, RSLocus rsLocus, String reference,
@@ -873,7 +907,7 @@ public class ClusteringCommandLineRunnerTest {
         // If we should simulate that environment,
         // we should not create RS ID entries in the database for remapped variants
         // like we did for SS IDs. The RS IDs for the remapped assembly will be created after the clustering process.
-        if (!remappedFromAnotherAssembly) {
+        if (!remappedFromAnotherAssembly && Objects.nonNull(rsAccession)) {
             if (rsAccession >= accessioningMonotonicInitRs) {
                 mongoTemplate.save(clusteredVariantEntity, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
             } else {
