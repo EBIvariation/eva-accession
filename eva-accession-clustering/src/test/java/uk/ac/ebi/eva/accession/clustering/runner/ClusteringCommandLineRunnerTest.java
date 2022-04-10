@@ -532,7 +532,7 @@ public class ClusteringCommandLineRunnerTest {
         assertSSBackPropRSAssociation(evaSS1.getAccession(), null, ASM1);
         assertSSBackPropRSAssociation(evaSS9.getAccession(), null, ASM1);
 
-        // Ensure that no back-propagation was performed when SS-RS association
+        // Ensure that back-propagation was performed when SS-RS association
         // was NOT preserved after remapping to ASM2 due to splits or merges
         assertSSBackPropRSAssociation(dbsnpSS2.getAccession(), dbsnpRS1.getAccession(), ASM1);
         Long newRS2InASM2 = this.submittedVariantAccessioningService
