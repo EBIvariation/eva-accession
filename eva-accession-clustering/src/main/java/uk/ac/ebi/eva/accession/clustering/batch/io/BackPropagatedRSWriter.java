@@ -172,7 +172,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
         // Currently if there is more than one entry for the SS accession in the remapped assembly,
         // we choose the maximum RS ID as a hack since we don't have a way to map between the
         // remapped SS and the original SS in such cases
-        // TODO: Re-visit during EVA-2612
+        // TODO: Re-visit after EVA-2830 and EVA-2840
         ClusteredVariantEntity rsFromRemappedAssembly =
                 ssInRemappedAssemblyGroupedByID
                         .get(submittedVariantEntity.getAccession())
