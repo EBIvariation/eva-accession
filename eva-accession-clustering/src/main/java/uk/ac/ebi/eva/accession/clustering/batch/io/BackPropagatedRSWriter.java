@@ -86,8 +86,6 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                         // See ss68617665 in GCA_000181335.3 for example.
                         // Don't bring such variants in for clustering again.
                         .filter(SubmittedVariantEntity::isAllelesMatch)
-                        // Ensure that we don't backpropagate to SS IDs that already have backpropagated RS
-                        .filter(ss -> Objects.isNull(ss.getBackPropagatedVariantAccession()))
                         .collect(Collectors.toList());
         List<Long> ssIDsToLookupInRemappedAssembly =
                 ssToLookupInRemappedAssembly.stream().map(AccessionedDocument::getAccession)
