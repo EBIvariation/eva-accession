@@ -134,6 +134,7 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                         getSuitableRSFromRemappedSS(ssInRemappedAssemblyGroupedByID, submittedVariantEntity);
             }
 
+            // Do not back-propagate RS if the RS matches previously assigned RS
             if (Objects.nonNull(rsToBackPropagate) && !rsToBackPropagate.equals(rsInOriginalAssembly)) {
                 BulkOperations bulkSVEUpdates, bulkSVOEInserts;
                 if (clusteringWriter.isEvaSubmittedVariant(submittedVariantEntity)) {
