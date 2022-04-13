@@ -38,7 +38,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.HistoryEventDTO;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -101,14 +101,14 @@ public class ClusteredVariantsRestController {
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                     required = true) Long identifier,
             @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
-                    ContigAliasNaming contigAliasNaming)
+                    ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                     new ArrayList<>();
-            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier, contigAliasNaming));
-            clusteredVariants.addAll(humanService.getAllByAccession(identifier, contigAliasNaming).stream().map(this::toDTO)
-                    .collect(Collectors.toList()));
+            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier, contigNamingConvention));
+            clusteredVariants.addAll(humanService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
+                                                 .collect(Collectors.toList()));
 
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
@@ -130,13 +130,13 @@ public class ClusteredVariantsRestController {
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                     required = true) Long identifier,
             @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
-                    ContigAliasNaming contigAliasNaming) throws AccessionDoesNotExistException {
+                    ContigNamingConvention contigNamingConvention) throws AccessionDoesNotExistException {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 new ArrayList<>();
         try {
-            allVariants.addAll(getNonHumanClusteredVariants(identifier, contigAliasNaming));
-            allVariants.addAll(humanService.getAllByAccession(identifier, contigAliasNaming).stream().map(this::toDTO)
-                    .collect(Collectors.toList()));
+            allVariants.addAll(getNonHumanClusteredVariants(identifier, contigNamingConvention));
+            allVariants.addAll(humanService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
+                                           .collect(Collectors.toList()));
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (AccessionDeprecatedException e) {
@@ -147,7 +147,7 @@ public class ClusteredVariantsRestController {
         }
 
         List<HistoryEventDTO<Long, ClusteredVariant>> allOperations =
-                clusteredVariantOperationService.getAllOperations(identifier, contigAliasNaming)
+                clusteredVariantOperationService.getAllOperations(identifier, contigNamingConvention)
                 .stream().map(this::toHistoryEventDTO).collect(Collectors.toList());
 
         if (allVariants.isEmpty() && allOperations.isEmpty()) {
@@ -166,10 +166,10 @@ public class ClusteredVariantsRestController {
     }
 
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
-            Long identifier, ContigAliasNaming contigAliasNaming) throws AccessionDeprecatedException, AccessionMergedException {
+            Long identifier, ContigNamingConvention contigNamingConvention) throws AccessionDeprecatedException, AccessionMergedException {
         try {
-            return nonHumanActiveService.getAllByAccession(identifier, contigAliasNaming).stream().map(this::toDTO)
-                    .collect(Collectors.toList());
+            return nonHumanActiveService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
+                                        .collect(Collectors.toList());
         } catch (AccessionDoesNotExistException e) {
             return Collections.emptyList();
         }
@@ -196,15 +196,16 @@ public class ClusteredVariantsRestController {
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
                     required = true) Long identifier,
             @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
-                    ContigAliasNaming contigAliasNaming)
+                    ContigNamingConvention contigNamingConvention)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         try {
-            // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
-            nonHumanActiveService.getAllByAccession(identifier, contigAliasNaming);
+            // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct
+            // URL
+            nonHumanActiveService.getAllByAccession(identifier, contigNamingConvention);
 
             List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
                     submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier),
-                                                                              contigAliasNaming);
+                                                                              contigNamingConvention);
 
             return submittedVariants.stream()
                                     .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))

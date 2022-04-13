@@ -17,17 +17,15 @@ package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 import java.util.ArrayList;
@@ -52,10 +50,12 @@ public class HumanDbsnpClusteredVariantAccessioningService {
         this.contigAliasService = contigAliasService;
     }
 
-    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier, ContigAliasNaming contigAliasNaming) {
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier, ContigNamingConvention contigNamingConvention) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
-        clusteredVariants.addAll(contigAliasService.getClusteredVariantsWithTranslatedContig(getHumanClusteredVariants(identifier), contigAliasNaming));
-        clusteredVariants.addAll(contigAliasService.getClusteredVariantsWithTranslatedContig(operationsService.getByAccession(identifier), contigAliasNaming));
+        clusteredVariants.addAll(contigAliasService.getClusteredVariantsWithTranslatedContig(getHumanClusteredVariants(identifier),
+                                                                                             contigNamingConvention));
+        clusteredVariants.addAll(contigAliasService.getClusteredVariantsWithTranslatedContig(operationsService.getByAccession(identifier),
+                                                                                             contigNamingConvention));
         return clusteredVariants;
     }
 

@@ -30,7 +30,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
@@ -146,7 +146,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(
-            Long accession, ContigAliasNaming contigAliasNaming) throws AccessionMergedException,
+            Long accession, ContigNamingConvention contigNamingConvention) throws AccessionMergedException,
             AccessionDoesNotExistException, AccessionDeprecatedException, NoSuchElementException {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants;
         if (accession >= accessioningMonotonicInitSs) {
@@ -154,7 +154,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         } else {
             submittedVariants = accessioningServiceDbsnp.getAllByAccession(accession);
         }
-        return contigAliasService.getSubmittedVariantsWithTranslatedContig(submittedVariants, contigAliasNaming);
+        return contigAliasService.getSubmittedVariantsWithTranslatedContig(submittedVariants, contigNamingConvention);
     }
 
     @Override
@@ -168,9 +168,11 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
-            List<Long> clusteredVariantAccessions, ContigAliasNaming contigAliasNaming) {
-        return joinLists(contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions), contigAliasNaming),
-                         contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions),contigAliasNaming));
+            List<Long> clusteredVariantAccessions, ContigNamingConvention contigNamingConvention) {
+        return joinLists(contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
+                                                                                     contigNamingConvention),
+                         contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
+                                                                                     contigNamingConvention));
     }
 
     @Override

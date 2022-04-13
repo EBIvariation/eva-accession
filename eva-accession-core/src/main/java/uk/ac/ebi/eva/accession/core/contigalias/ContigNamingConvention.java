@@ -18,9 +18,9 @@
 package uk.ac.ebi.eva.accession.core.contigalias;
 
 /**
- * This enum can be used to specify one of the synonyms supported by the contig alias service
+ * This enum can be used to specify one of the naming conventions supported by the contig alias service
  */
-public enum ContigAliasNaming {
+public enum ContigNamingConvention {
     GENBANK_SEQUENCE_NAME("genbank.sequence.name"),
     ENA_SEQUENCE_NAME("ena.sequence.name"),
     INSDC("insdc"),  // this is the same as GenBank,
@@ -32,7 +32,7 @@ public enum ContigAliasNaming {
 
     private final String text;
 
-    ContigAliasNaming(final String text) {
+    ContigNamingConvention(final String text) {
         this.text = text;
     }
 
