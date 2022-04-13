@@ -101,10 +101,10 @@ public class SplitOrMergedRSReader implements ItemStreamReader<List<SubmittedVar
                         Collectors.toList());
         rsToLookUpInRemappedAssembly.addAll(
                 clusteredVariantOperations.stream().map(ClusteredVariantOperationEntity::getMergedInto)
-                                          .collect(Collectors.toList()));
+                        .filter(Objects::nonNull).collect(Collectors.toList()));
         rsToLookUpInRemappedAssembly.addAll(
                 clusteredVariantOperations.stream().map(ClusteredVariantOperationEntity::getSplitInto)
-                                          .collect(Collectors.toList()));
+                        .filter(Objects::nonNull).collect(Collectors.toList()));
         List<Long> ssToLookUpInOriginalAssembly =
                 this.submittedVariantAccessioningService
                         .getByClusteredVariantAccessionIn(rsToLookUpInRemappedAssembly)

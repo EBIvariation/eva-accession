@@ -75,10 +75,10 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
 
     @Override
     public void write(
-            @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS)
+            @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssembly)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
         List<SubmittedVariantEntity> ssToLookupInRemappedAssembly =
-                submittedVariantEntitiesInOriginalAssemblyWithNoRS
+                submittedVariantEntitiesInOriginalAssembly
                         .stream()
                         // Some dbSNP imported variants might have been explicitly de-clustered
                         // because the REF/ALT allele data provided by dbSNP was internally inconsistent
@@ -100,10 +100,10 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
                                                                   entity.getVersion()))
                         .filter(entity -> Objects.nonNull(entity.getClusteredVariantAccession()))
                         .collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
-        assignRSToSS(ssToLookupInRemappedAssembly, ssInRemappedAssemblyGroupedByID);
+        backpropagateRSToSS(ssToLookupInRemappedAssembly, ssInRemappedAssemblyGroupedByID);
     }
 
-    private void assignRSToSS(
+    private void backpropagateRSToSS(
             @Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntitiesInOriginalAssemblyWithNoRS,
             Map<Long, List<SubmittedVariantEntity>> ssInRemappedAssemblyGroupedByID) {
 
