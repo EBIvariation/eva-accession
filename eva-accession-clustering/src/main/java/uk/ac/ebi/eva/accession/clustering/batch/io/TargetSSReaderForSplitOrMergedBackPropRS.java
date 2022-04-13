@@ -46,9 +46,10 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
-public class SplitOrMergedRSReader implements ItemStreamReader<List<SubmittedVariantEntity>> {
+// Read SS in the original assembly that should receive the RS that were split or merged in a remapped assembly
+public class TargetSSReaderForSplitOrMergedBackPropRS implements ItemStreamReader<List<SubmittedVariantEntity>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(SplitOrMergedRSReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(TargetSSReaderForSplitOrMergedBackPropRS.class);
 
     static final String ASSEMBLY_FIELD = "inactiveObjects.asm";
 
@@ -72,10 +73,11 @@ public class SplitOrMergedRSReader implements ItemStreamReader<List<SubmittedVar
 
     int chunkSize;
 
-    public SplitOrMergedRSReader(MongoTemplate mongoTemplate, String remappedAssembly, String originalAssembly,
-                                 ClusteredVariantAccessioningService clusteredVariantAccessioningService,
-                                 SubmittedVariantAccessioningService submittedVariantAccessioningService,
-                                 int chunkSize) {
+    public TargetSSReaderForSplitOrMergedBackPropRS
+            (MongoTemplate mongoTemplate, String remappedAssembly, String originalAssembly,
+             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
+             SubmittedVariantAccessioningService submittedVariantAccessioningService,
+             int chunkSize) {
         this.mongoTemplate = mongoTemplate;
         this.remappedAssembly = remappedAssembly;
         this.originalAssembly = originalAssembly;

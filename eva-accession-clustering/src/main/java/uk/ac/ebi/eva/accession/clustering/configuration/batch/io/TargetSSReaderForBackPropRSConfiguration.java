@@ -21,22 +21,22 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
-import uk.ac.ebi.eva.accession.clustering.batch.io.SplitOrMergedRSReader;
+import uk.ac.ebi.eva.accession.clustering.batch.io.TargetSSReaderForSplitOrMergedBackPropRS;
 import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_NEW_RS_TARGET_READER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.SPLIT_OR_MERGED_RS_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
 
 @Configuration
 @Import({MongoConfiguration.class, InputParametersConfiguration.class})
-public class BackPropagatedRSTargetReaderConfiguration {
+public class TargetSSReaderForBackPropRSConfiguration {
 
-    @Bean(BACK_PROPAGATED_NEW_RS_TARGET_READER)
-    public ClusteringMongoReader backPropagatedNewRSTargetReader(MongoTemplate mongoTemplate,
+    @Bean(TARGET_SS_READER_FOR_NEW_BACKPROP_RS)
+    public ClusteringMongoReader targetSSReaderForNewBackPropRS(MongoTemplate mongoTemplate,
                                                                  InputParameters parameters) {
         String remappedFromAssembly = parameters.getRemappedFrom();
         if (remappedFromAssembly == null) {
@@ -45,12 +45,12 @@ public class BackPropagatedRSTargetReaderConfiguration {
         return new ClusteringMongoReader(mongoTemplate, remappedFromAssembly, parameters.getChunkSize(), false);
     }
 
-    @Bean(SPLIT_OR_MERGED_RS_READER)
-    public SplitOrMergedRSReader backPropagatedSplitOrMergedRSTargetReader
+    @Bean(TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS)
+    public TargetSSReaderForSplitOrMergedBackPropRS targetSSReaderForSplitOrMergedBackPropRS
             (MongoTemplate mongoTemplate, ClusteredVariantAccessioningService clusteredVariantAccessioningService,
              SubmittedVariantAccessioningService submittedVariantAccessioningService, InputParameters parameters) {
-        return new SplitOrMergedRSReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getRemappedFrom(),
-                                         clusteredVariantAccessioningService, submittedVariantAccessioningService,
-                                         parameters.getChunkSize());
+        return new TargetSSReaderForSplitOrMergedBackPropRS(mongoTemplate, parameters.getAssemblyAccession(),
+                parameters.getRemappedFrom(), clusteredVariantAccessioningService, submittedVariantAccessioningService,
+                parameters.getChunkSize());
     }
 }
