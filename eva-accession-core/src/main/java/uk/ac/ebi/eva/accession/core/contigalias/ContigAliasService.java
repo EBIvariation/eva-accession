@@ -109,7 +109,7 @@ public class ContigAliasService {
         String contig;
         switch (contigNamingConvention) {
             case GENBANK_SEQUENCE_NAME:
-                contig = contigAliasChromosome.getName();
+                contig = contigAliasChromosome.getGenbankSequenceName();
                 break;
             case REFSEQ:
                 contig = contigAliasChromosome.getRefseq();
@@ -127,13 +127,13 @@ public class ContigAliasService {
                 contig = contigAliasChromosome.getTrunc512checksum();
                 break;
             default:
-                contig = contigAliasChromosome.getGenbank();
+                contig = contigAliasChromosome.getInsdc();
         }
 
        if (contig != null) {
            return contig;
        } else {
-           throw new NoSuchElementException("Contig " + contigAliasChromosome.getGenbank() +
+           throw new NoSuchElementException("Contig " + contigAliasChromosome.getInsdc() +
                                                     " could not be translated to " + contigNamingConvention);
        }
     }
