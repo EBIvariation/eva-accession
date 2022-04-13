@@ -17,18 +17,26 @@
  */
 package uk.ac.ebi.eva.accession.core.contigalias;
 
-public class ContigAliasIntputParameters {
+/**
+ * This enum can be used to specify one of the synonyms supported by the contig alias service
+ */
+public enum ContigAliasNaming {
+    GENBANK_SEQUENCE_NAME("genbank.sequence.name"),
+    ENA_SEQUENCE_NAME("ena.sequence.name"),
+    INSDC("insdc"),  // this is the same as GenBank,
+    REFSEQ("refseq"),
+    UCSC("ucsc"),
+    MD5_CHECKSUM("md5.checksum"),
+    TRUNC512_CHECKSUM("trunc512.checksum"),
+    NO_REPLACEMENT("no.replacement");  // do not use any particular naming, just keep whatever contig is provided
 
-    private String url;
+    private final String text;
 
-    public ContigAliasIntputParameters() {
+    ContigAliasNaming(final String text) {
+        this.text = text;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
+    public String getText() {
+        return text;
     }
 }

@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasIntputParameters;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasInputParameters;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 
 @Configuration
@@ -35,13 +35,13 @@ public class ContigAliasConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "contig-alias")
-    public ContigAliasIntputParameters contigAliasIntputParameters() {
-        return new ContigAliasIntputParameters();
+    public ContigAliasInputParameters contigAliasInputParameters() {
+        return new ContigAliasInputParameters();
     }
 
     @Bean
     public ContigAliasService contigAliasService(RestTemplate restTemplate,
-                                                 ContigAliasIntputParameters contigAliasIntputParameters) {
-        return new ContigAliasService(restTemplate, contigAliasIntputParameters.getUrl());
+                                                 ContigAliasInputParameters contigAliasInputParameters) {
+        return new ContigAliasService(restTemplate, contigAliasInputParameters.getUrl());
     }
 }
