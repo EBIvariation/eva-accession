@@ -24,11 +24,11 @@ public class ContigAliasChromosome {
 
     private long id;
 
-    private String name;
+    private String genbankSequenceName;
 
     private String enaSequenceName;
 
-    private String genbank;
+    private String insdc;
 
     private String refseq;
 
@@ -51,12 +51,12 @@ public class ContigAliasChromosome {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getGenbankSequenceName() {
+        return genbankSequenceName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setGenbankSequenceName(String genbankSequenceName) {
+        this.genbankSequenceName = genbankSequenceName;
     }
 
     public String getEnaSequenceName() {
@@ -67,12 +67,12 @@ public class ContigAliasChromosome {
         this.enaSequenceName = enaSequenceName;
     }
 
-    public String getGenbank() {
-        return genbank;
+    public String getInsdc() {
+        return insdc;
     }
 
-    public void setGenbank(String genbank) {
-        this.genbank = genbank;
+    public void setInsdc(String insdc) {
+        this.insdc = insdc;
     }
 
     public String getRefseq() {
