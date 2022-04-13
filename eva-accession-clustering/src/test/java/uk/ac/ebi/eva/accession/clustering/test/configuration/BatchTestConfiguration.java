@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSTargetReaderConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.TargetSSReaderForBackPropRSConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
@@ -66,7 +66,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
         ClusteringMongoReaderConfiguration.class,
         ClusteringVariantProcessorConfiguration.class,
         ClusteringWriterConfiguration.class,
-        BackPropagatedRSTargetReaderConfiguration.class,
+        TargetSSReaderForBackPropRSConfiguration.class,
         BackPropagatedRSWriterConfiguration.class,
         ListenersConfiguration.class,
         ClusteringCommandLineRunner.class,

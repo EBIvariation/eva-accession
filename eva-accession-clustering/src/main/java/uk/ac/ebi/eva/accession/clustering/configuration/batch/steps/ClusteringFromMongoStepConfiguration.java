@@ -35,8 +35,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import java.util.List;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_NEW_RS_TARGET_READER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.SPLIT_OR_MERGED_RS_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_MERGED_RS_STEP;
@@ -158,7 +158,7 @@ public class ClusteringFromMongoStepConfiguration {
 
     @Bean(BACK_PROPAGATE_NEW_RS_STEP)
     public Step backPropagateNewRSStep(
-            @Qualifier(BACK_PROPAGATED_NEW_RS_TARGET_READER)
+            @Qualifier(TARGET_SS_READER_FOR_NEW_BACKPROP_RS)
                     ItemStreamReader<SubmittedVariantEntity> backPropagatedNewRSTargetReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
@@ -176,7 +176,7 @@ public class ClusteringFromMongoStepConfiguration {
 
     @Bean(BACK_PROPAGATE_SPLIT_MERGED_RS_STEP)
     public Step backPropagateSplitAndMergedRSStep(
-            @Qualifier(SPLIT_OR_MERGED_RS_READER)
+            @Qualifier(TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS)
                     ItemStreamReader<List<SubmittedVariantEntity>> splitOrMergedRSReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
