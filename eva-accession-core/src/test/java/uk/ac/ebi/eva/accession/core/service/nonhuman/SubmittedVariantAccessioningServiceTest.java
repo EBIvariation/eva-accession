@@ -45,7 +45,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
@@ -282,7 +282,7 @@ public class SubmittedVariantAccessioningServiceTest {
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})
     @Test
     public void getAllByAccession() throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        assertEquals(2, service.getAllByAccession(2200000002L, ContigAliasNaming.INSDC).size());
+        assertEquals(2, service.getAllByAccession(2200000002L, ContigNamingConvention.INSDC).size());
     }
 
     @UsingDataSet(locations = {"/test-data/dbsnpSubmittedVariantEntity.json"})

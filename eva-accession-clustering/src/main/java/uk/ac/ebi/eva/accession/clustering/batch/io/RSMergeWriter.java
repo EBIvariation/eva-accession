@@ -32,7 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.Accession
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -384,7 +384,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         List<SubmittedVariantInactiveEntity> ssClusteredUnderTargetRS =
                 this.submittedVariantAccessioningService
                         .getByClusteredVariantAccessionIn(Collections.singletonList(prioritised.accessionToKeep),
-                                                          ContigAliasNaming.NO_REPLACEMENT)
+                                                          ContigNamingConvention.NO_REPLACEMENT)
                         .stream()
                         .filter(result -> result.getData().getReferenceSequenceAccession()
                                                 .equals(this.assemblyAccession))

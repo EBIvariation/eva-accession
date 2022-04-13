@@ -32,12 +32,9 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
-import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
-import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
@@ -81,10 +78,10 @@ public class SubmittedVariantsRestController {
             @PathVariable @ApiParam(value = "Numerical identifier of a submitted variant, e.g.: 5000000000",
                                     required = true) Long identifier,
             @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
-                    ContigAliasNaming contigAliasNaming)
+                    ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
-            return ResponseEntity.ok(service.getAllByAccession(identifier, contigAliasNaming).stream()
+            return ResponseEntity.ok(service.getAllByAccession(identifier, contigNamingConvention).stream()
                                             .map(this::toDTO).collect(Collectors.toList()));
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());

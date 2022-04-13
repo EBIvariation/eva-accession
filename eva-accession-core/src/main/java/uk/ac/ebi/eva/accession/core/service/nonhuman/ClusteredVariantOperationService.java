@@ -2,7 +2,7 @@ package uk.ac.ebi.eva.accession.core.service.nonhuman;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
@@ -29,12 +29,12 @@ public class ClusteredVariantOperationService {
     }
 
     public List<IEvent<? extends IClusteredVariant, Long>> getAllOperations(
-            Long accession, ContigAliasNaming contigAliasNaming) {
+            Long accession, ContigNamingConvention contigNamingConvention) {
         List<IEvent<? extends IClusteredVariant, Long>> totalOperations = new ArrayList<>();
         totalOperations.addAll(contigAliasService.getEventsWithTranslatedContig(
-                dbsnpClusteredVariantInactiveService.getAllEventsInvolvedIn(accession), contigAliasNaming));
+                dbsnpClusteredVariantInactiveService.getAllEventsInvolvedIn(accession), contigNamingConvention));
         totalOperations.addAll(contigAliasService.getEventsWithTranslatedContig(
-                clusteredVariantInactiveService.getAllEventsInvolvedIn(accession), contigAliasNaming));
+                clusteredVariantInactiveService.getAllEventsInvolvedIn(accession), contigNamingConvention));
         sortOperationsOldToNew(totalOperations);
         return totalOperations;
     }

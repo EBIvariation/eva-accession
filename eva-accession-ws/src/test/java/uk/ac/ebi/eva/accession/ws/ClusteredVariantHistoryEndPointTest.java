@@ -40,7 +40,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.HistoryEventDTO;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.ws.dto.VariantHistory;
@@ -94,7 +94,7 @@ public class ClusteredVariantHistoryEndPointTest {
     public void testVariantHistorySingleRSSplitIntoMultiple1() throws Exception {
         long fetchHistoryOfRS = 1L;
         ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> response =
-                restController.getVariantHistory(fetchHistoryOfRS, ContigAliasNaming.INSDC);
+                restController.getVariantHistory(fetchHistoryOfRS, ContigNamingConvention.INSDC);
         VariantHistory<ClusteredVariant, IClusteredVariant, String, Long> variantHistory = response.getBody();
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 variantHistory.getVariants();
@@ -119,7 +119,7 @@ public class ClusteredVariantHistoryEndPointTest {
     public void testVariantHistoryRSMerge() throws Exception {
         long fetchHistoryOfRS = 1L;
         ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> response =
-                restController.getVariantHistory(fetchHistoryOfRS, ContigAliasNaming.INSDC);
+                restController.getVariantHistory(fetchHistoryOfRS, ContigNamingConvention.INSDC);
         VariantHistory<ClusteredVariant, IClusteredVariant, String, Long> variantHistory = response.getBody();
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 variantHistory.getVariants();
@@ -143,7 +143,7 @@ public class ClusteredVariantHistoryEndPointTest {
     public void testVariantHistorySubsequentRSSplit() throws Exception {
         long fetchHistoryOfRS = 3000000000L;
         ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> response =
-                restController.getVariantHistory(fetchHistoryOfRS, ContigAliasNaming.INSDC);
+                restController.getVariantHistory(fetchHistoryOfRS, ContigNamingConvention.INSDC);
         VariantHistory<ClusteredVariant, IClusteredVariant, String, Long> variantHistory = response.getBody();
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 variantHistory.getVariants();
@@ -167,7 +167,7 @@ public class ClusteredVariantHistoryEndPointTest {
     public void testVariantHistorySubsequentRSMerge() throws Exception {
         long fetchHistoryOfRS = 9L;
         ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> response =
-                restController.getVariantHistory(fetchHistoryOfRS, ContigAliasNaming.INSDC);
+                restController.getVariantHistory(fetchHistoryOfRS, ContigNamingConvention.INSDC);
         VariantHistory<ClusteredVariant, IClusteredVariant, String, Long> variantHistory = response.getBody();
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 variantHistory.getVariants();
@@ -189,7 +189,7 @@ public class ClusteredVariantHistoryEndPointTest {
     public void testVariantHistoryMixOfSplitAndMerge() throws Exception {
         long fetchHistoryOfRS = 3000000000L;
         ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> response =
-                restController.getVariantHistory(fetchHistoryOfRS, ContigAliasNaming.INSDC);
+                restController.getVariantHistory(fetchHistoryOfRS, ContigNamingConvention.INSDC);
         VariantHistory<ClusteredVariant, IClusteredVariant, String, Long> variantHistory = response.getBody();
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 variantHistory.getVariants();

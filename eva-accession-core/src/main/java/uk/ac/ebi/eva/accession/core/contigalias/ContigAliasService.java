@@ -49,11 +49,11 @@ public class ContigAliasService {
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getSubmittedVariantsWithTranslatedContig(
             List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants,
-            ContigAliasNaming contigAliasNaming) throws NoSuchElementException {
-        if (skipContigTranslation(contigAliasNaming)) return submittedVariants;
+            ContigNamingConvention contigNamingConvention) throws NoSuchElementException {
+        if (skipContigTranslation(contigNamingConvention)) return submittedVariants;
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariantsAfterContigAlias = new ArrayList<>();
         for (AccessionWrapper<ISubmittedVariant, String, Long> submittedVariant : submittedVariants) {
-            String translatedContig = translateContig(submittedVariant.getData().getContig(), contigAliasNaming);
+            String translatedContig = translateContig(submittedVariant.getData().getContig(), contigNamingConvention);
             submittedVariantsAfterContigAlias.add(
                     createSubmittedVariantAccessionWrapperWithNewContig(submittedVariant, translatedContig));
         }
@@ -66,23 +66,23 @@ public class ContigAliasService {
      * When no naming convention is specified (naming convention is null) or naming convention is NO_REPLACEMENT or
      * naming convention is INSDC there is no need for contig translation so it can be skipped.
      */
-    private boolean skipContigTranslation(ContigAliasNaming contigAliasNaming) {
+    private boolean skipContigTranslation(ContigNamingConvention contigNamingConvention) {
         //Contigs are stored in INSDC naming convention in the accessioning database so no need for translation
-        return contigAliasNaming == null ||
-                contigAliasNaming.equals(ContigAliasNaming.INSDC) ||
-                contigAliasNaming.equals(ContigAliasNaming.NO_REPLACEMENT);
+        return contigNamingConvention == null ||
+                contigNamingConvention.equals(ContigNamingConvention.INSDC) ||
+                contigNamingConvention.equals(ContigNamingConvention.NO_REPLACEMENT);
     }
 
     /**
      * Query contig alias service to translate the contig to the desired naming convention
      */
-    private String translateContig(String genbankContig, ContigAliasNaming contigAliasNaming) {
+    private String translateContig(String genbankContig, ContigNamingConvention contigNamingConvention) {
         String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
         ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
-            throw new NoSuchElementException("Not data returned for " + url + " from the contig alias service");
+            throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
         }
-        return getTranslatedContig(contigAliasResponse, contigAliasNaming);
+        return getTranslatedContig(contigAliasResponse, contigNamingConvention);
     }
 
     private AccessionWrapper<ISubmittedVariant, String, Long> createSubmittedVariantAccessionWrapperWithNewContig(
@@ -104,10 +104,10 @@ public class ContigAliasService {
         return new AccessionWrapper<>(accessionWrapper.getAccession(), accessionWrapper.getHash(), dataAfterContigAlias);
 }
 
-    private String getTranslatedContig(ContigAliasResponse contigAliasResponse, ContigAliasNaming contigAliasNaming) {
+    private String getTranslatedContig(ContigAliasResponse contigAliasResponse, ContigNamingConvention contigNamingConvention) {
         ContigAliasChromosome contigAliasChromosome = contigAliasResponse.getEmbedded().getContigAliasChromosomes().get(0);
         String contig;
-        switch (contigAliasNaming) {
+        switch (contigNamingConvention) {
             case GENBANK_SEQUENCE_NAME:
                 contig = contigAliasChromosome.getName();
                 break;
@@ -134,16 +134,16 @@ public class ContigAliasService {
            return contig;
        } else {
            throw new NoSuchElementException("Contig " + contigAliasChromosome.getGenbank() +
-                                                    " could not be translated to " + contigAliasNaming);
+                                                    " could not be translated to " + contigNamingConvention);
        }
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getClusteredVariantsWithTranslatedContig(
-        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants, ContigAliasNaming contigAliasNaming) {
-        if (skipContigTranslation(contigAliasNaming)) return clusteredVariants;
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants, ContigNamingConvention contigNamingConvention) {
+        if (skipContigTranslation(contigNamingConvention)) return clusteredVariants;
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariantsAfterContigAlias = new ArrayList<>();
         for (AccessionWrapper<IClusteredVariant, String, Long> clusteredVariant : clusteredVariants) {
-            String translatedContig = translateContig(clusteredVariant.getData().getContig(), contigAliasNaming);
+            String translatedContig = translateContig(clusteredVariant.getData().getContig(), contigNamingConvention);
             clusteredVariantsAfterContigAlias.add(
                     createClusteredVariantAccessionWrapperWithNewContig(clusteredVariant, translatedContig));
         }
@@ -164,8 +164,8 @@ public class ContigAliasService {
     }
 
     public List<? extends IEvent<IClusteredVariant, Long>> getEventsWithTranslatedContig(
-            List<? extends IEvent<IClusteredVariant, Long>> events, ContigAliasNaming contigAliasNaming) {
-        if (skipContigTranslation(contigAliasNaming)) return events;
+            List<? extends IEvent<IClusteredVariant, Long>> events, ContigNamingConvention contigNamingConvention) {
+        if (skipContigTranslation(contigNamingConvention)) return events;
         List<ClusteredVariantOperationEntity> allEventsAfterContigAlias = new ArrayList<>();
         for (IEvent<? extends IClusteredVariant, Long> event : events) {
             List<? extends IAccessionedObject<? extends IClusteredVariant, ?, Long>> inactiveObjects =
@@ -173,7 +173,7 @@ public class ContigAliasService {
             List<ClusteredVariantInactiveEntity> inactiveObjectsAfterContigAlias = new ArrayList<>();
             for (IAccessionedObject<? extends IClusteredVariant, ?, Long> inactiveObject : inactiveObjects) {
                 IClusteredVariant clusteredVariant = inactiveObject.getModel();
-                String translatedContig = translateContig(clusteredVariant.getContig(), contigAliasNaming);
+                String translatedContig = translateContig(clusteredVariant.getContig(), contigNamingConvention);
                 inactiveObjectsAfterContigAlias.add(createClusteredVariantInactiveEntityWithNewContig(
                         inactiveObject, clusteredVariant, translatedContig));
             }
