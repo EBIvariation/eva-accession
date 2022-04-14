@@ -63,7 +63,7 @@ public class BeanNames {
 
     public static final String BACK_PROPAGATE_NEW_RS_STEP = "BACK_PROPAGATE_NEW_RS_STEP";
 
-    public static final String BACK_PROPAGATE_SPLIT_MERGED_RS_STEP = "BACK_PROPAGATE_SPLIT_MERGED_RS_STEP";
+    public static final String BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP = "BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP";
 
     public static final String CLUSTERING_FROM_VCF_JOB = "CLUSTERING_FROM_VCF_JOB";
 
@@ -73,5 +73,7 @@ public class BeanNames {
 
     public static final String CLUSTER_UNCLUSTERED_VARIANTS_JOB = "CLUSTER_UNCLUSTERED_VARIANTS_JOB";
 
-    public static final String BACK_PROPAGATE_RS_JOB = "BACK_PROPAGATE_RS_JOB";
+    public static final String BACK_PROPAGATE_NEW_RS_JOB = "BACK_PROPAGATE_NEW_RS_JOB";
+
+    public static final String BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB = "BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB";
 }

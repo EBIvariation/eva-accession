@@ -347,7 +347,7 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
                                                             BACK_PROPAGATE_NEW_RS_STEP));
         assertEquals(1, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            BACK_PROPAGATE_SPLIT_MERGED_RS_STEP));
+                BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP));
     }
 
     @Test
@@ -377,7 +377,7 @@ public class ClusteringCommandLineRunnerTest {
         assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
                 BACK_PROPAGATE_NEW_RS_STEP));
         assertEquals(0, jobRepository.getStepExecutionCount(currentJobInstance,
-                                                            BACK_PROPAGATE_SPLIT_MERGED_RS_STEP));
+                BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP));
     }
 
     @Test

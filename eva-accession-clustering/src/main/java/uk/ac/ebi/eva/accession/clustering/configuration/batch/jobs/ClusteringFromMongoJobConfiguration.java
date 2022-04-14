@@ -41,7 +41,7 @@ import org.springframework.lang.NonNull;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_MERGED_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
@@ -82,7 +82,7 @@ public class ClusteringFromMongoJobConfiguration {
                                       // Back-propagate RS that were newly created in the remapped assembly
                                       @Qualifier(BACK_PROPAGATE_NEW_RS_STEP) Step backPropagateNewRSStep,
                                       // Back-propagate RS in the remapped assembly that were split or merged
-                                      @Qualifier(BACK_PROPAGATE_SPLIT_MERGED_RS_STEP)
+                                      @Qualifier(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
                                                   Step backPropagateSplitMergedRSStep,
                                       StepBuilderFactory stepBuilderFactory,
                                       JobBuilderFactory jobBuilderFactory,

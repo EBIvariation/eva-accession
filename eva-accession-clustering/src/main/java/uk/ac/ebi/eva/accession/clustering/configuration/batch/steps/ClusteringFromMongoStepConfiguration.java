@@ -39,7 +39,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_MERGED_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_VARIANTS_MONGO_READER;
@@ -174,7 +174,7 @@ public class ClusteringFromMongoStepConfiguration {
         return step;
     }
 
-    @Bean(BACK_PROPAGATE_SPLIT_MERGED_RS_STEP)
+    @Bean(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
     public Step backPropagateSplitAndMergedRSStep(
             @Qualifier(TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS)
                     ItemStreamReader<List<SubmittedVariantEntity>> splitOrMergedRSReader,
@@ -182,7 +182,7 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_SPLIT_MERGED_RS_STEP)
+        TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
                 .<List<SubmittedVariantEntity>, List<SubmittedVariantEntity>>chunk(
                         chunkSizeCompletionPolicy)
                 .reader(splitOrMergedRSReader)
