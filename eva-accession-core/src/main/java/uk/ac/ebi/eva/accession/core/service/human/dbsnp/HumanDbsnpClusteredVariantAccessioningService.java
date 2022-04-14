@@ -50,6 +50,10 @@ public class HumanDbsnpClusteredVariantAccessioningService {
         this.contigAliasService = contigAliasService;
     }
 
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier) {
+        return getAllByAccession(identifier, ContigNamingConvention.INSDC);
+    }
+
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier, ContigNamingConvention contigNamingConvention) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
         clusteredVariants.addAll(contigAliasService.getClusteredVariantsWithTranslatedContig(getHumanClusteredVariants(identifier),

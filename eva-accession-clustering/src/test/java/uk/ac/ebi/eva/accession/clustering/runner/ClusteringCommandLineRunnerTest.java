@@ -66,7 +66,6 @@ import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -789,7 +788,7 @@ public class ClusteringCommandLineRunnerTest {
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         AccessionWrapper<ISubmittedVariant, String, Long> ssInDBWrapper =
                 this.submittedVariantAccessioningService
-                        .getAllByAccession(ss.getAccession(), ContigNamingConvention.INSDC)
+                        .getAllByAccession(ss.getAccession())
                         .stream()
                         .filter(entity -> entity.getHash().equals(ss.getHashedMessage())).findFirst().get();
         SubmittedVariantEntity ssInDB = new SubmittedVariantEntity(ssInDBWrapper.getAccession(),

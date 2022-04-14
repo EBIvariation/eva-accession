@@ -44,7 +44,6 @@ import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
@@ -174,7 +173,7 @@ public class RSSplitWriterTest {
         // because the RS hash for start position 101 is supported in these 2 variants
         List<AccessionWrapper<ISubmittedVariant, String, Long>> ssAssociatedWithRS1 =
         submittedVariantAccessioningService.getByClusteredVariantAccessionIn(
-                Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci), ContigNamingConvention.INSDC);
+                Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci));
         assertEquals(2, ssAssociatedWithRS1.size());
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss2.getAccession(), ss3.getAccession())));
@@ -230,7 +229,7 @@ public class RSSplitWriterTest {
         // the group SS1 and SS2 with locus 100 has the oldest SS ID and gets to keep the old RS ID
         List<AccessionWrapper<ISubmittedVariant, String, Long>> ssAssociatedWithRS1 =
                 submittedVariantAccessioningService.getByClusteredVariantAccessionIn(
-                        Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci), ContigNamingConvention.INSDC);
+                        Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci));
         assertEquals(2, ssAssociatedWithRS1.size());
         assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
                                       .containsAll(Arrays.asList(ss1.getAccession(), ss2.getAccession())));

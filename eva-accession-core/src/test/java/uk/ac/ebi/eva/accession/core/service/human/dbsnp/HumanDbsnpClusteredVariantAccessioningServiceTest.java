@@ -31,7 +31,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.test.configuration.human.MongoHumanTestConfiguration;
@@ -79,7 +78,7 @@ public class HumanDbsnpClusteredVariantAccessioningServiceTest {
     @Test
     public void getHumanActiveVariant() {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
-                humanService.getAllByAccession(HUMAN_ACTIVE_RS_ID_1, ContigNamingConvention.INSDC);
+                humanService.getAllByAccession(HUMAN_ACTIVE_RS_ID_1);
         assertEquals(1, clusteredVariants.size());
         IClusteredVariant clusteredVariant = clusteredVariants.get(0).getData();
         assertEquals(CLUSTERED_VARIANT_EXPECTED_1, clusteredVariant);
@@ -89,14 +88,14 @@ public class HumanDbsnpClusteredVariantAccessioningServiceTest {
     @Ignore("humanService.getAllByAccession is not returning multiple variants yet")
     public void getHumanActiveMultipleVariants() {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
-                humanService.getAllByAccession(HUMAN_ACTIVE_RS_ID_2, ContigNamingConvention.INSDC);
+                humanService.getAllByAccession(HUMAN_ACTIVE_RS_ID_2);
         assertEquals(2, clusteredVariants.size());
     }
 
     @Test
     public void getHumanActiveVariantInOperations() {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
-                humanService.getAllByAccession(HUMAN_ACTIVE_IN_OPERATIONS_RS_ID, ContigNamingConvention.INSDC);
+                humanService.getAllByAccession(HUMAN_ACTIVE_IN_OPERATIONS_RS_ID);
         assertEquals(1, clusteredVariants.size());
         IClusteredVariant clusteredVariant = clusteredVariants.get(0).getData();
         assertEquals(CLUSTERED_VARIANT_EXPECTED_2, clusteredVariant);
@@ -105,7 +104,7 @@ public class HumanDbsnpClusteredVariantAccessioningServiceTest {
     @Test
     public void nonExistingHumanVariant() {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
-                humanService.getAllByAccession(1L, ContigNamingConvention.INSDC);
+                humanService.getAllByAccession(1L);
         assertEquals(0, clusteredVariants.size());
         assertEquals(Collections.EMPTY_LIST, clusteredVariants);
     }

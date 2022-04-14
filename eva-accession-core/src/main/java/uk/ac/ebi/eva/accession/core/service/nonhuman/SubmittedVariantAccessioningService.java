@@ -145,6 +145,11 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         }
     }
 
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return getAllByAccession(accession, ContigNamingConvention.INSDC);
+    }
+
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(
             Long accession, ContigNamingConvention contigNamingConvention) throws AccessionMergedException,
             AccessionDoesNotExistException, AccessionDeprecatedException, NoSuchElementException {
@@ -165,6 +170,11 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         } else {
             return accessioningServiceDbsnp.getByAccessionAndVersion(accession, version);
         }
+    }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
+            List<Long> clusteredVariantAccessions) {
+        return getByClusteredVariantAccessionIn(clusteredVariantAccessions, ContigNamingConvention.INSDC);
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(

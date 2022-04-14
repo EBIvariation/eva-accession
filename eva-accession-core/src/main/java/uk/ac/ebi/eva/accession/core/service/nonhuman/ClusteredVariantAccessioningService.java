@@ -133,6 +133,11 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
         }
     }
 
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return getAllByAccession(accession, ContigNamingConvention.INSDC);
+    }
+
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(
             Long accession, ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
