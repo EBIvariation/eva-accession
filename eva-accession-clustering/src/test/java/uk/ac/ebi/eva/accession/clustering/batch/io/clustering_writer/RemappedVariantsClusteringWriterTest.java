@@ -330,8 +330,9 @@ public class RemappedVariantsClusteringWriterTest {
         assertEquals(2, submittedVariantOperationEntities.size());
         assertEquals(5000000000L, submittedVariantOperationEntities.get(0).getAccession().longValue());
         assertEquals(5000000000L, submittedVariantOperationEntities.get(1).getAccession().longValue());
-        assertEquals(EventType.UPDATED, submittedVariantOperationEntities.get(0).getEventType());
-        assertEquals(EventType.UPDATED, submittedVariantOperationEntities.get(1).getEventType());
+        assertTrue(submittedVariantOperationEntities.stream().map(SubmittedVariantOperationEntity::getEventType)
+                .collect(Collectors.toList()).containsAll(Arrays.asList(EventType.UPDATED,
+                        EventType.RS_BACK_PROPAGATED)));
         assertEquals("Clustering submitted variant 5000000000 with rs3000000000",
                      submittedVariantOperationEntities.stream().filter(svoe -> svoe.getInactiveObjects().get(0)
                                                                                    .getReferenceSequenceAccession()
@@ -399,8 +400,9 @@ public class RemappedVariantsClusteringWriterTest {
         assertEquals(2, submittedVariantOperationEntities.size());
         assertEquals(5000000000L, submittedVariantOperationEntities.get(0).getAccession().longValue());
         assertEquals(5000000000L, submittedVariantOperationEntities.get(1).getAccession().longValue());
-        assertEquals(EventType.UPDATED, submittedVariantOperationEntities.get(0).getEventType());
-        assertEquals(EventType.UPDATED, submittedVariantOperationEntities.get(1).getEventType());
+        assertTrue(submittedVariantOperationEntities.stream().map(SubmittedVariantOperationEntity::getEventType)
+                .collect(Collectors.toList()).containsAll(Arrays.asList(EventType.UPDATED,
+                        EventType.RS_BACK_PROPAGATED)));
         assertEquals("Clustering submitted variant 5000000000 with rs3000000006",
                      submittedVariantOperationEntities.stream().filter(svoe -> svoe.getInactiveObjects().get(0)
                                                                                    .getReferenceSequenceAccession()
