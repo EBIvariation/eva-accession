@@ -185,15 +185,15 @@ public class BackPropagatedRSWriter implements ItemWriter<SubmittedVariantEntity
     }
 
     private SubmittedVariantOperationEntity getUpdateOperation(SubmittedVariantEntity submittedVariantEntity,
-                                                               Long assignedRS) {
+                                                               Long backPropagatedRS) {
         // Query to create the update operation history
         SubmittedVariantOperationEntity updateOperation = new SubmittedVariantOperationEntity();
         SubmittedVariantInactiveEntity inactiveEntity = new SubmittedVariantInactiveEntity(submittedVariantEntity);
         updateOperation.fill(
-                EventType.UPDATED,
+                EventType.RS_BACK_PROPAGATED,
                 submittedVariantEntity.getAccession(),
                 null,
-                "Back-propagating rs" + assignedRS + " for submitted variant ss" +
+                "Back-propagating rs" + backPropagatedRS + " for submitted variant ss" +
                         submittedVariantEntity.getAccession() + " after remapping to " + this.remappedAssembly + ".",
                 Collections.singletonList(inactiveEntity)
         );
