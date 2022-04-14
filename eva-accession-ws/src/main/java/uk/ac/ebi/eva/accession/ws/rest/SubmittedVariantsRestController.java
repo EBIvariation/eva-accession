@@ -77,7 +77,7 @@ public class SubmittedVariantsRestController {
     public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a submitted variant, e.g.: 5000000000",
                                     required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
                     ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
