@@ -28,6 +28,10 @@ public class ClusteredVariantOperationService {
         this.contigAliasService = contigAliasService;
     }
 
+    public List<IEvent<? extends IClusteredVariant, Long>> getAllOperations(Long accession) {
+        return getAllOperations(accession, ContigNamingConvention.INSDC);
+    }
+
     public List<IEvent<? extends IClusteredVariant, Long>> getAllOperations(
             Long accession, ContigNamingConvention contigNamingConvention) {
         List<IEvent<? extends IClusteredVariant, Long>> totalOperations = new ArrayList<>();
