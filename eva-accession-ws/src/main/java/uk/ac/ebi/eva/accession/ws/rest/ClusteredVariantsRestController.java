@@ -100,7 +100,7 @@ public class ClusteredVariantsRestController {
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                     required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
                     ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
@@ -129,7 +129,7 @@ public class ClusteredVariantsRestController {
     public ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantHistory(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                     required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
                     ContigNamingConvention contigNamingConvention) throws AccessionDoesNotExistException {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 new ArrayList<>();
@@ -195,7 +195,7 @@ public class ClusteredVariantsRestController {
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
                     required = true) Long identifier,
-            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired")
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
                     ContigNamingConvention contigNamingConvention)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         try {
