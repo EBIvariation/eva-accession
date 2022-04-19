@@ -240,6 +240,7 @@ public class ReleaseRecordWriter implements ItemWriter<VariantContext> {
         List<Long> ssIDsToLookFor =  variantContexts.stream()
                                                     .map(VariantContext::getID)
                                                     .map(ssID -> Long.parseLong(ssID.substring(2)))
+                                                    .distinct()
                                                     .collect(Collectors.toList());
         List<ReleaseRecordEntity> releaseRecords = getReleaseRecords(ssIDsToLookFor);
 
