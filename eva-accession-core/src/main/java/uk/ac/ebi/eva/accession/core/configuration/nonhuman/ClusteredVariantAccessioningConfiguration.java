@@ -30,6 +30,8 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationPropertiesConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.ContigAliasConfiguration;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
@@ -52,7 +54,7 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 @Configuration
 @EnableSpringDataContiguousIdService
-@Import({ApplicationPropertiesConfiguration.class, MongoConfiguration.class})
+@Import({ApplicationPropertiesConfiguration.class, MongoConfiguration.class, ContigAliasConfiguration.class})
 /**
  * Configuration required to accession and query clustered variants.
  *
@@ -80,6 +82,9 @@ public class ClusteredVariantAccessioningConfiguration {
     @Autowired
     private ContiguousIdBlockService blockService;
 
+    @Autowired
+    private ContigAliasService contigAliasService;
+
     @Value("${accessioning.clustered.categoryId}")
     private String categoryId;
 
@@ -92,7 +97,7 @@ public class ClusteredVariantAccessioningConfiguration {
     public ClusteredVariantAccessioningService clusteredVariantAccessioningService() {
         return new ClusteredVariantAccessioningService(clusteredVariantMonotonicAccessioningService(),
                                                        dbsnpClusteredVariantMonotonicAccessioningService(),
-                                                       accessioningMonotonicInitRs());
+                                                       accessioningMonotonicInitRs(), contigAliasService);
     }
 
     @Bean
@@ -142,7 +147,9 @@ public class ClusteredVariantAccessioningConfiguration {
 
     @Bean
     public ClusteredVariantOperationService clusteredVariantHistoryService() {
-        return new ClusteredVariantOperationService(dbsnpClusteredVariantInactiveService(), clusteredVariantInactiveService());
+        return new ClusteredVariantOperationService(dbsnpClusteredVariantInactiveService(),
+                                                    clusteredVariantInactiveService(),
+                                                    contigAliasService);
     }
 
     @Bean

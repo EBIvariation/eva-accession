@@ -24,6 +24,8 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 
 import uk.ac.ebi.eva.accession.core.configuration.ApplicationProperties;
+import uk.ac.ebi.eva.accession.core.configuration.ContigAliasConfiguration;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.generators.DbsnpMonotonicAccessionGenerator;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
@@ -40,7 +42,7 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 @Configuration
 @EnableSpringDataContiguousIdService
-@Import({HumanMongoConfiguration.class})
+@Import({HumanMongoConfiguration.class, ContigAliasConfiguration.class})
 public class HumanClusteredVariantAccessioningConfiguration {
 
     @Autowired
@@ -54,6 +56,9 @@ public class HumanClusteredVariantAccessioningConfiguration {
 
     @Autowired
     private ContiguousIdBlockService service;
+
+    @Autowired
+    private ContigAliasService contigAliasService;
 
     @Bean("humanActiveService")
     public HumanDbsnpClusteredVariantMonotonicAccessioningService humanDbsnpClusteredActiveVariantAccessioningService() {
@@ -83,7 +88,8 @@ public class HumanClusteredVariantAccessioningConfiguration {
     @Bean("humanService")
     public HumanDbsnpClusteredVariantAccessioningService humanDbsnpClusteredVariantAccessioningService() {
         return new HumanDbsnpClusteredVariantAccessioningService(humanDbsnpClusteredActiveVariantAccessioningService(),
-                                                                 humanDbsnpClusteredVariantOperationAccessioningService());
+                                                                 humanDbsnpClusteredVariantOperationAccessioningService(),
+                                                                 contigAliasService);
     }
 
     @Bean
