@@ -88,4 +88,5 @@ public interface ISubmittedVariant {
 
     String getRemappingId();
 
+    Long getBackPropagatedVariantAccession();
 }

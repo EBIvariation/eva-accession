@@ -183,24 +183,27 @@ public class ReuseAccessionClusteringWriterTest {
 
         // keep the RS that a submitted variant already has (RS=existingRs)
         SubmittedVariantEntity sveClustered = createSubmittedVariantEntity(ASM_2, existingRs, 5000000000L);
+        metricCompute.clearCount();
         this.clusterVariants(Collections.singletonList(sveClustered));
         assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertClusteringCounts(metricCompute, 0, 0, 0, 0, 0, 0, 0);
 
         // assign an existing RS to a different submitted variant (that has rs=null)
         createSubmittedVariantEntity(ASM_1, null, 5100000000L);
         SubmittedVariantEntity sveNonClustered = createSubmittedVariantEntity(ASM_2, null, 5100000000L);
+        metricCompute.clearCount();
         this.clusterVariants(Collections.singletonList(sveNonClustered));
-        // Two RS - one reused for clustering the non-clustered variant sveNonClustered in the remapped assembly
-        // and another for back-propagating that new RS to the original assembly
-        assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        // One RS reused for clustering the non-clustered variant sveNonClustered in the remapped assembly
+        // When back-propagating that new RS to the original assembly, no new RS is created in the original assembly
+        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        assertClusteringCounts(metricCompute, 0, 0, 0, 0, 1, 0, 2);
 
         // for the same submitted variant without an assigned RS (rs=null), getOrCreate should not create another RS
+        metricCompute.clearCount();
         this.clusterVariants(Collections.singletonList(sveNonClustered));
-        assertEquals(2, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
-
-        // Two RS - one reused (but not created) for clustering the non-clustered variant sveNonClustered in the remapped assembly
-        // and another back-propagated RS created for the original assembly
-        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
+        assertEquals(1, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
+        // One RS reused for clustering the non-clustered variant sveNonClustered in the remapped assembly
+        assertClusteringCounts(metricCompute, 0, 0, 0, 0, 0, 0, 0);
     }
 
     private SubmittedVariantEntity createSubmittedVariantEntity(String assembly, Long rs, Long ss) {
@@ -266,9 +269,9 @@ public class ReuseAccessionClusteringWriterTest {
 
         // then
         assertEquals(0, mongoTemplate.count(new Query(), DbsnpSubmittedVariantEntity.class));
-        // Two RS records: one clustering SS in the remapped assembly with rs1 (already existing) and another
-        // for back-propagating rs1 to the SS in the older assembly (newly created)
-        assertEquals(2, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
+        // One RS record: clustering SS in the remapped assembly with rs1 (already existing)
+        // No RS record is created when back-propagating rs1 to the SS in the older assembly (newly created)
+        assertEquals(1, mongoTemplate.count(new Query(), DbsnpClusteredVariantEntity.class));
         assertEquals(2, mongoTemplate.count(new Query(), SubmittedVariantEntity.class));
         assertEquals(0, mongoTemplate.count(new Query(), ClusteredVariantEntity.class));
         // Two operations: one for clustering SS in the remapped assembly with rs1 and another
@@ -281,13 +284,13 @@ public class ReuseAccessionClusteringWriterTest {
         assertNotNull(operation.getCreatedDate());
 
         SubmittedVariantEntity afterClustering = mongoTemplate.findOne(new Query(), SubmittedVariantEntity.class);
-        assertEquals(rs1, afterClustering.getClusteredVariantAccession());
+        assertEquals(rs1, afterClustering.getBackPropagatedVariantAccession());
         SubmittedVariantOperationEntity afterClusteringOperation = mongoTemplate.findOne(
                 new Query(), SubmittedVariantOperationEntity.class);
         assertEquals(sveNonClustered.getAccession(), afterClusteringOperation.getAccession());
 
-        // One newly created RS due to back-propagation of rs1 to the SS in the older assembly
-        assertClusteringCounts(metricCompute, 1, 0, 0, 0, 2, 0, 2);
+        // No newly created RS - back-propagation of rs1 to the SS in the older assembly
+        assertClusteringCounts(metricCompute, 0, 0, 0, 0, 1, 0, 2);
     }
 
     private void clusterVariants(List<SubmittedVariantEntity> submittedVariantEntities)

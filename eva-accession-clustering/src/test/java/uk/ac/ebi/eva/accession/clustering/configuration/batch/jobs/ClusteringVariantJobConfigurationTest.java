@@ -63,7 +63,8 @@ import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
@@ -149,14 +150,16 @@ public class ClusteringVariantJobConfigurationTest {
         expectedSteps.add(PROCESS_RS_SPLIT_CANDIDATES_STEP);
         expectedSteps.add(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP);
         expectedSteps.add(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP);
-        expectedSteps.add(BACK_PROPAGATE_RS_STEP);
+        expectedSteps.add(BACK_PROPAGATE_NEW_RS_STEP);
+        expectedSteps.add(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     private void assertStepsExecuted(List<String> expectedSteps, JobExecution jobExecution) {
         Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
-        List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).collect(Collectors.toList());
+        List<String> steps = stepExecutions.stream().map(StepExecution::getStepName).
+                filter(stepName -> !stepName.contains("dummyStep")).collect(Collectors.toList());
         assertEquals(expectedSteps, steps);
     }
 

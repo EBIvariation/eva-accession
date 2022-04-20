@@ -102,7 +102,8 @@ public class ClusteringMongoReader implements ItemStreamReader<SubmittedVariantE
 
     private MongoCursor<Document> initializeCursor(Class<?> entityClass) {
         Bson query = Filters.and(Filters.in(ASSEMBLY_FIELD, assembly),
-                                 Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants));
+                Filters.exists(CLUSTERED_VARIANT_ACCESSION_FIELD, readOnlyClusteredVariants),
+                Filters.exists(SubmittedVariantEntity.backPropagatedRSAttribute, false));
         logger.info("Issuing find: {}", query);
 
         FindIterable<Document> submittedVariants = getSubmittedVariants(query, entityClass);

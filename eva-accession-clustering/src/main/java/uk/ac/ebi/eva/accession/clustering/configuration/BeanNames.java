@@ -33,7 +33,10 @@ public class BeanNames {
 
     public static final String RS_SPLIT_WRITER = "RS_SPLIT_WRITER";
 
-    public static final String BACK_PROPAGATED_RS_READER = "BACK_PROPAGATED_RS_READER";
+    public static final String TARGET_SS_READER_FOR_NEW_BACKPROP_RS = "TARGET_SS_READER_FOR_NEW_BACKPROP_RS";
+
+    public static final String TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS
+            = "TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS";
 
     public static final String BACK_PROPAGATED_RS_WRITER = "BACK_PROPAGATED_RS_WRITER";
 
@@ -58,7 +61,9 @@ public class BeanNames {
 
     public static final String CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP = "CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP";
 
-    public static final String BACK_PROPAGATE_RS_STEP = "BACK_PROPAGATE_RS_STEP";
+    public static final String BACK_PROPAGATE_NEW_RS_STEP = "BACK_PROPAGATE_NEW_RS_STEP";
+
+    public static final String BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP = "BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP";
 
     public static final String CLUSTERING_FROM_VCF_JOB = "CLUSTERING_FROM_VCF_JOB";
 
@@ -68,5 +73,7 @@ public class BeanNames {
 
     public static final String CLUSTER_UNCLUSTERED_VARIANTS_JOB = "CLUSTER_UNCLUSTERED_VARIANTS_JOB";
 
-    public static final String BACK_PROPAGATE_RS_JOB = "BACK_PROPAGATE_RS_JOB";
+    public static final String BACK_PROPAGATE_NEW_RS_JOB = "BACK_PROPAGATE_NEW_RS_JOB";
+
+    public static final String BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB = "BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB";
 }

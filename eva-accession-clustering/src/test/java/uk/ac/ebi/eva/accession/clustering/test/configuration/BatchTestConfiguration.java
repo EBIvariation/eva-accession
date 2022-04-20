@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSReaderConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.TargetSSReaderForBackPropRSConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
@@ -50,8 +50,7 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.sql.DataSource;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
 
 @EnableAutoConfiguration
 @Import({ClusteringFromVcfJobConfiguration.class,
@@ -67,7 +66,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
         ClusteringMongoReaderConfiguration.class,
         ClusteringVariantProcessorConfiguration.class,
         ClusteringWriterConfiguration.class,
-        BackPropagatedRSReaderConfiguration.class,
+        TargetSSReaderForBackPropRSConfiguration.class,
         BackPropagatedRSWriterConfiguration.class,
         ListenersConfiguration.class,
         ClusteringCommandLineRunner.class,
@@ -77,6 +76,8 @@ public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";
 
     public static final String JOB_LAUNCHER_FROM_MONGO = "JOB_LAUNCHER_FROM_MONGO";
+
+    public static final String JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP = "JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP";
 
     @Autowired
     private BatchProperties properties;
@@ -109,6 +110,18 @@ public class BatchTestConfiguration {
             @Override
             @Autowired
             public void setJob(@Qualifier(CLUSTERING_FROM_MONGO_JOB) Job job) {
+                super.setJob(job);
+            }
+        };
+    }
+
+    @Bean(JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP)
+    public JobLauncherTestUtils jobLauncherTestUtilsFromMongoOnlyFirstStep() {
+
+        return new JobLauncherTestUtils() {
+            @Override
+            @Autowired
+            public void setJob(@Qualifier(PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB) Job job) {
                 super.setJob(job);
             }
         };

@@ -29,7 +29,6 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAcces
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
@@ -45,11 +44,8 @@ public class BackPropagatedRSWriterConfiguration {
     public ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter(
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
             MongoTemplate mongoTemplate, InputParameters parameters,
-            ClusteredVariantAccessioningService clusteredVariantAccessioningService,
-            SubmittedVariantAccessioningService submittedVariantAccessioningService,
-            MetricCompute metricCompute) {
-        return new BackPropagatedRSWriter(parameters.getRemappedFrom(), parameters.getAssemblyAccession(),
-                                          clusteringWriter, clusteredVariantAccessioningService,
+            SubmittedVariantAccessioningService submittedVariantAccessioningService, MetricCompute metricCompute) {
+        return new BackPropagatedRSWriter(parameters.getAssemblyAccession(), clusteringWriter,
                                           submittedVariantAccessioningService, mongoTemplate, metricCompute);
     }
 }

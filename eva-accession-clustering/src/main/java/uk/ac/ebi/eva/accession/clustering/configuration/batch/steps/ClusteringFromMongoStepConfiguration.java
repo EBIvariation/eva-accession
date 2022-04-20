@@ -28,12 +28,18 @@ import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import uk.ac.ebi.eva.accession.clustering.batch.io.ListOfListItemWriter;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_READER;
+import java.util.List;
+
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_NEW_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_VARIANTS_MONGO_READER;
@@ -150,21 +156,40 @@ public class ClusteringFromMongoStepConfiguration {
         return step;
     }
 
-    @Bean(BACK_PROPAGATE_RS_STEP)
-    public Step backPropagateRSStep(
-            @Qualifier(BACK_PROPAGATED_RS_READER)
-                    ItemStreamReader<SubmittedVariantEntity> backPropagatedRSReader,
+    @Bean(BACK_PROPAGATE_NEW_RS_STEP)
+    public Step backPropagateNewRSStep(
+            @Qualifier(TARGET_SS_READER_FOR_NEW_BACKPROP_RS)
+                    ItemStreamReader<SubmittedVariantEntity> backPropagatedNewRSTargetReader,
             @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_RS_STEP)
+        TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_NEW_RS_STEP)
                                              .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(
                                                      chunkSizeCompletionPolicy)
-                                             .reader(backPropagatedRSReader)
+                                             .reader(backPropagatedNewRSTargetReader)
                                              .writer(backPropagatedRSWriter)
                                              .listener(progressListener)
                                              .build();
+        return step;
+    }
+
+    @Bean(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
+    public Step backPropagateSplitAndMergedRSStep(
+            @Qualifier(TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS)
+                    ItemStreamReader<List<SubmittedVariantEntity>> splitOrMergedRSReader,
+            @Qualifier(BACK_PROPAGATED_RS_WRITER) ItemWriter<SubmittedVariantEntity> backPropagatedRSWriter,
+            @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
+                .<List<SubmittedVariantEntity>, List<SubmittedVariantEntity>>chunk(
+                        chunkSizeCompletionPolicy)
+                .reader(splitOrMergedRSReader)
+                 // Spring needs this wrapping to flatten the List<List<SubmittedVariantEntity>> from the processor
+                .writer(new ListOfListItemWriter<>(backPropagatedRSWriter))
+                .listener(progressListener)
+                .build();
         return step;
     }
 }

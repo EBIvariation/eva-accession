@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.processors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import uk.ac.ebi.eva.accession.clustering.batch.processors.VariantToSubmittedVariantEntityProcessor;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 

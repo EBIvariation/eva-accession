@@ -75,6 +75,8 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
 
     private String remappingId;
 
+    private Long backPropagatedVariantAccession;
+
     public SubmittedVariantInactiveEntity() {
     }
 
@@ -172,6 +174,11 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     @Override
     public String getRemappingId() {
         return remappingId;
+    }
+
+    @Override
+    public Long getBackPropagatedVariantAccession() {
+        return backPropagatedVariantAccession;
     }
 
     @Override
