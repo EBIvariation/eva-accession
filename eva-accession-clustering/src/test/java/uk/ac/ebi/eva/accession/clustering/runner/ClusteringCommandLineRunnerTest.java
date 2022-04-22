@@ -855,10 +855,12 @@ public class ClusteringCommandLineRunnerTest {
         List<SubmittedVariantEntity> variantsInRemappedAssembly =
                 Arrays.asList(evaSS1, dbsnpSS2, evaSS5, dbsnpSS7, evaSS8, evaSS9);
         for (SubmittedVariantEntity variantInRemappedAssembly: variantsInRemappedAssembly) {
+            // getStart is multiplied by 1000 so as to avoid accidental hash collision across the list of SS above
+            // due to the same start positions
             RSLocus rsLocusObj = new RSLocus(ASM1, variantInRemappedAssembly.getContig(),
-                                             variantInRemappedAssembly.getStart() + ThreadLocalRandom.current()
-                                                                                                     .nextLong(10),
-                                             VariantType.SNV);
+                    variantInRemappedAssembly.getStart()*1000
+                            + ThreadLocalRandom.current().nextLong(10),
+                    VariantType.SNV);
             ClusteredVariantEntity rsObj = createRS(variantInRemappedAssembly.getClusteredVariantAccession(),
                                                     rsLocusObj, false);
             createSS(variantInRemappedAssembly.getAccession(),
