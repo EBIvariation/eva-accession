@@ -38,7 +38,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.HistoryEventDTO;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -51,6 +50,7 @@ import uk.ac.ebi.eva.accession.ws.dto.VariantHistory;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -101,7 +101,7 @@ public class ClusteredVariantsRestController {
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
                     required = true) Long identifier,
             @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
-                    ContigNamingConvention contigNamingConvention)
+            ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =

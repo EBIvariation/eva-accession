@@ -29,6 +29,8 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigAliasChromosome;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -22,11 +22,11 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
-import uk.ac.ebi.eva.accession.core.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.ArrayList;
 import java.util.Collections;

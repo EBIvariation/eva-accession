@@ -19,6 +19,7 @@ package uk.ac.ebi.eva.accession.core.contigalias;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigAliasChromosome;
 
 import java.util.List;
 
