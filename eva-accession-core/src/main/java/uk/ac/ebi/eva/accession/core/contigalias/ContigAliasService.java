@@ -29,6 +29,9 @@ import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigAliasResponse;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigAliasTranslator;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +85,7 @@ public class ContigAliasService {
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
             throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
         }
-        return getTranslatedContig(contigAliasResponse, contigNamingConvention);
+        return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, contigNamingConvention);
     }
 
     private AccessionWrapper<ISubmittedVariant, String, Long> createSubmittedVariantAccessionWrapperWithNewContig(
@@ -103,40 +106,6 @@ public class ContigAliasService {
                                                                       data.getCreatedDate());
         return new AccessionWrapper<>(accessionWrapper.getAccession(), accessionWrapper.getHash(), dataAfterContigAlias);
 }
-
-    private String getTranslatedContig(ContigAliasResponse contigAliasResponse, ContigNamingConvention contigNamingConvention) {
-        ContigAliasChromosome contigAliasChromosome = contigAliasResponse.getEmbedded().getContigAliasChromosomes().get(0);
-        String contig;
-        switch (contigNamingConvention) {
-            case GENBANK_SEQUENCE_NAME:
-                contig = contigAliasChromosome.getGenbankSequenceName();
-                break;
-            case REFSEQ:
-                contig = contigAliasChromosome.getRefseq();
-                break;
-            case UCSC:
-                contig = contigAliasChromosome.getUcscName();
-                break;
-            case ENA_SEQUENCE_NAME:
-                contig = contigAliasChromosome.getEnaSequenceName();
-                break;
-            case MD5_CHECKSUM:
-                contig = contigAliasChromosome.getMd5checksum();
-                break;
-            case TRUNC512_CHECKSUM:
-                contig = contigAliasChromosome.getTrunc512checksum();
-                break;
-            default:
-                contig = contigAliasChromosome.getInsdc();
-        }
-
-       if (contig != null) {
-           return contig;
-       } else {
-           throw new NoSuchElementException("Contig " + contigAliasChromosome.getInsdc() +
-                                                    " could not be translated to " + contigNamingConvention);
-       }
-    }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getClusteredVariantsWithTranslatedContig(
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants, ContigNamingConvention contigNamingConvention) {
