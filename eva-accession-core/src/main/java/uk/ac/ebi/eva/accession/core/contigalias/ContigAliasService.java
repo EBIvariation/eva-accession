@@ -91,9 +91,12 @@ public class ContigAliasService {
     }
 
     /**
-     *
+     * Query contig alias service to translate from contig name in specified naming convention to INSDC.
      */
     public String translateContigNameToInsdc(String contigName, String assembly, ContigNamingConvention contigNamingConvention) {
+        if (skipContigTranslation(contigNamingConvention)) {
+            return contigName;
+        }
         String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT + contigName
                 + "?accession=" + assembly + "&name=" + contigNamingConvention.toString();  // TODO check what the allowed value for name are
         ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
