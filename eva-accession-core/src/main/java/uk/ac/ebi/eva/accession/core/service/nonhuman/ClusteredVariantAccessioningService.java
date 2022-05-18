@@ -179,11 +179,15 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
-            String assembly, String contig, long start, VariantType type) {
-        IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
+            String assembly, String contig, long start, VariantType type, ContigNamingConvention contigNamingConvention) {
+        String insdcContig = contigAliasService.translateContigNameToInsdc(contig, assembly, contigNamingConvention);
+        IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, insdcContig, start, type, false, null);
         List<AccessionWrapper<IClusteredVariant, String, Long>> variants = this.get(
                 Collections.singletonList(clusteredVariant));
-        return variants;
+        return variants
+                .stream()
+                .map(accessionWrapper -> contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(accessionWrapper, contig))
+                .collect(Collectors.toList());
     }
 
     @Override
