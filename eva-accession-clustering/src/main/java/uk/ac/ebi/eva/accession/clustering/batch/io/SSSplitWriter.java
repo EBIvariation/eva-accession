@@ -266,8 +266,9 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                 newSplitCandidatesForCurrentBatch.add(splitCandidateOperation);
             }
             else {
-                logger.warn("SS ID " + svesThatShareSameID.get(0).getAccession()
-                                    + " is not associated with multiple SS. This should not happen!");
+                logger.warn("Not creating any split operation for SS ID " + svesThatShareSameID.get(0).getAccession()
+                                    + "either because 1) it is not associated with multiple SS entries " +
+                                    "(OR) 2) it is associated with SS which have mismatched alleles or multimap!");
             }
         }
         if (newSplitCandidatesForCurrentBatch.size() > 0) {
