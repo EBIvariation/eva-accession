@@ -12,7 +12,8 @@ public enum ClusteringMetric implements Metric {
     SUBMITTED_VARIANTS_CLUSTERED("submitted_variants_clustered", "Number of Variants(SS) Clustered", 0),
     SUBMITTED_VARIANTS_KEPT_UNCLUSTERED("submitted_variants_kept_unclustered", "Number of submitted variants kept unclustered", 0),
     SUBMITTED_VARIANTS_UPDATED_RS("submitted_variants_updated_rs", "Number of variants(ss) whose rs is updated", 0),
-    SUBMITTED_VARIANTS_UPDATE_OPERATIONS("submitted_variants_update_operations", "Number of submitted variants update operations performed", 0);
+    SUBMITTED_VARIANTS_UPDATE_OPERATIONS("submitted_variants_update_operations", "Number of submitted variants update operations performed", 0),
+    SUBMITTED_VARIANTS_SS_SPLIT("submitted_variants_ss_split", "Number of submitted variants whose ss is split", 0);
 
     private String name;
     private String description;
