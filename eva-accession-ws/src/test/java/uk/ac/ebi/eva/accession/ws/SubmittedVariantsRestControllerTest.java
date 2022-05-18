@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
@@ -45,6 +46,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrappe
 import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
@@ -72,6 +74,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
@@ -114,6 +117,9 @@ public class SubmittedVariantsRestControllerTest {
     @Mock
     private SubmittedVariantAccessioningService mockService;
 
+    @MockBean
+    private ContigAliasService contigAliasService;
+
     private List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> generatedAccessions;
 
     private SubmittedVariant variant1;
@@ -141,6 +147,14 @@ public class SubmittedVariantsRestControllerTest {
                                                                                                                             "CHROM1", 1, "ref",
                                                                                                                             ContigNamingConvention.INSDC, false);
         mockController = new SubmittedVariantsRestController(mockService, mockSubmittedVariantsBeaconService);
+
+        // TODO do this properly
+        Mockito.when(contigAliasService.translateContigNameToInsdc(any(String.class), any(String.class), any(ContigNamingConvention.class)))
+               .then(invocation -> invocation.getArgument(0));
+        Mockito.when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), any(ContigNamingConvention.class)))
+               .then(invocation -> invocation.getArgument(0));
+        Mockito.when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), any(String.class)))
+               .then(invocation -> invocation.getArgument(0));
     }
 
     @After
