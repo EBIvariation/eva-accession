@@ -94,6 +94,11 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
         this.assemblyMatch = submittedVariantEntity.isAssemblyMatch();
         this.allelesMatch = submittedVariantEntity.isAllelesMatch();
         this.validated = submittedVariantEntity.isValidated();
+        this.mapWeight = submittedVariantEntity.getMapWeight();
+        this.remappedFrom = submittedVariantEntity.getRemappedFrom();
+        this.remappedDate = submittedVariantEntity.getRemappedDate();
+        this.remappingId = submittedVariantEntity.getRemappingId();
+        this.backPropagatedVariantAccession = submittedVariantEntity.getBackPropagatedVariantAccession();
     }
 
     @Override
@@ -188,7 +193,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
 
     public SubmittedVariantEntity toSubmittedVariantEntity() {
         return new SubmittedVariantEntity(this.getAccession(), this.getHashedMessage(), this.getModel(),
-                                          this.getVersion());
+                                          this.getVersion(), this.remappedFrom, this.remappedDate, this.remappingId);
     }
 
     @Override
