@@ -221,21 +221,23 @@ public class ClusteredVariantsRestController {
             + "-or-rs")
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getByIdFields(
-            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name or accession, e.g.: CM000392.2")
                     String chromosome,
             @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
-            @RequestParam(name = "variantType") VariantType variantType) {
+            @RequestParam(name = "variantType") VariantType variantType,
+            @RequestParam(required = false) @ApiParam(value = "Chromosome naming convention used, default is INSDC")
+                    ContigNamingConvention contigNamingConvention) {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                 new ArrayList<>();
 
         List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
-                nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
+                nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType, contigNamingConvention);
         nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
         List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
-                humanService.getByIdFields(assembly, chromosome, start, variantType);
+                humanService.getByIdFields(assembly, chromosome, start, variantType, contigNamingConvention);
         humanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
         return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
@@ -251,9 +253,9 @@ public class ClusteredVariantsRestController {
                     "RS ID.")
     @GetMapping(value = "/beacon/query", produces = "application/json")
     public BeaconAlleleResponse doesVariantExist(
-            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name or accession, e.g.: CM000392.2")
                     String chromosome,
             @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType,
@@ -261,9 +263,9 @@ public class ClusteredVariantsRestController {
                     boolean includeDatasetReponses,
             HttpServletResponse response) {
         try {
-            BeaconAlleleResponse beaconAlleleResponse = beaconService
-                    .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
-            return beaconAlleleResponse;
+            ContigNamingConvention contigNamingConvention = ContigNamingConvention.ENA_SEQUENCE_NAME;
+            return beaconService.queryBeaconClusteredVariant(assembly, chromosome, start, variantType,
+                                                             contigNamingConvention, includeDatasetReponses);
         } catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);

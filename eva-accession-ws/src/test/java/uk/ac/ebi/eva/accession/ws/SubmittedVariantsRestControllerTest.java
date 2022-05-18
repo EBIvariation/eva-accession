@@ -139,7 +139,7 @@ public class SubmittedVariantsRestControllerTest {
         SubmittedVariantsBeaconService mockSubmittedVariantsBeaconService = Mockito.spy(new SubmittedVariantsBeaconService(service));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockSubmittedVariantsBeaconService).queryBeacon(null, "alt", "ref",
                                                                                                                             "CHROM1", 1, "ref",
-                                                                                                                            false);
+                                                                                                                            ContigNamingConvention.INSDC, false);
         mockController = new SubmittedVariantsRestController(mockService, mockSubmittedVariantsBeaconService);
     }
 
@@ -221,7 +221,8 @@ public class SubmittedVariantsRestControllerTest {
                                                                    Collections.singletonList(
                                                                            variant.getProjectAccession()),
                                                                    variant.getStart(), variant.getReferenceAllele(),
-                                                                   variant.getAlternateAllele());
+                                                                   variant.getAlternateAllele(),
+                                                                   ContigNamingConvention.INSDC);
 
             assertEquals(1, getVariantsResponse.getBody().size());
             assertCreatedDateNotNull(getVariantsResponse.getBody());
@@ -239,7 +240,8 @@ public class SubmittedVariantsRestControllerTest {
                 getVariantsResponse = controller.getByIdFields(variant2.getReferenceSequenceAccession(),
                                                                variant2.getContig(), multipleProjectAccessions,
                                                                variant2.getStart(), variant2.getReferenceAllele(),
-                                                               variant2.getAlternateAllele());
+                                                               variant2.getAlternateAllele(),
+                                                               ContigNamingConvention.INSDC);
 
         assertEquals(2, getVariantsResponse.getBody().size());
         assertCreatedDateNotNull(getVariantsResponse.getBody());

@@ -22,6 +22,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistE
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
 import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -31,6 +32,7 @@ import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class HumanDbsnpClusteredVariantAccessioningService {
@@ -73,10 +75,11 @@ public class HumanDbsnpClusteredVariantAccessioningService {
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
-            String assembly, String contig, long start, VariantType type) {
+            String assembly, String contig, long start, VariantType type, ContigNamingConvention contigNamingConvention) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
 
-        IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, contig, start, type, false,
+        String insdcContig = contigAliasService.translateContigNameToInsdc(contig, assembly, contigNamingConvention);
+        IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, insdcContig, start, type, false,
                                                                           null);
 
         List<AccessionWrapper<IClusteredVariant, String, Long>> activeClusteredVariantWrappers =
@@ -87,7 +90,10 @@ public class HumanDbsnpClusteredVariantAccessioningService {
                 operationsService.getOriginalVariant(clusteredVariantToSearch);
         clusteredVariants.addAll(activeClusteredVariantsInOperations);
 
-        return clusteredVariants;
+        return clusteredVariants
+                .stream()
+                .map(accessionWrapper -> contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(accessionWrapper, contig))
+                .collect(Collectors.toList());
     }
 
 }

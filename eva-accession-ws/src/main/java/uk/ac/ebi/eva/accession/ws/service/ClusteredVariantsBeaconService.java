@@ -36,6 +36,7 @@ import uk.ac.ebi.eva.commons.beacon.models.BeaconError;
 import uk.ac.ebi.eva.commons.beacon.models.Chromosome;
 import uk.ac.ebi.eva.commons.beacon.models.KeyValuePair;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,22 +72,23 @@ public class ClusteredVariantsBeaconService {
 
     public BeaconAlleleResponse queryBeaconClusteredVariant(String referenceGenome, String chromosome,
                                                             long start, VariantType variantType,
+                                                            ContigNamingConvention contigNamingConvention,
                                                             boolean includeDatasetResponses) {
-
         BeaconAlleleResponse beaconAlleleResponseNonHuman = queryBeaconClusteredVariantNonHuman(
-                referenceGenome, chromosome, start, variantType, includeDatasetResponses);
+                referenceGenome, chromosome, start, variantType, contigNamingConvention, includeDatasetResponses);
 
         BeaconAlleleResponse beaconAlleleResponseHuman = queryBeaconClusteredVariantHuman(
-                referenceGenome, chromosome, start, variantType, includeDatasetResponses);
+                referenceGenome, chromosome, start, variantType, contigNamingConvention, includeDatasetResponses);
 
         return mergeResponses(beaconAlleleResponseNonHuman, beaconAlleleResponseHuman);
     }
 
     private BeaconAlleleResponse queryBeaconClusteredVariantNonHuman(String referenceGenome, String chromosome,
                                                                      long start, VariantType variantType,
+                                                                     ContigNamingConvention contigNamingConvention,
                                                                      boolean includeDatasetResponses) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> variants =
-                clusteredVariantService.getByIdFields(referenceGenome, chromosome, start, variantType);
+                clusteredVariantService.getByIdFields(referenceGenome, chromosome, start, variantType, contigNamingConvention);
         List<BeaconDatasetAlleleResponse> datasetAlleleResponses = new ArrayList<>();
         boolean isVariantExists = !variants.isEmpty();
         if (isVariantExists && includeDatasetResponses) {
@@ -155,9 +157,10 @@ public class ClusteredVariantsBeaconService {
 
     private BeaconAlleleResponse queryBeaconClusteredVariantHuman(String referenceGenome, String chromosome,
                                                                   long start, VariantType variantType,
+                                                                  ContigNamingConvention contigNamingConvention,
                                                                   boolean includeDatasetResponses) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> variant =
-                humanService.getByIdFields(referenceGenome, chromosome, start, variantType);
+                humanService.getByIdFields(referenceGenome, chromosome, start, variantType, contigNamingConvention);
         List<BeaconDatasetAlleleResponse> getBeaconDatasetAlleleResponsesHuman = new ArrayList<>();
         if (!variant.isEmpty() && includeDatasetResponses) {
             String identifier = variant.get(0).getAccession().toString();

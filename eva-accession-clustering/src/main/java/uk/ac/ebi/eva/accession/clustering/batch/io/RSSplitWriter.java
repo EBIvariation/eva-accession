@@ -46,6 +46,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
@@ -200,7 +201,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 ssMarkedToReceiveNewRS.getReferenceSequenceAccession(), ssMarkedToReceiveNewRS.getContig(),
                 Collections.singletonList(ssMarkedToReceiveNewRS.getProjectAccession()),
                 ssMarkedToReceiveNewRS.getStart(), ssMarkedToReceiveNewRS.getReferenceAllele(),
-                ssMarkedToReceiveNewRS.getAlternateAllele()
+                ssMarkedToReceiveNewRS.getAlternateAllele(),
+                ContigNamingConvention.INSDC
                 // Look at the database to check if the SS that is marked
                 // to get a new RS during a split already was assigned a new RS during a previous run.
         ).stream().findFirst().map(AccessionWrapper::getData);

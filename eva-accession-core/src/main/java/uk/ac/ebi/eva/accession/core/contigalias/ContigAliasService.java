@@ -41,6 +41,8 @@ public class ContigAliasService {
 
     public static final String CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT = "/v1/chromosomes/genbank/";
 
+    public static final String CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT = "/v1/chromosomes/name/";
+
     private final RestTemplate restTemplate;
 
     private final String contigAliasUrl;
@@ -56,7 +58,7 @@ public class ContigAliasService {
         if (skipContigTranslation(contigNamingConvention)) return submittedVariants;
         List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariantsAfterContigAlias = new ArrayList<>();
         for (AccessionWrapper<ISubmittedVariant, String, Long> submittedVariant : submittedVariants) {
-            String translatedContig = translateContig(submittedVariant.getData().getContig(), contigNamingConvention);
+            String translatedContig = translateContigFromInsdc(submittedVariant.getData().getContig(), contigNamingConvention);
             submittedVariantsAfterContigAlias.add(
                     createSubmittedVariantAccessionWrapperWithNewContig(submittedVariant, translatedContig));
         }
@@ -79,7 +81,7 @@ public class ContigAliasService {
     /**
      * Query contig alias service to translate the contig to the desired naming convention
      */
-    private String translateContig(String genbankContig, ContigNamingConvention contigNamingConvention) {
+    private String translateContigFromInsdc(String genbankContig, ContigNamingConvention contigNamingConvention) {
         String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
         ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
@@ -88,7 +90,20 @@ public class ContigAliasService {
         return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, contigNamingConvention);
     }
 
-    private AccessionWrapper<ISubmittedVariant, String, Long> createSubmittedVariantAccessionWrapperWithNewContig(
+    /**
+     *
+     */
+    public String translateContigNameToInsdc(String contigName, String assembly, ContigNamingConvention contigNamingConvention) {
+        String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT + contigName
+                + "?accession=" + assembly + "&name=" + contigNamingConvention.toString();  // TODO check what the allowed value for name are
+        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
+        if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
+            throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
+        }
+        return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, ContigNamingConvention.INSDC);
+    }
+
+    public AccessionWrapper<ISubmittedVariant, String, Long> createSubmittedVariantAccessionWrapperWithNewContig(
             AccessionWrapper<ISubmittedVariant, String, Long> accessionWrapper, String newContig) {
         ISubmittedVariant data = accessionWrapper.getData();
         ISubmittedVariant dataAfterContigAlias = new SubmittedVariant(data.getReferenceSequenceAccession(),
@@ -112,14 +127,14 @@ public class ContigAliasService {
         if (skipContigTranslation(contigNamingConvention)) return clusteredVariants;
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariantsAfterContigAlias = new ArrayList<>();
         for (AccessionWrapper<IClusteredVariant, String, Long> clusteredVariant : clusteredVariants) {
-            String translatedContig = translateContig(clusteredVariant.getData().getContig(), contigNamingConvention);
+            String translatedContig = translateContigFromInsdc(clusteredVariant.getData().getContig(), contigNamingConvention);
             clusteredVariantsAfterContigAlias.add(
                     createClusteredVariantAccessionWrapperWithNewContig(clusteredVariant, translatedContig));
         }
         return clusteredVariantsAfterContigAlias;
     }
 
-    private AccessionWrapper<IClusteredVariant, String, Long> createClusteredVariantAccessionWrapperWithNewContig(
+    public AccessionWrapper<IClusteredVariant, String, Long> createClusteredVariantAccessionWrapperWithNewContig(
             AccessionWrapper<IClusteredVariant, String, Long> accessionWrapper, String newContig) {
         IClusteredVariant data = accessionWrapper.getData();
         IClusteredVariant dataAfterContigAlias = new ClusteredVariant(data.getAssemblyAccession(),
@@ -142,7 +157,7 @@ public class ContigAliasService {
             List<ClusteredVariantInactiveEntity> inactiveObjectsAfterContigAlias = new ArrayList<>();
             for (IAccessionedObject<? extends IClusteredVariant, ?, Long> inactiveObject : inactiveObjects) {
                 IClusteredVariant clusteredVariant = inactiveObject.getModel();
-                String translatedContig = translateContig(clusteredVariant.getContig(), contigNamingConvention);
+                String translatedContig = translateContigFromInsdc(clusteredVariant.getContig(), contigNamingConvention);
                 inactiveObjectsAfterContigAlias.add(createClusteredVariantInactiveEntityWithNewContig(
                         inactiveObject, clusteredVariant, translatedContig));
             }

@@ -112,13 +112,14 @@ public class SubmittedVariantsRestController {
     }
 
     @GetMapping(value = "/beacon/query", produces = "application/json")
-    public BeaconAlleleResponse doesVariantExist(@RequestParam(name="assemblyId") String assembly,
-                                                 @RequestParam(name="referenceName") String chromosome,
-                                                 @RequestParam(name="datasetIds") List<String> studies,
-                                                 @RequestParam(name="start") long start,
-                                                 @RequestParam(name="referenceBases") String reference,
-                                                 @RequestParam(name="alternateBases") String alternate,
-                                                 HttpServletResponse response) {
+    public BeaconAlleleResponse doesVariantExist(
+            @RequestParam(name="assemblyId") String assembly,
+            @RequestParam(name="referenceName") String chromosome,
+            @RequestParam(name="datasetIds") List<String> studies,
+            @RequestParam(name="start") long start,
+            @RequestParam(name="referenceBases") String reference,
+            @RequestParam(name="alternateBases") String alternate,
+            HttpServletResponse response) {
         if (start < 1) {
             int responseStatus = HttpServletResponse.SC_BAD_REQUEST;
             response.setStatus(responseStatus);
@@ -127,8 +128,9 @@ public class SubmittedVariantsRestController {
                                                     "Please provide a positive number as start position");
         }
         try {
+            ContigNamingConvention contigNamingConvention = ContigNamingConvention.ENA_SEQUENCE_NAME;
             return submittedVariantsBeaconService.queryBeacon(studies, alternate, reference, chromosome, start,
-                                                              assembly, false);
+                                                              assembly, contigNamingConvention, false);
         }
         catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
@@ -160,11 +162,13 @@ public class SubmittedVariantsRestController {
             @RequestParam(name="datasetIds") List<String> studies,
             @RequestParam(name="start") long start,
             @RequestParam(name="referenceBases") String reference,
-            @RequestParam(name="alternateBases") String alternate) {
+            @RequestParam(name="alternateBases") String alternate,
+            @RequestParam(required = false) @ApiParam(value = "Chromosome naming convention used, default is INSDC")
+                    ContigNamingConvention contigNamingConvention) {
         try {
             return ResponseEntity.ok(
                     submittedVariantsBeaconService.getVariantByIdFields(assembly, chromosome, studies, start, reference,
-                                                                        alternate));
+                                                                        alternate, contigNamingConvention));
         }
         catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());

@@ -219,9 +219,9 @@ public class ClusteredVariantsRestControllerTest {
         ClusteredVariantsBeaconService mockBeaconService = Mockito.spy(
                 new ClusteredVariantsBeaconService(clusteredService, mockHumanService, mockService));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
-               .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, false);
+               .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, ContigNamingConvention.INSDC, false);
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockHumanService)
-               .getByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV);
+               .getByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV,  ContigNamingConvention.INSDC);
         mockController = new ClusteredVariantsRestController(mockService, mockBeaconService, mockHumanService,
                 clusteredService, clusteredVariantOperationService
         );
@@ -821,7 +821,8 @@ public class ClusteredVariantsRestControllerTest {
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
                                          clusteredVariantEntity1.getStart(),
-                                         clusteredVariantEntity1.getType());
+                                         clusteredVariantEntity1.getType(),
+                                         ContigNamingConvention.INSDC);
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(clusteredVariantEntity1.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
@@ -833,7 +834,8 @@ public class ClusteredVariantsRestControllerTest {
                 controller.getByIdFields(clusteredHumanVariantEntity1.getAssemblyAccession(),
                                          clusteredHumanVariantEntity1.getContig(),
                                          clusteredHumanVariantEntity1.getStart(),
-                                         clusteredHumanVariantEntity1.getType());
+                                         clusteredHumanVariantEntity1.getType(),
+                                         ContigNamingConvention.INSDC);
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(clusteredHumanVariantEntity1.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
@@ -845,7 +847,8 @@ public class ClusteredVariantsRestControllerTest {
                 controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
                                          clusteredHumanVariantEntity3.getContig(),
                                          clusteredHumanVariantEntity3.getStart(),
-                                         clusteredHumanVariantEntity3.getType());
+                                         clusteredHumanVariantEntity3.getType(),
+                                         ContigNamingConvention.INSDC);
 
         assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
         assertEquals(clusteredHumanVariantEntity3.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
@@ -857,7 +860,8 @@ public class ClusteredVariantsRestControllerTest {
                 controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
                                          clusteredHumanVariantEntity3.getContig(),
                                          1L,
-                                         clusteredHumanVariantEntity3.getType());
+                                         clusteredHumanVariantEntity3.getType(),
+                                         ContigNamingConvention.INSDC);
 
         assertEquals(HttpStatus.NOT_FOUND, getVariantsResponse.getStatusCode());
     }
@@ -868,7 +872,8 @@ public class ClusteredVariantsRestControllerTest {
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
                                          123,
-                                         clusteredVariantEntity1.getType());
+                                         clusteredVariantEntity1.getType(),
+                                         ContigNamingConvention.INSDC);
 
         assertEquals(HttpStatus.NOT_FOUND, getVariantsResponse.getStatusCode());
     }
@@ -878,7 +883,7 @@ public class ClusteredVariantsRestControllerTest {
         String assemblyId = "GCA_ERROR";
         String chromosome = "CHROM1";
         int start = 123;
-        mockController.getByIdFields(assemblyId, chromosome, start, VariantType.SNV);
+        mockController.getByIdFields(assemblyId, chromosome, start, VariantType.SNV, ContigNamingConvention.INSDC);
     }
 
     @Test

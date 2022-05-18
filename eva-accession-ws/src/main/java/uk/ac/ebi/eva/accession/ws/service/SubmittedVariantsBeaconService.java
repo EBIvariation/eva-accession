@@ -21,11 +21,13 @@ package uk.ac.ebi.eva.accession.ws.service;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
+
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +43,7 @@ public class SubmittedVariantsBeaconService {
 
     public BeaconAlleleResponse queryBeacon(List<String> datasetStableIds, String alternateBases, String referenceBases,
                                             String chromosome, long start, String referenceGenome,
+                                            ContigNamingConvention contigNamingConvention,
                                             boolean includeDatasetResponses) {
 
         BeaconAlleleResponse result = new BeaconAlleleResponse();
@@ -49,15 +52,16 @@ public class SubmittedVariantsBeaconService {
                                                               includeDatasetResponses);
         result.setAlleleRequest(request);
         boolean exists = !getVariantByIdFields(referenceGenome, chromosome, datasetStableIds, start,
-                                               referenceBases, alternateBases).isEmpty();
+                                               referenceBases, alternateBases, contigNamingConvention).isEmpty();
         result.setExists(exists);
         return result;
     }
 
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getVariantByIdFields(
-            String assembly, String contig, List<String> studies, long start, String reference, String alternate) {
+            String assembly, String contig, List<String> studies, long start, String reference, String alternate,
+            ContigNamingConvention contigNamingConvention) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> variants = submittedVariantsService
-                .getAllByIdFields(assembly, contig, studies, start, reference, alternate);
+                .getAllByIdFields(assembly, contig, studies, start, reference, alternate, contigNamingConvention);
         return variants.stream()
                        .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
                        .collect(Collectors.toList());
