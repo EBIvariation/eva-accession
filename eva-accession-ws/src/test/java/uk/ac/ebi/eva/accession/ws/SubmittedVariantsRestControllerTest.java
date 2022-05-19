@@ -21,7 +21,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -185,7 +184,7 @@ public class SubmittedVariantsRestControllerTest {
                     throw new IllegalArgumentException("Tried to translate ENA contig using INSDC naming convention");
                 });
 
-        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(), any(ContigNamingConvention.class)))
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(), any()))
                 .thenCallRealMethod();
 
         when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(), anyString()))
