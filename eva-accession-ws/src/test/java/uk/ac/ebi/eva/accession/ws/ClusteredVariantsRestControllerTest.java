@@ -20,6 +20,7 @@ package uk.ac.ebi.eva.accession.ws;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,6 +113,8 @@ import static org.mockito.Mockito.when;
 public class ClusteredVariantsRestControllerTest {
 
     private static final String URL = "/v1/clustered-variants/";
+
+    private static final String ENA_CONTIG_SUFFIX = "_ENA";
 
     private static final long DBSNP_CLUSTERED_VARIANT_ACCESSION_1 = 1L;
 
@@ -269,22 +272,35 @@ public class ClusteredVariantsRestControllerTest {
         NoContigTranslationArgumentMatcher contigMatcher = new NoContigTranslationArgumentMatcher();
 
         when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(contigMatcher)))
-               .thenCallRealMethod();
+                .thenCallRealMethod();
         when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
-               .then(invocation -> invocation.getArgument(0));
+                .then(invocation -> {
+                    String contigName = invocation.getArgument(0);
+                    if (contigName.endsWith(ENA_CONTIG_SUFFIX)) {
+                        return contigName.substring(0, contigName.length() - ENA_CONTIG_SUFFIX.length());
+                    }
+                    throw new IllegalArgumentException("Tried to translate non-ENA contig using ENA naming convention");
+                });
 
-        when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(List.class), argThat(contigMatcher)))
+        when(contigAliasService.translateContigFromInsdc(anyString(), argThat(contigMatcher)))
                 .thenCallRealMethod();
-        when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(List.class), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
-               .then(invocation -> invocation.getArgument(0));
+        when(contigAliasService.translateContigFromInsdc(any(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
+                .then(invocation -> {
+                    String contigName = invocation.getArgument(0);
+                    if (!contigName.endsWith(ENA_CONTIG_SUFFIX)) {
+                        return contigName + ENA_CONTIG_SUFFIX;
+                    }
+                    throw new IllegalArgumentException("Tried to translate ENA contig using INSDC naming convention");
+                });
 
-        when(contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
-               .then(invocation -> invocation.getArgument(0));
-
-        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), argThat(contigMatcher)))
+        when(contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(any(), anyString()))
                 .thenCallRealMethod();
-        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
-               .then(invocation -> invocation.getArgument(0));
+
+        when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(), argThat(contigMatcher)))
+                .thenCallRealMethod();
+
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(), argThat(contigMatcher)))
+                .thenCallRealMethod();
     }
 
     private void setupDbSnpClusteredHumanVariants() {
@@ -479,6 +495,14 @@ public class ClusteredVariantsRestControllerTest {
         assertClusteredVariantCreatedDateNotNull(getVariantsResponse);
     }
 
+    private void checkClusteredVariantsUseEnaSequenceName(
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse) {
+        for (AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> dto : getVariantsResponse) {
+            ClusteredVariant variant = dto.getData();
+            Assert.assertTrue(variant.getContig().endsWith(ENA_CONTIG_SUFFIX));
+        }
+    }
+
     private <DTO, MODEL> void assertVariantsAreContainedInControllerResponse(
             List<AccessionResponseDTO<DTO, MODEL, String, Long>> getVariantsResponse,
             List<AccessionedDocument<MODEL, Long>> expectedVariants,
@@ -561,6 +585,17 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
+    public void testGetVariantsController_withContigTranslation() throws AccessionDoesNotExistException,
+            AccessionMergedException {
+        for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
+            ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
+                    getVariantsResponse = controller.get(generatedAccession.getAccession(), ContigNamingConvention.ENA_SEQUENCE_NAME);
+            checkClusteredVariantsOutput(getVariantsResponse.getBody(), generatedAccession.getAccession());
+            checkClusteredVariantsUseEnaSequenceName(getVariantsResponse.getBody());
+        }
+    }
+
+    @Test
     public void testGetSubmittedVariantsByClusteredVariantIds()
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
         getAndCheckSubmittedVariantsByClusteredVariantIds(
@@ -572,6 +607,11 @@ public class ClusteredVariantsRestControllerTest {
         getAndCheckSubmittedVariantsByClusteredVariantIds(
                 DBSNP_CLUSTERED_VARIANT_ACCESSION_3,
                 Collections.singletonList(evaSubmittedVariantEntity4));
+    }
+
+    @Test
+    public void testGetSubmittedVariantsByClusteredVariantIds_withContigTranslation() {
+        // TODO
     }
 
     private void getAndCheckSubmittedVariantsByClusteredVariantIds(Long clusteredVariantIds,
@@ -852,7 +892,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void findByIdFields() {
+    public void testGetByIdFields() {
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
@@ -865,7 +905,22 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void findByIdFieldsHumanVariant() {
+    public void testGetByIdFields_withContigTranslation() {
+        ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
+                controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
+                                         clusteredVariantEntity1.getContig() + ENA_CONTIG_SUFFIX,
+                                         clusteredVariantEntity1.getStart(),
+                                         clusteredVariantEntity1.getType(),
+                                         ContigNamingConvention.ENA_SEQUENCE_NAME);
+
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(clusteredVariantEntity1.getAccession(), getVariantsResponse.getBody().get(0).getAccession());
+        assertEquals(clusteredVariantEntity1.getContig() + ENA_CONTIG_SUFFIX,
+                     getVariantsResponse.getBody().get(0).getData().getContig());
+    }
+
+    @Test
+    public void testGetByIdFieldsHumanVariant() {
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredHumanVariantEntity1.getAssemblyAccession(),
                                          clusteredHumanVariantEntity1.getContig(),
@@ -878,7 +933,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void findByIdFieldsHumanVariantInOperations() {
+    public void testGetByIdFieldsHumanVariantInOperations() {
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
                                          clusteredHumanVariantEntity3.getContig(),
@@ -891,7 +946,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void findByIdFieldsHumanVariantDoesntExists() {
+    public void testGetByIdFieldsHumanVariantDoesntExists() {
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredHumanVariantEntity3.getAssemblyAccession(),
                                          clusteredHumanVariantEntity3.getContig(),
@@ -903,7 +958,7 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     @Test
-    public void findByIdFieldsClusteredVariantDoesntExists() {
+    public void testGetByIdFieldsClusteredVariantDoesntExists() {
         ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getVariantsResponse =
                 controller.getByIdFields(clusteredVariantEntity1.getAssemblyAccession(),
                                          clusteredVariantEntity1.getContig(),
@@ -927,7 +982,7 @@ public class ClusteredVariantsRestControllerTest {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
                 clusteredVariantEntity1.getAssemblyAccession(),
-                clusteredVariantEntity1.getContig(),
+                clusteredVariantEntity1.getContig() + ENA_CONTIG_SUFFIX,
                 clusteredVariantEntity1.getStart(),
                 clusteredVariantEntity1.getType(),
                 true,
@@ -976,7 +1031,7 @@ public class ClusteredVariantsRestControllerTest {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
                 clusteredVariantEntity1.getAssemblyAccession(),
-                clusteredVariantEntity1.getContig(),
+                clusteredVariantEntity1.getContig() + ENA_CONTIG_SUFFIX,
                 clusteredVariantEntity1.getStart(),
                 clusteredVariantEntity1.getType(),
                 false,
@@ -992,7 +1047,7 @@ public class ClusteredVariantsRestControllerTest {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
                 clusteredVariantEntity1.getAssemblyAccession(),
-                clusteredVariantEntity1.getContig(),
+                clusteredVariantEntity1.getContig() + ENA_CONTIG_SUFFIX,
                 123L,
                 clusteredVariantEntity1.getType(),
                 false,
@@ -1018,4 +1073,6 @@ public class ClusteredVariantsRestControllerTest {
                      (int) beaconAlleleResponse.getError().getErrorCode());
         assertEmbeddedAlleleRequest(beaconAlleleResponse, assemblyId, start, VariantType.SNV);
     }
+    
+    // TODO beacon query test for contig integration
 }
