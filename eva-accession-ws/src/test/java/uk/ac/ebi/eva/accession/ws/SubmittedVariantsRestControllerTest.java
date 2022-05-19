@@ -62,6 +62,7 @@ import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleRequest;
 import uk.ac.ebi.eva.accession.ws.dto.BeaconAlleleResponse;
 import uk.ac.ebi.eva.accession.ws.rest.SubmittedVariantsRestController;
 import uk.ac.ebi.eva.accession.ws.service.SubmittedVariantsBeaconService;
+import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import javax.servlet.http.HttpServletResponse;
@@ -75,6 +76,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
@@ -148,12 +152,18 @@ public class SubmittedVariantsRestControllerTest {
                                                                                                                             ContigNamingConvention.INSDC, false);
         mockController = new SubmittedVariantsRestController(mockService, mockSubmittedVariantsBeaconService);
 
-        // TODO do this properly
-        Mockito.when(contigAliasService.translateContigNameToInsdc(any(String.class), any(String.class), any(ContigNamingConvention.class)))
+        setUpContigAliasMock();
+    }
+
+    private void setUpContigAliasMock() {
+        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(new NoContigTranslationArgumentMatcher())))
+               .thenCallRealMethod();
+        // TODO make this one actually do something based on contig argument
+        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                .then(invocation -> invocation.getArgument(0));
         Mockito.when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), any(ContigNamingConvention.class)))
                .then(invocation -> invocation.getArgument(0));
-        Mockito.when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), any(String.class)))
+        Mockito.when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
                .then(invocation -> invocation.getArgument(0));
     }
 
