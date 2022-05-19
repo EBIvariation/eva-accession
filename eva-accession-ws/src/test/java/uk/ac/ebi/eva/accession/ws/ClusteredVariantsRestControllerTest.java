@@ -20,7 +20,6 @@ package uk.ac.ebi.eva.accession.ws;
 import com.mongodb.BasicDBObject;
 import org.bson.Document;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +43,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
@@ -296,10 +294,10 @@ public class ClusteredVariantsRestControllerTest {
         when(contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(any(), anyString()))
                 .thenCallRealMethod();
 
-        when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(), argThat(contigMatcher)))
+        when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(), any()))
                 .thenCallRealMethod();
 
-        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(), argThat(contigMatcher)))
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(), any()))
                 .thenCallRealMethod();
     }
 
@@ -499,7 +497,7 @@ public class ClusteredVariantsRestControllerTest {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getVariantsResponse) {
         for (AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> dto : getVariantsResponse) {
             ClusteredVariant variant = dto.getData();
-            Assert.assertTrue(variant.getContig().endsWith(ENA_CONTIG_SUFFIX));
+            assertTrue(variant.getContig().endsWith(ENA_CONTIG_SUFFIX));
         }
     }
 
@@ -590,7 +588,6 @@ public class ClusteredVariantsRestControllerTest {
         for (DbsnpClusteredVariantEntity generatedAccession : generatedAccessions) {
             ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>>
                     getVariantsResponse = controller.get(generatedAccession.getAccession(), ContigNamingConvention.ENA_SEQUENCE_NAME);
-            checkClusteredVariantsOutput(getVariantsResponse.getBody(), generatedAccession.getAccession());
             checkClusteredVariantsUseEnaSequenceName(getVariantsResponse.getBody());
         }
     }
