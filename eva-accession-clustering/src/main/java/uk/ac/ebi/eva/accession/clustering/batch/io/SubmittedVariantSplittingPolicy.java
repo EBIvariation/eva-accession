@@ -91,33 +91,33 @@ public class SubmittedVariantSplittingPolicy {
                                                        + firstSS.getHashedMessage());
         }
 
-        boolean firstHashHasEvidence = firstSSHashSplitDeterminants.submittedVariantEntity.isSupportedByEvidence();
-        boolean secondHashHasEvidence = secondSSHashSplitDeterminants.submittedVariantEntity.isSupportedByEvidence();
+        boolean firstHashHasEvidence = firstSS.isSupportedByEvidence();
+        boolean secondHashHasEvidence = secondSS.isSupportedByEvidence();
 
         // SS entries with RS ID get to retain their ID and the other SS will be selected for split
         if (Objects.nonNull(firstSSHashSplitDeterminants.rsID) &&
                 Objects.isNull(secondSSHashSplitDeterminants.rsID)) {
             return new SplitPriority(firstSSHashSplitDeterminants, secondSSHashSplitDeterminants);
-        } else if (Objects.nonNull(secondSSHashSplitDeterminants.rsID) &&
+        }
+        if (Objects.nonNull(secondSSHashSplitDeterminants.rsID) &&
                 Objects.isNull(firstSSHashSplitDeterminants.rsID)) {
             return new SplitPriority(secondSSHashSplitDeterminants, firstSSHashSplitDeterminants);
-        } else {
-            // If both SS have RS IDs, use the one that has evidence as the tie-breaker
-            if (firstHashHasEvidence && !secondHashHasEvidence) {
-                return new SplitPriority(firstSSHashSplitDeterminants, secondSSHashSplitDeterminants);
-            } else if (secondHashHasEvidence && !firstHashHasEvidence) {
-                return new SplitPriority(secondSSHashSplitDeterminants, firstSSHashSplitDeterminants);
-            } else {
-                // If two SS have same evidence and have RS assignments
-                // use lexicographic ordering of hash components as a tie-breaker
-                // https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-
-                SubmittedVariantSummaryFunction summaryFunction = new SubmittedVariantSummaryFunction();
-                if (summaryFunction.apply(firstSS).compareTo(summaryFunction.apply(secondSS)) < 0) {
-                    return new SplitPriority(firstSSHashSplitDeterminants, secondSSHashSplitDeterminants);
-                } else {
-                    return new SplitPriority(secondSSHashSplitDeterminants, firstSSHashSplitDeterminants);
-                }
-            }
         }
+        // If both SS have RS IDs, use the one that has evidence as the tie-breaker
+        if (firstHashHasEvidence && !secondHashHasEvidence) {
+            return new SplitPriority(firstSSHashSplitDeterminants, secondSSHashSplitDeterminants);
+        }
+        if (secondHashHasEvidence && !firstHashHasEvidence) {
+            return new SplitPriority(secondSSHashSplitDeterminants, firstSSHashSplitDeterminants);
+        }
+        // If two SS have same evidence and have RS assignments
+        // use lexicographic ordering of hash components as a tie-breaker
+        // https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-
+        SubmittedVariantSummaryFunction summaryFunction = new SubmittedVariantSummaryFunction();
+        if (summaryFunction.apply(firstSS).compareTo(summaryFunction.apply(secondSS)) < 0) {
+            return new SplitPriority(firstSSHashSplitDeterminants, secondSSHashSplitDeterminants);
+        }
+
+        return new SplitPriority(secondSSHashSplitDeterminants, firstSSHashSplitDeterminants);
     }
 }
