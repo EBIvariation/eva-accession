@@ -4,7 +4,8 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    # Temporarily run tests on the feature branch until merged to master
+    branches: [ master, feature/ws-contig-alias-integration ]
 
 jobs:
   build:

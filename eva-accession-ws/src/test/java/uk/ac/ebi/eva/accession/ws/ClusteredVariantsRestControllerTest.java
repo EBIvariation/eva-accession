@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
@@ -42,12 +43,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -70,6 +73,7 @@ import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.ws.rest.ClusteredVariantsRestController;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
+import uk.ac.ebi.eva.accession.ws.test.NoContigTranslationArgumentMatcher;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleRequest;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconDatasetAlleleResponse;
@@ -95,6 +99,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -201,6 +209,9 @@ public class ClusteredVariantsRestControllerTest {
     @Mock
     private HumanDbsnpClusteredVariantAccessioningService mockHumanService;
 
+    @MockBean
+    private ContigAliasService contigAliasService;
+
     @Before
     public void setUp() {
         dbsnpRepository.deleteAll();
@@ -249,6 +260,22 @@ public class ClusteredVariantsRestControllerTest {
         // In order to do so, replicate the structure of {@link SubmittedVariantsRestControllerTest}
         generatedAccessions = dbsnpRepository.saveAll(Arrays.asList(clusteredVariantEntity1, clusteredVariantEntity2,
                                                                     clusteredVariantEntity3));
+
+        setUpContigAliasMock();
+    }
+
+    private void setUpContigAliasMock() {
+        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(new NoContigTranslationArgumentMatcher())))
+               .thenCallRealMethod();
+        // TODO make this one actually do something based on contig argument
+        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
+               .then(invocation -> invocation.getArgument(0));
+        Mockito.when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(List.class), any(ContigNamingConvention.class)))
+               .then(invocation -> invocation.getArgument(0));
+        Mockito.when(contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
+               .then(invocation -> invocation.getArgument(0));
+        Mockito.when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), any(ContigNamingConvention.class)))
+               .then(invocation -> invocation.getArgument(0));
     }
 
     private void setupDbSnpClusteredHumanVariants() {
