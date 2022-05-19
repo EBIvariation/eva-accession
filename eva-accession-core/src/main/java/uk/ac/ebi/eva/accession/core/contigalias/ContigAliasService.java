@@ -81,7 +81,7 @@ public class ContigAliasService {
     /**
      * Query contig alias service to translate the contig to the desired naming convention
      */
-    private String translateContigFromInsdc(String genbankContig, ContigNamingConvention contigNamingConvention) {
+    public String translateContigFromInsdc(String genbankContig, ContigNamingConvention contigNamingConvention) {
         String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT + genbankContig;
         ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {

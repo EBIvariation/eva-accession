@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +94,9 @@ public class SubmittedVariantsRestControllerTest {
 
     private static final String URL = "/v1/submitted-variants/";
 
+    // Used to test contig translation capability
+    private static final String ENA_CONTIG_SUFFIX = "_ENA";
+
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
 
@@ -162,16 +166,30 @@ public class SubmittedVariantsRestControllerTest {
         when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(contigMatcher)))
                .thenCallRealMethod();
         when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
-               .then(invocation -> invocation.getArgument(0));
+               .then(invocation -> {
+                   String contigName = invocation.getArgument(0);
+                   if (contigName.endsWith(ENA_CONTIG_SUFFIX)) {
+                       return contigName.substring(0, contigName.length() - ENA_CONTIG_SUFFIX.length());
+                   }
+                   throw new IllegalArgumentException("Tried to translate non-ENA contig using ENA naming convention");
+               });
 
-        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), argThat(contigMatcher)))
+        when(contigAliasService.translateContigFromInsdc(anyString(), argThat(contigMatcher)))
                .thenCallRealMethod();
-        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
-               .then(invocation -> invocation.getArgument(0));
+        when(contigAliasService.translateContigFromInsdc(any(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
+                .then(invocation -> {
+                    String contigName = invocation.getArgument(0);
+                    if (!contigName.endsWith(ENA_CONTIG_SUFFIX)) {
+                        return contigName + ENA_CONTIG_SUFFIX;
+                    }
+                    throw new IllegalArgumentException("Tried to translate ENA contig using INSDC naming convention");
+                });
 
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(), any(ContigNamingConvention.class)))
+                .thenCallRealMethod();
 
-        when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
-               .then(invocation -> invocation.getArgument(0));
+        when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(), anyString()))
+               .thenCallRealMethod();
     }
 
     @After
@@ -229,6 +247,15 @@ public class SubmittedVariantsRestControllerTest {
         }
     }
 
+
+    private void assertUsesEnaSequenceName(
+            List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> body) {
+        for (AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long> dto : body) {
+            SubmittedVariant variant = dto.getData();
+            assertTrue(variant.getContig().endsWith(ENA_CONTIG_SUFFIX));
+        }
+    }
+
     @Test
     public void testGetVariantsController()
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
@@ -243,7 +270,21 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testgetByIdFieldsSingleStudyPerRequest() {
+    public void testGetVariantsController_withContigTranslation()
+            throws AccessionDoesNotExistException, AccessionMergedException {
+        for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
+            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                    getVariantsResponse = controller.get(generatedAccession.getAccession(), ContigNamingConvention.ENA_SEQUENCE_NAME);
+
+            assertEquals(1, getVariantsResponse.getBody().size());
+            assertCreatedDateNotNull(getVariantsResponse.getBody());
+            assertDefaultFlags(getVariantsResponse.getBody());
+            assertUsesEnaSequenceName(getVariantsResponse.getBody());
+        }
+    }
+
+    @Test
+    public void testGetByIdFieldsSingleStudyPerRequest() {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ISubmittedVariant variant = generatedAccession.getData();
             ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
@@ -262,7 +303,7 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
-    public void testgetByIdFieldsMultipleStudiesPerRequest() {
+    public void testGetByIdFieldsMultipleStudiesPerRequest() {
         List<String> multipleProjectAccessions = Arrays.asList(variant1.getProjectAccession(),
                                                                variant2.getProjectAccession(),
                                                                variant3.getProjectAccession());
@@ -279,13 +320,34 @@ public class SubmittedVariantsRestControllerTest {
         assertDefaultFlags(getVariantsResponse.getBody());
     }
 
+
+    @Test
+    public void testGetByIdFields_withContigTranslation() {
+        for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
+            ISubmittedVariant variant = generatedAccession.getData();
+            ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>>
+                    getVariantsResponse = controller.getByIdFields(variant.getReferenceSequenceAccession(),
+                                                                   variant.getContig() + ENA_CONTIG_SUFFIX,
+                                                                   Collections.singletonList(
+                                                                           variant.getProjectAccession()),
+                                                                   variant.getStart(), variant.getReferenceAllele(),
+                                                                   variant.getAlternateAllele(),
+                                                                   ContigNamingConvention.ENA_SEQUENCE_NAME);
+
+            assertEquals(1, getVariantsResponse.getBody().size());
+            assertCreatedDateNotNull(getVariantsResponse.getBody());
+            assertDefaultFlags(getVariantsResponse.getBody());
+            assertUsesEnaSequenceName(getVariantsResponse.getBody());
+        }
+    }
+
     @Test
     public void testDoesVariantExistFoundExistingVariantsSingleStudyPerRequest() {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ISubmittedVariant variant = generatedAccession.getData();
             HttpServletResponse response = new MockHttpServletResponse();
             BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
-                    variant.getReferenceSequenceAccession(), variant.getContig(),
+                    variant.getReferenceSequenceAccession(), variant.getContig() + ENA_CONTIG_SUFFIX,
                     Collections.singletonList(variant.getProjectAccession()),
                     variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(), response);
 
@@ -294,7 +356,7 @@ public class SubmittedVariantsRestControllerTest {
 
             BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
             assertEquals(variant.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
-            assertEquals(variant.getContig(), embeddedRequestObject.getReferenceName());
+            assertEquals(variant.getContig() + ENA_CONTIG_SUFFIX, embeddedRequestObject.getReferenceName());
             assertEquals(variant.getStart(), embeddedRequestObject.getStart());
             assertEquals(variant.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
             assertEquals(variant.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
@@ -311,7 +373,7 @@ public class SubmittedVariantsRestControllerTest {
             ISubmittedVariant variant = generatedAccession.getData();
             HttpServletResponse response = new MockHttpServletResponse();
             BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
-                    variant.getReferenceSequenceAccession(), variant.getContig(), multipleProjectAccessions,
+                    variant.getReferenceSequenceAccession(), variant.getContig() + ENA_CONTIG_SUFFIX, multipleProjectAccessions,
                     variant.getStart(), variant.getReferenceAllele(), variant.getAlternateAllele(), response);
 
             assertEquals(HttpServletResponse.SC_OK, response.getStatus());
@@ -319,7 +381,7 @@ public class SubmittedVariantsRestControllerTest {
 
             BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
             assertEquals(variant.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
-            assertEquals(variant.getContig(), embeddedRequestObject.getReferenceName());
+            assertEquals(variant.getContig() + ENA_CONTIG_SUFFIX, embeddedRequestObject.getReferenceName());
             assertEquals(variant.getStart(), embeddedRequestObject.getStart());
             assertEquals(variant.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
             assertEquals(variant.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
@@ -331,7 +393,7 @@ public class SubmittedVariantsRestControllerTest {
     public void testDoesVariantExistNonExistentVariants() {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
-                variant1.getReferenceSequenceAccession(), "CHROM3",
+                variant1.getReferenceSequenceAccession(), "CHROM3" + ENA_CONTIG_SUFFIX,
                 Collections.singletonList(variant1.getProjectAccession()),
                 variant1.getStart(), variant1.getReferenceAllele(), variant1.getAlternateAllele(), response);
 
@@ -340,7 +402,7 @@ public class SubmittedVariantsRestControllerTest {
 
         BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
         assertEquals(variant1.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
-        assertEquals("CHROM3", embeddedRequestObject.getReferenceName());
+        assertEquals("CHROM3" + ENA_CONTIG_SUFFIX, embeddedRequestObject.getReferenceName());
         assertEquals(variant1.getStart(), embeddedRequestObject.getStart());
         assertEquals(variant1.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
         assertEquals(variant1.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
@@ -350,7 +412,7 @@ public class SubmittedVariantsRestControllerTest {
     public void testDoesVariantExistWith400Error() {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = controller.doesVariantExist(
-                variant1.getReferenceSequenceAccession(), variant1.getContig(),
+                variant1.getReferenceSequenceAccession(), variant1.getContig() + ENA_CONTIG_SUFFIX,
                 Collections.singletonList(variant1.getProjectAccession()),
                 -1, variant1.getReferenceAllele(), variant1.getAlternateAllele(), response);
 
@@ -361,7 +423,7 @@ public class SubmittedVariantsRestControllerTest {
 
         BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
         assertEquals(variant1.getReferenceSequenceAccession(), embeddedRequestObject.getAssemblyId());
-        assertEquals(variant1.getContig(), embeddedRequestObject.getReferenceName());
+        assertEquals(variant1.getContig() + ENA_CONTIG_SUFFIX, embeddedRequestObject.getReferenceName());
         assertEquals(-1, embeddedRequestObject.getStart());
         assertEquals(variant1.getReferenceAllele(), embeddedRequestObject.getReferenceBases());
         assertEquals(variant1.getAlternateAllele(), embeddedRequestObject.getAlternateBases());
@@ -371,18 +433,20 @@ public class SubmittedVariantsRestControllerTest {
     public void testDoesVariantExistWith500Error() {
         HttpServletResponse response = new MockHttpServletResponse();
         BeaconAlleleResponse beaconAlleleResponse = mockController.doesVariantExist(
-                "asm", "CHROM1", null,1, "ref", "alt", response);
+                "asm", "CHROM1" + ENA_CONTIG_SUFFIX, null,1, "ref", "alt", response);
 
         assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatus());
         assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, beaconAlleleResponse.getError().getErrorCode());
 
         BeaconAlleleRequest embeddedRequestObject = beaconAlleleResponse.getAlleleRequest();
         assertEquals("asm", embeddedRequestObject.getAssemblyId());
-        assertEquals("CHROM1", embeddedRequestObject.getReferenceName());
+        assertEquals("CHROM1" + ENA_CONTIG_SUFFIX, embeddedRequestObject.getReferenceName());
         assertEquals(1, embeddedRequestObject.getStart());
         assertEquals("ref", embeddedRequestObject.getReferenceBases());
         assertEquals("alt", embeddedRequestObject.getAlternateBases());
     }
+
+    // TODO beacon query test for contig integration - e.g. if don't pass an ENA name
 
     @Test
     public void testGetRedirectionForMergedVariants()
