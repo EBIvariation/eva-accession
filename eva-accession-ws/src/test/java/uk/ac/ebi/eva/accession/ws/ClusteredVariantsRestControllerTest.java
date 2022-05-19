@@ -103,6 +103,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -230,7 +231,7 @@ public class ClusteredVariantsRestControllerTest {
         ClusteredVariantsBeaconService mockBeaconService = Mockito.spy(
                 new ClusteredVariantsBeaconService(clusteredService, mockHumanService, mockService));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockBeaconService)
-               .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, ContigNamingConvention.INSDC, false);
+               .queryBeaconClusteredVariant("GCA_ERROR", "CHROM1", 123, VariantType.SNV, ContigNamingConvention.ENA_SEQUENCE_NAME, false);
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockHumanService)
                .getByIdFields("GCA_ERROR", "CHROM1", 123, VariantType.SNV,  ContigNamingConvention.INSDC);
         mockController = new ClusteredVariantsRestController(mockService, mockBeaconService, mockHumanService,
@@ -265,16 +266,24 @@ public class ClusteredVariantsRestControllerTest {
     }
 
     private void setUpContigAliasMock() {
-        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(new NoContigTranslationArgumentMatcher())))
+        NoContigTranslationArgumentMatcher contigMatcher = new NoContigTranslationArgumentMatcher();
+
+        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(contigMatcher)))
                .thenCallRealMethod();
-        // TODO make this one actually do something based on contig argument
-        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
+        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                .then(invocation -> invocation.getArgument(0));
-        Mockito.when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(List.class), any(ContigNamingConvention.class)))
+
+        when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(List.class), argThat(contigMatcher)))
+                .thenCallRealMethod();
+        when(contigAliasService.getClusteredVariantsWithTranslatedContig(any(List.class), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                .then(invocation -> invocation.getArgument(0));
-        Mockito.when(contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
+
+        when(contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
                .then(invocation -> invocation.getArgument(0));
-        Mockito.when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), any(ContigNamingConvention.class)))
+
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), argThat(contigMatcher)))
+                .thenCallRealMethod();
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                .then(invocation -> invocation.getArgument(0));
     }
 

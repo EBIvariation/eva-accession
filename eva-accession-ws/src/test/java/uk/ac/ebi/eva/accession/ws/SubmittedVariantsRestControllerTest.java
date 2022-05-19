@@ -79,6 +79,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
@@ -156,14 +157,20 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     private void setUpContigAliasMock() {
-        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(new NoContigTranslationArgumentMatcher())))
+        NoContigTranslationArgumentMatcher contigMatcher = new NoContigTranslationArgumentMatcher();
+
+        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(contigMatcher)))
                .thenCallRealMethod();
-        // TODO make this one actually do something based on contig argument
-        Mockito.when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
+        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                .then(invocation -> invocation.getArgument(0));
-        Mockito.when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), any(ContigNamingConvention.class)))
+
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), argThat(contigMatcher)))
+               .thenCallRealMethod();
+        when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(List.class), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                .then(invocation -> invocation.getArgument(0));
-        Mockito.when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
+
+
+        when(contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(any(AccessionWrapper.class), anyString()))
                .then(invocation -> invocation.getArgument(0));
     }
 
