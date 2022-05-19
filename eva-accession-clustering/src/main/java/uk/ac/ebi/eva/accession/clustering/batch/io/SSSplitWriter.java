@@ -268,6 +268,11 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                 splitCandidateOperation.setId(id);
                 newSplitCandidatesForCurrentBatch.add(splitCandidateOperation);
             }
+            else {
+                logger.warn("Not creating any split operation for SS ID " + svesThatShareSameID.get(0).getAccession()
+                                    + " either because 1) it is not associated with multiple SS entries " +
+                                    "(OR) 2) it is associated with SS which have mismatched alleles or multimap!");
+            }
         }
         if (newSplitCandidatesForCurrentBatch.size() > 0) {
             this.mongoTemplate.insert(newSplitCandidatesForCurrentBatch, SubmittedVariantOperationEntity.class);
