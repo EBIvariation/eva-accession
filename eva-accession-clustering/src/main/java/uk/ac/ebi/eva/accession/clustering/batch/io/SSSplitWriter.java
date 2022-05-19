@@ -129,8 +129,10 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         for(AccessionWrapper<ISubmittedVariant, String, Long> existingSSEntryInDB: existingSSList) {
             // If some existing SS in the database have already been provided an updated accession
             // when processing a split operation previously, remove such SS from being considered for split
-            if(!existingSSEntryInDB.getAccession().equals(
-                    ssHashesAndAssociatedSS.get(existingSSEntryInDB.getHash()).getAccession()))
+            String existingSSEntryInDBHash = existingSSEntryInDB.getHash();
+            if(ssHashesAndAssociatedSS.containsKey(existingSSEntryInDBHash) &&
+                    !existingSSEntryInDB.getAccession().equals(ssHashesAndAssociatedSS
+                                                                       .get(existingSSEntryInDBHash).getAccession()))
             {
                 ssHashesAndAssociatedSS.remove(existingSSEntryInDB.getHash());
             }
@@ -229,6 +231,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                         .stream()
                         .map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
                                                                   result.getData(), result.getVersion()))
+                        .filter(sve -> !this.variantHasMultiMapOrMismatchedAlleles(sve))
                         .collect(Collectors.toList());
 
         for (SubmittedVariantEntity sve: svesWithDuplicateIDAlongWithActualDuplicates) {
@@ -254,7 +257,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
             SubmittedVariantOperationEntity splitCandidateOperation = new SubmittedVariantOperationEntity();
             List<SubmittedVariantEntity> svesThatShareSameID = idSVEMap.get(id);
             // Ensure that non-duplicate SS IDs (or) SS IDs with multimap or mismatched alleles are not processed
-            if (svesThatShareSameID.size() > 1 && !variantsHaveMultiMapOrMismatchedAlleles(svesThatShareSameID)) {
+            if (svesThatShareSameID.size() > 1) {
                 List<SubmittedVariantInactiveEntity> splitCandidates =
                         svesThatShareSameID.stream().map(SubmittedVariantInactiveEntity::new).collect(
                                 Collectors.toList());
@@ -265,11 +268,6 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                 splitCandidateOperation.setId(id);
                 newSplitCandidatesForCurrentBatch.add(splitCandidateOperation);
             }
-            else {
-                logger.warn("Not creating any split operation for SS ID " + svesThatShareSameID.get(0).getAccession()
-                                    + " either because 1) it is not associated with multiple SS entries " +
-                                    "(OR) 2) it is associated with SS which have mismatched alleles or multimap!");
-            }
         }
         if (newSplitCandidatesForCurrentBatch.size() > 0) {
             this.mongoTemplate.insert(newSplitCandidatesForCurrentBatch, SubmittedVariantOperationEntity.class);
@@ -277,9 +275,8 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    private boolean variantsHaveMultiMapOrMismatchedAlleles(List<SubmittedVariantEntity> svesThatShareSameID) {
-        return svesThatShareSameID.stream().anyMatch(sve -> !sve.isAllelesMatch() ||
-                (Objects.nonNull(sve.getMapWeight()) && sve.getMapWeight() > 1));
+    private boolean variantHasMultiMapOrMismatchedAlleles(SubmittedVariantEntity sve) {
+        return (!sve.isAllelesMatch()) || (Objects.nonNull(sve.getMapWeight()) && sve.getMapWeight() > 1);
     }
 
     // Get hashes that should receive the new SS IDs
