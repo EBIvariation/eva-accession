@@ -98,12 +98,27 @@ public class ContigAliasService {
             return contigName;
         }
         String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT + contigName
-                + "?accession=" + assembly + "&name=" + contigNamingConvention.toString();  // TODO check what the allowed value for name are
+                + "?accession=" + assembly + "&name=" + getNameParam(contigNamingConvention);
         ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
         if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
             throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
         }
         return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, ContigNamingConvention.INSDC);
+    }
+
+    /**
+     * Convert contig naming convention to one of the acceptable name params in the contig alias API.
+     * Defaults to "genbank".
+     */
+    private String getNameParam(ContigNamingConvention contigNamingConvention) {
+        switch (contigNamingConvention) {
+            case UCSC:
+                return "ucsc";
+            case ENA_SEQUENCE_NAME:
+                return "ena";
+            default:
+                return "genbank";
+        }
     }
 
     public AccessionWrapper<ISubmittedVariant, String, Long> createSubmittedVariantAccessionWrapperWithNewContig(
