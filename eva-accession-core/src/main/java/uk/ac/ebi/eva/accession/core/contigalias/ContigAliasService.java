@@ -41,6 +41,8 @@ public class ContigAliasService {
 
     public static final String CONTIG_ALIAS_CHROMOSOMES_GENBANK_ENDPOINT = "/v1/chromosomes/genbank/";
 
+    public static final String CONTIG_ALIAS_CHROMOSOMES_REFSEQ_ENDPOINT = "/v1/chromosomes/refseq/";
+
     public static final String CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT = "/v1/chromosomes/name/";
 
     private final RestTemplate restTemplate;
@@ -91,12 +93,29 @@ public class ContigAliasService {
     }
 
     /**
-     * Query contig alias service to translate from contig name in specified naming convention to INSDC.
+     * Query contig alias service to translate the contig from specified naming convention to INSDC.
      */
-    public String translateContigNameToInsdc(String contigName, String assembly, ContigNamingConvention contigNamingConvention) {
+    public String translateContigToInsdc(String contig, String assembly, ContigNamingConvention contigNamingConvention) {
         if (skipContigTranslation(contigNamingConvention)) {
-            return contigName;
+            return contig;
         }
+        if (contigNamingConvention.equals(ContigNamingConvention.REFSEQ)) {
+            return translateContigRefseqToInsdc(contig);
+        } else {
+            return translateContigNameToInsdc(contig, assembly, contigNamingConvention);
+        }
+    }
+
+    private String translateContigRefseqToInsdc(String refseq) {
+        String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_REFSEQ_ENDPOINT + refseq;
+        ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);
+        if (contigAliasResponse == null || contigAliasResponse.getEmbedded() == null) {
+            throw new NoSuchElementException("No data returned for " + url + " from the contig alias service");
+        }
+        return ContigAliasTranslator.getTranslatedContig(contigAliasResponse, ContigNamingConvention.INSDC);
+    }
+
+    private String translateContigNameToInsdc(String contigName, String assembly, ContigNamingConvention contigNamingConvention) {
         String url = contigAliasUrl + CONTIG_ALIAS_CHROMOSOMES_NAME_ENDPOINT + contigName
                 + "?accession=" + assembly + "&name=" + getNameParam(contigNamingConvention);
         ContigAliasResponse contigAliasResponse = restTemplate.getForObject(url, ContigAliasResponse.class);

@@ -124,7 +124,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByIdFields(
             String assembly, String contig, List<String> studies, long start, String reference, String alternate,
             ContigNamingConvention contigNamingConvention) {
-        String insdcContig = contigAliasService.translateContigNameToInsdc(contig, assembly, contigNamingConvention);
+        String insdcContig = contigAliasService.translateContigToInsdc(contig, assembly, contigNamingConvention);
         List<SubmittedVariant> submittedVariants = studies.stream()
                 .map(study -> new SubmittedVariant(assembly, 0, study, insdcContig, start, reference, alternate, null))
                 .collect(Collectors.toList());
