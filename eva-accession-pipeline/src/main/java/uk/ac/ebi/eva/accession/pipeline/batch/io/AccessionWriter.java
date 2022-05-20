@@ -84,6 +84,7 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
             }
 
             Set<ISubmittedVariant> variantsWithoutAccession = distinctVariants.stream()
+                                                                              .map(this::getSubmittedVariantWithoutClusteredVariantAccession)
                                                                               .filter(v -> !accessionedVariants
                                                                                       .contains(v))
                                                                               .collect(Collectors.toSet());

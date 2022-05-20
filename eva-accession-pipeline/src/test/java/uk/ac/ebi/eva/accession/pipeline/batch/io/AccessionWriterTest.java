@@ -334,13 +334,18 @@ public class AccessionWriterTest {
     public void shouldNotThrowIfVariantsDifferOnlyByClusteredVariantAccession() {
         SubmittedVariant variant = getSubmittedVariantWithClusteredVariant(CLUSTERED_VARIANT);
         SubmittedVariant variantWithRs = getSubmittedVariantWithClusteredVariant(NONNULL_CLUSTERED_VARIANT);
-        List<SubmittedVariant> variants = Arrays.asList(variant, variant);
+        List<SubmittedVariant> variants = Arrays.asList(variantWithRs, variantWithRs);
         AccessionWrapper<ISubmittedVariant, String, Long> accession = new AccessionWrapper<>(EXPECTED_ACCESSION,
                                                                                              "hashedMessage",
                                                                                              variantWithRs);
         List<AccessionWrapper<ISubmittedVariant, String, Long>> accessions = Collections.singletonList(accession);
 
         accessionWriter.checkCountsMatch(variants,
+                                         GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
+                                                 accessions));
+
+        List<SubmittedVariant> variantsWithRs = Arrays.asList(variant, variant);
+        accessionWriter.checkCountsMatch(variantsWithRs,
                                          GetOrCreateAccessionWrapperCreator.convertToGetOrCreateAccessionWrapper(
                                                  accessions));
     }
