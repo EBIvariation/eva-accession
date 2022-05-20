@@ -78,7 +78,7 @@ public class HumanDbsnpClusteredVariantAccessioningService {
             String assembly, String contig, long start, VariantType type, ContigNamingConvention contigNamingConvention) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
 
-        String insdcContig = contigAliasService.translateContigNameToInsdc(contig, assembly, contigNamingConvention);
+        String insdcContig = contigAliasService.translateContigToInsdc(contig, assembly, contigNamingConvention);
         IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, insdcContig, start, type, false,
                                                                           null);
 

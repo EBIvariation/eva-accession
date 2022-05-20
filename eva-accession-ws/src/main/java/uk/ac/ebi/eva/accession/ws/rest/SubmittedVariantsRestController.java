@@ -113,8 +113,9 @@ public class SubmittedVariantsRestController {
 
     @GetMapping(value = "/beacon/query", produces = "application/json")
     public BeaconAlleleResponse doesVariantExist(
-            @RequestParam(name="assemblyId") String assembly,
-            @RequestParam(name="referenceName") String chromosome,
+            @RequestParam(name="assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
+                    String assembly,
+            @RequestParam(name="referenceName") @ApiParam(value = "chromosome name, e.g.: chr16") String chromosome,
             @RequestParam(name="datasetIds") List<String> studies,
             @RequestParam(name="start") long start,
             @RequestParam(name="referenceBases") String reference,
@@ -157,8 +158,10 @@ public class SubmittedVariantsRestController {
             + "-subsnp-or-ss")
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>>> getByIdFields(
-            @RequestParam(name="assemblyId") String assembly,
-            @RequestParam(name="referenceName") String chromosome,
+            @RequestParam(name="assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
+                    String assembly,
+            @RequestParam(name="referenceName") @ApiParam(value = "chromosome name or accession, e.g.: CM000392.2")
+                    String chromosome,
             @RequestParam(name="datasetIds") List<String> studies,
             @RequestParam(name="start") long start,
             @RequestParam(name="referenceBases") String reference,

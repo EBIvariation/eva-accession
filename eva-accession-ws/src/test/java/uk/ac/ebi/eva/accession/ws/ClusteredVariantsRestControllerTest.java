@@ -272,9 +272,9 @@ public class ClusteredVariantsRestControllerTest {
     private void setUpContigAliasMock() {
         NoContigTranslationArgumentMatcher contigMatcher = new NoContigTranslationArgumentMatcher();
 
-        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), argThat(contigMatcher)))
+        when(contigAliasService.translateContigToInsdc(anyString(), anyString(), argThat(contigMatcher)))
                 .thenCallRealMethod();
-        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
+        when(contigAliasService.translateContigToInsdc(anyString(), anyString(), eq(ContigNamingConvention.ENA_SEQUENCE_NAME)))
                 .then(invocation -> {
                     String contigName = invocation.getArgument(0);
                     if (contigName.endsWith(ENA_CONTIG_SUFFIX)) {
@@ -282,7 +282,7 @@ public class ClusteredVariantsRestControllerTest {
                     }
                     throw new NoSuchElementException("Tried to translate non-ENA contig using ENA naming convention");
                 });
-        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.UCSC)))
+        when(contigAliasService.translateContigToInsdc(anyString(), anyString(), eq(ContigNamingConvention.UCSC)))
                 .thenThrow(NoSuchElementException.class);
 
         when(contigAliasService.translateContigFromInsdc(anyString(), argThat(contigMatcher)))
