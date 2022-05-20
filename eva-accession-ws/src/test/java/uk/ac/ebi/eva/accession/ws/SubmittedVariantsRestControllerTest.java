@@ -37,6 +37,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -69,11 +70,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -170,7 +173,7 @@ public class SubmittedVariantsRestControllerTest {
                    if (contigName.endsWith(ENA_CONTIG_SUFFIX)) {
                        return contigName.substring(0, contigName.length() - ENA_CONTIG_SUFFIX.length());
                    }
-                   throw new IllegalArgumentException("Tried to translate non-ENA contig using ENA naming convention");
+                   throw new NoSuchElementException("Tried to translate non-ENA contig using ENA naming convention");
                });
 
         when(contigAliasService.translateContigFromInsdc(anyString(), argThat(contigMatcher)))
@@ -181,7 +184,7 @@ public class SubmittedVariantsRestControllerTest {
                     if (!contigName.endsWith(ENA_CONTIG_SUFFIX)) {
                         return contigName + ENA_CONTIG_SUFFIX;
                     }
-                    throw new IllegalArgumentException("Tried to translate ENA contig using INSDC naming convention");
+                    throw new NoSuchElementException("Tried to translate ENA contig using INSDC naming convention");
                 });
 
         when(contigAliasService.getSubmittedVariantsWithTranslatedContig(any(), any()))
@@ -341,6 +344,18 @@ public class SubmittedVariantsRestControllerTest {
     }
 
     @Test
+    public void testGetByIdFields_withWrongContigTranslation() {
+        assertThrows(ResponseStatusException.class,
+                     () -> controller.getByIdFields(variant1.getReferenceSequenceAccession(),
+                                                    variant1.getContig(),
+                                                    Collections.singletonList(variant1.getProjectAccession()),
+                                                    variant1.getStart(),
+                                                    variant1.getReferenceAllele(),
+                                                    variant1.getAlternateAllele(),
+                                                    ContigNamingConvention.UCSC));
+    }
+
+    @Test
     public void testDoesVariantExistFoundExistingVariantsSingleStudyPerRequest() {
         for (AccessionWrapper<ISubmittedVariant, String, Long> generatedAccession : generatedAccessions) {
             ISubmittedVariant variant = generatedAccession.getData();
@@ -444,8 +459,6 @@ public class SubmittedVariantsRestControllerTest {
         assertEquals("ref", embeddedRequestObject.getReferenceBases());
         assertEquals("alt", embeddedRequestObject.getAlternateBases());
     }
-
-    // TODO beacon query test for contig integration - e.g. if don't pass an ENA name
 
     @Test
     public void testGetRedirectionForMergedVariants()
