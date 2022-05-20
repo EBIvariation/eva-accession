@@ -175,6 +175,8 @@ public class SubmittedVariantsRestControllerTest {
                    }
                    throw new NoSuchElementException("Tried to translate non-ENA contig using ENA naming convention");
                });
+        when(contigAliasService.translateContigNameToInsdc(anyString(), anyString(), eq(ContigNamingConvention.UCSC)))
+                .thenThrow(NoSuchElementException.class);
 
         when(contigAliasService.translateContigFromInsdc(anyString(), argThat(contigMatcher)))
                .thenCallRealMethod();
