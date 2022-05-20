@@ -229,18 +229,24 @@ public class ClusteredVariantsRestController {
             @RequestParam(name = "variantType") VariantType variantType,
             @RequestParam(required = false) @ApiParam(value = "Chromosome naming convention used, default is INSDC")
                     ContigNamingConvention contigNamingConvention) {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
-                new ArrayList<>();
+        try {
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+                    new ArrayList<>();
 
-        List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
-                nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType, contigNamingConvention);
-        nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
+            List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
+                    nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType,
+                                                        contigNamingConvention);
+            nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
-        List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
-                humanService.getByIdFields(assembly, chromosome, start, variantType, contigNamingConvention);
-        humanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
+            List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
+                    humanService.getByIdFields(assembly, chromosome, start, variantType, contigNamingConvention);
+            humanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
-        return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
+            return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(
+                    clusteredVariants);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
 
     private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDTO(

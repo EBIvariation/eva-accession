@@ -169,8 +169,9 @@ public class SubmittedVariantsRestController {
             return ResponseEntity.ok(
                     submittedVariantsBeaconService.getVariantByIdFields(assembly, chromosome, studies, start, reference,
                                                                         alternate, contigNamingConvention));
-        }
-        catch (Exception e) {
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
         }
     }
