@@ -93,6 +93,8 @@ public class SSSplitWriterTest {
 
     private SubmittedVariantEntity ss1, ss2, ss3, ss4, ss5, ss6;
 
+    private List<SubmittedVariantEntity> svesThatShareSameID;
+
     @Autowired
     private SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
@@ -135,12 +137,14 @@ public class SSSplitWriterTest {
         ss5 = createSS(2L, 2L, 103L, "A", "C", false, true);
         ss6 = createSS(2L, 2L, 103L, "A", "T", false, false);
 
-        this.mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3, ss4, ss5, ss6), DbsnpSubmittedVariantEntity.class);
+        this.svesThatShareSameID = Arrays.asList(ss1, ss2, ss3, ss4, ss5, ss6);
+
+        this.mongoTemplate.insert(this.svesThatShareSameID, DbsnpSubmittedVariantEntity.class);
     }
 
     private void writeSplitWithoutCrashes() throws Exception {
         setupSplitScenario();
-        ssSplitWriter.write(Arrays.asList(ss1, ss2, ss3, ss4, ss5, ss6));
+        ssSplitWriter.write(this.svesThatShareSameID);
     }
 
     @Test
@@ -191,58 +195,55 @@ public class SSSplitWriterTest {
     @Test
     public void testSplitWriterRestartAfterSplitCandidateRegistrationCrashes() throws Exception {
         setupSplitScenario();
-        List<SubmittedVariantEntity> svesThatShareSameID = Arrays.asList(ss1, ss2, ss3, ss4);
         SSSplitWriter mockSplitWriter = Mockito.spy((SSSplitWriter) ssSplitWriter);
-        doThrow(RuntimeException.class).when(mockSplitWriter).registerSplitCandidates(svesThatShareSameID);
+        doThrow(RuntimeException.class).when(mockSplitWriter).registerSplitCandidates(this.svesThatShareSameID);
         // invoke process - will crash when registering split candidates
         try {
-            mockSplitWriter.write(svesThatShareSameID);
+            mockSplitWriter.write(this.svesThatShareSameID);
         }
         catch (RuntimeException ignored) {
 
         }
         doCallRealMethod().when(mockSplitWriter).registerSplitCandidates(svesThatShareSameID);
         // Restart process
-        mockSplitWriter.write(svesThatShareSameID);
+        mockSplitWriter.write(this.svesThatShareSameID);
         assertPostSplitStatus();
     }
 
     @Test
     public void testSplitWriterRestartAfterSplitCandidateProcessingCrashes() throws Exception {
         setupSplitScenario();
-        List<SubmittedVariantEntity> svesThatShareSameID = Arrays.asList(ss1, ss2, ss3, ss4);
         SSSplitWriter mockSplitWriter = Mockito.spy((SSSplitWriter) ssSplitWriter);
         doThrow(RuntimeException.class).when(mockSplitWriter).processSplitCandidates(Mockito.anyList());
         // invoke process - will crash when processing split candidates
         try {
-            mockSplitWriter.write(svesThatShareSameID);
+            mockSplitWriter.write(this.svesThatShareSameID);
         }
         catch (RuntimeException ignored) {
 
         }
         doCallRealMethod().when(mockSplitWriter).processSplitCandidates(Mockito.anyList());
         // Restart process
-        mockSplitWriter.write(svesThatShareSameID);
+        mockSplitWriter.write(this.svesThatShareSameID);
         assertPostSplitStatus();
     }
 
     @Test
     public void testSplitWriterRestartAfterSplitCandidateClearingCrashes() throws Exception {
         setupSplitScenario();
-        List<SubmittedVariantEntity> svesThatShareSameID = Arrays.asList(ss1, ss2, ss3, ss4);
         SSSplitWriter mockSplitWriter = Mockito.spy((SSSplitWriter) ssSplitWriter);
         doThrow(RuntimeException.class).when(mockSplitWriter)
                                        .removeCurrentSSEntriesInDBForSplitCandidates(Mockito.anySet());
         // invoke process - will crash when clearing split candidates
         try {
-            mockSplitWriter.write(svesThatShareSameID);
+            mockSplitWriter.write(this.svesThatShareSameID);
         }
         catch (RuntimeException ignored) {
 
         }
         doCallRealMethod().when(mockSplitWriter).removeCurrentSSEntriesInDBForSplitCandidates(Mockito.anySet());
         // Restart process
-        mockSplitWriter.write(svesThatShareSameID);
+        mockSplitWriter.write(this.svesThatShareSameID);
         assertPostSplitStatus();
     }
 
@@ -251,7 +252,7 @@ public class SSSplitWriterTest {
         writeSplitWithoutCrashes();
         DatabaseState dbStateAfterFirstSplitWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
 
-        ssSplitWriter.write(Arrays.asList(ss1, ss2, ss3, ss4));
+        ssSplitWriter.write(this.svesThatShareSameID);
         DatabaseState dbStateAfterSecondSplitWrite = DatabaseState.getCurrentDatabaseState(this.mongoTemplate);
         assertEquals(dbStateAfterSecondSplitWrite, dbStateAfterFirstSplitWrite);
     }

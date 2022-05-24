@@ -37,11 +37,11 @@ public class SubmittedVariantSplittingPolicy {
             this.rsID = rsID;
         }
 
-        public SubmittedVariantEntity getSubmittedVarianEntity() {
+        public SubmittedVariantEntity getSubmittedVariantEntity() {
             return submittedVariantEntity;
         }
 
-        public String getSsHash() {
+        public String getSSHash() {
             return ssHash;
         }
 
@@ -78,7 +78,7 @@ public class SubmittedVariantSplittingPolicy {
         SubmittedVariantEntity firstSS = firstSSHashSplitDeterminants.submittedVariantEntity;
         SubmittedVariantEntity secondSS = secondSSHashSplitDeterminants.submittedVariantEntity;
 
-        // Split is only valid for variants sharing the same RS
+        // Split is only valid for variants sharing the same SS
         if (!firstSS.getAccession().equals(secondSS.getAccession())) {
             throw new IllegalArgumentException("SS split is not valid for two different SS: "
                                                        + firstSS.getAccession() + " and " + secondSS.getAccession());

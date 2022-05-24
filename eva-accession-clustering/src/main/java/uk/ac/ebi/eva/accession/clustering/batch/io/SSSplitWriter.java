@@ -94,7 +94,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         removeSplitCandidates(this.allSplitCandidatesForCurrentBatch);
     }
 
-    public void processSplitCandidates(List<SubmittedVariantOperationEntity> splitCandidateOperations)
+    protected void processSplitCandidates(List<SubmittedVariantOperationEntity> splitCandidateOperations)
             throws AccessionCouldNotBeGeneratedException {
         Map<String, SubmittedVariantEntity> svesToCreateWithNewIDs = new HashMap<>();
         for (SubmittedVariantOperationEntity operation: splitCandidateOperations) {
@@ -109,8 +109,8 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
             List<SubmittedVariantEntity> svesThatShouldGetNewIDs =  getSVEsThatShouldGetNewIDs(splitCandidates);
 
             for(SplitDeterminants splitCandidate: splitCandidates) {
-                if(svesThatShouldGetNewIDs.contains(splitCandidate.getSubmittedVarianEntity())) {
-                    svesToCreateWithNewIDs.put(splitCandidate.getSsHash(), splitCandidate.getSubmittedVarianEntity());
+                if(svesThatShouldGetNewIDs.contains(splitCandidate.getSubmittedVariantEntity())) {
+                    svesToCreateWithNewIDs.put(splitCandidate.getSSHash(), splitCandidate.getSubmittedVariantEntity());
                 }
             }
         }
@@ -122,7 +122,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         recordSplitOperation(svesToCreateWithNewIDs, newlyCreatedSVEs);
     }
 
-    public void excludeSSWithAlreadyUpdatedIDs(Map<String, SubmittedVariantEntity> ssHashesAndAssociatedSS) {
+    private void excludeSSWithAlreadyUpdatedIDs(Map<String, SubmittedVariantEntity> ssHashesAndAssociatedSS) {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> existingSSList =
                 this.submittedVariantAccessioningService.get(new ArrayList<>(ssHashesAndAssociatedSS.values()));
 
@@ -139,7 +139,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    public void removeCurrentSSEntriesInDBForSplitCandidates(Set<String> ssHashesToBeGivenNewIDs) {
+    protected void removeCurrentSSEntriesInDBForSplitCandidates(Set<String> ssHashesToBeGivenNewIDs) {
         Query queryToRemoveCurrentSSEntries = query(where(ID_ATTRIBUTE).in(ssHashesToBeGivenNewIDs));
         this.mongoTemplate.remove(queryToRemoveCurrentSSEntries, SubmittedVariantEntity.class);
         this.mongoTemplate.remove(queryToRemoveCurrentSSEntries, DbsnpSubmittedVariantEntity.class);
@@ -190,14 +190,14 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         }
     }
 
-    private void removeSplitCandidates(List<SubmittedVariantOperationEntity> splitCandidatesForCurrentBatch) {
+    protected void removeSplitCandidates(List<SubmittedVariantOperationEntity> splitCandidatesForCurrentBatch) {
         List<String> splitCandidateIDsToFind = splitCandidatesForCurrentBatch.stream().map(
                 SubmittedVariantOperationEntity::getId).collect(Collectors.toList());
         this.mongoTemplate.remove(query(where(ID_ATTRIBUTE).in(splitCandidateIDsToFind)),
                                   SubmittedVariantOperationEntity.class);
     }
 
-    public void registerSplitCandidates(List<SubmittedVariantEntity> svesWithDuplicateID) {
+    protected void registerSplitCandidates(List<SubmittedVariantEntity> svesWithDuplicateID) {
         this.allSplitCandidatesForCurrentBatch.clear();
         // Get a map of split candidate ID -> List of SVEs involved in the split
         Map<String, List<SubmittedVariantEntity>> idSVEMap =
@@ -256,7 +256,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         for (String id: idsForSplitCandidateOperationsToWrite) {
             SubmittedVariantOperationEntity splitCandidateOperation = new SubmittedVariantOperationEntity();
             List<SubmittedVariantEntity> svesThatShareSameID = idSVEMap.get(id);
-            // Ensure that non-duplicate SS IDs (or) SS IDs with multimap or mismatched alleles are not processed
+            // Ensure that non-duplicate SS IDs are not processed
             if (svesThatShareSameID.size() > 1) {
                 List<SubmittedVariantInactiveEntity> splitCandidates =
                         svesThatShareSameID.stream().map(SubmittedVariantInactiveEntity::new).collect(
@@ -288,8 +288,8 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         }
         final SplitDeterminants hashThatShouldRetainOldSS = lastPrioritizedHash;
         return splitCandidates.stream()
-                .map(SplitDeterminants::getSubmittedVarianEntity)
-                .filter(sve -> !(sve.getHashedMessage().equals(hashThatShouldRetainOldSS.getSsHash())))
+                .map(SplitDeterminants::getSubmittedVariantEntity)
+                .filter(sve -> !(sve.getHashedMessage().equals(hashThatShouldRetainOldSS.getSSHash())))
                 .collect(Collectors.toList());
     }
 }
