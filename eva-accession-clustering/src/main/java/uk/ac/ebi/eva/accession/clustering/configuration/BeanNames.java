@@ -33,6 +33,8 @@ public class BeanNames {
 
     public static final String RS_SPLIT_WRITER = "RS_SPLIT_WRITER";
 
+    public static final String SS_SPLIT_WRITER = "SS_SPLIT_WRITER";
+
     public static final String TARGET_SS_READER_FOR_NEW_BACKPROP_RS = "TARGET_SS_READER_FOR_NEW_BACKPROP_RS";
 
     public static final String TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS
