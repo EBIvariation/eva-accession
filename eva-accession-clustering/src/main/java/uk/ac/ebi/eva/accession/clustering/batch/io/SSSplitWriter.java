@@ -119,6 +119,7 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> newlyCreatedSVEs =
                 this.submittedVariantAccessioningService.getOrCreate(new ArrayList<>(svesToCreateWithNewIDs.values()));
         this.metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_SS_SPLIT, newlyCreatedSVEs.size());
+        this.metricCompute.saveMetricsCountsInDB();
         recordSplitOperation(svesToCreateWithNewIDs, newlyCreatedSVEs);
     }
 
