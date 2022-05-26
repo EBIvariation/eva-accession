@@ -81,7 +81,7 @@ public class VariantToVariantContextProcessorTest {
                      variantContext.getAlternateAlleles());
         assertEquals("ss" + expectedId, variantContext.getID());
         assertTrue(variantContext.getFilters().isEmpty());
-        assertEquals(4, variantContext.getCommonInfo().getAttributes().size());
+        assertEquals(5, variantContext.getCommonInfo().getAttributes().size());
 
         assertTrue(variantContext.getCommonInfo().hasAttribute(PROJECT_ID_KEY));
         assertEquals(expectedStudy, variantContext.getCommonInfo().getAttribute(PROJECT_ID_KEY));
