@@ -82,6 +82,16 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
     }
 
     @Override
+    /**
+     * This method can accept a list of submitted variant entities that share duplicate IDs with other
+     * submitted variant entities. It is not necessary to provide the duplicates themselves.
+     * for ex: if Submitted variant entities:
+     * sve1 and sve2 share the same ID ss1
+     * sve3 and sve4 share the same ID ss2
+     * It is sufficient to provide just sve1 and sve3 to this method.
+     * Providing duplicates is harmless but may make the writer inefficient
+     * since it will result in extra queries to the database.
+     */
     public void write(@Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntities)
             throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, InstantiationException,
             IllegalAccessException {
