@@ -242,7 +242,8 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                         .stream()
                         .map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
                                                                   result.getData(), result.getVersion()))
-                        .filter(sve -> !this.variantHasMultiMapOrMismatchedAlleles(sve))
+                        .filter(sve -> !this.variantHasMultiMapOrMismatchedAlleles(sve)
+                                && Objects.isNull(sve.getRemappedFrom()))
                         .collect(Collectors.toList());
 
         for (SubmittedVariantEntity sve: svesWithDuplicateIDAlongWithActualDuplicates) {
