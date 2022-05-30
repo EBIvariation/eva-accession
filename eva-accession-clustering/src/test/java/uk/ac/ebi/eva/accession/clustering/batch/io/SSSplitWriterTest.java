@@ -29,9 +29,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.SSSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
@@ -47,8 +52,10 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
+import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +68,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.SS_SPLIT_WRITER;
 
 @RunWith(SpringRunner.class)
@@ -101,9 +111,24 @@ public class SSSplitWriterTest {
     @Autowired
     private MetricCompute<ClusteringMetric> metricCompute;
 
+    @Autowired
+    private CountServiceParameters countServiceParameters;
+
+    private MockRestServiceServer mockServer;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
+
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         cleanup();
+        mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(ExpectedCount.manyTimes(),
+                          requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+                  .andExpect(method(HttpMethod.POST))
+                  .andRespond(withStatus(HttpStatus.OK));
     }
 
     @After
