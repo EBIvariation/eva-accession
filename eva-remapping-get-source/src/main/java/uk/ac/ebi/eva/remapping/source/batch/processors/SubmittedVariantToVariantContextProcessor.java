@@ -27,6 +27,7 @@ import java.util.Map;
 
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.CREATED_DATE;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.RS_KEY;
+import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.SS_HASH;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.PROJECT_KEY;
 import static uk.ac.ebi.eva.remapping.source.batch.io.VariantContextWriter.TAXONOMY;
 
@@ -72,6 +73,7 @@ public class SubmittedVariantToVariantContextProcessor implements ItemProcessor<
 
     private Map<String, String> getAttributes(SubmittedVariantEntity variant) {
         Map<String, String> attributes = new HashMap<>();
+        attributes.put(SS_HASH, variant.getHashedMessage());
         if (variant.getClusteredVariantAccession() != null) {
             attributes.put(RS_KEY, RS_PREFIX + variant.getClusteredVariantAccession());
         }
