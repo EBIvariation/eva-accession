@@ -41,6 +41,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(VariantContextWriter.class);
 
+    public static final String SS_HASH = "SS_HASH";
+
     public static final String RS_KEY = "RS";
 
     public static final String PROJECT_KEY = "PROJECT";
@@ -80,6 +82,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
     protected Set<VCFHeaderLine> buildHeaderLines() {
         Set<VCFHeaderLine> metaData = new HashSet<>();
         metaData.add(new VCFHeaderLine("reference", getReferenceAssemblyLine()));
+        metaData.add(new VCFInfoHeaderLine(SS_HASH, 1, VCFHeaderLineType.String,
+                "Hash (_id in MongoDB) of the Submitted Variant from which the remapped variant was created"));
         metaData.add(new VCFInfoHeaderLine(RS_KEY, 1, VCFHeaderLineType.String,
                                            "RS ID where this SS ID is clustered"));
         metaData.add(new VCFInfoHeaderLine(PROJECT_KEY, 1, VCFHeaderLineType.String,
