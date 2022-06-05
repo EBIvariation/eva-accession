@@ -96,7 +96,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
                                                                               assembly_accession, release_species_inventory_table,
                                                                               release_version)
         with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                              user="evadev") as \
+                              user="evapro") as \
                 metadata_connection_handle:
             # To be idempotent, clear destination tempmongo database
             destination_db_name = get_release_db_name_in_tempmongo_instance(taxonomy_id)

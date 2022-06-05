@@ -112,7 +112,7 @@ def cluster_multiple_from_mongo(taxonomy_id, common_clustering_properties_file, 
     clustering_tracking_table = common_properties["clustering-release-tracker"]
     release_version = common_properties["release-version"]
     clustering_folder = common_properties['clustering-folder']
-    with get_metadata_connection_handle("development", common_properties["private-config-xml-file"]) as metadata_connection_handle:
+    with get_metadata_connection_handle("production", common_properties["private-config-xml-file"]) as metadata_connection_handle:
         assembly_list, scientific_name = get_assemblies_and_scientific_name_from_taxonomy(taxonomy_id, metadata_connection_handle, clustering_tracking_table, release_version)
         pipeline, output_directory = generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common_properties, memory, instance, enable_retryable)
         pipeline.run_pipeline(
