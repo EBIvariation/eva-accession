@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def update_release_status_for_assembly(private_config_xml_file, profile, release_species_inventory_table, taxonomy_id,
                                        assembly_accession, release_version):
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                          user="evadev") as metadata_connection_handle:
+                          user="evapro") as metadata_connection_handle:
         update_release_progress_status(metadata_connection_handle, release_species_inventory_table,
                                        taxonomy_id, assembly_accession, release_version,
                                        release_status='Completed')

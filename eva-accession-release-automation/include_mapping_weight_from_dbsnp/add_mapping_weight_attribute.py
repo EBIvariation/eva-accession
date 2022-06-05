@@ -44,8 +44,8 @@ def import_mapping_weight_attribute_for_dbsnp_species(private_config_xml_file, m
 
 def add_mapping_weight_attribute_for_dbsnp_species(private_config_xml_file, dbsnp_species_name):
     try:
-        with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development", private_config_xml_file),
-                              user="evadev") as metadata_connection_handle:
+        with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production", private_config_xml_file),
+                              user="evapro") as metadata_connection_handle:
             dbsnp_species_taxonomy = int(dbsnp_species_name.split("_")[-1])
             import_mapping_weight_attribute_for_dbsnp_species(private_config_xml_file, metadata_connection_handle,
                                                               dbsnp_species_taxonomy)

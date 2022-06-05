@@ -35,7 +35,7 @@ def set_clustering_status(private_config_xml_file, clustering_tracking_table, as
         update_status_query += f", clustering_end='{now}'"
     update_status_query += (f" WHERE assembly_accession='{assembly}' AND taxonomy='{tax_id}' "
                             f"AND release_version={release_version}")
-    with get_metadata_connection_handle("development", private_config_xml_file) as metadata_connection_handle:
+    with get_metadata_connection_handle("production", private_config_xml_file) as metadata_connection_handle:
         execute_query(metadata_connection_handle, update_status_query)
 
 

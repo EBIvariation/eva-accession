@@ -308,11 +308,11 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
     # Release README, known issues etc.,
     publish_release_top_level_files_to_ftp(release_properties)
 
-    metadata_password = get_properties_from_xml_file("development",
+    metadata_password = get_properties_from_xml_file("production",
                                                      release_properties.private_config_xml_file)["eva.evapro.password"]
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("development",
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production",
                                                               release_properties.private_config_xml_file),
-                          user="evadev", password=metadata_password) as metadata_connection_handle:
+                          user="evapro", password=metadata_password) as metadata_connection_handle:
         assemblies_to_process = get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties,
                                                                          metadata_connection_handle)
         species_has_unmapped_data = "Unmapped" in set([assembly_info["assembly_accession"] for assembly_info in

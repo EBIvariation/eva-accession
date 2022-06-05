@@ -40,7 +40,7 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
                                                                    asm_report_output_file_pattern))
     validate_release_vcf_files_commands = []
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                          user="evadev") as \
+                          user="evapro") as \
             metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                                       release_species_inventory_table,

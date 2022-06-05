@@ -172,7 +172,7 @@ def merge_dbsnp_eva_text_files(assembly_accession, species_release_folder, text_
 def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evadev") \
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evapro") \
         as metadata_connection_handle:
         release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                release_species_inventory_table,

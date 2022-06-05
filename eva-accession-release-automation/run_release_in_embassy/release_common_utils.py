@@ -32,7 +32,7 @@ def open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id, 
     local_forwarded_port = get_available_local_port(MONGO_PORT)
     try:
         with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                              user="evadev") as \
+                              user="evapro") as \
                 metadata_connection_handle:
             tempmongo_instance = get_target_mongo_instance_for_assembly(taxonomy_id, assembly, release_species_inventory_table,
                                                                         release_version, metadata_connection_handle)
