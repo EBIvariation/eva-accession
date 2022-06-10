@@ -42,7 +42,7 @@ def get_assemblies_with_multimap_snps_for_species(metadata_connection_handle):
 
 def export_all_multimap_snps_from_dbsnp_dumps(private_config_xml_file):
     result_file = "all_multimap_snp_ids_from_dbsnp_dumps.txt"
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production", private_config_xml_file), user="evapro") \
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file), user="evapro") \
         as metadata_connection_handle:
         assembly_GCA_accession_map = get_assemblies_with_multimap_snps_for_species(metadata_connection_handle)
         for species_info in get_species_info(metadata_connection_handle):
