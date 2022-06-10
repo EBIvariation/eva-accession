@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 def get_multimap_snps_from_mongo(private_config_xml_file, collection_to_validate):
     #  Dirty hack: since mongoexport does not allow switching databases
     #  replace admin in the URI with the database name and relegate admin to authSource
-    production_mongo_uri = get_mongo_uri_for_eva_profile("production", private_config_xml_file) \
+    production_mongo_uri = get_mongo_uri_for_eva_profile("production_processing", private_config_xml_file) \
         .replace("/admin", "/eva_accession_sharded?authSource=admin")
     output_file = collection_to_validate + "_multimap_snp_ids.txt"
     accession_attribute = collection_attribute_paths[collection_to_validate]["rs_accession_attribute_name"].replace(
@@ -63,7 +63,7 @@ def are_all_unprocessed_multimap_snps_absent_in_mongo(private_config_xml_file, c
                                                       unprocessed_multimap_snps_in_dbsnp_file):
     chunk_size = 2000
     num_entries_looked_up = 0
-    with MongoClient(get_mongo_uri_for_eva_profile("production", private_config_xml_file)) as mongo_handle:
+    with MongoClient(get_mongo_uri_for_eva_profile("production_processing", private_config_xml_file)) as mongo_handle:
         with open(unprocessed_multimap_snps_in_dbsnp_file) as unprocessed_snps_in_dbsnp_file_handle:
             while True:
                 snps_to_lookup_in_mongo = defaultdict(list)

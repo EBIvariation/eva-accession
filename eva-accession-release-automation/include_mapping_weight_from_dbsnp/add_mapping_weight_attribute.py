@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 def import_mapping_weight_attribute_for_dbsnp_species(private_config_xml_file, metadata_connection_handle,
                                                       dbsnp_species_taxonomy):
     metadata_params = metadata_connection_handle.get_dsn_parameters()
-    mongo_params = parse_uri(get_mongo_uri_for_eva_profile("production", private_config_xml_file))
+    mongo_params = parse_uri(get_mongo_uri_for_eva_profile("production_processing", private_config_xml_file))
     # nodelist is in format: [(host1,port1), (host2,port2)]. Just choose one.
     # Mongo is smart enough to fallback to secondaries automatically.
     mongo_host = mongo_params["nodelist"][0][0]
@@ -44,7 +44,7 @@ def import_mapping_weight_attribute_for_dbsnp_species(private_config_xml_file, m
 
 def add_mapping_weight_attribute_for_dbsnp_species(private_config_xml_file, dbsnp_species_name):
     try:
-        with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production", private_config_xml_file),
+        with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
                               user="evapro") as metadata_connection_handle:
             dbsnp_species_taxonomy = int(dbsnp_species_name.split("_")[-1])
             import_mapping_weight_attribute_for_dbsnp_species(private_config_xml_file, metadata_connection_handle,

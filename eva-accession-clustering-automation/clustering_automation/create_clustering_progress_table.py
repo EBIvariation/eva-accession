@@ -65,7 +65,7 @@ def create_table(private_config_xml_file):
         'release_status text null, '
         'primary key (taxonomy, assembly_accession, release_version))'
     )
-    with get_metadata_connection_handle("production", private_config_xml_file) as pg_conn:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         execute_query(pg_conn, query_create_table)
 
 
@@ -75,7 +75,7 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
         "from eva_progress_tracker.remapping_tracker "
         f"where release_version={release_version} "
         "group by taxonomy, scientific_name, assembly_accession")
-    with get_metadata_connection_handle("production", private_config_xml_file) as pg_conn:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         for taxonomy, scientific_name, assembly_accession, sources, num_ss_id in get_all_results_for_query(pg_conn,
                                                                                                            query_retrieve_info):
             if num_ss_id == 0:
@@ -102,7 +102,7 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
 def fill_in_from_previous_inventory(private_config_xml_file, release_version):
     query = ("select taxonomy_id, scientific_name, assembly, sources, total_num_variants, release_folder_name "
             "from dbsnp_ensembl_species.release_species_inventory where sources='DBSNP - filesystem' and release_version=2")
-    with get_metadata_connection_handle("production", private_config_xml_file) as pg_conn:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         for taxonomy, scientific_name, assembly, sources, total_num_variants, release_folder_name in get_all_results_for_query(pg_conn, query):
             should_be_clustered = False
             should_be_released = False
@@ -123,7 +123,7 @@ def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_fi
     cve_res = get_rs_count_per_assembly_in_collection(mongo_source, 'clusteredVariantEntity', pipeline)
     dbsnp_res = get_rs_count_per_assembly_in_collection(mongo_source, 'dbsnpClusteredVariantEntity', pipeline)
 
-    with get_metadata_connection_handle("production", private_config_xml_file) as pg_conn:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         for assembly in assembly_list:
             sources, rs_count = get_sources_and_rs_count(cve_res, dbsnp_res, assembly)
             # Skip if there are no rs present for the assembly in any collection
@@ -139,7 +139,7 @@ def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_fi
 
 def get_assembly_list_for_taxonomy(private_config_xml_file, taxonomy, release_version):
     assembly_list = set()
-    with get_metadata_connection_handle("production", private_config_xml_file) as pg_conn:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         query = f'SELECT assembly_accession from evapro.assembly where taxonomy_id = {taxonomy}'
         for assembly in get_all_results_for_query(pg_conn, query):
             assembly_list.add(assembly[0])
