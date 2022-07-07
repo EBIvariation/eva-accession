@@ -99,6 +99,11 @@ public class ClusteredVariantInactiveEntity extends InactiveSubDocument<ICluster
         return new ClusteredVariant(this);
     }
 
+    public ClusteredVariantEntity toClusteredVariantEntity() {
+        return new ClusteredVariantEntity(this.getAccession(), this.getHashedMessage(), this.getModel(),
+                                          this.getVersion());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
