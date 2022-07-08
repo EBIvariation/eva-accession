@@ -17,6 +17,7 @@
         <module>eva-accession-import</module>
         <module>eva-accession-release</module>
         <module>eva-remapping-get-source</module>
+        <module>eva-accession-dbsnp-deprecate</module>
         <module>eva-accession-deprecate</module>
         <module>eva-accession-import-dbsnp2</module>
         <module>eva-accession-clustering</module>
