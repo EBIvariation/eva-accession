@@ -72,6 +72,8 @@ public class SubmittedVariantDeprecationWriterTest {
 
     private static final int TAXONOMY = 60711;
 
+    private static final String REASON = "Deprecation test";
+
     @Autowired
     private Long accessioningMonotonicInitSs;
 
@@ -138,7 +140,7 @@ public class SubmittedVariantDeprecationWriterTest {
                                                       this.clusteredVariantAccessioningService,
                                                       this.accessioningMonotonicInitSs,
                                                       this.accessioningMonotonicInitRs,
-                                                      "TEST", "Deprecation test");
+                                                      "TEST", REASON);
         sveDeprecationWriter.write(Arrays.asList(ss1, ss2, ss3));
         assertPostDeprecationDatabaseState();
 
@@ -163,8 +165,11 @@ public class SubmittedVariantDeprecationWriterTest {
         assertNotNull(ss1DeprecationOp);
         assertNotNull(ss2DeprecationOp);
         assertNotNull(ss3DeprecationOp);
+        assertEquals(REASON, ss1DeprecationOp.getReason());
         assertEquals(ss1, ss1DeprecationOp.getInactiveObjects().get(0).toSubmittedVariantEntity());
+        assertEquals(REASON, ss2DeprecationOp.getReason());
         assertEquals(ss2, ss2DeprecationOp.getInactiveObjects().get(0).toSubmittedVariantEntity());
+        assertEquals(REASON, ss3DeprecationOp.getReason());
         assertEquals(ss3, ss3DeprecationOp.getInactiveObjects().get(0).toSubmittedVariantEntity());
 
         // Ensure that only the RS with accession 1 (rs1) is deprecated
@@ -201,5 +206,4 @@ public class SubmittedVariantDeprecationWriterTest {
         String hash = hashingFunction.apply(cv);
         return new ClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
     }
-
 }
