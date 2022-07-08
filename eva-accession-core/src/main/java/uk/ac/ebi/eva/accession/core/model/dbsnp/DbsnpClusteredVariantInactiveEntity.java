@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core.model.dbsnp;
 
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 
 public class DbsnpClusteredVariantInactiveEntity extends ClusteredVariantInactiveEntity {
@@ -27,5 +28,9 @@ public class DbsnpClusteredVariantInactiveEntity extends ClusteredVariantInactiv
 
     public DbsnpClusteredVariantInactiveEntity(DbsnpClusteredVariantEntity dbsnpClusteredVariantEntity) {
         super(dbsnpClusteredVariantEntity);
+    }
+
+    public ClusteredVariantEntity toClusteredVariantEntity() {
+        return super.toClusteredVariantEntity();
     }
 }
