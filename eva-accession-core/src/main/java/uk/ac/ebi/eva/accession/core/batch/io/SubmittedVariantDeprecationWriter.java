@@ -58,6 +58,8 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
     private final String deprecationIdSuffix;
     private final String deprecationReason;
 
+    private int numDeprecatedSubmittedEntities;
+
     public SubmittedVariantDeprecationWriter(String assemblyAccession, MongoTemplate mongoTemplate,
                                              SubmittedVariantAccessioningService submittedVariantAccessioningService,
                                              ClusteredVariantAccessioningService clusteredVariantAccessioningService,
@@ -110,7 +112,9 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
                     svoeCollectionToUse = sveCollectionToUse.equals(SubmittedVariantEntity.class) ?
                     SubmittedVariantOperationEntity.class : DbsnpSubmittedVariantOperationEntity.class;
             writeDeprecationOperation(svesToDeprecate, svoeCollectionToUse);
-            this.mongoTemplate.findAllAndRemove(query(where("_id").in(ssHashesToRemove)), sveCollectionToUse);
+            List<? extends SubmittedVariantEntity> removedEntities = this.mongoTemplate.findAllAndRemove(
+                    query(where("_id").in(ssHashesToRemove)), sveCollectionToUse);
+            this.numDeprecatedSubmittedEntities += removedEntities.size();
             this.clusteredVariantDeprecationWriter.write(cvesToDeprecate);
         }
     }
@@ -134,5 +138,13 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
         svoesToWrite = svoesToWrite.stream().filter(svoe -> operationIds.contains(svoe.getId())).collect(
                 Collectors.toList());
         this.mongoTemplate.insert(svoesToWrite, svoeCollectionToUse);
+    }
+
+    public int getNumDeprecatedSubmittedEntities() {
+        return numDeprecatedSubmittedEntities;
+    }
+
+    public int getNumDeprecatedClusteredEntities() {
+        return this.clusteredVariantDeprecationWriter.getNumDeprecatedEntities();
     }
 }
