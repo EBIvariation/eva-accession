@@ -47,6 +47,8 @@ public class ClusteredVariantDeprecationWriter implements ItemWriter<ClusteredVa
     private final SubmittedVariantAccessioningService submittedVariantAccessioningService;
     private final Long accessioningMonotonicInitRs;
 
+    private int numDeprecatedEntities;
+
     /**
      * This will be suffixed to the ID field of the deprecation operation that is being written.
      * This enables efficient searching of these operations by using RS_DEPRECATED_<suffix> in a regular expression.
@@ -69,6 +71,10 @@ public class ClusteredVariantDeprecationWriter implements ItemWriter<ClusteredVa
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
         this.deprecationIdSuffix = deprecationIdSuffix;
         this.deprecationReason = deprecationReason;
+    }
+
+    public int getNumDeprecatedEntities() {
+        return numDeprecatedEntities;
     }
 
     @Override
@@ -106,7 +112,9 @@ public class ClusteredVariantDeprecationWriter implements ItemWriter<ClusteredVa
                     cvoeCollectionToUse = cveCollectionToUse.equals(ClusteredVariantEntity.class) ?
                     ClusteredVariantOperationEntity.class : DbsnpClusteredVariantOperationEntity.class;
             writeDeprecationOperation(cvesToDeprecate, cvoeCollectionToUse);
-            this.mongoTemplate.findAllAndRemove(query(where("_id").in(rsHashesToRemove)), cveCollectionToUse);
+            List<? extends ClusteredVariantEntity> removedEntities = this.mongoTemplate.findAllAndRemove(
+                    query(where("_id").in(rsHashesToRemove)), cveCollectionToUse);
+            this.numDeprecatedEntities += removedEntities.size();
         }
     }
 
