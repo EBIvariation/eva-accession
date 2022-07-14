@@ -22,12 +22,25 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.batch.core.scope.context.ChunkContext;
 
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
+import uk.ac.ebi.eva.accession.core.batch.io.SubmittedVariantDeprecationWriter;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 public class DeprecationStepProgressListener
         extends StepListenerSupport<SubmittedVariantEntity, SubmittedVariantEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(DeprecationStepProgressListener.class);
+
+    private final SubmittedVariantDeprecationWriter submittedVariantDeprecationWriter;
+    private final MetricCompute metricCompute;
+
+    public DeprecationStepProgressListener(SubmittedVariantDeprecationWriter submittedVariantDeprecationWriter,
+                                           MetricCompute metricCompute) {
+        this.submittedVariantDeprecationWriter = submittedVariantDeprecationWriter;
+        this.metricCompute = metricCompute;
+
+    }
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
@@ -43,15 +56,25 @@ public class DeprecationStepProgressListener
     public void afterChunk(ChunkContext context) {
         String stepName = context.getStepContext().getStepName();
         long numTotalItemsRead = context.getStepContext().getStepExecution().getReadCount();
-        long numTotalItemsWritten = context.getStepContext().getStepExecution().getWriteCount();
+        int numTotalDeprecatedSS = this.submittedVariantDeprecationWriter.getNumDeprecatedSubmittedEntities();
+        int numTotalDeprecatedRS = this.submittedVariantDeprecationWriter.getNumDeprecatedClusteredEntities();
+        this.metricCompute.clearCount(ClusteringMetric.SUBMITTED_VARIANTS_DEPRECATED);
+        this.metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_DEPRECATED, numTotalDeprecatedSS);
+        this.metricCompute.clearCount(ClusteringMetric.CLUSTERED_VARIANTS_DEPRECATED);
+        this.metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_DEPRECATED, numTotalDeprecatedRS);
 
-        logger.info("{}: SS IDs read = {}, SS IDs deprecated = {}", stepName, numTotalItemsRead, numTotalItemsWritten);
+        logger.info("{}: SS IDs read = {}, SS IDs deprecated = {}, RS IDs deprecated = {}", stepName, numTotalItemsRead,
+                    numTotalDeprecatedSS, numTotalDeprecatedRS);
     }
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        logger.info("Step {} finished: SS IDs read = {}, SS IDs deprecated = {}",
-                    stepExecution.getStepName(), stepExecution.getReadCount(), stepExecution.getWriteCount());
+        long numTotalDeprecatedSS = this.metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_DEPRECATED);
+        long numTotalDeprecatedRS = this.metricCompute.getCount(ClusteringMetric.CLUSTERED_VARIANTS_DEPRECATED);
+        this.metricCompute.saveMetricsCountsInDB();
+
+        logger.info("{}: SS IDs read = {}, SS IDs deprecated = {}, RS IDs deprecated = {}", stepExecution.getStepName(),
+                    stepExecution.getReadCount(), numTotalDeprecatedSS, numTotalDeprecatedRS);
         return stepExecution.getExitStatus();
     }
 }

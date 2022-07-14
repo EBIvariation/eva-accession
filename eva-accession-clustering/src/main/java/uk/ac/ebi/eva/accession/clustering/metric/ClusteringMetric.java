@@ -9,11 +9,13 @@ public enum ClusteringMetric implements Metric {
     CLUSTERED_VARIANTS_RS_SPLIT("clustered_variants_rs_split", "Number of clustered variants whose rs is split", 0),
     CLUSTERED_VARIANTS_MERGED("clustered_variants_merged", "Number of clustered variants merged", 0),
     CLUSTERED_VARIANTS_MERGE_OPERATIONS("clustered_variants_merge_operations", "Number of merge operations on clustered variants", 0),
+    CLUSTERED_VARIANTS_DEPRECATED("clustered_variants_deprecated", "Number of clustered variants that have been deprecated", 0),
     SUBMITTED_VARIANTS_CLUSTERED("submitted_variants_clustered", "Number of Variants(SS) Clustered", 0),
     SUBMITTED_VARIANTS_KEPT_UNCLUSTERED("submitted_variants_kept_unclustered", "Number of submitted variants kept unclustered", 0),
     SUBMITTED_VARIANTS_UPDATED_RS("submitted_variants_updated_rs", "Number of variants(ss) whose rs is updated", 0),
     SUBMITTED_VARIANTS_UPDATE_OPERATIONS("submitted_variants_update_operations", "Number of submitted variants update operations performed", 0),
-    SUBMITTED_VARIANTS_SS_SPLIT("submitted_variants_ss_split", "Number of submitted variants whose ss is split", 0);
+    SUBMITTED_VARIANTS_SS_SPLIT("submitted_variants_ss_split", "Number of submitted variants whose ss is split", 0),
+    SUBMITTED_VARIANTS_DEPRECATED("submitted_variants_deprecated", "Number of submitted variants that have been deprecated", 0);
 
     private String name;
     private String description;

@@ -18,16 +18,34 @@ package uk.ac.ebi.eva.accession.deprecate.configuration.batch.listeners;
 import org.springframework.batch.core.listener.StepListenerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
 
+import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetricCompute;
+import uk.ac.ebi.eva.accession.deprecate.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.core.batch.io.SubmittedVariantDeprecationWriter;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
 import uk.ac.ebi.eva.accession.deprecate.batch.listeners.DeprecationStepProgressListener;
+import uk.ac.ebi.eva.accession.deprecate.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.metrics.configuration.MetricConfiguration;
+import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
+import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 @Configuration
+@Import({MetricConfiguration.class, InputParametersConfiguration.class})
 public class ListenerConfiguration {
 
     @Bean(BeanNames.DEPRECATION_PROGRESS_LISTENER)
-    public StepListenerSupport<SubmittedVariantEntity, SubmittedVariantEntity> deprecationProgressListener() {
-        return new DeprecationStepProgressListener();
+    public StepListenerSupport<SubmittedVariantEntity, SubmittedVariantEntity> deprecationProgressListener(
+            SubmittedVariantDeprecationWriter submittedVariantDeprecationWriter, MetricCompute metricCompute) {
+        return new DeprecationStepProgressListener(submittedVariantDeprecationWriter, metricCompute);
+    }
+
+    @Bean
+    public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters,
+                                                    RestTemplate restTemplate, InputParameters inputParameters) {
+        return new ClusteringMetricCompute(countServiceParameters, restTemplate,
+                                           inputParameters.getAssemblyAccession());
     }
 }
