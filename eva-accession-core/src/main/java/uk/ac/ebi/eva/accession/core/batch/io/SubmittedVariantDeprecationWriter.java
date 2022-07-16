@@ -36,6 +36,7 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessionin
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -101,6 +102,7 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
                     Collectors.toList());
             List<Long> associatedRSIDs = svesToDeprecate.stream()
                                                         .map(SubmittedVariantEntity::getClusteredVariantAccession)
+                                                        .filter(Objects::nonNull)
                                                         .distinct()
                                                         .collect(Collectors.toList());
             List<ClusteredVariantEntity> cvesToDeprecate = this.clusteredVariantAccessioningService
