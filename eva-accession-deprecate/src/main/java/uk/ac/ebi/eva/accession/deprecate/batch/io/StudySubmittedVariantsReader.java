@@ -33,10 +33,7 @@ import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 
 /**
- * Read all ClusteredVariants in the dbsnpClusteredVariantEntityDeclustered collection that are not in the main
- * collection dbsnpClusteredVariantEntity
- *
- * DeprecableClusteredVariantsReader = dbsnpClusteredVariantEntityDeclustered - dbsnpClusteredVariantEntity
+ * Read all SubmittedVariants for a given study
  */
 public class StudySubmittedVariantsReader implements ItemStreamReader<SubmittedVariantEntity> {
 
@@ -69,7 +66,6 @@ public class StudySubmittedVariantsReader implements ItemStreamReader<SubmittedV
 
     @Override
     public SubmittedVariantEntity read() {
-        // Read from dbsnp collection first and subsequently EVA collection
         Document nextElement = null;
         if (evaCursor != null && evaCursor.hasNext()) {
             nextElement = evaCursor.next();

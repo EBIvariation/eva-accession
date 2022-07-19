@@ -17,6 +17,8 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
 import com.mongodb.ReadPreference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
@@ -42,6 +44,9 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
 public class ClusteredVariantDeprecationWriter implements ItemWriter<ClusteredVariantEntity> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClusteredVariantDeprecationWriter.class);
+
     private final String assemblyAccession;
     private final MongoTemplate mongoTemplate;
     private final SubmittedVariantAccessioningService submittedVariantAccessioningService;
@@ -100,6 +105,10 @@ public class ClusteredVariantDeprecationWriter implements ItemWriter<ClusteredVa
                                 .equals(this.assemblyAccession))
                             .map(sve -> sve.getData().getClusteredVariantAccession())
                             .collect(Collectors.toSet());
+            logger.warn("The following RS IDs are still associated with existing submitted variants. " +
+                                "Hence they will not be deprecated. The RS IDs are: " +
+                                rsIdsAssociatedWithExistingSS.stream().map(Object::toString).collect(
+                                        Collectors.joining(",")));
             rsIDsToRemove.removeAll(rsIdsAssociatedWithExistingSS);
 
             cvesToDeprecate = cvesToDeprecate.stream()
