@@ -105,10 +105,12 @@ public class ClusteredVariantDeprecationWriter implements ItemWriter<ClusteredVa
                                 .equals(this.assemblyAccession))
                             .map(sve -> sve.getData().getClusteredVariantAccession())
                             .collect(Collectors.toSet());
-            logger.warn("The following RS IDs are still associated with existing submitted variants. " +
-                                "Hence they will not be deprecated. The RS IDs are: " +
-                                rsIdsAssociatedWithExistingSS.stream().map(Object::toString).collect(
-                                        Collectors.joining(",")));
+            if (rsIdsAssociatedWithExistingSS.size() > 0) {
+                logger.warn("The following RS IDs are still associated with existing submitted variants. " +
+                                    "Hence they will not be deprecated. The RS IDs are: " +
+                                    rsIdsAssociatedWithExistingSS.stream().map(Object::toString).collect(
+                                            Collectors.joining(",")));
+            }
             rsIDsToRemove.removeAll(rsIdsAssociatedWithExistingSS);
 
             cvesToDeprecate = cvesToDeprecate.stream()
