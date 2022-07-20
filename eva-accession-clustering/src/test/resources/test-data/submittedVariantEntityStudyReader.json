@@ -1,0 +1,40 @@
+{
+  "submittedVariantEntity": [
+    {
+      "_id": "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "projectId_1",
+      "contig": "1",
+      "start": NumberLong(3000),
+      "ref": "C",
+      "alt": "G",
+      "accession": NumberLong(5),
+      "version": 1
+    },
+    {
+      "_id": "9F05088C2058BC2AECFF8B904E439E2FD4C67F20",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "projectId_2",
+      "contig": "1",
+      "start": NumberLong(3000),
+      "ref": "C",
+      "alt": "G",
+      "accession": NumberLong(5),
+      "version": 1
+    },
+    {
+      "_id": "9B9240E0488CA3960B2FFC161878DA7F21FC1756",
+      "seq": "GCA_000000001.1",
+      "tax": 3000,
+      "study": "projectId_3",
+      "contig": "1",
+      "start": NumberLong(3000),
+      "ref": "C",
+      "alt": "G",
+      "accession": NumberLong(5),
+      "version": 1
+    }
+  ]
+}

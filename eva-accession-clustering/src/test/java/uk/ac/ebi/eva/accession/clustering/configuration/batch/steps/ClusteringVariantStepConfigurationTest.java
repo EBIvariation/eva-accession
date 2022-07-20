@@ -71,6 +71,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.*;
 
 @RunWith(SpringRunner.class)
@@ -96,6 +97,10 @@ public class ClusteringVariantStepConfigurationTest {
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_MONGO)
     private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
+
+    @Autowired
+    @Qualifier(JOB_LAUNCHER_STUDY_FROM_MONGO)
+    private JobLauncherTestUtils jobLauncherTestUtilsStudyFromMongo;
 
     @Autowired
     @Qualifier(JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP)
@@ -185,6 +190,21 @@ public class ClusteringVariantStepConfigurationTest {
         assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
         assertClusteredVariantsCreated(Arrays.asList(3000000000L, 3000000001L, 3000000002L, 3000000003L));
         assertSubmittedVariantsUpdated();
+    }
+
+    @Test
+    @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityStudyReader.json"})
+    public void clusteredVariantStepStudyFromMongo() {
+        assertEquals(3, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertTrue(allSubmittedVariantsNotClustered());
+
+        JobExecution jobExecution = jobLauncherTestUtilsStudyFromMongo.launchStep(STUDY_CLUSTERING_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertEquals(3, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertClusteredVariantsCreated(Arrays.asList(3000000000L));
+        assertEquals(2, getSubmittedVariantsWithRS());
     }
 
     @Test
