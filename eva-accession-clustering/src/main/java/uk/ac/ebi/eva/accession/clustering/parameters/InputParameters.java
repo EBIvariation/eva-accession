@@ -15,8 +15,11 @@
  */
 package uk.ac.ebi.eva.accession.clustering.parameters;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
+
+import java.util.List;
 
 public class InputParameters {
 
@@ -24,7 +27,9 @@ public class InputParameters {
 
     private String remappedFrom;
 
-    private String projectAccession;
+    private String projectAccession;  // used for clustering from VCF job
+
+    private List<String> projects;  // used for study clustering from Mongo job
 
     private String assemblyAccession;
 
@@ -48,6 +53,14 @@ public class InputParameters {
 
     public void setProjectAccession(String projectAccession) {
         this.projectAccession = projectAccession;
+    }
+
+    public List<String> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<String> projects) {
+        this.projects = projects;
     }
 
     public String getAssemblyAccession() {
@@ -86,6 +99,7 @@ public class InputParameters {
         return new JobParametersBuilder()
                 .addString("assemblyAccession", assemblyAccession)
                 .addString("projectAccession", projectAccession)
+                .addString("projects", CollectionUtils.isEmpty(projects) ? "" : String.join(",", projects))
                 .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
                 .toJobParameters();

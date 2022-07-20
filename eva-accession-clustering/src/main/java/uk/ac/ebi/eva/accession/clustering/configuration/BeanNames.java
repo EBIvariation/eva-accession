@@ -23,6 +23,8 @@ public class BeanNames {
 
     public static final String NON_CLUSTERED_VARIANTS_MONGO_READER = "NON_CLUSTERED_VARIANTS_MONGO_READER";
 
+    public static final String STUDY_CLUSTERING_MONGO_READER = "STUDY_CLUSTERING_MONGO_READER";
+
     public static final String RS_MERGE_CANDIDATES_READER = "RS_MERGE_CANDIDATES_READER";
 
     public static final String RS_SPLIT_CANDIDATES_READER = "RS_SPLIT_CANDIDATES_READER";
@@ -63,6 +65,8 @@ public class BeanNames {
 
     public static final String CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP = "CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP";
 
+    public static final String STUDY_CLUSTERING_STEP = "STUDY_CLUSTERING_STEP";
+
     public static final String BACK_PROPAGATE_NEW_RS_STEP = "BACK_PROPAGATE_NEW_RS_STEP";
 
     public static final String BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP = "BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP";
@@ -70,6 +74,8 @@ public class BeanNames {
     public static final String CLUSTERING_FROM_VCF_JOB = "CLUSTERING_FROM_VCF_JOB";
 
     public static final String CLUSTERING_FROM_MONGO_JOB = "CLUSTERING_FROM_MONGO_JOB";
+
+    public static final String STUDY_CLUSTERING_JOB = "STUDY_CLUSTERING_JOB";
 
     public static final String PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB = "PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB";
 

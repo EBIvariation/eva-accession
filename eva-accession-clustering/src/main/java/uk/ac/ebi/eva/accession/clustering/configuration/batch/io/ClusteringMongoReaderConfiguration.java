@@ -22,12 +22,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReaderRetryable;
+import uk.ac.ebi.eva.accession.clustering.batch.io.StudyClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_VARIANTS_MONGO_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_VARIANTS_MONGO_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_MONGO_READER;
 
 @Configuration
 @Import({MongoConfiguration.class, InputParametersConfiguration.class})
@@ -64,5 +66,19 @@ public class ClusteringMongoReaderConfiguration {
             return new ClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(), parameters.getChunkSize(),
                                              false);
         }
+    }
+
+    @Bean(STUDY_CLUSTERING_MONGO_READER)
+    @StepScope
+    public StudyClusteringMongoReader studyClusteringMongoReader(MongoTemplate mongoTemplate,
+                                                                 InputParameters parameters) {
+        if (parameters.getAssemblyAccession() == null || parameters.getAssemblyAccession().isEmpty()) {
+            throw new IllegalArgumentException("Please provide an assembly");
+        }
+        if (parameters.getProjects() == null || parameters.getProjects().isEmpty()) {
+            throw new IllegalArgumentException("Please provide one or more studies");
+        }
+        return new StudyClusteringMongoReader(mongoTemplate, parameters.getAssemblyAccession(),
+                                              parameters.getProjects(), parameters.getChunkSize());
     }
 }
