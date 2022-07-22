@@ -5,7 +5,7 @@ stages:
 
 variables:
     WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
-    CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
+    CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*exec.jar
     ACCESSIONING_ARTIFACT_PATH: eva-accession-pipeline/target/eva-accession-pipeline-*.jar
     RELEASE_ARTIFACT_PATH: eva-accession-release/target/eva-accession-release-*.jar
     DEPRECATE_ARTIFACT_PATH: eva-accession-deprecate/target/eva-accession-deprecate-*.jar
