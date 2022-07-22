@@ -33,7 +33,7 @@ public class StudySubmittedVariantsReaderConfiguration {
     @Bean(BeanNames.STUDY_SUMITTED_VARIANTS_READER)
     @StepScope
     StudySubmittedVariantsReader studySubmittedVariantsReader(MongoTemplate mongoTemplate, InputParameters parameters) {
-        return new StudySubmittedVariantsReader(parameters.getAssemblyAccession(), parameters.getStudy(), mongoTemplate,
-                                                parameters.getChunkSize());
+        return new StudySubmittedVariantsReader(parameters.getAssemblyAccession(), parameters.getProjectAccession(),
+                mongoTemplate, parameters.getChunkSize());
     }
 }
