@@ -159,8 +159,6 @@ deploy-tomcat-production-fallback:
         - echo "$EVA_ETL_PRIVATE_KEY" | tr -d '\r' | ssh-add -
         - TMP_NAME=$(basename $(ls $ARTIFACT_PATH))
         - ARTIFACT_NAME=${TMP_NAME%%.jar}-${ENVIRONMENT_NAME}.jar
-        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE}:${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME}
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE} "ln -fns ${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME} ${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${SYMLINK_NAME}"
         - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE_CODON}:${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME}
         - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE_CODON} "ln -fns ${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME} ${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${SYMLINK_NAME}"
 
