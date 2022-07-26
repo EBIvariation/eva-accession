@@ -5,14 +5,16 @@ stages:
 
 variables:
     WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
-    CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*.jar
+    CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*exec.jar
     ACCESSIONING_ARTIFACT_PATH: eva-accession-pipeline/target/eva-accession-pipeline-*.jar
     RELEASE_ARTIFACT_PATH: eva-accession-release/target/eva-accession-release-*.jar
+    DEPRECATE_ARTIFACT_PATH: eva-accession-deprecate/target/eva-accession-deprecate-*.jar
     REMAPPING_GET_SOURCE_ARTIFACT_PATH: eva-remapping-get-source/target/eva-remapping-get-source-*exec.jar
     REMAPPING_INGEST_ARTIFACT_PATH: eva-remapping-ingest/target/eva-remapping-ingest-*.jar
     CLUSTERING_SYMLINK_NAME: "eva-accession-clustering.jar"
     ACCESSIONING_SYMLINK_NAME: "eva-accession-pipeline.jar"
     RELEASE_SYMLINK_NAME: "eva-accession-release.jar"
+    DEPRECATE_SYMLINK_NAME: "eva-accession-deprecate.jar"
     REMAPPING_GET_SOURCE_SYMLINK_NAME: "eva-remapping-get-source.jar"
     REMAPPING_INGEST_SYMLINK_NAME: "eva-remapping-ingest.jar"
     MAVEN_SETTINGS: maven-settings.xml
@@ -44,7 +46,7 @@ test:
         - apk add --update curl
         - curl -u $GITHUB_USER:$GITHUB_TOKEN -H "Accept:$MEDIA_TYPE" $URL_MAVEN_SETTINGS > $MAVEN_SETTINGS
     script:
-        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-remapping-get-source,eva-accession-clustering,eva-accession-pipeline,eva-accession-release,eva-remapping-ingest' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
+        - mvn package --projects 'eva-accession-core,eva-accession-ws,eva-remapping-get-source,eva-accession-clustering,eva-accession-pipeline,eva-accession-release,eva-accession-deprecate,eva-remapping-ingest' --settings $MAVEN_SETTINGS -P $MAVEN_PROFILE -DskipTests -Dtimestamp=$DATETIME
         - cp eva-accession-ws/target/eva*.war $WS_ARTIFACT_PATH
     after_script:
         - rm $MAVEN_SETTINGS
@@ -54,6 +56,7 @@ test:
             - $CLUSTERING_ARTIFACT_PATH
             - $ACCESSIONING_ARTIFACT_PATH
             - $RELEASE_ARTIFACT_PATH
+            - $DEPRECATE_ARTIFACT_PATH
             - $REMAPPING_GET_SOURCE_ARTIFACT_PATH
             - $REMAPPING_INGEST_ARTIFACT_PATH
 
@@ -156,8 +159,6 @@ deploy-tomcat-production-fallback:
         - echo "$EVA_ETL_PRIVATE_KEY" | tr -d '\r' | ssh-add -
         - TMP_NAME=$(basename $(ls $ARTIFACT_PATH))
         - ARTIFACT_NAME=${TMP_NAME%%.jar}-${ENVIRONMENT_NAME}.jar
-        - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE}:${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME}
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE} "ln -fns ${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME} ${EVA_SOFTWARE_PATH}/eva-accession/${DEPLOY_DIRECTORY}/${SYMLINK_NAME}"
         - scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $ARTIFACT_PATH ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE_CODON}:${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME}
         - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${CLUSTER_USER}@${CLUSTER_LOGIN_NODE_CODON} "ln -fns ${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${ARTIFACT_NAME} ${EVA_SOFTWARE_PATH_CODON}/eva-accession/${DEPLOY_DIRECTORY}/${SYMLINK_NAME}"
 
@@ -192,6 +193,18 @@ deploy-release-jar-development:
         ARTIFACT_PATH: $RELEASE_ARTIFACT_PATH
         DEPLOY_DIRECTORY: release_development
         SYMLINK_NAME: $RELEASE_SYMLINK_NAME
+    dependencies:
+        - package-development
+    only:
+        - master
+
+deploy-deprecate-jar-development:
+    extends: .deploy-jar
+    variables:
+        ENVIRONMENT_NAME: development
+        ARTIFACT_PATH: $DEPRECATE_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: deprecate_development
+        SYMLINK_NAME: $DEPRECATE_SYMLINK_NAME
     dependencies:
         - package-development
     only:
@@ -254,6 +267,19 @@ deploy-release-jar-production:
         ARTIFACT_PATH: $RELEASE_ARTIFACT_PATH
         DEPLOY_DIRECTORY: release_production
         SYMLINK_NAME: $RELEASE_SYMLINK_NAME
+    dependencies:
+        - package-production
+    only:
+        - tags
+
+deploy-deprecate-jar-production:
+    extends: .deploy-jar
+    when: manual
+    variables:
+        ENVIRONMENT_NAME: production
+        ARTIFACT_PATH: $DEPRECATE_ARTIFACT_PATH
+        DEPLOY_DIRECTORY: deprecate_production
+        SYMLINK_NAME: $DEPRECATE_SYMLINK_NAME
     dependencies:
         - package-production
     only:
