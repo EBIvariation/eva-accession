@@ -21,7 +21,7 @@ public class InputParameters {
 
     private String assemblyAccession;
 
-    private String study;
+    private String projectAccession;
 
     private String deprecationIdSuffix;
 
@@ -43,12 +43,12 @@ public class InputParameters {
         this.assemblyAccession = assemblyAccession;
     }
 
-    public String getStudy() {
-        return study;
+    public String getProjectAccession() {
+        return projectAccession;
     }
 
-    public void setStudy(String study) {
-        this.study = study;
+    public void setProjectAccession(String projectAccession) {
+        this.projectAccession = projectAccession;
     }
 
     public String getDeprecationIdSuffix() {
