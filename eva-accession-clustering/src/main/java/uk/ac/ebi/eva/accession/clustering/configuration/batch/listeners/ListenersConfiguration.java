@@ -25,6 +25,7 @@ public class ListenersConfiguration {
     @Bean
     public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters, RestTemplate restTemplate,
                                                     InputParameters inputParameters) {
-        return new ClusteringMetricCompute(countServiceParameters, restTemplate, inputParameters.getAssemblyAccession());
+        return new ClusteringMetricCompute(countServiceParameters, restTemplate, inputParameters.getAssemblyAccession(),
+                                           inputParameters.getProjects());
     }
 }
