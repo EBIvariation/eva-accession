@@ -32,6 +32,8 @@ import uk.ac.ebi.eva.metrics.configuration.MetricConfiguration;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import java.util.Collections;
+
 @Configuration
 @Import({MetricConfiguration.class, InputParametersConfiguration.class})
 public class ListenerConfiguration {
@@ -46,6 +48,7 @@ public class ListenerConfiguration {
     public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters,
                                                     RestTemplate restTemplate, InputParameters inputParameters) {
         return new ClusteringMetricCompute(countServiceParameters, restTemplate,
-                                           inputParameters.getAssemblyAccession());
+                                           inputParameters.getAssemblyAccession(),
+                                           Collections.singletonList(inputParameters.getProjectAccession()));
     }
 }
