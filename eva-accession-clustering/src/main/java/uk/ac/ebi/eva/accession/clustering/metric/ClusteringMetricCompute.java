@@ -14,9 +14,13 @@ public class ClusteringMetricCompute extends BaseMetricCompute<ClusteringMetric>
     private static final String PROCESS = "clustering";
     private final String assembly;
 
-    public ClusteringMetricCompute(CountServiceParameters countServiceParameters, RestTemplate restTemplate, String assembly) {
+    private List<String> projects;
+
+    public ClusteringMetricCompute(CountServiceParameters countServiceParameters, RestTemplate restTemplate,
+                                   String assembly, List<String> projects) {
         super(countServiceParameters, restTemplate);
         this.assembly = assembly;
+        this.projects = projects;
     }
 
     public String getProcessName() {
@@ -31,6 +35,7 @@ public class ClusteringMetricCompute extends BaseMetricCompute<ClusteringMetric>
         try {
             JSONObject identifier = new JSONObject();
             identifier.put("assembly", assembly);
+            identifier.put("projects", projects);
             return identifier.toString();
         } catch (JSONException jsonException) {
             throw new RuntimeException("Could not create Identifier for Clustering Counts. Error ", jsonException);

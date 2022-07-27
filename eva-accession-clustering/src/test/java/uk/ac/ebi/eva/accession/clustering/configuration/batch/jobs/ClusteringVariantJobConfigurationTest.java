@@ -44,6 +44,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
+import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
@@ -168,10 +169,20 @@ public class ClusteringVariantJobConfigurationTest {
     @UsingDataSet(locations = {"/test-data/submittedVariantEntityStudyReader.json"})
     public void studyJobFromMongo() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtilsStudyFromMongo.launchJob();
-        List<String> expectedSteps = new ArrayList<>();
-        expectedSteps.add(STUDY_CLUSTERING_STEP);
+        List<String> expectedSteps = Collections.singletonList(STUDY_CLUSTERING_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+    }
+
+    @Test
+    @DirtiesContext
+    @UsingDataSet(locations = {"/test-data/submittedVariantEntityStudyReader.json"})
+    public void testStudyJobFromMongoIdempotent() throws Exception {
+        jobLauncherTestUtilsStudyFromMongo.launchJob();
+        DatabaseState databaseStateAfterFirstRun = DatabaseState.getCurrentDatabaseState(mongoTemplate);
+        jobLauncherTestUtilsStudyFromMongo.launchJob();
+        DatabaseState databaseStateAfterSecondRun = DatabaseState.getCurrentDatabaseState(mongoTemplate);
+        assertEquals(databaseStateAfterFirstRun, databaseStateAfterSecondRun);
     }
 
     private void assertStepsExecuted(List<String> expectedSteps, JobExecution jobExecution) {
