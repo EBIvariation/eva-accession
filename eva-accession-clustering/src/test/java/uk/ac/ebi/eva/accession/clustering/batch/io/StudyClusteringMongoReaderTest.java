@@ -42,10 +42,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
@@ -63,8 +62,6 @@ public class StudyClusteringMongoReaderTest {
     private static final int CHUNK_SIZE = 5;
 
     private static final String SUBMITTED_VARIANT_ENTITY = "submittedVariantEntity";
-
-    private static final String PROJECT_1_HASH = "96A7CDAE49D1ACDC833524E294C37BDC8F8435FB";
 
     private static final String PROJECT_2_HASH = "9F05088C2058BC2AECFF8B904E439E2FD4C67F20";
 
@@ -101,14 +98,13 @@ public class StudyClusteringMongoReaderTest {
 
     @Test
     public void readSubmittedVariantsPerStudy() {
-        assertEquals(3, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
+        assertEquals(5, mongoTemplate.getCollection(SUBMITTED_VARIANT_ENTITY).countDocuments());
         List<SubmittedVariantEntity> variants = readIntoList(studyClusteringMongoReader);
         assertEquals(2, variants.size());
 
-        Set<String> hashes = variants.stream().map(SubmittedVariantEntity::getId).collect(Collectors.toSet());
-        assertTrue(hashes.contains(PROJECT_2_HASH));
-        assertTrue(hashes.contains(PROJECT_3_HASH));
-        assertFalse(hashes.contains(PROJECT_1_HASH));
+        Set<String> actualHashes = variants.stream().map(SubmittedVariantEntity::getId).collect(Collectors.toSet());
+        Set<String> expectedHashes = Stream.of(PROJECT_2_HASH, PROJECT_3_HASH).collect(Collectors.toSet());
+        assertEquals(expectedHashes, actualHashes);
     }
 
     private List<SubmittedVariantEntity> readIntoList(StudyClusteringMongoReader reader) {
