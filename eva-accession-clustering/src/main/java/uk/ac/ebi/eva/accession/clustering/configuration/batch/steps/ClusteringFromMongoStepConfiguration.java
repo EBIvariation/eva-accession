@@ -35,6 +35,8 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import java.util.List;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_MONGO_READER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_SPLIT_OR_MERGED_BACKPROP_RS;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.BACK_PROPAGATED_RS_WRITER;
@@ -190,6 +192,22 @@ public class ClusteringFromMongoStepConfiguration {
                 .writer(new ListOfListItemWriter<>(backPropagatedRSWriter))
                 .listener(progressListener)
                 .build();
+        return step;
+    }
+
+    @Bean(STUDY_CLUSTERING_STEP)
+    public Step studyClusteringStep(
+            @Qualifier(STUDY_CLUSTERING_MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
+            @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
+            @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            StepBuilderFactory stepBuilderFactory,
+            SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(STUDY_CLUSTERING_STEP)
+                                             .<SubmittedVariantEntity, SubmittedVariantEntity>chunk(chunkSizeCompletionPolicy)
+                                             .reader(mongoReader)
+                                             .writer(submittedVariantWriter)
+                                             .listener(progressListener)
+                                             .build();
         return step;
     }
 }

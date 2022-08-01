@@ -40,6 +40,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusterUnclus
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromMongoJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromVcfJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ProcessRemappedVariantsWithRSJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.StudyClusteringJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.ClusteringVariantProcessorConfiguration;
@@ -55,6 +56,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
 @EnableAutoConfiguration
 @Import({ClusteringFromVcfJobConfiguration.class,
         ClusteringFromMongoJobConfiguration.class,
+        StudyClusteringJobConfiguration.class,
         ProcessRemappedVariantsWithRSJobConfiguration.class,
         ClusterUnclusteredVariantsJobConfiguration.class,
         BackPropagateRSJobConfiguration.class,
@@ -76,6 +78,8 @@ public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";
 
     public static final String JOB_LAUNCHER_FROM_MONGO = "JOB_LAUNCHER_FROM_MONGO";
+
+    public static final String JOB_LAUNCHER_STUDY_FROM_MONGO = "JOB_LAUNCHER_STUDY_FROM_MONGO";
 
     public static final String JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP = "JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP";
 
@@ -110,6 +114,18 @@ public class BatchTestConfiguration {
             @Override
             @Autowired
             public void setJob(@Qualifier(CLUSTERING_FROM_MONGO_JOB) Job job) {
+                super.setJob(job);
+            }
+        };
+    }
+
+    @Bean(JOB_LAUNCHER_STUDY_FROM_MONGO)
+    public JobLauncherTestUtils jobLauncherTestUtilsStudyFromMongo() {
+
+        return new JobLauncherTestUtils() {
+            @Override
+            @Autowired
+            public void setJob(@Qualifier(STUDY_CLUSTERING_JOB) Job job) {
                 super.setJob(job);
             }
         };
