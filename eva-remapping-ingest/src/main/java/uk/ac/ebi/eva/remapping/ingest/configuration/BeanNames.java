@@ -17,10 +17,6 @@ package uk.ac.ebi.eva.remapping.ingest.configuration;
 
 public class BeanNames {
 
-    public static final String SUBMITTED_VARIANT_ENTITY = "submittedVariantEntity";
-
-    public static final String DBSNP_SUBMITTED_VARIANT_ENTITY = "dbsnpSubmittedVariantEntity";
-
     public static final String VCF_READER = "VCF_READER";
 
     public static final String COMPOSITE_VARIANT_PROCESSOR = "COMPOSITE_VARIANT_PROCESSOR";
