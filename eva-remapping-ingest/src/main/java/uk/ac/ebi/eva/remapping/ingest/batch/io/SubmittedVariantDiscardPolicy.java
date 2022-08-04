@@ -45,6 +45,7 @@ public class SubmittedVariantDiscardPolicy {
         public SubmittedVariantEntity getSve() {
             return sve;
         }
+
         public Long getSsId() {
             return ssId;
         }
@@ -60,10 +61,11 @@ public class SubmittedVariantDiscardPolicy {
     }
 
     public static class DiscardPriority {
-        public final SubmittedVariantEntity sveToKeep;
-        public final SubmittedVariantEntity sveToDiscard;
+        public final SubmittedVariantDiscardDeterminants sveToKeep;
+        public final SubmittedVariantDiscardDeterminants sveToDiscard;
 
-        public DiscardPriority(SubmittedVariantEntity sveToKeep, SubmittedVariantEntity sveToDiscard) {
+        public DiscardPriority(SubmittedVariantDiscardDeterminants sveToKeep,
+                               SubmittedVariantDiscardDeterminants sveToDiscard) {
             this.sveToKeep = sveToKeep;
             this.sveToDiscard = sveToDiscard;
         }
@@ -81,15 +83,15 @@ public class SubmittedVariantDiscardPolicy {
         }
 
         if (firstSve.getRemappedFrom() == null && secondSve.getRemappedFrom() != null) {
-            return new DiscardPriority(firstSve.getSve(), secondSve.getSve());
+            return new DiscardPriority(firstSve, secondSve);
         }
         if (firstSve.getRemappedFrom() != null && secondSve.getRemappedFrom() == null) {
-            return new DiscardPriority(secondSve.getSve(), firstSve.getSve());
+            return new DiscardPriority(secondSve, firstSve);
         }
         if (firstSve.getCreatedDate().isBefore(secondSve.getCreatedDate())) {
-            return new DiscardPriority(firstSve.getSve(), secondSve.getSve());
+            return new DiscardPriority(firstSve, secondSve);
         }
-        return new DiscardPriority(secondSve.getSve(), firstSve.getSve());
+        return new DiscardPriority(secondSve, firstSve);
     }
 
 }

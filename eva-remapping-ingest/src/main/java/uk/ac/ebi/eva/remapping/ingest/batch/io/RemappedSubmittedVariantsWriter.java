@@ -34,9 +34,11 @@ import uk.ac.ebi.eva.remapping.ingest.batch.io.SubmittedVariantDiscardPolicy.Sub
 import uk.ac.ebi.eva.remapping.ingest.batch.listeners.RemappingIngestCounts;
 import uk.ac.ebi.eva.remapping.ingest.configuration.CollectionNames;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,7 +77,6 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         List<SubmittedVariantEntity> svesToInsert = new ArrayList<>(submittedVariantsRemapped);
 
         try {
-            // Resolve potential duplicate SS IDs
             Map<Long, List<SubmittedVariantEntity>> duplicateCandidates = getDuplicateSs(svesToInsert);
             List<SubmittedVariantEntity> svesToDiscard = resolveDuplicates(duplicateCandidates, svesToInsert);
             List<SubmittedVariantOperationEntity> discardOperations = getDiscardOperations(svesToDiscard);
@@ -84,10 +85,9 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                                                                   SubmittedVariantEntity.class,
                                                                   collection);
             BulkOperations svoeBulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
-                                                                      SubmittedVariantEntity.class,
+                                                                      SubmittedVariantOperationEntity.class,
                                                                       operationCollection);
 
-            // TODO think about ordering of these statements & idempotency
             bulkOperations.insert(svesToInsert);
             if (svesToDiscard.size() > 0) {
                 bulkOperations.remove(query(where("_id").in(
@@ -96,10 +96,10 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                 svoeBulkOperations.insert(discardOperations);
             }
             BulkWriteResult bulkWriteResult = bulkOperations.execute();
-            BulkWriteResult operationWriteResult = svoeBulkOperations.execute();
+            svoeBulkOperations.execute();
 
-            // TODO counts.... ?
             remappingIngestCounts.addRemappedVariantsIngested(bulkWriteResult.getInsertedCount());
+            remappingIngestCounts.addRemappedVariantsDiscarded(bulkWriteResult.getDeletedCount());
         } catch (DuplicateKeyException exception) {
             MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
             BulkWriteResult bulkWriteResult = writeException.getWriteResult();
@@ -120,17 +120,15 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
     }
 
     private Map<Long, List<SubmittedVariantEntity>> getDuplicateSs(List<SubmittedVariantEntity> sves) {
-        Map<Long, List<SubmittedVariantEntity>> svesGroupedBySs = new HashMap<>();
-
         // Collect potential duplicates from the current batch
-        addToSsMap(sves, svesGroupedBySs);
+        Map<Long, List<SubmittedVariantEntity>> svesGroupedBySs = groupSvesBySs(sves);
 
         // Find duplicate SS already in the database
         List<SubmittedVariantEntity> svesWithSameAccession = mongoTemplate.find(
                 query(where("seq").is(assemblyAccession).and("accession").in(svesGroupedBySs.keySet())),
                 SubmittedVariantEntity.class, collection);
         if (!svesWithSameAccession.isEmpty()) {
-            addToSsMap(svesWithSameAccession, svesGroupedBySs);
+            svesGroupedBySs.putAll(groupSvesBySs(svesWithSameAccession));
         }
 
         return svesGroupedBySs
@@ -140,11 +138,8 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private void addToSsMap(List<SubmittedVariantEntity> sves, Map<Long, List<SubmittedVariantEntity>> ssMap) {
-        for (SubmittedVariantEntity sve : sves) {
-            ssMap.putIfAbsent(sve.getAccession(), Collections.emptyList());
-            ssMap.get(sve.getAccession()).add(sve);
-        }
+    private Map<Long, List<SubmittedVariantEntity>> groupSvesBySs(List<SubmittedVariantEntity> sves) {
+        return sves.stream().collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
     }
 
     private List<SubmittedVariantEntity> resolveDuplicates(
@@ -154,23 +149,34 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
         // TODO provision for same hash - need to keep the one in DB already if present, to ensure idempotency
         //  and also not creating superfluous discard operations.
+        // TODO also where should we resolve the hash exactly....
+        //  --> do it before getting created date, to ensure in that method there's no hash collision
+
+        List<SubmittedVariantEntity> duplicateSves = svesGroupedBySs
+                .values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+        Map<String, LocalDateTime> createdDateByHash = getAllCreatedDateFromSource(duplicateSves);
 
         for (Map.Entry<Long, List<SubmittedVariantEntity>> ssAndSve: svesGroupedBySs.entrySet()) {
             List<SubmittedVariantEntity> duplicates = ssAndSve.getValue();
             // Ensure we only keep one out of the list of duplicates for this SS.
             SubmittedVariantEntity currentKept = duplicates.get(0);
+            SubmittedVariantDiscardDeterminants currentDeterminants = new SubmittedVariantDiscardDeterminants(
+                    currentKept,
+                    currentKept.getAccession(),
+                    currentKept.getRemappedFrom(),
+                    createdDateByHash.get(currentKept.getHashedMessage()));
             for (int i = 1; i < duplicates.size(); i++) {
                 SubmittedVariantEntity other = duplicates.get(i);
                 DiscardPriority priority = SubmittedVariantDiscardPolicy.prioritise(
-                        new SubmittedVariantDiscardDeterminants(currentKept,
-                                                                currentKept.getAccession(),
-                                                                currentKept.getRemappedFrom(),
-                                                                currentKept.getCreatedDate()),  // TODO this needs to be the created date in the source assembly!!
+                        currentDeterminants,
                         new SubmittedVariantDiscardDeterminants(other,
                                                                 other.getAccession(),
                                                                 other.getRemappedFrom(),
-                                                                other.getCreatedDate()));
-                currentKept = priority.sveToKeep;
+                                                                createdDateByHash.get(other.getHashedMessage())));
+                currentDeterminants = priority.sveToKeep;
+                currentKept = priority.sveToKeep.getSve();
             }
             // Discard everything that's not currentKept
             for (SubmittedVariantEntity sve : duplicates) {
@@ -184,12 +190,64 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                     svesToNotInsert.add(sve);
                 }
             }
-
         }
         if (svesToNotInsert.size() > 0) {
             logger.info("Not inserting because SS ID already exists in assembly: " + svesToNotInsert);
+            remappingIngestCounts.addRemappedVariantsDiscarded(svesToNotInsert.size());
         }
         return svesToDiscard;
+    }
+
+    private Map<String, LocalDateTime> getAllCreatedDateFromSource(List<SubmittedVariantEntity> duplicateSves) {
+        // By default use the target SVE's created date
+        Map<String, LocalDateTime> targetHashToSourceCreatedDate = duplicateSves
+                .stream().collect(Collectors.toMap(SubmittedVariantEntity::getHashedMessage,
+                                                   SubmittedVariantEntity::getCreatedDate));
+
+        Map<String, List<SubmittedVariantEntity>> svesBySourceAssembly = duplicateSves
+                .stream().collect(Collectors.groupingBy(SubmittedVariantEntity::getRemappedFrom));
+
+        for (Map.Entry<String, List<SubmittedVariantEntity>> asmAndSves : svesBySourceAssembly.entrySet()) {
+            String sourceAsm = asmAndSves.getKey();
+            List<SubmittedVariantEntity> svesRemappedFromAsm = asmAndSves.getValue();
+
+            // If not remapped, stick with the target created date
+            if (sourceAsm == null) {
+                continue;
+            }
+
+            // Otherwise query database for source SVEs with same accession in this assembly to get their created date
+            List<Long> targetAccessions = svesRemappedFromAsm
+                    .stream()
+                    .map(SubmittedVariantEntity::getAccession)
+                    .collect(Collectors.toList());
+            List<SubmittedVariantEntity> allSourceSvesInAsm = mongoTemplate.find(
+                    query(where("seq").is(sourceAsm).and("accession").in(targetAccessions)),
+                    SubmittedVariantEntity.class, collection);
+            Map<Long, List<SubmittedVariantEntity>> sourceSvesByAccession = allSourceSvesInAsm
+                    .stream().collect(Collectors.groupingBy(SubmittedVariantEntity::getAccession));
+
+            for (SubmittedVariantEntity sve : svesRemappedFromAsm) {
+                List<SubmittedVariantEntity> sourceSves = sourceSvesByAccession.get(sve.getAccession());
+                targetHashToSourceCreatedDate.put(sve.getHashedMessage(), getCreatedDateFromSource(sve, sourceSves));
+            }
+        }
+
+        return targetHashToSourceCreatedDate;
+    }
+
+    private LocalDateTime getCreatedDateFromSource(SubmittedVariantEntity targetSve,
+                                                   List<SubmittedVariantEntity> sourceSves) {
+        // If we can't find the exact source SVE for any reason, use the created date of the remapped SVE
+        if (sourceSves.isEmpty()) {
+            logger.warn("No SS " + targetSve.getAccession() + " found in source assembly " + targetSve.getRemappedFrom());
+            return targetSve.getCreatedDate();
+        }
+        if (sourceSves.size() > 1) {
+            logger.warn("Duplicate SS " + targetSve.getAccession() + " found in assembly " + targetSve.getRemappedFrom());
+            return targetSve.getCreatedDate();
+        }
+        return sourceSves.get(0).getCreatedDate();
     }
 
     private List<SubmittedVariantOperationEntity> getDiscardOperations(List<SubmittedVariantEntity> svesToDiscard) {
