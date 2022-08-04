@@ -21,9 +21,12 @@ public class RemappingIngestCounts {
 
     private long remappedVariantsSkipped;
 
+    private long remappedVariantsDiscarded;
+
     public RemappingIngestCounts() {
         this.remappedVariantsIngested = 0;
         this.remappedVariantsSkipped = 0;
+        this.remappedVariantsDiscarded = 0;
     }
 
     public long getRemappedVariantsIngested() {
@@ -40,5 +43,13 @@ public class RemappingIngestCounts {
 
     public void addRemappedVariantsSkipped(long remappedVariantsSkipped) {
         this.remappedVariantsSkipped += remappedVariantsSkipped;
+    }
+
+    public long getRemappedVariantsDiscarded() {
+        return remappedVariantsDiscarded;
+    }
+
+    public void addRemappedVariantsDiscarded(long remappedVariantsDiscarded) {
+        this.remappedVariantsDiscarded += remappedVariantsDiscarded;
     }
 }
