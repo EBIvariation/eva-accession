@@ -24,6 +24,10 @@ public class RemappingIngestCounts {
     private long remappedVariantsDiscarded;
 
     public RemappingIngestCounts() {
+        resetCounts();
+    }
+
+    public void resetCounts() {
         this.remappedVariantsIngested = 0;
         this.remappedVariantsSkipped = 0;
         this.remappedVariantsDiscarded = 0;

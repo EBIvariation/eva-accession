@@ -107,6 +107,6 @@ public class IngestRemappedVariantsFromVcfJobConfigurationTest {
                                                     .filter(x -> x.getRemappingId() != null &&
                                                             x.getRemappingId().equals(remappingId))
                                                     .count();
-        assertEquals(4, variantsWithMetatada);
+        assertEquals(3, variantsWithMetatada);
     }
 }
