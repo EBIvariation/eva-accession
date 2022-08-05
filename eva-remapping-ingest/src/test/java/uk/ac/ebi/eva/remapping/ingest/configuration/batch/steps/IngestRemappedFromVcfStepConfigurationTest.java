@@ -99,13 +99,13 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         //Documents in the database after the ingestion
-        assertEquals(11, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(10, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         Query remappedVariantsQuery = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
         List<SubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
                                                                            SubmittedVariantEntity.class);
 
-        assertEquals(6, remappedVariants.size());
+        assertEquals(5, remappedVariants.size());
 
         //Variant ss5000000000: Remapped only once
         assertEquals(2, getVariantCountBySsId(5000000000L));
@@ -120,8 +120,8 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         assertEquals(2, getVariantCountBySsId(5000000001L));
 
         //Variant ss5000000002: Remapped twice to a different location
-        //Insert both remapped variants
-        assertEquals(3, getVariantCountBySsId(5000000002L));
+        //Skip the duplicate variant as they have the same accession
+        assertEquals(2, getVariantCountBySsId(5000000002L));
 
         //Variant ss5000000002: Remapped only once, belongs to a different project and have a different taxonomy
         assertEquals(2, getVariantCountBySsId(5000000003L));
