@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -119,7 +120,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
         if (svesToNotInsert.size() > 0) {
             logger.info("Not inserting due to duplicate hashes: " + svesToNotInsert);
-            remappingIngestCounts.addRemappedVariantsDiscarded(svesToNotInsert.size());
+            remappingIngestCounts.addRemappedVariantsSkipped(svesToNotInsert.size());
         }
     }
 
@@ -180,7 +181,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         }
         if (svesToNotInsert.size() > 0) {
             logger.info("Not inserting because SS ID already exists in assembly: " + svesToNotInsert);
-            remappingIngestCounts.addRemappedVariantsDiscarded(svesToNotInsert.size());
+            remappingIngestCounts.addRemappedVariantsSkipped(svesToNotInsert.size());
         }
     }
 
@@ -206,14 +207,15 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                                                    SubmittedVariantEntity::getCreatedDate));
 
         Map<String, List<SubmittedVariantEntity>> svesBySourceAssembly = duplicateSves
-                .stream().collect(Collectors.groupingBy(SubmittedVariantEntity::getRemappedFrom));
+                .stream().collect(Collectors.groupingBy(
+                        sve -> Objects.isNull(sve.getRemappedFrom()) ? "" : sve.getRemappedFrom()));
 
         for (Map.Entry<String, List<SubmittedVariantEntity>> asmAndSves : svesBySourceAssembly.entrySet()) {
             String sourceAsm = asmAndSves.getKey();
             List<SubmittedVariantEntity> svesRemappedFromAsm = asmAndSves.getValue();
 
             // If not remapped, stick with the target created date
-            if (sourceAsm == null) {
+            if (sourceAsm.equals("")) {
                 continue;
             }
 
@@ -240,7 +242,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
     private LocalDateTime getCreatedDateFromSource(SubmittedVariantEntity targetSve,
                                                    List<SubmittedVariantEntity> sourceSves) {
         // If we can't find the exact source SVE for any reason, use the created date of the remapped SVE
-        if (sourceSves.isEmpty()) {
+        if (Objects.isNull(sourceSves) || sourceSves.isEmpty()) {
             logger.warn("No SS " + targetSve.getAccession() + " found in source assembly " + targetSve.getRemappedFrom());
             return targetSve.getCreatedDate();
         }
