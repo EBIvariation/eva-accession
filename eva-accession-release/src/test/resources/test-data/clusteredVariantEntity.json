@@ -20,6 +20,18 @@
       "version" : 1,
       "createdDate" : ISODate("2019-07-06T11:04:24.445Z")
     },
+    {
+      "asm": "GCA_000409795.2",
+      "tax" : 60711,
+      "contig" : "CM001954.1",
+      "start" : NumberLong(3337130),
+      "type" : "SNV",
+      "validated" : false,
+      "hashedMessage" : "7A4304A9E9AE320D0E28FCC9E23EF1E605ACACAA",
+      "accession" : NumberLong(3000000016),
+      "version" : 1,
+      "createdDate" : ISODate("2017-09-20T08:25:00Z")
+    },
     { "_id" : "AF001E7FA51A752C603C0DBEA47654E21E877A80",
       "asm" : "GCA_000409795.2",
       "tax" : 60711,

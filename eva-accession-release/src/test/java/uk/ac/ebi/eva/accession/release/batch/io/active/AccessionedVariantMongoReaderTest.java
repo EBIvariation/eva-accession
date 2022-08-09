@@ -45,11 +45,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader.REMAPPED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
@@ -288,6 +290,28 @@ public class AccessionedVariantMongoReaderTest {
         assertFlagEqualsInAllVariants(SUBMITTED_VARIANT_VALIDATED_KEY, false);
     }
 
+    @Test
+    public void includeRemappedFlag() throws Exception {
+        List<Variant> variants = readIntoList();
+        assertNotEquals(0, variants.size());
+        List<Variant> rsToLookFor = variants.stream().filter(v -> v.getMainId().equals("rs8181"))
+                                            .collect(Collectors.toList());
+        assertNotEquals(0, rsToLookFor.size());
+        // Both the SS clustered by the RS 8181 has the "remappedFrom" attribute
+        assertTrue(rsToLookFor.stream().flatMap(v -> v.getSourceEntries().stream())
+                              .map(se -> se.getAttribute(REMAPPED_KEY))
+                              .map(Boolean::new)
+                              .allMatch(v -> v.equals(true)));
+        rsToLookFor = variants.stream().filter(v -> v.getMainId().equals("rs869808637"))
+                              .collect(Collectors.toList());
+        assertNotEquals(0, rsToLookFor.size());
+        // Only one of the SS clustered by the RS 869808637 has the "remappedFrom" attribute
+        assertTrue(rsToLookFor.stream().flatMap(v -> v.getSourceEntries().stream())
+                              .map(se -> se.getAttribute(REMAPPED_KEY))
+                              .map(Boolean::new)
+                              .allMatch(v -> v.equals(false)));
+    }
+
     private void assertFlagEqualsInAllVariants(String key, boolean value) throws Exception {
         List<Variant> variants = readIntoList();
         assertNotEquals(0, variants.size());
@@ -422,7 +446,7 @@ public class AccessionedVariantMongoReaderTest {
      */
     @Test
     public void ensureOnlySSInReleaseAssemblyIsUsed() throws Exception {
-        Variant variantInTwoAssemblies = readIntoList().stream().filter(e -> e.getIds().contains("rs8181"))
+        Variant variantInTwoAssemblies = readIntoList().stream().filter(e -> e.getIds().contains("rs100"))
                                                        .findFirst().get();
         // Ensure that only one SS entry is available in the variant that was read
         assertEquals(1, variantInTwoAssemblies.getSourceEntries().size());
