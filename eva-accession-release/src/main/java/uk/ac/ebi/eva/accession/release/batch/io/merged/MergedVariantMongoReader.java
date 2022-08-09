@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Sorts.ascending;
@@ -148,6 +149,10 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
         Map<String, Variant> mergedVariants = new HashMap<>();
         Collection<Document> submittedVariantOperations = (Collection<Document>) mergedVariant.get(SS_INFO_FIELD);
+        boolean remappedRS = submittedVariantOperations.stream()
+                                                       .map(e -> (Collection<Document>) e.get("inactiveObjects"))
+                                                       .flatMap(Collection::stream)
+                                                       .allMatch(sve -> Objects.nonNull(sve.getString("remappedFrom")));
 
         Collection<Document> activeClusteredVariant = (Collection<Document>) mergedVariant.get(ACTIVE_RS);
         if (activeClusteredVariant.isEmpty()) {
@@ -179,7 +184,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
                 VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                          submittedVariantValidated, allelesMatch,
-                                                                         assemblyMatch, evidence, mergedInto);
+                                                                         assemblyMatch, evidence, remappedRS,
+                                                                         mergedInto);
 
                 addToVariants(mergedVariants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
             }

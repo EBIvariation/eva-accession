@@ -12,7 +12,29 @@
       "rs": NumberLong(869808637),
       "accession": NumberLong(5259673695),
       "version": 1,
+      "remappedFrom": "GCA_000409795.1",
+      "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+      "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
       "createdDate": ISODate("2016-05-05T13:43:00Z")
+    },
+    {
+      "_id": "81901D6C149D283C8E00859E8BADC1C89750CCCC",
+      "seq": "GCA_000409795.2",
+      "tax": 60711,
+      "study": "PRJEB3913",
+      "contig": "CM001954.1",
+      "start": NumberLong(81),
+      "ref": "",
+      "alt": "T",
+      "rs": NumberLong(8181),
+      "remappedFrom": "GCA_000409795.1",
+      "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+      "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+      "accession": NumberLong(5269673695),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
     },
     { "_id" : "46E8DD84642226210462CBF39E3C64E2",
       "seq" : "GCA_000409795.2",

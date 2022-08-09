@@ -280,6 +280,9 @@
           "asmMatch" : true,
           "allelesMatch" : true,
           "validated" : false,
+          "remappedFrom" : "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
           "hashedMessage" : "25D93C6E673745BF5CF8B88C864104F1164B8D8C",
           "accession" : NumberLong(1991294603),
           "version" : 1,
@@ -414,6 +417,51 @@
           "accession" : NumberLong(3062726743),
           "version" : 1,
           "createdDate" : ISODate("2017-09-01T11:00:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c51c1e5dcc3abf7ee91316a"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(3062726741),
+      "reason" : "Original 3000000010 was merged into 3000000000.",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84642226210462CBF39E3C64E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB22989",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(2),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("3062726741"),
+          "rs" : NumberLong(3000000010),
+          "remappedFrom": "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c51c1e5dcc3abf7ee90316a"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(3062725741),
+      "reason" : "Original 3000000020 was merged into 3000000016.",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84642226230462CBF39E3C64E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB22989",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337130),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("3062725741"),
+          "rs" : NumberLong(3000000020),
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
         }
       ]
     }

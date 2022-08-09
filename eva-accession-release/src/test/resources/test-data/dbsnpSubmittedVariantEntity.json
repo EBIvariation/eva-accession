@@ -27,6 +27,9 @@
       "alt": "T",
       "rs": NumberLong(8181),
       "accession": NumberLong(8282),
+      "remappedFrom": "GCA_000409795.1",
+      "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+      "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
       "version": 1,
       "createdDate": ISODate(
       "2016-05-05T13:43:00Z"
@@ -69,6 +72,22 @@
       "study": "PRJEB7929",
       "contig": "CM001954.1",
       "start": NumberLong(70000000),
+      "ref": "T",
+      "alt": "",
+      "rs": NumberLong(100),
+      "accession": NumberLong(200),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      )
+    },
+    {
+      "_id": "81901D6C149C283D8E00859E8BADC1C89750F112",
+      "seq": "GCA_000409795.1",
+      "tax": 60711,
+      "study": "PRJEB7929",
+      "contig": "CM001954.1",
+      "start": NumberLong(70010000),
       "ref": "T",
       "alt": "",
       "rs": NumberLong(100),

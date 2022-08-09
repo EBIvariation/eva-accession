@@ -42,6 +42,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -121,6 +122,8 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
 
         Map<String, Variant> variants = new HashMap<>();
         Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
+        boolean remappedRS = submittedVariants.stream()
+                                              .allMatch(sve -> Objects.nonNull(sve.getString("remappedFrom")));
 
         for (Document submittedVariant : submittedVariants) {
             long submittedVariantStart = submittedVariant.getLong(START_FIELD);
@@ -138,7 +141,7 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
 
             VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                      submittedVariantValidated, allelesMatch,
-                                                                     assemblyMatch, evidence);
+                                                                     assemblyMatch, evidence, remappedRS);
 
             addToVariants(variants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
         }

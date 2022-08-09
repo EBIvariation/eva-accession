@@ -198,7 +198,7 @@ public class VariantContextWriterTest {
                                      buildVariant(GENBANK_ACCESSION_1, 1000, "C", "A", SNP_SEQUENCE_ONTOLOGY, STUDY_1));
 
         List<String> metadataLines = grepFile(output, "^##.*");
-        assertEquals(10, metadataLines.size());
+        assertEquals(11, metadataLines.size());
         List<String> contigLines = grepFile(output, "##contig=<ID=Chr1,accession=\"CM0001.1\">");
         assertEquals(1, contigLines.size());
         List<String> headerLines = grepFile(output, "^#CHROM.*");
