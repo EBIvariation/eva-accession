@@ -45,6 +45,7 @@ import java.util.Set;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.REMAPPED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
@@ -118,6 +119,9 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
         metaData.add(new VCFInfoHeaderLine(SUPPORTED_BY_EVIDENCE_KEY, 0, VCFHeaderLineType.Flag,
                                            "Lack of evidence flag, present if no submitted variant includes genotype "
                                            + "or frequency information"));
+        metaData.add(new VCFInfoHeaderLine(REMAPPED_KEY, 0, VCFHeaderLineType.Flag,
+                                           "Remapped flag, present if the clustered variant clusters only  "
+                                                   + "remapped submitted variants"));
         return metaData;
     }
 

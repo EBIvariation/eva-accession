@@ -39,8 +39,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
+import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -56,6 +57,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.REMAPPED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongoReader.ASSEMBLY_MATCH_KEY;
@@ -66,6 +68,7 @@ import static uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantMongo
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
+        "/test-data/clusteredVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantOperationEntity.json",
         "/test-data/submittedVariantOperationEntity.json",  // includes 1 update involving dbSNP RS merge
         "/test-data/dbsnpClusteredVariantEntity.json",
@@ -217,6 +220,30 @@ public class MergedVariantMongoReaderTest {
     @Test
     public void includeEvidenceFlag() throws Exception {
         assertFlagEqualsInAllVariants(SUPPORTED_BY_EVIDENCE_KEY, false);
+    }
+
+    @Test
+    public void includeRemappedFlag() throws Exception {
+        MergedVariantMongoReader evaReader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE,
+                                                     new EvaCollectionNames());
+        Map<String, Variant> variants = readIntoMap(evaReader);
+        assertNotEquals(0, variants.size());
+        List<Variant> rsToLookFor = variants.values().stream().filter(v -> v.getMainId().equals("rs3000000010"))
+                                            .collect(Collectors.toList());
+        assertNotEquals(0, rsToLookFor.size());
+        // Both the SS involved in SVOE/dbsnpSVOE operations has the "remappedFrom" attribute
+        assertTrue(rsToLookFor.stream().flatMap(v -> v.getSourceEntries().stream())
+                              .map(se -> se.getAttribute(REMAPPED_KEY))
+                              .map(Boolean::new)
+                              .allMatch(v -> v.equals(true)));
+        rsToLookFor = variants.values().stream().filter(v -> v.getMainId().equals("rs3000000020"))
+                              .collect(Collectors.toList());
+        assertNotEquals(0, rsToLookFor.size());
+        // Only one of the SS involved in SVOE/dbsnpSVOE operations has the "remappedFrom" attribute
+        assertTrue(rsToLookFor.stream().flatMap(v -> v.getSourceEntries().stream())
+                              .map(se -> se.getAttribute(REMAPPED_KEY))
+                              .map(Boolean::new)
+                              .allMatch(v -> v.equals(false)));
     }
 
     /**

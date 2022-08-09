@@ -73,7 +73,7 @@ public class CreateMergedReleaseStepConfigurationTest {
 
     private static final long EXPECTED_LINES = 5;
 
-    private static final long EXPECTED_EVA_LINES = 1;
+    private static final long EXPECTED_EVA_LINES = 2;
 
     private static final Map<String, String> assemblyAccessionToName =
             Collections.singletonMap("GCA_000409795.2", "Chlorocebus_sabeus 1.1");

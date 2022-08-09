@@ -16,6 +16,9 @@
           "alt" : "G",
           "accession" : NumberLong("5259673694"),
           "rs" : NumberLong(3000000010),
+          "remappedFrom": "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
           "version" : 1,
           "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
         }
@@ -69,6 +72,30 @@
         }
       ],
       "createdDate" : ISODate("2022-01-12T01:07:27.057Z")
+    },
+    {
+      "_id" : ObjectId("5c51c1e5ddc3abf7ee91326a"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(5279673694),
+      "reason" : "Original 3000000020 was merged into 3000000016.",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84641226210462CBF39E3C64E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB22988",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337130),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("5279673694"),
+          "rs" : NumberLong(3000000020),
+          "remappedFrom": "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
     }
   ]
 }

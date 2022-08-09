@@ -86,7 +86,7 @@ public class AccessionReleaseJobConfigurationTest {
 
     private static final long EXPECTED_LINES_MERGED = 5;
 
-    private static final long EXPECTED_EVA_LINES_MERGED = 1;
+    private static final long EXPECTED_EVA_LINES_MERGED = 2;
 
     private static final long EXPECTED_LINES_DEPRECATED = 3;
 

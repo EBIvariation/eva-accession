@@ -56,6 +56,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     public static final String ALLELES_MATCH_KEY = "ALMM";
 
+    public static final String REMAPPED_KEY = "REMAPPED";
+
     public static final String SUPPORTED_BY_EVIDENCE_KEY = "LOE";
 
     public static final String MERGED_INTO_KEY = "CURR";
@@ -139,17 +141,19 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
                                                          boolean submittedVariantValidated, boolean allelesMatch,
-                                                         boolean assemblyMatch, boolean evidence, Long mergedInto) {
+                                                         boolean assemblyMatch, boolean evidence, boolean remappedRS,
+                                                         Long mergedInto) {
         VariantSourceEntry variantSourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                         submittedVariantValidated, allelesMatch,
-                                                                        assemblyMatch, evidence);
+                                                                        assemblyMatch, evidence, remappedRS);
         variantSourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
         return variantSourceEntry;
     }
 
     protected VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
                                                          boolean submittedVariantValidated, boolean allelesMatch,
-                                                         boolean assemblyMatch, boolean evidence) {
+                                                         boolean assemblyMatch, boolean evidence,
+                                                         boolean remappedRS) {
         VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
         sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
         sourceEntry.addAttribute(STUDY_ID_KEY, study);
@@ -158,6 +162,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
         sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
         sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
         sourceEntry.addAttribute(SUPPORTED_BY_EVIDENCE_KEY, Boolean.toString(evidence));
+        sourceEntry.addAttribute(REMAPPED_KEY, Boolean.toString(remappedRS));
         return sourceEntry;
     }
 
