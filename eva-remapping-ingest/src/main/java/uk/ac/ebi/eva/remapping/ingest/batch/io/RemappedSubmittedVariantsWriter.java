@@ -182,8 +182,12 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                     currentKept = priority.sveToKeep.getSve();
                 } catch (IllegalArgumentException exception) {
                     // This is an issue to be investigated but needn't block processing as these SVEs are
-                    // indistinguishable, so we log the error (these should be removed earlier in any case).
+                    // indistinguishable, so we log the error and keep whichever is not in the insert list.
                     logger.warn(exception.toString());
+                    if (svesToInsert.contains(currentKept) && !svesToInsert.contains(other)) {
+                        currentKept = other;
+                        currentDeterminants = otherDeterminants;
+                    }
                 }
             }
             // Discard everything that's not currentKept
