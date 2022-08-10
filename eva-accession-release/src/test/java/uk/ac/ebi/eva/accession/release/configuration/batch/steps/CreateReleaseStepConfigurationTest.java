@@ -188,6 +188,7 @@ public class CreateReleaseStepConfigurationTest {
         long numVariantsInRelease = FileUtils.countNonCommentLines(new FileInputStream(outputFile));
         assertEquals(EXPECTED_DBSNP_LINES, numVariantsInRelease);
         assertEquals(0, grepFile(outputFile, ".*rs8181.*").size());
+        assertEquals(1, grepFile(outputFile, ".*rs869927931.*REMAPPED.*").size());
     }
 
     @Test
