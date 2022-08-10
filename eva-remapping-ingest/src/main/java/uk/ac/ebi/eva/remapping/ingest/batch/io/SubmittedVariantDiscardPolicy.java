@@ -72,16 +72,14 @@ public class SubmittedVariantDiscardPolicy {
     }
 
     /**
-     * Keep the submitted variant without remappedFrom attribute, or earliest createdDate as tie-breaker.
+     * Select which submitted variant to keep and which to discard, according to the following criteria in order:
+     * - remappedFrom: null is kept (local to the assembly rather than remapped)
+     * - createdDate: earlier is kept
+     * - SS ID: smaller is kept
+     * If all these attributes are equal, these are genuinely the same variant and an exception is thrown.
      */
     public static DiscardPriority prioritise(SubmittedVariantDiscardDeterminants firstSve,
                                              SubmittedVariantDiscardDeterminants secondSve) {
-        // Discard is only valid for variants sharing the same SS
-        if (!firstSve.getSsId().equals(secondSve.getSsId())) {
-            throw new IllegalArgumentException("Submitted variant discard is not valid for two different SS: "
-                                                       + firstSve.getSsId() + " and " + secondSve.getSsId());
-        }
-
         if (firstSve.getRemappedFrom() == null && secondSve.getRemappedFrom() != null) {
             return new DiscardPriority(firstSve, secondSve);
         }
@@ -91,7 +89,17 @@ public class SubmittedVariantDiscardPolicy {
         if (firstSve.getCreatedDate().isBefore(secondSve.getCreatedDate())) {
             return new DiscardPriority(firstSve, secondSve);
         }
-        return new DiscardPriority(secondSve, firstSve);
+        if (firstSve.getCreatedDate().isAfter(secondSve.getCreatedDate())) {
+            return new DiscardPriority(secondSve, firstSve);
+        }
+        if (firstSve.getSsId() < secondSve.getSsId()) {
+            return new DiscardPriority(firstSve, secondSve);
+        }
+        if (firstSve.getSsId() > secondSve.getSsId()) {
+            return new DiscardPriority(secondSve, firstSve);
+        }
+        throw new IllegalArgumentException("Could not prioritise between the following submitted variants:\n"
+                                                   + firstSve.getSve() + "\n" + secondSve.getSve());
     }
 
 }
