@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ALLELES_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.ASSEMBLY_MATCH_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
+import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.REMAPPED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.STUDY_ID_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUPPORTED_BY_EVIDENCE_KEY;
@@ -108,6 +109,11 @@ public class VariantToVariantContextProcessor implements ItemProcessor<IVariant,
                 case ASSEMBLY_MATCH_KEY:
                     if (attribute.getValue().stream().anyMatch(Boolean.toString(false)::equals)) {
                         attributes.put(attribute.getKey(), "");
+                    }
+                    break;
+                case REMAPPED_KEY:
+                    if (attribute.getValue().stream().anyMatch(Boolean.toString(true)::equals)) {
+                        attributes.put(REMAPPED_KEY, "");
                     }
                     break;
                 case SUPPORTED_BY_EVIDENCE_KEY:
