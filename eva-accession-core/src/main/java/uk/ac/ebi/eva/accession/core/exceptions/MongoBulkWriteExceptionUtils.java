@@ -30,8 +30,8 @@ public class MongoBulkWriteExceptionUtils {
 
     private static final String DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME = "IDKEY";
 
-    private static final String DUPLICATE_KEY_ERROR_MESSAGE_REGEX = "index:\\s.*\\{\\s?\\:\\s?\"(?<"
-            + DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME + ">[a-zA-Z0-9]+)\"\\s?\\}";
+    private static final String DUPLICATE_KEY_ERROR_MESSAGE_REGEX = "index:\\s.*\\{\\s?.*\\:\\s?\"(?<"
+            + DUPLICATE_KEY_ERROR_MESSAGE_GROUP_NAME + ">[a-zA-Z0-9_.]+)\"\\s?\\}";
 
     private static final Pattern DUPLICATE_KEY_PATTERN = Pattern.compile(DUPLICATE_KEY_ERROR_MESSAGE_REGEX);
 
