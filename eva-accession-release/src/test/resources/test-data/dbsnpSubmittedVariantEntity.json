@@ -10,9 +10,6 @@
       "ref": "G",
       "alt": "A",
       "rs": NumberLong(869808637),
-      "remappedFrom": "GCA_000409795.1",
-      "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
-      "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
       "accession": NumberLong(1991577882),
       "version": 1,
       "createdDate": ISODate(
@@ -174,6 +171,9 @@
       "ref": "T",
       "alt": "G",
       "rs": NumberLong(869927931),
+      "remappedFrom": "GCA_000409795.1",
+      "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+      "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
       "accession": NumberLong(1991294603),
       "version": 1,
       "createdDate": ISODate(
