@@ -24,13 +24,13 @@ from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_prof
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
 from run_release_in_embassy.release_common_utils import get_bgzip_bcftools_index_commands_for_file, \
-    get_release_vcf_file_name, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
+    get_release_vcf_file_name_genbank, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
 
 
 def move_release_files_to_unsorted_category(assembly_accession, species_release_folder, vcf_file_category,
                                             unsorted_release_file_path):
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
-    release_file_path = get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category)
+    release_file_path = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession, vcf_file_category)
     release_file_name = os.path.basename(release_file_path)
     for variant_source in ["eva", "dbsnp"]:
         vcf_file_name = release_file_path.replace(release_file_name,
