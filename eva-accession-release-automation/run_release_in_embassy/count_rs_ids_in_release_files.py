@@ -17,7 +17,7 @@ import os
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories
-from run_release_in_embassy.release_common_utils import get_release_vcf_file_name, get_release_text_file_name
+from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank, get_release_text_file_name
 
 
 def count_rs_ids_in_release_files(count_ids_script_path, assembly_accession, species_release_folder):
@@ -25,7 +25,7 @@ def count_rs_ids_in_release_files(count_ids_script_path, assembly_accession, spe
     with open(release_count_filename, "w") as release_count_file_handle:
         release_count_file_handle.write("# Unique RS ID counts\n")
         for vcf_file_category in release_vcf_file_categories:
-            release_vcf_file_name = get_release_vcf_file_name(species_release_folder, assembly_accession,
+            release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession,
                                                               vcf_file_category)
             num_ids_in_file = run_command_with_output("Counting RS IDs in file: " + release_vcf_file_name,
                                                       "{0} {1}.gz".format(count_ids_script_path, release_vcf_file_name),

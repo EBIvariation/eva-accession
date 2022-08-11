@@ -17,7 +17,7 @@ import click
 import os
 import psycopg2
 
-from run_release_in_embassy.release_common_utils import get_release_vcf_file_name
+from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
     release_vcf_file_categories, vcf_validation_output_file_pattern, asm_report_output_file_pattern
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
@@ -54,7 +54,7 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
 
         for vcf_file_category in release_vcf_file_categories:
 
-            release_vcf_file_name = get_release_vcf_file_name(species_release_folder, assembly_accession,
+            release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession,
                                                               vcf_file_category)
             release_vcf_dir = os.path.dirname(release_vcf_file_name)
             if "multimap" not in vcf_file_category:

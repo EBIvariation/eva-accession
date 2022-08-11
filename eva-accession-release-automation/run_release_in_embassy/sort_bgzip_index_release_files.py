@@ -17,8 +17,9 @@ import click
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories
-from run_release_in_embassy.release_common_utils import get_release_vcf_file_name, get_unsorted_release_vcf_file_name, \
-    get_release_text_file_name, get_unsorted_release_text_file_name, get_bgzip_bcftools_index_commands_for_file
+from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank, \
+    get_unsorted_release_vcf_file_name, get_release_text_file_name, get_unsorted_release_text_file_name, \
+    get_bgzip_bcftools_index_commands_for_file
 
 
 def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_path, assembly_accession,
@@ -30,7 +31,7 @@ def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_pa
     for vcf_file_category in release_vcf_file_categories:
         unsorted_release_file_name = get_unsorted_release_vcf_file_name(species_release_folder, assembly_accession,
                                                                         vcf_file_category)
-        sorted_release_file_name = get_release_vcf_file_name(species_release_folder, assembly_accession,
+        sorted_release_file_name = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession,
                                                              vcf_file_category)
         commands.append("rm -f {2} && {0} -f {1} {2}".format(vcf_sort_script_path,
                                                              unsorted_release_file_name,
