@@ -66,7 +66,7 @@ def get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_fi
 def get_release_vcf_file_name_genbank(species_release_folder, assembly_accession, vcf_file_category):
     return os.path.join(
         species_release_folder, assembly_accession,
-        "{0}_{1}_with_genbak.vcf".format(assembly_accession,vcf_file_category)
+        "{0}_{1}_with_genbank.vcf".format(assembly_accession,vcf_file_category)
     )
 
 
