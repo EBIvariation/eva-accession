@@ -120,8 +120,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                                            "Lack of evidence flag, present if no submitted variant includes genotype "
                                            + "or frequency information"));
         metaData.add(new VCFInfoHeaderLine(REMAPPED_KEY, 0, VCFHeaderLineType.Flag,
-                                           "Remapped flag, present if the clustered variant clusters only  "
-                                                   + "remapped submitted variants"));
+                                           "Remapped flag, present if the clustered variant originate only  "
+                                                   + "from submitted variants remapped to this assembly"));
         return metaData;
     }
 
