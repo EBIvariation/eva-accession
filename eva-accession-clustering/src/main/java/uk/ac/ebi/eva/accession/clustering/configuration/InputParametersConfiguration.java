@@ -15,18 +15,36 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 
+import java.io.File;
+
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_REPORT_FILE;
+
 @Configuration
 public class InputParametersConfiguration {
+
+    private static final Logger logger = LoggerFactory.getLogger(InputParametersConfiguration.class);
 
     @Bean
     @ConfigurationProperties(prefix = "parameters")
     public InputParameters inputParameters() {
         return new InputParameters();
+    }
+
+    @Bean(RS_REPORT_FILE)
+    public File rsReportFile() {
+        File rsReportFile = new File(inputParameters().getRSReportPath());
+        if (rsReportFile.exists()) {
+            logger.warn(String.format("RS report file %s already exists! It is possible that duplicates " +
+                                              "are written to it!", rsReportFile.getAbsolutePath()));
+        }
+        return rsReportFile;
     }
 }

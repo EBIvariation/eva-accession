@@ -35,6 +35,8 @@ public class InputParameters {
 
     private String assemblyAccession;
 
+    private String rsReportPath;
+
     private int chunkSize;
 
     private boolean forceRestart;
@@ -71,6 +73,14 @@ public class InputParameters {
 
     public void setAssemblyAccession(String assemblyAccession) {
         this.assemblyAccession = assemblyAccession;
+    }
+
+    public String getRSReportPath() {
+        return rsReportPath;
+    }
+
+    public void setRSReportPath(String rsReportPath) {
+        this.rsReportPath = rsReportPath;
     }
 
     public int getChunkSize() {

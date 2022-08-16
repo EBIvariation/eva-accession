@@ -56,6 +56,9 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessionin
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -89,6 +92,9 @@ public class RSSplitWriterTest {
     private MongoTemplate mongoTemplate;
 
     @Autowired
+    private File rsReportFile;
+
+    @Autowired
     @Qualifier(RS_SPLIT_WRITER)
     private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
 
@@ -113,18 +119,19 @@ public class RSSplitWriterTest {
     private MetricCompute<ClusteringMetric> metricCompute;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         cleanup();
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws IOException {
         cleanup();
     }
 
-    private void cleanup() {
+    private void cleanup() throws IOException {
         mongoClient.dropDatabase(TEST_DB);
         metricCompute.clearCount();
+        Files.deleteIfExists(this.rsReportFile.toPath());
     }
 
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,
@@ -178,6 +185,15 @@ public class RSSplitWriterTest {
         // 2 new RS IDs associated with ss1 and ss4
         assertEquals(2, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS));
         assertEquals(2, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS));
+
+        List<String> rsReportLines = Files.readAllLines(this.rsReportFile.toPath());
+        assertEquals(2, rsReportLines.size());
+        // RS ID created for a given hash in not deterministic during the split.
+        // So, use regex to check for just the hashes in the RS report.
+        assertTrue(rsReportLines.stream()
+                                .anyMatch(line -> line.matches(".*\t20610F413155992F45A41FB1DC6005B2FAA1565B")));
+        assertTrue(rsReportLines.stream()
+                                .anyMatch(line -> line.matches(".*\t717DE940ADEB9E9DCAF09600065BAAF9A91EE713")));
     }
 
     @Test
@@ -225,6 +241,15 @@ public class RSSplitWriterTest {
         // 2 new RS IDs associated with SS groups: ss3,ss4 and ss5,ss6
         assertEquals(4, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATE_OPERATIONS));
         assertEquals(4, metricCompute.getCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS));
+
+        List<String> rsReportLines = Files.readAllLines(this.rsReportFile.toPath());
+        assertEquals(2, rsReportLines.size());
+        // RS ID created for a given hash in not deterministic during the split.
+        // So, use regex to check for just the hashes in the RS report.
+        assertTrue(rsReportLines.stream()
+                                .anyMatch(line -> line.matches(".*\t717DE940ADEB9E9DCAF09600065BAAF9A91EE713")));
+        assertTrue(rsReportLines.stream()
+                                .anyMatch(line -> line.matches(".*\t0304A4760D6365E3BAA8E203AF0355248C05979D")));
     }
 
     @Test
@@ -270,6 +295,15 @@ public class RSSplitWriterTest {
         assertNotEquals(rs1Accession, newRSForSS2);
         assertNotEquals(rs1Accession, newRSForSS2_another);
         assertNotEquals(newRSForSS2, newRSForSS2_another);
+
+        List<String> rsReportLines = Files.readAllLines(this.rsReportFile.toPath());
+        assertEquals(2, rsReportLines.size());
+        // RS ID created for a given hash in not deterministic during the split.
+        // So, use regex to check for just the hashes in the RS report.
+        assertTrue(rsReportLines.stream()
+                                .anyMatch(line -> line.matches(".*\t15F833E1CD27F19EEC66BE89E96B89C99D46A5AB")));
+        assertTrue(rsReportLines.stream()
+                                .anyMatch(line -> line.matches(".*\t0304A4760D6365E3BAA8E203AF0355248C05979D")));
     }
 
     @Test
@@ -299,6 +333,12 @@ public class RSSplitWriterTest {
                                                                       .getClusteredVariantAccession();
         assertEquals(rs1Accession, newRSForSS1);
         assertNotEquals(rs1Accession, newRSForSS1_another);
+
+        List<String> rsReportLines = Files.readAllLines(this.rsReportFile.toPath());
+        assertEquals(1, rsReportLines.size());
+        // RS ID created for a given hash in not deterministic during the split.
+        // So, use regex to check for just the hashes in the RS report.
+        assertTrue(rsReportLines.get(0).matches(".*\t38B381F33CE89A941BABDB854FABF267C99843C6"));
     }
 
     private SubmittedVariantOperationEntity createScenario2_SplitsInvolvingSameSSWithSameRS
@@ -345,5 +385,11 @@ public class RSSplitWriterTest {
 
         assertEquals(databaseStateAfterSecondSplitWrite, databaseStateAfterFirstSplitWrite);
         assertEquals(databaseStateAfterThirdSplitWrite, databaseStateAfterFirstSplitWrite);
+
+        List<String> rsReportLines = Files.readAllLines(this.rsReportFile.toPath());
+        assertEquals(1, rsReportLines.size());
+        // RS ID created for a given hash in not deterministic during the split.
+        // So, use regex to check for just the hashes in the RS report.
+        assertTrue(rsReportLines.get(0).matches(".*\t38B381F33CE89A941BABDB854FABF267C99843C6"));
     }
 }
