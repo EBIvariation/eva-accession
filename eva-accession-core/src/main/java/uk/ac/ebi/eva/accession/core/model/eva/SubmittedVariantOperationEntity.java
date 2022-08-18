@@ -52,7 +52,7 @@ public class SubmittedVariantOperationEntity extends EventDocument<ISubmittedVar
     @Override
     public int hashCode() {
         return Objects.hash(this.getId(), this.getEventType(), this.getAccession(), this.getMergedInto(),
-                            this.getSplitInto(),this.getReason(), this.getCreatedDate(), this.getInactiveObjects());
+                            this.getSplitInto(), this.getReason(), this.getCreatedDate(), this.getInactiveObjects());
     }
 
     @Override

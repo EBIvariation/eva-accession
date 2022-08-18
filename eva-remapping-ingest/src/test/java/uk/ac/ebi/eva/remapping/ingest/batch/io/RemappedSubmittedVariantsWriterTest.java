@@ -72,7 +72,8 @@ public class RemappedSubmittedVariantsWriterTest {
     @Qualifier(REMAPPED_SUBMITTED_VARIANTS_WRITER)
     private RemappedSubmittedVariantsWriter writer;
 
-    private Function<ISubmittedVariant, String> hashingFunction;
+    private final Function<ISubmittedVariant, String> hashingFunction =
+            new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
 
     //Required by nosql-unit
     @Autowired
@@ -85,11 +86,6 @@ public class RemappedSubmittedVariantsWriterTest {
     @Autowired
     private RemappingIngestCounts remappingIngestCounts;
 
-    @Before
-    public void setUp() {
-        hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
-    }
-
     @After
     public void tearDown() {
         mongoClient.dropDatabase(TEST_DB);
@@ -98,7 +94,7 @@ public class RemappedSubmittedVariantsWriterTest {
 
     private SubmittedVariantEntity createSve(Long accession, long start, String ref, String alt,
                                              LocalDateTime createdDate, String remappedFrom) {
-        SubmittedVariant model = new SubmittedVariant("GCA_000000002.1", 1000, "projectId_1", "CM000002.1",
+        SubmittedVariant model = new SubmittedVariant("GCA_000000001.2", 1000, "projectId_1", "CM000002.1",
                                                       start, ref, alt, 3000000002L);
         String hash = hashingFunction.apply(model);
         SubmittedVariantEntity sve = new SubmittedVariantEntity(accession, hash, model, 1);
@@ -140,8 +136,12 @@ public class RemappedSubmittedVariantsWriterTest {
 
     @Test
     public void testDoesNotWriteNewDuplicateAccessions_discardFromDatabase() {
+        // Same SS but remapped is already in the db
+        SubmittedVariantEntity remappedSve = createSve(5000000004L, 1000, "C", "T", LocalDateTime.now(), "GCA_000000001.1");
+        mongoTemplate.insert(remappedSve);
+
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
-                createSve(5000000002L, 2100, "C", "T", LocalDateTime.now(), null));
+                createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), null));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(1, 0, 1);
     }
@@ -149,19 +149,19 @@ public class RemappedSubmittedVariantsWriterTest {
     @Test
     public void testDeduplicatesAccessionsFromInput() {
         List<SubmittedVariantEntity> svesToWrite = Arrays.asList(
-                createSve(5000000003L, 2100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"),
-                createSve(5000000003L, 2100, "A", "T", LocalDateTime.now(), "GCA_000000001.1"));
+                createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"),
+                createSve(5000000003L, 1100, "A", "T", LocalDateTime.now(), "GCA_000000001.1"));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(1, 0, 1);
     }
 
     @Test
     public void testDiscardsDuplicateHashes() {
-        SubmittedVariantEntity sveWithSameHash = createSve(5000000002L, 2100, "C", "T", LocalDateTime.now(), null);
+        SubmittedVariantEntity sveWithSameHash = createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), null);
         mongoTemplate.insert(sveWithSameHash);
 
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
-                createSve(5000000005L, 2100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
+                createSve(5000000005L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(0, 0, 1);
     }
@@ -169,7 +169,7 @@ public class RemappedSubmittedVariantsWriterTest {
     @Test
     public void testIdempotentWrites() {
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
-                createSve(5000000002L, 2100, "C", "T", LocalDateTime.now(), null));
+                createSve(5000000002L, 1100, "C", "T", LocalDateTime.now(), null));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(1, 0, 1);
 

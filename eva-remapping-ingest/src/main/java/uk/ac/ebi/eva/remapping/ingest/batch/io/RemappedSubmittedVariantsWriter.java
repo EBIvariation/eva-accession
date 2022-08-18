@@ -96,12 +96,6 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                                                               SubmittedVariantEntity.class,
                                                               collection);
         // Deal with discards before inserts, to avoid DuplicateKeyExceptions
-        if (svesToDiscard.size() > 0) {
-            bulkOperations.remove(query(where("_id").in(
-                    svesToDiscard.stream().map(SubmittedVariantEntity::getHashedMessage)
-                                 .collect(Collectors.toSet()))));
-            bulkOperations.execute();
-        }
         if (discardOperations.size() > 0) {
             try {
                 BulkOperations svoeBulkOperations = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED,
@@ -124,6 +118,12 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                 remappingIngestCounts.addRemappedVariantsDiscarded(bulkWriteResult.getInsertedCount());
                 remappingIngestCounts.addRemappedVariantsSkipped(duplicatesSkipped.size());
             }
+        }
+        if (svesToDiscard.size() > 0) {
+            bulkOperations.remove(query(where("_id").in(
+                    svesToDiscard.stream().map(SubmittedVariantEntity::getHashedMessage)
+                                 .collect(Collectors.toSet()))));
+            bulkOperations.execute();
         }
 
         if (svesToInsert.size() > 0) {
