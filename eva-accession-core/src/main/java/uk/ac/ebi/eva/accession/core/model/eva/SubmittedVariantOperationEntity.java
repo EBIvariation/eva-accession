@@ -22,6 +22,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocu
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Document
 public class SubmittedVariantOperationEntity extends EventDocument<ISubmittedVariant, Long,
@@ -31,6 +32,27 @@ public class SubmittedVariantOperationEntity extends EventDocument<ISubmittedVar
         super();
         //Set the created date to assure is is assigned when performing bulk operations
         setCreatedDate(LocalDateTime.now());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SubmittedVariantOperationEntity that = (SubmittedVariantOperationEntity) o;
+        return Objects.equals(this.getId(), that.getId()) &&
+                Objects.equals(this.getEventType(), that.getEventType()) &&
+                Objects.equals(this.getAccession(), that.getAccession()) &&
+                Objects.equals(this.getMergedInto(), that.getMergedInto()) &&
+                Objects.equals(this.getSplitInto(), that.getSplitInto()) &&
+                Objects.equals(this.getReason(), that.getReason()) &&
+                Objects.equals(this.getCreatedDate(), that.getCreatedDate()) &&
+                Objects.equals(this.getInactiveObjects(), that.getInactiveObjects());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getId(), this.getEventType(), this.getAccession(), this.getMergedInto(),
+                            this.getSplitInto(), this.getReason(), this.getCreatedDate(), this.getInactiveObjects());
     }
 
     @Override

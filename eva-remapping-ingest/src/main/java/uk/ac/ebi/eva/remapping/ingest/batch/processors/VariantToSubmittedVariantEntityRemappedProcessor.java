@@ -78,7 +78,7 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
                 throw new IllegalArgumentException("RS id is not in the correct format: " + rsIdTxt);
             }
         } else {
-            logger.warn("Variant {} does not have an RS ID associated: {}", variant.getMainId(), variant);
+            logger.debug("Variant {} does not have an RS ID associated: {}", variant.getMainId(), variant);
         }
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession,

@@ -352,7 +352,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     @Override
     public String toString() {
         return "SubmittedVariantEntity{" +
-                "referenceSequenceAccession='" + referenceSequenceAccession + '\'' +
+                "accession=" + getAccession() +
+                ", referenceSequenceAccession='" + referenceSequenceAccession + '\'' +
                 ", taxonomyAccession=" + taxonomyAccession +
                 ", projectAccession='" + projectAccession + '\'' +
                 ", contig='" + contig + '\'' +
