@@ -50,8 +50,6 @@ public class ClusteringWriterConfiguration {
                                                       Long accessioningMonotonicInitRs,
                                                       MetricCompute metricCompute,
                                                       File rsReportFile) throws IOException {
-
-
         return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
                                     clusteredVariantAccessioningService, accessioningMonotonicInitSs,
                                     accessioningMonotonicInitRs, metricCompute, true,
