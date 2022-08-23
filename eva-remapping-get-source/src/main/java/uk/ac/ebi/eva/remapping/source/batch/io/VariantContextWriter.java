@@ -45,6 +45,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
 
     public static final String RS_KEY = "RS";
 
+    public static final String BACKPROP_RS_KEY = "BACKPROP_RS";
+
     public static final String PROJECT_KEY = "PROJECT";
 
     public static final String TAXONOMY = "TAX";
@@ -86,6 +88,8 @@ public class VariantContextWriter implements ItemStreamWriter<VariantContext> {
                 "Hash (_id in MongoDB) of the Submitted Variant from which the remapped variant was created"));
         metaData.add(new VCFInfoHeaderLine(RS_KEY, 1, VCFHeaderLineType.String,
                                            "RS ID where this SS ID is clustered"));
+        metaData.add(new VCFInfoHeaderLine(BACKPROP_RS_KEY, 1, VCFHeaderLineType.String,
+                                           "RS ID that was backpropagated to this SS from another remapping"));
         metaData.add(new VCFInfoHeaderLine(PROJECT_KEY, 1, VCFHeaderLineType.String,
                                            "PROJECT ID associated with this SS ID"));
         metaData.add(new VCFInfoHeaderLine(TAXONOMY, 1, VCFHeaderLineType.String,
