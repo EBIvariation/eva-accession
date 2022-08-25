@@ -51,6 +51,9 @@ import uk.ac.ebi.eva.commons.core.models.VariantClassifier;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,6 +103,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private final boolean processClusteredRemappedVariants;
 
+    private final File rsReportFile;
+
+    private FileWriter rsReportFileWriter;
+
     private Map<String, SubmittedVariantOperationEntity> mergeCandidateSVOE;
 
     private Map<Long, SubmittedVariantOperationEntity> rsSplitCandidateSVOE;
@@ -110,7 +117,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                             Long accessioningMonotonicInitSs,
                             Long accessioningMonotonicInitRs,
                             MetricCompute metricCompute,
-                            boolean processClusteredRemappedVariants) {
+                            boolean processClusteredRemappedVariants,
+                            File rsReportFile) throws IOException {
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.clusteredService = clusteredVariantAccessioningService;
@@ -121,6 +129,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
         this.metricCompute = metricCompute;
         this.processClusteredRemappedVariants = processClusteredRemappedVariants;
+        this.rsReportFile = rsReportFile;
         getSVOEWithMergeAndRSSplitCandidates();
     }
 
@@ -146,20 +155,27 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     @Override
     public void write(@Nonnull List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, AccessionDoesNotExistException {
-        assignedAccessions.clear();
+            throws IOException, MongoBulkWriteException, AccessionCouldNotBeGeneratedException,
+            AccessionDoesNotExistException {
+        try {
+            this.rsReportFileWriter = new FileWriter(this.rsReportFile, true);
+            assignedAccessions.clear();
 
-        // Write new Clustered Variants in mongo and get existing ones. May merge clustered variants
-        getOrCreateClusteredVariantAccessions(submittedVariantEntities);
+            // Write new Clustered Variants in mongo and get existing ones. May merge clustered variants
+            getOrCreateClusteredVariantAccessions(submittedVariantEntities);
 
-        // Update submitted variants "rs" field for unclustered variants
-        if (!this.processClusteredRemappedVariants) {
-            clusterSubmittedVariants(submittedVariantEntities);
+            // Update submitted variants "rs" field for unclustered variants
+            if (!this.processClusteredRemappedVariants) {
+                clusterSubmittedVariants(submittedVariantEntities);
+            }
+        }
+        finally {
+            this.rsReportFileWriter.close();
         }
     }
 
     private void getOrCreateClusteredVariantAccessions(List<? extends SubmittedVariantEntity> submittedVariantEntities)
-            throws AccessionCouldNotBeGeneratedException {
+            throws AccessionCouldNotBeGeneratedException, IOException {
         if (processClusteredRemappedVariants) {
             processClusteredRemappedVariants(submittedVariantEntities);
         } else {
@@ -169,7 +185,12 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             if (!clusteredVariants.isEmpty()) {
                 List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
                         clusteredService.getOrCreate(clusteredVariants);
-
+                for (GetOrCreateAccessionWrapper<IClusteredVariant, String, Long> result : accessionWrappers) {
+                    if (result.isNewAccession()) {
+                        ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, result.getAccession(),
+                                                            result.getHash());
+                    }
+                }
                 List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionNoMultimap =
                         excludeMultimaps(accessionWrappers);
 
@@ -209,7 +230,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
      * ACCESSION    EVENT_TYPE          REASON                  INACTIVe_OBJECTS
      * 306          RS_SPLIT_CANDIDATE  Hash mismatch with 306  {ss-500 and ss-501}
      */
-    private void processClusteredRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants) {
+    private void processClusteredRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants)
+            throws IOException {
         List<SubmittedVariantEntity> clusteredRemappedSubmittedVariants = getClusteredAndRemappedVariants(submittedVariants);
         if(clusteredRemappedSubmittedVariants.isEmpty()) {
             return;
@@ -378,10 +400,16 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private void insertAllEntriesInDB(List<ClusteredVariantEntity> clusteredVariantEntities,
                                       List<ClusteredVariantEntity> dbsnpClusteredVariantEntities,
                                       Map<String, SubmittedVariantOperationEntity> mergeSVOE,
-                                      Map<Long, SubmittedVariantOperationEntity> rsSplitSVOE) {
+                                      Map<Long, SubmittedVariantOperationEntity> rsSplitSVOE) throws IOException {
         mongoTemplate.insert(clusteredVariantEntities, ClusteredVariantEntity.class);
         mongoTemplate.insert(dbsnpClusteredVariantEntities, DbsnpClusteredVariantEntity.class);
         metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, clusteredVariantEntities.size() + dbsnpClusteredVariantEntities.size());
+        for (ClusteredVariantEntity cve : clusteredVariantEntities) {
+            ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, cve.getAccession(), cve.getHashedMessage());
+        }
+        for (ClusteredVariantEntity cve : dbsnpClusteredVariantEntities) {
+            ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, cve.getAccession(), cve.getHashedMessage());
+        }
 
         List<SubmittedVariantOperationEntity> mergeSVOEInsertEntries = new ArrayList<>();
         List<SubmittedVariantOperationEntity> rsSplitSVOEInsertEntries = new ArrayList<>();
@@ -560,5 +588,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     protected String getClusteredVariantHash(ISubmittedVariant submittedVariant) {
         ClusteredVariant clusteredVariant = toClusteredVariant(submittedVariant);
         return clusteredHashingFunction.apply(clusteredVariant);
+    }
+
+    protected static void writeRSReportEntry (FileWriter rsReportWriter, Long rsAccession, String rsHash)
+            throws IOException {
+        rsReportWriter.write(String.format("%s\t%s\n", rsAccession, rsHash));
     }
 }

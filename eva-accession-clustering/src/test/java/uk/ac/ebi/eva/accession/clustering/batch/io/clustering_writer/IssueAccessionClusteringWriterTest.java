@@ -60,6 +60,9 @@ import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -103,6 +106,9 @@ public class IssueAccessionClusteringWriterTest {
 
     @Autowired
     private InputParameters inputParameters;
+
+    @Autowired
+    private File rsReportFile;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -154,9 +160,10 @@ public class IssueAccessionClusteringWriterTest {
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
+        Files.deleteIfExists(this.rsReportFile.toPath());
     }
 
     @After
@@ -175,6 +182,12 @@ public class IssueAccessionClusteringWriterTest {
         assertSubmittedVariantsUpdated();
         assertSubmittedVariantsOperationInserted();
         assertClusteringCounts(metricCompute, 4, 0, 0, 0, 5, 0, 5);
+        List<String> rsReportLines = Files.readAllLines(this.rsReportFile.toPath());
+        assertEquals(4, rsReportLines.size());
+        assertTrue(rsReportLines.contains("3000000000\tD6AC085C7A222F9DEAB2A3BAAF8811609B318588"));
+        assertTrue(rsReportLines.contains("3000000001\t45AD6681283DABF5A0467AD32C368943EE247DAB"));
+        assertTrue(rsReportLines.contains("3000000002\t48835E7155AE18E191AD399AFDF035A086CBF500"));
+        assertTrue(rsReportLines.contains("3000000003\tFC1D506154A501D11EE62739129E6478A8EC535A"));
     }
 
     private List<SubmittedVariantEntity> createSubmittedVariantEntities() {

@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +35,9 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
+import java.io.File;
+import java.io.IOException;
+
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_MERGE_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER;
@@ -42,6 +46,9 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLI
 @Import({ClusteredVariantAccessioningConfiguration.class, SubmittedVariantAccessioningConfiguration.class,
         ClusteringWriterConfiguration.class, MongoConfiguration.class})
 public class RSMergeAndSplitWriterConfiguration {
+
+    @Autowired
+    private InputParameters inputParameters;
 
     @Bean(RS_MERGE_WRITER)
     public ItemWriter<SubmittedVariantOperationEntity> rsMergeWriter(
@@ -59,8 +66,10 @@ public class RSMergeAndSplitWriterConfiguration {
             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
             SubmittedVariantAccessioningService submittedVariantAccessioningService,
             MongoTemplate mongoTemplate,
-            MetricCompute metricCompute) {
+            MetricCompute metricCompute,
+            File rsReportFile) throws IOException {
         return new RSSplitWriter(clusteringWriter, clusteredVariantAccessioningService,
-                                 submittedVariantAccessioningService, mongoTemplate, metricCompute);
+                                 submittedVariantAccessioningService, mongoTemplate, metricCompute,
+                                 rsReportFile);
     }
 }

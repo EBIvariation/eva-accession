@@ -33,6 +33,8 @@ public class BeanNames {
 
     public static final String RS_MERGE_WRITER = "RS_MERGE_WRITER";
 
+    public static final String RS_REPORT_FILE = "RS_REPORT_FILE";
+
     public static final String RS_SPLIT_WRITER = "RS_SPLIT_WRITER";
 
     public static final String SS_SPLIT_WRITER = "SS_SPLIT_WRITER";
