@@ -99,10 +99,18 @@ public class VariantContextWriterTest {
 
     private SubmittedVariantEntity buildVariant(String chr, long start, String ref, String alt, Long rs,
                                                 String project, int taxonomy) {
+        return buildVariant(chr, start, ref, alt, rs, null, project, taxonomy);
+    }
+
+    private SubmittedVariantEntity buildVariant(String chr, long start, String ref, String alt, Long rs,
+                                                Long backpropRs, String project, int taxonomy) {
         SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(1L, SS_HASH, REFERENCE_ASSEMBLY,
                                                                                    taxonomy, project, chr, start, ref,
                                                                                    alt, rs, false, false, false, false,
                                                                                    1);
+        if (backpropRs != null) {
+            submittedVariantEntity.setBackPropagatedVariantAccession(backpropRs);
+        }
         submittedVariantEntity.setCreatedDate(LocalDateTime.parse(CREATED_DATE));
         return submittedVariantEntity;
     }
@@ -154,25 +162,29 @@ public class VariantContextWriterTest {
     }
 
     private void assertInfo(Long rsId, String infoColumn) {
-        assertInfo(infoColumn, SS_HASH, rsId, PROJECT_ACCESSION, TAXONOMY_ACCESSION, CREATED_DATE);
+        assertInfo(infoColumn, SS_HASH, rsId, null, PROJECT_ACCESSION, TAXONOMY_ACCESSION, CREATED_DATE);
     }
 
-    private void assertInfo(String infoColumn, String expectedSSHash, Long expectedRsId, String expectedProject, int expectedTaxonomy,
-                            String expectedCreatedDate) {
+    private void assertInfo(String infoColumn, String expectedSSHash, Long expectedRsId, Long expectedBackpropRs,
+                            String expectedProject, int expectedTaxonomy, String expectedCreatedDate) {
         String[] infos = infoColumn.split(";");
 
+        int expectedLength = 4;
         if (expectedRsId != null) {
-            assertEquals(5, infos.length);
-        } else {
-            assertEquals(4, infos.length);
+            expectedLength++;
         }
+        if (expectedBackpropRs != null) {
+            expectedLength++;
+        }
+        assertEquals(expectedLength, infos.length);
 
         for (String info : infos) {
-            if (info.startsWith("SS_HASH=")){
+            if (info.startsWith("SS_HASH=")) {
                 assertEquals("SS_HASH=" + expectedSSHash, info);
-            }
-            else if (info.startsWith("RS=")){
+            } else if (info.startsWith("RS=")) {
                 assertEquals("RS=rs" + expectedRsId, info);
+            } else if (info.startsWith("BACKPROP_RS=")) {
+                assertEquals("BACKPROP_RS=rs" + expectedBackpropRs, info);
             } else if(info.startsWith("PROJECT=")) {
                 assertEquals("PROJECT=" + expectedProject, info);
             } else if(info.startsWith("TAX=")) {
@@ -192,7 +204,7 @@ public class VariantContextWriterTest {
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, null, project2, taxonomy2, CREATED_DATE);
+            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, null, null, project2, taxonomy2, CREATED_DATE);
         });
         assertEquals(1, variantCount);
     }
@@ -207,7 +219,7 @@ public class VariantContextWriterTest {
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, rsId, project2, taxonomy2, CREATED_DATE);
+            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, rsId, null, project2, taxonomy2, CREATED_DATE);
         });
         assertEquals(1, variantCount);
     }
@@ -219,17 +231,18 @@ public class VariantContextWriterTest {
         String project2 = "project2";
         int taxonomy2 = 1000;
         long rsId = 123L;
+        long backpropRs = 456L;
         File output = assertWriteVcf(outputFolder,
-                                     buildVariant("1", 1000, "C", "A", rsId, project2, taxonomy2),
-                                     buildVariant("2", 1000, "C", "A", rsId, project2, taxonomy2),
-                                     buildVariant("3", 1000, "C", "A", rsId, project2, taxonomy2),
-                                     buildVariant("4", 1000, "C", "A", rsId, project2, taxonomy2));
+                                     buildVariant("1", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
+                                     buildVariant("2", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
+                                     buildVariant("3", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2),
+                                     buildVariant("4", 1000, "C", "A", rsId, backpropRs, project2, taxonomy2));
 
         final Long[] expectedChr = {1L};
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
             assertEquals(expectedChr[0].toString(), columns[VCF_CHROMOSOME_COLUMN]);
-            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, rsId, project2, taxonomy2, CREATED_DATE);
+            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, rsId, backpropRs, project2, taxonomy2, CREATED_DATE);
             expectedChr[0]++;
         });
         assertEquals(4, variantCount);
@@ -244,7 +257,7 @@ public class VariantContextWriterTest {
 
         long variantCount = forEachVcfDataLine(output, (String[] columns) -> {
             assertEquals(COLUMNS_IN_VCF_WITHOUT_SAMPLES, columns.length);
-            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, null, "a%25weird%3Dproject%3Bwith%2Cspecial characters", TAXONOMY_ACCESSION,
+            assertInfo(columns[VCF_INFO_COLUMN], SS_HASH, null, null, "a%25weird%3Dproject%3Bwith%2Cspecial characters", TAXONOMY_ACCESSION,
                     CREATED_DATE);
         });
         assertEquals(1, variantCount);

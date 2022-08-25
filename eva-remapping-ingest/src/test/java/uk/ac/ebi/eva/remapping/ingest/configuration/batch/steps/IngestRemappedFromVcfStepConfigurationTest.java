@@ -99,13 +99,13 @@ public class IngestRemappedFromVcfStepConfigurationTest {
         Assert.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         //Documents in the database after the ingestion
-        assertEquals(10, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
+        assertEquals(11, mongoTemplate.getCollection(SUBMITTED_VARIANT_COLLECTION).countDocuments());
 
         Query remappedVariantsQuery = new Query(Criteria.where("remappedFrom").is(REMAPPED_FROM));
         List<SubmittedVariantEntity> remappedVariants = mongoTemplate.find(remappedVariantsQuery,
                                                                            SubmittedVariantEntity.class);
 
-        assertEquals(5, remappedVariants.size());
+        assertEquals(6, remappedVariants.size());
 
         //Variant ss5000000000: Remapped only once
         assertEquals(2, getVariantCountBySsId(5000000000L));
@@ -125,6 +125,10 @@ public class IngestRemappedFromVcfStepConfigurationTest {
 
         //Variant ss5000000002: Remapped only once, belongs to a different project and have a different taxonomy
         assertEquals(2, getVariantCountBySsId(5000000003L));
+
+        //Variant ss5000000005: Ingested with backpropagated RS
+        List<SubmittedVariantEntity> bpVariants = getVariantsBySsId(5000000005L);
+        assertEquals(1, bpVariants.stream().filter(x -> x.getBackPropagatedVariantAccession() == 3000000004L).count());
     }
 
     private long getVariantCountBySsId(long ssId) {

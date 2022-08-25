@@ -42,6 +42,8 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
 
     public static final String RS_KEY = "RS";
 
+    public static final String BACKPROP_RS_KEY = "BACKPROP_RS";
+
     public static final String CREATED_DATE = "CREATED";
 
     private String assemblyAccession;
@@ -70,16 +72,12 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         int taxonomyAccession = NumberUtils.createInteger(sourceEntry.getAttribute(TAXONOMY_KEY));
         String projectAccession = sourceEntry.getAttribute(PROJECT_KEY);
         String rsIdTxt = sourceEntry.getAttribute(RS_KEY);
-        Long rsId = null;
-        if (rsIdTxt != null) {
-            if (rsIdTxt.startsWith("rs")) {
-                    rsId = NumberUtils.createLong(sourceEntry.getAttribute(RS_KEY).substring(2));
-            } else {
-                throw new IllegalArgumentException("RS id is not in the correct format: " + rsIdTxt);
-            }
-        } else {
+        Long rsId = parseRsId(rsIdTxt);
+        if (rsId == null) {
             logger.debug("Variant {} does not have an RS ID associated: {}", variant.getMainId(), variant);
         }
+        String backpropRsTxt = sourceEntry.getAttribute(BACKPROP_RS_KEY);
+        Long backpropRs = parseRsId(backpropRsTxt);
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
@@ -93,6 +91,21 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
                                                                                            remappedFrom,
                                                                                            LocalDateTime.now(),
                                                                                            remappingId);
+        if (backpropRs != null) {
+            submittedVariantRemappedEntity.setBackPropagatedVariantAccession(backpropRs);
+        }
         return submittedVariantRemappedEntity;
+    }
+
+    private Long parseRsId(String rsIdTxt) {
+        Long rsId = null;
+        if (rsIdTxt != null) {
+            if (rsIdTxt.startsWith("rs")) {
+                rsId = NumberUtils.createLong(rsIdTxt.substring(2));
+            } else {
+                throw new IllegalArgumentException("RS id is not in the correct format: " + rsIdTxt);
+            }
+        }
+        return rsId;
     }
 }
