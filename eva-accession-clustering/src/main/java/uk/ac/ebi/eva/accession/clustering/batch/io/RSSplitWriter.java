@@ -49,6 +49,9 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessionin
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -88,23 +91,35 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private final MetricCompute<ClusteringMetric> metricCompute;
 
+    private final File rsReportFile;
+
+    private FileWriter rsReportFileWriter;
+
     public RSSplitWriter(ClusteringWriter clusteringWriter,
                          ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
                          MongoTemplate mongoTemplate,
-                         MetricCompute<ClusteringMetric> metricCompute) {
+                         MetricCompute<ClusteringMetric> metricCompute,
+                         File rsReportFile) throws IOException {
         this.clusteringWriter = clusteringWriter;
         this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
         this.metricCompute = metricCompute;
+        this.rsReportFile = rsReportFile;
     }
 
     @Override
     public void write(@Nonnull List<? extends SubmittedVariantOperationEntity> submittedVariantOperationEntities)
-            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException {
-        for (SubmittedVariantOperationEntity entity: submittedVariantOperationEntities) {
-            writeRSSplit(entity);
+            throws MongoBulkWriteException, AccessionCouldNotBeGeneratedException, IOException {
+        try {
+            this.rsReportFileWriter = new FileWriter(this.rsReportFile, true);
+            for (SubmittedVariantOperationEntity entity : submittedVariantOperationEntities) {
+                writeRSSplit(entity);
+            }
+        }
+        finally {
+            this.rsReportFileWriter.close();
         }
     }
 
@@ -116,7 +131,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
     }
 
     public void writeRSSplit(SubmittedVariantOperationEntity submittedVariantOperationEntity)
-            throws AccessionCouldNotBeGeneratedException {
+            throws AccessionCouldNotBeGeneratedException, IOException {
         // For each sets of RS hashes among the split candidates
         // get a triple with
         // 1) ClusteredVariant object with the hash 2) the hash itself and 3) number of variants with that hash
@@ -160,7 +175,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private void issueNewRSForHashes(List<String> hashesThatShouldGetNewRS,
                                      List<SubmittedVariantInactiveEntity> submittedVariantInactiveEntities)
-            throws AccessionCouldNotBeGeneratedException {
+            throws AccessionCouldNotBeGeneratedException, IOException {
         Map<String, List<SubmittedVariantEntity>> rsHashAndAssociatedSS =
                 submittedVariantInactiveEntities
                 .stream()
@@ -179,6 +194,7 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                 Long newRSAccession =
                         this.clusteredVariantAccessioningService.getOrCreate(
                                 Collections.singletonList(clusteredVariantEntity)).get(0).getAccession();
+                ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, newRSAccession, rsHash);
                 metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
                 List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);
                 for (SubmittedVariantEntity submittedVariantEntity: associatedSSEntries) {
