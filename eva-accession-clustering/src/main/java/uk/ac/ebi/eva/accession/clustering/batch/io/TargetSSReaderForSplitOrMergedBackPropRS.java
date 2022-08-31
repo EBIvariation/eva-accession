@@ -98,6 +98,9 @@ public class TargetSSReaderForSplitOrMergedBackPropRS implements ItemStreamReade
                 break;
             }
         }
+        if (clusteredVariantOperations.size() == 0) {
+            return null;
+        }
         List<Long> rsToLookUpInRemappedAssembly =
                 clusteredVariantOperations.stream().map(ClusteredVariantOperationEntity::getAccession).collect(
                         Collectors.toList());
@@ -111,7 +114,9 @@ public class TargetSSReaderForSplitOrMergedBackPropRS implements ItemStreamReade
                 this.submittedVariantAccessioningService
                         .getByClusteredVariantAccessionIn(rsToLookUpInRemappedAssembly)
                         .stream()
-                        .filter(e -> e.getData().getReferenceSequenceAccession().equals(this.remappedAssembly))
+                        .filter(e -> e.getData().getReferenceSequenceAccession().equals(this.remappedAssembly)
+                                && Objects.nonNull(e.getData().getRemappedFrom())
+                                && e.getData().getRemappedFrom().equals(this.originalAssembly))
                         .map(AccessionWrapper::getAccession)
                         .collect(Collectors.toList());
         List<SubmittedVariantEntity> targetSSRecordsInOriginalAssembly =
@@ -120,7 +125,7 @@ public class TargetSSReaderForSplitOrMergedBackPropRS implements ItemStreamReade
                         .stream().map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
                                                                            result.getData(), result.getVersion()))
                         .collect(Collectors.toList());
-        return targetSSRecordsInOriginalAssembly.size() == 0 ? null: targetSSRecordsInOriginalAssembly;
+        return targetSSRecordsInOriginalAssembly;
     }
 
     public ClusteredVariantOperationEntity readCursor() {
