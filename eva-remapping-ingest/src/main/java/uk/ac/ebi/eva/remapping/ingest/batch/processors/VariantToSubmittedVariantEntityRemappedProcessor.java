@@ -78,6 +78,11 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
         }
         String backpropRsTxt = sourceEntry.getAttribute(BACKPROP_RS_KEY);
         Long backpropRs = parseRsId(backpropRsTxt);
+        if (backpropRs != null) {
+            logger.debug("Variant {} will use back propagated RS {} instead of source RS {}",
+                         variant.getMainId(), backpropRs, rsId);
+            rsId = backpropRs;
+        }
 
         SubmittedVariant submittedVariant = new SubmittedVariant(assemblyAccession, taxonomyAccession, projectAccession,
                                                                  variant.getChromosome(), variant.getStart(),
@@ -91,9 +96,6 @@ public class VariantToSubmittedVariantEntityRemappedProcessor implements ItemPro
                                                                                            remappedFrom,
                                                                                            LocalDateTime.now(),
                                                                                            remappingId);
-        if (backpropRs != null) {
-            submittedVariantRemappedEntity.setBackPropagatedVariantAccession(backpropRs);
-        }
         return submittedVariantRemappedEntity;
     }
 
