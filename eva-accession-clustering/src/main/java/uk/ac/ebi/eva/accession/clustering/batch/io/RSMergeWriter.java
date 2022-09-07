@@ -96,6 +96,9 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private static final String REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_VARIANT_COLLECTION = "seq";
 
+    private static final String ASM_ATTRIBUTE_IN_OPERATIONS_COLLECTION = INACTIVE_OBJECT_ATTRIBUTE + "." +
+            REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION;
+
     private int currentlyProcessingOperationIndex;
 
     private List<SubmittedVariantOperationEntity> allMergeCandidateOperations;
@@ -201,8 +204,10 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>
                 existingOperations =
                 this.mongoTemplate.find(query(where(ACCESSION_ATTRIBUTE).is(mergee.getAccession()))
-                                                .addCriteria(where(MERGE_DESTINATION_ATTRIBUTE)
-                                                                     .is(mergeDestination.getAccession())),
+                                                .addCriteria(where(MERGE_DESTINATION_ATTRIBUTE).is(
+                                                        mergeDestination.getAccession()))
+                                                .addCriteria(where(ASM_ATTRIBUTE_IN_OPERATIONS_COLLECTION)
+                                                                     .is(this.assemblyAccession)),
                                         operationsCollectionToWriteTo);
         if (existingOperations.isEmpty()) {
             ClusteredVariantOperationEntity operation = new ClusteredVariantOperationEntity();
