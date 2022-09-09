@@ -128,7 +128,7 @@ public class IngestRemappedFromVcfStepConfigurationTest {
 
         //Variant ss5000000005: Ingested with backpropagated RS
         List<SubmittedVariantEntity> bpVariants = getVariantsBySsId(5000000005L);
-        assertEquals(1, bpVariants.stream().filter(x -> x.getBackPropagatedVariantAccession() == 3000000004L).count());
+        assertEquals(1, bpVariants.stream().filter(x -> x.getClusteredVariantAccession() == 3000000004L).count());
     }
 
     private long getVariantCountBySsId(long ssId) {
