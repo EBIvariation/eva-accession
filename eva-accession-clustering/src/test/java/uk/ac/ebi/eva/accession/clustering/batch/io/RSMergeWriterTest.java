@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -36,6 +38,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveSubDocument;
 
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
@@ -45,6 +49,13 @@ import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -52,12 +63,15 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantOper
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantOperationRepository;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -136,7 +150,13 @@ public class RSMergeWriterTest {
     private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,
                                             String alternate) {
 
-        return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession, ASSEMBLY, 60711,
+        return createSS(ssAccession, rsAccession, start, reference, alternate, ASSEMBLY);
+    }
+
+    private SubmittedVariantEntity createSS(Long ssAccession, Long rsAccession, Long start, String reference,
+                                            String alternate, String assemblyToUse) {
+
+        return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession + assemblyToUse, assemblyToUse, 60711,
                                           "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
                                           false, 1);
     }
@@ -234,8 +254,11 @@ public class RSMergeWriterTest {
     private void assertRSAssociatedWithSS(Long rsAccession, SubmittedVariantEntity submittedVariantEntity)
             throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         assertEquals(rsAccession,
-                     submittedVariantAccessioningService.getByAccession(submittedVariantEntity.getAccession()).getData()
-                                                        .getClusteredVariantAccession());
+                     submittedVariantAccessioningService
+                             .getAllActiveByAssemblyAndAccessionIn(ASSEMBLY,
+                                                                   Collections.singletonList(
+                                                                           submittedVariantEntity.getAccession()))
+                             .stream().findFirst().get().getData().getClusteredVariantAccession());
     }
 
     @Test
@@ -372,6 +395,8 @@ public class RSMergeWriterTest {
          * SS2/RS2 and SS3/RS2 are split candidate entries because the same RS has different loci
          */
         createMultiLevelMergeScenario();
+        // Create similar entries as above in another assembly
+        createSimilarEntriesInAnotherAssembly();
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
         SubmittedVariantOperationEntity temp;
         while ((temp = rsMergeCandidatesReader.read()) != null) {
@@ -390,10 +415,23 @@ public class RSMergeWriterTest {
          * 4    1   chr1/103/SNV
          *
          */
+        // Check rs2 to rs1 merge
+        assertMergeOp(ss2.getClusteredVariantAccession(), ss1.getClusteredVariantAccession(), ASSEMBLY);
+        // Check rs3 to rs1 merge
+        assertMergeOp(ss3.getClusteredVariantAccession(), ss1.getClusteredVariantAccession(), ASSEMBLY);
         assertRSAssociatedWithSS(1L, ss1);
         assertRSAssociatedWithSS(1L, ss2);
         assertRSAssociatedWithSS(1L, ss3);
         assertRSAssociatedWithSS(1L, ss4);
+    }
+
+    private void assertMergeOp(Long mergee, Long merger, String assemblyToUse) {
+        assertEquals(0, this.clusteredVariantAccessioningService
+                .getAllActiveByAssemblyAndAccessionIn(assemblyToUse, Arrays.asList(mergee)).size());
+        assertEquals(1, this.mongoTemplate.find(Query.query(Criteria.where("inactiveObjects.asm")
+                                                                    .is(assemblyToUse).and("accession").is(mergee)
+                                                                    .and("mergeInto").is(merger)),
+                                                DbsnpClusteredVariantOperationEntity.class).size());
     }
 
     public void createMultiLevelMergeScenario() {
@@ -420,6 +458,27 @@ public class RSMergeWriterTest {
 
         this.mongoTemplate.insert(Arrays.asList(mergeOperation1, mergeOperation2, splitOperation1),
                                   SUBMITTED_VARIANT_OPERATION_COLLECTION);
+    }
+
+    private void createSimilarEntriesInAnotherAssembly() {
+        //ss1-ss3 will be inserted to dbsnpSubmittedVariantEntity
+        // and ss4 to submittedVariantEntity collections respectively
+        SubmittedVariantEntity ss1_another_asm = createSS(1L, 1L, 100L, "C", "T", "ASM_ANOTHER");
+        SubmittedVariantEntity ss2_another_asm = createSS(2L, 1L, 100L, "C", "A", "ASM_ANOTHER");
+        SubmittedVariantEntity ss3_another_asm = createSS(3L, 2L, 103L, "A", "G", "ASM_ANOTHER");
+        SubmittedVariantEntity ss4_another_asm = createSS(4L, 3L, 103L, "T", "C", "ASM_ANOTHER");
+        this.mongoTemplate.insert(Arrays.asList(ss1_another_asm, ss2_another_asm, ss3_another_asm),
+                                  DBSNP_SUBMITTED_VARIANT_COLLECTION);
+        this.mongoTemplate.insert(Collections.singletonList(ss4_another_asm), SUBMITTED_VARIANT_COLLECTION);
+
+        DbsnpClusteredVariantEntity rs1_another_asm = this.createRS(ss1_another_asm);
+        // create operations for rs2 -> rs1 merge to test EVA-2974 root cause
+        // see https://www.ebi.ac.uk/panda/jira/browse/EVA-2974?focusedCommentId=405919&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-405919
+        DbsnpClusteredVariantOperationEntity rs2ToRs1MergeOp = new DbsnpClusteredVariantOperationEntity();
+        rs2ToRs1MergeOp.fill(EventType.MERGED, 2L, 1L,
+                             "Identical clustered variant received multiple RS identifiers",
+                             Arrays.asList(new DbsnpClusteredVariantInactiveEntity(rs1_another_asm)));
+        this.mongoTemplate.save(rs2ToRs1MergeOp);
     }
 
     @Test
@@ -451,5 +510,19 @@ public class RSMergeWriterTest {
 
         assertEquals(databaseStateAfterSecondMergeWrite, databaseStateAfterFirstMergeWrite);
         assertEquals(databaseStateAfterThirdMergeWrite, databaseStateAfterFirstMergeWrite);
+    }
+
+    private DbsnpClusteredVariantEntity createRS(SubmittedVariantEntity sve) {
+        Function<IClusteredVariant, String> hashingFunction =  new ClusteredVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        ClusteredVariant cv = new ClusteredVariant(sve.getReferenceSequenceAccession(), sve.getTaxonomyAccession(),
+                                                   sve.getContig(),
+                                                   sve.getStart(),
+                                                   new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
+                                                               sve.getReferenceAllele(),
+                                                               sve.getAlternateAllele()).getType(),
+                                                   true, null);
+        String hash = hashingFunction.apply(cv);
+        return new DbsnpClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
     }
 }
