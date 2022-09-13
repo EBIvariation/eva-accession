@@ -41,6 +41,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFro
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromVcfJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ProcessRemappedVariantsWithRSJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.StudyClusteringJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.ClusteringVariantProcessorConfiguration;
@@ -52,11 +53,13 @@ import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
+import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration.NEW_CLUSTERED_VARIANTS_QC_JOB;
 
 @EnableAutoConfiguration
 @Import({ClusteringFromVcfJobConfiguration.class,
         ClusteringFromMongoJobConfiguration.class,
         StudyClusteringJobConfiguration.class,
+        NewClusteredVariantsQCJobConfiguration.class,
         ProcessRemappedVariantsWithRSJobConfiguration.class,
         ClusterUnclusteredVariantsJobConfiguration.class,
         BackPropagateRSJobConfiguration.class,
@@ -80,6 +83,8 @@ public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_FROM_MONGO = "JOB_LAUNCHER_FROM_MONGO";
 
     public static final String JOB_LAUNCHER_STUDY_FROM_MONGO = "JOB_LAUNCHER_STUDY_FROM_MONGO";
+
+    public static final String JOB_LAUNCHER_NEW_CLUSTERED_VARIANTS_QC = "JOB_LAUNCHER_NEW_CLUSTERED_VARIANTS_QC";
 
     public static final String JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP = "JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP";
 
@@ -126,6 +131,18 @@ public class BatchTestConfiguration {
             @Override
             @Autowired
             public void setJob(@Qualifier(STUDY_CLUSTERING_JOB) Job job) {
+                super.setJob(job);
+            }
+        };
+    }
+
+    @Bean(JOB_LAUNCHER_NEW_CLUSTERED_VARIANTS_QC)
+    public JobLauncherTestUtils jobLauncherTestUtilsNewClusteredVariants() {
+
+        return new JobLauncherTestUtils() {
+            @Override
+            @Autowired
+            public void setJob(@Qualifier(NEW_CLUSTERED_VARIANTS_QC_JOB) Job job) {
                 super.setJob(job);
             }
         };
