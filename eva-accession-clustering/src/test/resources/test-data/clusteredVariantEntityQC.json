@@ -1,0 +1,26 @@
+{
+  "clusteredVariantEntity": [
+    {
+      "_id": "4D4DB71BE5648BD2A052523E8DB73216B55DF388",
+      "asm": "GCA_000000001.1",
+      "tax": 3000,
+      "contig": "2",
+      "start": NumberLong(3000),
+      "type": "SNV",
+      "accession": NumberLong(2),
+      "version": 1,
+      "createdDate": ISODate("2020-08-03T15:23:06.356Z")
+    },
+    {
+      "_id": "E0DDC2E7F48F5E1C3FE1028680D07A5A16FFE846",
+      "asm": "GCA_000000001.1",
+      "tax": 3000,
+      "contig": "2",
+      "start": NumberLong(4000),
+      "type": "SNV",
+      "accession": NumberLong(5),
+      "version": 1,
+      "createdDate": ISODate("2020-08-03T15:23:06.356Z")
+    }
+  ]
+}
