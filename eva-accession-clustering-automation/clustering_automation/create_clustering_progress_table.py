@@ -71,56 +71,44 @@ def create_table(private_config_xml_file):
 
 
 def fill_in_table_from_remapping(private_config_xml_file, release_version, reference_directory):
-    query_assembly_accession_info = (f"""select taxonomy, scientific_name, assembly_accession, string_agg(distinct source, ', '), 
-    sum(num_ss_ids) from eva_progress_tracker.remapping_tracker where release_version={release_version} 
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
+        query_target_asm = (f"""select taxonomy, scientific_name, assembly_accession, string_agg(distinct source, ', '),
+         sum(num_ss_ids) from eva_progress_tracker.remapping_tracker 
+        where release_version={release_version} 
         group by taxonomy, scientific_name, assembly_accession""")
-    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         for taxonomy, scientific_name, assembly_accession, sources, num_ss_id \
-                in get_all_results_for_query(pg_conn, query_assembly_accession_info):
-            if num_ss_id == 0:
-                # Do not release species with no data
-                continue
+                in get_all_results_for_query(pg_conn, query_target_asm):
+            insert_remapping_entries(pg_conn, taxonomy, scientific_name, assembly_accession, sources,
+                                     num_ss_id, reference_directory, release_version)
 
-            should_be_clustered = True
-            should_be_released = True
-            ncbi_assembly = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
-            fasta_path = ncbi_assembly.assembly_fasta_path
-            report_path = ncbi_assembly.assembly_report_path
-            tempmongo_instance = get_tempmongo_instance(pg_conn, taxonomy)
-            release_folder_name = normalise_taxon_scientific_name(scientific_name)
-            query_insert = (
-                'INSERT INTO eva_progress_tracker.clustering_release_tracker '
-                '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
-                'fasta_path, report_path, tempmongo_instance, should_be_released, release_folder_name) '
-                f"VALUES ('{sources}', {taxonomy}, '{scientific_name}', '{assembly_accession}', {release_version}, "
-                f"{should_be_clustered}, '{fasta_path}', '{report_path}', '{tempmongo_instance}', {should_be_released}, "
-                f"'{release_folder_name}') ON CONFLICT DO NOTHING")
-            execute_query(pg_conn, query_insert)
-
-    query_origin_assembly_accession_info = (f"""select taxonomy, scientific_name, origin_assembly_accession, source, num_ss_ids
-        from eva_progress_tracker.remapping_tracker where release_version={release_version}""")
-    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
+        query_origin_asm = (f"""select taxonomy, scientific_name, origin_assembly_accession, source, num_ss_ids
+        from eva_progress_tracker.remapping_tracker 
+        where release_version={release_version}""")
         for taxonomy, scientific_name, assembly_accession, source, num_ss_id \
-                in get_all_results_for_query(pg_conn, query_origin_assembly_accession_info):
-            if num_ss_id == 0:
-                # Do not release species with no data
-                continue
+                in get_all_results_for_query(pg_conn, query_origin_asm):
+            insert_remapping_entries(pg_conn, taxonomy, scientific_name, assembly_accession, source,
+                                     num_ss_id, reference_directory, release_version)
 
-            should_be_clustered = True
-            should_be_released = True
-            ncbi_assembly = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
-            fasta_path = ncbi_assembly.assembly_fasta_path
-            report_path = ncbi_assembly.assembly_report_path
-            tempmongo_instance = get_tempmongo_instance(pg_conn, taxonomy)
-            release_folder_name = normalise_taxon_scientific_name(scientific_name)
-            query_insert = (
-                'INSERT INTO eva_progress_tracker.clustering_release_tracker '
-                '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
-                'fasta_path, report_path, tempmongo_instance, should_be_released, release_folder_name) '
-                f"VALUES ('{source}', {taxonomy}, '{scientific_name}', '{assembly_accession}', {release_version}, "
-                f"{should_be_clustered}, '{fasta_path}', '{report_path}', '{tempmongo_instance}', {should_be_released}, "
-                f"'{release_folder_name}') ON CONFLICT DO NOTHING")
-            execute_query(pg_conn, query_insert)
+
+def insert_remapping_entries(pg_conn, taxonomy, scientific_name, assembly_accession, source, num_ss_id,
+                             reference_directory, release_version):
+    if num_ss_id == 0:  # Do not release species with no data
+        return
+    should_be_clustered = True
+    should_be_released = True
+    ncbi_assembly = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
+    fasta_path = ncbi_assembly.assembly_fasta_path
+    report_path = ncbi_assembly.assembly_report_path
+    tempmongo_instance = get_tempmongo_instance(pg_conn, taxonomy)
+    release_folder_name = normalise_taxon_scientific_name(scientific_name)
+    query_insert = (
+        'INSERT INTO eva_progress_tracker.clustering_release_tracker '
+        '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
+        'fasta_path, report_path, tempmongo_instance, should_be_released, release_folder_name) '
+        f"VALUES ('{source}', {taxonomy}, '{scientific_name}', '{assembly_accession}', {release_version}, "
+        f"{should_be_clustered}, '{fasta_path}', '{report_path}', '{tempmongo_instance}', {should_be_released}, "
+        f"'{release_folder_name}') ON CONFLICT DO NOTHING")
+    execute_query(pg_conn, query_insert)
 
 
 def fill_in_from_previous_release(private_config_xml_file, curr_release_version):
@@ -284,7 +272,7 @@ def main():
     if 'create_and_fill_table' in args.tasks:
         create_table(args.private_config_xml_file)
         fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
-        fill_in_from_previous_release(args.private_config_xml_file, args.release_version)
+        #fill_in_from_previous_release(args.private_config_xml_file, args.release_version)
 
 
     if 'fill_rs_count' in args.tasks:
