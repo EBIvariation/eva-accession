@@ -18,7 +18,6 @@ from itertools import cycle
 from ebi_eva_common_pyutils.assembly import NCBIAssembly
 from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile
 from ebi_eva_common_pyutils.logger import logging_config
-
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.mongodb import MongoDatabase
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
@@ -33,6 +32,7 @@ all_tasks = ['create_and_fill_table', 'fill_rs_count']
 
 taxonomy_tempmongo_instance = {}
 
+
 def get_tempmongo_instance(pg_conn, taxonomy_id):
     if not taxonomy_tempmongo_instance:
         query = "select taxonomy, tempmongo_instance from eva_progress_tracker.clustering_release_tracker where tempmongo_instance is not null"
@@ -42,6 +42,7 @@ def get_tempmongo_instance(pg_conn, taxonomy_id):
     if taxonomy_id not in taxonomy_tempmongo_instance:
         taxonomy_tempmongo_instance[taxonomy_id] = next(tempmongo_instances)
     return taxonomy_tempmongo_instance[taxonomy_id]
+
 
 def create_table(private_config_xml_file):
     query_create_table = (
@@ -70,14 +71,12 @@ def create_table(private_config_xml_file):
 
 
 def fill_in_table_from_remapping(private_config_xml_file, release_version, reference_directory):
-    query_retrieve_info = (
-        "select taxonomy, scientific_name, assembly_accession, string_agg(distinct source, ', '), sum(num_ss_ids)"
-        "from eva_progress_tracker.remapping_tracker "
-        f"where release_version={release_version} "
-        "group by taxonomy, scientific_name, assembly_accession")
+    query_assembly_accession_info = (f"""select taxonomy, scientific_name, assembly_accession, string_agg(distinct source, ', '), 
+    sum(num_ss_ids) from eva_progress_tracker.remapping_tracker where release_version={release_version} 
+        group by taxonomy, scientific_name, assembly_accession""")
     with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
-        for taxonomy, scientific_name, assembly_accession, sources, num_ss_id in get_all_results_for_query(pg_conn,
-                                                                                                           query_retrieve_info):
+        for taxonomy, scientific_name, assembly_accession, sources, num_ss_id \
+                in get_all_results_for_query(pg_conn, query_assembly_accession_info):
             if num_ss_id == 0:
                 # Do not release species with no data
                 continue
@@ -98,21 +97,49 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
                 f"'{release_folder_name}') ON CONFLICT DO NOTHING")
             execute_query(pg_conn, query_insert)
 
-
-def fill_in_from_previous_inventory(private_config_xml_file, release_version):
-    query = ("select taxonomy_id, scientific_name, assembly, sources, total_num_variants, release_folder_name "
-            "from dbsnp_ensembl_species.release_species_inventory where sources='DBSNP - filesystem' and release_version=2")
+    query_origin_assembly_accession_info = (f"""select taxonomy, scientific_name, origin_assembly_accession, source, num_ss_ids
+        from eva_progress_tracker.remapping_tracker where release_version={release_version}""")
     with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
-        for taxonomy, scientific_name, assembly, sources, total_num_variants, release_folder_name in get_all_results_for_query(pg_conn, query):
-            should_be_clustered = False
-            should_be_released = False
+        for taxonomy, scientific_name, assembly_accession, source, num_ss_id \
+                in get_all_results_for_query(pg_conn, query_origin_assembly_accession_info):
+            if num_ss_id == 0:
+                # Do not release species with no data
+                continue
+
+            should_be_clustered = True
+            should_be_released = True
+            ncbi_assembly = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
+            fasta_path = ncbi_assembly.assembly_fasta_path
+            report_path = ncbi_assembly.assembly_report_path
+            tempmongo_instance = get_tempmongo_instance(pg_conn, taxonomy)
+            release_folder_name = normalise_taxon_scientific_name(scientific_name)
             query_insert = (
                 'INSERT INTO eva_progress_tracker.clustering_release_tracker '
                 '(sources, taxonomy, scientific_name, assembly_accession, release_version, should_be_clustered, '
-                'should_be_released, release_folder_name) '
-                f"VALUES ('{sources}', {taxonomy}, '{scientific_name}', '{assembly}', {release_version}, "
-                f"{should_be_clustered}, {should_be_released}, '{release_folder_name}') ON CONFLICT DO NOTHING"
-            )
+                'fasta_path, report_path, tempmongo_instance, should_be_released, release_folder_name) '
+                f"VALUES ('{source}', {taxonomy}, '{scientific_name}', '{assembly_accession}', {release_version}, "
+                f"{should_be_clustered}, '{fasta_path}', '{report_path}', '{tempmongo_instance}', {should_be_released}, "
+                f"'{release_folder_name}') ON CONFLICT DO NOTHING")
+            execute_query(pg_conn, query_insert)
+
+
+def fill_in_from_previous_release(private_config_xml_file, curr_release_version):
+    query = f"""select taxonomy,scientific_name,assembly_accession,sources,fasta_path,report_path,
+    release_folder_name from eva_progress_tracker.clustering_release_tracker 
+            where release_version = {curr_release_version - 1}"""
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
+        for tax, sc_name, asm_acc, src, fs_path, rpt_path, rls_folder_name in get_all_results_for_query(pg_conn, query):
+            if src == 'DBSNP - filesystem':
+                should_be_rls = False
+            else:
+                should_be_rls = True
+            tmp_instance = get_tempmongo_instance(pg_conn, tax)
+            query_insert = f"""INSERT INTO eva_progress_tracker.clustering_release_tracker( 
+                taxonomy,scientific_name,assembly_accession,release_version,sources,fasta_path,
+                report_path,tempmongo_instance,should_be_released, release_folder_name) 
+                VALUES ({tax},'{sc_name}','{asm_acc}',{curr_release_version},'{src}','{fs_path}',
+                '{rpt_path}','{tmp_instance}','{should_be_rls}', '{rls_folder_name}') ON CONFLICT DO NOTHING"""
+
             execute_query(pg_conn, query_insert)
 
 
@@ -208,7 +235,8 @@ def update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, taxonomy, assembly)
     execute_query(pg_conn, query_update)
 
 
-def insert_new_entry_for_taxonomy_assembly(pg_conn, sources, rs_count, release_version, taxonomy, assembly, reference_directory):
+def insert_new_entry_for_taxonomy_assembly(pg_conn, sources, rs_count, release_version, taxonomy, assembly,
+                                           reference_directory):
     logger.info(f'inserting rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
     scientific_name = get_scientific_name(pg_conn, taxonomy)
     release_folder_name = normalise_taxon_scientific_name(scientific_name)
@@ -235,13 +263,16 @@ def get_scientific_name(pg_conn, taxonomy):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Create and load the clustering and release tracking table', add_help=False)
+    parser = argparse.ArgumentParser(description='Create and load the clustering and release tracking table',
+                                     add_help=False)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", help="version of the release", type=int, required=True)
-    parser.add_argument("--reference-directory", help="Directory where the reference genomes exists or should be downloaded", required=True)
-    parser.add_argument("--taxonomy", help="taxonomy id for which rs count needs to be updated", type=int, required=False)
+    parser.add_argument("--reference-directory",
+                        help="Directory where the reference genomes exists or should be downloaded", required=True)
+    parser.add_argument("--taxonomy", help="taxonomy id for which rs count needs to be updated", type=int,
+                        required=False)
     parser.add_argument('--tasks', required=False, type=str, nargs='+', default=all_tasks, choices=all_tasks,
-                            help='Task or set of tasks to perform.')
+                        help='Task or set of tasks to perform.')
     parser.add_argument('--help', action='help', help='Show this help message and exit')
     args = parser.parse_args()
 
@@ -252,8 +283,9 @@ def main():
 
     if 'create_and_fill_table' in args.tasks:
         create_table(args.private_config_xml_file)
-        fill_in_from_previous_inventory(args.private_config_xml_file, args.release_version)
         fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
+        fill_in_from_previous_release(args.private_config_xml_file, args.release_version)
+
 
     if 'fill_rs_count' in args.tasks:
         if not args.taxonomy:
