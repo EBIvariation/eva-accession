@@ -27,6 +27,7 @@ import uk.ac.ebi.eva.accession.core.batch.io.FastaSynonymSequenceReader;
 import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.remapping.source.batch.processors.ContextNucleotideAdditionProcessor;
+import uk.ac.ebi.eva.remapping.source.batch.processors.ExcludeAllelesMismatchVariantsProcessor;
 import uk.ac.ebi.eva.remapping.source.batch.processors.ExcludeInvalidVariantsProcessor;
 import uk.ac.ebi.eva.remapping.source.batch.processors.ExcludeMultimapVariantsProcessor;
 import uk.ac.ebi.eva.remapping.source.batch.processors.SubmittedVariantToVariantContextProcessor;
@@ -47,6 +48,7 @@ public class SubmittedVariantsProcessorConfiguration {
 
         compositeItemProcessor.setDelegates(Arrays.asList(
                 new ExcludeMultimapVariantsProcessor(),
+                new ExcludeAllelesMismatchVariantsProcessor(),
                 new ExcludeInvalidVariantsProcessor(),
                 new ContextNucleotideAdditionProcessor(fastaReader),
                 new ExcludeInvalidVariantsProcessor(),  // exclude again in case a IUPAC code is added as context base
