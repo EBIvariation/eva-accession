@@ -79,7 +79,7 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
         for taxonomy, scientific_name, assembly_accession, sources, num_ss_id \
                 in get_all_results_for_query(pg_conn, query_target_asm):
             insert_remapping_entries(pg_conn, taxonomy, scientific_name, assembly_accession, sources,
-                                     num_ss_id, reference_directory, release_version)
+                                     num_ss_id, True, reference_directory, release_version)
 
         query_origin_asm = (f"""select taxonomy, scientific_name, origin_assembly_accession, source, num_ss_ids
         from eva_progress_tracker.remapping_tracker 
@@ -87,14 +87,14 @@ def fill_in_table_from_remapping(private_config_xml_file, release_version, refer
         for taxonomy, scientific_name, assembly_accession, source, num_ss_id \
                 in get_all_results_for_query(pg_conn, query_origin_asm):
             insert_remapping_entries(pg_conn, taxonomy, scientific_name, assembly_accession, source,
-                                     num_ss_id, reference_directory, release_version)
+                                     num_ss_id, False, reference_directory, release_version)
 
 
 def insert_remapping_entries(pg_conn, taxonomy, scientific_name, assembly_accession, source, num_ss_id,
-                             reference_directory, release_version):
+                             should_be_cls, reference_directory, release_version):
     if num_ss_id == 0:  # Do not release species with no data
         return
-    should_be_clustered = True
+    should_be_clustered = should_be_cls
     should_be_released = True
     ncbi_assembly = NCBIAssembly(assembly_accession, scientific_name, reference_directory)
     fasta_path = ncbi_assembly.assembly_fasta_path
@@ -272,7 +272,7 @@ def main():
     if 'create_and_fill_table' in args.tasks:
         create_table(args.private_config_xml_file)
         fill_in_table_from_remapping(args.private_config_xml_file, args.release_version, args.reference_directory)
-        #fill_in_from_previous_release(args.private_config_xml_file, args.release_version)
+        fill_in_from_previous_release(args.private_config_xml_file, args.release_version)
 
 
     if 'fill_rs_count' in args.tasks:
