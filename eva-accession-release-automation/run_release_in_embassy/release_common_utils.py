@@ -89,7 +89,7 @@ def get_unsorted_release_text_file_name(species_release_folder, assembly_accessi
 
 
 def get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession):
-    return "acc_" + str(taxonomy_id) + assembly_accession.replace('.', '_')
+    return "acc_" + str(taxonomy_id) + "_" + assembly_accession.replace('.', '_')
 
 
 def get_release_folder_name(taxonomy_id):
