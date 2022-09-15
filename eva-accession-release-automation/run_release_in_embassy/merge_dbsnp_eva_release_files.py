@@ -118,7 +118,7 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, a
             get_bgzip_and_index_commands(bgzip_path, bcftools_path, vcf_sort_script_path, [dbsnp_file, eva_file]))
         sorted_file_names = [name.replace("_unsorted", "") for name in [dbsnp_file, eva_file]]
         vcf_merge_commands.append(
-            "(({0} merge --no-version -O v {1}.gz {2}.gz | grep -v ^##) >> {3})".format(bcftools_path,
+            "(({0} merge --no-version -m none -O v {1}.gz {2}.gz | grep -v ^##) >> {3})".format(bcftools_path,
                                                                                         sorted_file_names[0],
                                                                                         sorted_file_names[1],
                                                                                         unsorted_release_file_path))
