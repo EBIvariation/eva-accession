@@ -71,8 +71,8 @@ package-internal:
 package-development:
     extends: .package
     variables:
-        ENVIRONMENT_NAME: production_processing
-        MAVEN_PROFILE: development
+        ENVIRONMENT_NAME: development
+        MAVEN_PROFILE: production_processing
     only:
         - master
 
