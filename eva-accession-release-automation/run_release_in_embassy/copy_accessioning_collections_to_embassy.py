@@ -99,7 +99,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
                               user="evapro") as \
                 metadata_connection_handle:
             # To be idempotent, clear destination tempmongo database
-            destination_db_name = get_release_db_name_in_tempmongo_instance(taxonomy_id)
+            destination_db_name = get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
             MongoClient(port=mongo_port).drop_database(destination_db_name)
 
             release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,

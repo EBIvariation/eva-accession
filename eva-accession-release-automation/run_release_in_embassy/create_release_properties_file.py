@@ -52,7 +52,7 @@ def get_release_properties_for_assembly(private_config_xml_file, profile, taxono
                                                              release_inventory_info_for_assembly["report_path"]
     release_inventory_info_for_assembly["output_folder"] = os.path.join(species_release_folder, assembly_accession)
     release_inventory_info_for_assembly["mongo_accessioning_db"] = \
-        get_release_db_name_in_tempmongo_instance(taxonomy_id)
+        get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
     return merge_two_dicts(release_inventory_info_for_assembly,
                            get_release_job_repo_properties(private_config_xml_file, profile))
 
