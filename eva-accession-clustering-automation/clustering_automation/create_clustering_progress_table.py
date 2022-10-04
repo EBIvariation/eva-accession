@@ -144,9 +144,9 @@ def fill_num_rs_id_for_taxonomy_and_assembly(mongo_source, private_config_xml_fi
             # Skip if there are no rs present for the assembly in any collection
             if sources == 'None':
                 continue
-            entry_exists = check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly)
+            entry_exists = check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, release_version, taxonomy, assembly)
             if entry_exists:
-                update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, taxonomy, assembly)
+                update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, release_version, taxonomy, assembly)
             else:
                 insert_new_entry_for_taxonomy_assembly(pg_conn, sources, rs_count, release_version, taxonomy, assembly,
                                                        reference_directory)
@@ -208,18 +208,18 @@ def get_sources_and_rs_count(cve_res, dbsnp_res, assembly):
         return ['None', 0]
 
 
-def check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, taxonomy, assembly):
+def check_if_entry_exists_for_taxonomy_and_assembly(pg_conn, release_version, taxonomy, assembly):
     logger.info(f'check if entry exists for taxonomy({taxonomy}) and assembly({assembly})')
     query_check = f"""SELECT count(*) from eva_progress_tracker.clustering_release_tracker
-                                 WHERE taxonomy={taxonomy} and assembly_accession='{assembly}'"""
+                      WHERE taxonomy={taxonomy} and assembly_accession='{assembly}' and release_version={release_version}"""
     result = get_all_results_for_query(pg_conn, query_check)
     return True if result[0][0] != 0 else False
 
 
-def update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, taxonomy, assembly):
+def update_rs_count_for_taxonomy_assembly(pg_conn, rs_count, release_version, taxonomy, assembly):
     logger.info(f'updating rs count({rs_count}) for taxonomy({taxonomy}) and assembly({assembly})')
     query_update = (f"""UPDATE eva_progress_tracker.clustering_release_tracker SET num_rs_to_release={rs_count}
-                        WHERE taxonomy={taxonomy} and assembly_accession='{assembly}'""")
+                        WHERE taxonomy={taxonomy} and assembly_accession='{assembly}' and release_version={release_version}""")
     execute_query(pg_conn, query_update)
 
 
