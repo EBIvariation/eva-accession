@@ -438,12 +438,12 @@ def export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, a
 
 def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
                               release_version, species_release_folder):
-    port_forwarding_process_id, mongo_port, exit_code  = None, None, None
+    port_forwarding_process_id, mongo_port, exit_code = None, None, None
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
                                                                               assembly_accession, release_species_inventory_table,
                                                                               release_version)
-        db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id)
+        db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
         with MongoClient(port=mongo_port) as client:
             mongo_unique_rs_ids_file = os.path.join(species_release_folder, assembly_accession,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))
