@@ -88,7 +88,7 @@ def get_collections_to_copy(collections_to_copy, sources="EVA,DBSNP"):
 def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir):
-    port_forwarding_process_id, mongo_port, exit_code = None, None, None
+    port_forwarding_process_id, mongo_port, exit_code = None, None, -1
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
                                                                               assembly_accession, release_species_inventory_table,
