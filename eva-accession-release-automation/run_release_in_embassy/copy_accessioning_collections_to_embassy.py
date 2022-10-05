@@ -12,22 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import click
 import logging
-import psycopg2
 import shutil
 import sys
 import traceback
 
-from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile, get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.mongo_utils import copy_db
 from pymongo import MongoClient
 from pymongo.uri_parser import parse_uri
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
     get_release_db_name_in_tempmongo_instance
-from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
-    get_release_assemblies_for_taxonomy
+from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly
 
 
 logger = logging.getLogger(__name__)
@@ -95,9 +93,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
                                                                               assembly_accession, release_species_inventory_table,
                                                                               release_version)
-        with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                              user="evapro") as \
-                metadata_connection_handle:
+        with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
             # To be idempotent, clear destination tempmongo database
             destination_db_name = get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
             MongoClient(port=mongo_port).drop_database(destination_db_name)

@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import click
 import collections
 import glob
 import os
-import psycopg2
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
 from run_release_in_embassy.release_common_utils import get_bgzip_bcftools_index_commands_for_file, \
@@ -172,8 +170,7 @@ def merge_dbsnp_eva_text_files(assembly_accession, species_release_folder, text_
 def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evapro") \
-        as metadata_connection_handle:
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                release_species_inventory_table,
                                                                release_version, metadata_connection_handle)
