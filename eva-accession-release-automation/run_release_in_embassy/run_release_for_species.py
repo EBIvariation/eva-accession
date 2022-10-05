@@ -18,11 +18,10 @@ import copy
 import datetime
 import logging
 import os
-import psycopg2
 import yaml
 
 from ebi_eva_common_pyutils.common_utils import merge_two_dicts
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy
 from run_release_in_embassy.release_common_utils import get_release_folder_name
 
@@ -158,8 +157,7 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, release
     profile = common_release_properties["profile"]
     release_species_inventory_table = common_release_properties["release-species-inventory-table"]
     release_version = common_release_properties["release-version"]
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evapro") \
-        as metadata_connection_handle:
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         if not release_assemblies:
             release_assemblies = get_release_assemblies_for_taxonomy(taxonomy_id, release_species_inventory_table,
                                                                      release_version, metadata_connection_handle)

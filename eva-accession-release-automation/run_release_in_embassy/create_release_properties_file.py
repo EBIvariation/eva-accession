@@ -11,18 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 
 import click
 import os
-import psycopg2
 import textwrap
 
 
 from run_release_in_embassy.release_common_utils import get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly
 from ebi_eva_common_pyutils.common_utils import merge_two_dicts
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile, EVAPrivateSettingsXMLConfig
+from ebi_eva_common_pyutils.config_utils import EVAPrivateSettingsXMLConfig
 
 
 def get_release_job_repo_properties(private_config_xml_file, eva_profile_name):
@@ -40,9 +39,7 @@ def get_release_job_repo_properties(private_config_xml_file, eva_profile_name):
 
 def get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                         release_species_inventory_table, release_version, species_release_folder):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                          user="evapro") as \
-            metadata_connection_handle:
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                                       release_species_inventory_table,
                                                                                       release_version,
