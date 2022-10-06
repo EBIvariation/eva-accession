@@ -22,13 +22,13 @@ from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
 from run_release_in_embassy.release_common_utils import get_bgzip_bcftools_index_commands_for_file, \
-    get_release_vcf_file_name_genbank, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
+    get_release_vcf_file_name, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
 
 
 def move_release_files_to_unsorted_category(assembly_accession, species_release_folder, vcf_file_category,
                                             unsorted_release_file_path):
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
-    release_file_path = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession, vcf_file_category)
+    release_file_path = get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category)
     release_file_name = os.path.basename(release_file_path)
     for variant_source in ["eva", "dbsnp"]:
         vcf_file_name = release_file_path.replace(release_file_name,
@@ -38,8 +38,8 @@ def move_release_files_to_unsorted_category(assembly_accession, species_release_
                                                                                  unsorted_release_file_name))
         if os.path.exists(vcf_file_name) and not os.path.exists(unsorted_file_name):
             os.rename(vcf_file_name, unsorted_file_name)
-        else:
-            print(f'Could not move {vcf_file_name} to {unsorted_file_name}')
+        elif not os.path.exists(vcf_file_name):
+            raise Exception(f"Could not rename {vcf_file_name} because the file does not exist")
 
 
 def get_bgzip_and_index_commands(bgzip_path, bcftools_path, vcf_sort_script_path, files_in_category):
@@ -91,7 +91,6 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, a
     unsorted_release_file_path = get_unsorted_release_vcf_file_name(species_release_folder, assembly_accession,
                                                                     vcf_file_category)
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
-    print(unsorted_release_file_path)
     # After release pipeline is run on a species, the default VCF output files are in the formats like below
     # ex: eva_GCA_000409795.2_merged_ids.vcf and dbsnp_GCA_000409795.2_merged_ids.vcf
     # Move them to files with _unsorted suffix to avoid confusion
@@ -101,8 +100,6 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, a
                                                                 "dbsnp*_" + unsorted_release_file_name)
     eva_vcf_file_pattern = unsorted_release_file_path.replace(unsorted_release_file_name,
                                                               "eva*_" + unsorted_release_file_name)
-    print(dbsnp_vcf_file_pattern)
-    print(eva_vcf_file_pattern)
     files_in_dbsnp_for_category = glob.glob(dbsnp_vcf_file_pattern)
     files_in_eva_for_category = glob.glob(eva_vcf_file_pattern)
 
