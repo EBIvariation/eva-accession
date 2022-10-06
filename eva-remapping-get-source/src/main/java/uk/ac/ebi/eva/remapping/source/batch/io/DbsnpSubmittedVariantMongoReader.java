@@ -50,8 +50,9 @@ public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<Db
         if (taxonomy != 0) {
             criteria.and(TAXONOMY_KEY).is(taxonomy);
         }
-
-        setQuery(new Query(criteria));
+        Query query = new Query(criteria);
+        query.setMeta(Meta(flags = {CursorOption.NO_TIMEOUT}));
+        setQuery(query);
     }
 
 }
