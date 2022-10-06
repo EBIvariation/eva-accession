@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.remapping.source.batch.io;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Meta;
 import org.springframework.data.mongodb.core.query.Query;
 
 import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
@@ -49,8 +50,10 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
         if (taxonomy != 0) {
             criteria.and(TAXONOMY_KEY).is(taxonomy);
         }
+        Meta meta = new Meta();
+        meta.addFlag(Meta.CursorOption.NO_TIMEOUT);
         Query query = new Query(criteria);
-        query.setMeta(Meta(flags = {CursorOption.NO_TIMEOUT}));
+        query.setMeta(meta);
         setQuery(query);
     }
 
