@@ -51,7 +51,7 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
         }
         Query query = new Query(criteria);
         query.setMeta(Meta(flags = {CursorOption.NO_TIMEOUT}));
-        setQuery(new Query(criteria));
+        setQuery(query);
     }
 
 }
