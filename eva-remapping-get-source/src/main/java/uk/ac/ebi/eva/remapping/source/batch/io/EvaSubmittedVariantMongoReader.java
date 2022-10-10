@@ -36,12 +36,15 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
 
     public static final String TAXONOMY_KEY = "tax";
 
+    public static final String REMAPPEDFROM_KEY = "RemappedFrom";
+
     public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
                                           List<String> projects, int taxonomy) {
         setTemplate(mongoTemplate);
         setTargetType(SubmittedVariantEntity.class);
 
         Criteria criteria = where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession);
+        criteria.and(REMAPPEDFROM_KEY).exists(false);
 
         if (!CollectionUtils.isEmpty(projects)) {
             criteria.and(PROJECT_KEY).in(projects);
