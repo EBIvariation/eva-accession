@@ -36,7 +36,7 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
 
     public static final String TAXONOMY_KEY = "tax";
 
-    public static final String REMAPPEDFROM_KEY = "RemappedFrom";
+    public static final String REMAPPEDFROM_KEY = "remappedFrom";
 
     public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
                                           List<String> projects, int taxonomy) {
