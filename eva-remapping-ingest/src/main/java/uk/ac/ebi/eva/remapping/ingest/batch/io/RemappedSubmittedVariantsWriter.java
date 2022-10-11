@@ -192,7 +192,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
             }
             // Discard everything that's not currentKept
             for (SubmittedVariantEntity sve : duplicates) {
-                if (sve.equals(currentKept)) continue;
+                if (sve.equals(currentKept) && sve.getAccession().equals(currentKept.getAccession())) continue;
                 // If the SVE to discard isn't one we were trying to insert, add it to the list of SVEs to remove from
                 // the database; otherwise just remove it from the list to insert.
                 if (!svesToInsert.remove(sve)) {
@@ -216,9 +216,9 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
         // Get the subset of these that are actually identical and remove them immediately from svesToInsert
         // These are counted as skips rather than discards.
-        Map<Integer, List<SubmittedVariantEntity>> duplicateSve = filterForDuplicates(
+        Map<String, List<SubmittedVariantEntity>> duplicateSve = filterForDuplicates(
                 Stream.concat(svesToInsert.stream(), svesWithSameHash.stream())
-                      .collect(Collectors.groupingBy(SubmittedVariantEntity::hashCode)));
+                      .collect(Collectors.groupingBy(sve -> sve.hashCode() + "_" + sve.getAccession())));
         for (List<SubmittedVariantEntity> dups : duplicateSve.values()) {
             if (svesToInsert.remove(dups.get(0))) {
                 remappingIngestCounts.addRemappedVariantsSkipped(1);
