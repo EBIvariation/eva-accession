@@ -36,12 +36,15 @@ public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<Db
 
     public static final String TAXONOMY_KEY = "tax";
 
+    public static final String REMAPPEDFROM_KEY = "remappedFrom";
+
     public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
                                           List<String> projects, int taxonomy) {
         setTemplate(mongoTemplate);
         setTargetType(DbsnpSubmittedVariantEntity.class);
 
         Criteria criteria = where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession);
+        criteria.and(REMAPPEDFROM_KEY).exists(false);
 
         if (!CollectionUtils.isEmpty(projects)) {
             criteria.and(PROJECT_KEY).in(projects);

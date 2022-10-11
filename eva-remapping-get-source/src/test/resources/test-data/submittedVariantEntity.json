@@ -31,6 +31,20 @@
       "createdDate": ISODate(
       "2016-05-05T13:43:00Z"
       )
+    },
+    {
+      "_id" : "0A2116D018373A7F0A5DE398C46D9C31ED210A2E",
+      "seq" : "GCA_000409795.2",
+      "tax" : 10000,
+      "study" : "PRJEB7923",
+      "contig" : "CM001954.1",
+      "start" : NumberLong(1832217),
+      "ref" : "T",
+      "alt" : "C",
+      "accession" : NumberLong(5000000002),
+      "version" : 1,
+      "createdDate" : ISODate("2019-07-30T15:03:15.283Z"),
+      "remappedFrom" : "GCA_000409795.1"
     }
   ]
 }
