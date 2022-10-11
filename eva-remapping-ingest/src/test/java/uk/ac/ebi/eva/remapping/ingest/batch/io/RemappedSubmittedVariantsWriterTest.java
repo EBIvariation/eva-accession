@@ -167,6 +167,20 @@ public class RemappedSubmittedVariantsWriterTest {
     }
 
     @Test
+    public void testDeduplicatesHashesFromInput() {
+        SubmittedVariantEntity duplicateSve = createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1");
+        mongoTemplate.insert(duplicateSve);
+
+        List<SubmittedVariantEntity> svesToWrite = Arrays.asList(
+                // Exact duplicate of what's in the db already => skipped
+                createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"),
+                // Duplicate hash but different accession => discard operation
+                createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
+        writer.write(svesToWrite);
+        assertRemappingIngestCounts(0, 1, 1);
+    }
+
+    @Test
     public void testIdempotentWrites() {
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
                 createSve(5000000002L, 1100, "C", "T", LocalDateTime.now(), null));
