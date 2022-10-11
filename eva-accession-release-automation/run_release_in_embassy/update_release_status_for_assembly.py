@@ -14,11 +14,10 @@
 
 import click
 import logging
-import psycopg2
 
 
 from run_release_in_embassy.release_metadata import update_release_progress_status
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 
 
 logger = logging.getLogger(__name__)
@@ -26,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 def update_release_status_for_assembly(private_config_xml_file, profile, release_species_inventory_table, taxonomy_id,
                                        assembly_accession, release_version):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                          user="evapro") as metadata_connection_handle:
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         update_release_progress_status(metadata_connection_handle, release_species_inventory_table,
                                        taxonomy_id, assembly_accession, release_version,
                                        release_status='Completed')

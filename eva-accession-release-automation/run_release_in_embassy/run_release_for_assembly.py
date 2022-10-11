@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
                              release_version, species_release_folder, release_jar_path, memory):
-    exit_code = 0
+    exit_code = -1
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
                                                                               assembly_accession, release_species_inventory_table,
@@ -39,6 +39,7 @@ def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, asse
         release_command = 'java -Xmx{0}g -jar {1} --spring.config.location="{2}" -Dspring.data.mongodb.port={3}'\
             .format(memory, release_jar_path, release_properties_file, mongo_port)
         run_command_with_output("Running release pipeline for assembly: " + assembly_accession, release_command)
+        exit_code = 0
     except Exception as ex:
         logger.error("Encountered an error while running release for assembly: " + assembly_accession + "\n"
                      + traceback.format_exc())

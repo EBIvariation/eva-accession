@@ -12,25 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import click
 import collections
 import glob
 import os
-import psycopg2
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
 from run_release_in_embassy.release_common_utils import get_bgzip_bcftools_index_commands_for_file, \
-    get_release_vcf_file_name_genbank, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
+    get_release_vcf_file_name, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
 
 
 def move_release_files_to_unsorted_category(assembly_accession, species_release_folder, vcf_file_category,
                                             unsorted_release_file_path):
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
-    release_file_path = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession, vcf_file_category)
+    release_file_path = get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category)
     release_file_name = os.path.basename(release_file_path)
     for variant_source in ["eva", "dbsnp"]:
         vcf_file_name = release_file_path.replace(release_file_name,
@@ -40,6 +38,8 @@ def move_release_files_to_unsorted_category(assembly_accession, species_release_
                                                                                  unsorted_release_file_name))
         if os.path.exists(vcf_file_name) and not os.path.exists(unsorted_file_name):
             os.rename(vcf_file_name, unsorted_file_name)
+        elif not os.path.exists(vcf_file_name):
+            raise Exception(f"Could not rename {vcf_file_name} because the file does not exist")
 
 
 def get_bgzip_and_index_commands(bgzip_path, bcftools_path, vcf_sort_script_path, files_in_category):
@@ -172,8 +172,7 @@ def merge_dbsnp_eva_text_files(assembly_accession, species_release_folder, text_
 def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file), user="evapro") \
-        as metadata_connection_handle:
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                release_species_inventory_table,
                                                                release_version, metadata_connection_handle)

@@ -257,9 +257,9 @@ def read_next_batch_of_missing_ids(missing_rs_ids_file_handle):
 
 def get_unique_release_rs_ids(species_release_folder, assembly_accession):
     folder_prefix = os.path.join(species_release_folder, assembly_accession, assembly_accession)
-    active_rs_ids_file = folder_prefix + "_current_ids.vcf.gz"
-    merged_rs_ids_file = folder_prefix + "_merged_ids.vcf.gz"
-    multimap_rs_ids_file = folder_prefix + "_multimap_ids.vcf.gz"
+    active_rs_ids_file = folder_prefix + "_current_ids_with_genbank.vcf.gz"
+    merged_rs_ids_file = folder_prefix + "_merged_ids_with_genbank.vcf.gz"
+    multimap_rs_ids_file = folder_prefix + "_multimap_ids_with_genbank.vcf.gz"
     merged_deprecated_rs_ids_file = folder_prefix + "_merged_deprecated_ids.txt.gz"
     deprecated_rs_ids_file = folder_prefix + "_deprecated_ids.txt.gz"
 
@@ -438,12 +438,12 @@ def export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, a
 
 def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
                               release_version, species_release_folder):
-    port_forwarding_process_id, mongo_port, exit_code  = None, None, None
+    port_forwarding_process_id, mongo_port, exit_code = None, None, -1
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
                                                                               assembly_accession, release_species_inventory_table,
                                                                               release_version)
-        db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id)
+        db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
         with MongoClient(port=mongo_port) as client:
             mongo_unique_rs_ids_file = os.path.join(species_release_folder, assembly_accession,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))

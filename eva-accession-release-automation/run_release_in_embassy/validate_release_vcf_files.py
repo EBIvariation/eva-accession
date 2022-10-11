@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import click
 import os
-import psycopg2
 
 from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
     release_vcf_file_categories, vcf_validation_output_file_pattern, asm_report_output_file_pattern
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 
 
 def remove_index_if_outdated(fasta_path):
@@ -39,9 +37,7 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
                                                                    vcf_validation_output_file_pattern,
                                                                    asm_report_output_file_pattern))
     validate_release_vcf_files_commands = []
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile(profile, private_config_xml_file),
-                          user="evapro") as \
-            metadata_connection_handle:
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                                       release_species_inventory_table,
                                                                                       release_version,
