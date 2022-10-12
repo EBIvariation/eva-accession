@@ -57,6 +57,8 @@ parameters.remappedFrom=
 parameters.vcf={vcf}
 parameters.projectAccession={project}
 parameters.allowRetry={str(enable_retryable).lower()}
+parameters.projects=
+parameters.rsReportPath={assembly_accession}_rs_report.txt
 """)
     properties_file.write(clustering_properties)
 
