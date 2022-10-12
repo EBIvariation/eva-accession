@@ -21,7 +21,6 @@ import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.MongoClient;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -162,6 +161,33 @@ public class RemappedSubmittedVariantsWriterTest {
 
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
                 createSve(5000000005L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
+        writer.write(svesToWrite);
+        assertRemappingIngestCounts(0, 0, 1);
+    }
+
+    @Test
+    public void testDeduplicatesHashesFromInput() {
+        SubmittedVariantEntity duplicateSve = createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1");
+        mongoTemplate.insert(duplicateSve);
+
+        List<SubmittedVariantEntity> svesToWrite = Arrays.asList(
+                // Exact duplicate of what's in the db already => skipped
+                createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"),
+                // Duplicate hash but different accession => discard operation
+                createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
+        writer.write(svesToWrite);
+        assertRemappingIngestCounts(0, 1, 1);
+    }
+
+    @Test
+    public void testDuplicateHashAndAccessionButDifferentSVEs() {
+        SubmittedVariantEntity sve = createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1");
+        mongoTemplate.insert(sve);
+
+        // Same hash and accession as what's in db, but different in some other attribute
+        SubmittedVariantEntity duplicateSve = createSve(5000000003L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1");
+        duplicateSve.setBackPropagatedVariantAccession(12345L);
+        List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(duplicateSve);
         writer.write(svesToWrite);
         assertRemappingIngestCounts(0, 0, 1);
     }

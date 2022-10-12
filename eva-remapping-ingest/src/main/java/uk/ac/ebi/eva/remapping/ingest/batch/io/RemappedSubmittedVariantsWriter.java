@@ -107,7 +107,8 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
 
             } catch (DuplicateKeyException exception) {
                 // As we check for hash collisions in submitted variants, we should only get duplicate keys from
-                // trying to insert an identical DISCARD operation, which should only happen when resuming or rerunning.
+                // trying to insert an identical DISCARD operation, which shouldn't happen even when rerunning
+                // (since identical SVEs are skipped).
                 MongoBulkWriteException writeException = ((MongoBulkWriteException) exception.getCause());
                 BulkWriteResult bulkWriteResult = writeException.getWriteResult();
 
@@ -181,10 +182,12 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                     currentDeterminants = priority.sveToKeep;
                     currentKept = priority.sveToKeep.getSve();
                 } catch (IllegalArgumentException exception) {
+                    // Note this should only happen if hashes and accessions are equal but other attributes (e.g.
+                    // mapWeight, backPropRS...) are not.
                     // This is an issue to be investigated but needn't block processing as these SVEs are
                     // indistinguishable, so we log the error and keep whichever is not in the insert list.
                     logger.warn(exception.toString());
-                    if (svesToInsert.contains(currentKept) && !svesToInsert.contains(other)) {
+                    if (containsSveList(svesToInsert, currentKept) && !containsSveList(svesToInsert, other)) {
                         currentKept = other;
                         currentDeterminants = otherDeterminants;
                     }
@@ -192,10 +195,10 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
             }
             // Discard everything that's not currentKept
             for (SubmittedVariantEntity sve : duplicates) {
-                if (sve.equals(currentKept)) continue;
+                if (equalsSveAndAccession(sve, currentKept)) continue;
                 // If the SVE to discard isn't one we were trying to insert, add it to the list of SVEs to remove from
                 // the database; otherwise just remove it from the list to insert.
-                if (!svesToInsert.remove(sve)) {
+                if (!removeAllFromSveList(svesToInsert, sve)) {
                     svesToDiscard.add(sve);
                 }
                 // Either way create a discard operation
@@ -214,13 +217,13 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         List<SubmittedVariantEntity> svesWithSameHash = mongoTemplate.find(query(where("_id").in(hashes)),
                                                                            SubmittedVariantEntity.class, collection);
 
-        // Get the subset of these that are actually identical and remove them immediately from svesToInsert
-        // These are counted as skips rather than discards.
-        Map<Integer, List<SubmittedVariantEntity>> duplicateSve = filterForDuplicates(
+        // Get the subset of these that are actually identical (including accession) and remove them immediately from
+        // svesToInsert. These are counted as skips rather than discards.
+        Map<String, List<SubmittedVariantEntity>> duplicateSve = filterForDuplicates(
                 Stream.concat(svesToInsert.stream(), svesWithSameHash.stream())
-                      .collect(Collectors.groupingBy(SubmittedVariantEntity::hashCode)));
+                      .collect(Collectors.groupingBy(sve -> sve.hashCode() + "_" + sve.getAccession())));
         for (List<SubmittedVariantEntity> dups : duplicateSve.values()) {
-            if (svesToInsert.remove(dups.get(0))) {
+            if (removeAllFromSveList(svesToInsert, dups.get(0))) {
                 remappingIngestCounts.addRemappedVariantsSkipped(1);
             }
         }
@@ -231,6 +234,25 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                       .collect(Collectors.groupingBy(SubmittedVariantEntity::getHashedMessage));
 
         return filterForDuplicates(svesGroupedByHash);
+    }
+
+    private boolean removeAllFromSveList(List<SubmittedVariantEntity> sves, SubmittedVariantEntity sveToRemove) {
+        int initialSize = sves.size();
+        sves.removeIf(sve -> equalsSveAndAccession(sve, sveToRemove));
+        return sves.size() < initialSize;
+    }
+
+    private boolean containsSveList(List<SubmittedVariantEntity> sves, SubmittedVariantEntity sveToFind) {
+        for (SubmittedVariantEntity sve: sves) {
+            if (equalsSveAndAccession(sve, sveToFind)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean equalsSveAndAccession(SubmittedVariantEntity first, SubmittedVariantEntity second) {
+        return first.equals(second) && first.getAccession().equals(second.getAccession());
     }
 
     private Map<Long, List<SubmittedVariantEntity>> getDuplicateAccessions(List<SubmittedVariantEntity> svesToInsert) {
