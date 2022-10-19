@@ -61,6 +61,7 @@ workflow_process_arguments_map = collections.OrderedDict(
 workflow_process_template_for_nextflow = """
 process {workflow-process-name} {{
     memory='{memory} GB'
+    {cluster-options}
     input:
         val flag from {previous-process-output-flag}
     output:
@@ -105,6 +106,8 @@ def get_nextflow_process_definition(assembly_release_properties, workflow_proces
                                                                " ".join(["--{0} {1}"
                                                                         .format(arg, release_properties[arg])
                                                                          for arg in workflow_process_args]))
+    release_properties["cluster-options"] = 'clusterOptions "-g /accession"' if "run_release_for_assembly" \
+                                                                                in workflow_process_name else ""
     return workflow_process_template_for_nextflow.format(**release_properties)
 
 
