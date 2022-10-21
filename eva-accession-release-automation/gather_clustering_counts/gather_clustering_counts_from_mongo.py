@@ -1,6 +1,7 @@
 import argparse
 import glob
 import os
+import re
 import psycopg2
 from collections import defaultdict
 from datetime import datetime
@@ -9,11 +10,12 @@ from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_common_pyutils.mongodb import MongoDatabase
 from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
 from ebi_eva_common_pyutils.pg_utils import execute_query, get_all_results_for_query
-from gather_per_species_clustering_counts import assembly_table_name
+from gather_clustering_counts.gather_per_species_clustering_counts import assembly_table_name
 
 
 logger = logging_config.get_logger(__name__)
 logging_config.add_stdout_handler()
+taxonomy_scientific_name_map = defaultdict(dict)
 
 
 def gather_count_from_mongo(clustering_dir, remapping_dir, mongo_source, private_config_xml_file, release_version):
@@ -329,7 +331,16 @@ collections = {
 }
 
 
+def parse_remapping_log_file_path(log_file_path):
+    taxid, assembly_accession = log_file_path.split('/')[-4:][:2]
+    scientific_name = taxonomy_scientific_name_map[taxid]
+    return scientific_name, taxid, assembly_accession
+
+
 def parse_log_file_path(log_file_path):
+    remapping_log_file_pattern = re.compile("^(GCA_.*)+_to_(GCA_.*)+_clustering.log$")
+    if remapping_log_file_pattern.match(os.path.basename(log_file_path)):
+        return parse_remapping_log_file_path(log_file_path)
     scientific_name_taxonomy_id, assembly_accession, file_name = log_file_path.split('/')[-3:]
     scientific_name = '_'.join(scientific_name_taxonomy_id.split('_')[:-1])
     taxid = scientific_name_taxonomy_id.split('_')[-1]
@@ -374,6 +385,18 @@ def parse_one_log(log_file):
     return results
 
 
+def populate_taxonomy_scientific_name_association(private_config_xml_file, release_version):
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
+                          user="evapro") as metadata_connection_handle:
+        query_taxonomy_scientific_name = f"select distinct cast(taxonomy as varchar(10)) as taxid, scientific_name " \
+                                         f"from eva_progress_tracker.clustering_release_tracker " \
+                                         f"where release_version = {release_version}"
+        for taxonomy, scientific_name in get_all_results_for_query(metadata_connection_handle,
+                                                                   query_taxonomy_scientific_name):
+            # Use similar approach to what is used in clustering automation: https://github.com/EBIvariation/eva-accession/blob/85371091fe5bcc56545ec2d7ccb73baa8a793c92/eva-accession-clustering-automation/clustering_automation/cluster_from_mongo.py#L59
+            taxonomy_scientific_name_map[taxonomy] = scientific_name.lower().replace(' ', '_')
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Parse all the clustering logs to get date ranges and query mongo to get metrics counts')
@@ -392,6 +415,7 @@ def main():
     args = parser.parse_args()
     mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
                                  db_name="eva_accession_sharded")
+    populate_taxonomy_scientific_name_association(args.private_config_xml_file, args.release_version)
     gather_count_from_mongo(args.clustering_root_path, args.remapping_root_path, mongo_source,
                             args.private_config_xml_file, args.release_version)
 
