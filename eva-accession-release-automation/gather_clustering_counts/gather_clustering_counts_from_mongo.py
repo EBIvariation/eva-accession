@@ -37,7 +37,7 @@ def get_assembly_info_and_date_ranges(all_log_files):
     ranges_per_assembly = defaultdict(dict)
     for log_file in all_log_files:
         logger.info('Parse log_dict file: ' + log_file)
-        scientific_name, taxid, assembly_accession, log_date = parse_log_file_path(log_file)
+        scientific_name, taxid, assembly_accession = parse_log_file_path(log_file)
         log_metric_date_range = parse_one_log(log_file)
 
         if assembly_accession not in ranges_per_assembly:
@@ -333,8 +333,7 @@ def parse_log_file_path(log_file_path):
     scientific_name_taxonomy_id, assembly_accession, file_name = log_file_path.split('/')[-3:]
     scientific_name = '_'.join(scientific_name_taxonomy_id.split('_')[:-1])
     taxid = scientific_name_taxonomy_id.split('_')[-1]
-    date = datetime.strptime(file_name.split('.')[0].split('_')[-1], '%Y%m%d%H%M%S')  # 20220112170519
-    return scientific_name, taxid, assembly_accession, date
+    return scientific_name, taxid, assembly_accession
 
 
 def parse_one_log(log_file):
