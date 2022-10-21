@@ -338,6 +338,7 @@ def parse_remapping_log_file_path(log_file_path):
 
 
 def parse_log_file_path(log_file_path):
+    # See https://github.com/EBIvariation/eva-tools/blob/9bed9547c73d35a475d06bf6fff58b1bb6af2140/variant-remapping-automation/remapping_process.nf#L245
     remapping_log_file_pattern = re.compile("^(GCA_.*)+_to_(GCA_.*)+_clustering.log$")
     if remapping_log_file_pattern.match(os.path.basename(log_file_path)):
         return parse_remapping_log_file_path(log_file_path)
