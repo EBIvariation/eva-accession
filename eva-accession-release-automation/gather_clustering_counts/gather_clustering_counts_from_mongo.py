@@ -15,7 +15,7 @@ from gather_clustering_counts.gather_per_species_clustering_counts import assemb
 
 logger = logging_config.get_logger(__name__)
 logging_config.add_stdout_handler()
-taxonomy_scientific_name_map = defaultdict(dict)
+taxonomy_scientific_name_map = {}
 
 
 def gather_count_from_mongo(clustering_dir, remapping_dir, mongo_source, private_config_xml_file, release_version):
