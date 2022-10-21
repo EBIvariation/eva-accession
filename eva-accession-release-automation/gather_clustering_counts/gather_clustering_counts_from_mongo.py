@@ -16,12 +16,14 @@ logger = logging_config.get_logger(__name__)
 logging_config.add_stdout_handler()
 
 
-def gather_count_from_mongo(clustering_dir, mongo_source, private_config_xml_file, release_version):
+def gather_count_from_mongo(clustering_dir, remapping_dir, mongo_source, private_config_xml_file, release_version):
     # Assume the directory structure:
     # clustering_dir --> <scientific_name_taxonomy_id> --> <assembly_accession> --> cluster_<date>.log_dict
 
-    all_log_pattern = os.path.join(clustering_dir, '*', 'GCA_*', 'cluster_*.log')
-    all_log_files = glob.glob(all_log_pattern)
+    all_clustering_logs_pattern = os.path.join(clustering_dir, '*', 'GCA_*', 'cluster_*.log')
+    # Beginning release 4, clustering of new studies is also carried out during remapping
+    all_remapping_logs_pattern = os.path.join(remapping_dir, '*', 'GCA_*', 'logs', '*_clustering.log')
+    all_log_files = glob.glob(all_clustering_logs_pattern) + glob.glob(all_remapping_logs_pattern)
     ranges_per_assembly = get_assembly_info_and_date_ranges(all_log_files)
     metrics_per_assembly = get_metrics_per_assembly(mongo_source, ranges_per_assembly)
     insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_per_assembly, release_version)
@@ -62,6 +64,16 @@ def get_assembly_info_and_date_ranges(all_log_files):
                 if "completed" in log_metric_date_range['CLUSTER_UNCLUSTERED_VARIANTS_JOB']
                 else log_metric_date_range["last_timestamp"]
             }
+        study_clustering_step_name = 'STUDY_CLUSTERING_STEP'
+        study_clustering_job_name = 'STUDY_CLUSTERING_JOB'
+        # new_clustered_current_rs
+        if study_clustering_step_name in log_metric_date_range:
+            ranges_per_assembly[assembly_accession]['metrics']['new_clustered_current_rs'][log_file] = {
+                'from': log_metric_date_range[study_clustering_step_name],
+                'to': log_metric_date_range[study_clustering_job_name]["completed"]
+                if "completed" in log_metric_date_range[study_clustering_job_name]
+                else log_metric_date_range["last_timestamp"]
+            }
         # merged_rs
         if 'PROCESS_RS_MERGE_CANDIDATES_STEP' in log_metric_date_range:
             ranges_per_assembly[assembly_accession]['metrics']['merged_rs'][log_file] = {
@@ -84,6 +96,14 @@ def get_assembly_info_and_date_ranges(all_log_files):
                 'from': log_metric_date_range['CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP'],
                 'to': log_metric_date_range['CLUSTER_UNCLUSTERED_VARIANTS_JOB']["completed"]
                 if "completed" in log_metric_date_range['CLUSTER_UNCLUSTERED_VARIANTS_JOB']
+                else log_metric_date_range["last_timestamp"]
+            }
+        # new_ss_clustered
+        if study_clustering_step_name in log_metric_date_range:
+            ranges_per_assembly[assembly_accession]['metrics']['new_ss_clustered'][log_file] = {
+                'from': log_metric_date_range[study_clustering_step_name],
+                'to': log_metric_date_range[study_clustering_job_name]["completed"]
+                if "completed" in log_metric_date_range[study_clustering_job_name]
                 else log_metric_date_range["last_timestamp"]
             }
     return ranges_per_assembly
@@ -360,6 +380,8 @@ def main():
         description='Parse all the clustering logs to get date ranges and query mongo to get metrics counts')
     parser.add_argument("--clustering-root-path", type=str,
                         help="base directory where all the clustering was run.", required=True)
+    parser.add_argument("--remapping-root-path", type=str,
+                        help="base directory where all the remapping was run.", required=True)
     parser.add_argument("--mongo-source-uri",
                         help="Mongo Source URI (ex: mongodb://user:@mongos-source-host:27017/admin)", required=True)
     parser.add_argument("--mongo-source-secrets-file",
@@ -371,7 +393,8 @@ def main():
     args = parser.parse_args()
     mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
                                  db_name="eva_accession_sharded")
-    gather_count_from_mongo(args.clustering_root_path, mongo_source, args.private_config_xml_file, args.release_version)
+    gather_count_from_mongo(args.clustering_root_path, args.remapping_root_path, mongo_source,
+                            args.private_config_xml_file, args.release_version)
 
 
 if __name__ == '__main__':
