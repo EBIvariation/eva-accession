@@ -251,6 +251,7 @@ deploy-accessioning-jar-production:
     extends: .deploy-jar
     when: manual
     variables:
+        ENVIRONMENT_NAME: production
         ARTIFACT_PATH: $ACCESSIONING_ARTIFACT_PATH
         DEPLOY_DIRECTORY: accessioning_production
         SYMLINK_NAME: $ACCESSIONING_SYMLINK_NAME
