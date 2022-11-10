@@ -200,7 +200,7 @@ def insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_pe
                            f"new_merged_deprecated_rs, new_ss_clustered, remapped_current_rs, " \
                            f"new_remapped_current_rs, split_rs, new_split_rs, ss_clustered, clustered_current_rs," \
                            f"new_clustered_current_rs) " \
-                           f"values ({taxid}, '{scientific_name}', '{asm}', '{folder}', {release_version}, " \
+                           f"values ({taxid}, '{scientific_name}', '{asm}', '{folder}', {release_version}, "
 
             if asm_last_release_data:
                 prev_release_current_rs = asm_last_release_data[0][5]
@@ -332,7 +332,10 @@ collections = {
 
 
 def parse_remapping_log_file_path(log_file_path):
-    taxid, assembly_accession = log_file_path.split('/')[-4:][:2]
+    taxid = log_file_path.split('/')[-4]
+    # Parse the filename to get the *target* assembly
+    m = re.search(r'GCA_[0-9.]+_to_(GCA_[0-9.]+)_clustering\.log', os.path.basename(p))
+    assembly_accession = m.group(1)
     scientific_name = taxonomy_scientific_name_map[taxid]
     return scientific_name, taxid, assembly_accession
 
