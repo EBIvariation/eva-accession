@@ -175,7 +175,7 @@ def insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_pe
         for asm in metrics_per_assembly:
             # get last release data for assembly
             query_last_release = f"select * from {assembly_table_name} "\
-                             f"where assembly_accession = '{asm}' and release_version = {release_version}-1"
+                             f"where assembly_accession = '{asm}' and release_version = {release_version-1}"
             logger.info(query_last_release)
             asm_last_release_data = get_all_results_for_query(metadata_connection_handle, query_last_release)
 
@@ -270,7 +270,7 @@ def insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_pe
         assemblies_in_logs = ",".join(f"'{a}'" for a in ranges_per_assembly.keys())
         query_missing_assemblies_stats = f"select * " \
                                          f"from {assembly_table_name} " \
-                                         f"where release_version = {release_version}-1 " \
+                                         f"where release_version = {release_version-1} " \
                                          f"and assembly_accession not in ({assemblies_in_logs});"
         logger.info(query_missing_assemblies_stats)
         missing_assemblies_stats = get_all_results_for_query(metadata_connection_handle, query_missing_assemblies_stats)
