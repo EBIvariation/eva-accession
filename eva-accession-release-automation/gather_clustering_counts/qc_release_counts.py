@@ -3,7 +3,7 @@ import csv
 import glob
 import os
 import re
-from collections import defaultdict, Counter
+from collections import defaultdict
 
 from ebi_eva_common_pyutils.common_utils import pretty_print
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
@@ -53,7 +53,7 @@ def get_counts_from_release_files(private_config_xml_file, release_version, rele
 
 def get_counts_from_database(private_config_xml_file, release_version):
     """
-    These are loaded to the per-assembly counts table by gather_clustering_counts_from_mongo,
+    DB counts are loaded to the per-assembly counts table by gather_clustering_counts_from_mongo,
     so just read them directly. Returns results in the same format as above.
     """
     results = defaultdict(dict)
@@ -76,19 +76,23 @@ def get_counts_from_database(private_config_xml_file, release_version):
     return results
 
 
-def compare_counts(counts_from_files, counts_from_db, threshold, output_csv):
+def compare_counts(counts_from_files, counts_from_db, threshold, output_csv=None):
+    """
+    Compares counts from files with counts from database for each taxonomy/assembly/metric.
+    Outputs diffs greater than threshold to either output_csv or stdout.
+    """
     all_metrics = ('current_rs', 'multi_mapped_rs', 'merged_rs', 'deprecated_rs', 'merged_deprecated_rs')
     header = ('Taxonomy', 'Assembly', 'Metric', 'File', 'DB', 'Diff (file-db)')
     rows = []
 
     all_taxids = set(counts_from_files.keys()).union(counts_from_db.keys())
     for taxid in all_taxids:
-        tax_counts_from_files = counts_from_files.get(taxid, defaultdict(lambda: Counter()))
-        tax_counts_from_db = counts_from_db.get(taxid, defaultdict(lambda: Counter()))
+        tax_counts_from_files = counts_from_files.get(taxid, defaultdict(dict))
+        tax_counts_from_db = counts_from_db.get(taxid, defaultdict(dict))
         all_asms = set(tax_counts_from_files.keys()).union(tax_counts_from_db.keys())
         for asm in all_asms:
-            asm_counts_from_files = tax_counts_from_files.get(asm, Counter())
-            asm_counts_from_db = tax_counts_from_db.get(asm, Counter())
+            asm_counts_from_files = tax_counts_from_files.get(asm, {})
+            asm_counts_from_db = tax_counts_from_db.get(asm, {})
             for metric in all_metrics:
                 file_count = asm_counts_from_files.get(metric, 0)
                 db_count = asm_counts_from_db.get(metric, 0)
@@ -107,7 +111,7 @@ def compare_counts(counts_from_files, counts_from_db, threshold, output_csv):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='QC release counts')
+    parser = argparse.ArgumentParser(description='QC release counts from files and database')
     parser.add_argument("--release-root-path", help="base directory where the release was run", required=True)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", type=int, help="current release version", required=True)
