@@ -97,7 +97,7 @@ def get_release_file_list_for_assembly(release_assembly_info):
     for example, see here, ftp://ftp.ebi.ac.uk/pub/databases/eva/rs_releases/release_1/by_assembly/GCA_000001515.4/)
     """
     assembly_accession = release_assembly_info["assembly_accession"]
-    vcf_files = ["{0}_{1}_with_genbank.vcf.gz".format(assembly_accession, category) for category in release_vcf_file_categories]
+    vcf_files = ["{0}_{1}.vcf.gz".format(assembly_accession, category) for category in release_vcf_file_categories]
     text_files = ["{0}_{1}.txt.gz".format(assembly_accession, category) for category in release_text_file_categories]
     csi_files = ["{0}.csi".format(filename) for filename in vcf_files]
     release_file_list = vcf_files + text_files + csi_files + ["README_rs_ids_counts.txt"]
