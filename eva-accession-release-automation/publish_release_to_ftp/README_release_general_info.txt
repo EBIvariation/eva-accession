@@ -1,10 +1,10 @@
-EVA RefSNP release 2
+EVA RefSNP release 4
 
 Feedback
 ==================================
 If you access and use the data stored in the release we would love to hear from you.
 Please fill in this short survey to let us know what you think.
-https://tinyurl.com/evarelease2survey
+https://tinyurl.com/evarelease4survey
 
 Definitions
 ==================================
@@ -84,6 +84,9 @@ Contains the RS IDs which can be browsed from the EVA website
 
 The file is in VCF format and some extra information is available in the INFO
 column, using the next keys:
+
+- REMAPPED: Remapped flag, present if the clustered variant originate only from submitted variants
+  remapped to this assembly
 
 - ALMM: Alleles mismatch flag, present when some of the submitted variants have
   inconsistent allele information. See
