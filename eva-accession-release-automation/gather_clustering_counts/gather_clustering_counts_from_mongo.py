@@ -2,6 +2,8 @@ import argparse
 import glob
 import os
 import re
+from pytz import timezone
+
 import psycopg2
 from collections import defaultdict
 from datetime import datetime
@@ -334,7 +336,7 @@ collections = {
 def parse_remapping_log_file_path(log_file_path):
     taxid = log_file_path.split('/')[-4]
     # Parse the filename to get the *target* assembly
-    m = re.search(r'GCA_[0-9.]+_to_(GCA_[0-9.]+)_clustering\.log', os.path.basename(p))
+    m = re.search(r'GCA_[0-9.]+_to_(GCA_[0-9.]+)_clustering\.log', os.path.basename(log_file_path))
     assembly_accession = m.group(1)
     scientific_name = taxonomy_scientific_name_map[taxid]
     return scientific_name, taxid, assembly_accession
@@ -365,6 +367,7 @@ def parse_one_log(log_file):
             # get last timestamp
             try:
                 timestamp = datetime.strptime(f"{sp_line[0]}T{sp_line[1]}Z", '%Y-%m-%dT%H:%M:%S.%fZ')
+                timestamp = timezone('Europe/London').localize(timestamp)
             except ValueError:
                 pass
 
