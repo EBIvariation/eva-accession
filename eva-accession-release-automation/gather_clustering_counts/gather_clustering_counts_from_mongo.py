@@ -1,5 +1,6 @@
 import argparse
 import glob
+import json
 import os
 import re
 from pytz import timezone
@@ -23,13 +24,25 @@ taxonomy_scientific_name_map = {}
 def gather_count_from_mongo(clustering_dir, remapping_dir, mongo_source, private_config_xml_file, release_version):
     # Assume the directory structure:
     # clustering_dir --> <scientific_name_taxonomy_id> --> <assembly_accession> --> cluster_<date>.log_dict
-
     all_clustering_logs_pattern = os.path.join(clustering_dir, '*', 'GCA_*', 'cluster_*.log')
     # Beginning release 4, clustering of new studies is also carried out during remapping
     all_remapping_logs_pattern = os.path.join(remapping_dir, '*', 'GCA_*', 'logs', '*_clustering.log')
     all_log_files = glob.glob(all_clustering_logs_pattern) + glob.glob(all_remapping_logs_pattern)
-    ranges_per_assembly = get_assembly_info_and_date_ranges(all_log_files)
-    metrics_per_assembly = get_metrics_per_assembly(mongo_source, ranges_per_assembly)
+
+    # Only run if json dump files doesn't already exist
+    ranges_fp = 'ranges_per_assembly.json'
+    metrics_fp = 'metrics_per_assembly.json'
+    if not os.path.exists(ranges_fp):
+        ranges_per_assembly = get_assembly_info_and_date_ranges(all_log_files)
+        json.dump(ranges_per_assembly, open(ranges_fp, 'w+'))
+    else:
+        ranges_per_assembly = json.load(open(ranges_fp, 'r'))
+    if not os.path.exists(metrics_fp):
+        metrics_per_assembly = get_metrics_per_assembly(mongo_source, ranges_per_assembly)
+        json.dump(metrics_per_assembly, open(metrics_fp, 'w+'))
+    else:
+        metrics_per_assembly = json.load(open(metrics_fp, 'r'))
+
     insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_per_assembly, release_version)
 
 
@@ -296,7 +309,7 @@ def fill_data_from_previous_release(metadata_connection_handle, ranges_per_assem
     """Insert metrics for taxonomies and assemblies *not* processed during the current release, but present in a
     previous release."""
     assemblies_in_logs = {a for a in ranges_per_assembly.keys()}
-    asm_tax_in_logs = {(asm, tax) for asm in assemblies_in_logs for tax, _ in ranges_per_assembly[asm]}
+    asm_tax_in_logs = {(asm, tax) for asm in assemblies_in_logs for tax, _ in ranges_per_assembly[asm]['species_info']}
     previous_release_stats = get_all_results_for_query(metadata_connection_handle,
                                                        f"select * from {assembly_table_name} "
                                                        f"where release_version = {release_version-1}")
