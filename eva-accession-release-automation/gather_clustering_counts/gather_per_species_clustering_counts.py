@@ -43,12 +43,11 @@ def get_new_ss_clustered(private_config_xml_file, release_version, taxonomy_id):
     with get_metadata_connection_handle('production_processing', private_config_xml_file) as db_conn:
         results = get_all_results_for_query(db_conn, query)
     if len(results) > 1:
-        raise ValueError(f'Should have exactly one assembly for taxonomy {taxonomy_id} with new clustered ss, '
-                         f'instead found {len(results)}')
+        logger.warning(f'Found {len(results)} assemblies for taxonomy {taxonomy_id} with new clustered ss')
     elif len(results) == 0:
         logger.warning(f'No assemblies found with new clustered ss for taxonomy {taxonomy_id}')
         return 0
-    return results[0][0]
+    return sum(x[0] for x in results)
 
 
 def get_last_release_metric(private_config_xml_file, release_version, taxonomy_id, column_name):
