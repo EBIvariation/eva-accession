@@ -1,2 +1,0 @@
-ebi_eva_common_pyutils
-pytz
