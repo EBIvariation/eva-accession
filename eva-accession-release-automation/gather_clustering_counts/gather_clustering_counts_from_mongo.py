@@ -292,6 +292,7 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
         # Finally perform inserts, once for each taxonomy but otherwise identical
         for taxid, scientific_name in ranges_per_assembly[asm]['species_info']:
             folder = f"{scientific_name}/{asm}"
+            formatted_name = scientific_name.capitalize().replace('_', ' ')
             insert_query = f"insert into {assembly_table_name} "\
                            f"(taxonomy_id, scientific_name, assembly_accession, release_folder, release_version, " \
                            f"current_rs, multi_mapped_rs, merged_rs, deprecated_rs, merged_deprecated_rs, " \
@@ -299,7 +300,7 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
                            f"new_merged_deprecated_rs, new_ss_clustered, remapped_current_rs, " \
                            f"new_remapped_current_rs, split_rs, new_split_rs, ss_clustered, clustered_current_rs," \
                            f"new_clustered_current_rs) " \
-                           f"values ({taxid}, '{scientific_name}', '{asm}', '{folder}', {release_version}, "
+                           f"values ({taxid}, '{formatted_name}', '{asm}', '{folder}', {release_version}, "
             insert_query = f"{insert_query} {insert_query_values}"
             logger.info(insert_query)
             execute_query(metadata_connection_handle, insert_query)
@@ -309,18 +310,19 @@ def fill_data_from_previous_release(metadata_connection_handle, ranges_per_assem
     """Insert metrics for taxonomies and assemblies *not* processed during the current release, but present in a
     previous release."""
     assemblies_in_logs = {a for a in ranges_per_assembly.keys()}
-    asm_tax_in_logs = {(asm, tax) for asm in assemblies_in_logs for tax, _ in ranges_per_assembly[asm]['species_info']}
+    asm_tax_in_logs = {(asm, int(tax)) for asm in assemblies_in_logs for tax, _ in ranges_per_assembly[asm]['species_info']}
     previous_release_stats = get_all_results_for_query(metadata_connection_handle,
                                                        f"select * from {assembly_table_name} "
                                                        f"where release_version = {release_version-1}")
     for previous_assembly_stats in previous_release_stats:
         taxonomy_id = previous_assembly_stats[0]
         scientific_name = previous_assembly_stats[1]
+        formatted_name = scientific_name.capitalize().replace('_', ' ')
         assembly_accession = previous_assembly_stats[2]
         release_folder = previous_assembly_stats[3]
 
         # If the complete taxonomy/assembly pair is already present in the current release, do nothing
-        if (taxonomy_id, assembly_accession) in asm_tax_in_logs:
+        if (assembly_accession, taxonomy_id) in asm_tax_in_logs:
             continue
 
         # If the assembly is present in the current release but not with this taxonomy,
@@ -332,8 +334,8 @@ def fill_data_from_previous_release(metadata_connection_handle, ranges_per_assem
             current_release_stats = get_all_results_for_query(metadata_connection_handle, query_current_release)
             # again this can have multiple rows, but we assume they contain the same metrics
             # copy these metrics exactly but using this taxonomy, scientific name, and release folder
-            insert_query_values = f"values ({taxonomy_id}, '{scientific_name}', '{assembly_accession}', '{release_folder}', " \
-                                  f"{', '.join(current_release_stats[0][4:])});"
+            insert_query_values = f"values ({taxonomy_id}, '{formatted_name}', '{assembly_accession}', '{release_folder}', " \
+                                  f"{', '.join((str(x) for x in current_release_stats[0][4:]))});"
 
         # Otherwise we copy previous assembly stats exactly
         else:
@@ -352,7 +354,7 @@ def fill_data_from_previous_release(metadata_connection_handle, ranges_per_assem
                                                                        query_ss_clustered)
             ss_clustered = ss_clustered_previous_releases[0][0]
 
-            insert_query_values = f"values ({taxonomy_id}, '{scientific_name}', '{assembly_accession}', '{release_folder}', " \
+            insert_query_values = f"values ({taxonomy_id}, '{formatted_name}', '{assembly_accession}', '{release_folder}', " \
                                   f"{release_version}, {current_rs}, {multi_mapped_rs}, {merged_rs}, {deprecated_rs}, " \
                                   f"{merged_deprecated_rs}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {ss_clustered}, 0, 0);"
 
