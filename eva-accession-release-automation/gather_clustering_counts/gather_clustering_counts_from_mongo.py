@@ -1,7 +1,7 @@
 import argparse
 import glob
-import json
 import os
+import pickle
 import re
 from pytz import timezone
 
@@ -29,19 +29,19 @@ def gather_count_from_mongo(clustering_dir, remapping_dir, mongo_source, private
     all_remapping_logs_pattern = os.path.join(remapping_dir, '*', 'GCA_*', 'logs', '*_clustering.log')
     all_log_files = glob.glob(all_clustering_logs_pattern) + glob.glob(all_remapping_logs_pattern)
 
-    # Only run if json dump files doesn't already exist
-    ranges_fp = 'ranges_per_assembly.json'
-    metrics_fp = 'metrics_per_assembly.json'
+    # Only run if dump files don't already exist
+    ranges_fp = 'ranges_per_assembly.pkl'
+    metrics_fp = 'metrics_per_assembly.pkl'
     if not os.path.exists(ranges_fp):
         ranges_per_assembly = get_assembly_info_and_date_ranges(all_log_files)
-        json.dump(ranges_per_assembly, open(ranges_fp, 'w+'))
+        pickle.dump(ranges_per_assembly, open(ranges_fp, 'wb+'))
     else:
-        ranges_per_assembly = json.load(open(ranges_fp, 'r'))
+        ranges_per_assembly = pickle.load(open(ranges_fp, 'rb'))
     if not os.path.exists(metrics_fp):
         metrics_per_assembly = get_metrics_per_assembly(mongo_source, ranges_per_assembly)
-        json.dump(metrics_per_assembly, open(metrics_fp, 'w+'))
+        pickle.dump(metrics_per_assembly, open(metrics_fp, 'wb+'))
     else:
-        metrics_per_assembly = json.load(open(metrics_fp, 'r'))
+        metrics_per_assembly = pickle.load(open(metrics_fp, 'rb'))
 
     insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_per_assembly, release_version)
 
@@ -291,7 +291,7 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
 
         # Finally perform inserts, once for each taxonomy but otherwise identical
         for taxid, scientific_name in ranges_per_assembly[asm]['species_info']:
-            folder = f"{ranges_per_assembly[asm]['scientific_name']}/{asm}"
+            folder = f"{scientific_name}/{asm}"
             insert_query = f"insert into {assembly_table_name} "\
                            f"(taxonomy_id, scientific_name, assembly_accession, release_folder, release_version, " \
                            f"current_rs, multi_mapped_rs, merged_rs, deprecated_rs, merged_deprecated_rs, " \
@@ -333,7 +333,7 @@ def fill_data_from_previous_release(metadata_connection_handle, ranges_per_assem
             # again this can have multiple rows, but we assume they contain the same metrics
             # copy these metrics exactly but using this taxonomy, scientific name, and release folder
             insert_query_values = f"values ({taxonomy_id}, '{scientific_name}', '{assembly_accession}', '{release_folder}', " \
-                                  f"{', '.join(current_release_stats[4:])});"
+                                  f"{', '.join(current_release_stats[0][4:])});"
 
         # Otherwise we copy previous assembly stats exactly
         else:
