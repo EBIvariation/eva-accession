@@ -1,3 +1,0 @@
-click==7.1.2
-ebi_eva_common_pyutils
-requests==2.22.0
