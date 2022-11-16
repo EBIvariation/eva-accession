@@ -57,22 +57,20 @@ def get_counts_from_database(private_config_xml_file, release_version):
     so just read them directly. Returns results in the same format as above.
     """
     results = defaultdict(dict)
+    all_metrics = ('current_rs', 'multi_mapped_rs', 'merged_rs', 'deprecated_rs', 'merged_deprecated_rs',
+                   'new_merged_rs', 'new_deprecated_rs', 'new_merged_deprecated_rs')
     query = (
         f"SELECT taxonomy_id, assembly_accession, "
-        f"current_rs, multi_mapped_rs, merged_rs, deprecated_rs, merged_deprecated_rs "
+        + ", ".join(all_metrics) +
         f"FROM {assembly_table_name} "
         f"WHERE release_version={release_version}"
     )
     with get_metadata_connection_handle('production_processing', private_config_xml_file) as db_conn:
         for row in get_all_results_for_query(db_conn, query):
-            taxid, assembly, current_rs, multi_mapped_rs, merged_rs, deprecated_rs, merged_deprecated_rs = row
-            results[taxid][assembly] = {
-                'current_rs': current_rs,
-                'multi_mapped_rs': multi_mapped_rs,
-                'merged_rs': merged_rs,
-                'deprecated_rs': deprecated_rs,
-                'merged_deprecated_rs': merged_deprecated_rs
-            }
+            taxid, assembly = row[:2]
+            results[taxid][assembly] = {}
+            for index, metric in enumerate(all_metrics):
+                results[taxid][assembly][metric] = row[index]
     return results
 
 
@@ -110,6 +108,42 @@ def compare_counts(counts_from_files, counts_from_db, threshold, output_csv=None
     return rows
 
 
+def update_counts(counts_from_files, counts_from_db, counts_from_previous_db, release_version, threshold):
+    """
+    Update count that need to be change to be in since between the release files and the database.
+    """
+    all_metrics = ('current_rs', 'multi_mapped_rs', 'merged_rs', 'deprecated_rs', 'merged_deprecated_rs',
+                   'new_merged_rs', 'new_deprecated_rs', 'new_merged_deprecated_rs')
+
+    all_taxids = set(counts_from_files.keys()).union(counts_from_db.keys())
+    for taxid in all_taxids:
+        tax_counts_from_files = counts_from_files.get(taxid, defaultdict(dict))
+        tax_counts_from_db = counts_from_db.get(taxid, defaultdict(dict))
+        tax_counts_from_previous_db = counts_from_previous_db.get(taxid, defaultdict(dict))
+        all_asms = set(tax_counts_from_files.keys()).union(tax_counts_from_db.keys())
+        for asm in all_asms:
+            metrics_change_list = []
+            asm_counts_from_files = tax_counts_from_files.get(asm, {})
+            asm_counts_from_db = tax_counts_from_db.get(asm, {})
+            asm_counts_from_previous_db = tax_counts_from_previous_db.get(asm, {})
+            for metric in all_metrics:
+                file_count = asm_counts_from_files.get(metric, 0)
+                db_count = asm_counts_from_db.get(metric, 0)
+                prev_db_count = asm_counts_from_previous_db.get(metric, 0)
+
+                if abs(file_count - db_count) > threshold:
+                    metrics_change_list.append(f"{metric} = {file_count}")
+                    # calculate the new_metric associated
+                    db_count_new = file_count - prev_db_count
+                    if db_count_new > 0:
+                        metrics_change_list.append(f"new_{metric} = {db_count_new}")
+
+            query = (f"UPDATE {assembly_table_name} SET {', '.join(metrics_change_list)} "
+                     f"WHERE taxonomy={taxid} and assembly_accession={asm} and release_version={release_version};")
+
+            print(query)
+
+
 def main():
     parser = argparse.ArgumentParser(description='QC release counts from files and database')
     parser.add_argument("--release-root-path", help="base directory where the release was run", required=True)
@@ -119,6 +153,8 @@ def main():
                         required=False, default=0)
     parser.add_argument("--output-csv", help="optional file to output results, otherwise will print to stdout",
                         required=False, default=None)
+    parser.add_argument("--update", default=False, action="store_true",
+                        help="Flag to get the script to update the database counts to use the current File count.")
 
     args = parser.parse_args()
     private_config_xml_file = args.private_config_xml_file
@@ -129,8 +165,11 @@ def main():
 
     counts_from_files = get_counts_from_release_files(private_config_xml_file, release_version, release_root_path)
     counts_from_db = get_counts_from_database(private_config_xml_file, release_version)
+    counts_from_previous_db = get_counts_from_database(private_config_xml_file, release_version-1)
 
     compare_counts(counts_from_files, counts_from_db, threshold, output_csv)
+    if args.update:
+        update_counts(counts_from_files, counts_from_db, counts_from_previous_db, release_version, threshold)
 
 
 if __name__ == '__main__':
