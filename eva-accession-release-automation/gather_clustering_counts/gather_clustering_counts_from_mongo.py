@@ -216,6 +216,9 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
                              f"where assembly_accession = '{asm}' and release_version = {release_version-1}"
         logger.info(query_last_release)
         asm_last_release_data = get_all_results_for_query(metadata_connection_handle, query_last_release)
+        # asm_last_release_data can have multiple rows (if multiple taxids are associated with the same assembly),
+        # but we assume though metrics are same as that's how we're currently releasing.
+        assert len(set(row[4:] for row in asm_last_release_data)) == 1
 
         # insert data for current release - common to all taxonomies that share this assembly
         new_remapped_current_rs = metrics_per_assembly[asm]['new_remapped_current_rs']
@@ -226,8 +229,6 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
         new_split_rs = metrics_per_assembly[asm]['split_rs']
         new_ss_clustered = metrics_per_assembly[asm]['new_ss_clustered']
 
-        # asm_last_release_data can have multiple rows (if multiple taxids are associated with the same assembly),
-        # but we assume though metrics are same as that's how we're currently releasing.
         if asm_last_release_data:
             prev_release_current_rs = asm_last_release_data[0][5]
             prev_release_merged_rs = asm_last_release_data[0][7]
