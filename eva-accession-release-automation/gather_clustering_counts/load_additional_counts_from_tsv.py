@@ -26,11 +26,22 @@ def load_from_tsv(tsv_file, release_version, private_config_xml_file):
         for record in reader:
             new_metric, metric = metrics_map.get(record.get('metric'))
             count = record.get('count')
+            if metric in ('merged_rs', 'deprecated_rs'):
+                query = (
+                    f"UPDATE {assembly_table_name} SET "
+                    f"{new_metric} = {new_metric} + {count}, "
+                    f"{metric} = {metric} + {count}, "
+                    f"current_rs = current_rs - {count} " 
+                    f"WHERE assembly_accession='{record.get('assembly')}' and release_version={release_version};"
+                )
+            else:
+                query = (
+                    f"UPDATE {assembly_table_name} SET "
+                    f"{new_metric} = {new_metric} + {count}, "
+                    f"{metric} = {metric} + {count} "
+                    f"WHERE assembly_accession='{record.get('assembly')}' and release_version={release_version};"
+                )
 
-            query = (
-                f"UPDATE {assembly_table_name} SET {new_metric} = {new_metric} + {count}, {metric} = {metric} + {count} "
-                f"WHERE assembly_accession='{record.get('assembly')}' and release_version={release_version};"
-            )
             logger.info(query)
             all_queries.append(query)
 
