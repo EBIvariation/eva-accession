@@ -116,10 +116,10 @@ def update_counts(private_config_xml_file, counts_from_files, counts_from_db, co
     """
     Update count that need to be change to be in since between the release files and the database.
     """
-    all_metrics = ('current_rs', 'multi_mapped_rs', 'merged_rs', 'deprecated_rs', 'merged_deprecated_rs',
-                   'new_merged_rs', 'new_deprecated_rs', 'new_merged_deprecated_rs')
+    all_metrics = ('current_rs', 'multi_mapped_rs', 'merged_rs', 'deprecated_rs', 'merged_deprecated_rs')
     all_queries = []
     all_taxids = set(counts_from_files.keys()).union(counts_from_db.keys())
+    metrics_per_assembly = {}
     for taxid in all_taxids:
         tax_counts_from_files = counts_from_files.get(taxid, defaultdict(dict))
         tax_counts_from_db = counts_from_db.get(taxid, defaultdict(dict))
@@ -141,15 +141,19 @@ def update_counts(private_config_xml_file, counts_from_files, counts_from_db, co
                     db_count_new = file_count - prev_db_count
                     if db_count_new > 0:
                         metrics_change_list.append(f"new_{metric}={db_count_new}")
-            if metrics_change_list:
-                query = (f"UPDATE {assembly_table_name} SET {', '.join(metrics_change_list)} "
-                         f"WHERE taxonomy={taxid} and assembly_accession={asm} and release_version={release_version};")
 
-                logger.info(query)
-                all_queries.append(query)
+            if metrics_change_list:
+                if asm in metrics_per_assembly:
+                    assert metrics_change_list == metrics_per_assembly[asm], f'Metrics update for {taxid} is different from one previously set'
+                else:
+                    metrics_per_assembly[asm] = metrics_change_list
 
     with get_metadata_connection_handle('production_processing', private_config_xml_file) as db_conn:
-        for query in all_queries:
+        for asm in metrics_per_assembly:
+
+            query = (f"UPDATE {assembly_table_name} SET {', '.join(metrics_per_assembly[asm])} "
+                     f"WHERE assembly_accession='{asm}' and release_version={release_version};")
+            logger.info(query)
             execute_query(db_conn, query)
 
 
