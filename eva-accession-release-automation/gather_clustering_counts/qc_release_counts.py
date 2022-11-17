@@ -117,19 +117,22 @@ def update_counts(private_config_xml_file, counts_from_files, counts_from_db, co
     Update count that need to be change to be in since between the release files and the database.
     """
     all_metrics = ('current_rs', 'multi_mapped_rs', 'merged_rs', 'deprecated_rs', 'merged_deprecated_rs')
-    all_queries = []
     all_taxids = set(counts_from_files.keys()).union(counts_from_db.keys())
     metrics_per_assembly = {}
+    #summarise previous count per assembly
+    counts_from_previous_per_assembly = {}
+    for taxid in counts_from_previous_db:
+        for asm in counts_from_previous_db[taxid]:
+            counts_from_previous_per_assembly[asm] = counts_from_previous_db[taxid][asm]
     for taxid in all_taxids:
         tax_counts_from_files = counts_from_files.get(taxid, defaultdict(dict))
         tax_counts_from_db = counts_from_db.get(taxid, defaultdict(dict))
-        tax_counts_from_previous_db = counts_from_previous_db.get(taxid, defaultdict(dict))
         all_asms = set(tax_counts_from_files.keys()).union(tax_counts_from_db.keys())
         for asm in all_asms:
             metrics_change_list = []
             asm_counts_from_files = tax_counts_from_files.get(asm, {})
             asm_counts_from_db = tax_counts_from_db.get(asm, {})
-            asm_counts_from_previous_db = tax_counts_from_previous_db.get(asm, {})
+            asm_counts_from_previous_db = counts_from_previous_per_assembly.get(asm, {})
             for metric in all_metrics:
                 file_count = asm_counts_from_files.get(metric, 0)
                 db_count = asm_counts_from_db.get(metric, 0)
@@ -144,13 +147,13 @@ def update_counts(private_config_xml_file, counts_from_files, counts_from_db, co
 
             if metrics_change_list:
                 if asm in metrics_per_assembly:
-                    assert metrics_change_list == metrics_per_assembly[asm], f'Metrics update for {taxid} is different from one previously set'
+                    assert metrics_change_list == metrics_per_assembly[asm], \
+                        f'Metrics update for {taxid} is different from one previously set'
                 else:
                     metrics_per_assembly[asm] = metrics_change_list
 
     with get_metadata_connection_handle('production_processing', private_config_xml_file) as db_conn:
         for asm in metrics_per_assembly:
-
             query = (f"UPDATE {assembly_table_name} SET {', '.join(metrics_per_assembly[asm])} "
                      f"WHERE assembly_accession='{asm}' and release_version={release_version};")
             logger.info(query)
