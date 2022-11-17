@@ -73,7 +73,7 @@ def get_counts_from_database(private_config_xml_file, release_version):
         for row in get_all_results_for_query(db_conn, query):
             taxid, assembly = row[:2]
             results[taxid][assembly] = {}
-            for index, metric in enumerate(all_metrics[2:]):
+            for index, metric in enumerate(all_metrics):
                 results[taxid][assembly][metric] = row[index + 2]
     return results
 
