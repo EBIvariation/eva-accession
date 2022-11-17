@@ -6,12 +6,16 @@ import re
 from collections import defaultdict
 
 from ebi_eva_common_pyutils.common_utils import pretty_print
+from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
 
 from gather_clustering_counts.gather_per_species_clustering_counts import get_taxonomy_and_scientific_name, \
     assembly_table_name, id_to_column
 
+
+logger = logging_config.get_logger(__name__)
+logging_config.add_stdout_handler()
 
 def get_counts_from_release_files(private_config_xml_file, release_version, release_dir):
     """
@@ -62,15 +66,15 @@ def get_counts_from_database(private_config_xml_file, release_version):
     query = (
         f"SELECT taxonomy_id, assembly_accession, "
         + ", ".join(all_metrics) +
-        f"FROM {assembly_table_name} "
+        f" FROM {assembly_table_name} "
         f"WHERE release_version={release_version}"
     )
     with get_metadata_connection_handle('production_processing', private_config_xml_file) as db_conn:
         for row in get_all_results_for_query(db_conn, query):
             taxid, assembly = row[:2]
             results[taxid][assembly] = {}
-            for index, metric in enumerate(all_metrics):
-                results[taxid][assembly][metric] = row[index]
+            for index, metric in enumerate(all_metrics[2:]):
+                results[taxid][assembly][metric] = row[index + 2]
     return results
 
 
@@ -108,13 +112,13 @@ def compare_counts(counts_from_files, counts_from_db, threshold, output_csv=None
     return rows
 
 
-def update_counts(counts_from_files, counts_from_db, counts_from_previous_db, release_version, threshold):
+def update_counts(private_config_xml_file, counts_from_files, counts_from_db, counts_from_previous_db, release_version, threshold):
     """
     Update count that need to be change to be in since between the release files and the database.
     """
     all_metrics = ('current_rs', 'multi_mapped_rs', 'merged_rs', 'deprecated_rs', 'merged_deprecated_rs',
                    'new_merged_rs', 'new_deprecated_rs', 'new_merged_deprecated_rs')
-
+    all_queries = []
     all_taxids = set(counts_from_files.keys()).union(counts_from_db.keys())
     for taxid in all_taxids:
         tax_counts_from_files = counts_from_files.get(taxid, defaultdict(dict))
@@ -136,12 +140,17 @@ def update_counts(counts_from_files, counts_from_db, counts_from_previous_db, re
                     # calculate the new_metric associated
                     db_count_new = file_count - prev_db_count
                     if db_count_new > 0:
-                        metrics_change_list.append(f"new_{metric} = {db_count_new}")
+                        metrics_change_list.append(f"new_{metric}={db_count_new}")
+            if metrics_change_list:
+                query = (f"UPDATE {assembly_table_name} SET {', '.join(metrics_change_list)} "
+                         f"WHERE taxonomy={taxid} and assembly_accession={asm} and release_version={release_version};")
 
-            query = (f"UPDATE {assembly_table_name} SET {', '.join(metrics_change_list)} "
-                     f"WHERE taxonomy={taxid} and assembly_accession={asm} and release_version={release_version};")
+                logger.info(query)
+                all_queries.append(query)
 
-            print(query)
+    with get_metadata_connection_handle('production_processing', private_config_xml_file) as db_conn:
+        for query in all_queries:
+            execute_query(db_conn, query)
 
 
 def main():
@@ -169,7 +178,8 @@ def main():
 
     compare_counts(counts_from_files, counts_from_db, threshold, output_csv)
     if args.update:
-        update_counts(counts_from_files, counts_from_db, counts_from_previous_db, release_version, threshold)
+        update_counts(private_config_xml_file, counts_from_files, counts_from_db, counts_from_previous_db,
+                      release_version, threshold)
 
 
 if __name__ == '__main__':
