@@ -65,8 +65,7 @@ def get_last_release_metric(private_config_xml_file, release_version, taxonomy_i
 def get_taxonomy_and_scientific_name(private_config_xml_file, release_version, species_folder):
     query = f"select taxonomy, scientific_name from {tracker_table_name} " \
             f"where release_version={release_version} " \
-            f"and release_folder_name='{species_folder}' " \
-            f"and should_be_released"
+            f"and release_folder_name='{species_folder}' "
     with get_metadata_connection_handle('production_processing', private_config_xml_file) as db_conn:
         results = get_all_results_for_query(db_conn, query)
     if len(results) < 1:
