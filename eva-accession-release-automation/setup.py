@@ -1,10 +1,9 @@
-import os
 from setuptools import find_packages, setup
 
 
 def get_requires():
     requires = []
-    with open(os.path.join(os.path.dirname(__file__), "run_release_in_embassy", "requirements.txt"), "rt") as req_file:
+    with open("requirements.txt", "rt") as req_file:
         for line in req_file:
             requires.append(line.rstrip())
     return requires
