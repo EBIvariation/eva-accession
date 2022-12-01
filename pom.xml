@@ -155,6 +155,17 @@
         </repository>
     </repositories>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>cloudsmith</id>
+            <url>https://maven.cloudsmith.io/ebivariation/packages/</url>
+        </snapshotRepository>
+        <repository>
+            <id>cloudsmith</id>
+            <url>https://maven.cloudsmith.io/ebivariation/packages/</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
