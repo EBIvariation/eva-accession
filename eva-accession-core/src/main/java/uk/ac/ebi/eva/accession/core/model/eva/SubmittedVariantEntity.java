@@ -96,7 +96,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         this(accession, hashedMessage, model.getReferenceSequenceAccession(), model.getTaxonomyAccession(),
              model.getProjectAccession(), model.getContig(), model.getStart(), model.getReferenceAllele(),
              model.getAlternateAllele(), model.getClusteredVariantAccession(), model.isSupportedByEvidence(),
-             model.isAssemblyMatch(), model.isAllelesMatch(), model.isValidated(), version);
+             model.isAssemblyMatch(), model.isAllelesMatch(), model.isValidated(), version, model.getMapWeight());
         this.setRemappedFrom(model.getRemappedFrom());
         this.setRemappingId(model.getRemappingId());
         this.setRemappedDate(model.getRemappedDate());
