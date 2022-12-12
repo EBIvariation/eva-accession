@@ -58,7 +58,8 @@ public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVarian
 
     public ClusteredVariantEntity(Long accession, String hashedMessage, IClusteredVariant model, int version) {
         this(accession, hashedMessage, model.getAssemblyAccession(), model.getTaxonomyAccession(), model.getContig(),
-             model.getStart(), model.getType(), model.isValidated(), model.getCreatedDate(), version);
+                model.getStart(), model.getType(), model.isValidated(), model.getCreatedDate(), version,
+                model.getMapWeight());
     }
 
     public ClusteredVariantEntity(Long accession, String hashedMessage, String assemblyAccession,

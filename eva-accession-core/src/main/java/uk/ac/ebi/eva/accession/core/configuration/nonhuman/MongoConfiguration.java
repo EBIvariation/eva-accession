@@ -60,6 +60,7 @@ public class MongoConfiguration {
     }
 
     @Bean
+    @Primary
     public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
                                    Environment environment) throws UnknownHostException {
         MongoClientOptions mongoClientOptions = options.getIfAvailable();
@@ -75,6 +76,7 @@ public class MongoConfiguration {
     }
 
     @Bean("primaryFactory")
+    @Primary
     public MongoDbFactory mongoDbFactory(MongoProperties properties,
                                          ObjectProvider<MongoClientOptions> options,
                                          Environment environment) throws UnknownHostException {
