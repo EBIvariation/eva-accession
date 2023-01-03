@@ -6,11 +6,11 @@ stages:
 variables:
     WS_ARTIFACT_PATH: eva-accession-ws/target/eva-accession-ws-$ENVIRONMENT_NAME.war
     CLUSTERING_ARTIFACT_PATH: eva-accession-clustering/target/eva-accession-clustering-*exec.jar
-    ACCESSIONING_ARTIFACT_PATH: eva-accession-pipeline/target/eva-accession-pipeline-*.jar
-    RELEASE_ARTIFACT_PATH: eva-accession-release/target/eva-accession-release-*.jar
-    DEPRECATE_ARTIFACT_PATH: eva-accession-deprecate/target/eva-accession-deprecate-*.jar
+    ACCESSIONING_ARTIFACT_PATH: eva-accession-pipeline/target/eva-accession-pipeline-*exec.jar
+    RELEASE_ARTIFACT_PATH: eva-accession-release/target/eva-accession-release-*exec.jar
+    DEPRECATE_ARTIFACT_PATH: eva-accession-deprecate/target/eva-accession-deprecate-*exec.jar
     REMAPPING_GET_SOURCE_ARTIFACT_PATH: eva-remapping-get-source/target/eva-remapping-get-source-*exec.jar
-    REMAPPING_INGEST_ARTIFACT_PATH: eva-remapping-ingest/target/eva-remapping-ingest-*.jar
+    REMAPPING_INGEST_ARTIFACT_PATH: eva-remapping-ingest/target/eva-remapping-ingest-*exec.jar
     CLUSTERING_SYMLINK_NAME: "eva-accession-clustering.jar"
     ACCESSIONING_SYMLINK_NAME: "eva-accession-pipeline.jar"
     RELEASE_SYMLINK_NAME: "eva-accession-release.jar"
