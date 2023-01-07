@@ -86,7 +86,8 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
             process_name=f'process_remapped_variants_with_rs_{suffix}',
             command_to_run=f'java -Xmx{memory}m -jar {clustering_artifact} --spring.config.location=file:{properties_path} '
                            f'--spring.batch.job.names=PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB',
-            process_directives=process_directives_for_java_pipelines
+            process_directives='clusterOptions': f"{process_directives_for_java_pipelines['clusterOptions']}"
+                                                  f" -g /accession "}  # Limits the overall number of jobs using job tracker
         ))
         pipeline._add_new_process(NextFlowProcess(
             process_name=f'cluster_{suffix}',
