@@ -57,6 +57,7 @@ public class ClusteredVariantInactiveEntity extends InactiveSubDocument<ICluster
         this.start = clusteredVariantEntity.getStart();
         this.type = clusteredVariantEntity.getType();
         this.validated = clusteredVariantEntity.isValidated();
+        this.mapWeight = clusteredVariantEntity.getMapWeight();
     }
 
     @Override
