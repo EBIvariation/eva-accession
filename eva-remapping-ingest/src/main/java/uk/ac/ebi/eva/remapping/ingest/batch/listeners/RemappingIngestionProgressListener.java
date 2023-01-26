@@ -41,11 +41,13 @@ public class RemappingIngestionProgressListener extends GenericProgressListener<
 
         String stepName = stepExecution.getStepName();
         long numTotalItemsRead = stepExecution.getReadCount();
-        logger.info("Step {} finished: Items (remapped ss) read = {}, ss ingested = {}, ss skipped (duplicate) = {}",
+        logger.info("Step {} finished: Items (remapped ss) read = {}, ss ingested = {}, ss skipped (duplicate) = {}," +
+                            " ss discarded from db = {}",
                     stepName,
                     numTotalItemsRead,
                     remappingIngestCounts.getRemappedVariantsIngested(),
-                    remappingIngestCounts.getRemappedVariantsSkipped());
+                    remappingIngestCounts.getRemappedVariantsSkipped(),
+                    remappingIngestCounts.getRemappedVariantsDiscarded());
         return status;
     }
 }
