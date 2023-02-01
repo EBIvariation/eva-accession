@@ -198,7 +198,7 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                 if (equalsSveAndAccession(sve, currentKept)) continue;
                 // If the SVE to discard isn't one we were trying to insert, add it to the list of SVEs to remove from
                 // the database; otherwise just remove it from the list to insert.
-                if (!removeAllFromSveList(svesToInsert, sve)) {
+                if (removeAllFromSveList(svesToInsert, sve) == 0) {
                     svesToDiscard.add(sve);
                 }
                 // Either way create a discard operation
@@ -223,9 +223,8 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
                 Stream.concat(svesToInsert.stream(), svesWithSameHash.stream())
                       .collect(Collectors.groupingBy(sve -> sve.hashCode() + "_" + sve.getAccession())));
         for (List<SubmittedVariantEntity> dups : duplicateSve.values()) {
-            if (removeAllFromSveList(svesToInsert, dups.get(0))) {
-                remappingIngestCounts.addRemappedVariantsSkipped(1);
-            }
+            int numRemoved = removeAllFromSveList(svesToInsert, dups.get(0));
+            remappingIngestCounts.addRemappedVariantsSkipped(numRemoved);
         }
 
         // Get the remaining duplicate hashes
@@ -236,10 +235,10 @@ public class RemappedSubmittedVariantsWriter implements ItemWriter<SubmittedVari
         return filterForDuplicates(svesGroupedByHash);
     }
 
-    private boolean removeAllFromSveList(List<SubmittedVariantEntity> sves, SubmittedVariantEntity sveToRemove) {
+    private int removeAllFromSveList(List<SubmittedVariantEntity> sves, SubmittedVariantEntity sveToRemove) {
         int initialSize = sves.size();
         sves.removeIf(sve -> equalsSveAndAccession(sve, sveToRemove));
-        return sves.size() < initialSize;
+        return initialSize - sves.size();
     }
 
     private boolean containsSveList(List<SubmittedVariantEntity> sves, SubmittedVariantEntity sveToFind) {
