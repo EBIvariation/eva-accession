@@ -16,7 +16,6 @@
  */
 package uk.ac.ebi.eva.remapping.ingest.batch.io;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.MongoClient;
@@ -56,7 +55,6 @@ import static uk.ac.ebi.eva.remapping.ingest.configuration.BeanNames.REMAPPED_SU
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:ingest-remapped-variants.properties")
-@UsingDataSet(locations = {"/test-data/submittedVariantEntity.json"})
 public class RemappedSubmittedVariantsWriterTest {
 
     private static final String TEST_DB = "test-ingest-remapping";
@@ -120,17 +118,28 @@ public class RemappedSubmittedVariantsWriterTest {
         assertEquals(discarded, remappingIngestCounts.getRemappedVariantsDiscarded());
     }
 
+    private void assertDatabaseCounts(int newSves) {
+        assertEquals(newSves, mongoTemplate.findAll(SubmittedVariantEntity.class).size());
+    }
+
     @Test
     public void testDoesNotWriteNewDuplicateAccessions_discardFromInput() {
-        // Ensure the source variant we'd find is later than whatever is already in the db
-        SubmittedVariantEntity sourceSve = createSveInAssembly("GCA_000000001.5", 5000000002L, 2100, "C", "T",
-                                                               LocalDateTime.now(), null);
-        mongoTemplate.insert(sourceSve);
+        List<SubmittedVariantEntity> svesInDb = Arrays.asList(
+                // Oldest source (non-remapped) SVE
+                createSveInAssembly("GCA_000000001.1", 5000000002L, 1000, "C", "T", LocalDateTime.now(), null),
+                // SVE remapped from oldest SVE
+                createSve(5000000002L, 2000, "C", "T", LocalDateTime.now(), "GCA_000000001.1"),
+                // Another (newer) non-remapped SVE
+                createSveInAssembly("GCA_000000001.5", 5000000002L, 2100, "C", "T", LocalDateTime.now(), null));
+
+        mongoTemplate.insert(svesInDb, SubmittedVariantEntity.class);
 
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
+                // SVE remapped from newer source SVE should be discarded
                 createSve(5000000002L, 2100, "C", "T", LocalDateTime.now(), "GCA_000000001.5"));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(0, 0, 1);
+        assertDatabaseCounts(3);
     }
 
     @Test
@@ -143,6 +152,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), null));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(1, 0, 1);
+        assertDatabaseCounts(1);
     }
 
     @Test
@@ -152,6 +162,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 createSve(5000000003L, 1100, "A", "T", LocalDateTime.now(), "GCA_000000001.1"));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(1, 0, 1);
+        assertDatabaseCounts(1);
     }
 
     @Test
@@ -163,6 +174,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 createSve(5000000005L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(0, 0, 1);
+        assertDatabaseCounts(1);
     }
 
     @Test
@@ -177,6 +189,7 @@ public class RemappedSubmittedVariantsWriterTest {
                 createSve(5000000004L, 1100, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
         writer.write(svesToWrite);
         assertRemappingIngestCounts(0, 1, 1);
+        assertDatabaseCounts(1);
     }
 
     @Test
@@ -190,10 +203,13 @@ public class RemappedSubmittedVariantsWriterTest {
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(duplicateSve);
         writer.write(svesToWrite);
         assertRemappingIngestCounts(0, 0, 1);
+        assertDatabaseCounts(1);
     }
 
     @Test
     public void testIdempotentWrites() {
+        mongoTemplate.insert(createSve(5000000002L, 1000, "C", "T", LocalDateTime.now(), "GCA_000000001.1"));
+
         List<SubmittedVariantEntity> svesToWrite = Collections.singletonList(
                 createSve(5000000002L, 1100, "C", "T", LocalDateTime.now(), null));
         writer.write(svesToWrite);
@@ -215,6 +231,59 @@ public class RemappedSubmittedVariantsWriterTest {
 
         assertEquals(sveAfterFirstWrite, sveAfterSecondWrite);
         assertEquals(svoeAfterFirstWrite, svoeAfterSecondWrite);
+    }
+
+    @Test
+    public void testDuplicateAccessionInDb_discardFromDb() {
+        // Scenario assumes duplicate SS on one assembly already present in database
+        LocalDateTime now = LocalDateTime.now();
+        List<SubmittedVariantEntity> svesInDb = Arrays.asList(
+                createSve(5000000003L, 1100, "C", "T", now, "GCA_000000001.1"),
+                createSve(5000000003L, 1200, "C", "T", now, "GCA_000000001.1")
+        );
+        mongoTemplate.insert(svesInDb, SubmittedVariantEntity.class);
+        // Use the exact createdDate present in the database
+        now = mongoTemplate.findAll(SubmittedVariantEntity.class).get(0).getCreatedDate();
+
+        // If we ingest another variant with the same SS, the writer will discard duplicates from the database as well.
+        List<SubmittedVariantEntity> firstBatch = Collections.singletonList(
+                createSve(5000000003L, 1400, "C", "T", now, "GCA_000000001.1")
+        );
+        writer.write(firstBatch);
+        assertRemappingIngestCounts(0, 0, 2);
+        assertDatabaseCounts(1);
+
+        List<SubmittedVariantEntity> secondBatch = Arrays.asList(
+                createSve(5000000003L, 1400, "C", "T", now, "GCA_000000001.1"),
+                createSve(5000000004L, 1400, "C", "T", now, "GCA_000000001.1")
+        );
+        writer.write(secondBatch);
+        assertRemappingIngestCounts(0, 1, 3);
+        assertDatabaseCounts(1);
+    }
+
+    @Test
+    public void testDuplicateAccessionInDb_skipFromInput() {
+        // Scenario assumes duplicate SS on one assembly already present in database
+        LocalDateTime now = LocalDateTime.now();
+        List<SubmittedVariantEntity> svesInDb = Arrays.asList(
+                createSve(5000000003L, 1100, "C", "T", now, "GCA_000000001.1"),
+                createSve(5000000003L, 1200, "C", "T", now, "GCA_000000001.1")
+        );
+        mongoTemplate.insert(svesInDb, SubmittedVariantEntity.class);
+        // Use the exact createdDate present in the database
+        now = mongoTemplate.findAll(SubmittedVariantEntity.class).get(0).getCreatedDate();
+
+        // This case does NOT deduplicate the accessions already present in db, as the duplicate SS in the batch is
+        // filtered out based on duplicate hash before we query the db for that accessions
+        List<SubmittedVariantEntity> svesToWrite = Arrays.asList(
+                createSve(5000000003L, 1400, "C", "T", now, "GCA_000000001.1"),
+                createSve(5000000003L, 1400, "C", "T", now, "GCA_000000001.1"),
+                createSve(5000000004L, 1400, "C", "T", now, "GCA_000000001.1")
+        );
+        writer.write(svesToWrite);
+        assertRemappingIngestCounts(1, 2, 0);
+        assertDatabaseCounts(3);
     }
 
 }
