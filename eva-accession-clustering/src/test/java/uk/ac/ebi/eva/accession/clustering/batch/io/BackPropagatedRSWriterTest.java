@@ -128,7 +128,7 @@ public class BackPropagatedRSWriterTest {
     /*
      * See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=810976681
      */
-    public void runBackPropagationWithMultipleAssemblies() throws AccessionCouldNotBeGeneratedException {
+    public void runBackPropagationAcrossMultipleRemappings() throws AccessionCouldNotBeGeneratedException {
         RSLocus rsLocus1 = new RSLocus(ASM1, "chr1", 100L, VariantType.SNV);
         RSLocus rsLocus2 = new RSLocus(ASM2, "chr1", 101L, VariantType.SNV);
         RSLocus rsLocus3 = new RSLocus(ASM2, "chr1", 102L, VariantType.SNV);
