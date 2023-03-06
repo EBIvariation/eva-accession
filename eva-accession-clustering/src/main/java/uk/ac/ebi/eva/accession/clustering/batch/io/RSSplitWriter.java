@@ -308,11 +308,26 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
         final SplitDeterminants hashThatShouldRetainOldRS = lastPrioritizedHash;
         Class<? extends ClusteredVariantEntity> rsCollectionToUse = clusteringWriter.getClusteredVariantCollection(
                 hashThatShouldRetainOldRS.getClusteredVariantEntity().getAccession());
-        if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashThatShouldRetainOldRS.getRsHash())),
-                                    rsCollectionToUse).isEmpty()) {
-            this.mongoTemplate.insert(hashThatShouldRetainOldRS.getClusteredVariantEntity(),
-                    this.mongoTemplate.getCollectionName(rsCollectionToUse));
-            metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
+        String hashToFind = hashThatShouldRetainOldRS.getRsHash();
+        Class<? extends ClusteredVariantEntity> otherCollection =
+                (rsCollectionToUse == DbsnpClusteredVariantEntity.class)?
+                        ClusteredVariantEntity.class: DbsnpClusteredVariantEntity.class;
+        if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashToFind)), rsCollectionToUse).isEmpty()) {
+            // Don't insert an entry with an RS hash if that hash already exists in another collection
+            // This way, we at least make it possible for a clustering re-run to resolve a previously unresolved merge
+            // See https://docs.google.com/spreadsheets/d/10NqzlcmKF5cVotJtnYhEFYvD_A7P9WsjN2p2ipYFKxE/edit#gid=0
+            // If we allow multiple hashes to co-exist in different collections, a re-run will be hindered
+            // (see EVA-3132 and https://ebi-eva.slack.com/archives/C5A6MLDAR/p1676986532496859)
+            if (this.mongoTemplate.find(query(where(ID_ATTRIBUTE).is(hashToFind)),otherCollection).isEmpty()) {
+                this.mongoTemplate.insert(hashThatShouldRetainOldRS.getClusteredVariantEntity(),
+                        this.mongoTemplate.getCollectionName(rsCollectionToUse));
+                metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
+            } else {
+                logger.warn("Skipping creation of RS record " + hashThatShouldRetainOldRS.getClusteredVariantEntity()
+                        + " because the  hash " + hashToFind + " is present in the " + otherCollection.getSimpleName()
+                        + " collection! This should NOT happen and likely indicates an RS merge that did not take place!"
+                        +" See https://docs.google.com/spreadsheets/d/10NqzlcmKF5cVotJtnYhEFYvD_A7P9WsjN2p2ipYFKxE/edit#gid=0.");
+            }
         }
         return splitCandidates.stream()
                               .map(SplitDeterminants::getRsHash)
