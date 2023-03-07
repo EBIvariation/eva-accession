@@ -392,4 +392,42 @@ public class RSSplitWriterTest {
         // So, use regex to check for just the hashes in the RS report.
         assertTrue(rsReportLines.get(0).matches(".*\t38B381F33CE89A941BABDB854FABF267C99843C6"));
     }
+
+    @Test
+    @DirtiesContext
+    /**
+     * See EVA-3182 and https://docs.google.com/spreadsheets/d/10NqzlcmKF5cVotJtnYhEFYvD_A7P9WsjN2p2ipYFKxE/edit#rangeid=1226157786
+     */
+    public void testRetainedRSIsNotCreatedWhenHashExists() throws Exception {
+        Long sameRSAccessionToBeUsedForDifferentLoci = 1L;
+        // Create SS with the same RS with ss1 and ss2 sharing the same locus (chr + start + type)
+        ss1 = createSS(1L, sameRSAccessionToBeUsedForDifferentLoci, 100L, "C", "G");
+        ss2 = createSS(2L, sameRSAccessionToBeUsedForDifferentLoci, 101L, "A", "T");
+
+        mongoTemplate.insert(Arrays.asList(ss1, ss2), DbsnpSubmittedVariantEntity.class);
+        // Create a separate entry in CVE with the same hash as the RS locus of ss1
+        ClusteredVariantEntity ss1CVE = clusteringWriter.toClusteredVariantEntity(ss1);
+        ClusteredVariantEntity newEntryInCVE = new ClusteredVariantEntity(7L, ss1CVE.getHashedMessage(), ss1CVE);
+        mongoTemplate.save(newEntryInCVE);
+
+        SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
+        splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
+                ss1.getAccession(), "Hash mismatch with " + ss1.getClusteredVariantAccession(),
+                Stream.of(ss1, ss2).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList())
+        );
+        mongoTemplate.insert(Collections.singletonList(splitOperation), SubmittedVariantOperationEntity.class);
+        rsSplitWriter.write(Collections.singletonList(splitOperation));
+
+        // Ensure that SS1 gets to retain the old RS
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> ssAssociatedWithRS1 =
+                submittedVariantAccessioningService.getByClusteredVariantAccessionIn(
+                        Collections.singletonList(sameRSAccessionToBeUsedForDifferentLoci));
+        assertEquals(1, ssAssociatedWithRS1.size());
+        assertTrue(ssAssociatedWithRS1.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet())
+                .containsAll(Arrays.asList(ss1.getAccession())));
+
+        // Ensure that the RS with accession 1 associated with ss1 is NOT created
+        // because an RS with accession 7 already has the same hash
+        assertTrue(mongoTemplate.findAll(DbsnpClusteredVariantEntity.class).isEmpty());
+    }
 }
