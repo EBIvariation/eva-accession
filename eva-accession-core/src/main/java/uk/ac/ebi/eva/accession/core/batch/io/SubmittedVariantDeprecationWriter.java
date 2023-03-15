@@ -17,6 +17,7 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
 import com.mongodb.ReadPreference;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
@@ -32,11 +33,11 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.groovy.commons.EVAObjectModelUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -100,15 +101,19 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
         if (svesToDeprecate.size() > 0) {
             List<String> ssHashesToRemove = svesToDeprecate.stream().map(AccessionedDocument::getId).collect(
                     Collectors.toList());
-            List<Long> associatedRSIDs = svesToDeprecate.stream()
-                                                        .map(SubmittedVariantEntity::getClusteredVariantAccession)
-                                                        .filter(Objects::nonNull)
-                                                        .distinct()
-                                                        .collect(Collectors.toList());
+            Set<ImmutablePair<String, Long>> associatedRSHashesAndIDs = svesToDeprecate.stream()
+                    .map(EVAObjectModelUtils::toClusteredVariantEntity)
+                    .map(cve -> new ImmutablePair<>(cve.getHashedMessage(), cve.getAccession()))
+                    .collect(Collectors.toSet());
             List<ClusteredVariantEntity> cvesToDeprecate = this.clusteredVariantAccessioningService
-                    .getAllActiveByAssemblyAndAccessionIn(this.assemblyAccession, associatedRSIDs)
-                    .stream().map(result -> new ClusteredVariantEntity(result.getAccession(), result.getHash(),
-                                                                       result.getData()))
+                    .getAllActiveByAssemblyAndAccessionIn(this.assemblyAccession,
+                            associatedRSHashesAndIDs.stream().map(c -> c.right).collect(Collectors.toList()))
+                    .stream()
+                    .filter(result ->
+                            associatedRSHashesAndIDs.contains(
+                                    new ImmutablePair<>(result.getHash(), result.getAccession())))
+                    .map(result -> new ClusteredVariantEntity(result.getAccession(), result.getHash(),
+                                                              result.getData()))
                     .collect(Collectors.toList());
             Class<? extends EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>
                     svoeCollectionToUse = sveCollectionToUse.equals(SubmittedVariantEntity.class) ?
