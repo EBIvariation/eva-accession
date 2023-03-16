@@ -31,7 +31,7 @@ import java.util.function.Function;
 /***
  * Utilities to obtain/transform objects in the EVA model
  */
-class EVAObjectModelUtils {
+public class EVAObjectModelUtils {
     public static String getClusteredVariantHash(ISubmittedVariant submittedVariant) {
         ClusteredVariant clusteredVariant = toClusteredVariant(submittedVariant);
         Function<IClusteredVariant, String>  clusteredHashingFunction = (new ClusteredVariantSummaryFunction())

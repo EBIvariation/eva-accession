@@ -33,7 +33,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
-import uk.ac.ebi.eva.groovy.commons.EVAObjectModelUtils;
+import uk.ac.ebi.eva.accession.core.EVAObjectModelUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
