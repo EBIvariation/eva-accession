@@ -60,7 +60,7 @@
             <exclusions>
                 <exclusion>
                     <groupId>uk.ac.ebi.eva</groupId>
-                    <artifactId>eva-accession</artifactId>
+                    <artifactId>eva-accession-core</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
