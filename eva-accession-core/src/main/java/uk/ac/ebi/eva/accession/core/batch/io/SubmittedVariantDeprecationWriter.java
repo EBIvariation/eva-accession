@@ -35,10 +35,7 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.groovy.commons.EVAObjectModelUtils;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -102,6 +99,7 @@ public class SubmittedVariantDeprecationWriter implements ItemWriter<SubmittedVa
             List<String> ssHashesToRemove = svesToDeprecate.stream().map(AccessionedDocument::getId).collect(
                     Collectors.toList());
             Set<ImmutablePair<String, Long>> associatedRSHashesAndIDs = svesToDeprecate.stream()
+                    .filter(sve -> Objects.nonNull(sve.getClusteredVariantAccession()))
                     .map(EVAObjectModelUtils::toClusteredVariantEntity)
                     .map(cve -> new ImmutablePair<>(cve.getHashedMessage(), cve.getAccession()))
                     .collect(Collectors.toSet());

@@ -53,17 +53,6 @@
             <groupId>com.github.samtools</groupId>
             <artifactId>htsjdk</artifactId>
         </dependency>
-        <dependency>
-            <groupId>uk.ac.ebi.eva</groupId>
-            <artifactId>eva-common-groovyutils</artifactId>
-            <version>0.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>uk.ac.ebi.eva</groupId>
-                    <artifactId>eva-accession-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
     </dependencies>
 
     <build>
