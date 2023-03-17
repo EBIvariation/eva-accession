@@ -17,12 +17,12 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
 import com.mongodb.ReadPreference;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -31,9 +31,10 @@ import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEn
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.accession.core.EVAObjectModelUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -96,25 +97,32 @@ public class ClusteredVariantDeprecationWriter implements ItemWriter<ClusteredVa
                            Class<? extends ClusteredVariantEntity> cveCollectionToUse) {
 
         if (cvesToDeprecate.size() > 0) {
-            Set<Long> rsIDsToRemove = cvesToDeprecate.stream().map(AccessionedDocument::getAccession).collect(
-                    Collectors.toSet());
-            Set<Long> rsIdsAssociatedWithExistingSS =
-                    this.submittedVariantAccessioningService
-                            .getByClusteredVariantAccessionIn(new ArrayList<>(rsIDsToRemove))
-                            .stream().filter(result -> result.getData().getReferenceSequenceAccession()
-                                .equals(this.assemblyAccession))
-                            .map(sve -> sve.getData().getClusteredVariantAccession())
+            Set<ImmutablePair<String, Long>> rsHashesAndIDsToRemove = cvesToDeprecate.stream().map(
+                    cve -> new ImmutablePair<>(cve.getHashedMessage(), cve.getAccession())).collect(Collectors.toSet());
+            Set<ImmutablePair<String, Long>> rsHashesAndIDsAssociatedWithExistingSS =
+                    this.submittedVariantAccessioningService.getByClusteredVariantAccessionIn(
+                            rsHashesAndIDsToRemove.stream().map(c -> c.right).collect(Collectors.toList())).stream()
+                            .map(result -> new SubmittedVariantEntity(result.getAccession(), result.getHash(),
+                                    result.getData(), result.getVersion()))
+                            .filter(result -> result.getReferenceSequenceAccession().equals(this.assemblyAccession)
+                                    && rsHashesAndIDsToRemove.contains(
+                                            new ImmutablePair<>(EVAObjectModelUtils.getClusteredVariantHash(result),
+                                                    result.getClusteredVariantAccession())))
+                            .map(result -> new ImmutablePair<>(EVAObjectModelUtils.getClusteredVariantHash(result),
+                                    result.getClusteredVariantAccession()))
                             .collect(Collectors.toSet());
-            if (rsIdsAssociatedWithExistingSS.size() > 0) {
-                logger.warn("The following RS IDs are still associated with existing submitted variants. " +
-                                    "Hence they will not be deprecated. The RS IDs are: " +
-                                    rsIdsAssociatedWithExistingSS.stream().map(Object::toString).collect(
-                                            Collectors.joining(",")));
+            if (rsHashesAndIDsAssociatedWithExistingSS.size() > 0) {
+                logger.warn("The following RS ID/hash combinations are still associated with existing submitted variants. " +
+                                    "Hence they will not be deprecated. The combinations are: " +
+                        rsHashesAndIDsAssociatedWithExistingSS.stream().map(Object::toString).collect(
+                                Collectors.joining(",")));
             }
-            rsIDsToRemove.removeAll(rsIdsAssociatedWithExistingSS);
+            rsHashesAndIDsToRemove.removeAll(rsHashesAndIDsAssociatedWithExistingSS);
 
             cvesToDeprecate = cvesToDeprecate.stream()
-                                             .filter(cve -> rsIDsToRemove.contains(cve.getAccession()))
+                                             .filter(cve ->
+                                                     rsHashesAndIDsToRemove.contains(new ImmutablePair<>(
+                                                             cve.getHashedMessage(), cve.getAccession())))
                                              .collect(Collectors.toList());
             Set<String> rsHashesToRemove = cvesToDeprecate.stream()
                                                           .map(ClusteredVariantEntity::getId)
