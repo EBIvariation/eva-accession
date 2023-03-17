@@ -93,7 +93,7 @@ public class SubmittedVariantDeprecationWriterTest {
     private ClusteredVariantAccessioningService clusteredVariantAccessioningService;
 
     private SubmittedVariantEntity ss1, ss2, ss3, ss4;
-    private ClusteredVariantEntity rs1, rs2;
+    private ClusteredVariantEntity rs1, rs1AnotherHash, rs2;
 
     //Required by nosql-unit
     @Autowired
@@ -205,5 +205,85 @@ public class SubmittedVariantDeprecationWriterTest {
                                                    true, null);
         String hash = hashingFunction.apply(cv);
         return new ClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
+    }
+
+    @Test
+    public void testDeprecateSSWithSpecificRSHash() {
+        // ss1 -> rs1 -> rsLocus1
+        // ss2 -> rs1 -> rsLocus2
+        // ss3,ss4 -> rs3 -> rsLocus3
+        // ss5 -> rs1 -> rsLocus2
+        ss1 = createSS(1L, 1L, 100L, "C", "T");
+        ss2 = createSS(2L, 1L, 101L, "C", "A");
+        SubmittedVariantEntity ss5 = createSS(7L, 1L, 101L, "C", "G");
+        ss3 = createSS(5L, 5L, 102L, "T", "G");
+        ss4 = createSS(6L, 5L, 102L, "T", "A");
+
+        this.mongoTemplate.insert(Arrays.asList(ss1, ss2), DbsnpSubmittedVariantEntity.class);
+        rs1 = this.createRS(ss1);
+        rs1AnotherHash = this.createRS(ss2);
+        this.mongoTemplate.insert(Arrays.asList(rs1, rs1AnotherHash), DbsnpClusteredVariantEntity.class);
+
+        this.mongoTemplate.insert(Arrays.asList(ss3, ss4, ss5), SubmittedVariantEntity.class);
+        rs2 = this.createRS(ss3);
+        this.mongoTemplate.save(rs2, this.mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
+
+        SubmittedVariantDeprecationWriter sveDeprecationWriter =
+                new SubmittedVariantDeprecationWriter(ASSEMBLY, this.mongoTemplate,
+                        this.submittedVariantAccessioningService,
+                        this.clusteredVariantAccessioningService,
+                        this.accessioningMonotonicInitSs,
+                        this.accessioningMonotonicInitRs,
+                        "TEST", REASON);
+        sveDeprecationWriter.write(Arrays.asList(ss1, ss2, ss3));
+        assertPostDeprecationDatabaseStateForSpecificRSHash();
+
+        // Ensure that the second run of deprecation does not do any harm
+        sveDeprecationWriter.write(Arrays.asList(ss1, ss2, ss3));
+        assertPostDeprecationDatabaseStateForSpecificRSHash();
+    }
+
+    private void assertPostDeprecationDatabaseStateForSpecificRSHash() {
+        assertEquals(0, this.mongoTemplate.findAll(DbsnpSubmittedVariantEntity.class).size());
+        // ss4 and ss5 were not deprecated and still remains
+        assertEquals(2, this.mongoTemplate.findAll(SubmittedVariantEntity.class).size());
+
+        assertEquals(2, this.mongoTemplate.findAll(DbsnpSubmittedVariantOperationEntity.class).size());
+        assertEquals(1, this.mongoTemplate.findAll(SubmittedVariantOperationEntity.class).size());
+        DbsnpSubmittedVariantOperationEntity ss1DeprecationOp =
+                this.mongoTemplate.findById("SS_DEPRECATED_TEST_hash1", DbsnpSubmittedVariantOperationEntity.class);
+        DbsnpSubmittedVariantOperationEntity ss2DeprecationOp =
+                this.mongoTemplate.findById("SS_DEPRECATED_TEST_hash2", DbsnpSubmittedVariantOperationEntity.class);
+        SubmittedVariantOperationEntity ss3DeprecationOp =
+                this.mongoTemplate.findById("SS_DEPRECATED_TEST_hash5", SubmittedVariantOperationEntity.class);
+        assertNotNull(ss1DeprecationOp);
+        assertNotNull(ss2DeprecationOp);
+        assertNotNull(ss3DeprecationOp);
+        assertEquals(REASON, ss1DeprecationOp.getReason());
+        assertEquals(ss1, ss1DeprecationOp.getInactiveObjects().get(0).toSubmittedVariantEntity());
+        assertEquals(REASON, ss2DeprecationOp.getReason());
+        assertEquals(ss2, ss2DeprecationOp.getInactiveObjects().get(0).toSubmittedVariantEntity());
+        assertEquals(REASON, ss3DeprecationOp.getReason());
+        assertEquals(ss3, ss3DeprecationOp.getInactiveObjects().get(0).toSubmittedVariantEntity());
+
+        // Ensure that only the RS with accession 1, locus 1 (rs1, rsLocus1)  is deprecated
+        // because the RS with accession 5 (rs2) is still associated with ss4
+        // and RS with accession 1, locus 2 (rs1, rsLocus2) is still associated with ss5
+        assertEquals(1, this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class).size());
+        assertEquals(1L,
+                this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class).get(0).getAccession().longValue());
+        // rsLocus2 start 101L won't have been deprecated
+        assertEquals(rs1AnotherHash.getHashedMessage(),
+                this.mongoTemplate.findAll(DbsnpClusteredVariantEntity.class).get(0).getHashedMessage());
+        assertEquals(1, this.mongoTemplate.findAll(ClusteredVariantEntity.class).size());
+        assertEquals(5L,
+                this.mongoTemplate.findAll(ClusteredVariantEntity.class).get(0).getAccession().longValue());
+        assertEquals(1, this.mongoTemplate.findAll(DbsnpClusteredVariantOperationEntity.class).size());
+        assertEquals(0, this.mongoTemplate.findAll(ClusteredVariantOperationEntity.class).size());
+        DbsnpClusteredVariantOperationEntity rs1DeprecationOp =
+                this.mongoTemplate.findById("RS_DEPRECATED_TEST_" + rs1.getHashedMessage(),
+                        DbsnpClusteredVariantOperationEntity.class);
+        assertNotNull(rs1DeprecationOp);
+        assertEquals(rs1, rs1DeprecationOp.getInactiveObjects().get(0).toClusteredVariantEntity());
     }
 }
