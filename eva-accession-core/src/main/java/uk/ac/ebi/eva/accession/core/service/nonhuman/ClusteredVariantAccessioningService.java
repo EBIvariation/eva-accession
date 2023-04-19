@@ -29,11 +29,14 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsExcep
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
+
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,12 +54,16 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
 
     private Long accessioningMonotonicInitRs;
 
+    private final ContigAliasService contigAliasService;
+
     public ClusteredVariantAccessioningService(ClusteredVariantMonotonicAccessioningService accessioningService,
                                                DbsnpClusteredVariantMonotonicAccessioningService accessioningServiceDbsnp,
-                                               Long accessioningMonotonicInitRs) {
+                                               Long accessioningMonotonicInitRs,
+                                               ContigAliasService contigAliasService) {
         this.accessioningService = accessioningService;
         this.accessioningServiceDbsnp = accessioningServiceDbsnp;
         this.accessioningMonotonicInitRs = accessioningMonotonicInitRs;
+        this.contigAliasService = contigAliasService;
     }
 
     @Override
@@ -128,11 +135,19 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long accession)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return getAllByAccession(accession, ContigNamingConvention.INSDC);
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(
+            Long accession, ContigNamingConvention contigNamingConvention)
+            throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants;
         if (accession >= accessioningMonotonicInitRs) {
-            return accessioningService.getAllByAccession(accession);
+            clusteredVariants = accessioningService.getAllByAccession(accession);
         } else {
-            return accessioningServiceDbsnp.getAllByAccession(accession);
+            clusteredVariants = accessioningServiceDbsnp.getAllByAccession(accession);
         }
+        return contigAliasService.getClusteredVariantsWithTranslatedContig(clusteredVariants, contigNamingConvention);
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>>
@@ -164,11 +179,15 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
-            String assembly, String contig, long start, VariantType type) {
-        IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, contig, start, type, false, null);
+            String assembly, String contig, long start, VariantType type, ContigNamingConvention contigNamingConvention) {
+        String insdcContig = contigAliasService.translateContigToInsdc(contig, assembly, contigNamingConvention);
+        IClusteredVariant clusteredVariant = new ClusteredVariant(assembly, 0, insdcContig, start, type, false, null);
         List<AccessionWrapper<IClusteredVariant, String, Long>> variants = this.get(
                 Collections.singletonList(clusteredVariant));
-        return variants;
+        return variants
+                .stream()
+                .map(accessionWrapper -> contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(accessionWrapper, contig))
+                .collect(Collectors.toList());
     }
 
     @Override

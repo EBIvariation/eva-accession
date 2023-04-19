@@ -55,6 +55,7 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantInactiv
 import uk.ac.ebi.eva.accession.core.summary.SubmittedVariantSummaryFunction;
 import uk.ac.ebi.eva.accession.core.test.configuration.nonhuman.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.core.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -288,7 +289,7 @@ public class SubmittedVariantAccessioningServiceTest {
     @Test
     public void getAllByIdFields() {
         assertEquals(2, service.getAllByIdFields("GCA_000009999.3", "21", Arrays.asList("DBSNP999", "DBSNP111"),
-                20849999L, "", "GG").size());
+                                                 20849999L, "", "GG", ContigNamingConvention.INSDC).size());
     }
 
     @UsingDataSet(locations = {"/test-data/submittedVariantEntity.json", "/test-data/dbsnpSubmittedVariantEntity.json"})

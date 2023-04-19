@@ -17,20 +17,22 @@ package uk.ac.ebi.eva.accession.core.service.human.dbsnp;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 
+import uk.ac.ebi.eva.accession.core.contig.ContigNaming;
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class HumanDbsnpClusteredVariantAccessioningService {
@@ -39,17 +41,27 @@ public class HumanDbsnpClusteredVariantAccessioningService {
 
     private final HumanDbsnpClusteredVariantOperationAccessioningService operationsService;
 
+    private final ContigAliasService contigAliasService;
+
     public HumanDbsnpClusteredVariantAccessioningService(
             @Qualifier("humanActiveService") HumanDbsnpClusteredVariantMonotonicAccessioningService humanService,
-            @Qualifier("humanOperationsService") HumanDbsnpClusteredVariantOperationAccessioningService operationsService) {
+            @Qualifier("humanOperationsService") HumanDbsnpClusteredVariantOperationAccessioningService operationsService,
+            ContigAliasService contigAliasService) {
         this.humanService = humanService;
         this.operationsService = operationsService;
+        this.contigAliasService = contigAliasService;
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier) {
+        return getAllByAccession(identifier, ContigNamingConvention.INSDC);
+    }
+
+    public List<AccessionWrapper<IClusteredVariant, String, Long>> getAllByAccession(Long identifier, ContigNamingConvention contigNamingConvention) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
-        clusteredVariants.addAll(getHumanClusteredVariants(identifier));
-        clusteredVariants.addAll(operationsService.getByAccession(identifier));
+        clusteredVariants.addAll(contigAliasService.getClusteredVariantsWithTranslatedContig(getHumanClusteredVariants(identifier),
+                                                                                             contigNamingConvention));
+        clusteredVariants.addAll(contigAliasService.getClusteredVariantsWithTranslatedContig(operationsService.getByAccession(identifier),
+                                                                                             contigNamingConvention));
         return clusteredVariants;
     }
 
@@ -63,10 +75,11 @@ public class HumanDbsnpClusteredVariantAccessioningService {
     }
 
     public List<AccessionWrapper<IClusteredVariant, String, Long>> getByIdFields(
-            String assembly, String contig, long start, VariantType type) {
+            String assembly, String contig, long start, VariantType type, ContigNamingConvention contigNamingConvention) {
         List<AccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants = new ArrayList<>();
 
-        IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, contig, start, type, false,
+        String insdcContig = contigAliasService.translateContigToInsdc(contig, assembly, contigNamingConvention);
+        IClusteredVariant clusteredVariantToSearch = new ClusteredVariant(assembly, 0, insdcContig, start, type, false,
                                                                           null);
 
         List<AccessionWrapper<IClusteredVariant, String, Long>> activeClusteredVariantWrappers =
@@ -77,7 +90,10 @@ public class HumanDbsnpClusteredVariantAccessioningService {
                 operationsService.getOriginalVariant(clusteredVariantToSearch);
         clusteredVariants.addAll(activeClusteredVariantsInOperations);
 
-        return clusteredVariants;
+        return clusteredVariants
+                .stream()
+                .map(accessionWrapper -> contigAliasService.createClusteredVariantAccessionWrapperWithNewContig(accessionWrapper, contig))
+                .collect(Collectors.toList());
     }
 
 }
