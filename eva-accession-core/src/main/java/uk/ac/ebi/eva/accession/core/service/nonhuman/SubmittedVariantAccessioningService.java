@@ -29,13 +29,17 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsExcep
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
+
+import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpSubmittedVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.SubmittedVariantMonotonicAccessioningService;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,12 +53,16 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     private Long accessioningMonotonicInitSs;
 
+    private ContigAliasService contigAliasService;
+
     public SubmittedVariantAccessioningService(SubmittedVariantMonotonicAccessioningService accessioningService,
                                                DbsnpSubmittedVariantMonotonicAccessioningService accessioningServiceDbsnp,
-                                               Long accessioningMonotonicInitSs) {
+                                               Long accessioningMonotonicInitSs,
+                                               ContigAliasService contigAliasService) {
         this.accessioningService = accessioningService;
         this.accessioningServiceDbsnp = accessioningServiceDbsnp;
         this.accessioningMonotonicInitSs = accessioningMonotonicInitSs;
+        this.contigAliasService = contigAliasService;
     }
 
     @Override
@@ -114,12 +122,17 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
     }
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByIdFields(
-            String assembly, String contig, List<String> studies, long start, String reference, String alternate) {
+            String assembly, String contig, List<String> studies, long start, String reference, String alternate,
+            ContigNamingConvention contigNamingConvention) {
+        String insdcContig = contigAliasService.translateContigToInsdc(contig, assembly, contigNamingConvention);
         List<SubmittedVariant> submittedVariants = studies.stream()
-                .map(study -> new SubmittedVariant(assembly, 0, study, contig, start, reference, alternate, null))
+                .map(study -> new SubmittedVariant(assembly, 0, study, insdcContig, start, reference, alternate, null))
                 .collect(Collectors.toList());
         List<AccessionWrapper<ISubmittedVariant, String, Long>> variants = this.get(submittedVariants);
-        return variants;
+        return variants
+                .stream()
+                .map(accessionWrapper -> contigAliasService.createSubmittedVariantAccessionWrapperWithNewContig(accessionWrapper, contig))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -139,11 +152,19 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(Long accession)
             throws AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
+        return getAllByAccession(accession, ContigNamingConvention.INSDC);
+    }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getAllByAccession(
+            Long accession, ContigNamingConvention contigNamingConvention) throws AccessionMergedException,
+            AccessionDoesNotExistException, AccessionDeprecatedException, NoSuchElementException {
+        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants;
         if (accession >= accessioningMonotonicInitSs) {
-            return accessioningService.getAllByAccession(accession);
+            submittedVariants = accessioningService.getAllByAccession(accession);
         } else {
-            return accessioningServiceDbsnp.getAllByAccession(accession);
+            submittedVariants = accessioningServiceDbsnp.getAllByAccession(accession);
         }
+        return contigAliasService.getSubmittedVariantsWithTranslatedContig(submittedVariants, contigNamingConvention);
     }
 
     @Override
@@ -158,8 +179,15 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
             List<Long> clusteredVariantAccessions) {
-        return joinLists(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
-                         accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions));
+        return getByClusteredVariantAccessionIn(clusteredVariantAccessions, ContigNamingConvention.INSDC);
+    }
+
+    public List<AccessionWrapper<ISubmittedVariant, String, Long>> getByClusteredVariantAccessionIn(
+            List<Long> clusteredVariantAccessions, ContigNamingConvention contigNamingConvention) {
+        return joinLists(contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningService.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
+                                                                                     contigNamingConvention),
+                         contigAliasService.getSubmittedVariantsWithTranslatedContig(accessioningServiceDbsnp.getByClusteredVariantAccessionIn(clusteredVariantAccessions),
+                                                                                     contigNamingConvention));
     }
 
     @Override

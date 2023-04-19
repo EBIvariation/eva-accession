@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
@@ -36,6 +37,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.HistoryEvent;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.HistoryEventDTO;
+
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -48,11 +50,13 @@ import uk.ac.ebi.eva.accession.ws.dto.VariantHistory;
 import uk.ac.ebi.eva.accession.ws.service.ClusteredVariantsBeaconService;
 import uk.ac.ebi.eva.commons.beacon.models.BeaconAlleleResponse;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -95,19 +99,23 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}", produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> get(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                    required = true) Long identifier)
+                    required = true) Long identifier,
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
+            ContigNamingConvention contigNamingConvention)
             throws AccessionMergedException, AccessionDoesNotExistException {
         try {
             List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
                     new ArrayList<>();
-            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier));
-            clusteredVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
-                    .collect(Collectors.toList()));
+            clusteredVariants.addAll(getNonHumanClusteredVariants(identifier, contigNamingConvention));
+            clusteredVariants.addAll(humanService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
+                                                 .collect(Collectors.toList()));
 
             if (clusteredVariants.isEmpty()) {
                 throw new AccessionDoesNotExistException(identifier);
             }
             return ResponseEntity.ok(clusteredVariants);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (AccessionDeprecatedException e) {
             // not done with an exception handler because the only way to get the accession parameter would be parsing
             // the exception message
@@ -120,13 +128,17 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}/history", produces = "application/json")
     public ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantHistory(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
-                    required = true) Long identifier) throws AccessionDoesNotExistException {
+                    required = true) Long identifier,
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
+                    ContigNamingConvention contigNamingConvention) throws AccessionDoesNotExistException {
         List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> allVariants =
                 new ArrayList<>();
         try {
-            allVariants.addAll(getNonHumanClusteredVariants(identifier));
-            allVariants.addAll(humanService.getAllByAccession(identifier).stream().map(this::toDTO)
-                    .collect(Collectors.toList()));
+            allVariants.addAll(getNonHumanClusteredVariants(identifier, contigNamingConvention));
+            allVariants.addAll(humanService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
+                                           .collect(Collectors.toList()));
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (AccessionDeprecatedException e) {
             allVariants.addAll(getDeprecatedClusteredVariant(identifier));
         }catch (AccessionMergedException e){
@@ -134,7 +146,8 @@ public class ClusteredVariantsRestController {
             // we will rely on operations to provide info about those rs ids in which the given rs has been merged
         }
 
-        List<HistoryEventDTO<Long, ClusteredVariant>> allOperations = clusteredVariantOperationService.getAllOperations(identifier)
+        List<HistoryEventDTO<Long, ClusteredVariant>> allOperations =
+                clusteredVariantOperationService.getAllOperations(identifier, contigNamingConvention)
                 .stream().map(this::toHistoryEventDTO).collect(Collectors.toList());
 
         if (allVariants.isEmpty() && allOperations.isEmpty()) {
@@ -153,10 +166,10 @@ public class ClusteredVariantsRestController {
     }
 
     private List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> getNonHumanClusteredVariants(
-            Long identifier) throws AccessionDeprecatedException, AccessionMergedException {
+            Long identifier, ContigNamingConvention contigNamingConvention) throws AccessionDeprecatedException, AccessionMergedException {
         try {
-            return nonHumanActiveService.getAllByAccession(identifier).stream().map(this::toDTO)
-                    .collect(Collectors.toList());
+            return nonHumanActiveService.getAllByAccession(identifier, contigNamingConvention).stream().map(this::toDTO)
+                                        .collect(Collectors.toList());
         } catch (AccessionDoesNotExistException e) {
             return Collections.emptyList();
         }
@@ -181,17 +194,25 @@ public class ClusteredVariantsRestController {
     @GetMapping(value = "/{identifier}/submitted", produces = "application/json")
     public List<AccessionResponseDTO<SubmittedVariant, ISubmittedVariant, String, Long>> getSubmittedVariants(
             @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 869808637",
-                    required = true) Long identifier)
+                    required = true) Long identifier,
+            @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
+                    ContigNamingConvention contigNamingConvention)
             throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
-        // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct URL
-        nonHumanActiveService.getAllByAccession(identifier);
+        try {
+            // trigger the checks. if the identifier was merged, the EvaControllerAdvice will redirect to the correct
+            // URL
+            nonHumanActiveService.getAllByAccession(identifier, contigNamingConvention);
 
-        List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
-                submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier));
+            List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants =
+                    submittedVariantsService.getByClusteredVariantAccessionIn(Collections.singletonList(identifier),
+                                                                              contigNamingConvention);
 
-        return submittedVariants.stream()
-                .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
-                .collect(Collectors.toList());
+            return submittedVariants.stream()
+                                    .map(wrapper -> new AccessionResponseDTO<>(wrapper, SubmittedVariant::new))
+                                    .collect(Collectors.toList());
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
 
     @ApiOperation(value = "Find a clustered variant (RS) by the identifying fields", notes = "This endpoint returns "
@@ -200,24 +221,32 @@ public class ClusteredVariantsRestController {
             + "-or-rs")
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>>> getByIdFields(
-            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name or accession, e.g.: CM000392.2")
                     String chromosome,
             @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
-            @RequestParam(name = "variantType") VariantType variantType) {
-        List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
-                new ArrayList<>();
+            @RequestParam(name = "variantType") VariantType variantType,
+            @RequestParam(required = false) @ApiParam(value = "Chromosome naming convention used, default is INSDC")
+                    ContigNamingConvention contigNamingConvention) {
+        try {
+            List<AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long>> clusteredVariants =
+                    new ArrayList<>();
 
-        List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
-                nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType);
-        nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
+            List<AccessionWrapper<IClusteredVariant, String, Long>> nonHumanClusteredVariants =
+                    nonHumanActiveService.getByIdFields(assembly, chromosome, start, variantType,
+                                                        contigNamingConvention);
+            nonHumanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
-        List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
-                humanService.getByIdFields(assembly, chromosome, start, variantType);
-        humanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
+            List<AccessionWrapper<IClusteredVariant, String, Long>> humanClusteredVariants =
+                    humanService.getByIdFields(assembly, chromosome, start, variantType, contigNamingConvention);
+            humanClusteredVariants.stream().map(this::toDTO).forEach(clusteredVariants::add);
 
-        return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(clusteredVariants);
+            return clusteredVariants.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.ok(
+                    clusteredVariants);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
 
     private AccessionResponseDTO<ClusteredVariant, IClusteredVariant, String, Long> toDTO(
@@ -230,9 +259,9 @@ public class ClusteredVariantsRestController {
                     "RS ID.")
     @GetMapping(value = "/beacon/query", produces = "application/json")
     public BeaconAlleleResponse doesVariantExist(
-            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accesion in GCA format, e.g.: GCA_000002305.1")
+            @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome genbank accession, e.g.: CM000392.2")
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name, e.g.: chr16")
                     String chromosome,
             @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType,
@@ -240,9 +269,9 @@ public class ClusteredVariantsRestController {
                     boolean includeDatasetReponses,
             HttpServletResponse response) {
         try {
-            BeaconAlleleResponse beaconAlleleResponse = beaconService
-                    .queryBeaconClusteredVariant(assembly, chromosome, start, variantType, includeDatasetReponses);
-            return beaconAlleleResponse;
+            ContigNamingConvention contigNamingConvention = ContigNamingConvention.ENA_SEQUENCE_NAME;
+            return beaconService.queryBeaconClusteredVariant(assembly, chromosome, start, variantType,
+                                                             contigNamingConvention, includeDatasetReponses);
         } catch (Exception ex) {
             int responseStatus = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
             response.setStatus(responseStatus);

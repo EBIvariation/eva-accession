@@ -43,6 +43,7 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
+import uk.ac.ebi.eva.commons.core.models.contigalias.ContigNamingConvention;
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import javax.annotation.Nonnull;
@@ -387,7 +388,8 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
 
         List<SubmittedVariantInactiveEntity> ssClusteredUnderTargetRS =
                 this.submittedVariantAccessioningService
-                        .getByClusteredVariantAccessionIn(Collections.singletonList(prioritised.accessionToKeep))
+                        .getByClusteredVariantAccessionIn(Collections.singletonList(prioritised.accessionToKeep),
+                                                          ContigNamingConvention.NO_REPLACEMENT)
                         .stream()
                         .filter(result -> result.getData().getReferenceSequenceAccession()
                                                 .equals(this.assemblyAccession))
