@@ -38,6 +38,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     @Field("tax")
     private int taxonomyAccession;
 
+    @Indexed(background = true)
     @Field("study")
     private String projectAccession;
 
