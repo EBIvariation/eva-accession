@@ -20,8 +20,11 @@ import htsjdk.samtools.util.StringUtil;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationOptions;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.util.CloseableIterator;
 import org.springframework.util.Assert;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -136,20 +139,25 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private void getSVOEWithMergeAndRSSplitCandidates() {
         List<String> MERGE_AND_SPLIT_EVENTS = Arrays.asList(EventType.RS_MERGE_CANDIDATES.name(),
                                                             EventType.RS_SPLIT_CANDIDATES.name());
-        Query queryOperations = query(where("eventType").in(MERGE_AND_SPLIT_EVENTS)
-                                                        .and("inactiveObjects").elemMatch(where("seq").is(assembly)));
-        List<SubmittedVariantOperationEntity> submittedVariantOperationEntities =
-                mongoTemplate.find(queryOperations, SubmittedVariantOperationEntity.class);
-
+        AggregationOptions aggregationOptions = Aggregation.newAggregationOptions().cursorBatchSize(1000)
+                .allowDiskUse(true).build();
         mergeCandidateSVOE = new HashMap<>();
         rsSplitCandidateSVOE = new HashMap<>();
 
-        for(SubmittedVariantOperationEntity svoe: submittedVariantOperationEntities){
-            if (svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES)) {
-                mergeCandidateSVOE.put(getClusteredVariantHash(svoe.getInactiveObjects().get(0).getModel()), svoe);
-            } else if (svoe.getEventType().equals(EventType.RS_SPLIT_CANDIDATES)) {
-                rsSplitCandidateSVOE.put(svoe.getAccession(), svoe);
-            }
+        try (
+                CloseableIterator<SubmittedVariantOperationEntity> svoes = mongoTemplate.aggregateStream(
+                        Aggregation.newAggregation(
+                                Aggregation.match(where("eventType").in(MERGE_AND_SPLIT_EVENTS)
+                                        .and("inactiveObjects").elemMatch(where("seq").is(assembly))))
+                        .withOptions(aggregationOptions), SubmittedVariantOperationEntity.class.getSimpleName(),
+                SubmittedVariantOperationEntity.class)) {
+            svoes.forEachRemaining(svoe -> {
+                if (svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES)) {
+                    mergeCandidateSVOE.put(getClusteredVariantHash(svoe.getInactiveObjects().get(0).getModel()), svoe);
+                } else if (svoe.getEventType().equals(EventType.RS_SPLIT_CANDIDATES)) {
+                    rsSplitCandidateSVOE.put(svoe.getAccession(), svoe);
+                }
+            });
         }
     }
 
