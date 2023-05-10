@@ -30,6 +30,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
@@ -102,6 +103,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     private CountServiceParameters countServiceParameters;
 
     @Autowired
+    @Qualifier("COUNT_STATS_REST_TEMPLATE")
     private RestTemplate restTemplate;
 
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";

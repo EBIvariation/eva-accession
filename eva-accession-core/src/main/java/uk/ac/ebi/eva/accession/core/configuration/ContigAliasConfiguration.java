@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.eva.accession.core.configuration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +29,7 @@ import uk.ac.ebi.eva.accession.core.contigalias.ContigAliasService;
 @Configuration
 public class ContigAliasConfiguration {
 
-    @Bean
+    @Bean(name="CONTIG_ALIAS_REST_TEMPLATE")
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }
@@ -40,7 +41,7 @@ public class ContigAliasConfiguration {
     }
 
     @Bean
-    public ContigAliasService contigAliasService(RestTemplate restTemplate,
+    public ContigAliasService contigAliasService(@Qualifier("CONTIG_ALIAS_REST_TEMPLATE") RestTemplate restTemplate,
                                                  ContigAliasInputParameters contigAliasInputParameters) {
         return new ContigAliasService(restTemplate, contigAliasInputParameters.getUrl());
     }

@@ -113,6 +113,7 @@ public class ClusteringVariantJobConfigurationTest {
     private CountServiceParameters countServiceParameters;
 
     @Autowired
+    @Qualifier("COUNT_STATS_REST_TEMPLATE")
     private RestTemplate restTemplate;
 
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";

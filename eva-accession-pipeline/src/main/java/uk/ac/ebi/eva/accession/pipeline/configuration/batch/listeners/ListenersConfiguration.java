@@ -1,5 +1,6 @@
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -22,7 +23,8 @@ public class ListenersConfiguration {
     }
 
     @Bean
-    public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters, RestTemplate restTemplate,
+    public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters,
+                                                    @Qualifier("COUNT_STATS_REST_TEMPLATE") RestTemplate restTemplate,
                                                     InputParameters inputParameters) {
         return new AccessioningMetricCompute(countServiceParameters, restTemplate, inputParameters.getAssemblyAccession(),
                 inputParameters.getProjectAccession());

@@ -16,6 +16,7 @@
 package uk.ac.ebi.eva.accession.deprecate.configuration.batch.listeners;
 
 import org.springframework.batch.core.listener.StepListenerSupport;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -46,7 +47,8 @@ public class ListenerConfiguration {
 
     @Bean
     public MetricCompute getClusteringMetricCompute(CountServiceParameters countServiceParameters,
-                                                    RestTemplate restTemplate, InputParameters inputParameters) {
+                                                    @Qualifier("COUNT_STATS_REST_TEMPLATE") RestTemplate restTemplate,
+                                                    InputParameters inputParameters) {
         return new ClusteringMetricCompute(countServiceParameters, restTemplate,
                                            inputParameters.getAssemblyAccession(),
                                            Collections.singletonList(inputParameters.getProjectAccession()));
