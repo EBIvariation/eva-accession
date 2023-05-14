@@ -60,6 +60,8 @@ public class DeprecatedVariantMongoReaderTest {
 
     private static final String ASSEMBLY = "GCA_000001735.1";
 
+    private static final int TAXONOMY = 3702;
+
     @Autowired
     private MongoTemplate mongoTemplate;
 
@@ -76,7 +78,7 @@ public class DeprecatedVariantMongoReaderTest {
     @Before
     public void setUp() {
         ExecutionContext executionContext = new ExecutionContext();
-        reader = DeprecatedVariantMongoReader.dbsnpDeprecatedVariantMongoReader(ASSEMBLY, mongoTemplate);
+        reader = DeprecatedVariantMongoReader.dbsnpDeprecatedVariantMongoReader(ASSEMBLY, TAXONOMY, mongoTemplate);
         reader.open(executionContext);
     }
 

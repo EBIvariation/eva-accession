@@ -56,6 +56,8 @@ public class ContigMongoReaderTest {
 
     private static final String ASSEMBLY_ACCESSION = "GCA_000409795.2";
 
+    private static final int TAXONOMY = 60711;
+
     @Autowired
     private MongoClient mongoClient;
 
@@ -69,8 +71,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicActiveContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB,
-                                                                        new DbsnpCollectionNames());
+        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, TAXONOMY, mongoClient,
+                                                                        TEST_DB, new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();
@@ -82,8 +84,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicMergedContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB,
-                                                                        new DbsnpCollectionNames());
+        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, TAXONOMY, mongoClient,
+                                                                        TEST_DB, new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();
@@ -95,7 +97,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicMultimapContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.multimapContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB,
+        ContigMongoReader reader = ContigMongoReader.multimapContigReader(ASSEMBLY_ACCESSION, TAXONOMY,
+                                                                          mongoClient, TEST_DB,
                                                                           new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;

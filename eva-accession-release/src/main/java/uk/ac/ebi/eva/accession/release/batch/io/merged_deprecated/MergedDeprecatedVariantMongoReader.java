@@ -33,7 +33,6 @@ import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
-import org.springframework.data.mongodb.core.convert.MongoConverter;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
@@ -58,11 +57,15 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
 
     private static final String ASSEMBLY_FIELD = "asm";
 
+    private static final String TAXONOMY_FIELD = "tax";
+
     private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
 
     private static final String SS_INFO_FIELD = "ssInfo";
 
     private final String assemblyAccession;
+
+    private final int taxonomyAccession;
 
     private final MongoClient mongoClient;
 
@@ -74,9 +77,10 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
 
     private CollectionNames names;
 
-    public MergedDeprecatedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                              int chunkSize, CollectionNames names) {
+    public MergedDeprecatedVariantMongoReader(String assemblyAccession, int taxonomyAccession, MongoClient mongoClient,
+                                              String database, int chunkSize, CollectionNames names) {
         this.assemblyAccession = assemblyAccession;
+        this.taxonomyAccession = taxonomyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
         this.chunkSize = chunkSize;
@@ -99,7 +103,9 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
     }
 
     private List<Bson> buildAggregation() {
-        Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession));
+        Bson matchAssembly = Aggregates.match(Filters.and(
+                Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession),
+                Filters.eq(getInactiveField(TAXONOMY_FIELD), taxonomyAccession)));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), MERGE_INTO_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);

@@ -36,10 +36,11 @@ public class DbsnpMergedDeprecatedVariantMongoReader
 
     private MongoConverter mongoConverter;
 
-    public DbsnpMergedDeprecatedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
+    public DbsnpMergedDeprecatedVariantMongoReader(String assemblyAccession, int taxonomyAccession,
+                                                   MongoClient mongoClient, String database,
                                                    MongoConverter mongoConverter, int chunkSize,
                                                    CollectionNames names) {
-        super(assemblyAccession, mongoClient, database, chunkSize, names);
+        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
         this.mongoConverter = mongoConverter;
     }
 

@@ -81,9 +81,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
             "dbsnpClusteredVariantEntity"
     );
 
-    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize,
-                                    CollectionNames names) {
-        super(assemblyAccession, mongoClient, database, chunkSize, names);
+    public MergedVariantMongoReader(String assemblyAccession, int taxonomyAccession, MongoClient mongoClient,
+                                    String database, int chunkSize, CollectionNames names) {
+        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
     }
 
     @Override
@@ -93,7 +93,10 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     @Override
     protected List<Bson> buildAggregation() {
-        Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
+        Bson matchAssembly = Aggregates.match(Filters.and(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD),
+                                                                     assemblyAccession),
+                                                          Filters.eq(getInactiveField(TAXONOMY_FIELD),
+                                                                     taxonomyAccession)));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchMerged, sort));

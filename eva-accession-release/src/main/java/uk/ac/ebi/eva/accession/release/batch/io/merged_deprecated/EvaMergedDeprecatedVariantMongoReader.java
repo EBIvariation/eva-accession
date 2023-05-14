@@ -37,9 +37,11 @@ public class EvaMergedDeprecatedVariantMongoReader
 
     private MongoConverter mongoConverter;
 
-    public EvaMergedDeprecatedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                                 MongoConverter mongoConverter, int chunkSize, CollectionNames names) {
-        super(assemblyAccession, mongoClient, database, chunkSize, names);
+    public EvaMergedDeprecatedVariantMongoReader(String assemblyAccession, int taxonomyAccession,
+                                                 MongoClient mongoClient, String database,
+                                                 MongoConverter mongoConverter, int chunkSize,
+                                                 CollectionNames names) {
+        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
         this.mongoConverter = mongoConverter;
     }
 

@@ -4,6 +4,7 @@ import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 
+import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -208,7 +209,7 @@ public class AccessionReleaseJobLauncherCommandLineRunnerTest {
     }
 
     private void injectErrorIntoMongoClusteredVariantOperationCollection() throws Exception {
-        Query query = query(where("_id").is("5c519550dcc3abf7ee9125af"));
+        Query query = query(where("_id").is(new ObjectId("5c519550dcc3abf7ee9125af")));
         Update update = new Update();
         // Intentionally inject error in entry#7 (contig, start sorted) in the Mongo collection
         update.set("inactiveObjects.0.accession", "881171680jibberish");

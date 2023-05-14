@@ -49,7 +49,11 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final String ACTIVE_REFERENCE_ASSEMBLY_FIELD = "asm";
 
+    private static final String ACTIVE_TAXONOMY_FIELD = "tax";
+
     private static final String INACTIVE_REFERENCE_ASSEMBLY_FIELD = "inactiveObjects.asm";
+
+    private static final String INACTIVE_TAXONOMY_FIELD = "inactiveObjects.tax";
 
     private static final String EVENT_TYPE_FIELD = "eventType";
 
@@ -75,25 +79,29 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private final List<Bson> aggregation;
 
-    public static ContigMongoReader activeContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                       String database, CollectionNames names) {
+    public static ContigMongoReader activeContigReader(String assemblyAccession, int taxonomyAccession,
+                                                       MongoClient mongoClient, String database,
+                                                       CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
                                      names.getClusteredVariantEntity(),
-                                     buildAggregationForActiveContigs(assemblyAccession));
+                                     buildAggregationForActiveContigs(assemblyAccession, taxonomyAccession));
     }
 
-    public static ContigMongoReader mergedContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                       String database, CollectionNames names) {
+    public static ContigMongoReader mergedContigReader(String assemblyAccession, int taxonomyAccession,
+                                                       MongoClient mongoClient, String database,
+                                                       CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
                                      names.getClusteredVariantOperationEntity(),
-                                     buildAggregationForMergedContigs(assemblyAccession));
+                                     buildAggregationForMergedContigs(assemblyAccession, taxonomyAccession));
     }
 
-    public static ContigMongoReader multimapContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                         String database, CollectionNames names) {
+    // TODO: Remove these since multimaps are now deprecated
+    public static ContigMongoReader multimapContigReader(String assemblyAccession, int taxonomyAccession,
+                                                         MongoClient mongoClient, String database,
+                                                         CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
                                      names.getClusteredVariantEntity(),
-                                     buildAggregationForMultimapContigs(assemblyAccession));
+                                     buildAggregationForMultimapContigs(assemblyAccession, taxonomyAccession));
     }
 
     private ContigMongoReader(String assemblyAccession, MongoClient mongoClient, String database, String collection,
@@ -105,8 +113,9 @@ public class ContigMongoReader implements ItemStreamReader<String> {
         this.aggregation = aggregation;
     }
 
-    private static List<Bson> buildAggregationForActiveContigs(String assemblyAccession) {
-        Bson match = Aggregates.match(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
+    private static List<Bson> buildAggregationForActiveContigs(String assemblyAccession, int taxonomyAccession) {
+        Bson match = Aggregates.match(Filters.and(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+                                                  Filters.eq(ACTIVE_TAXONOMY_FIELD, taxonomyAccession)));
         Bson uniqueContigs = Aggregates.group(ACTIVE_CONTIG_KEY);
         List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
         logger.info("Issuing aggregation: {}", aggregation);
@@ -127,8 +136,9 @@ public class ContigMongoReader implements ItemStreamReader<String> {
      * $project the contig field into a toplevel field
      * before we can do the $group.
      */
-    private static List<Bson> buildAggregationForMergedContigs(String assemblyAccession) {
+    private static List<Bson> buildAggregationForMergedContigs(String assemblyAccession, int taxonomyAccession) {
         Bson match = Aggregates.match(Filters.and(Filters.eq(INACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+                                                  Filters.eq(INACTIVE_TAXONOMY_FIELD, taxonomyAccession),
                                                   Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString())));
 
         Bson extractContig = Aggregates.project(new Document(MONGO_ID_FIELD, INACTIVE_CONTIG_KEY));
@@ -143,8 +153,10 @@ public class ContigMongoReader implements ItemStreamReader<String> {
         return aggregation;
     }
 
-    private static List<Bson> buildAggregationForMultimapContigs(String assemblyAccession) {
+    // TODO: Remove these since multimaps are now deprecated
+    private static List<Bson> buildAggregationForMultimapContigs(String assemblyAccession, int taxonomyAccession) {
         Bson match = Aggregates.match(Filters.and(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+                                                  Filters.eq(ACTIVE_TAXONOMY_FIELD, taxonomyAccession),
                                                   Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
         Bson uniqueContigs = Aggregates.group(ACTIVE_CONTIG_KEY);
         List<Bson> aggregation = Arrays.asList(match, uniqueContigs);

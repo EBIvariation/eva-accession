@@ -39,6 +39,7 @@ public class DeprecatedVariantMongoReaderConfiguration {
     public DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantMongoReaderDbsnp(
             InputParameters parameters, MongoTemplate mongoTemplate) {
         return DeprecatedVariantMongoReader.dbsnpDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                                              parameters.getTaxonomyAccession(),
                                                                               mongoTemplate);
     }
 
@@ -47,6 +48,7 @@ public class DeprecatedVariantMongoReaderConfiguration {
     public DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> deprecatedVariantMongoReaderEva(
             InputParameters parameters, MongoTemplate mongoTemplate) {
         return DeprecatedVariantMongoReader.evaDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                                            parameters.getTaxonomyAccession(),
                                                                             mongoTemplate);
     }
 

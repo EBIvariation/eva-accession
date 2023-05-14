@@ -40,14 +40,15 @@ public class MultimapVariantMongoReader extends AccessionedVariantMongoReader {
     // see https://www.ncbi.nlm.nih.gov/books/NBK44455/#Build.your_descriptions_of_mapweight_in
     public static final int NON_SINGLE_LOCATION_MAPPING = 2;
 
-    public MultimapVariantMongoReader(String assemblyAccession, MongoClient mongoClient,
+    public MultimapVariantMongoReader(String assemblyAccession, int taxonomyAccession, MongoClient mongoClient,
                                       String database, int chunkSize, CollectionNames names) {
-        super(assemblyAccession, mongoClient, database, chunkSize, names);
+        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
     }
 
     @Override
     protected List<Bson> buildAggregation() {
         Bson match = Aggregates.match(Filters.and(Filters.eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+                                                  Filters.eq(TAXONOMY_FIELD, taxonomyAccession),
                                                   Filters.gte(MAPPING_WEIGHT_FIELD, NON_SINGLE_LOCATION_MAPPING)));
         Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), ACCESSION_FIELD,

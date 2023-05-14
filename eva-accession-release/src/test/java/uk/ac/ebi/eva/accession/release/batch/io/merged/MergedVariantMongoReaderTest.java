@@ -83,6 +83,8 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ASSEMBLY = "GCA_000409795.2";
 
+    private static final int TAXONOMY = 60711;
+
     private static final String ID_1_A = "CM001954.1_5_G_A";
 
     private static final String ID_1_T = "CM001954.1_5_G_T";
@@ -116,7 +118,7 @@ public class MergedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        defaultReader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE,
+        defaultReader = new MergedVariantMongoReader(ASSEMBLY, TAXONOMY, mongoClient, TEST_DB, CHUNK_SIZE,
                                                      new DbsnpCollectionNames());
     }
 
@@ -224,8 +226,8 @@ public class MergedVariantMongoReaderTest {
 
     @Test
     public void includeRemappedFlag() throws Exception {
-        MergedVariantMongoReader evaReader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                     new EvaCollectionNames());
+        MergedVariantMongoReader evaReader = new MergedVariantMongoReader(ASSEMBLY, TAXONOMY, mongoClient, TEST_DB,
+                                                                          CHUNK_SIZE, new EvaCollectionNames());
         Map<String, Variant> variants = readIntoMap(evaReader);
         assertNotEquals(0, variants.size());
         List<Variant> rsToLookFor = variants.values().stream().filter(v -> v.getMainId().equals("rs3000000010"))
@@ -260,8 +262,9 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void includeOnlyMergedVariants() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001215.4", mongoClient, TEST_DB,
-                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001215.4", 7227,
+                                                                       mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
 
         assertEquals(1, allVariants.size());
@@ -282,8 +285,9 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void includeOnlyMergedVariantsWithSameChrAndSameStartInRsAndSs() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000002305.1", mongoClient, TEST_DB,
-                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000002305.1", 9796,
+                                                                       mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
 
         assertEquals(2, allVariants.size());
@@ -308,7 +312,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void noExceptionIfSsWereDeclustered() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.5", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.5", 10090,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(0, allVariants.size());
@@ -324,7 +329,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test(expected = IllegalStateException.class)
     public void exceptionIfRsMergedHasNoSsMergeOperations() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000181335.3", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000181335.3", 9685,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         readIntoMap(reader);
     }
@@ -339,7 +345,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void excludeMergedIntoADeprecatedRs() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000004515.3", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000004515.3", 3847,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());
@@ -367,7 +374,8 @@ public class MergedVariantMongoReaderTest {
             "this situation (More details in javadoc)")
     @Test
     public void rsMappedToDifferentLocationsOneDeprecated() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001111.1", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001111.1", 1111,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
 
@@ -392,7 +400,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void noExceptionIfSsFromDifferentCollectionUpdated() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.4", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.4", 10090,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());
@@ -406,7 +415,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void rsMergedWithRsFromDifferentCollection() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_002863925.1", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_002863925.1", 9796,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());

@@ -30,25 +30,26 @@ public class DeprecatedVariantMongoReader<T extends
         extends MongoDbCursorItemReader<T> {
 
     public static DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> dbsnpDeprecatedVariantMongoReader(
-            String assemblyAccession,
+            String assemblyAccession, int taxonomyAccession,
             MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate,
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, taxonomyAccession, mongoTemplate,
                                                   DbsnpClusteredVariantOperationEntity.class);
     }
 
     public static DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> evaDeprecatedVariantMongoReader(
-            String assemblyAccession,
+            String assemblyAccession, int taxonomyAccession,
             MongoTemplate mongoTemplate) {
-        return new DeprecatedVariantMongoReader<>(assemblyAccession, mongoTemplate,
+        return new DeprecatedVariantMongoReader<>(assemblyAccession, taxonomyAccession, mongoTemplate,
                                                   ClusteredVariantOperationEntity.class);
     }
 
-    public DeprecatedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
+    public DeprecatedVariantMongoReader(String assemblyAccession, int taxonomyAccession, MongoTemplate mongoTemplate,
                                         Class<T> operationClass) {
         setTemplate(mongoTemplate);
         setTargetType(operationClass);
 
-        setQuery(String.format("{ \"inactiveObjects.asm\" : \"%s\", eventType : \"%s\" }", assemblyAccession,
+        setQuery(String.format("{ \"inactiveObjects.asm\" : \"%s\", \"inactiveObjects.tax\" : %d, " +
+                                       "eventType : \"%s\" }", assemblyAccession, taxonomyAccession,
                                EventType.DEPRECATED));
     }
 

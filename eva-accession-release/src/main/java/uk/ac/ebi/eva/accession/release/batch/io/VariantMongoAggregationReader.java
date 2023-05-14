@@ -68,6 +68,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected static final String REFERENCE_ASSEMBLY_FIELD = "asm";
 
+    protected static final String TAXONOMY_FIELD = "tax";
+
     protected static final String REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS = "seq";
 
     protected static final String STUDY_FIELD = "study";
@@ -100,6 +102,8 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected String assemblyAccession;
 
+    protected int taxonomyAccession;
+
     protected MongoClient mongoClient;
 
     protected String database;
@@ -110,9 +114,10 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     protected CollectionNames names;
 
-    public VariantMongoAggregationReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                         int chunkSize, CollectionNames names) {
+    public VariantMongoAggregationReader(String assemblyAccession, int taxonomyAccession, MongoClient mongoClient,
+                                         String database, int chunkSize, CollectionNames names) {
         this.assemblyAccession = assemblyAccession;
+        this.taxonomyAccession = taxonomyAccession;
         this.mongoClient = mongoClient;
         this.database = database;
         this.chunkSize = chunkSize;

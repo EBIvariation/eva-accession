@@ -25,6 +25,8 @@ public class InputParameters {
 
     private String assemblyAccession;
 
+    private int taxonomyAccession;
+
     private String fasta;
 
     private String assemblyReportUrl;
@@ -42,6 +44,7 @@ public class InputParameters {
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("assemblyAccession", assemblyAccession)
+                .addLong("taxonomyAccession", (long) taxonomyAccession)
                 .addString("fasta", fasta)
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addString("outputFolder", outputFolder)
@@ -54,6 +57,14 @@ public class InputParameters {
 
     public void setAssemblyAccession(String assemblyAccession) {
         this.assemblyAccession = assemblyAccession;
+    }
+
+    public int getTaxonomyAccession() {
+        return taxonomyAccession;
+    }
+
+    public void setTaxonomyAccession(int taxonomyAccession) {
+        this.taxonomyAccession = taxonomyAccession;
     }
 
     public String getFasta() {

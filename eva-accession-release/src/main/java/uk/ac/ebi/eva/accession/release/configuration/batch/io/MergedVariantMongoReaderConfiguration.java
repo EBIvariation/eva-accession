@@ -49,7 +49,7 @@ public class MergedVariantMongoReaderConfiguration {
                                                      MongoProperties mongoProperties) {
         logger.info("Injecting Dbsnp MergedVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
-                new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                new MergedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(), mongoClient,
                                              mongoProperties.getDatabase(), parameters.getChunkSize(),
                                              new DbsnpCollectionNames()));
     }
@@ -60,7 +60,7 @@ public class MergedVariantMongoReaderConfiguration {
                                                      MongoProperties mongoProperties) {
         logger.info("Injecting Eva MergedVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
-                new MergedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                new MergedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(), mongoClient,
                                              mongoProperties.getDatabase(), parameters.getChunkSize(),
                                              new EvaCollectionNames()));
     }

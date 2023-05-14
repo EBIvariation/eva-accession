@@ -54,6 +54,33 @@
       ]
     },
     {
+      "_id" : ObjectId("aaaac1e5dcc3abf7ee91aaab"),
+      "eventType" : "MERGED",
+      "accession" : NumberLong(1986084768),
+      "mergeInto" : NumberLong(9999999999),
+      "reason" : "Identical submitted variant received multiple SS identifiers.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001215.4",
+          "tax" : 7228,
+          "study" : "MORROW_EBE_SUSSEX_MORROW_LHM_RG",
+          "contig" : "AE013599.5",
+          "start" : NumberLong(7680720),
+          "ref" : "T",
+          "alt" : "",
+          "rs" : NumberLong(881301177),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "29E37FFE95F85FB075BBEE3A3717F2F1823C2FB0",
+          "accession" : NumberLong(1986084768),
+          "version" : 1,
+          "createdDate" : ISODate("2016-04-26T11:55:00.000Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("1111c1e5dcc3abf7ee911111"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(1991577882),
@@ -158,6 +185,32 @@
       ]
     },
     {
+      "_id" : ObjectId("9999c1e5dcc3abf7ee919900"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(1991294603),
+      "reason" : "Original rs1099214387 was merged into rs869808637.",
+      "inactiveObjects" : [
+        {
+          "seq": "GCA_000409795.2",
+          "tax": 60712,
+          "study": "PRJEB7923",
+          "contig": "CM001941.2",
+          "start": NumberLong(13),
+          "ref": "T",
+          "alt": "G",
+          "rs": NumberLong(1107370406),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "C8930BB341EFC47A015DEBF4BC9D141EAAB6C78F",
+          "accession" : NumberLong(1991294603),
+          "version" : 1,
+          "createdDate" : ISODate("2016-04-26T11:55:00.000Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5c6b752c2b1ff38bf4ef95a8"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(107450259),
@@ -236,6 +289,32 @@
       ]
     },
     {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c5"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(107450259),
+      "reason" : "Original rs69314228 was merged into rs68736359.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000002305.1",
+          "tax" : 9797,
+          "study" : "BROAD_GENOME_BROAD_EQUCAB2.0:2008.08.08",
+          "contig" : "AAWR02045368.1",
+          "start" : NumberLong(505),
+          "ref" : "T",
+          "alt" : "A",
+          "rs" : NumberLong(69314228),
+          "evidence" : true,
+          "asmMatch" : false,
+          "allelesMatch" : false,
+          "validated" : true,
+          "hashedMessage" : "0B132CD580DE49817786CEBC235285C9B49C5E2A",
+          "accession" : NumberLong(107450259),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c0"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(1991577882),
@@ -291,6 +370,35 @@
       ]
     },
     {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c2"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(1991294603),
+      "reason" : "Original rs66666 was merged into rs66667.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000409795.2",
+          "tax" : 60712,
+          "study" : "PRJEB2000",
+          "contig" : "CM001941.2",
+          "start" : NumberLong(3337129),
+          "ref" : "T",
+          "alt" : "G",
+          "rs" : NumberLong(66666),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "remappedFrom" : "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "hashedMessage" : "25D93C6E673745BF5CF8B88C864104F1164B8D8C",
+          "accession" : NumberLong(1991294603),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5d4bd7e256ccf06f703798cc"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(181942290),
@@ -299,6 +407,32 @@
         {
           "seq" : "GCA_000001635.5",
           "tax" : 10090,
+          "study" : "UNISTS_SUBMISSION_08-24-2009",
+          "contig" : "CM000996.2",
+          "start" : NumberLong(121461812),
+          "ref" : "TCTACACACACACACACACACACACACACACACACACACAGCACTAGAATTAGGCATGTAACATCACAGTCATCTTTTATGTGGTAGTGGTCTCATGCACAGAAACTTTA",
+          "alt" : "(D3MIT42)",
+          "rs" : NumberLong(258660893),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "29E8AA6153CEB07AA14CFCFC56BDC144DFA1A476",
+          "accession" : NumberLong(181942290),
+          "version" : 1,
+          "createdDate" : ISODate("2009-12-15T15:28:00.000+0000")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5d4bd7e256ccf06f703798cd"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(181942290),
+      "reason" : "Declustered: None of the variant alleles match the reference allele.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001635.5",
+          "tax" : 10091,
           "study" : "UNISTS_SUBMISSION_08-24-2009",
           "contig" : "CM000996.2",
           "start" : NumberLong(121461812),
@@ -369,6 +503,32 @@
       ]
     },
     {
+      "_id" : ObjectId("5ca60ff9dab486ab4f9d5c2b"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(3060073575),
+      "reason" : "Original rs1155918185 was merged into rs393316094.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000004515.3",
+          "tax" : 3848,
+          "study" : "BELZILE-LAB_WHOLE_GENOME_SNP_DISCOVERY",
+          "contig" : "CM000836.2",
+          "start" : NumberLong(40018568),
+          "ref" : "A",
+          "alt" : "G",
+          "rs" : NumberLong(1155918185),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "4F02D37F6D5FDD777E74533CC144E0D512D3CF6A",
+          "accession" : NumberLong(3060073575),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-01T11:00:00.000Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5ca60fecdab486ab4f9d5951"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(3062726743),
@@ -421,6 +581,32 @@
       ]
     },
     {
+      "_id" : ObjectId("5ca60fecdab486ab4f9d5953"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(3062726743),
+      "reason" : "Original rs3333 was merged into rs1111.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001111.1",
+          "tax" : 1112,
+          "study" : "BELZILE-LAB_WHOLE_GENOME_SNP_DISCOVERY",
+          "contig" : "CM000111.1",
+          "start" : NumberLong(200),
+          "ref" : "G",
+          "alt" : "A",
+          "rs" : NumberLong(3333),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "F82060CBC359D9B4A65C5C642F47288C5BD4367F",
+          "accession" : NumberLong(3062726743),
+          "version" : 1,
+          "createdDate" : ISODate("2017-09-01T11:00:00.000Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5c51c1e5dcc3abf7ee91316a"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(3062726741),
@@ -453,6 +639,27 @@
         { "hashedMessage" : "46E8DD84642226230462CBF39E3C64E2",
           "seq" : "GCA_000409795.2",
           "tax" : 60711,
+          "study" : "PRJEB22989",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337130),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("3062725741"),
+          "rs" : NumberLong(3000000020),
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c51c1e5dcc3abf7ee90316b"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(3062725741),
+      "reason" : "Original 3000000020 was merged into 3000000016.",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84642226230462CBF39E3C64E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60712,
           "study" : "PRJEB22989",
           "contig" : "CM001954.1",
           "start" : NumberLong(3337130),

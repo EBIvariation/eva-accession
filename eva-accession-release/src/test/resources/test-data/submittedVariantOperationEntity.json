@@ -25,6 +25,30 @@
       ]
     },
     {
+      "_id" : ObjectId("5c51c1e5dcc3abf7ee91326b"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(5259673694),
+      "reason" : "Original 3000000010 was merged into 3000000000.",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84642226210462CBF39E3C64E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60712,
+          "study" : "PRJEB22988",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(2),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("5259673694"),
+          "rs" : NumberLong(3000000010),
+          "remappedFrom": "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5d4bd7e256ccf06f703798cc"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(181942290),
@@ -33,6 +57,28 @@
         {
           "seq" : "GCA_000001635.4",
           "tax" : 10090,
+          "study" : "UNISTS_SUBMISSION_08-24-2009",
+          "contig" : "CM000996.2",
+          "start" : NumberLong(121461812),
+          "ref" : "T",
+          "alt" : "C",
+          "rs" : NumberLong(258660892),
+          "hashedMessage" : "29E8AA6153CEB07AA14CFCFC56BDC144DFA1A476",
+          "accession" : NumberLong(5259673693),
+          "version" : 1,
+          "createdDate" : ISODate("2009-12-15T15:28:00.000+0000")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5d4bd7e256ccf06f703798cd"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(181942290),
+      "reason" : "Original 258660892 was merged into 244942338.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001635.4",
+          "tax" : 10091,
           "study" : "UNISTS_SUBMISSION_08-24-2009",
           "contig" : "CM000996.2",
           "start" : NumberLong(121461812),
@@ -74,6 +120,33 @@
       "createdDate" : ISODate("2022-01-12T01:07:27.057Z")
     },
     {
+      "_id" : ObjectId("61de29cf47abea7f2397efb9"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong("5327034575"),
+      "reason" : "Original rs3091764863 associated with SS was merged into rs393745096.",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_002863925.1",
+          "tax" : 9797,
+          "study" : "PRJEB30116",
+          "contig" : "CM009157.1",
+          "start" : NumberLong(21631965),
+          "ref" : "C",
+          "alt" : "A",
+          "rs" : NumberLong("3091764863"),
+          "evidence" : true,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "73C89DD1FE09466807AB6D666564DE643B0ABB4D",
+          "accession" : NumberLong("5327034575"),
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-14T07:19:08.660Z")
+        }
+      ],
+      "createdDate" : ISODate("2022-01-12T01:07:27.057Z")
+    },
+    {
       "_id" : ObjectId("5c51c1e5ddc3abf7ee91326a"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(5279673694),
@@ -82,6 +155,30 @@
         { "hashedMessage" : "46E8DD84641226210462CBF39E3C64E2",
           "seq" : "GCA_000409795.2",
           "tax" : 60711,
+          "study" : "PRJEB22988",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337130),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("5279673694"),
+          "rs" : NumberLong(3000000020),
+          "remappedFrom": "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c51c1e5ddc3abf7ee91326b"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(5279673694),
+      "reason" : "Original 3000000020 was merged into 3000000016.",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84641226210462CBF39E3C64E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60712,
           "study" : "PRJEB22988",
           "contig" : "CM001954.1",
           "start" : NumberLong(3337130),

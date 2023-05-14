@@ -181,6 +181,25 @@
       )
     },
     {
+      "_id": "40F6E23B8F90B05D4E89B93126AB08ADEB366C15",
+      "seq": "GCA_000409795.2",
+      "tax": 60712,
+      "study": "PRJEB7924",
+      "contig": "CM001941.2",
+      "start": NumberLong(13),
+      "ref": "T",
+      "alt": "G",
+      "rs": NumberLong(869927931),
+      "remappedFrom": "GCA_000409795.1",
+      "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+      "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+      "accession": NumberLong(1991294603),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:31:00Z"
+      )
+    },
+    {
       "_id": "A3CE9DB4B332C6CD29E6A3A25F4665995E62C5B1",
       "seq": "GCF_000001735.3",
       "tax": 3702,
@@ -269,10 +288,46 @@
       )
     },
     {
+      "_id": "A76F3107039B41C98B66A5D692D14525D4172DC5",
+      "seq": "GCF_000001735.3",
+      "tax": 3703,
+      "study": "EVA_ARABIDOPSIS_1001_EVA_ARABIDOPSIS_1001_B",
+      "contig": "CP002685.1",
+      "start": NumberLong(4758626),
+      "ref": "G",
+      "alt": "C",
+      "rs": NumberLong(347048227),
+      "accession": NumberLong(
+      "2687490506"
+      ),
+      "version": 1,
+      "createdDate": ISODate(
+      "2017-02-10T14:52:00Z"
+      )
+    },
+    {
       "_id": "36DCF444101DEC1EBEF3D97F443BF9FA247C9B3A",
       "seq": "GCF_000309985.1",
       "tax": 3711,
       "study": "WENDELL_2012-VNTR",
+      "contig": "CM001642.1",
+      "start": NumberLong(7356604),
+      "ref": "",
+      "alt": "AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC",
+      "rs": NumberLong(268233057),
+      "asmMatch": false,
+      "allelesMatch": false,
+      "accession": NumberLong(490570267),
+      "version": 1,
+      "createdDate": ISODate(
+      "2012-02-17T10:01:00Z"
+      )
+    },
+    {
+      "_id": "36DCF444101DEC1EBEF3D97F443BF9FA247C9B3B",
+      "seq": "GCF_000309985.1",
+      "tax": 3712,
+      "study": "WENDELL_2012-VNTS",
       "contig": "CM001642.1",
       "start": NumberLong(7356604),
       "ref": "",
@@ -359,6 +414,24 @@
       )
     },
     {
+      "_id": "1E1426BB15717F902B7F7EA6FD0776C8F6AC5A63",
+      "seq": "GCF_000003055.6",
+      "tax": 9914,
+      "study": "HMGU-IHG_BT.1_3",
+      "contig": "GK000010.2",
+      "start": NumberLong(101813055),
+      "ref": "T",
+      "alt": "AC",
+      "rs": NumberLong(109920405),
+      "evidence": false,
+      "validated": true,
+      "accession": NumberLong(141079924),
+      "version": 1,
+      "createdDate": ISODate(
+      "2009-05-22T11:57:00Z"
+      )
+    },
+    {
       "_id" : "31AF0F8B67B6BBFD1E9AF59FB5FAFAE88A1966AA",
       "seq" : "GCA_000001215.4",
       "tax" : 7227,
@@ -381,6 +454,24 @@
       "seq" : "GCA_000001215.4",
       "tax" : 7227,
       "study" : "MORROW_EBE_SUSSEX_MORROW_LHM_RG",
+      "contig" : "AE013599.5",
+      "start" : NumberLong(7680720),
+      "ref" : "T",
+      "alt" : "",
+      "rs" : NumberLong(80393223),
+      "evidence" : false,
+      "validated" : true,
+      "accession" : NumberLong(1986084768),
+      "version" : 1,
+      "createdDate" : ISODate(
+      "2016-04-26T11:55:00.000Z"
+      )
+    },
+    {
+      "_id" : "29E37FFE95F85FB075BBEE3A3717F2F1823C2FB1",
+      "seq" : "GCA_000001215.4",
+      "tax" : 7228,
+      "study" : "MORROW_EBE_SUSSEX_MORROW_LHM_RH",
       "contig" : "AE013599.5",
       "start" : NumberLong(7680720),
       "ref" : "T",
@@ -443,6 +534,22 @@
       "createdDate" : ISODate("2014-07-29T22:13:00.000Z")
     },
     {
+      "_id" : "47B7C562F91D91DC8CFC4A2102DF7E7A9AB38316",
+      "seq" : "GCA_000002775.1",
+      "tax" : 3695,
+      "study" : "BESC_ASSOC_545",
+      "contig" : "CM000351.1",
+      "start" : NumberLong(3474340),
+      "ref" : "C",
+      "alt" : "T",
+      "rs" : NumberLong(1153055382),
+      "evidence" : false,
+      "validated" : true,
+      "accession" : NumberLong(1122557780),
+      "version" : 1,
+      "createdDate" : ISODate("2014-07-29T22:13:00.000Z")
+    },
+    {
       "_id": "7A4304A9E9AE320D0E28FCC9E23EF1E605ACA444",
       "seq": "GCA_000409795.2",
       "tax" : 60711,
@@ -481,6 +588,23 @@
       "seq": "GCA_000409795.2",
       "tax": 60711,
       "study": "PRJEB7923",
+      "contig": "CM001954.1",
+      "start": NumberLong(241),
+      "ref": "",
+      "alt": "T",
+      "rs": NumberLong(8182),
+      "accession": NumberLong(8282),
+      "version": 1,
+      "createdDate": ISODate(
+      "2016-05-05T13:43:00Z"
+      ),
+      "mapWeight": 2
+    },
+    {
+      "_id": "81901D6C149D283D8E00859E8BADC1C89750CEEF",
+      "seq": "GCA_000409795.2",
+      "tax": 60712,
+      "study": "PRJEB7924",
       "contig": "CM001954.1",
       "start": NumberLong(241),
       "ref": "",

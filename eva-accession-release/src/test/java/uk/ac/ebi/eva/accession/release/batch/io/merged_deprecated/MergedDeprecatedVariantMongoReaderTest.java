@@ -61,6 +61,8 @@ public class MergedDeprecatedVariantMongoReaderTest {
 
     private static final String ASSEMBLY = "GCA_000409795.2";
 
+    private static final int TAXONOMY = 60711;
+
     private static final int CHUNK_SIZE = 5;
 
     @Autowired
@@ -82,8 +84,9 @@ public class MergedDeprecatedVariantMongoReaderTest {
     @Before
     public void setUp() {
         ExecutionContext executionContext = new ExecutionContext();
-        reader = new DbsnpMergedDeprecatedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, mongoTemplate.getConverter(),
-                                                             CHUNK_SIZE, new DbsnpCollectionNames());
+        reader = new DbsnpMergedDeprecatedVariantMongoReader(ASSEMBLY, TAXONOMY, mongoClient, TEST_DB,
+                                                             mongoTemplate.getConverter(), CHUNK_SIZE,
+                                                             new DbsnpCollectionNames());
         reader.open(executionContext);
     }
 

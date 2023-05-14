@@ -28,6 +28,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationOperation;
+import org.springframework.data.mongodb.core.aggregation.BooleanOperators;
 
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
@@ -63,9 +64,10 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
     private static final List<String> allSubmittedVariantCollectionNames = Arrays.asList("submittedVariantEntity",
                                                                                          "dbsnpSubmittedVariantEntity");
 
-    public AccessionedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database,
-                                         int chunkSize, CollectionNames names) {
-        super(assemblyAccession, mongoClient, database, chunkSize, names);
+    public AccessionedVariantMongoReader(String assemblyAccession, int taxonomyAccession,
+                                         MongoClient mongoClient, String database, int chunkSize,
+                                         CollectionNames names) {
+        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
     }
 
     @Override
@@ -93,14 +95,19 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         // Filter out ss entries not belonging to the release assembly from ssArray field
         // created above from the lookup
         AggregationOperation addFieldsOperation =
-                aggregationContext -> new Document("$addFields",
-                                    new Document(SS_INFO_FIELD,
-                                                 filter(tempArrayName)
-                                                         .as(SS_INFO_FIELD)
-                                                         .by(valueOf(SS_INFO_FIELD + "." +
-                                                                     REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS)
-                                                                     .equalToValue(assemblyAccession))
-                                                         .toDocument(Aggregation.DEFAULT_CONTEXT)));
+                aggregationContext ->
+                        new Document("$addFields",
+                                     new Document(SS_INFO_FIELD,
+                                                  filter(tempArrayName)
+                                                          .as(SS_INFO_FIELD)
+                                                          .by(BooleanOperators.And.and(
+                                                                  valueOf(SS_INFO_FIELD + "." +
+                                                                                  REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS)
+                                                                          .equalToValue(assemblyAccession),
+                                                                  valueOf(SS_INFO_FIELD + "." +
+                                                                                  TAXONOMY_FIELD)
+                                                                          .equalToValue(taxonomyAccession)))
+                                                          .toDocument(Aggregation.DEFAULT_CONTEXT)));
         Bson addSSInfoField = addFieldsOperation.toDocument(Aggregation.DEFAULT_CONTEXT);
         Map<String, Object> removalMap = allSubmittedVariantCollectionNames
                 .stream().collect(Collectors.toMap(Function.identity(), v -> 0));
