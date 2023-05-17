@@ -46,7 +46,7 @@ public class DeprecatedVariantMongoReaderConfiguration {
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderDbsnp(InputParameters parameters, MongoClient mongoClient,
                                                           MongoProperties mongoProperties) {
-        logger.info("Injecting Dbsnp MergedVariantMongoReader with parameters: {}", parameters);
+        logger.info("Injecting Dbsnp DeprecatedVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
                 new DeprecatedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(),
                                                  mongoClient, mongoProperties.getDatabase(), parameters.getChunkSize(),
@@ -57,7 +57,7 @@ public class DeprecatedVariantMongoReaderConfiguration {
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderEva(InputParameters parameters, MongoClient mongoClient,
                                                         MongoProperties mongoProperties) {
-        logger.info("Injecting Dbsnp MergedVariantMongoReader with parameters: {}", parameters);
+        logger.info("Injecting EVA DeprecatedVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
                 new DeprecatedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(),
                                                  mongoClient, mongoProperties.getDatabase(), parameters.getChunkSize(),
