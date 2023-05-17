@@ -19,10 +19,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantAccessionWriter;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -47,12 +45,12 @@ public class DeprecatedVariantAccessionWriterTest {
 
     @Test
     public void write() throws Exception {
-        DbsnpClusteredVariantOperationEntity variant1 = new DbsnpClusteredVariantOperationEntity();
-        variant1.fill(EventType.DEPRECATED, 1L, null, "Reason", null);
-        DbsnpClusteredVariantOperationEntity variant2 = new DbsnpClusteredVariantOperationEntity();
-        variant2.fill(EventType.DEPRECATED, 2L, null, "Reason", null);
-        DbsnpClusteredVariantOperationEntity variant3 = new DbsnpClusteredVariantOperationEntity();
-        variant3.fill(EventType.DEPRECATED, 3L, null, "Reason", null);
+        Variant variant1 = new Variant("chr1", 1L, 2L, "C", "A");
+        variant1.setMainId("rs1");
+        Variant variant2 = new Variant("chr2", 2L, 3L, "A", "T");
+        variant2.setMainId("rs2");
+        Variant variant3 = new Variant("chr3", 3L, 4L, "T", "G");
+        variant3.setMainId("rs3");
 
         deprecatedVariantAccessionWriter.open(null);
         deprecatedVariantAccessionWriter.write(Arrays.asList(variant1, variant2, variant3));

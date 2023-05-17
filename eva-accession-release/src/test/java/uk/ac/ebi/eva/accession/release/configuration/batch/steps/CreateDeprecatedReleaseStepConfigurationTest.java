@@ -53,6 +53,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DB
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class CreateDeprecatedReleaseStepConfigurationTest {

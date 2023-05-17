@@ -22,6 +22,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -37,9 +38,11 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Reads historical variants, that have been merged into a later deprecate one, from a MongoDB database.
@@ -51,15 +54,26 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
 
     protected static final String INACTIVE_OBJECTS = "inactiveObjects";
 
+    private static final String ACCESSION_FIELD = "accession";
+
     private static final String MERGE_INTO_FIELD = "mergeInto";
 
     private static final String EVENT_TYPE_FIELD = "eventType";
 
     private static final String ASSEMBLY_FIELD = "asm";
 
+    private static final String REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS = "seq";
+
     private static final String TAXONOMY_FIELD = "tax";
 
     private static final String CLUSTERED_VARIANT_ACCESSION_FIELD = "rs";
+
+    private static final List<String> allSubmittedVariantOperationCollectionNames = Arrays.asList(
+            "submittedVariantOperationEntity",
+            "dbsnpSubmittedVariantOperationEntity"
+    );
+
+    private static final String SS_OPS_INFO_FIELD = "ssOpsInfo";
 
     private static final String SS_INFO_FIELD = "ssInfo";
 
@@ -103,14 +117,36 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
     }
 
     private List<Bson> buildAggregation() {
-        Bson matchAssembly = Aggregates.match(Filters.and(
-                Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession),
-                Filters.eq(getInactiveField(TAXONOMY_FIELD), taxonomyAccession)));
+        List<Bson> aggregation = new ArrayList<>();
+        Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(ASSEMBLY_FIELD), assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson lookup = Aggregates.lookup(names.getSubmittedVariantEntity(), MERGE_INTO_FIELD,
                                         CLUSTERED_VARIANT_ACCESSION_FIELD, SS_INFO_FIELD);
         Bson matchEmpty = Aggregates.match(Filters.eq(SS_INFO_FIELD, Collections.EMPTY_LIST));
-        List<Bson> aggregation = Arrays.asList(matchAssembly, matchMerged, lookup, matchEmpty);
+        aggregation.addAll(Arrays.asList(matchAssembly, matchMerged, lookup, matchEmpty));
+        for (String submittedVariantOperationCollectionName : allSubmittedVariantOperationCollectionNames) {
+            Bson opsLookup = Aggregates.lookup(submittedVariantOperationCollectionName, ACCESSION_FIELD,
+                                            getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
+                                            submittedVariantOperationCollectionName);
+            aggregation.add(opsLookup);
+        }
+        // Concat entries from all submitted variant operation collections
+        Bson ssOpsConcat = Aggregates.addFields(new Field<>(SS_OPS_INFO_FIELD,
+                                                            new Document("$concatArrays",
+                                                                         allSubmittedVariantOperationCollectionNames
+                                                                                 .stream().map(v -> "$" + v)
+                                                                                 .collect(Collectors.toList()))));
+        aggregation.add(ssOpsConcat);
+        // There should be some evidence that there is at least one operation in the submitted operations
+        // referencing the said RS
+        Bson matchAtLeastOneSSOp = Aggregates.match(Filters.and(
+                Filters.eq(SS_OPS_INFO_FIELD + "." +
+                                   getInactiveField(TAXONOMY_FIELD),
+                           this.taxonomyAccession),
+                Filters.eq(SS_OPS_INFO_FIELD + "." +
+                                   getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
+                           this.assemblyAccession)));
+        aggregation.add(matchAtLeastOneSSOp);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }

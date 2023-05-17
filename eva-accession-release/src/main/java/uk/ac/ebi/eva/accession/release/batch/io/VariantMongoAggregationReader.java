@@ -33,12 +33,14 @@ import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class VariantMongoAggregationReader implements ItemStreamReader<List<Variant>> {
 
@@ -151,7 +153,9 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
         VariantSourceEntry variantSourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                         submittedVariantValidated, allelesMatch,
                                                                         assemblyMatch, evidence, remappedRS);
-        variantSourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
+        if (Objects.nonNull(mergedInto)) {
+            variantSourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
+        }
         return variantSourceEntry;
     }
 
@@ -202,5 +206,39 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
+    }
+
+    /**
+     * The query performed in mongo can retrieve more variants than the actual ones because in some cases the same
+     * clustered variant is mapped against multiple locations. So we need to check that that clustered variant we are
+     * processing only appears in the VCF release file with the alleles from submitted variants matching the location.
+     */
+    protected boolean isSameLocation(String contig, long start, String submittedVariantContig,
+                                     long submittedVariantStart,
+                                     String type) {
+        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart, type);
+    }
+
+    /**
+     * The start is considered to be the same when:
+     * - start in clustered and submitted variant match
+     * - start in clustered and submitted variant have a difference of 1
+     *
+     * The start position can be different in ambiguous INDELS because the renormalization is only applied to
+     * submitted variants. In those cases the start in the clustered and submitted variants will not exactly match but
+     * the difference should be 1
+     *
+     * Example:
+     * RS (assembly: GCA_000309985.1, accession: 268233057, chromosome: CM001642.1, start: 7356605, type: INS)
+     * SS (assembly: GCA_000309985.1, accession: 490570267, chromosome: CM001642.1, start: 7356604, reference: ,
+     *     alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
+     */
+    private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart, String type) {
+        return clusteredVariantStart == submittedVariantStart
+                || (isIndel(type) && Math.abs(clusteredVariantStart - submittedVariantStart) == 1L);
+    }
+
+    private boolean isIndel(String type) {
+        return type.equals(VariantType.INS.toString()) || type.equals(VariantType.DEL.toString());
     }
 }

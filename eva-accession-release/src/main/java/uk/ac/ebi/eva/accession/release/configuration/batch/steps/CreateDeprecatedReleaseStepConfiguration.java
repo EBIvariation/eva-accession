@@ -20,25 +20,18 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemStreamReader;
-import org.springframework.batch.item.ItemStreamWriter;
 import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
-import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantAccessionWriter;
-import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.DeprecatedVariantMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.DeprecatedAccessionWriterConfiguration;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_DEPRECATED_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_DEPRECATED_RELEASE_WRITER;
@@ -63,16 +56,14 @@ public class CreateDeprecatedReleaseStepConfiguration {
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Qualifier(DBSNP_DEPRECATED_VARIANT_READER)
-                    DeprecatedVariantMongoReader<DbsnpClusteredVariantOperationEntity> deprecatedVariantReader,
+            ItemReader<Variant> deprecatedVariantReader,
             @Qualifier(DBSNP_DEPRECATED_RELEASE_WRITER) DeprecatedVariantAccessionWriter accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP)
-                .<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>,
-                        EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>
-                        >chunk(chunkSizeCompletionPolicy)
-                .reader(deprecatedVariantReader)
-                .writer(accessionWriter)
-                .listener(progressListener)
-                .build();
+                                             .<Variant, Variant>chunk(chunkSizeCompletionPolicy)
+                                             .reader(deprecatedVariantReader)
+                                             .writer(accessionWriter)
+                                             .listener(progressListener)
+                                             .build();
         return step;
     }
 
@@ -81,16 +72,14 @@ public class CreateDeprecatedReleaseStepConfiguration {
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy,
             @Qualifier(EVA_DEPRECATED_VARIANT_READER)
-                    DeprecatedVariantMongoReader<ClusteredVariantOperationEntity> deprecatedVariantReader,
+            ItemReader<Variant> deprecatedVariantReader,
             @Qualifier(EVA_DEPRECATED_RELEASE_WRITER) DeprecatedVariantAccessionWriter accessionWriter) {
         TaskletStep step = stepBuilderFactory.get(RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP)
-                .<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>,
-                        EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>
-                        >chunk(chunkSizeCompletionPolicy)
-                .reader(deprecatedVariantReader)
-                .writer(accessionWriter)
-                .listener(progressListener)
-                .build();
+                                             .<Variant, Variant>chunk(chunkSizeCompletionPolicy)
+                                             .reader(deprecatedVariantReader)
+                                             .writer(accessionWriter)
+                                             .listener(progressListener)
+                                             .build();
         return step;
     }
 }

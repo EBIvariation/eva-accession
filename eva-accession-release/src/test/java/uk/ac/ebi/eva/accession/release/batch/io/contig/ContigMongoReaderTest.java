@@ -31,7 +31,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
@@ -56,8 +55,6 @@ public class ContigMongoReaderTest {
 
     private static final String ASSEMBLY_ACCESSION = "GCA_000409795.2";
 
-    private static final int TAXONOMY = 60711;
-
     @Autowired
     private MongoClient mongoClient;
 
@@ -71,7 +68,7 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicActiveContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, TAXONOMY, mongoClient,
+        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, mongoClient,
                                                                         TEST_DB, new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
@@ -84,7 +81,7 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicMergedContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, TAXONOMY, mongoClient,
+        ContigMongoReader reader = ContigMongoReader.mergedContigReader(ASSEMBLY_ACCESSION, mongoClient,
                                                                         TEST_DB, new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
@@ -97,8 +94,7 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicMultimapContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.multimapContigReader(ASSEMBLY_ACCESSION, TAXONOMY,
-                                                                          mongoClient, TEST_DB,
+        ContigMongoReader reader = ContigMongoReader.multimapContigReader(ASSEMBLY_ACCESSION, mongoClient, TEST_DB,
                                                                           new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
