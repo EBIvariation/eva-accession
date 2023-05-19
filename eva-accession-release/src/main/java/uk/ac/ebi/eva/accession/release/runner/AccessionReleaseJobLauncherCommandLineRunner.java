@@ -113,6 +113,9 @@ public class AccessionReleaseJobLauncherCommandLineRunner extends JobLauncherCom
 
             // TODO: different jobs can have different parameters
             JobParameters jobParameters = inputParameters.toJobParameters();
+            if (jobParameters.getLong("taxonomyAccession") == 0) {
+                throw new IllegalArgumentException("Taxonomy accession parameter should NOT be empty!");
+            }
 
             JobStatusManager.checkIfJobNameHasBeenDefined(jobName);
             JobStatusManager.checkIfPropertiesHaveBeenProvided(jobParameters);
