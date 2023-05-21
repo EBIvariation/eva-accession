@@ -48,6 +48,8 @@ import uk.ac.ebi.eva.commons.batch.job.JobStatusManager;
 
 import java.util.Collection;
 
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB;
+
 @Component
 public class AccessionReleaseJobLauncherCommandLineRunner extends JobLauncherCommandLineRunner implements
         ApplicationEventPublisherAware, ExitCodeGenerator {
@@ -113,7 +115,8 @@ public class AccessionReleaseJobLauncherCommandLineRunner extends JobLauncherCom
 
             // TODO: different jobs can have different parameters
             JobParameters jobParameters = inputParameters.toJobParameters();
-            if (jobParameters.getLong("taxonomyAccession") == 0) {
+            if (jobParameters.getLong("taxonomyAccession") == 0 &&
+                    !this.jobName.equals(CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB)) {
                 throw new IllegalArgumentException("Taxonomy accession parameter should NOT be empty!");
             }
 
