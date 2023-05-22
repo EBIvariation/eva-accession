@@ -480,7 +480,7 @@ public class MergedVariantMongoReaderTest {
 
         // Test records returned when the mongo reader is given TAX2
         // Note rs3 is returned even though in Mongo it was originally issued in TAX1
-        // This is because there is a SS record in TAX2 that was declustered from rs3
+        // This is because, before the merge, there was a SS record in TAX2 that was clustered under rs3
         reader = new MergedVariantMongoReader(ASSEMBLY, TAX2, mongoClient, TEST_DB, CHUNK_SIZE,
                                               new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
