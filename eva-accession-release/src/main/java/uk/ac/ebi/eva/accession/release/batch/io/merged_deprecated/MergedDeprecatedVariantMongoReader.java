@@ -140,6 +140,7 @@ public abstract class MergedDeprecatedVariantMongoReader<OPERATION_ENTITY>
         // There should be some evidence that there is at least one operation in the submitted operations
         // referencing the said RS
         Bson matchAtLeastOneSSOp = Aggregates.match(Filters.and(
+                Filters.ne(SS_OPS_INFO_FIELD, Collections.emptyList()),
                 Filters.eq(SS_OPS_INFO_FIELD + "." +
                                    getInactiveField(TAXONOMY_FIELD),
                            this.taxonomyAccession),

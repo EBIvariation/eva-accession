@@ -39,6 +39,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +105,9 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
                                                                .collect(Collectors.toList()))));
         // We only need the SS info field
         aggregation.add(concat);
+
+        Bson matchOnlyNonEmptySSInfo = Aggregates.match(Filters.ne(SS_INFO_FIELD, Collections.emptyList()));
+        aggregation.add(matchOnlyNonEmptySSInfo);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }

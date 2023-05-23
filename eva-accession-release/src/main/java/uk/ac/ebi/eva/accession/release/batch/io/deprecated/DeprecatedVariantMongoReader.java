@@ -35,6 +35,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -86,6 +87,7 @@ public class DeprecatedVariantMongoReader extends VariantMongoAggregationReader 
         // Ensure that we are only retrieving the variants with the relevant taxonomy
         // and event type in the Submitted operations collections
         Bson matchTaxonomyAndEventType = Aggregates.match(Filters.and(
+                Filters.ne(SS_INFO_FIELD, Collections.emptyList()),
                 Filters.eq(SS_INFO_FIELD + "." +
                                    getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
                            this.assemblyAccession),

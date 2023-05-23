@@ -114,6 +114,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         // Ensure that we are only retrieving the variants with the relevant taxonomy
         // and event type in the Submitted operations collections
         Bson matchTaxonomyAndEventType = Aggregates.match(Filters.and(
+                Filters.ne(SS_INFO_FIELD, Collections.emptyList()),
                 Filters.eq(SS_INFO_FIELD + "." +
                                    getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
                            this.assemblyAccession),
@@ -132,6 +133,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                                                                  .stream().map(v -> "$" + v)
                                                                  .collect(Collectors.toList()))));
         aggregation.add(rsConcat);
+        Bson matchOnlyNonEmptyActiveRS = Aggregates.match(Filters.ne(ACTIVE_RS, Collections.emptyList()));
+        aggregation.add(matchOnlyNonEmptyActiveRS);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
