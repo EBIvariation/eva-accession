@@ -211,10 +211,10 @@ public class AccessionReleaseJobLauncherCommandLineRunnerTest {
     }
 
     private void injectErrorIntoMongoClusteredVariantOperationCollection() throws Exception {
-        Query query = query(where("_id").is("5c36053f4a2c10d01c39d9c5"));
+        Query query = query(where("_id").is("5c519550dcc3abf7ee9125af"));
         Update update = new Update();
         // Intentionally inject error in the Mongo collection
-        update.set("inactiveObjects.0.start", "3337129jibberish");
+        update.set("inactiveObjects.0.start", "8421515jibberish");
         mongoTemplate.updateFirst(query, update, DbsnpClusteredVariantOperationEntity.class);
     }
 
@@ -227,11 +227,11 @@ public class AccessionReleaseJobLauncherCommandLineRunnerTest {
     }
 
     private void injectErrorIntoMongoClusteredVariantCollection() throws Exception {
-        Query query = query(where("_id").is("7A4304A9E9AE320D0E28FCC9E23EF1E605ACA111"));
+        Query query = query(where("_id").is("F475F4F6657CF52CE8BF8416AA945EF669CB1BCD"));
         Update update = new Update();
         // Intentionally inject error in entry#7 (contig, start sorted) in the Mongo collection
-        update.set("accession", "1153596374jibberish");
-        mongoTemplate.updateFirst(query, update, DbsnpClusteredVariantEntity.class);
+        update.set("start", "5jibberish");
+        UpdateResult result = mongoTemplate.updateFirst(query, update, DbsnpClusteredVariantEntity.class);
     }
 
     private void remediateMongoClusteredVariantCollection() throws Exception {
