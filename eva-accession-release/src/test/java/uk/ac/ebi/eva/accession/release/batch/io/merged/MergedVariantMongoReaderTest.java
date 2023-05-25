@@ -25,6 +25,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -34,11 +35,27 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
+import uk.ac.ebi.eva.accession.release.batch.io.deprecated.DeprecatedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
@@ -46,16 +63,23 @@ import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.CLUSTERED_VARIANT_VALIDATED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.REMAPPED_KEY;
 import static uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader.SUBMITTED_VARIANT_VALIDATED_KEY;
@@ -83,6 +107,8 @@ public class MergedVariantMongoReaderTest {
 
     private static final String ASSEMBLY = "GCA_000409795.2";
 
+    private static final int TAXONOMY = 60711;
+
     private static final String ID_1_A = "CM001954.1_5_G_A";
 
     private static final String ID_1_T = "CM001954.1_5_G_T";
@@ -94,6 +120,10 @@ public class MergedVariantMongoReaderTest {
     private static final int EXPECTED_MERGED_VARIANTS = 5;
 
     private static final int CHUNK_SIZE = 5;
+
+    // Separate taxonomies for the test testOnlySpecifiedTaxVariantsRead to isolate it from other tests
+    private static final int TAX1 = 100;
+    private static final int TAX2 = 101;
 
     @Autowired
     private MongoClient mongoClient;
@@ -116,24 +146,16 @@ public class MergedVariantMongoReaderTest {
     @Before
     public void setUp() throws Exception {
         executionContext = new ExecutionContext();
-        defaultReader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE,
+        defaultReader = new MergedVariantMongoReader(ASSEMBLY, TAXONOMY, mongoClient, TEST_DB, CHUNK_SIZE,
                                                      new DbsnpCollectionNames());
     }
 
-    @Test
-    public void readMergedVariants() {
-        MongoDatabase db = mongoClient.getDatabase(TEST_DB);
-        MongoCollection<Document> collection = db.getCollection(DBSNP_CLUSTERED_VARIANT_OPERATION_ENTITY);
-
-        AggregateIterable<Document> result = collection.aggregate(defaultReader.buildAggregation())
-                                                       .allowDiskUse(true)
-                                                       .useCursor(true);
-        MongoCursor<Document> iterator = result.iterator();
-        List<Variant> operations = new ArrayList<>();
-        while (iterator.hasNext()) {
-            operations.addAll(defaultReader.getVariants(iterator.next()));
-        }
-        assertEquals(EXPECTED_MERGED_VARIANTS, operations.size());
+    @After
+    public void tearDown() throws Exception {
+        this.mongoTemplate.findAllAndRemove(query(where("inactiveObjects.tax").in(Arrays.asList(TAX1, TAX2))),
+                                            DbsnpSubmittedVariantOperationEntity.class);
+        this.mongoTemplate.findAllAndRemove(query(where("inactiveObjects.tax").in(Arrays.asList(TAX1, TAX2))),
+                                            DbsnpClusteredVariantOperationEntity.class);
     }
 
     @Test
@@ -224,8 +246,8 @@ public class MergedVariantMongoReaderTest {
 
     @Test
     public void includeRemappedFlag() throws Exception {
-        MergedVariantMongoReader evaReader = new MergedVariantMongoReader(ASSEMBLY, mongoClient, TEST_DB, CHUNK_SIZE,
-                                                     new EvaCollectionNames());
+        MergedVariantMongoReader evaReader = new MergedVariantMongoReader(ASSEMBLY, TAXONOMY, mongoClient, TEST_DB,
+                                                                          CHUNK_SIZE, new EvaCollectionNames());
         Map<String, Variant> variants = readIntoMap(evaReader);
         assertNotEquals(0, variants.size());
         List<Variant> rsToLookFor = variants.values().stream().filter(v -> v.getMainId().equals("rs3000000010"))
@@ -260,8 +282,9 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void includeOnlyMergedVariants() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001215.4", mongoClient, TEST_DB,
-                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001215.4", 7227,
+                                                                       mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
 
         assertEquals(1, allVariants.size());
@@ -282,8 +305,9 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void includeOnlyMergedVariantsWithSameChrAndSameStartInRsAndSs() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000002305.1", mongoClient, TEST_DB,
-                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000002305.1", 9796,
+                                                                       mongoClient, TEST_DB,
+                                                                       CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
 
         assertEquals(2, allVariants.size());
@@ -308,7 +332,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void noExceptionIfSsWereDeclustered() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.5", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.5", 10090,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(0, allVariants.size());
@@ -319,14 +344,14 @@ public class MergedVariantMongoReaderTest {
      * - One merge operation for clustered variants (rs782965190 merged into rs43955718)
      * - No submitted variants operations associated to rs782965190
      *
-     * Given that the are not merge nor decluster operations for any submitted variant associated this should throw
-     * an exception
+     * Given that there are not merge nor decluster operations for any submitted variant associated this should
+     * not return any records
      */
-    @Test(expected = IllegalStateException.class)
     public void exceptionIfRsMergedHasNoSsMergeOperations() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000181335.3", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000181335.3", 9685,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
-        readIntoMap(reader);
+        assertEquals(0, readIntoMap(reader).size());
     }
 
     /**
@@ -339,7 +364,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void excludeMergedIntoADeprecatedRs() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000004515.3", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000004515.3", 3847,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());
@@ -367,7 +393,8 @@ public class MergedVariantMongoReaderTest {
             "this situation (More details in javadoc)")
     @Test
     public void rsMappedToDifferentLocationsOneDeprecated() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001111.1", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001111.1", 1111,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
 
@@ -392,7 +419,8 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void noExceptionIfSsFromDifferentCollectionUpdated() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.4", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_000001635.4", 10090,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());
@@ -406,10 +434,82 @@ public class MergedVariantMongoReaderTest {
      */
     @Test
     public void rsMergedWithRsFromDifferentCollection() throws Exception {
-        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_002863925.1", mongoClient, TEST_DB,
+        MergedVariantMongoReader reader = new MergedVariantMongoReader("GCA_002863925.1", 9796,
+                                                                       mongoClient, TEST_DB,
                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
         Map<String, Variant> allVariants = readIntoMap(reader);
         assertEquals(1, allVariants.size());
+    }
+
+    @Test
+    public void testOnlySpecifiedTaxVariantsRead() throws Exception {
+        // See scenario here: https://docs.google.com/spreadsheets/d/12QJT4N0-UJGTv3BtVq_gyyrVzweXd5ev2WFlnP-4MW4/edit#rangeid=169520205
+        DbsnpSubmittedVariantEntity ss1 = createSS(ASSEMBLY, TAX1, 1L, 1L, 100L, "C", "A");
+        DbsnpSubmittedVariantEntity ss2 = createSS(ASSEMBLY, TAX2, 2L, 2L, 101L, "A", "T");
+        DbsnpSubmittedVariantEntity ss3 = createSS(ASSEMBLY, TAX2, 3L, 3L, 102L, "T", "G");
+        DbsnpClusteredVariantEntity rs1 = createRS(ss1, null);
+        DbsnpClusteredVariantEntity rs2 = createRS(ss2, null);
+        DbsnpClusteredVariantEntity rs3 = createRS(ss3, TAX1);
+        this.mongoTemplate.insert(Stream.of(ss1, ss2, ss3).map(ss -> {
+            DbsnpSubmittedVariantOperationEntity dbsnpSvoeObj = new DbsnpSubmittedVariantOperationEntity();
+            dbsnpSvoeObj.fill(EventType.UPDATED, ss.getAccession(),
+                              "Original RS was merged into another RS",
+                              Arrays.asList(new DbsnpSubmittedVariantInactiveEntity(ss)));
+            return dbsnpSvoeObj;
+        }).collect(Collectors.toList()), DbsnpSubmittedVariantOperationEntity.class);
+        this.mongoTemplate.insert(Stream.of(rs1, rs2, rs3).map(rs -> {
+            DbsnpClusteredVariantOperationEntity dbsnpCvoeObj = new DbsnpClusteredVariantOperationEntity();
+            dbsnpCvoeObj.fill( EventType.MERGED, rs.getAccession(), rs.getAccession() + 10,
+                               "Original RS was merged into another RS",
+                               Arrays.asList(new DbsnpClusteredVariantInactiveEntity(rs)));
+            return dbsnpCvoeObj;
+        }).collect(Collectors.toList()), DbsnpClusteredVariantOperationEntity.class);
+        // If we don't insert target CVEs of the merges, the merge reader will fail
+        // because such merged RS will be categorized as merged-then-deprecated
+        this.mongoTemplate.insert(Stream.of(rs1, rs2, rs3).map(rs -> new ClusteredVariantEntity(
+                                          rs.getAccession() + 10, rs.getHashedMessage(), rs.getModel()))
+                                        .collect(Collectors.toList()), DbsnpClusteredVariantEntity.class);
+
+        // Test records returned when the mongo reader is given TAX1
+        MergedVariantMongoReader reader  = new MergedVariantMongoReader(ASSEMBLY, TAX1, mongoClient, TEST_DB,
+                                                                        CHUNK_SIZE, new DbsnpCollectionNames());
+        reader.open(new ExecutionContext());
+        List<Variant> mergedVariants = new ArrayList<>(readIntoMap(reader).values());
+        assertEquals(1, mergedVariants.size());
+        assertEquals("rs1", mergedVariants.get(0).getMainId());
+
+        // Test records returned when the mongo reader is given TAX2
+        // Note rs3 is returned even though in Mongo it was originally issued in TAX1
+        // This is because, before the merge, there was a SS record in TAX2 that was clustered under rs3
+        reader = new MergedVariantMongoReader(ASSEMBLY, TAX2, mongoClient, TEST_DB, CHUNK_SIZE,
+                                              new DbsnpCollectionNames());
+        reader.open(new ExecutionContext());
+        mergedVariants = new ArrayList<>(readIntoMap(reader).values());
+        assertEquals(2, mergedVariants.size());
+        assertTrue(Arrays.asList("rs2", "rs3").contains(mergedVariants.get(0).getMainId()));
+        assertTrue(Arrays.asList("rs2", "rs3").contains(mergedVariants.get(1).getMainId()));
+    }
+
+    private DbsnpSubmittedVariantEntity createSS(String assembly, int taxonomy, Long ssAccession, Long rsAccession,
+                                                 Long start, String reference, String alternate) {
+        return new DbsnpSubmittedVariantEntity(ssAccession, "hash" + ssAccession, assembly, taxonomy,
+                                               "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false,
+                                               false, false, 1);
+    }
+
+    private DbsnpClusteredVariantEntity createRS(SubmittedVariantEntity sve, Integer alternateTaxonomy) {
+        Function<IClusteredVariant, String> hashingFunction =  new ClusteredVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        int taxonomyToUse = Objects.isNull(alternateTaxonomy)? sve.getTaxonomyAccession(): alternateTaxonomy;
+        ClusteredVariant cv = new ClusteredVariant(sve.getReferenceSequenceAccession(), taxonomyToUse,
+                                                   sve.getContig(),
+                                                   sve.getStart(),
+                                                   new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
+                                                               sve.getReferenceAllele(),
+                                                               sve.getAlternateAllele()).getType(),
+                                                   true, null);
+        String hash = hashingFunction.apply(cv);
+        return new DbsnpClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
     }
 
 }

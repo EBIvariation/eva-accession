@@ -49,9 +49,9 @@ public class AccessionedVariantMongoReaderConfiguration {
                                                           MongoProperties mongoProperties) {
         logger.info("Injecting Dbsnp AccessionedVariantMongoReader with parameters: {}", parameters.toJobParameters());
         return new UnwindingItemStreamReader<>(
-                new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                  mongoProperties.getDatabase(), parameters.getChunkSize(),
-                                                  new DbsnpCollectionNames()));
+                new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(),
+                        mongoClient, mongoProperties.getDatabase(), parameters.getChunkSize(),
+                        new DbsnpCollectionNames()));
     }
 
     @Bean(EVA_ACCESSIONED_VARIANT_READER)
@@ -60,8 +60,8 @@ public class AccessionedVariantMongoReaderConfiguration {
                                                         MongoProperties mongoProperties) {
         logger.info("Injecting Eva AccessionedVariantMongoReader with parameters: {}", parameters.toJobParameters());
         return new UnwindingItemStreamReader<>(
-                new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
-                                                  mongoProperties.getDatabase(), parameters.getChunkSize(),
-                                                  new EvaCollectionNames()));
+                new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(),
+                        mongoClient, mongoProperties.getDatabase(), parameters.getChunkSize(),
+                        new EvaCollectionNames()));
     }
 }

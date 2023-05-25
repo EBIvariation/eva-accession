@@ -45,7 +45,8 @@ public class MergedDeprecatedVariantMongoReaderConfiguration {
     public ItemStreamReader<DbsnpClusteredVariantOperationEntity> mergedDeprecatedVariantMongoReaderDbsnp(
             InputParameters parameters, MongoClient mongoClient, MongoTemplate mongoTemplate,
             MongoProperties mongoProperties) {
-        return new DbsnpMergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+        return new DbsnpMergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                           parameters.getTaxonomyAccession(), mongoClient,
                                                            mongoProperties.getDatabase(), mongoTemplate.getConverter(),
                                                            parameters.getChunkSize(), new DbsnpCollectionNames());
     }
@@ -55,7 +56,8 @@ public class MergedDeprecatedVariantMongoReaderConfiguration {
     public ItemStreamReader<ClusteredVariantOperationEntity> mergedDeprecatedVariantMongoReaderEva(
             InputParameters parameters, MongoClient mongoClient, MongoTemplate mongoTemplate,
             MongoProperties mongoProperties) {
-        return new EvaMergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+        return new EvaMergedDeprecatedVariantMongoReader(parameters.getAssemblyAccession(),
+                                                         parameters.getTaxonomyAccession(), mongoClient,
                                                          mongoProperties.getDatabase(), mongoTemplate.getConverter(),
                                                          parameters.getChunkSize(), new EvaCollectionNames());
     }

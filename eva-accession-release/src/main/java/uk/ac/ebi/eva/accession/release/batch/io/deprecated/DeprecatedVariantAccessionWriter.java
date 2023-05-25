@@ -18,11 +18,8 @@ package uk.ac.ebi.eva.accession.release.batch.io.deprecated;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
-import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
-import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -30,12 +27,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Writes the accessions of historical variants to a flat file.
  */
-public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<EventDocument<IClusteredVariant, Long,
-        ? extends ClusteredVariantInactiveEntity>> {
+public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<Variant> {
 
     private final File output;
 
@@ -59,14 +56,6 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<EventD
     }
 
     @Override
-    public void write(
-            List<? extends EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> variants) {
-        for (EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> variant : variants) {
-            printWriter.println("rs" + variant.getAccession());
-        }
-    }
-
-    @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
 
     }
@@ -76,4 +65,12 @@ public class DeprecatedVariantAccessionWriter implements ItemStreamWriter<EventD
         printWriter.close();
     }
 
+    @Override
+    public void write(List<? extends Variant> variants) throws Exception {
+        for (Variant variant: variants) {
+            if (!Objects.isNull(variant)) {
+                printWriter.println(variant.getMainId());
+            }
+        }
+    }
 }
