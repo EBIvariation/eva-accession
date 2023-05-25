@@ -27,7 +27,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantMongoReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
 import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
@@ -50,7 +49,8 @@ public class MultimapVariantMongoReaderConfiguration {
                                                           MongoProperties mongoProperties) {
         logger.info("Injecting Dbsnp MultimapVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
-                new MultimapVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                new MultimapVariantMongoReader(parameters.getAssemblyAccession(),
+                                               parameters.getTaxonomyAccession(), mongoClient,
                                                mongoProperties.getDatabase(), parameters.getChunkSize(),
                                                new DbsnpCollectionNames()));
     }
@@ -61,7 +61,8 @@ public class MultimapVariantMongoReaderConfiguration {
                                                         MongoProperties mongoProperties) {
         logger.info("Injecting Eva MultimapVariantMongoReader with parameters: {}", parameters);
         return new UnwindingItemStreamReader<>(
-                new MultimapVariantMongoReader(parameters.getAssemblyAccession(), mongoClient,
+                new MultimapVariantMongoReader(parameters.getAssemblyAccession(),
+                                               parameters.getTaxonomyAccession(), mongoClient,
                                                mongoProperties.getDatabase(), parameters.getChunkSize(),
                                                new EvaCollectionNames()));
     }

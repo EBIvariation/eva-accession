@@ -81,9 +81,9 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
             "dbsnpClusteredVariantEntity"
     );
 
-    public MergedVariantMongoReader(String assemblyAccession, MongoClient mongoClient, String database, int chunkSize,
-                                    CollectionNames names) {
-        super(assemblyAccession, mongoClient, database, chunkSize, names);
+    public MergedVariantMongoReader(String assemblyAccession, int taxonomyAccession, MongoClient mongoClient,
+                                    String database, int chunkSize, CollectionNames names) {
+        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
     }
 
     @Override
@@ -93,7 +93,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
 
     @Override
     protected List<Bson> buildAggregation() {
-        Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD), assemblyAccession));
+        Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD),
+                                                         assemblyAccession));
         Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.MERGED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
         List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchMerged, sort));
@@ -110,6 +111,16 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                                                                .stream().map(v -> "$" + v)
                                                                .collect(Collectors.toList()))));
         aggregation.add(ssConcat);
+        // Ensure that we are only retrieving the variants with the relevant taxonomy
+        // and event type in the Submitted operations collections
+        Bson matchTaxonomyAndEventType = Aggregates.match(Filters.and(
+                Filters.ne(SS_INFO_FIELD, Collections.emptyList()),
+                Filters.eq(SS_INFO_FIELD + "." +
+                                   getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
+                           this.assemblyAccession),
+                Filters.eq(SS_INFO_FIELD + "." + getInactiveField(TAXONOMY_FIELD), this.taxonomyAccession),
+                Filters.eq(SS_INFO_FIELD + "." + EVENT_TYPE_FIELD,EventType.UPDATED.toString())));
+        aggregation.add(matchTaxonomyAndEventType);
 
         // Similarly look in both clustered variant collections for active RS
         for (String clusteredVariantCollectionName : allClusteredVariantCollectionNames) {
@@ -122,6 +133,8 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
                                                                  .stream().map(v -> "$" + v)
                                                                  .collect(Collectors.toList()))));
         aggregation.add(rsConcat);
+        Bson matchOnlyNonEmptyActiveRS = Aggregates.match(Filters.ne(ACTIVE_RS, Collections.emptyList()));
+        aggregation.add(matchOnlyNonEmptyActiveRS);
         logger.info("Issuing aggregation: {}", aggregation);
         return aggregation;
     }
@@ -130,6 +143,7 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         return INACTIVE_OBJECTS + "." + field;
     }
 
+    @Override
     protected List<Variant> getVariants(Document mergedVariant) {
         Collection<Document> inactiveObjects = (Collection<Document>) mergedVariant.get(INACTIVE_OBJECTS);
         if (inactiveObjects.size() > 1) {
@@ -205,38 +219,5 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         }
 
         return new ArrayList<>(mergedVariants.values());
-    }
-
-    /**
-     * The query performed in mongo can retrieve more variants than the actual ones because in some cases the same
-     * clustered variant is mapped against multiple locations. So we need to check that that clustered variant we are
-     * processing only appears in the VCF release file with the alleles from submitted variants matching the location.
-     */
-    private boolean isSameLocation(String contig, long start, String submittedVariantContig, long submittedVariantStart,
-                                   String type) {
-        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart, type);
-    }
-
-    /**
-     * The start is considered to be the same when:
-     * - start in clustered and submitted variant match
-     * - start in clustered and submitted variant have a difference of 1
-     *
-     * The start position can be different in ambiguous INDELS because the renormalization is only applied to
-     * submitted variants. In those cases the start in the clustered and submitted variants will not exactly match but
-     * the difference should be 1
-     *
-     * Example:
-     * RS (assembly: GCA_000309985.1, accession: 268233057, chromosome: CM001642.1, start: 7356605, type: INS)
-     * SS (assembly: GCA_000309985.1, accession: 490570267, chromosome: CM001642.1, start: 7356604, reference: ,
-     *     alternate: AGAGCTATGATCTTCGGAAGGAGAAGGAGAAGGAAAAGATTCATGACGTCCAC)
-     */
-    private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart, String type) {
-        return clusteredVariantStart == submittedVariantStart
-                || (isIndel(type) && Math.abs(clusteredVariantStart - submittedVariantStart) == 1L);
-    }
-
-    private boolean isIndel(String type) {
-        return type.equals(VariantType.INS.toString()) || type.equals(VariantType.DEL.toString());
     }
 }

@@ -25,6 +25,54 @@
       ]
     },
     {
+      "_id" : ObjectId("5c51c1e5dcc3abf7ee91426a"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(525973694),
+      "reason" : "Declustered",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84642226210462CBF39E364E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB2988",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337129),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("525973694"),
+          "rs" : NumberLong(3000000015),
+          "remappedFrom": "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c51c1e5dcc3abf7fe91426a"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(525973695),
+      "reason" : "Declustered",
+      "inactiveObjects" : [
+        { "hashedMessage" : "46E8DD84642226230462CBF39E364E2",
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB2988",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337130),
+          "ref" : "A",
+          "alt" : "G",
+          "accession" : NumberLong("525973695"),
+          "rs" : NumberLong(3000000016),
+          "remappedFrom": "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "version" : 1,
+          "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5d4bd7e256ccf06f703798cc"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(181942290),

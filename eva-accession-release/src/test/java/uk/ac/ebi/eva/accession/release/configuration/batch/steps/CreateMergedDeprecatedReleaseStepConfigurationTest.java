@@ -59,6 +59,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EV
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantOperationEntity.json",
+        "/test-data/dbsnpSubmittedVariantOperationEntity.json",
         "/test-data/dbsnpClusteredVariantEntity.json",
         "/test-data/dbsnpSubmittedVariantEntity.json",
         "/test-data/clusteredVariantOperationEntity.json",

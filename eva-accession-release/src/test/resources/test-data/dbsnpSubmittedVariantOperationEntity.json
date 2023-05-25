@@ -262,6 +262,32 @@
       ]
     },
     {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c7"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(1991577883),
+      "reason" : "Declustered",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB1001",
+          "contig" : "CM001954.1",
+          "start" : NumberLong(3337129),
+          "ref" : "G",
+          "alt" : "A",
+          "rs" : NumberLong(1153596374),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "6EF42C94A8BFC6EB3DD0431F434D78F93E6F158Z",
+          "accession" : NumberLong(1991577883),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
       "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c1"),
       "eventType" : "UPDATED",
       "accession" : NumberLong(1991294603),
@@ -285,6 +311,64 @@
           "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
           "hashedMessage" : "25D93C6E673745BF5CF8B88C864104F1164B8D8C",
           "accession" : NumberLong(1991294603),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95d1"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(199129603),
+      "reason" : "Declustered",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB2000",
+          "contig" : "CM001941.2",
+          "start" : NumberLong(3337129),
+          "ref" : "T",
+          "alt" : "G",
+          "rs" : NumberLong(66667),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "remappedFrom" : "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A2C27",
+          "hashedMessage" : "25D93C6E673745BF5CF8B88C864104F114B8D8C",
+          "accession" : NumberLong(199129603),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef95c8"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(1991294609),
+      "reason" : "Declustered",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000409795.2",
+          "tax" : 60711,
+          "study" : "PRJEB2001",
+          "contig" : "AE014298.5",
+          "start" : NumberLong(8421515),
+          "ref" : "T",
+          "alt" : "G",
+          "rs" : NumberLong(881171680),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "remappedFrom" : "GCA_000409795.1",
+          "remappedDate" : ISODate("2021-08-12T18:10:26.249Z"),
+          "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+          "hashedMessage" : "25D93C6E673745BF5CF8B88C864104F1164B8D8Z",
+          "accession" : NumberLong(1991294609),
           "version" : 1,
           "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
         }
@@ -462,6 +546,58 @@
           "rs" : NumberLong(3000000020),
           "version" : 1,
           "createdDate" : ISODate("2019-07-07T08:41:28.928Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef96e8"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(199157793),
+      "reason" : "Declustered",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001735.1",
+          "tax" : 3702,
+          "study" : "PRJEB1009",
+          "contig" : "CP002684.1",
+          "start" : NumberLong(11216875),
+          "ref" : "G",
+          "alt" : "A",
+          "rs" : NumberLong(1101244729),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "6EF42C94A8BFC6EB3DD0431F434D78F93E6F268Z",
+          "accession" : NumberLong(199157793),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
+        }
+      ]
+    },
+    {
+      "_id" : ObjectId("5c6b752c2b1ff38bf4ef96d8"),
+      "eventType" : "UPDATED",
+      "accession" : NumberLong(19915793),
+      "reason" : "Declustered",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000001735.1",
+          "tax" : 3702,
+          "study" : "PRJEB109",
+          "contig": "CP002688.1",
+          "start": NumberLong(7716685),
+          "ref" : "G",
+          "alt" : "A",
+          "rs" : NumberLong(1106670930),
+          "evidence" : false,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "6EF42C94A8BFC6E3DD0431F434D78F9E6F268Z",
+          "accession" : NumberLong(19915793),
+          "version" : 1,
+          "createdDate" : ISODate("2008-09-25T16:29:00.000Z")
         }
       ]
     }
