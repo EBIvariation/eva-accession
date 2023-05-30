@@ -40,7 +40,9 @@ import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import uk.ac.ebi.eva.commons.mongodb.utils.MongoUtils;
 
+import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 
 @Configuration
@@ -62,8 +64,16 @@ public class MongoConfiguration {
     @Bean
     @Primary
     public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
-                                   Environment environment) throws UnknownHostException {
+                                   Environment environment) throws UnknownHostException, UnsupportedEncodingException {
         MongoClientOptions mongoClientOptions = options.getIfAvailable();
+        // Weirdly, MongoClient instantiation works without authentication mechanism
+        // in the eva-accession project but does not work in the eva-pipeline project
+        // So we explicitly pass it as null here
+        properties.setUri(MongoUtils.constructMongoClientURI(properties.getHost(), properties.getDatabase(),
+                properties.getUsername(), String.valueOf(properties.getPassword()),
+                properties.getAuthenticationDatabase(), null, readPreference).getURI());
+        // If you don't do this, Spring Boot goes bonkers
+        //properties.setHost(null);
         MongoClientOptions.Builder mongoClientOptionsBuilder;
         if (mongoClientOptions != null) {
             mongoClientOptionsBuilder = new MongoClientOptions.Builder(mongoClientOptions);
@@ -79,7 +89,8 @@ public class MongoConfiguration {
     @Primary
     public MongoDbFactory mongoDbFactory(MongoProperties properties,
                                          ObjectProvider<MongoClientOptions> options,
-                                         Environment environment) throws UnknownHostException {
+                                         Environment environment)
+            throws UnknownHostException, UnsupportedEncodingException {
         return new SimpleMongoDbFactory(mongoClient(properties, options, environment), properties.getDatabase());
     }
 
@@ -87,7 +98,8 @@ public class MongoConfiguration {
     @Primary
     public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
                                                        ObjectProvider<MongoClientOptions> options,
-                                                       Environment environment) throws UnknownHostException {
+                                                       Environment environment)
+            throws UnknownHostException, UnsupportedEncodingException {
         return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
                                          new MongoMappingContext());
     }
