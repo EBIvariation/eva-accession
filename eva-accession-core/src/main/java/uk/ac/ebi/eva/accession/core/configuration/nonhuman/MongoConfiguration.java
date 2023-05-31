@@ -44,6 +44,7 @@ import uk.ac.ebi.eva.commons.mongodb.utils.MongoUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.util.Objects;
 
 @Configuration
 @EnableMongoRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.repository"})
@@ -66,14 +67,16 @@ public class MongoConfiguration {
     public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
                                    Environment environment) throws UnknownHostException, UnsupportedEncodingException {
         MongoClientOptions mongoClientOptions = options.getIfAvailable();
-        // Weirdly, MongoClient instantiation works without authentication mechanism
-        // in the eva-accession project but does not work in the eva-pipeline project
-        // So we explicitly pass it as null here
-        properties.setUri(MongoUtils.constructMongoClientURI(properties.getHost(), properties.getDatabase(),
-                properties.getUsername(), String.valueOf(properties.getPassword()),
-                properties.getAuthenticationDatabase(), null, readPreference).getURI());
-        // If you don't do this, Spring Boot goes bonkers
-        //properties.setHost(null);
+        // Only set the URI if it isn't already set
+        if (Objects.isNull(properties.getUri())) {
+            // Weirdly, MongoClient instantiation works without authentication mechanism
+            // in the eva-accession project but does not work in the eva-pipeline project
+            // So we explicitly pass it as null here
+            properties.setUri(MongoUtils.constructMongoClientURI(properties.getHost(), properties.getPort(),
+                    properties.getDatabase(), properties.getUsername(), (Objects.nonNull(properties.getPassword()) ?
+                            String.valueOf(properties.getPassword()) : ""),
+                    properties.getAuthenticationDatabase(), null, readPreference).getURI());
+        }
         MongoClientOptions.Builder mongoClientOptionsBuilder;
         if (mongoClientOptions != null) {
             mongoClientOptionsBuilder = new MongoClientOptions.Builder(mongoClientOptions);
