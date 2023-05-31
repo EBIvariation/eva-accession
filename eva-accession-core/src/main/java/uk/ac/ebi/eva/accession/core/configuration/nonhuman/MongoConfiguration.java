@@ -17,14 +17,11 @@ package uk.ac.ebi.eva.accession.core.configuration.nonhuman;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.ReadConcern;
-import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.mongo.MongoClientFactory;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -40,11 +37,10 @@ import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-import uk.ac.ebi.eva.commons.mongodb.utils.MongoUtils;
+import uk.ac.ebi.eva.accession.core.configuration.MongoClientCreator;
 
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
-import java.util.Objects;
 
 @Configuration
 @EnableMongoRepositories(basePackages = {"uk.ac.ebi.eva.accession.core.repository"})
@@ -66,26 +62,7 @@ public class MongoConfiguration {
     @Primary
     public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
                                    Environment environment) throws UnknownHostException, UnsupportedEncodingException {
-        MongoClientOptions mongoClientOptions = options.getIfAvailable();
-        // Only set the URI if it isn't already set
-        if (Objects.isNull(properties.getUri())) {
-            // Weirdly, MongoClient instantiation works without authentication mechanism
-            // in the eva-accession project but does not work in the eva-pipeline project
-            // So we explicitly pass it as null here
-            properties.setUri(MongoUtils.constructMongoClientURI(properties.getHost(), properties.getPort(),
-                    properties.getDatabase(), properties.getUsername(), (Objects.nonNull(properties.getPassword()) ?
-                            String.valueOf(properties.getPassword()) : ""),
-                    properties.getAuthenticationDatabase(), null, readPreference).getURI());
-        }
-        MongoClientOptions.Builder mongoClientOptionsBuilder;
-        if (mongoClientOptions != null) {
-            mongoClientOptionsBuilder = new MongoClientOptions.Builder(mongoClientOptions);
-        } else {
-            mongoClientOptionsBuilder = new MongoClientOptions.Builder();
-        }
-        mongoClientOptions = mongoClientOptionsBuilder.readPreference(ReadPreference.valueOf(readPreference))
-                .writeConcern(WriteConcern.MAJORITY).readConcern(ReadConcern.MAJORITY).build();
-        return new MongoClientFactory(properties, environment).createMongoClient(mongoClientOptions);
+        return MongoClientCreator.getMongoClient(properties, options, environment, readPreference);
     }
 
     @Bean("primaryFactory")
