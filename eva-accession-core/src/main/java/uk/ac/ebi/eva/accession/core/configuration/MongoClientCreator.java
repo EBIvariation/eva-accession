@@ -25,6 +25,8 @@ public class MongoClientCreator {
                             String.valueOf(properties.getPassword()) : ""),
                     properties.getAuthenticationDatabase(), null, readPreference).getURI());
         }
+        // If we don't do this Spring gets confused since both the URI (which already has the host)
+        // and the host parameters are present
         properties.setHost(null);
         MongoClientOptions.Builder mongoClientOptionsBuilder;
         if (mongoClientOptions != null) {
