@@ -17,14 +17,11 @@ package uk.ac.ebi.eva.accession.core.configuration.nonhuman;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
-import com.mongodb.ReadConcern;
-import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.mongo.MongoClientFactory;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -40,7 +37,9 @@ import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import uk.ac.ebi.eva.accession.core.configuration.MongoClientCreator;
 
+import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 
 @Configuration
@@ -62,24 +61,16 @@ public class MongoConfiguration {
     @Bean
     @Primary
     public MongoClient mongoClient(MongoProperties properties, ObjectProvider<MongoClientOptions> options,
-                                   Environment environment) throws UnknownHostException {
-        MongoClientOptions mongoClientOptions = options.getIfAvailable();
-        MongoClientOptions.Builder mongoClientOptionsBuilder;
-        if (mongoClientOptions != null) {
-            mongoClientOptionsBuilder = new MongoClientOptions.Builder(mongoClientOptions);
-        } else {
-            mongoClientOptionsBuilder = new MongoClientOptions.Builder();
-        }
-        mongoClientOptions = mongoClientOptionsBuilder.readPreference(ReadPreference.valueOf(readPreference))
-                .writeConcern(WriteConcern.MAJORITY).readConcern(ReadConcern.MAJORITY).build();
-        return new MongoClientFactory(properties, environment).createMongoClient(mongoClientOptions);
+                                   Environment environment) throws UnknownHostException, UnsupportedEncodingException {
+        return MongoClientCreator.getMongoClient(properties, options, environment, readPreference);
     }
 
     @Bean("primaryFactory")
     @Primary
     public MongoDbFactory mongoDbFactory(MongoProperties properties,
                                          ObjectProvider<MongoClientOptions> options,
-                                         Environment environment) throws UnknownHostException {
+                                         Environment environment)
+            throws UnknownHostException, UnsupportedEncodingException {
         return new SimpleMongoDbFactory(mongoClient(properties, options, environment), properties.getDatabase());
     }
 
@@ -87,7 +78,8 @@ public class MongoConfiguration {
     @Primary
     public MappingMongoConverter mappingMongoConverter(MongoProperties properties,
                                                        ObjectProvider<MongoClientOptions> options,
-                                                       Environment environment) throws UnknownHostException {
+                                                       Environment environment)
+            throws UnknownHostException, UnsupportedEncodingException {
         return new MappingMongoConverter(new DefaultDbRefResolver(mongoDbFactory(properties, options, environment)),
                                          new MongoMappingContext());
     }
