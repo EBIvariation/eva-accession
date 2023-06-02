@@ -5,7 +5,7 @@
     <parent>
         <groupId>uk.ac.ebi.eva</groupId>
         <artifactId>eva-accession</artifactId>
-        <version>0.6.21-SNAPSHOT</version>
+        <version>0.6.21</version>
     </parent>
 
     <artifactId>eva-accession-core</artifactId>
