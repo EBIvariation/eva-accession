@@ -30,6 +30,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfigura
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import java.util.Arrays;
@@ -55,12 +56,18 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
 
     public static final EventType MERGE_CANDIDATES_EVENT_TYPE = EventType.RS_MERGE_CANDIDATES;
 
+    public static final String MERGE_CANDIDATE_ID_PREFIX = "RSMC";
+
+    public static final String SPLIT_CANDIDATE_ID_PREFIX = "RSSC";
+
     public static Criteria getSplitCandidatesCriteria(String assemblyAccession) {
-        return where(DBCollection.ID_FIELD_NAME).regex("^RSSC_" + assemblyAccession + "_.*");
+        return where(DBCollection.ID_FIELD_NAME).regex("^" + SPLIT_CANDIDATE_ID_PREFIX + "_"
+                                                               + assemblyAccession + "_.*");
     }
 
     public static Criteria getMergeCandidatesCriteria(String assemblyAccession) {
-        return where(DBCollection.ID_FIELD_NAME).regex("^RSMC_" + assemblyAccession + "_.*");
+        return where(DBCollection.ID_FIELD_NAME).regex("^" + MERGE_CANDIDATE_ID_PREFIX + "_"
+                                                               + assemblyAccession + "_.*");
     }
 
     @Bean(RS_SPLIT_CANDIDATES_READER)

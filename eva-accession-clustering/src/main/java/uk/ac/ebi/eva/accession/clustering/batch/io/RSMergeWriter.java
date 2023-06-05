@@ -429,7 +429,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 newSplitCandidateRecord.fill(EventType.RS_SPLIT_CANDIDATES, lowestSS,
                         "Hash mismatch with " + prioritised.accessionToKeep,
                         ssClusteredUnderTargetRS);
-                newSplitCandidateRecord.setId("RSSC_" + this.assemblyAccession + "_" + prioritised.accessionToKeep);
+                newSplitCandidateRecord.setId(ClusteringWriter.getSplitCandidateId(newSplitCandidateRecord));
                 mongoTemplate.insert(Collections.singletonList(newSplitCandidateRecord),
                         SubmittedVariantOperationEntity.class);
                 metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT, 1);

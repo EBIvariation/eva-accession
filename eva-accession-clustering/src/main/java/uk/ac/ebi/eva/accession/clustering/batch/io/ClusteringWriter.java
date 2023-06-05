@@ -35,6 +35,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
+import uk.ac.ebi.eva.accession.core.EVAObjectModelUtils;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -71,6 +72,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
+import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.*;
 
 /**
  * This writer has two parts:
@@ -423,8 +425,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         for (Map.Entry<String, SubmittedVariantOperationEntity> entry : mergeSVOE.entrySet()) {
             SubmittedVariantOperationEntity svoe = entry.getValue();
             if(Objects.isNull(svoe.getId())){
-                svoe.setId("RSMC_" + this.assembly + "_" +
-                                   this.getClusteredVariantHash(svoe.getInactiveObjects().get(0)));
+                svoe.setId(getMergeCandidateId(svoe));
                 mergeSVOEInsertEntries.add(svoe);
                 continue;
             }
@@ -442,8 +443,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             Long accession = entry.getKey();
             SubmittedVariantOperationEntity svoe = entry.getValue();
             if(Objects.isNull(svoe.getId())){
-                svoe.setId("RSSC_" + this.assembly + "_" +
-                                   svoe.getInactiveObjects().get(0).getClusteredVariantAccession());
+                svoe.setId(getSplitCandidateId(svoe));
                 rsSplitSVOEInsertEntries.add(svoe);
                 continue;
             }
@@ -603,5 +603,17 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     protected static void writeRSReportEntry (FileWriter rsReportWriter, Long rsAccession, String rsHash)
             throws IOException {
         rsReportWriter.write(String.format("%s\t%s\n", rsAccession, rsHash));
+    }
+
+    public static String getMergeCandidateId(SubmittedVariantOperationEntity svoe) {
+        return String.format("%s_%s_%s", MERGE_CANDIDATE_ID_PREFIX,
+                             svoe.getInactiveObjects().get(0).getReferenceSequenceAccession(),
+                             EVAObjectModelUtils.getClusteredVariantHash(svoe.getInactiveObjects().get(0)));
+    }
+
+    public static String getSplitCandidateId(SubmittedVariantOperationEntity svoe) {
+        return String.format("%s_%s_%d", SPLIT_CANDIDATE_ID_PREFIX,
+                             svoe.getInactiveObjects().get(0).getReferenceSequenceAccession(),
+                             svoe.getInactiveObjects().get(0).getClusteredVariantAccession());
     }
 }

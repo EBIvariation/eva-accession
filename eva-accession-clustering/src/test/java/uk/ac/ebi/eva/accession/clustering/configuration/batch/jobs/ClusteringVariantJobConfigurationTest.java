@@ -73,6 +73,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATE_ID_PREFIX;
+import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATE_ID_PREFIX;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_STUDY_FROM_MONGO;
@@ -224,7 +226,7 @@ public class ClusteringVariantJobConfigurationTest {
             mergeOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
                                 ss1.getAccession(), null, "Mock merge candidate",
                                 Arrays.asList(ss1, ss2));
-            mergeOperation.setId("RSMC_" + ss1.getReferenceSequenceAccession() + "_" + i);
+            mergeOperation.setId(MERGE_CANDIDATE_ID_PREFIX + "_" + ss1.getReferenceSequenceAccession() + "_" + i);
             mongoTemplate.insert(mergeOperation,
                                  mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }
@@ -241,7 +243,7 @@ public class ClusteringVariantJobConfigurationTest {
             splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                                 ss3.getAccession(), null, "Mock split candidate",
                                 Arrays.asList(ss3, ss4));
-            splitOperation.setId("RSSC_" + ss3.getReferenceSequenceAccession() + "_" + i);
+            splitOperation.setId(SPLIT_CANDIDATE_ID_PREFIX + "_" + ss3.getReferenceSequenceAccession() + "_" + i);
             mongoTemplate.insert(splitOperation,
                                  mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }

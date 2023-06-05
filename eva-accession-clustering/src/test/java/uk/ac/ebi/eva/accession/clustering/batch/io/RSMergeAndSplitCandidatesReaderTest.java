@@ -38,7 +38,6 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplit
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.core.EVAObjectModelUtils;
 import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
@@ -104,7 +103,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
         splitOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                              ss1.getAccession(), null, "Hash mismatch with rs1",
                              Arrays.asList(ss1, ss2, ss3));
-        splitOperation1.setId("RSSC_" + ASSEMBLY + "_1");
+        splitOperation1.setId(ClusteringWriter.getSplitCandidateId(splitOperation1));
 
         SubmittedVariantInactiveEntity ss4 = new SubmittedVariantInactiveEntity(
                 createSSWithLocus(4L, 2L, 103L, "C", "T"));
@@ -119,7 +118,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
                              ss4.getAccession(),
                              null, "Hash mismatch with rs2",
                              Arrays.asList(ss4, ss5, ss6));
-        splitOperation2.setId("RSSC_" + ASSEMBLY + "_2");
+        splitOperation2.setId(ClusteringWriter.getSplitCandidateId(splitOperation2));
 
         mongoTemplate.insert(splitOperation1, SUBMITTED_VARIANT_OPERATION_COLLECTION);
         mongoTemplate.insert(splitOperation2, SUBMITTED_VARIANT_OPERATION_COLLECTION);
@@ -139,7 +138,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
         mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
                              ss1.getAccession(), null, "Different RS with matching loci",
                              Arrays.asList(ss1, ss2, ss3));
-        mergeOperation1.setId("RSMC_" + ASSEMBLY + "_" + EVAObjectModelUtils.getClusteredVariantHash(ss1));
+        mergeOperation1.setId(ClusteringWriter.getMergeCandidateId(mergeOperation1));
 
         SubmittedVariantInactiveEntity ss4 = new SubmittedVariantInactiveEntity(
                 createSSWithLocus(4L, 4L, 103L, "A", "C"));
@@ -154,7 +153,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
                              ss4.getAccession(),
                              null, "Different RS with matching loci",
                              Arrays.asList(ss4, ss5, ss6));
-        mergeOperation2.setId("RSMC_" + ASSEMBLY + "_" + EVAObjectModelUtils.getClusteredVariantHash(ss4));
+        mergeOperation2.setId(ClusteringWriter.getMergeCandidateId(mergeOperation2));
 
         mongoTemplate.insert(mergeOperation1, SUBMITTED_VARIANT_OPERATION_COLLECTION);
         mongoTemplate.insert(mergeOperation2, SUBMITTED_VARIANT_OPERATION_COLLECTION);
