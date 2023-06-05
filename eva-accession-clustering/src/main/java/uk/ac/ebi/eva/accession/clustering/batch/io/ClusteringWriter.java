@@ -357,7 +357,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 submittedVariantOperationEntity.fill(EventType.RS_MERGE_CANDIDATES, accessionInDB,
                         "RS mismatch with " + accessionInDB, inactiveObjects);
-
+                submittedVariantOperationEntity.setId("RSMC_" + this.assembly + "_" + variantHash);
                 mergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             }
             updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
@@ -391,7 +391,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                                                                         .collect(Collectors.toList());
                 submittedVariantOperationEntity.fill(EventType.RS_SPLIT_CANDIDATES, variantAccession,
                         "Hash mismatch with " + variantAccession, inactiveEntities);
-
+                submittedVariantOperationEntity.setId("RSSC_" + this.assembly + "_" + variantAccession);
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             }
             updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);

@@ -26,6 +26,8 @@ import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 
 @Configuration
 @EnableBatchProcessing
@@ -40,5 +42,17 @@ public class ProcessRemappedVariantsWithRSJobConfiguration {
                                 .incrementer(new RunIdIncrementer())
                                 .start(clusteringClusteredVariantsFromMongoStep)
                                 .build();
+    }
+
+    @Bean("MERGE_SPLIT_RESOLUTION_JOB")
+    public Job processMergeSplitResolutionJob(
+            @Qualifier(PROCESS_RS_MERGE_CANDIDATES_STEP) Step processRSMergeCandidatesStep,
+            @Qualifier(PROCESS_RS_SPLIT_CANDIDATES_STEP) Step processRSSplitCandidatesStep,
+            JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get("MERGE_SPLIT_RESOLUTION_JOB")
+                .incrementer(new RunIdIncrementer())
+                .start(processRSMergeCandidatesStep)
+                .next(processRSSplitCandidatesStep)
+                .build();
     }
 }
