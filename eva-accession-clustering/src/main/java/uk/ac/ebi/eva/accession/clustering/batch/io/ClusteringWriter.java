@@ -357,7 +357,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                 submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
                 submittedVariantOperationEntity.fill(EventType.RS_MERGE_CANDIDATES, accessionInDB,
                         "RS mismatch with " + accessionInDB, inactiveObjects);
-                submittedVariantOperationEntity.setId("RSMC_" + this.assembly + "_" + variantHash);
                 mergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             }
             updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
@@ -391,7 +390,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                                                                         .collect(Collectors.toList());
                 submittedVariantOperationEntity.fill(EventType.RS_SPLIT_CANDIDATES, variantAccession,
                         "Hash mismatch with " + variantAccession, inactiveEntities);
-                submittedVariantOperationEntity.setId("RSSC_" + this.assembly + "_" + variantAccession);
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             }
             updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
@@ -425,6 +423,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         for (Map.Entry<String, SubmittedVariantOperationEntity> entry : mergeSVOE.entrySet()) {
             SubmittedVariantOperationEntity svoe = entry.getValue();
             if(Objects.isNull(svoe.getId())){
+                svoe.setId("RSMC_" + this.assembly + "_" +
+                                   this.getClusteredVariantHash(svoe.getInactiveObjects().get(0)));
                 mergeSVOEInsertEntries.add(svoe);
                 continue;
             }
@@ -442,6 +442,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
             Long accession = entry.getKey();
             SubmittedVariantOperationEntity svoe = entry.getValue();
             if(Objects.isNull(svoe.getId())){
+                svoe.setId("RSSC_" + this.assembly + "_" +
+                                   svoe.getInactiveObjects().get(0).getClusteredVariantAccession());
                 rsSplitSVOEInsertEntries.add(svoe);
                 continue;
             }

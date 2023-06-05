@@ -138,10 +138,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
             this.currentlyProcessingOperationIndex = i;
             writeRSMerge(allMergeCandidateOperations.get(i));
         }
-        List<String> allCandidateIds = allMergeCandidateOperations.stream().map(EventDocument::getId)
-                .collect(Collectors.toList());
-        this.mongoTemplate.findAllAndRemove(query(where("_id").in(allCandidateIds)),
-                SubmittedVariantOperationEntity.class);
     }
 
     private void populateOperationsIndex

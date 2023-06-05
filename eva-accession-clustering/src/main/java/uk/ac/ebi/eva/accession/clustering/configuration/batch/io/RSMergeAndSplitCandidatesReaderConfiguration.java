@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
 import com.mongodb.DBCollection;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -65,8 +64,9 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
     }
 
     @Bean(RS_SPLIT_CANDIDATES_READER)
-    public ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader(MongoTemplate mongoTemplate,
-                                                                               InputParameters parameters) {
+    public MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader(MongoTemplate mongoTemplate,
+                                                                                            InputParameters parameters)
+    {
         MongoDbCursorItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoDbCursorItemReader<>();
         mongoItemReader.setTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);
@@ -82,8 +82,9 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
     }
 
     @Bean(RS_MERGE_CANDIDATES_READER)
-    public ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader(MongoTemplate mongoTemplate,
-                                                                               InputParameters parameters) {
+    public MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader(MongoTemplate mongoTemplate,
+                                                                                            InputParameters parameters)
+    {
         MongoDbCursorItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoDbCursorItemReader<>();
         mongoItemReader.setTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);

@@ -72,7 +72,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
@@ -221,11 +220,12 @@ public class ClusteringVariantJobConfigurationTest {
         SubmittedVariantInactiveEntity ss2 = new SubmittedVariantInactiveEntity(
                 createSSWithLocus(2L, 2L, 100L, "C", "A"));
         for (int i = 0; i < numSplitCandidateOperations; i++) {
-            SubmittedVariantOperationEntity splitOperation = new SubmittedVariantOperationEntity();
-            splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
+            SubmittedVariantOperationEntity mergeOperation = new SubmittedVariantOperationEntity();
+            mergeOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
                                 ss1.getAccession(), null, "Mock merge candidate",
                                 Arrays.asList(ss1, ss2));
-            mongoTemplate.insert(splitOperation,
+            mergeOperation.setId("RSMC_" + ss1.getReferenceSequenceAccession() + "_" + i);
+            mongoTemplate.insert(mergeOperation,
                                  mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }
     }
@@ -241,6 +241,7 @@ public class ClusteringVariantJobConfigurationTest {
             splitOperation.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                                 ss3.getAccession(), null, "Mock split candidate",
                                 Arrays.asList(ss3, ss4));
+            splitOperation.setId("RSSC_" + ss3.getReferenceSequenceAccession() + "_" + i);
             mongoTemplate.insert(splitOperation,
                                  mongoTemplate.getCollectionName(SubmittedVariantOperationEntity.class));
         }
