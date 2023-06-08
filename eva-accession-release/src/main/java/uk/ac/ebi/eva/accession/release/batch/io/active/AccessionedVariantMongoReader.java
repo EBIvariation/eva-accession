@@ -27,6 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
+import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.batch.item.NonTransientResourceException;
+import org.springframework.batch.item.ParseException;
+import org.springframework.batch.item.UnexpectedInputException;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
@@ -56,17 +61,18 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEM
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
 import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALIDATED;
 
-public class AccessionedVariantMongoReader extends VariantMongoAggregationReader {
+public class AccessionedVariantMongoReader implements ItemStreamReader<List<Variant>> {
 
     private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
 
     private static final List<String> allSubmittedVariantCollectionNames = Arrays.asList("submittedVariantEntity",
                                                                                          "dbsnpSubmittedVariantEntity");
+    private VariantMongoAggregationReader reader;
 
     public AccessionedVariantMongoReader(String assemblyAccession, int taxonomyAccession,
-                                         MongoClient mongoClient, String database, int chunkSize,
-                                         CollectionNames names) {
-        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
+                                         MongoClient mongoClient, MongoTemplate mongoTemplate, String database,
+                                         int chunkSize, CollectionNames names) {
+        EVAO
     }
 
     @Override
@@ -74,11 +80,21 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
         aggregate(names.getClusteredVariantEntity());
     }
 
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+
+    }
+
+    @Override
+    public void close() throws ItemStreamException {
+
+    }
+
     protected List<Bson> buildAggregation() {
         Bson match = Aggregates.match(eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
-        Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
+        //Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
         Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
-        List<Bson> aggregation = new ArrayList<>(Arrays.asList(match, sort, singlemap));
+        List<Bson> aggregation = new ArrayList<>(Arrays.asList(match, singlemap));
 
         for (String submittedVariantCollectionName : allSubmittedVariantCollectionNames) {
             String lookupQuery = "{ $lookup: { " +
@@ -146,5 +162,10 @@ public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
             addToVariants(variants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
         }
         return new ArrayList<>(variants.values());
+    }
+
+    @Override
+    public List<Variant> read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+        return null;
     }
 }
