@@ -17,23 +17,23 @@
 package uk.ac.ebi.eva.accession.release.batch.io.active;
 
 import com.mongodb.MongoClient;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Field;
-import com.mongodb.client.model.Filters;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
-import org.springframework.batch.item.NonTransientResourceException;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.query.Meta;
+import org.springframework.data.mongodb.core.query.Query;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.AccessionedDocument;
 
+import uk.ac.ebi.eva.accession.core.EVAObjectModelUtils;
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationReader;
 import uk.ac.ebi.eva.accession.release.collectionNames.CollectionNames;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
@@ -43,41 +43,47 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.exists;
-import static com.mongodb.client.model.Sorts.ascending;
-import static com.mongodb.client.model.Sorts.orderBy;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 
-import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ALLELES_MATCH;
-import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_ASSEMBLY_MATCH;
-import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_SUPPORTED_BY_EVIDENCE;
-import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALIDATED;
 
-public class AccessionedVariantMongoReader implements ItemStreamReader<List<Variant>> {
+public class AccessionedVariantMongoReader extends VariantMongoAggregationReader
+        implements ItemStreamReader<List<Variant>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AccessionedVariantMongoReader.class);
+    private MongoDbCursorItemReader<ClusteredVariantEntity> cursorItemReader;
 
-    private static final List<String> allSubmittedVariantCollectionNames = Arrays.asList("submittedVariantEntity",
-                                                                                         "dbsnpSubmittedVariantEntity");
-    private VariantMongoAggregationReader reader;
+    private MongoTemplate mongoTemplate;
 
     public AccessionedVariantMongoReader(String assemblyAccession, int taxonomyAccession,
                                          MongoClient mongoClient, MongoTemplate mongoTemplate, String database,
                                          int chunkSize, CollectionNames names) {
-        EVAO
+        super(assemblyAccession, taxonomyAccession, mongoClient, database, chunkSize, names);
+        this.mongoTemplate = mongoTemplate;
+        this.cursorItemReader = new MongoDbCursorItemReader<>();
+        Class<? extends ClusteredVariantEntity> className =
+                names.getClusteredVariantEntity().equals("clusteredVariantEntity")?
+                        ClusteredVariantEntity.class: DbsnpClusteredVariantEntity.class;
+        this.cursorItemReader.setTargetType(className);
+        this.cursorItemReader.setTemplate(mongoTemplate);
+        Query queryToGetClusteredVariants = query(where(REFERENCE_ASSEMBLY_FIELD)
+                                                          .is(this.assemblyAccession)
+                                                          .and(MAPPING_WEIGHT_FIELD).exists(false));
+        Meta meta = new Meta();
+        meta.addFlag(Meta.CursorOption.NO_TIMEOUT);
+        queryToGetClusteredVariants.setMeta(meta);
+        this.cursorItemReader.setQuery(queryToGetClusteredVariants);
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        aggregate(names.getClusteredVariantEntity());
+        this.cursorItemReader.open(executionContext);
     }
 
     @Override
@@ -87,73 +93,33 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
 
     @Override
     public void close() throws ItemStreamException {
-
+        this.cursorItemReader.close();
     }
 
-    protected List<Bson> buildAggregation() {
-        Bson match = Aggregates.match(eq(REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
-        //Bson sort = Aggregates.sort(orderBy(ascending(CONTIG_FIELD, START_FIELD)));
-        Bson singlemap = Aggregates.match(Filters.not(exists(MAPPING_WEIGHT_FIELD)));
-        List<Bson> aggregation = new ArrayList<>(Arrays.asList(match, singlemap));
-
-        for (String submittedVariantCollectionName : allSubmittedVariantCollectionNames) {
-            String lookupQuery = "{ $lookup: { " +
-                    String.format("from: \"%s\",", submittedVariantCollectionName) +
-                    String.format("let: { rsAccession: \"$%s\" },", ACCESSION_FIELD) +
-                    "pipeline: [{" +
-                    "$match: {$expr: {$and: [" +
-                    String.format("{ $eq: ['$%s', \"$$rsAccession\"]},",
-                                  CLUSTERED_VARIANT_ACCESSION_FIELD) +
-                    String.format("{ $eq: [\"$%s\", \"%s\"]},",
-                                  REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS,
-                                  this.assemblyAccession) +
-                    String.format("{ $eq: [\"$%s\", %d]}]}}}],",
-                                  TAXONOMY_FIELD, this.taxonomyAccession) +
-                    String.format("as: \"%s\"}}", submittedVariantCollectionName);
-            logger.info(lookupQuery);
-            Bson lookup = Aggregation.DEFAULT_CONTEXT.getMappedObject(Document.parse(lookupQuery));
-            aggregation.add(lookup);
-        }
-        // Concat ss entries from all submitted variant collections
-        Bson concat = Aggregates.addFields(new Field<>(SS_INFO_FIELD,
-                                                       new Document("$concatArrays", allSubmittedVariantCollectionNames
-                                                               .stream().map(v -> "$" + v)
-                                                               .collect(Collectors.toList()))));
-        // We only need the SS info field
-        aggregation.add(concat);
-
-        Bson matchOnlyNonEmptySSInfo = Aggregates.match(Filters.ne(SS_INFO_FIELD, Collections.emptyList()));
-        aggregation.add(matchOnlyNonEmptySSInfo);
-        logger.info("Issuing aggregation: {}", aggregation);
-        return aggregation;
-    }
-
-    protected List<Variant> getVariants(Document clusteredVariant) {
-        String contig = clusteredVariant.getString(CONTIG_FIELD);
-        long start = clusteredVariant.getLong(START_FIELD);
-        long rs = clusteredVariant.getLong(ACCESSION_FIELD);
-        String type = clusteredVariant.getString(TYPE_FIELD);
+    protected List<Variant> getVariants(ClusteredVariantEntity clusteredVariant,
+                                        List<SubmittedVariantEntity> submittedVariants) {
+        String contig = clusteredVariant.getContig();
+        long start = clusteredVariant.getStart();
+        long rs = clusteredVariant.getAccession();
+        String type = clusteredVariant.getType().toString();
         String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
-        boolean validated = clusteredVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
+        boolean validated = clusteredVariant.getModel().isValidated();
+        boolean remappedRS = submittedVariants.stream().allMatch(sve -> Objects.nonNull(sve.getRemappedFrom()));
 
         Map<String, Variant> variants = new HashMap<>();
-        Collection<Document> submittedVariants = (Collection<Document>)clusteredVariant.get(SS_INFO_FIELD);
-        boolean remappedRS = submittedVariants.stream()
-                                              .allMatch(sve -> Objects.nonNull(sve.getString("remappedFrom")));
-
-        for (Document submittedVariant : submittedVariants) {
-            long submittedVariantStart = submittedVariant.getLong(START_FIELD);
-            String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
+        for (SubmittedVariantEntity submittedVariant : submittedVariants) {
+            long submittedVariantStart = submittedVariant.getStart();
+            String submittedVariantContig = submittedVariant.getContig();
             if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart, type)) {
                 continue;
             }
-            String reference = submittedVariant.getString(REFERENCE_ALLELE_FIELD);
-            String alternate = submittedVariant.getString(ALTERNATE_ALLELE_FIELD);
-            String study = submittedVariant.getString(STUDY_FIELD);
-            boolean submittedVariantValidated = submittedVariant.getBoolean(VALIDATED_FIELD, DEFAULT_VALIDATED);
-            boolean allelesMatch = submittedVariant.getBoolean(ALLELES_MATCH_FIELD, DEFAULT_ALLELES_MATCH);
-            boolean assemblyMatch = submittedVariant.getBoolean(ASSEMBLY_MATCH_FIELD, DEFAULT_ASSEMBLY_MATCH);
-            boolean evidence = submittedVariant.getBoolean(SUPPORTED_BY_EVIDENCE_FIELD, DEFAULT_SUPPORTED_BY_EVIDENCE);
+            String reference = submittedVariant.getReferenceAllele();
+            String alternate = submittedVariant.getAlternateAllele();
+            String study = submittedVariant.getProjectAccession();
+            boolean submittedVariantValidated = submittedVariant.getModel().isValidated();
+            boolean allelesMatch = submittedVariant.getModel().isAllelesMatch();
+            boolean assemblyMatch = submittedVariant.getModel().isAssemblyMatch();
+            boolean evidence = submittedVariant.getModel().isSupportedByEvidence();
 
             VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
                                                                      submittedVariantValidated, allelesMatch,
@@ -163,9 +129,72 @@ public class AccessionedVariantMongoReader implements ItemStreamReader<List<Vari
         }
         return new ArrayList<>(variants.values());
     }
+    public Map<Long, List<ClusteredVariantEntity>> getAccessionKeyedCVERecords() throws Exception {
+        Map<Long, List<ClusteredVariantEntity>> rsHashKeyedCVE = new HashMap<>();
+        for (int i = 0; i < this.getChunkSize(); i++) {
+            ClusteredVariantEntity cve = this.cursorItemReader.read();
+            if (Objects.isNull(cve)) return rsHashKeyedCVE;
+            Long rsAccession = cve.getAccession();
+            if (!rsHashKeyedCVE.containsKey(rsAccession)) {
+                rsHashKeyedCVE.put(rsAccession, new ArrayList<>());
+            }
+            rsHashKeyedCVE.get(rsAccession).add(cve);
+        }
+        return rsHashKeyedCVE;
+    }
+
+    public Map<ClusteredVariantEntity, List<SubmittedVariantEntity>> getCorrespondingSS(
+            Map<Long, List<ClusteredVariantEntity>> accessionKeyedCVEs) {
+        List<SubmittedVariantEntity> correspondingSS = new ArrayList<>();
+        Map<ClusteredVariantEntity, List<SubmittedVariantEntity>> correspondingRSMap = new HashMap<>();
+        Set<Long> rsAccessionsToFind = accessionKeyedCVEs.keySet();
+
+        for (Class<? extends SubmittedVariantEntity> className: Arrays.asList(DbsnpSubmittedVariantEntity.class,
+                                                                              SubmittedVariantEntity.class)) {
+            correspondingSS.addAll(
+             this.mongoTemplate.find(query(where(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS)
+                                                   .is(this.assemblyAccession)
+                                                   .and(TAXONOMY_FIELD).is(this.taxonomyAccession)
+                                                   .and(CLUSTERED_VARIANT_ACCESSION_FIELD).in(rsAccessionsToFind)
+                                                   .and(MAPPING_WEIGHT_FIELD).exists(false)),
+                                     SubmittedVariantEntity.class, this.mongoTemplate.getCollectionName(className)));
+        }
+        for (SubmittedVariantEntity sve: correspondingSS) {
+            Long rsAccession = sve.getClusteredVariantAccession();
+            if (accessionKeyedCVEs.containsKey(rsAccession)) {
+                for (ClusteredVariantEntity correspondingCVE: accessionKeyedCVEs.get(rsAccession)) {
+                    if (!correspondingRSMap.containsKey(correspondingCVE)) {
+                        correspondingRSMap.put(correspondingCVE, new ArrayList<>());
+                    }
+                    correspondingRSMap.get(correspondingCVE).add(sve);
+                }
+            }
+        }
+        return correspondingRSMap;
+    }
 
     @Override
-    public List<Variant> read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public List<Variant> read() throws Exception {
+        List<Variant> variantList = new ArrayList<>();
+        Map<Long, List<ClusteredVariantEntity>> accessionKeyedCVEs = getAccessionKeyedCVERecords();
+        if (accessionKeyedCVEs.size() > 0) {
+            Map<ClusteredVariantEntity, List<SubmittedVariantEntity>> results = getCorrespondingSS(accessionKeyedCVEs);
+            for (Map.Entry<ClusteredVariantEntity, List<SubmittedVariantEntity>> entry : results.entrySet()) {
+                variantList.addAll(getVariants(entry.getKey(), entry.getValue()));
+            }
+        }
+        return variantList.size() > 0? variantList: null;
+    }
+
+    // The following two overrides are necessary evils to minimize code changes
+    // since we still haven't gotten rid of the dependency on VariantAggregationMongoReader
+    @Override
+    protected List<Bson> buildAggregation() {
+        return null;
+    }
+
+    @Override
+    protected List<Variant> getVariants(Document clusteredVariant) {
         return null;
     }
 }

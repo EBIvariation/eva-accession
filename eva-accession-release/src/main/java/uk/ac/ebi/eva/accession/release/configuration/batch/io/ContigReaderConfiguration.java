@@ -33,10 +33,8 @@ import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_ACTIVE_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_ACTIVE_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_CONTIG_READER;
 
 @Configuration
 @EnableConfigurationProperties({DbsnpDataSource.class})
@@ -64,16 +62,6 @@ public class ContigReaderConfiguration {
                                                     mongoProperties.getDatabase(), new DbsnpCollectionNames());
     }
 
-    @Bean(DBSNP_MULTIMAP_CONTIG_READER)
-    @StepScope
-    ItemStreamReader<String> multimapContigReaderDbsnp(InputParameters parameters, MongoClient mongoClient,
-                                                       MongoProperties mongoProperties) throws Exception {
-        logger.info("Injecting {} with parameters: {}, {}", Thread.currentThread().getStackTrace()[1].getMethodName(),
-                    parameters.getAssemblyAccession(), mongoProperties.getDatabase());
-        return ContigMongoReader.multimapContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                      mongoProperties.getDatabase(), new DbsnpCollectionNames());
-    }
-
     @Bean(EVA_ACTIVE_CONTIG_READER)
     @StepScope
     ItemStreamReader<String> activeContigReaderEva(InputParameters parameters, MongoClient mongoClient,
@@ -92,15 +80,5 @@ public class ContigReaderConfiguration {
                     parameters.getAssemblyAccession(), mongoProperties.getDatabase());
         return ContigMongoReader.mergedContigReader(parameters.getAssemblyAccession(), mongoClient,
                                                     mongoProperties.getDatabase(), new EvaCollectionNames());
-    }
-
-    @Bean(EVA_MULTIMAP_CONTIG_READER)
-    @StepScope
-    ItemStreamReader<String> multimapContigReaderEva(InputParameters parameters, MongoClient mongoClient,
-                                                     MongoProperties mongoProperties) throws Exception {
-        logger.info("Injecting {} with parameters: {}, {}", Thread.currentThread().getStackTrace()[1].getMethodName(),
-                    parameters.getAssemblyAccession(), mongoProperties.getDatabase());
-        return ContigMongoReader.multimapContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                      mongoProperties.getDatabase(), new EvaCollectionNames());
     }
 }

@@ -105,7 +105,7 @@ public class DeprecatedVariantMongoReaderTest {
         this.reader.close();
     }
 
-    private List<Variant> readIntoList() {
+    private List<Variant> readIntoList() throws Exception {
         List<Variant> variants = new ArrayList<>();
         List<Variant> variantsInBatch;
 
@@ -116,7 +116,7 @@ public class DeprecatedVariantMongoReaderTest {
     }
 
     @Test
-    public void testOnlySpecifiedTaxVariantsRead() {
+    public void testOnlySpecifiedTaxVariantsRead() throws Exception {
         // See scenario here: https://docs.google.com/spreadsheets/d/12QJT4N0-UJGTv3BtVq_gyyrVzweXd5ev2WFlnP-4MW4/edit#rangeid=1202280213
         DbsnpSubmittedVariantEntity ss1 = createSS(ASSEMBLY, TAXONOMY_1, 1L, 1L, 100L, "C", "A");
         DbsnpSubmittedVariantEntity ss2 = createSS(ASSEMBLY, TAXONOMY_2, 2L, 2L, 101L, "A", "T");

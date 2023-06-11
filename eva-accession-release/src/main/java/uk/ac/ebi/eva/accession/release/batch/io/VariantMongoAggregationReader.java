@@ -140,7 +140,7 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
     abstract protected List<Bson> buildAggregation();
 
     @Override
-    public List<Variant> read() throws UnexpectedInputException, ParseException, NonTransientResourceException {
+    public List<Variant> read() throws Exception {
         return cursor.hasNext() ? getVariants(cursor.next()) : null;
     }
 
@@ -240,5 +240,9 @@ public abstract class VariantMongoAggregationReader implements ItemStreamReader<
 
     private boolean isIndel(String type) {
         return type.equals(VariantType.INS.toString()) || type.equals(VariantType.DEL.toString());
+    }
+
+    public int getChunkSize() {
+        return chunkSize;
     }
 }

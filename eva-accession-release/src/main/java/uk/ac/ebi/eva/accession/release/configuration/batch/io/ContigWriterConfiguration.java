@@ -27,16 +27,12 @@ import java.io.File;
 
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getDbsnpActiveContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getDbsnpMergedContigsFilePath;
-import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getDbsnpMultimapContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getEvaActiveContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getEvaMergedContigsFilePath;
-import static uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter.getEvaMultimapContigsFilePath;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_ACTIVE_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_ACTIVE_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_CONTIG_WRITER;
 
 @Configuration
 public class ContigWriterConfiguration {
@@ -58,13 +54,6 @@ public class ContigWriterConfiguration {
                                 contigMapping);
     }
 
-    @Bean(DBSNP_MULTIMAP_CONTIG_WRITER)
-    public ContigWriter multimapContigWriterDbsnp(InputParameters inputParameters) {
-        return new ContigWriter(new File(getDbsnpMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                                                         inputParameters.getAssemblyAccession())),
-                                contigMapping);
-    }
-
     @Bean(EVA_ACTIVE_CONTIG_WRITER)
     public ContigWriter activeContigWriterEva(InputParameters inputParameters) {
         return new ContigWriter(new File(getEvaActiveContigsFilePath(inputParameters.getOutputFolder(),
@@ -76,13 +65,6 @@ public class ContigWriterConfiguration {
     public ContigWriter mergedContigWriterEva(InputParameters inputParameters) {
         return new ContigWriter(new File(getEvaMergedContigsFilePath(inputParameters.getOutputFolder(),
                                                                      inputParameters.getAssemblyAccession())),
-                                contigMapping);
-    }
-
-    @Bean(EVA_MULTIMAP_CONTIG_WRITER)
-    public ContigWriter multimapContigWriterEva(InputParameters inputParameters) {
-        return new ContigWriter(new File(getEvaMultimapContigsFilePath(inputParameters.getOutputFolder(),
-                                                                       inputParameters.getAssemblyAccession())),
                                 contigMapping);
     }
 }
