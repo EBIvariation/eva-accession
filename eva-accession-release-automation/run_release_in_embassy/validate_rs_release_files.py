@@ -40,6 +40,12 @@ dbsnp_svoe_collection_name = "dbsnpSubmittedVariantOperationEntity"
 cve_collection_name = "clusteredVariantEntity"
 dbsnp_cve_collection_name = "dbsnpClusteredVariantEntity"
 
+collections_taxonomy_attribute_map = {
+    "dbsnpClusteredVariantEntity": "tax",
+    "dbsnpClusteredVariantOperationEntity": "inactiveObjects.tax",
+    "clusteredVariantEntity": "tax",
+    "clusteredVariantOperationEntity": "inactiveObjects.tax"
+}
 
 get_merged_ss_query = [
         {
@@ -417,19 +423,37 @@ def get_missing_ids_attributions(assembly_accession, missing_rs_ids_file, mongo_
         logger.info("All missing RS IDs have been accounted for!")
 
 
-def export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, assembly_accession,
-                                    mongo_unique_rs_ids_file):
+def export_unique_rs_ids_from_mongo(mongo_database_handle, assembly_accession, taxonomy_id, mongo_unique_rs_ids_file):
     collection_rs_ids_files = []
     for collection, assembly_attribute_path in collections_assembly_attribute_map.items():
         if "clustered" in collection.lower():
+            collection_handle = mongo_database_handle[collection]
             collection_rs_ids_file = mongo_unique_rs_ids_file.replace(".txt", "_{0}.txt".format(collection))
-            run_command_with_output("Exporting RS IDs from collection " + collection,
-                                    "mongoexport --host localhost --port {0} --db {1} --collection {2} "
-                                    "--query '{{\"{3}\": \"{4}\"}}' "
-                                    "--fields accession --type csv --noHeaderLine --out {5}"
-                                    .format(mongo_port, db_name_in_tempmongo_instance, collection,
-                                            assembly_attribute_path, assembly_accession, collection_rs_ids_file),
-                                    log_error_stream_to_output=True)
+            taxonomy_attribute_path = collections_taxonomy_attribute_map[collection]
+            agg_pipeline = []
+            for sve_coll in (sve_collection_name, dbsnp_sve_collection_name):
+                agg_pipeline.append({
+                    "$lookup": {
+                        "from": sve_coll,
+                        "let": {"rsAccession": "$accession"},
+                        "pipeline": [{"$match": {"$expr": {"$and": [
+                            {"$eq": ["$rs", "$$rsAccession"]},
+                            {"$eq": [f"${assembly_attribute_path}", assembly_accession]},
+                            {"$eq": [f"${taxonomy_attribute_path}", taxonomy_id]},
+                        ]}}}],
+                        "as": sve_coll
+                    }
+                })
+            agg_pipeline.extend([
+                {"$addFields": {
+                    "ssInfo": {"$concatArrays": ["$submittedVariantEntity", "$dbsnpSubmittedVariantEntity"]}}},
+                {"$match": {"$ne": {"ssInfo": []}}},
+                {"$project": {"accession": 1, "_id": 0}}
+            ])
+            logger.info(f'Exporting RS IDs from collection {collection}')
+            results = collection_handle.aggregate(agg_pipeline)
+            with open(collection_rs_ids_file, 'w+') as f:
+                f.write('\n'.join(r['accession'] for r in results))
             collection_rs_ids_files.append(collection_rs_ids_file)
     run_command_with_output("Removing duplicates from RS IDs exported from Mongo",
                             "(cat {0} | sort -u > {1})".format(" ".join(collection_rs_ids_files),
@@ -445,15 +469,15 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
                                                                               release_version)
         db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
         with MongoClient(port=mongo_port) as client:
+            db_handle = client[db_name_in_tempmongo_instance]
             mongo_unique_rs_ids_file = os.path.join(species_release_folder, assembly_accession,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))
-            export_unique_rs_ids_from_mongo(mongo_port, db_name_in_tempmongo_instance, assembly_accession,
-                                            mongo_unique_rs_ids_file)
+            export_unique_rs_ids_from_mongo(db_handle, assembly_accession, taxonomy_id, mongo_unique_rs_ids_file)
             unique_release_rs_ids_file = get_unique_release_rs_ids(species_release_folder, assembly_accession)
             missing_rs_ids_file = os.path.join(os.path.dirname(unique_release_rs_ids_file),
                                                assembly_accession + "_missing_ids.txt")
             file_diff(mongo_unique_rs_ids_file, unique_release_rs_ids_file, FileDiffOption.NOT_IN, missing_rs_ids_file)
-            get_missing_ids_attributions(assembly_accession, missing_rs_ids_file, client[db_name_in_tempmongo_instance])
+            get_missing_ids_attributions(assembly_accession, missing_rs_ids_file, db_handle)
             exit_code = 0
     except Exception as ex:
         logger.error("Encountered an error while running release for assembly: " + assembly_accession + "\n"

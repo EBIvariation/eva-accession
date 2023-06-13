@@ -11,30 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+import os
 
 import click
-import os
-import textwrap
-
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_common_pyutils.spring_properties import SpringPropertiesGenerator
 
 from run_release_in_embassy.release_common_utils import get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly
-from ebi_eva_common_pyutils.common_utils import merge_two_dicts
-from ebi_eva_common_pyutils.config_utils import EVAPrivateSettingsXMLConfig
-
-
-def get_release_job_repo_properties(private_config_xml_file, eva_profile_name):
-    release_job_repo_properties = {}
-    config = EVAPrivateSettingsXMLConfig(private_config_xml_file)
-    xpath_location_template = '//settings/profiles/profile/id[text()="{0}"]/../properties/{1}/text()'
-    release_job_repo_properties["job_repo_url"] = config.get_value_with_xpath(
-        xpath_location_template.format(eva_profile_name, "eva.accession.jdbc.url"))[0]
-    release_job_repo_properties["job_repo_username"] = config.get_value_with_xpath(
-        xpath_location_template.format(eva_profile_name, "eva.accession.user"))[0]
-    release_job_repo_properties["job_repo_password"] = config.get_value_with_xpath(
-        xpath_location_template.format(eva_profile_name, "eva.accession.password"))[0]
-    return release_job_repo_properties
 
 
 def get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
@@ -47,11 +31,9 @@ def get_release_properties_for_assembly(private_config_xml_file, profile, taxono
     if not release_inventory_info_for_assembly["report_path"].startswith("file:"):
         release_inventory_info_for_assembly["report_path"] = "file:" + \
                                                              release_inventory_info_for_assembly["report_path"]
-    release_inventory_info_for_assembly["output_folder"] = os.path.join(species_release_folder, assembly_accession)
     release_inventory_info_for_assembly["mongo_accessioning_db"] = \
         get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
-    return merge_two_dicts(release_inventory_info_for_assembly,
-                           get_release_job_repo_properties(private_config_xml_file, profile))
+    return release_inventory_info_for_assembly
 
 
 def create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
@@ -63,43 +45,17 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
     release_properties = get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                              release_species_inventory_table, release_version,
                                                              species_release_folder)
-    properties_string = """
-        spring.batch.job.names=ACCESSION_RELEASE_JOB
-        parameters.accessionedVcf=
-        parameters.assemblyAccession={assembly_accession}
-        parameters.assemblyReportUrl={report_path}
-        parameters.chunkSize=1000
-        parameters.contigNaming=SEQUENCE_NAME
-        parameters.fasta={fasta_path}
-        parameters.forceRestart=true
-        parameters.outputFolder={output_folder}
-        
-        # job repository datasource
-        spring.datasource.driver-class-name=org.postgresql.Driver
-        
-        spring.datasource.url={job_repo_url}
-        spring.datasource.username={job_repo_username}
-        spring.datasource.password={job_repo_password}
-        spring.datasource.tomcat.max-active=3
-        
-        # Only to set up the database!
-        # spring.jpa.generate-ddl=true
-        
-        # To suppress weird error message in Spring Boot 2 
-        # See https://github.com/spring-projects/spring-boot/issues/12007#issuecomment-370774241  
-        spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
-        spring.data.mongodb.database={mongo_accessioning_db}
-        # spring.data.mongodb.username=
-        # spring.data.mongodb.password=
-        # spring.data.mongodb.authentication-database=admin
-        mongodb.read-preference=primaryPreferred
-        
-        logging.level.uk.ac.ebi.eva.accession.release=INFO
-        
-        # as this is a spring batch application, disable the embedded tomcat. This is the new way to do that for spring 2.
-        spring.main.web-application-type=none
-        """.format(**release_properties)
-    open(output_file, "w").write(textwrap.dedent(properties_string).lstrip())
+    properties_string = SpringPropertiesGenerator(profile, private_config_xml_file).get_release_properties(
+        temp_mongo_db=release_properties['mongo_accessioning_db'],
+        job_name='ACCESSION_RELEASE_JOB',
+        assembly_accession=assembly_accession,
+        taxonomy_accession=taxonomy_id,
+        fasta=release_properties['fasta_path'],
+        assembly_report=release_properties['report_path'],
+        contig_naming='SEQUENCE_NAME',
+        output_folder=assembly_species_release_folder
+    )
+    open(output_file, "w").write(properties_string)
     return output_file
 
 
