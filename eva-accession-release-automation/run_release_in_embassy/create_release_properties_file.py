@@ -28,9 +28,6 @@ def get_release_properties_for_assembly(private_config_xml_file, profile, taxono
                                                                                       release_species_inventory_table,
                                                                                       release_version,
                                                                                       metadata_connection_handle)
-    if not release_inventory_info_for_assembly["report_path"].startswith("file:"):
-        release_inventory_info_for_assembly["report_path"] = "file:" + \
-                                                             release_inventory_info_for_assembly["report_path"]
     release_inventory_info_for_assembly["mongo_accessioning_db"] = \
         get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
     return release_inventory_info_for_assembly
