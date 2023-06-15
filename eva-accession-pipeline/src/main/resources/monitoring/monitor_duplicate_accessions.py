@@ -19,25 +19,26 @@ from datetime import datetime
 import getpass
 import smtplib
 from __init__ import *
+from urllib.parse import quote_plus
+
+
+def get_mongo_uri(mongo_connection_properties):
+    return "mongodb://{0}:{1}@{2}/{3}?authSource={4}".format(mongo_connection_properties["mongo_username"],
+                                                             quote_plus(mongo_connection_properties["mongo_password"]),
+                                                             mongo_connection_properties["mongo_host"],
+                                                             mongo_connection_properties["mongo_db"],
+                                                             mongo_connection_properties["mongo_auth_db"])
 
 
 def export_mongo_accessions(mongo_connection_properties, collection_name, export_output_filename):
-    export_command = 'mongoexport --host {0} --port {1} --db {2} --username {3} --password {4} ' \
-                     '--authenticationDatabase={5} --collection {6} --type=csv --fields accession ' \
+    export_command = 'mongoexport --uri {0} ' \
+                     '--collection {1} --type=csv --fields accession ' \
                      "--query  '{{remappedFrom: {{$exists: false}}}}' " \
-                     '-o "{7}" 2>&1' \
-                    .format(mongo_connection_properties["mongo_host"],
-                            mongo_connection_properties["mongo_port"],
-                            mongo_connection_properties["mongo_db"],
-                            mongo_connection_properties["mongo_username"],
-                            mongo_connection_properties["mongo_password"],
-                            mongo_connection_properties["mongo_auth_db"],
-                            collection_name,
-                            export_output_filename)
+                     '-o "{2}" 2>&1' \
+                    .format(get_mongo_uri(mongo_connection_properties), collection_name, export_output_filename)
     run_command_with_output("Exporting accessions in the {0} collection in the {1} database at {2}..."
                             .format(collection_name, mongo_connection_properties["mongo_db"],
-                                    mongo_connection_properties["mongo_host"]),
-                            export_command)
+                                    mongo_connection_properties["mongo_host"]), export_command)
 
 
 def notify_by_email(mongo_connection_properties, collection_name, duplicates_output_filename,
