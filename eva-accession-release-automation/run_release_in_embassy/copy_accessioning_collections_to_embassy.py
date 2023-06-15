@@ -40,9 +40,16 @@ collections_assembly_attribute_map = {
     "clusteredVariantOperationEntity": "inactiveObjects.asm"
 }
 
+submitted_collections_taxonomy_attribute_map = {
+    "dbsnpSubmittedVariantEntity": "tax",
+    "dbsnpSubmittedVariantOperationEntity": "inactiveObjects.tax",
+    "submittedVariantEntity": "tax",
+    "submittedVariantOperationEntity": "inactiveObjects.tax"
+}
+
 
 def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file, profile, assembly_accession,
-                                   collections_to_copy_map, dump_dir, destination_db_name):
+                                   taxonomy_id, collections_to_copy_map, dump_dir, destination_db_name):
     mongo_params = parse_uri(get_mongo_uri_for_eva_profile(profile, private_config_xml_file))
     # nodelist is in format: [(host1,port1), (host2,port2)]. Just choose one.
     # Mongo is smart enough to fallback to secondaries automatically.
@@ -55,8 +62,13 @@ def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file
 
     for collection, collection_assembly_attribute_name in sorted(collections_to_copy_map.items()):
         logger.info("Begin processing collection: " + collection)
-        # Curly braces when they are not positional parameters
-        query = """'{{"{0}": {{"$in":["{1}"]}}}}'""".format(collection_assembly_attribute_name, assembly_accession)
+        if "clustered" in collection.lower():
+            # Curly braces when they are not positional parameters
+            query = """'{{"{0}": {{"$in":["{1}"]}}}}'""".format(collection_assembly_attribute_name, assembly_accession)
+        else:
+            taxonomy_attribute_path = submitted_collections_taxonomy_attribute_map[collection]
+            query = """'{{"{0}": {{"$in":["{1}"]}}, "{2}": {{"$in":[{3}]}}}}'""".format(
+                collection_assembly_attribute_name, assembly_accession, taxonomy_attribute_path, taxonomy_id)
         sharded_db_name = "eva_accession_sharded"
         mongodump_args = {"db": sharded_db_name, "host": mongo_host,
                           "username": mongo_params["username"], "password": mongo_params["password"],
@@ -105,7 +117,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
                         .format(release_info["tempmongo_instance"], mongo_port))
             collections_to_copy_map = get_collections_to_copy(collections_to_copy, sources=release_info["sources"])
             mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file, profile, assembly_accession,
-                                           collections_to_copy_map, dump_dir, destination_db_name)
+                                           taxonomy_id, collections_to_copy_map, dump_dir, destination_db_name)
             exit_code = 0
     except Exception as ex:
         logger.error("Encountered an error while copying species data to Embassy for assemblies in "

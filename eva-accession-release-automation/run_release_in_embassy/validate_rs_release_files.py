@@ -28,7 +28,8 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.file_utils import file_diff, FileDiffOption
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
     get_release_db_name_in_tempmongo_instance
-from run_release_in_embassy.copy_accessioning_collections_to_embassy import collections_assembly_attribute_map
+from run_release_in_embassy.copy_accessioning_collections_to_embassy import collections_assembly_attribute_map, \
+    submitted_collections_taxonomy_attribute_map
 from pymongo import MongoClient
 
 logger = logging.getLogger(__name__)
@@ -39,13 +40,6 @@ dbsnp_sve_collection_name = "dbsnpSubmittedVariantEntity"
 dbsnp_svoe_collection_name = "dbsnpSubmittedVariantOperationEntity"
 cve_collection_name = "clusteredVariantEntity"
 dbsnp_cve_collection_name = "dbsnpClusteredVariantEntity"
-
-collections_taxonomy_attribute_map = {
-    "dbsnpClusteredVariantEntity": "tax",
-    "dbsnpClusteredVariantOperationEntity": "inactiveObjects.tax",
-    "clusteredVariantEntity": "tax",
-    "clusteredVariantOperationEntity": "inactiveObjects.tax"
-}
 
 get_merged_ss_query = [
         {
@@ -429,9 +423,9 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, assembly_accession, t
         if "clustered" in collection.lower():
             collection_handle = mongo_database_handle[collection]
             collection_rs_ids_file = mongo_unique_rs_ids_file.replace(".txt", "_{0}.txt".format(collection))
-            taxonomy_attribute_path = collections_taxonomy_attribute_map[collection]
             agg_pipeline = []
             for sve_coll in (sve_collection_name, dbsnp_sve_collection_name):
+                taxonomy_attribute_path = submitted_collections_taxonomy_attribute_map[sve_coll]
                 agg_pipeline.append({
                     "$lookup": {
                         "from": sve_coll,
