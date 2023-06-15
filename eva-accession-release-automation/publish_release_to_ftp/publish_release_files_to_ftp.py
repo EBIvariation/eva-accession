@@ -19,12 +19,11 @@
 import click
 import glob
 import os
-import psycopg2
 
 from publish_release_to_ftp.create_assembly_name_symlinks import create_assembly_name_symlinks
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile, get_properties_from_xml_file
 from ebi_eva_common_pyutils.logger import logging_config
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 from run_release_in_embassy.run_release_for_species import get_common_release_properties
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories
@@ -308,11 +307,8 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
     # Release README, known issues etc.,
     publish_release_top_level_files_to_ftp(release_properties)
 
-    metadata_password = get_properties_from_xml_file("production_processing",
-                                                     release_properties.private_config_xml_file)["eva.evapro.password"]
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing",
-                                                              release_properties.private_config_xml_file),
-                          user="evapro", password=metadata_password) as metadata_connection_handle:
+    with get_metadata_connection_handle(
+            "production_processing", release_properties.private_config_xml_file) as metadata_connection_handle:
         assemblies_to_process = get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties,
                                                                          metadata_connection_handle)
         species_has_unmapped_data = "Unmapped" in set([assembly_info["assembly_accession"] for assembly_info in
