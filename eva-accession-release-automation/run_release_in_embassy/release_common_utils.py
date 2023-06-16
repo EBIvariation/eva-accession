@@ -69,7 +69,7 @@ def get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id, assem
 
 
 def get_unsorted_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
-    vcf_file_path = get_release_vcf_file_name(species_release_folder, assembly_accession, taxonomy_id, vcf_file_category)
+    vcf_file_path = get_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category)
     filename = os.path.basename(vcf_file_path)
     return vcf_file_path.replace(filename, filename.replace(".vcf", "_unsorted.vcf"))
 

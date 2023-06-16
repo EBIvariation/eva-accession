@@ -32,14 +32,15 @@ def move_release_files_to_unsorted_category(taxonomy_id, assembly_accession, spe
                                                   vcf_file_category)
     release_file_name = os.path.basename(release_file_path)
     for variant_source in ["eva", "dbsnp"]:
-        vcf_file_name = release_file_path.replace(release_file_name,
-                                                  "{0}_{1}".format(variant_source, release_file_name))
+        vcf_file_name = release_file_path.replace(
+            release_file_name,
+            "{0}_{1}".format(variant_source, release_file_name.replace(f'{str(taxonomy_id)}_', '')))
         unsorted_file_name = unsorted_release_file_path.replace(unsorted_release_file_name,
                                                                 "{0}_{1}".format(variant_source,
                                                                                  unsorted_release_file_name))
         if os.path.exists(vcf_file_name) and not os.path.exists(unsorted_file_name):
             os.rename(vcf_file_name, unsorted_file_name)
-        elif not os.path.exists(vcf_file_name):
+        elif not os.path.exists(vcf_file_name) and not os.path.exists(unsorted_file_name):
             raise Exception(f"Could not rename {vcf_file_name} because the file does not exist")
 
 
@@ -89,7 +90,7 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, t
     vcf_merge_commands = []
     # This is the desired post-merge output file name in the format <assembly>_<category>.vcf
     # ex: 60711_GCA_000409795.2_merged_ids.vcf
-    unsorted_release_file_path = get_unsorted_release_vcf_file_name(taxonomy_id, species_release_folder, assembly_accession,
+    unsorted_release_file_path = get_unsorted_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession,
                                                                     vcf_file_category)
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
     # After release pipeline is run on a species, the default VCF output files are in the formats like below
@@ -98,9 +99,9 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, t
     move_release_files_to_unsorted_category(taxonomy_id, assembly_accession, species_release_folder, vcf_file_category,
                                             unsorted_release_file_path)
     dbsnp_vcf_file_pattern = unsorted_release_file_path.replace(unsorted_release_file_name,
-                                                                "dbsnp*_" + unsorted_release_file_name)
+                                                                "dbsnp*_" + unsorted_release_file_name.replace(f'{str(taxonomy_id)}_', ''))
     eva_vcf_file_pattern = unsorted_release_file_path.replace(unsorted_release_file_name,
-                                                              "eva*_" + unsorted_release_file_name)
+                                                              "eva*_" + unsorted_release_file_name.replace(f'{str(taxonomy_id)}_', ''))
     files_in_dbsnp_for_category = glob.glob(dbsnp_vcf_file_pattern)
     files_in_eva_for_category = glob.glob(eva_vcf_file_pattern)
 
@@ -141,11 +142,11 @@ def merge_dbsnp_eva_text_files(taxonomy_id, assembly_accession, species_release_
     # After release is run on a species, the default text (i.e., non-vcf) output files have ".unsorted.txt" file suffix
     # ex: dbsnp_GCA_000409795.2_merged_deprecated_ids.unsorted.txt
     dbsnp_text_file_pattern = unsorted_release_file_path.replace(unsorted_release_file_name, "dbsnp*_" +
-                                                                 unsorted_release_file_name)
+                                                                 unsorted_release_file_name.replace(f'{str(taxonomy_id)}_', ''))
     # After release is run on a species, the default text (i.e., non-vcf) output files have ".unsorted.txt" file suffix
     # ex: eva_GCA_000409795.2_merged_deprecated_ids.unsorted.txt
     eva_text_file_pattern = unsorted_release_file_path.replace(unsorted_release_file_name, "eva*_" +
-                                                               unsorted_release_file_name)
+                                                               unsorted_release_file_name.replace(f'{str(taxonomy_id)}_', ''))
     files_in_dbsnp_for_category = glob.glob(dbsnp_text_file_pattern)
     files_in_eva_for_category = glob.glob(eva_text_file_pattern)
 
