@@ -50,8 +50,8 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
 
         for vcf_file_category in release_vcf_file_categories:
 
-            release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession,
-                                                              vcf_file_category)
+            release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id,
+                                                                      assembly_accession, vcf_file_category)
             release_vcf_dir = os.path.dirname(release_vcf_file_name)
             if "multimap" not in vcf_file_category:
                 validate_release_vcf_files_commands.append("({0} -i {1} -o {2}) || true".format(vcf_validator_path,

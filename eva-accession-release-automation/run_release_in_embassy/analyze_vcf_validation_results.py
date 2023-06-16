@@ -16,7 +16,6 @@
 
 import click
 import glob
-import logging
 import sys
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
