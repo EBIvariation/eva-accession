@@ -36,7 +36,7 @@ def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, asse
                                                                               assembly_accession,
                                                                               release_species_inventory_table,
                                                                               release_version, species_release_folder)
-        release_command = 'java -Xmx{0}g -jar {1} --spring.config.location="{2}" -Dspring.data.mongodb.port={3}'\
+        release_command = 'java -Xmx{0}g -jar {1} --spring.config.location=file:{2} -Dspring.data.mongodb.port={3}'\
             .format(memory, release_jar_path, release_properties_file, mongo_port)
         run_command_with_output("Running release pipeline for assembly: " + assembly_accession, release_command)
         exit_code = 0
