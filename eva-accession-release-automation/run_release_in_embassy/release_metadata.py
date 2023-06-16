@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
 release_vcf_file_categories = ["current_ids", "merged_ids", "multimap_ids"]
 release_text_file_categories = ["deprecated_ids", "merged_deprecated_ids"]

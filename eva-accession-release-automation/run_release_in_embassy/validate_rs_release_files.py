@@ -441,7 +441,7 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, assembly_accession, t
             agg_pipeline.extend([
                 {"$addFields": {
                     "ssInfo": {"$concatArrays": ["$submittedVariantEntity", "$dbsnpSubmittedVariantEntity"]}}},
-                {"$match": {"$ne": {"ssInfo": []}}},
+                {"$match": {"ssInfo": {"$ne": []}}},
                 {"$project": {"accession": 1, "_id": 0}}
             ])
             logger.info(f'Exporting RS IDs from collection {collection}')

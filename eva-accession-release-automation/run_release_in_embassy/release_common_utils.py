@@ -55,31 +55,32 @@ def get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, file):
     return commands
 
 
-def get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category):
-    return os.path.join(species_release_folder, assembly_accession, "{0}_{1}.vcf".format(assembly_accession,
-                                                                                         vcf_file_category))
+def get_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
+    return os.path.join(species_release_folder, assembly_accession, "{0}_{1}_{2}.vcf".format(taxonomy_id,
+                                                                                             assembly_accession,
+                                                                                             vcf_file_category))
 
 
-def get_release_vcf_file_name_genbank(species_release_folder, assembly_accession, vcf_file_category):
+def get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
     return os.path.join(
         species_release_folder, assembly_accession,
-        "{0}_{1}_with_genbank.vcf".format(assembly_accession,vcf_file_category)
+        "{0}_{1}_{2}_with_genbank.vcf".format(taxonomy_id, assembly_accession, vcf_file_category)
     )
 
 
-def get_unsorted_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category):
-    vcf_file_path = get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category)
+def get_unsorted_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
+    vcf_file_path = get_release_vcf_file_name(species_release_folder, assembly_accession, taxonomy_id, vcf_file_category)
     filename = os.path.basename(vcf_file_path)
     return vcf_file_path.replace(filename, filename.replace(".vcf", "_unsorted.vcf"))
 
 
-def get_release_text_file_name(species_release_folder, assembly_accession, release_text_file_category):
-    return os.path.join(species_release_folder, assembly_accession, "{0}_{1}.txt".format(assembly_accession,
-                                                                                         release_text_file_category))
+def get_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession, release_text_file_category):
+    return os.path.join(species_release_folder, assembly_accession,
+                        "{0}_{1}_{2}.txt".format(taxonomy_id, assembly_accession, release_text_file_category))
 
 
-def get_unsorted_release_text_file_name(species_release_folder, assembly_accession, release_text_file_category):
-    release_text_file_path = get_release_text_file_name(species_release_folder, assembly_accession,
+def get_unsorted_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession, release_text_file_category):
+    release_text_file_path = get_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession,
                                                         release_text_file_category)
     filename = os.path.basename(release_text_file_path)
     return release_text_file_path.replace(filename, filename.replace(".txt", ".unsorted.txt"))

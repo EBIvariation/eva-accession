@@ -20,10 +20,13 @@ from run_release_in_embassy.release_metadata import release_vcf_file_categories
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 
 
-def update_sequence_name(assembly_accession, species_release_folder, sequence_name_converter_path, bcftools_path):
+def update_sequence_name(taxonomy_id, assembly_accession, species_release_folder, sequence_name_converter_path,
+                         bcftools_path):
     for vcf_file_category in release_vcf_file_categories:
-        release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, assembly_accession, vcf_file_category)
-        release_vcf_file_output_name = get_release_vcf_file_name(species_release_folder, assembly_accession, vcf_file_category)
+        release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id,
+                                                                  assembly_accession, vcf_file_category)
+        release_vcf_file_output_name = get_release_vcf_file_name(species_release_folder, taxonomy_id,
+                                                                 assembly_accession, vcf_file_category)
 
         # Commands run separately so the index isn't attempted if the conversion fails
         run_command_with_output("Changing contig name to ENA for assembly " + assembly_accession,
@@ -34,13 +37,14 @@ def update_sequence_name(assembly_accession, species_release_folder, sequence_na
                                 "({0} index --csi {1}.gz)".format(bcftools_path, release_vcf_file_output_name))
 
 
+@click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
 @click.option("--species-release-folder", required=True)
 @click.option("--sequence-name-converter-path", help="/path/to/vcf/sequence-name-converter", required=True)
 @click.option("--bcftools-path", help="ex: /path/to/bcftools/binary", required=True)
 @click.command()
-def main(assembly_accession, species_release_folder, sequence_name_converter_path, bcftools_path):
-    update_sequence_name(assembly_accession, species_release_folder, sequence_name_converter_path, bcftools_path)
+def main(taxonomy_id, assembly_accession, species_release_folder, sequence_name_converter_path, bcftools_path):
+    update_sequence_name(taxonomy_id, assembly_accession, species_release_folder, sequence_name_converter_path, bcftools_path)
 
 
 if __name__ == "__main__":
