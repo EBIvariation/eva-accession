@@ -25,7 +25,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -38,6 +38,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplit
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -68,11 +69,11 @@ public class RSMergeAndSplitCandidatesReaderTest {
 
     @Autowired
     @Qualifier(RS_SPLIT_CANDIDATES_READER)
-    private ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
 
     @Autowired
     @Qualifier(RS_MERGE_CANDIDATES_READER)
-    private ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
 
     //Required by nosql-unit
     @Autowired
@@ -81,8 +82,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
             MongoDbConfigurationBuilder.mongoDb().databaseName(TEST_DB).build());
-
-    private SubmittedVariantEntity createSSWithLocus(Long ssAccession, Long rsAccession, Long start, String reference,
+        private SubmittedVariantEntity createSSWithLocus(Long ssAccession, Long rsAccession, Long start, String reference,
                                                      String alternate) {
         return new SubmittedVariantEntity(ssAccession, "hash" + ssAccession, ASSEMBLY, 60711,
                                           "PRJ1", "chr1", start, reference, alternate, rsAccession, false, false, false,
@@ -103,6 +103,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
         splitOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                              ss1.getAccession(), null, "Hash mismatch with rs1",
                              Arrays.asList(ss1, ss2, ss3));
+        splitOperation1.setId(ClusteringWriter.getSplitCandidateId(splitOperation1));
 
         SubmittedVariantInactiveEntity ss4 = new SubmittedVariantInactiveEntity(
                 createSSWithLocus(4L, 2L, 103L, "C", "T"));
@@ -115,8 +116,9 @@ public class RSMergeAndSplitCandidatesReaderTest {
         // anything. We are updating the submitted variant, changing its rs field
         splitOperation2.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                              ss4.getAccession(),
-                             null, "Hash mismatch with rs1",
+                             null, "Hash mismatch with rs2",
                              Arrays.asList(ss4, ss5, ss6));
+        splitOperation2.setId(ClusteringWriter.getSplitCandidateId(splitOperation2));
 
         mongoTemplate.insert(splitOperation1, SUBMITTED_VARIANT_OPERATION_COLLECTION);
         mongoTemplate.insert(splitOperation2, SUBMITTED_VARIANT_OPERATION_COLLECTION);
@@ -136,6 +138,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
         mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
                              ss1.getAccession(), null, "Different RS with matching loci",
                              Arrays.asList(ss1, ss2, ss3));
+        mergeOperation1.setId(ClusteringWriter.getMergeCandidateId(mergeOperation1));
 
         SubmittedVariantInactiveEntity ss4 = new SubmittedVariantInactiveEntity(
                 createSSWithLocus(4L, 4L, 103L, "A", "C"));
@@ -150,6 +153,7 @@ public class RSMergeAndSplitCandidatesReaderTest {
                              ss4.getAccession(),
                              null, "Different RS with matching loci",
                              Arrays.asList(ss4, ss5, ss6));
+        mergeOperation2.setId(ClusteringWriter.getMergeCandidateId(mergeOperation2));
 
         mongoTemplate.insert(mergeOperation1, SUBMITTED_VARIANT_OPERATION_COLLECTION);
         mongoTemplate.insert(mergeOperation2, SUBMITTED_VARIANT_OPERATION_COLLECTION);
@@ -174,6 +178,8 @@ public class RSMergeAndSplitCandidatesReaderTest {
         createSplitCandidateEntries();
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
         SubmittedVariantOperationEntity submittedVariantOperationEntity;
+        ExecutionContext executionContext = new ExecutionContext();
+        this.rsSplitCandidatesReader.open(executionContext);
         while ((submittedVariantOperationEntity = rsSplitCandidatesReader.read()) != null) {
             submittedVariantOperationEntities.add(submittedVariantOperationEntity);
         }
@@ -186,6 +192,8 @@ public class RSMergeAndSplitCandidatesReaderTest {
         createMergeCandidateEntries();
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
         SubmittedVariantOperationEntity submittedVariantOperationEntity;
+        ExecutionContext executionContext = new ExecutionContext();
+        this.rsMergeCandidatesReader.open(executionContext);
         while ((submittedVariantOperationEntity = rsMergeCandidatesReader.read()) != null) {
             submittedVariantOperationEntities.add(submittedVariantOperationEntity);
         }

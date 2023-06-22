@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
@@ -64,8 +65,8 @@ import java.util.stream.Collectors;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 import static org.springframework.data.mongodb.core.query.Update.update;
-import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getMergeCandidatesQuery;
-import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getSplitCandidatesQuery;
+import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getMergeCandidatesCriteria;
+import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.getSplitCandidatesCriteria;
 
 public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity> {
 
@@ -318,10 +319,11 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
     }
 
     private void updateOperationsInDB(ClusteredVariantMergingPolicy.Priority prioritised,
-                           SubmittedVariantOperationEntity currentMergeOperation) {
-        Query queryForMergeCandidatesInvolvingMergee = getMergeCandidatesQuery(this.assemblyAccession)
-                .addCriteria(where(ID_ATTRIBUTE).ne(currentMergeOperation.getId()))
-                .addCriteria(where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToBeMerged));
+                                      SubmittedVariantOperationEntity currentMergeOperation) {
+        Query queryForMergeCandidatesInvolvingMergee = query(new Criteria().andOperator(
+                getMergeCandidatesCriteria(this.assemblyAccession),
+                where(ID_ATTRIBUTE).ne(currentMergeOperation.getId()),
+                where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToBeMerged)));
         List<SubmittedVariantOperationEntity> operationsInDBInvolvingMergee =
                 mongoTemplate.find(queryForMergeCandidatesInvolvingMergee, SubmittedVariantOperationEntity.class);
         for (SubmittedVariantOperationEntity operation: operationsInDBInvolvingMergee) {
@@ -357,9 +359,10 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 SubmittedVariantOperationEntity updatedOperation =
                         new SubmittedVariantOperationEntity();
                 updatedOperation.fill(operation.getEventType(), operation.getAccession(), operation.getReason(),
-                                      inactiveEntities);
+                        inactiveEntities);
+                updatedOperation.setId(operation.getId());
                 allMergeCandidateOperations.set(operationWithIndex.operationIndex, updatedOperation);
-            }            
+            }
         }
     }
 
@@ -374,10 +377,12 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
     }
 
     private void updateSplitCandidates(ClusteredVariantMergingPolicy.Priority prioritised) {
-        Query queryForSplitCandidatesInvolvingTargetRS = getSplitCandidatesQuery(this.assemblyAccession)
-                .addCriteria(where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToKeep));
-        Query queryForSplitCandidatesInvolvingMergee = getSplitCandidatesQuery(this.assemblyAccession)
-                .addCriteria(where(RS_KEY_IN_OPERATIONS_COLLECTION).is(prioritised.accessionToBeMerged));
+        Query queryForSplitCandidatesInvolvingTargetRS = query(getSplitCandidatesCriteria(this.assemblyAccession)
+                                                                       .and(RS_KEY_IN_OPERATIONS_COLLECTION)
+                                                                       .is(prioritised.accessionToKeep));
+        Query queryForSplitCandidatesInvolvingMergee = query(getSplitCandidatesCriteria(this.assemblyAccession)
+                                                                     .and(RS_KEY_IN_OPERATIONS_COLLECTION)
+                                                                     .is(prioritised.accessionToBeMerged));
         // Since the mergee has been merged into the target RS,
         // the split candidates record for mergee are no longer valid - so, delete them!
         mongoTemplate.remove(queryForSplitCandidatesInvolvingMergee, SubmittedVariantOperationEntity.class);
@@ -422,8 +427,9 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 // TODO: Refactor to use common fill method for split candidates generation
                 // to avoid duplicating reason text and call semantics
                 newSplitCandidateRecord.fill(EventType.RS_SPLIT_CANDIDATES, lowestSS,
-                                             "Hash mismatch with " + prioritised.accessionToKeep,
-                                             ssClusteredUnderTargetRS);
+                        "Hash mismatch with " + prioritised.accessionToKeep,
+                        ssClusteredUnderTargetRS);
+                newSplitCandidateRecord.setId(ClusteringWriter.getSplitCandidateId(newSplitCandidateRecord));
                 mongoTemplate.insert(Collections.singletonList(newSplitCandidateRecord),
                         SubmittedVariantOperationEntity.class);
                 metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_RS_SPLIT, 1);
@@ -446,10 +452,11 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                         where(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_VARIANT_COLLECTION).is(this.assemblyAccession));
         List<? extends SubmittedVariantEntity> svToUpdate =
                 mongoTemplate.find(querySubmitted, submittedVariantCollection);
+        List<String> svToUpdateIds = svToUpdate.stream().map(AccessionedDocument::getId).collect(Collectors.toList());
 
         Update update = new Update();
         update.set(RS_KEY, prioritised.accessionToKeep);
-        mongoTemplate.updateMulti(querySubmitted, update, submittedVariantCollection);
+        mongoTemplate.updateMulti(query(where("_id").in(svToUpdateIds)), update, submittedVariantCollection);
         metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_UPDATED_RS, svToUpdate.size());
 
         List<SubmittedVariantOperationEntity> operations =

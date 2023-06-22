@@ -31,6 +31,7 @@ import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.test.JobLauncherTestUtils;
@@ -66,6 +67,7 @@ import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
@@ -212,9 +214,9 @@ public class ClusteringCommandLineRunnerTest {
     @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER)
     private ClusteringWriter clusteringWriterPostMergeAndSplit;
 
-    private ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
 
-    private ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
 
     @Autowired
     @Qualifier(RS_MERGE_WRITER)
@@ -453,7 +455,7 @@ public class ClusteringCommandLineRunnerTest {
         List<SubmittedVariantOperationEntity> splitOperationsInDB = allOperationsInDB.stream().filter(
                 op -> op.getEventType().equals(EventType.RS_SPLIT_CANDIDATES)).collect(Collectors.toList());
         assertEquals(expectedSSListInMergeOps.size() , mergeOperationsInDB.size());
-        assertEquals(splitOperationsInDB.size() , splitOperationsInDB.size());
+        assertEquals(expectedSSListInSplitOps.size() , splitOperationsInDB.size());
         if (expectedSSListInMergeOps.size() > 0) {
             assertTrue(expectedSSListInMergeOps.stream()
                                               .allMatch(participantSSList ->
@@ -1147,12 +1149,14 @@ public class ClusteringCommandLineRunnerTest {
         SubmittedVariantOperationEntity tempSVO;
         rsMergeCandidatesReader = new RSMergeAndSplitCandidatesReaderConfiguration()
                 .rsMergeCandidatesReader(this.mongoTemplate, this.inputParameters);
+        rsMergeCandidatesReader.open(new ExecutionContext());
         while((tempSVO = rsMergeCandidatesReader.read()) != null) {
             mergeCandidates.add(tempSVO);
         }
         rsMergeWriter.write(mergeCandidates);
         rsSplitCandidatesReader = new RSMergeAndSplitCandidatesReaderConfiguration()
                 .rsSplitCandidatesReader(this.mongoTemplate, this.inputParameters);
+        rsSplitCandidatesReader.open(new ExecutionContext());
         while((tempSVO = rsSplitCandidatesReader.read()) != null) {
             splitCandidates.add(tempSVO);
         }

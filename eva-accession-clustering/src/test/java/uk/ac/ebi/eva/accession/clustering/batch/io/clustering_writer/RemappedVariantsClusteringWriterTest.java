@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +41,7 @@ import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
@@ -126,11 +127,11 @@ public class RemappedVariantsClusteringWriterTest {
 
     @Autowired
     @Qualifier(RS_MERGE_CANDIDATES_READER)
-    private ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
 
     @Autowired
     @Qualifier(RS_SPLIT_CANDIDATES_READER)
-    private ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
 
     @Autowired
     @Qualifier(RS_MERGE_WRITER)
@@ -593,9 +594,11 @@ public class RemappedVariantsClusteringWriterTest {
         List<SubmittedVariantOperationEntity> mergeCandidates = new ArrayList<>();
         List<SubmittedVariantOperationEntity> splitCandidates = new ArrayList<>();
         SubmittedVariantOperationEntity tempSVO;
+        rsMergeCandidatesReader.open(new ExecutionContext());
         while((tempSVO = rsMergeCandidatesReader.read()) != null) {
             mergeCandidates.add(tempSVO);
         }
+        rsSplitCandidatesReader.open(new ExecutionContext());
         while((tempSVO = rsSplitCandidatesReader.read()) != null) {
             splitCandidates.add(tempSVO);
         }

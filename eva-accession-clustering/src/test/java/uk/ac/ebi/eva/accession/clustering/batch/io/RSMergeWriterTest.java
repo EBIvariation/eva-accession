@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -49,13 +49,12 @@ import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
-import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -108,11 +107,11 @@ public class RSMergeWriterTest {
 
     @Autowired
     @Qualifier(RS_MERGE_CANDIDATES_READER)
-    private ItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsMergeCandidatesReader;
 
     @Autowired
     @Qualifier(RS_SPLIT_CANDIDATES_READER)
-    private ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
+    private MongoDbCursorItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader;
 
     @Autowired
     @Qualifier(RS_MERGE_WRITER)
@@ -190,6 +189,7 @@ public class RSMergeWriterTest {
         mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
                              ss1.getAccession(), null, "Different RS with matching loci",
                              Arrays.asList(ssInactive1, ssInactive4));
+        mergeOperation1.setId(ClusteringWriter.getMergeCandidateId(mergeOperation1));
 
         //ss2 will be inserted to dbsnpSubmittedVariantEntity and ss5 to submittedVariantEntity collections respectively
         ss2 = createSS(2L, 2L, 103L, "A", "C");
@@ -202,6 +202,7 @@ public class RSMergeWriterTest {
                              ss2.getAccession(),
                              null, "Different RS with matching loci",
                              Arrays.asList(ssInactive2, ssInactive5));
+        mergeOperation2.setId(ClusteringWriter.getMergeCandidateId(mergeOperation2));
 
         //Candidates for split are entries with same RS but different locus
         ss6 = createSS(6L, 4L, 104L, "G", "A");
@@ -219,12 +220,15 @@ public class RSMergeWriterTest {
         splitOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                              ss2.getAccession(), "Hash mismatch with " + ss2.getClusteredVariantAccession(),
                              Arrays.asList(ssInactive2, ssInactive8));
+        splitOperation1.setId(ClusteringWriter.getSplitCandidateId(splitOperation1));
         splitOperation2.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                              ss4.getAccession(), "Hash mismatch with " + ss4.getClusteredVariantAccession(),
                              Arrays.asList(ssInactive4, ssInactive6, ssInactive7));
+        splitOperation2.setId(ClusteringWriter.getSplitCandidateId(splitOperation2));
         splitOperation3.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                              ss5.getAccession(), "Hash mismatch with " + ss5.getClusteredVariantAccession(),
                              Arrays.asList(ssInactive5, ssInactive9));
+        splitOperation3.setId(ClusteringWriter.getSplitCandidateId(splitOperation3));
 
         List<SubmittedVariantEntity> ssToInsertToDbsnpSVE = Arrays.asList(ss1, ss2);
         List<SubmittedVariantEntity> ssToInsertToSVE = Arrays.asList(ss4, ss5, ss6, ss7, ss8, ss9);
@@ -284,6 +288,7 @@ public class RSMergeWriterTest {
         createMergeAndSplitCandidateEntries();
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
         SubmittedVariantOperationEntity submittedVariantOperationEntity;
+        rsMergeCandidatesReader.open(new ExecutionContext());
         while ((submittedVariantOperationEntity = rsMergeCandidatesReader.read()) != null) {
             submittedVariantOperationEntities.add(submittedVariantOperationEntity);
         }
@@ -345,6 +350,7 @@ public class RSMergeWriterTest {
         // and hence generate a split candidate event
         List<SubmittedVariantOperationEntity> splitEvents = new ArrayList<>();
         SubmittedVariantOperationEntity tempObj;
+        rsSplitCandidatesReader.open(new ExecutionContext());
         while ((tempObj = rsSplitCandidatesReader.read()) != null) {
                 splitEvents.add(tempObj);
         }
@@ -399,6 +405,7 @@ public class RSMergeWriterTest {
         createSimilarEntriesInAnotherAssembly();
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
         SubmittedVariantOperationEntity temp;
+        rsMergeCandidatesReader.open(new ExecutionContext());
         while ((temp = rsMergeCandidatesReader.read()) != null) {
             submittedVariantOperationEntities.add(temp);
         }
@@ -447,14 +454,18 @@ public class RSMergeWriterTest {
         mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
                              ss1.getAccession(), null, "Different RS with matching loci",
                              Stream.of(ss1, ss2).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+        mergeOperation1.setId(ClusteringWriter.getMergeCandidateId(mergeOperation1));
         SubmittedVariantOperationEntity mergeOperation2 = new SubmittedVariantOperationEntity();
         mergeOperation2.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
                              ss3.getAccession(), null, "Different RS with matching loci",
                              Stream.of(ss3, ss4).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+        mergeOperation2.setId(ClusteringWriter.getMergeCandidateId(mergeOperation2));
+
         SubmittedVariantOperationEntity splitOperation1 = new SubmittedVariantOperationEntity();
         splitOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATES_EVENT_TYPE,
                              ss2.getAccession(), null, "Hash mismatch with " + ss2.getClusteredVariantAccession(),
                              Stream.of(ss2, ss3).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+        splitOperation1.setId(ClusteringWriter.getSplitCandidateId(splitOperation1));
 
         this.mongoTemplate.insert(Arrays.asList(mergeOperation1, mergeOperation2, splitOperation1),
                                   SUBMITTED_VARIANT_OPERATION_COLLECTION);
@@ -496,6 +507,7 @@ public class RSMergeWriterTest {
         createMultiLevelMergeScenario();
         List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
         SubmittedVariantOperationEntity temp;
+        rsMergeCandidatesReader.open(new ExecutionContext());
         while ((temp = rsMergeCandidatesReader.read()) != null) {
             submittedVariantOperationEntities.add(temp);
         }
