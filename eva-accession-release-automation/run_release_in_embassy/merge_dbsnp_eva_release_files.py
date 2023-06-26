@@ -187,7 +187,7 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
             merge_commands.extend(merge_dbsnp_eva_text_files(taxonomy_id, assembly_accession, species_release_folder,
                                                              text_release_file_category, release_info["sources"]))
         final_merge_command = " && ".join(merge_commands)
-        run_command_with_output(f"Merging dbSNP and EVA release files for taxonomy {taxonomy_id} assembly {assembly_accession}",
+        run_command_with_output(f"Merging dbSNP and EVA release files for taxonomy {taxonomy_id} and assembly {assembly_accession}",
                                 final_merge_command)
 
 
