@@ -255,8 +255,8 @@ def read_next_batch_of_missing_ids(missing_rs_ids_file_handle):
         yield lines_read
 
 
-def get_unique_release_rs_ids(species_release_folder, assembly_accession):
-    folder_prefix = os.path.join(species_release_folder, assembly_accession, assembly_accession)
+def get_unique_release_rs_ids(species_release_folder, taxonomy_id, assembly_accession):
+    folder_prefix = os.path.join(species_release_folder, assembly_accession, f'{taxonomy_id}_{assembly_accession}')
     active_rs_ids_file = folder_prefix + "_current_ids_with_genbank.vcf.gz"
     merged_rs_ids_file = folder_prefix + "_merged_ids_with_genbank.vcf.gz"
     multimap_rs_ids_file = folder_prefix + "_multimap_ids_with_genbank.vcf.gz"
@@ -467,7 +467,8 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
             mongo_unique_rs_ids_file = os.path.join(species_release_folder, assembly_accession,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))
             export_unique_rs_ids_from_mongo(db_handle, assembly_accession, taxonomy_id, mongo_unique_rs_ids_file)
-            unique_release_rs_ids_file = get_unique_release_rs_ids(species_release_folder, assembly_accession)
+            unique_release_rs_ids_file = get_unique_release_rs_ids(species_release_folder, taxonomy_id,
+                                                                   assembly_accession)
             missing_rs_ids_file = os.path.join(os.path.dirname(unique_release_rs_ids_file),
                                                assembly_accession + "_missing_ids.txt")
             file_diff(mongo_unique_rs_ids_file, unique_release_rs_ids_file, FileDiffOption.NOT_IN, missing_rs_ids_file)
