@@ -17,23 +17,30 @@
 
 package uk.ac.ebi.eva.accession.core.batch.io;
 
+import com.mongodb.ClientSessionOptions;
+import com.mongodb.client.ClientSession;
 import com.mongodb.util.JSON;
+import org.bson.BsonDocument;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.util.CloseableIterator;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,7 +64,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\?(\\d+)");
 
-    private MongoOperations template;
+    private MongoTemplate mongoTemplate;
 
     private String query;
 
@@ -77,6 +84,14 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 
     private Query mongoQuery;
 
+    private boolean startPeriodicRefreshThread = false;
+
+    private BsonDocument serverSessionID;
+
+    private ThreadPoolTaskScheduler scheduler;
+
+    private ScheduledFuture periodicRefreshFuture;
+
     public MongoDbCursorItemReader() {
         super();
         setName(ClassUtils.getShortName(MongoDbCursorItemReader.class));
@@ -87,11 +102,11 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
      * Used to perform operations against the MongoDB instance.  Also
      * handles the mapping of documents to objects.
      *
-     * @param template the MongoOperations instance to use
-     * @see MongoOperations
+     * @param mongotemplate the MongoTemplate instance to use
+     * @see MongoTemplate
      */
-    public void setTemplate(MongoOperations template) {
-        this.template = template;
+    public void setMongoTemplate(MongoTemplate mongotemplate) {
+        this.mongoTemplate = mongotemplate;
     }
 
     /**
@@ -172,37 +187,64 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
         this.hint = hint;
     }
 
+    private void startPeriodicSessionRefresh() {
+        // By default, the cursorTimeoutMillis on a Mongo server is 10 minutes
+        // Therefore, try refreshing the cursors every 8 minutes (480e3 milliseconds)
+        final long refreshInterval = 480000L;
+        // Use Spring's thread pool scheduler so that the Spring runtime can clean up threads on exit
+        this.scheduler = new ThreadPoolTaskScheduler();
+        this.scheduler.setPoolSize(3);
+        this.scheduler.initialize();
+        this.periodicRefreshFuture = this.scheduler.scheduleAtFixedRate(() -> mongoTemplate.executeCommand(
+                new Document("refreshSessions", Collections.singletonList(serverSessionID))), refreshInterval);
+    }
+
     @Override
     protected T doRead() throws Exception {
-        return cursor.hasNext() ? cursor.next() : null;
+        if (!startPeriodicRefreshThread) {
+            startPeriodicSessionRefresh();
+            startPeriodicRefreshThread = true;
+        }
+        if(cursor.hasNext()) {
+            return cursor.next();
+        }
+        this.scheduler.shutdown();
+        return null;
     }
 
     @Override
     protected void doOpen() throws Exception {
-        if (mongoQuery == null) {
-            String populatedQuery = replacePlaceholders(query, parameterValues);
-            if (StringUtils.hasText(fields)) {
-                mongoQuery = new BasicQuery(populatedQuery, fields);
-            } else {
-                mongoQuery = new BasicQuery(populatedQuery);
+        ClientSessionOptions sessionOptions = ClientSessionOptions.builder().causallyConsistent(true).build();
+        ClientSession session = this.mongoTemplate.getMongoDbFactory().getSession(sessionOptions);
+        this.mongoTemplate.withSession(() -> session).execute(mongoOp -> {
+            this.serverSessionID = session.getServerSession().getIdentifier();
+            if (mongoQuery == null) {
+                String populatedQuery = replacePlaceholders(query, parameterValues);
+                if (StringUtils.hasText(fields)) {
+                    mongoQuery = new BasicQuery(populatedQuery, fields);
+                } else {
+                    mongoQuery = new BasicQuery(populatedQuery);
+                }
             }
-        }
 
-        if(StringUtils.hasText(hint)) {
-            mongoQuery.withHint(hint);
-        }
+            if(StringUtils.hasText(hint)) {
+                mongoQuery.withHint(hint);
+            }
 
-        if (sort != null) {
-            mongoQuery.with(sort);
-        }
+            if (sort != null) {
+                mongoQuery.with(sort);
+            }
 
-        logger.info("Issuing MongoDB query: {}", mongoQuery);
+            logger.info("Issuing MongoDB query: {}", mongoQuery);
 
-        if(StringUtils.hasText(collection)) {
-            cursor = template.stream(mongoQuery, type, collection);
-        } else {
-            cursor = template.stream(mongoQuery, type);
-        }
+            if(StringUtils.hasText(collection)) {
+                cursor = this.mongoTemplate.stream(mongoQuery, type, collection);
+            } else {
+                cursor = this.mongoTemplate.stream(mongoQuery, type);
+            }
+
+            return null;
+        });
     }
 
     @Override
@@ -217,7 +259,7 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        Assert.state(template != null, "An implementation of MongoOperations is required.");
+        Assert.state(mongoTemplate != null, "An implementation of MongoTemplate is required.");
         Assert.state(type != null, "A type to convert the input into is required.");
         Assert.state(query != null || mongoQuery != null, "A query is required.");
     }

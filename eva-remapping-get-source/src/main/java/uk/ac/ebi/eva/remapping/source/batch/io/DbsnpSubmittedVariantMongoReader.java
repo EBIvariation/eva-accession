@@ -40,7 +40,7 @@ public class DbsnpSubmittedVariantMongoReader extends MongoDbCursorItemReader<Db
 
     public DbsnpSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
                                           List<String> projects, int taxonomy) {
-        setTemplate(mongoTemplate);
+        setMongoTemplate(mongoTemplate);
         setTargetType(DbsnpSubmittedVariantEntity.class);
 
         Criteria criteria = where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession);
