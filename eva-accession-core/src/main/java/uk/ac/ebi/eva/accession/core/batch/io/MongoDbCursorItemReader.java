@@ -18,6 +18,7 @@
 package uk.ac.ebi.eva.accession.core.batch.io;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.util.JSON;
 import org.bson.BsonDocument;
@@ -40,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,13 +85,13 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
 
     private Query mongoQuery;
 
+    private boolean hasSessionSupport = true;
+
     private boolean startPeriodicRefreshThread = false;
 
     private BsonDocument serverSessionID;
 
     private ThreadPoolTaskScheduler scheduler;
-
-    private ScheduledFuture periodicRefreshFuture;
 
     public MongoDbCursorItemReader() {
         super();
@@ -195,56 +196,75 @@ public class MongoDbCursorItemReader<T> extends AbstractItemCountingItemStreamIt
         this.scheduler = new ThreadPoolTaskScheduler();
         this.scheduler.setPoolSize(3);
         this.scheduler.initialize();
-        this.periodicRefreshFuture = this.scheduler.scheduleAtFixedRate(() -> mongoTemplate.executeCommand(
+        this.scheduler.scheduleAtFixedRate(() -> mongoTemplate.executeCommand(
                 new Document("refreshSessions", Collections.singletonList(serverSessionID))), refreshInterval);
     }
 
     @Override
     protected T doRead() throws Exception {
-        if (!startPeriodicRefreshThread) {
+        if (!this.startPeriodicRefreshThread && this.hasSessionSupport) {
             startPeriodicSessionRefresh();
             startPeriodicRefreshThread = true;
         }
         if(cursor.hasNext()) {
             return cursor.next();
         }
-        this.scheduler.shutdown();
+        if (this.hasSessionSupport) {
+            this.scheduler.shutdown();
+        }
         return null;
     }
 
     @Override
     protected void doOpen() throws Exception {
         ClientSessionOptions sessionOptions = ClientSessionOptions.builder().causallyConsistent(true).build();
-        ClientSession session = this.mongoTemplate.getMongoDbFactory().getSession(sessionOptions);
-        this.mongoTemplate.withSession(() -> session).execute(mongoOp -> {
+        ClientSession session = null;
+        try {
+            session = this.mongoTemplate.getMongoDbFactory().getSession(sessionOptions);
+        }
+        catch (MongoClientException ex) { // Handle stand-alone instances that don't have session support
+            if (ex.getMessage().toLowerCase().contains("sessions are not supported")) {
+                this.hasSessionSupport = false;
+            }
+        }
+        if (this.hasSessionSupport && Objects.nonNull(session)) {
             this.serverSessionID = session.getServerSession().getIdentifier();
-            if (mongoQuery == null) {
-                String populatedQuery = replacePlaceholders(query, parameterValues);
-                if (StringUtils.hasText(fields)) {
-                    mongoQuery = new BasicQuery(populatedQuery, fields);
-                } else {
-                    mongoQuery = new BasicQuery(populatedQuery);
-                }
-            }
+            // This is needed because the withSession closure below expects a final ClientSession object
+            final ClientSession finalSession = session;
+            this.mongoTemplate.withSession(() -> finalSession).execute(mongoOp -> this.initializeCursor());
+        } else {
+            this.initializeCursor();
+        }
+    }
 
-            if(StringUtils.hasText(hint)) {
-                mongoQuery.withHint(hint);
-            }
-
-            if (sort != null) {
-                mongoQuery.with(sort);
-            }
-
-            logger.info("Issuing MongoDB query: {}", mongoQuery);
-
-            if(StringUtils.hasText(collection)) {
-                cursor = this.mongoTemplate.stream(mongoQuery, type, collection);
+    // There is no need for this method to return Object except for the fact that the execute method
+    // that calls this method requires a non-void return type
+    private Object initializeCursor() {
+        if (mongoQuery == null) {
+            String populatedQuery = replacePlaceholders(query, parameterValues);
+            if (StringUtils.hasText(fields)) {
+                mongoQuery = new BasicQuery(populatedQuery, fields);
             } else {
-                cursor = this.mongoTemplate.stream(mongoQuery, type);
+                mongoQuery = new BasicQuery(populatedQuery);
             }
+        }
 
-            return null;
-        });
+        if(StringUtils.hasText(hint)) {
+            mongoQuery.withHint(hint);
+        }
+
+        if (sort != null) {
+            mongoQuery.with(sort);
+        }
+
+        logger.info("Issuing MongoDB query: {}", mongoQuery);
+
+        if(StringUtils.hasText(collection)) {
+            cursor = this.mongoTemplate.stream(mongoQuery, type, collection);
+        } else {
+            cursor = this.mongoTemplate.stream(mongoQuery, type);
+        }
+        return null;
     }
 
     @Override
