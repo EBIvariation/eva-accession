@@ -419,13 +419,14 @@ def get_missing_ids_attributions(assembly_accession, missing_rs_ids_file, mongo_
 
 def export_unique_rs_ids_from_mongo(mongo_database_handle, taxonomy_id, assembly_accession, mongo_unique_rs_ids_file):
     collection_rs_ids_files = []
-    for collection, assembly_attribute_path in collections_assembly_attribute_map.items():
+    for collection in collections_assembly_attribute_map:
         if "clustered" in collection.lower():
             collection_handle = mongo_database_handle[collection]
             collection_rs_ids_file = mongo_unique_rs_ids_file.replace(".txt", "_{0}.txt".format(collection))
             agg_pipeline = []
             for sve_coll in (sve_collection_name, dbsnp_sve_collection_name):
                 taxonomy_attribute_path = submitted_collections_taxonomy_attribute_map[sve_coll]
+                assembly_attribute_path = collections_assembly_attribute_map[sve_coll]
                 agg_pipeline.append({
                     "$lookup": {
                         "from": sve_coll,
@@ -445,10 +446,10 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, taxonomy_id, assembly
                 {"$project": {"accession": 1, "_id": 0}}
             ])
             logger.info(f'Exporting RS IDs from collection {collection}')
-            logger.debug(f"Using aggregation pipeline: {agg_pipeline}")
+            logger.info(f"Using aggregation pipeline: {agg_pipeline}")
             results = collection_handle.aggregate(agg_pipeline)
             with open(collection_rs_ids_file, 'w+') as f:
-                f.write('\n'.join(r['accession'] for r in results))
+                f.write('\n'.join(str(r['accession']) for r in results))
             collection_rs_ids_files.append(collection_rs_ids_file)
     run_command_with_output("Removing duplicates from RS IDs exported from Mongo",
                             "(cat {0} | sort -u > {1})".format(" ".join(collection_rs_ids_files),
