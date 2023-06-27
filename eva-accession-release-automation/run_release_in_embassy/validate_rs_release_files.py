@@ -417,7 +417,7 @@ def get_missing_ids_attributions(assembly_accession, missing_rs_ids_file, mongo_
         logger.info("All missing RS IDs have been accounted for!")
 
 
-def export_unique_rs_ids_from_mongo(mongo_database_handle, assembly_accession, taxonomy_id, mongo_unique_rs_ids_file):
+def export_unique_rs_ids_from_mongo(mongo_database_handle, taxonomy_id, assembly_accession, mongo_unique_rs_ids_file):
     collection_rs_ids_files = []
     for collection, assembly_attribute_path in collections_assembly_attribute_map.items():
         if "clustered" in collection.lower():
@@ -433,7 +433,7 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, assembly_accession, t
                         "pipeline": [{"$match": {"$expr": {"$and": [
                             {"$eq": ["$rs", "$$rsAccession"]},
                             {"$eq": [f"${assembly_attribute_path}", assembly_accession]},
-                            {"$eq": [f"${taxonomy_attribute_path}", taxonomy_id]},
+                            {"$eq": [f"${taxonomy_attribute_path}", int(taxonomy_id)]},
                         ]}}}],
                         "as": sve_coll
                     }
@@ -445,6 +445,7 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, assembly_accession, t
                 {"$project": {"accession": 1, "_id": 0}}
             ])
             logger.info(f'Exporting RS IDs from collection {collection}')
+            logger.debug(f"Using aggregation pipeline: {agg_pipeline}")
             results = collection_handle.aggregate(agg_pipeline)
             with open(collection_rs_ids_file, 'w+') as f:
                 f.write('\n'.join(r['accession'] for r in results))
@@ -466,7 +467,7 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
             db_handle = client[db_name_in_tempmongo_instance]
             mongo_unique_rs_ids_file = os.path.join(species_release_folder, assembly_accession,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))
-            export_unique_rs_ids_from_mongo(db_handle, assembly_accession, taxonomy_id, mongo_unique_rs_ids_file)
+            export_unique_rs_ids_from_mongo(db_handle, taxonomy_id, assembly_accession, mongo_unique_rs_ids_file)
             unique_release_rs_ids_file = get_unique_release_rs_ids(species_release_folder, taxonomy_id,
                                                                    assembly_accession)
             missing_rs_ids_file = os.path.join(os.path.dirname(unique_release_rs_ids_file),
