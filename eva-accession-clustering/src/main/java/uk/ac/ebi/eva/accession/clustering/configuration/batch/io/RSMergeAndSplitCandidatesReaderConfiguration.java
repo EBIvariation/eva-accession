@@ -82,7 +82,6 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
         //See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/#rangeid=1213746442
         Meta meta = new Meta();
         meta.setCursorBatchSize(parameters.getChunkSize());
-        meta.setMaxTime(Duration.ofHours(2));
         meta.addFlag(Meta.CursorOption.NO_TIMEOUT);
         Query query = query(getSplitCandidatesCriteria(parameters.getAssemblyAccession()));
         query.setMeta(meta);
@@ -102,7 +101,6 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
         //See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/#rangeid=1213746442
         Meta meta = new Meta();
         meta.setCursorBatchSize(parameters.getChunkSize());
-        meta.setMaxTime(Duration.ofHours(2));
         meta.addFlag(Meta.CursorOption.NO_TIMEOUT);
         Query query = query(getMergeCandidatesCriteria(parameters.getAssemblyAccession()));
         query.setMeta(meta);
