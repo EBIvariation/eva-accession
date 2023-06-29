@@ -40,7 +40,7 @@ public class EvaSubmittedVariantMongoReader extends MongoDbCursorItemReader<Subm
 
     public EvaSubmittedVariantMongoReader(String assemblyAccession, MongoTemplate mongoTemplate,
                                           List<String> projects, int taxonomy) {
-        setTemplate(mongoTemplate);
+        setMongoTemplate(mongoTemplate);
         setTargetType(SubmittedVariantEntity.class);
 
         Criteria criteria = where(REFERENCE_SEQUENCE_FIELD).is(assemblyAccession);

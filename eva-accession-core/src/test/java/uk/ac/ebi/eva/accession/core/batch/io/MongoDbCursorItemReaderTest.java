@@ -72,7 +72,7 @@ public class MongoDbCursorItemReaderTest {
     @Before
     public void setUp() {
         reader = new MongoDbCursorItemReader<>();
-        reader.setTemplate(mongoTemplate);
+        reader.setMongoTemplate(mongoTemplate);
         reader.setTargetType(DbsnpSubmittedVariantEntity.class);
     }
 

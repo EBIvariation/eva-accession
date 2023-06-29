@@ -30,9 +30,9 @@ import uk.ac.ebi.eva.accession.clustering.configuration.InputParametersConfigura
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.core.batch.io.MongoDbCursorItemReader;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
-import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -75,12 +75,13 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
                                                                                             InputParameters parameters)
     {
         MongoDbCursorItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoDbCursorItemReader<>();
-        mongoItemReader.setTemplate(mongoTemplate);
+        mongoItemReader.setMongoTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);
         mongoItemReader.setCollection(SUBMITTED_VARIANT_OPERATIONS_COLLECTION);
 
         //See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/#rangeid=1213746442
         Meta meta = new Meta();
+        meta.setCursorBatchSize(parameters.getChunkSize());
         meta.addFlag(Meta.CursorOption.NO_TIMEOUT);
         Query query = query(getSplitCandidatesCriteria(parameters.getAssemblyAccession()));
         query.setMeta(meta);
@@ -93,12 +94,13 @@ public class RSMergeAndSplitCandidatesReaderConfiguration {
                                                                                             InputParameters parameters)
     {
         MongoDbCursorItemReader<SubmittedVariantOperationEntity> mongoItemReader = new MongoDbCursorItemReader<>();
-        mongoItemReader.setTemplate(mongoTemplate);
+        mongoItemReader.setMongoTemplate(mongoTemplate);
         mongoItemReader.setTargetType(SubmittedVariantOperationEntity.class);
         mongoItemReader.setCollection(SUBMITTED_VARIANT_OPERATIONS_COLLECTION);
 
         //See https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/#rangeid=1213746442
         Meta meta = new Meta();
+        meta.setCursorBatchSize(parameters.getChunkSize());
         meta.addFlag(Meta.CursorOption.NO_TIMEOUT);
         Query query = query(getMergeCandidatesCriteria(parameters.getAssemblyAccession()));
         query.setMeta(meta);
