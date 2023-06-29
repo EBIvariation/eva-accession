@@ -25,18 +25,20 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 logger = logging.getLogger(__name__)
 
 
-def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
-                             release_version, species_release_folder, release_jar_path, memory):
+def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
+                             release_species_inventory_table, release_version, species_release_folder, release_jar_path,
+                             memory):
     exit_code = -1
     try:
-        port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
-                                                                              assembly_accession, release_species_inventory_table,
+        port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile,
+                                                                              taxonomy_id, assembly_accession,
+                                                                              release_species_inventory_table,
                                                                               release_version)
-        release_properties_file = create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id,
-                                                                              assembly_accession,
+        release_properties_file = create_release_properties_file_for_assembly(private_config_xml_file, profile,
+                                                                              taxonomy_id, assembly_accession,
                                                                               release_species_inventory_table,
                                                                               release_version, species_release_folder)
-        release_command = 'java -Xmx{0}g -jar {1} --spring.config.location="{2}" -Dspring.data.mongodb.port={3}'\
+        release_command = 'java -Xmx{0}g -jar {1} --spring.config.location=file:{2} -Dspring.data.mongodb.port={3}'\
             .format(memory, release_jar_path, release_properties_file, mongo_port)
         run_command_with_output("Running release pipeline for assembly: " + assembly_accession, release_command)
         exit_code = 0
@@ -61,10 +63,11 @@ def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, asse
 @click.option("--release-jar-path", required=True)
 @click.option("--memory",  help="Memory in GB. ex: 8", default=8, type=int, required=False)
 @click.command()
-def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         species_release_folder, release_jar_path, memory):
-    run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
-                             release_version, species_release_folder, release_jar_path, memory)
+def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
+         release_version, species_release_folder, release_jar_path, memory):
+    run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
+                             release_species_inventory_table, release_version, species_release_folder, release_jar_path,
+                             memory)
 
 
 if __name__ == "__main__":

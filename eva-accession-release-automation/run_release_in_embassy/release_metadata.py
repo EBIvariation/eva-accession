@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
+from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
 release_vcf_file_categories = ["current_ids", "merged_ids", "multimap_ids"]
 release_text_file_categories = ["deprecated_ids", "merged_deprecated_ids"]
@@ -52,22 +52,6 @@ def get_target_mongo_instance_for_assembly(taxonomy_id, assembly, release_specie
         raise Exception(f"Could not find target Mongo instance in Embassy "
                         f"for taxonomy {taxonomy_id} and assembly {assembly}")
 
-    return results[0][0]
-
-
-def get_target_mongo_instance_for_taxonomy(taxonomy_id, release_species_inventory_table, release_version,
-                                           metadata_connection_handle):
-    results = get_all_results_for_query(metadata_connection_handle, "select distinct tempmongo_instance from {0} "
-                                                                    "where taxonomy = '{1}' "
-                                                                    "and release_version = {2} "
-                                                                    "and should_be_released "
-                                                                    "and num_rs_to_release > 0"
-                                        .format(release_species_inventory_table, taxonomy_id, release_version))
-    if len(results) == 0:
-        raise Exception("Could not find target Mongo instance in Embassy for taxonomy ID: " + taxonomy_id)
-    if len(results) > 1:
-        raise Exception("More than one target Mongo instance in Embassy specified for taxonomy ID: {0} "
-                        "in the release inventory table: {1}".format(taxonomy_id, release_species_inventory_table))
     return results[0][0]
 
 
