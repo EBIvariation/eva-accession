@@ -95,9 +95,10 @@ def get_release_file_list_for_assembly(release_assembly_info):
     Get list of release files at assembly level
     for example, see here, ftp://ftp.ebi.ac.uk/pub/databases/eva/rs_releases/release_1/by_assembly/GCA_000001515.4/)
     """
+    taxonomy = release_assembly_info['taxonomy']
     assembly_accession = release_assembly_info["assembly_accession"]
-    vcf_files = [f"{assembly_accession}_{category}.vcf.gz" for category in release_vcf_file_categories]
-    text_files = [f"{assembly_accession}_{category}.txt.gz" for category in release_text_file_categories]
+    vcf_files = [f"{taxonomy}_{assembly_accession}_{category}.vcf.gz" for category in release_vcf_file_categories]
+    text_files = [f"{taxonomy}_{assembly_accession}_{category}.txt.gz" for category in release_text_file_categories]
     csi_files = [f"{filename}.csi" for filename in vcf_files]
     release_file_list = vcf_files + text_files + csi_files + ["README_rs_ids_counts.txt"]
     return sorted(release_file_list)
@@ -136,7 +137,7 @@ def recreate_public_release_assembly_folder(assembly_accession, public_release_a
                             f"mkdir -p {public_release_assembly_folder}")
 
 
-def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties, public_release_assembly_folder,
+def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
                                       public_release_species_assembly_folder):
     assembly_accession = current_release_assembly_info["assembly_accession"]
     species_release_folder_name = current_release_assembly_info["release_folder_name"]
@@ -192,7 +193,7 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
     if current_release_assembly_info["should_be_released"] and \
             current_release_assembly_info["num_rs_to_release"] > 0:
         copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
-                                          public_release_assembly_folder, public_release_species_assembly_folder)
+                                          public_release_species_assembly_folder)
     # Below code to hardlink to previous release commented since we will be releasing everything with new regime
     # else:
     #     # Since the assembly data is unchanged from the last release, hard-link instead of symlink to older release data
@@ -272,7 +273,7 @@ def publish_species_level_files_to_ftp(release_properties, species_current_relea
     # Determine if the unmapped data should be copied from the current or a previous release
     copy_from_current_release = len(glob.glob(os.path.join(species_staging_release_folder_path,
                                                            unmapped_ids_file_regex))) > 0
-    source_folder_to_copy_from = species_current_release_folder_path if copy_from_current_release \
+    source_folder_to_copy_from = species_staging_release_folder_path if copy_from_current_release \
         else species_previous_release_folder_path
 
     copy_unmapped_files(source_folder_to_copy_from, species_current_release_folder_path, copy_from_current_release)
