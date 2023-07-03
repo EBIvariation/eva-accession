@@ -122,18 +122,19 @@ def create_symlink_to_species_folder_from_assembly_folder(current_release_assemb
     species_release_folder_name = current_release_assembly_info["release_folder_name"]
     public_release_assembly_species_folder = os.path.join(public_release_assembly_folder, species_release_folder_name)
     public_release_species_assembly_folder = os.path.join(release_properties.public_ftp_current_release_folder,
-                                                 by_species_folder_name, species_release_folder_name, assembly_accession)
+                                                          by_species_folder_name, species_release_folder_name,
+                                                          assembly_accession)
     run_command_with_output(f"""Creating symlink from assembly folder {public_release_assembly_species_folder} to 
                             species folder {public_release_species_assembly_folder}""",
                             'bash -c "cd {0} && ln -sfT {1} {2}"'.format(public_release_assembly_folder,
-                                os.path.relpath(public_release_species_assembly_folder, public_release_assembly_folder),
-                                public_release_assembly_species_folder))
+                                            os.path.relpath(public_release_species_assembly_folder,
+                                            public_release_assembly_folder), public_release_assembly_species_folder))
 
 
 def recreate_public_release_species_assembly_folder(assembly_accession, public_release_species_assembly_folder):
-    run_command_with_output(f"Removing release folder if it exists for {assembly_accession}...",
+    run_command_with_output(f"Removing species assembly folder for {assembly_accession}...",
                             f"rm -rf {public_release_species_assembly_folder}")
-    run_command_with_output(f"Creating release folder for {assembly_accession}...",
+    run_command_with_output(f"Creating species assembly folder for {assembly_accession}...",
                             f"mkdir -p {public_release_species_assembly_folder}")
 
 
@@ -181,17 +182,15 @@ def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_pro
 #                         .format(public_previous_release_assembly_folder))
 
 
-
-def recreate_public_release_assembly_folder_if_not_exists(assembly_accession, public_release_assembly_folder):
+def create_public_release_assembly_folder_if_not_exists(assembly_accession, public_release_assembly_folder):
     if not os.path.exists(public_release_assembly_folder):
         run_command_with_output(f"Creating release folder for {assembly_accession}...",
-                            f"mkdir -p {public_release_assembly_folder}")
+                                f"mkdir -p {public_release_assembly_folder}")
+
 
 def publish_assembly_release_files_to_ftp(current_release_assembly_info, release_properties,
-                                          species_current_release_folder_name):
+                                          public_release_assembly_folder, species_current_release_folder_name):
     assembly_accession = current_release_assembly_info["assembly_accession"]
-    public_release_assembly_folder = get_folder_path_for_assembly(release_properties.public_ftp_current_release_folder,
-                                                                  assembly_accession)
     public_release_species_assembly_folder = \
         get_folder_path_for_species_assembly(release_properties.public_ftp_current_release_folder,
                                              species_current_release_folder_name, assembly_accession)
@@ -209,8 +208,6 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
 
     # Symlink to release README_general_info file - See layout in the link below:
     # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
-
-    recreate_public_release_assembly_folder_if_not_exists(assembly_accession, public_release_assembly_folder)
     run_command_with_output(f"""Symlinking to release level {readme_general_info_file} and 
                             {readme_known_issues_file} files for assembly {assembly_accession}""",
                             'bash -c "cd {1} && ln -sfT {0}/{2} {1}/{2} && ln -sfT {0}/{3} {1}/{3}"'
@@ -342,7 +339,13 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
         for current_release_assembly_info in \
                 get_release_assemblies_for_release_version(assemblies_to_process, release_properties.release_version):
             if current_release_assembly_info["assembly_accession"] != "Unmapped":
+                assembly_accession = current_release_assembly_info["assembly_accession"]
+                public_release_assembly_folder = get_folder_path_for_assembly(
+                    release_properties.public_ftp_current_release_folder, assembly_accession)
+                create_public_release_assembly_folder_if_not_exists(assembly_accession, public_release_assembly_folder)
+
                 publish_assembly_release_files_to_ftp(current_release_assembly_info, release_properties,
+                                                      public_release_assembly_folder,
                                                       species_current_release_folder_name)
 
         # Symlinks with assembly names in the species folder ex: Sorbi1 -> GCA_000003195.1
