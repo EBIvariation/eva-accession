@@ -130,11 +130,11 @@ def create_symlink_to_species_folder_from_assembly_folder(current_release_assemb
                                 public_release_assembly_species_folder))
 
 
-def recreate_public_release_assembly_folder(assembly_accession, public_release_assembly_folder):
+def recreate_public_release_species_assembly_folder(assembly_accession, public_release_species_assembly_folder):
     run_command_with_output(f"Removing release folder if it exists for {assembly_accession}...",
-                            f"rm -rf {public_release_assembly_folder}")
+                            f"rm -rf {public_release_species_assembly_folder}")
     run_command_with_output(f"Creating release folder for {assembly_accession}...",
-                            f"mkdir -p {public_release_assembly_folder}")
+                            f"mkdir -p {public_release_species_assembly_folder}")
 
 
 def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
@@ -145,7 +145,7 @@ def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_pro
     run_command_with_output(f"Removing md5 checksum file {md5sum_output_file} for assembly if it exists...",
                             f"rm -f {md5sum_output_file}")
 
-    recreate_public_release_assembly_folder(assembly_accession, public_release_species_assembly_folder)
+    recreate_public_release_species_assembly_folder(assembly_accession, public_release_species_assembly_folder)
 
     for filename in get_release_file_list_for_assembly(current_release_assembly_info):
         source_file_path = os.path.join(release_properties.staging_release_folder, species_release_folder_name,
@@ -160,26 +160,32 @@ def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_pro
                                                 os.path.basename(source_file_path) + "\n")
 
 
-def hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_info, release_properties):
-    assembly_accession = current_release_assembly_info["assembly_accession"]
-    public_current_release_assembly_folder = \
-        get_folder_path_for_assembly(release_properties.public_ftp_current_release_folder, assembly_accession)
-    public_previous_release_assembly_folder = \
-        get_folder_path_for_assembly(release_properties.public_ftp_previous_release_folder, assembly_accession)
+# def hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_info, release_properties):
+#     assembly_accession = current_release_assembly_info["assembly_accession"]
+#     public_current_release_assembly_folder = \
+#         get_folder_path_for_assembly(release_properties.public_ftp_current_release_folder, assembly_accession)
+#     public_previous_release_assembly_folder = \
+#         get_folder_path_for_assembly(release_properties.public_ftp_previous_release_folder, assembly_accession)
+#
+#     if os.path.exists(public_previous_release_assembly_folder):
+#         recreate_public_release_assembly_folder(assembly_accession, public_current_release_assembly_folder)
+#         for filename in get_release_file_list_for_assembly(current_release_assembly_info) + ["md5checksums.txt"]:
+#             file_to_hardlink = f"{public_previous_release_assembly_folder}/{filename}"
+#             if os.path.exists(file_to_hardlink):
+#                 run_command_with_output(f"""Creating hardlink from previous release assembly folder
+#                                         {public_current_release_assembly_folder} to current release assembly folder
+#                                         {public_previous_release_assembly_folder}""",
+#                                         f'ln -f {file_to_hardlink} {public_current_release_assembly_folder}')
+#     else:
+#         raise Exception("Previous release folder {0} does not exist for assembly!"
+#                         .format(public_previous_release_assembly_folder))
 
-    if os.path.exists(public_previous_release_assembly_folder):
-        recreate_public_release_assembly_folder(assembly_accession, public_current_release_assembly_folder)
-        for filename in get_release_file_list_for_assembly(current_release_assembly_info) + ["md5checksums.txt"]:
-            file_to_hardlink = f"{public_previous_release_assembly_folder}/{filename}"
-            if os.path.exists(file_to_hardlink):
-                run_command_with_output(f"""Creating hardlink from previous release assembly folder 
-                                        {public_current_release_assembly_folder} to current release assembly folder 
-                                        {public_previous_release_assembly_folder}""",
-                                        f'ln -f {file_to_hardlink} {public_current_release_assembly_folder}')
-    else:
-        raise Exception("Previous release folder {0} does not exist for assembly!"
-                        .format(public_previous_release_assembly_folder))
 
+
+def recreate_public_release_assembly_folder_if_not_exists(assembly_accession, public_release_assembly_folder):
+    if not os.path.exists(public_release_assembly_folder):
+        run_command_with_output(f"Creating release folder for {assembly_accession}...",
+                            f"mkdir -p {public_release_assembly_folder}")
 
 def publish_assembly_release_files_to_ftp(current_release_assembly_info, release_properties,
                                           species_current_release_folder_name):
@@ -203,7 +209,8 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
 
     # Symlink to release README_general_info file - See layout in the link below:
     # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
-    recreate_public_release_assembly_folder(assembly_accession, public_release_assembly_folder)
+
+    recreate_public_release_assembly_folder_if_not_exists(assembly_accession, public_release_assembly_folder)
     run_command_with_output(f"""Symlinking to release level {readme_general_info_file} and 
                             {readme_known_issues_file} files for assembly {assembly_accession}""",
                             'bash -c "cd {1} && ln -sfT {0}/{2} {1}/{2} && ln -sfT {0}/{3} {1}/{3}"'
@@ -346,8 +353,8 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
 def main():
     argparse = ArgumentParser(description='Publish release files to FTP')
     argparse.add_argument('--common_release_properties_file', required=True, type=str,
-                          help='"ex: /path/to/release/properties.yml"')
-    argparse.add_argument('--taxonomy_id', required=True, type=int, help='"ex: 9913"')
+                          help='ex: /path/to/release/properties.yml')
+    argparse.add_argument('--taxonomy_id', required=True, type=int, help='ex: 9913')
 
     args = argparse.parse_args()
 
