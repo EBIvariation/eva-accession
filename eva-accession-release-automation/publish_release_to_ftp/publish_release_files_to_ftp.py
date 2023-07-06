@@ -160,28 +160,6 @@ def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_pro
             open(md5sum_output_file, "a").write(md5sum_output.strip() + "\t" +
                                                 os.path.basename(source_file_path) + "\n")
 
-
-# def hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_info, release_properties):
-#     assembly_accession = current_release_assembly_info["assembly_accession"]
-#     public_current_release_assembly_folder = \
-#         get_folder_path_for_assembly(release_properties.public_ftp_current_release_folder, assembly_accession)
-#     public_previous_release_assembly_folder = \
-#         get_folder_path_for_assembly(release_properties.public_ftp_previous_release_folder, assembly_accession)
-#
-#     if os.path.exists(public_previous_release_assembly_folder):
-#         recreate_public_release_assembly_folder(assembly_accession, public_current_release_assembly_folder)
-#         for filename in get_release_file_list_for_assembly(current_release_assembly_info) + ["md5checksums.txt"]:
-#             file_to_hardlink = f"{public_previous_release_assembly_folder}/{filename}"
-#             if os.path.exists(file_to_hardlink):
-#                 run_command_with_output(f"""Creating hardlink from previous release assembly folder
-#                                         {public_current_release_assembly_folder} to current release assembly folder
-#                                         {public_previous_release_assembly_folder}""",
-#                                         f'ln -f {file_to_hardlink} {public_current_release_assembly_folder}')
-#     else:
-#         raise Exception("Previous release folder {0} does not exist for assembly!"
-#                         .format(public_previous_release_assembly_folder))
-
-
 def create_public_release_assembly_folder_if_not_exists(assembly_accession, public_release_assembly_folder):
     if not os.path.exists(public_release_assembly_folder):
         run_command_with_output(f"Creating release folder for {assembly_accession}...",
@@ -199,12 +177,6 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
             current_release_assembly_info["num_rs_to_release"] > 0:
         copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
                                           public_release_species_assembly_folder)
-    # Below code to hardlink to previous release commented since we will be releasing everything with new regime
-    # else:
-    #     # Since the assembly data is unchanged from the last release, hard-link instead of symlink to older release data
-    #     # so that deleting data in older releases does not impact the newer releases
-    #     # (hard-linking preserves the underlying data for a link until all links to that data are deleted)
-    #     hardlink_to_previous_release_assembly_files_in_ftp(current_release_assembly_info, release_properties)
 
     # Symlink to release README_general_info file - See layout in the link below:
     # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
