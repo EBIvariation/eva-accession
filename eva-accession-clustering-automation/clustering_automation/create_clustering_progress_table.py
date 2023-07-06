@@ -149,30 +149,41 @@ def insert_entry_for_taxonomy_and_assembly(private_config_xml_file, profile, tax
 
 
 def get_assembly_list_for_taxonomy_for_release(private_config_xml_file, profile, release_version, taxonomy):
-    assembly_list = []
+    assembly_source = {}
     with get_metadata_connection_handle(profile, private_config_xml_file) as pg_conn:
-        query = f"""SELECT distinct assembly_accession from eva_progress_tracker.clustering_release_tracker 
+        query = f"""SELECT distinct assembly_accession, sources from eva_progress_tracker.clustering_release_tracker 
                     where taxonomy = {taxonomy} and release_version = {release_version}"""
-        for assembly in get_all_results_for_query(pg_conn, query):
-            assembly_list.append(assembly[0])
+        for assembly, sources in get_all_results_for_query(pg_conn, query):
+            assembly_source[assembly] = sources
 
-        return assembly_list
+        return assembly_source
 
 
 def get_taxonomy_list_for_release(private_config_xml_file, profile, release_version):
-    tax_asm = defaultdict(list)
-    query = f"""select distinct taxonomy, assembly_accession from eva_progress_tracker.clustering_release_tracker
+    tax_asm = defaultdict(defaultdict)
+    query = f"""select distinct taxonomy, assembly_accession, sources 
+                from eva_progress_tracker.clustering_release_tracker
                 where release_version={release_version}"""
     with get_metadata_connection_handle(profile, private_config_xml_file) as pg_conn:
-        for tax, asm_acc in get_all_results_for_query(pg_conn, query):
-            tax_asm[tax].append(asm_acc)
+        for tax, asm_acc, sources in get_all_results_for_query(pg_conn, query):
+            tax_asm[tax][asm_acc] = sources
         return tax_asm
 
 
-def find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, tax, asm):
+def get_sources_for_taxonomy_assembly(private_config_xml_file, profile, release_version, taxonomy, assembly):
+    with get_metadata_connection_handle(profile, private_config_xml_file) as pg_conn:
+        query = f"""SELECT sources from eva_progress_tracker.clustering_release_tracker 
+                    where taxonomy = {taxonomy} and assembly_accession='{assembly}' 
+                    and release_version = {release_version}"""
+
+        result = get_all_results_for_query(pg_conn, query)
+        return result[0][0]
+
+
+def find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, coll, tax, asm):
     search_query = {'tax': tax, 'seq': asm, 'rs': {'$exists': True}}
-    coll = mongo_source.mongo_handle[mongo_source.db_name]['submittedVariantEntity']
-    result = coll.find_one(search_query)
+    collection = mongo_source.mongo_handle[mongo_source.db_name][coll]
+    result = collection.find_one(search_query)
     if result:
         logger.info(f'Found SS with RS for Taxonomy {tax} and Assembly {asm} : SS {result}')
         return True
@@ -181,9 +192,18 @@ def find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, tax, asm):
         return False
 
 
-def fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, tax, asm, profile, release_version,
+def fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, tax, asm, src, profile, release_version,
                                                       mongo_source):
-    should_be_released = find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, tax, asm)
+    should_be_released_eva = should_be_released_dbsnp = False
+
+    if 'EVA' in src:
+        eva_coll = 'submittedVariantEntity'
+        should_be_released_eva = find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, eva_coll, tax, asm)
+    if 'DBSNP' in src:
+        dbsnp_coll = 'dbsnpSubmittedVariantentity'
+        should_be_released_dbsnp = find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, dbsnp_coll, tax, asm)
+
+    should_be_released = should_be_released_eva or should_be_released_dbsnp
     num_rs_to_release = 1 if should_be_released else 0
 
     with get_metadata_connection_handle(profile, private_config_xml_file) as pg_conn:
@@ -194,11 +214,11 @@ def fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, t
         execute_query(pg_conn, update_query)
 
 
-def fill_should_be_released_for_taxonomy(private_config_xml_file, tax, asm_list, profile, release_version,
+def fill_should_be_released_for_taxonomy(private_config_xml_file, tax, asm_sources, profile, release_version,
                                          mongo_source):
-    for asm in asm_list:
-        fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, tax, asm, profile, release_version,
-                                                          mongo_source)
+    for asm_acc in asm_sources:
+        fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, tax, asm_acc, asm_sources[asm_acc],
+                                                          profile, release_version, mongo_source)
 
 
 def fill_should_be_released_for_all_in_release(private_config_xml_file, profile, release_version, mongo_source):
@@ -243,7 +263,7 @@ def main():
                                                 args.reference_directory)
 
         fill_should_be_released_for_all_in_release(args.private_config_xml_file, args.profile, args.release_version,
-                                                  mongo_source)
+                                                   mongo_source)
 
     if 'fill_should_be_released' in args.tasks:
         if not args.taxonomy:
@@ -254,9 +274,11 @@ def main():
             fill_should_be_released_for_taxonomy(args.private_config_xml_file, args.taxonomy, asm_list, args.profile,
                                                  args.release_version, mongo_source)
         else:
+            sources = get_sources_for_taxonomy_assembly(args.private_config_xml_file, args.profile,
+                                                        args.release_version, args.taxonomy, args.assembly)
             fill_should_be_released_for_taxonomy_and_assembly(args.private_config_xml_file, args.taxonomy,
-                                                              args.assembly, args.profile, args.release_version,
-                                                              mongo_source)
+                                                              args.assembly, sources, args.profile,
+                                                              args.release_version, mongo_source)
 
 
 if __name__ == '__main__':
