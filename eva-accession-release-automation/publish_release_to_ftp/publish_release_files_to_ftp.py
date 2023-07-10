@@ -35,7 +35,7 @@ readme_general_info_file = "README_release_general_info.txt"
 readme_known_issues_file = "README_release_known_issues.txt"
 readme_changelog_file = "README_release_changelog.txt"
 species_name_mapping_file = "species_name_mapping.tsv"
-release_top_level_files_to_copy = (species_name_mapping_file, readme_known_issues_file, readme_general_info_file, species_name_mapping_file)
+release_top_level_files_to_copy = (readme_known_issues_file, readme_general_info_file)
 unmapped_ids_file_regex = "*_unmapped_ids.txt.gz"
 logger = logging_config.get_logger(__name__)
 

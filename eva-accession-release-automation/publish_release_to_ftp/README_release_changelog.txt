@@ -1,11 +1,11 @@
-This document describe technical changes associated with the EVA RefSNP release.
+This document describes technical changes associated with the EVA RefSNP release.
 
 EVA RefSNP release 5
 ====================
 
 - Release is now performed per taxonomy of the submitted variants:
-  Previous release contain variant based on their presence on an assembly.
-  From release 5, a variant will only be present if it was found in the specified taxonomy.
+  Previous release contained variants based on their presence on an assembly.
+  From release 5, a variant will only be present in a release file if it was found in the specified taxonomy.
 - The variants previously marked as multi-mapped have now been deprecated and are available in the deprecated file
   of each release.
 - Previously unreleased variant mismatching the reference genome are now release in the deprecated file of each release.
@@ -31,4 +31,4 @@ EVA RefSNP release 2
 EVA RefSNP release 1
 ====================
 
- - Initial release containing only variant defined in dbSNP and ported to EVA
+ - Initial release containing only variants defined in dbSNP and ported to EVA
