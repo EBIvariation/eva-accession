@@ -151,7 +151,6 @@ def insert_entry_for_taxonomy_and_assembly(private_config_xml_file, profile, ref
             # no need to insert again
             if src_in_db == sources or ('EVA' in src_in_db and 'DBSNP' in src_in_db):
                 logger.info(f"Entry already present for taxonomy {tax} and assembly {asm_acc} with sources {sources}")
-                pass
             else:
                 # We have different sources which means we need to update entry to have both DBNSP and EVA in sources
                 update_query = f"""update eva_progress_tracker.clustering_release_tracker set sources='DBSNP, EVA'
@@ -208,7 +207,7 @@ def find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, coll, tax, asm):
         return False
 
 
-def fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, tax, asm, src, profile, release_version,
+def determine_release_for_taxonomy_and_assembly(private_config_xml_file, tax, asm, src, profile, release_version,
                                                       mongo_source):
     should_be_released_eva = should_be_released_dbsnp = False
     if asm != 'Unmapped':
@@ -253,7 +252,7 @@ def fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, t
 def fill_should_be_released_for_taxonomy(private_config_xml_file, tax, asm_sources, profile, release_version,
                                          mongo_source):
     for asm_acc in asm_sources:
-        fill_should_be_released_for_taxonomy_and_assembly(private_config_xml_file, tax, asm_acc, asm_sources[asm_acc],
+        determine_release_for_taxonomy_and_assembly(private_config_xml_file, tax, asm_acc, asm_sources[asm_acc],
                                                           profile, release_version, mongo_source)
 
 
@@ -312,7 +311,7 @@ def main():
         else:
             sources = get_sources_for_taxonomy_assembly(args.private_config_xml_file, args.profile,
                                                         args.release_version, args.taxonomy, args.assembly)
-            fill_should_be_released_for_taxonomy_and_assembly(args.private_config_xml_file, args.taxonomy,
+            determine_release_for_taxonomy_and_assembly(args.private_config_xml_file, args.taxonomy,
                                                               args.assembly, sources, args.profile,
                                                               args.release_version, mongo_source)
 
