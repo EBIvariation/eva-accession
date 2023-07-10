@@ -134,7 +134,7 @@ deprecated due to the following reason(s):
 
 - The position of the variant went beyond the chromosome length
 
-- The position of the variant was imprecise (formerly called multimapped)
+- The position of the variant was imprecise (formerly called multimapped i.e. multiple genomic locations)
 
 - The reference allele provided does not match the reference genome
 
