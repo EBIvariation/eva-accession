@@ -192,7 +192,10 @@ def determine_should_be_released_for_coll(mongo_source, tax, asm, ss_coll, rs_co
         logger.warning(f'No SS with RS found for Taxonomy {tax} and Assembly {asm} in collection {ss_coll}')
 
     # Looking for RS if no SS with RS is found, for cases where there might not be a variant in SS, but there might be a
-    # RS in corresponding CVE collection because of remapping/split operations
+    # RS in corresponding CVE collection.
+    # (For release we will look up against both dbsnpSVE and SVE for records in a given EVA or dbSNP CVE collection but
+    # only if we mark the sources in the release table, see below
+    # https://github.com/EBIvariation/eva-accession/blob/5f827ae8f062ae923a83c16070f6ebf08c544e31/eva-accession-release/src/main/java/uk/ac/ebi/eva/accession/release/batch/io/active/AccessionedVariantMongoReader.java#L83))
     logger.info(f"Looking for RS with Taxonomy {tax} and Assembly {asm} in collection {rs_coll}")
     collection = mongo_source.mongo_handle[mongo_source.db_name][rs_coll]
     rs_with_tax_asm = collection.find_one(rs_query)
