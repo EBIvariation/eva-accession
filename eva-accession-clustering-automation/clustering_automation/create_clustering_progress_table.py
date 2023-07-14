@@ -31,20 +31,6 @@ tempmongo_instances = cycle([f'tempmongo-{instance}' for instance in range(1, 11
 
 all_tasks = ['fill_release_entries', 'fill_should_be_released']
 
-taxonomy_tempmongo_instance = {}
-
-
-def get_tempmongo_instance(pg_conn, taxonomy_id):
-    if not taxonomy_tempmongo_instance:
-        query = "select taxonomy, tempmongo_instance from eva_progress_tracker.clustering_release_tracker where tempmongo_instance is not null"
-        for taxonomy, tempmongo_instance in get_all_results_for_query(pg_conn, query):
-            taxonomy_tempmongo_instance[taxonomy] = tempmongo_instance
-
-    if taxonomy_id not in taxonomy_tempmongo_instance:
-        taxonomy_tempmongo_instance[taxonomy_id] = next(tempmongo_instances)
-    return taxonomy_tempmongo_instance[taxonomy_id]
-
-
 def create_table_if_not_exists(private_config_xml_file):
     query_create_table = (
         'create table if not exists eva_progress_tracker.clustering_release_tracker('
@@ -92,8 +78,8 @@ def fill_in_from_previous_release(private_config_xml_file, profile, curr_release
     with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         for tax, sc_name, asm_acc, src, fs_path, rpt_path, rls_folder_name in get_all_results_for_query(pg_conn, query):
             insert_entry_for_taxonomy_and_assembly(private_config_xml_file, profile, ref_dir, tax, asm_acc,
-                                                    curr_release_version, src,  sc_name, fs_path, rpt_path,
-                                                    rls_folder_name)
+                                                   curr_release_version, src, sc_name, fs_path, rpt_path,
+                                                   rls_folder_name)
 
 
 def fill_in_from_eva(private_config_xml_file, profile, release_version, ref_dir):
@@ -133,7 +119,7 @@ def insert_entry_for_taxonomy_and_assembly(private_config_xml_file, profile, ref
         report_path = report_path if report_path else ncbi_assembly.assembly_report_path
         release_folder_name = release_folder_name if release_folder_name else normalise_taxon_scientific_name(sc_name)
 
-        tempongo_instance = get_tempmongo_instance(pg_conn, tax)
+        tempongo_instance = next(tempmongo_instances)
         src_in_db = get_sources_for_taxonomy_assembly(private_config_xml_file, profile, release_version, tax, asm_acc)
 
         if not src_in_db:
@@ -195,34 +181,56 @@ def get_sources_for_taxonomy_assembly(private_config_xml_file, profile, release_
             return result[0][0]
 
 
-def find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, coll, tax, asm):
-    search_query = {'tax': tax, 'seq': asm, 'rs': {'$exists': True}}
-    collection = mongo_source.mongo_handle[mongo_source.db_name][coll]
-    result = collection.find_one(search_query)
-    if result:
-        logger.info(f'Found SS with RS for Taxonomy {tax} and Assembly {asm} : SS {result}')
+def determine_should_be_released_for_coll(mongo_source, tax, asm, ss_coll, rs_coll, ss_query, rs_query):
+    logger.info(f"Looking for SS with RS for Taxonomy {tax} and Assembly {asm} in collection {ss_coll}")
+    collection = mongo_source.mongo_handle[mongo_source.db_name][ss_coll]
+    ss_with_rs = collection.find_one(ss_query)
+    if ss_with_rs:
+        logger.info(f'Found SS with RS for Taxonomy {tax} and Assembly {asm} in collection {ss_coll}, SS: {ss_with_rs}')
         return True
     else:
-        logger.warning(f'No SS with RS found for Taxonomy {tax} and Assembly {asm} in collection {coll}')
+        logger.warning(f'No SS with RS found for Taxonomy {tax} and Assembly {asm} in collection {ss_coll}')
+
+    # Looking for RS if no SS with RS is found, for cases where there might not be a variant in SS, but there might be a
+    # RS in corresponding CVE collection.
+    # (For release we will look up against both dbsnpSVE and SVE for records in a given EVA or dbSNP CVE collection but
+    # only if we mark the sources in the release table, see below
+    # https://github.com/EBIvariation/eva-accession/blob/5f827ae8f062ae923a83c16070f6ebf08c544e31/eva-accession-release/src/main/java/uk/ac/ebi/eva/accession/release/batch/io/active/AccessionedVariantMongoReader.java#L83))
+    logger.info(f"Looking for RS with Taxonomy {tax} and Assembly {asm} in collection {rs_coll}")
+    collection = mongo_source.mongo_handle[mongo_source.db_name][rs_coll]
+    rs_with_tax_asm = collection.find_one(rs_query)
+    if rs_with_tax_asm:
+        logger.info(f'Found RS with Taxonomy {tax} and Assembly {asm} in collection {rs_coll}, RS: {rs_with_tax_asm}')
+        return True
+    else:
+        logger.warning(f'No RS found for Taxonomy {tax} and Assembly {asm} in collection {ss_coll}')
         return False
 
 
 def determine_release_for_taxonomy_and_assembly(private_config_xml_file, tax, asm, src, profile, release_version,
-                                                      mongo_source):
+                                                mongo_source):
     should_be_released_eva = should_be_released_dbsnp = False
     if asm != 'Unmapped':
+        ss_query = {'tax': tax, 'seq': asm, 'rs': {'$exists': True}}
+        rs_query = {'tax': tax, 'asm': asm}
         if 'EVA' in src:
-            eva_coll = 'submittedVariantEntity'
-            should_be_released_eva = find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, eva_coll, tax, asm)
+            eva_ss_coll = 'submittedVariantEntity'
+            eva_rs_coll = 'clusteredVariantEntity'
+            should_be_released_eva = determine_should_be_released_for_coll(mongo_source, tax, asm, eva_ss_coll,
+                                                                            eva_rs_coll, ss_query, rs_query)
         if 'DBSNP' in src:
-            dbsnp_coll = 'dbsnpSubmittedVariantentity'
-            should_be_released_dbsnp = find_if_any_ss_has_rs_for_tax_and_asm(mongo_source, dbsnp_coll, tax, asm)
+            dbsnp_ss_coll = 'dbsnpSubmittedVariantEntity'
+            dbsnp_rs_coll = 'dbsnpClusteredVariantEntity'
+            should_be_released_dbsnp = determine_should_be_released_for_coll(mongo_source, tax, asm, dbsnp_ss_coll,
+                                                                              dbsnp_rs_coll, ss_query, rs_query)
 
         should_be_released = should_be_released_eva or should_be_released_dbsnp
     else:
         should_be_released = False
 
-    logger.info(f"For taxonomy {tax} and assembly {asm}, should_be_released is {should_be_released}")
+    logger.info(f"For taxonomy {tax} and assembly {asm}, should_be_released is {should_be_released} "
+                f"(should_be_released_eva = {should_be_released_eva}, "
+                f"should_be_released_dbsnp = {should_be_released_dbsnp})")
     num_rs_to_release = 1 if should_be_released else 0
 
     with get_metadata_connection_handle(profile, private_config_xml_file) as pg_conn:
@@ -236,12 +244,16 @@ def determine_release_for_taxonomy_and_assembly(private_config_xml_file, tax, as
         # to release, then remove that from the sources
         if should_be_released and ('DBSNP' in src and 'EVA' in src):
             if not should_be_released_dbsnp or not should_be_released_eva:
-                if not should_be_released_eva:
-                    logger.info(f"For taxonomy {tax} and assembly {asm}, EVA does not have any variants to release")
-                    sources = 'DBSNP'
-                elif not should_be_released_dbsnp:
-                    logger.info(f"For taxonomy {tax} and assembly {asm}, DBSNP does not have any variants to release")
+                if should_be_released_eva:
+                    logger.info(f"For taxonomy {tax} and assembly {asm}, "
+                                f"putting the source as EVA as DBSNP does not have any variants to release")
                     sources = 'EVA'
+                elif should_be_released_dbsnp:
+                    logger.info(f"For taxonomy {tax} and assembly {asm}, "
+                                f"putting the source as DBSNP as EVA does not have any variants to release")
+                    sources = 'DBSNP'
+
+                logger.info(f"For tax {tax} and assembly {asm} Updating sources to {sources}")
 
                 update_sources_query = f"""update eva_progress_tracker.clustering_release_tracker 
                             set sources='{sources}' where taxonomy={tax} and assembly_accession='{asm}' 
@@ -253,7 +265,7 @@ def fill_should_be_released_for_taxonomy(private_config_xml_file, tax, asm_sourc
                                          mongo_source):
     for asm_acc in asm_sources:
         determine_release_for_taxonomy_and_assembly(private_config_xml_file, tax, asm_acc, asm_sources[asm_acc],
-                                                          profile, release_version, mongo_source)
+                                                    profile, release_version, mongo_source)
 
 
 def fill_should_be_released_for_all_in_release(private_config_xml_file, profile, release_version, mongo_source):
@@ -312,8 +324,8 @@ def main():
             sources = get_sources_for_taxonomy_assembly(args.private_config_xml_file, args.profile,
                                                         args.release_version, args.taxonomy, args.assembly)
             determine_release_for_taxonomy_and_assembly(args.private_config_xml_file, args.taxonomy,
-                                                              args.assembly, sources, args.profile,
-                                                              args.release_version, mongo_source)
+                                                        args.assembly, sources, args.profile,
+                                                        args.release_version, mongo_source)
 
 
 if __name__ == '__main__':
