@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import datetime
 
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
@@ -22,11 +23,19 @@ asm_report_output_file_pattern = "*.vcf.text_assembly_report.*"
 
 def update_release_progress_status(metadata_connection_handle, release_species_inventory_table, taxonomy,
                                    assembly_accession, release_version, release_status):
-    update_status_query = f"update {release_species_inventory_table} " \
-                          f"set release_status = '{release_status}' " \
-                          f"where taxonomy = {taxonomy} " \
-                          f"and assembly_accession = '{assembly_accession}' " \
-                          f"and release_version = {release_version};"
+    if release_status == 'Started':
+        date_to_change = 'release_start'
+    else:
+        date_to_change = 'release_end'
+    now = datetime.datetime.now().isoformat()
+    update_status_query = (
+        f"update {release_species_inventory_table} " 
+        f"set release_status = '{release_status}' " 
+        f"set {date_to_change} = '{release_status}' " 
+        f"where taxonomy = {taxonomy} " 
+        f"and assembly_accession = '{assembly_accession}' " 
+        f"and release_version = {release_version};"
+    )
     with metadata_connection_handle.cursor() as cursor:
         cursor.execute(update_status_query)
     metadata_connection_handle.commit()
