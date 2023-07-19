@@ -447,9 +447,10 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, taxonomy_id, assembly
             ])
             logger.info(f'Exporting RS IDs from collection {collection}')
             logger.info(f"Using aggregation pipeline: {agg_pipeline}")
-            results = collection_handle.aggregate(agg_pipeline)
+            file_content = '\n'.join(str(r['accession']) for r in collection_handle.aggregate(agg_pipeline))
             with open(collection_rs_ids_file, 'w+') as f:
-                f.write('\n'.join(str(r['accession']) for r in results) + '\n')
+                if file_content:
+                    f.write(file_content + '\n')
             collection_rs_ids_files.append(collection_rs_ids_file)
     run_command_with_output("Removing duplicates from RS IDs exported from Mongo",
                             "(cat {0} | sort -u > {1})".format(" ".join(collection_rs_ids_files),
