@@ -30,8 +30,7 @@ def update_release_progress_status(metadata_connection_handle, release_species_i
     now = datetime.datetime.now().isoformat()
     update_status_query = (
         f"update {release_species_inventory_table} " 
-        f"set release_status = '{release_status}' " 
-        f"set {date_to_change} = '{release_status}' " 
+        f"set release_status = '{release_status}', {date_to_change} = '{now}' " 
         f"where taxonomy = {taxonomy} " 
         f"and assembly_accession = '{assembly_accession}' " 
         f"and release_version = {release_version};"
