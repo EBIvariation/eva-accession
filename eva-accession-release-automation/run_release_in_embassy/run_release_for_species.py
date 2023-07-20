@@ -31,37 +31,40 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 copy_process = "copy_accessioning_collections_to_embassy"
 # Processes, in order, that make up the workflow and the arguments that they take
 workflow_process_arguments_map = collections.OrderedDict(
-    [(copy_process, ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
-                     "release-species-inventory-table", "release-version", "dump-dir"]),
-     ("run_release_for_assembly", ["private-config-xml-file", "profile", "taxonomy-id",
-                                   "assembly-accession", "release-species-inventory-table",
-                                   "release-version", "species-release-folder", "release-jar-path",
-                                   "memory"]),
-     ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "profile", "bgzip-path", "bcftools-path",
-                                        "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
-                                        "release-species-inventory-table", "release-version",
-                                        "species-release-folder"]),
-     ("sort_bgzip_index_release_files", ["bgzip-path", "bcftools-path",
-                                         "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
-                                         "species-release-folder"]),
-     ("validate_release_vcf_files", ["private-config-xml-file", "profile", "taxonomy-id",
-                                     "assembly-accession", "release-species-inventory-table", "release-version",
-                                     "species-release-folder",
-                                     "vcf-validator-path", "assembly-checker-path"]),
-     ("analyze_vcf_validation_results", ["species-release-folder", "assembly-accession"]),
-     ("count_rs_ids_in_release_files", ["count-ids-script-path", "taxonomy-id", "assembly-accession",
-                                        "species-release-folder"]),
-     ("validate_rs_release_files", ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
-                                    "release-species-inventory-table", "release-version", "species-release-folder"]),
-     ('update_sequence_names_to_ena', ["taxonomy-id", "assembly-accession", "species-release-folder",
-                                       'sequence-name-converter-path', 'bcftools-path']),
-     ("update_release_status_for_assembly", ["private-config-xml-file", "profile", "release-species-inventory-table",
-                                             "taxonomy-id", "assembly-accession", "release-version"])
+    [
+        ("initiate_release_status_for_assembly", ["private-config-xml-file", "profile", "release-species-inventory-table",
+                                                  "taxonomy-id", "assembly-accession", "release-version"]),
+        (copy_process, ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
+                        "release-species-inventory-table", "release-version", "dump-dir"]),
+        ("run_release_for_assembly", ["private-config-xml-file", "profile", "taxonomy-id",
+                                      "assembly-accession", "release-species-inventory-table",
+                                      "release-version", "species-release-folder", "release-jar-path",
+                                      "memory"]),
+        ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "profile", "bgzip-path", "bcftools-path",
+                                           "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
+                                           "release-species-inventory-table", "release-version",
+                                           "species-release-folder"]),
+        ("sort_bgzip_index_release_files", ["bgzip-path", "bcftools-path",
+                                            "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
+                                            "species-release-folder"]),
+        ("validate_release_vcf_files", ["private-config-xml-file", "profile", "taxonomy-id",
+                                        "assembly-accession", "release-species-inventory-table", "release-version",
+                                        "species-release-folder",
+                                        "vcf-validator-path", "assembly-checker-path"]),
+        ("analyze_vcf_validation_results", ["species-release-folder", "assembly-accession"]),
+        ("count_rs_ids_in_release_files", ["count-ids-script-path", "taxonomy-id", "assembly-accession",
+                                           "species-release-folder"]),
+        ("validate_rs_release_files", ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
+                                       "release-species-inventory-table", "release-version", "species-release-folder"]),
+        ('update_sequence_names_to_ena', ["taxonomy-id", "assembly-accession", "species-release-folder",
+                                          'sequence-name-converter-path', 'bcftools-path']),
+        ("update_release_status_for_assembly", ["private-config-xml-file", "profile", "release-species-inventory-table",
+                                                "taxonomy-id", "assembly-accession", "release-version", "status"])
      ])
 
 workflow_process_template_for_nextflow = """
 process {workflow-process-name} {{
-    memory='{memory} GB'
+
     {cluster-options}
     input:
         val flag from {previous-process-output-flag}
@@ -75,8 +78,8 @@ process {workflow-process-name} {{
 """
 
 
-def get_release_properties_for_current_species(common_release_properties, taxonomy_id, memory):
-    release_properties = {"taxonomy-id": taxonomy_id, "memory": memory,
+def get_release_properties_for_current_species(common_release_properties, taxonomy_id):
+    release_properties = {"taxonomy-id": taxonomy_id,
                           "species-release-folder": os.path.join(common_release_properties["release-folder"],
                                                                  get_release_folder_name(taxonomy_id))}
     os.makedirs(release_properties["species-release-folder"], exist_ok=True)
@@ -112,11 +115,11 @@ def get_nextflow_process_definition(assembly_release_properties, workflow_proces
     return workflow_process_template_for_nextflow.format(**release_properties)
 
 
-def prepare_release_workflow_file_for_species(common_release_properties, taxonomy_id, assembly_accession, memory):
+def prepare_release_workflow_file_for_species(common_release_properties, taxonomy_id, assembly_accession):
     process_index = 1
     release_properties = merge_two_dicts(common_release_properties,
                                          get_release_properties_for_current_species(common_release_properties,
-                                                                                    taxonomy_id, memory))
+                                                                                    taxonomy_id))
     release_assembly_properties = merge_two_dicts(release_properties,
                                          get_release_properties_for_current_assembly(release_properties,
                                                                                      assembly_accession))
@@ -155,7 +158,7 @@ def get_common_release_properties(common_release_properties_file):
     return yaml.load(open(common_release_properties_file), Loader=yaml.FullLoader)
 
 
-def run_release_for_species(common_release_properties_file, taxonomy_id, release_assemblies, memory):
+def run_release_for_species(common_release_properties_file, taxonomy_id, release_assemblies):
     common_release_properties = get_common_release_properties(common_release_properties_file)
     private_config_xml_file = common_release_properties["private-config-xml-file"]
     profile = common_release_properties["profile"]
@@ -168,8 +171,7 @@ def run_release_for_species(common_release_properties_file, taxonomy_id, release
         for assembly_accession in release_assemblies:
             workflow_file_name, release_log_file = prepare_release_workflow_file_for_species(common_release_properties,
                                                                                              taxonomy_id,
-                                                                                             assembly_accession,
-                                                                                             memory)
+                                                                                             assembly_accession)
             workflow_report_file_name = workflow_file_name.replace(".nf", ".report.html")
             if os.path.exists(workflow_report_file_name):
                 os.remove(workflow_report_file_name)
@@ -189,9 +191,8 @@ def main():
     argparse.add_argument("--common-release-properties-file", help="ex: /path/to/release/properties.yml", required=True)
     argparse.add_argument("--taxonomy-id", help="ex: 9913", required=True)
     argparse.add_argument("--assembly-accessions", nargs='+', help="ex: GCA_000003055.3")
-    argparse.add_argument("--memory", help="Memory in GB. ex: 8", default=8, type=int, required=False)
     args = argparse.parse_args()
-    run_release_for_species(args.common_release_properties_file, args.taxonomy_id, args.assembly_accessions, args.memory)
+    run_release_for_species(args.common_release_properties_file, args.taxonomy_id, args.assembly_accessions)
 
 
 if __name__ == "__main__":
