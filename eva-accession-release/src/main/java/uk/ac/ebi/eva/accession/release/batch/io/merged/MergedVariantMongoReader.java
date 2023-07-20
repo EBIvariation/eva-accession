@@ -211,11 +211,12 @@ public class MergedVariantMongoReader extends VariantMongoAggregationReader {
         }
 
         if (!hasSubmittedVariantsDeclustered && mergedVariants.isEmpty()) {
-            throw new IllegalStateException ("Found merge operation for rs" + rs + " but no SS IDs updates " +
-                                                     "(merge/update) in the collection containing operations. " +
-                                                     "Since every RS ID in dbSNP is associated with at least one SS " +
-                                                     "ID, the latter must be updated when the former are merged, " +
-                                                     "unless they have been previously declustered (RS ID = null).");
+            logger.warn("Found merge operation for rs" + rs + " but no SS IDs updates " +
+                                "(merge/update) in the collection containing operations. " +
+                                "This could have possibly happened on a remapped variant " +
+                                "because there was a subsequent split issued for this RS due to loci disagreement " +
+                                "between the RS and the SS.");
+            return Collections.emptyList();
         }
 
         return new ArrayList<>(mergedVariants.values());
