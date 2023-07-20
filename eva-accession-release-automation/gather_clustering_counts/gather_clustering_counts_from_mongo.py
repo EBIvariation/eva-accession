@@ -1,39 +1,69 @@
 import argparse
-import glob
 import os
 import pickle
-import re
-from pytz import timezone
 
 import psycopg2
+import psycopg2.extras
 from collections import defaultdict
 from datetime import datetime
 
 from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_common_pyutils.mongodb import MongoDatabase
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile
+from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile, get_accession_pg_creds_for_profile
 from ebi_eva_common_pyutils.pg_utils import execute_query, get_all_results_for_query
-from gather_clustering_counts.gather_per_species_clustering_counts import assembly_table_name
-
+from gather_clustering_counts.gather_per_species_clustering_counts import assembly_table_name, tracker_table_name
+from urllib.parse import urlsplit
 
 logger = logging_config.get_logger(__name__)
 logging_config.add_stdout_handler()
 taxonomy_scientific_name_map = {}
+assembly_taxonomy_map = defaultdict(set)
 
 
-def gather_count_from_mongo(clustering_dir, remapping_dir, mongo_source, private_config_xml_file, release_version):
-    # Assume the directory structure:
-    # clustering_dir --> <scientific_name_taxonomy_id> --> <assembly_accession> --> cluster_<date>.log_dict
-    all_clustering_logs_pattern = os.path.join(clustering_dir, '*', 'GCA_*', 'cluster_*.log')
-    # Beginning release 4, clustering of new studies is also carried out during remapping
-    all_remapping_logs_pattern = os.path.join(remapping_dir, '*', 'GCA_*', 'logs', '*_clustering.log')
-    all_log_files = glob.glob(all_clustering_logs_pattern) + glob.glob(all_remapping_logs_pattern)
+def get_release_end_timestamps_from_last_release(private_config_xml_file, current_release_version) -> dict:
+    """
+    Get release end timestamps from last release for all assemblies
+    """
+    assembly_timestamp_map = {}
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
+                          user="evapro") as metadata_connection_handle:
+        prev_release_end_timestamp_query = "select assembly_accession, " \
+                                           "max(release_end)::timestamp AT TIME ZONE 'Europe/London' " \
+                                           "as last_release_end_timestamp from " \
+                                           f"{tracker_table_name} " \
+                                           f"where release_version < {current_release_version} " \
+                                           f"and release_end is not null " \
+                                           "group by assembly_accession"
+        for result in get_all_results_for_query(metadata_connection_handle, prev_release_end_timestamp_query):
+            assembly_timestamp_map[result[0]] = result[1]
+    return assembly_timestamp_map
 
+
+def get_all_assemblies_for_current_release(private_config_xml_file, current_release_version):
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
+                          user="evapro") as metadata_connection_handle:
+        query_to_get_release_end_timestamp = "select distinct assembly_accession from " \
+                                             f"{tracker_table_name} " \
+                                             f"where release_version = {current_release_version} "
+    return [x[0] for x in get_all_results_for_query(metadata_connection_handle, query_to_get_release_end_timestamp)]
+
+
+def gather_count_from_mongo(mongo_source, private_config_xml_file, release_version):
+    ranges_per_assembly = defaultdict(dict)
+    current_release_assemblies = get_all_assemblies_for_current_release(private_config_xml_file, release_version)
+    prev_release_end_timestamp_per_assembly = get_release_end_timestamps_from_last_release(private_config_xml_file,
+                                                                                           release_version)
     # Only run if dump files don't already exist
-    ranges_fp = 'ranges_per_assembly.pkl'
-    metrics_fp = 'metrics_per_assembly.pkl'
+    ranges_fp = f'ranges_release_{release_version}.pkl'
+    metrics_fp = f'metrics_release_{release_version}.pkl'
     if not os.path.exists(ranges_fp):
-        ranges_per_assembly = get_assembly_info_and_date_ranges(all_log_files)
+        for assembly_accession in current_release_assemblies:
+            prev_release_end_timestamp_for_assembly = prev_release_end_timestamp_per_assembly.get(assembly_accession,
+                                                                                                  None)
+            time_ranges_by_job_id_from_job_tracker = get_time_ranges_by_job_id_from_job_tracker(
+                assembly_accession, private_config_xml_file, prev_release_end_timestamp_for_assembly)
+            ranges_per_assembly.update(get_assembly_info_and_date_ranges(assembly_accession,
+                                                                         time_ranges_by_job_id_from_job_tracker))
         pickle.dump(ranges_per_assembly, open(ranges_fp, 'wb+'))
     else:
         ranges_per_assembly = pickle.load(open(ranges_fp, 'rb'))
@@ -46,7 +76,7 @@ def gather_count_from_mongo(clustering_dir, remapping_dir, mongo_source, private
     insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_per_assembly, release_version)
 
 
-def get_assembly_info_and_date_ranges(all_log_files):
+def get_assembly_info_and_date_ranges(assembly_accession, time_ranges_by_job_id: dict) -> dict:
     """
     Parse all the log files and retrieve assembly basic information (taxonomy, scientific name) and the date ranges
     where all jobs and steps were run during the clustering process
@@ -69,11 +99,8 @@ def get_assembly_info_and_date_ranges(all_log_files):
     }
     """
     ranges_per_assembly = defaultdict(dict)
-    for log_file in all_log_files:
-        logger.info('Parse log_dict file: ' + log_file)
-        scientific_name, taxid, assembly_accession = parse_log_file_path(log_file)
-        log_metric_date_range = parse_one_log(log_file)
-
+    for job_id, job_id_time_ranges in time_ranges_by_job_id.items():
+        logger.info('Process Job ID: ' + str(job_id))
         if assembly_accession not in ranges_per_assembly:
             ranges_per_assembly[assembly_accession] = defaultdict(dict)
             ranges_per_assembly[assembly_accession]['metrics'] = defaultdict(dict)
@@ -81,67 +108,135 @@ def get_assembly_info_and_date_ranges(all_log_files):
         # species info - a list of (taxonomy, scientific name) associated with this assembly
         if 'species_info' not in ranges_per_assembly[assembly_accession]:
             ranges_per_assembly[assembly_accession]['species_info'] = set()
-        ranges_per_assembly[assembly_accession]['species_info'].add((taxid, scientific_name))
+            for taxid in assembly_taxonomy_map[assembly_accession]:
+                ranges_per_assembly[assembly_accession]['species_info'].add((taxid,
+                                                                             taxonomy_scientific_name_map[taxid]))
 
         # new_remapped_current_rs
-        if 'CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP' in log_metric_date_range:
-            ranges_per_assembly[assembly_accession]['metrics']['new_remapped_current_rs'][log_file] = {
-                'from': log_metric_date_range['CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP'],
-                'to': log_metric_date_range['CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP']
-                if "CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP" in log_metric_date_range
-                else log_metric_date_range["last_timestamp"]
+        if 'CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP' in job_id_time_ranges:
+            ranges_per_assembly[assembly_accession]['metrics']['new_remapped_current_rs'][job_id] = {
+                'from': job_id_time_ranges['CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP'],
+                'to': job_id_time_ranges['CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP']
+                if "CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP" in job_id_time_ranges
+                else job_id_time_ranges["last_timestamp"]
             }
         # new_clustered_current_rs
-        if 'CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP' in log_metric_date_range:
-            ranges_per_assembly[assembly_accession]['metrics']['new_clustered_current_rs'][log_file] = {
-                'from': log_metric_date_range['CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP'],
-                'to': log_metric_date_range['CLUSTER_UNCLUSTERED_VARIANTS_JOB']["completed"]
-                if "completed" in log_metric_date_range['CLUSTER_UNCLUSTERED_VARIANTS_JOB']
-                else log_metric_date_range["last_timestamp"]
+        if 'CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP' in job_id_time_ranges:
+            ranges_per_assembly[assembly_accession]['metrics']['new_clustered_current_rs'][job_id] = {
+                'from': job_id_time_ranges['CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP'],
+                'to': job_id_time_ranges['CLUSTER_UNCLUSTERED_VARIANTS_JOB']["completed"]
+                if "completed" in job_id_time_ranges['CLUSTER_UNCLUSTERED_VARIANTS_JOB']
+                else job_id_time_ranges["last_timestamp"]
             }
         study_clustering_step_name = 'STUDY_CLUSTERING_STEP'
         study_clustering_job_name = 'STUDY_CLUSTERING_JOB'
         # new_clustered_current_rs
-        if study_clustering_step_name in log_metric_date_range:
-            ranges_per_assembly[assembly_accession]['metrics']['new_clustered_current_rs'][log_file] = {
-                'from': log_metric_date_range[study_clustering_step_name],
-                'to': log_metric_date_range[study_clustering_job_name]["completed"]
-                if "completed" in log_metric_date_range[study_clustering_job_name]
-                else log_metric_date_range["last_timestamp"]
+        if study_clustering_step_name in job_id_time_ranges:
+            ranges_per_assembly[assembly_accession]['metrics']['new_clustered_current_rs'][job_id] = {
+                'from': job_id_time_ranges[study_clustering_step_name],
+                'to': job_id_time_ranges[study_clustering_job_name]["completed"]
+                if "completed" in job_id_time_ranges[study_clustering_job_name]
+                else job_id_time_ranges["last_timestamp"]
             }
         # merged_rs
-        if 'PROCESS_RS_MERGE_CANDIDATES_STEP' in log_metric_date_range:
-            ranges_per_assembly[assembly_accession]['metrics']['merged_rs'][log_file] = {
-                'from': log_metric_date_range['PROCESS_RS_MERGE_CANDIDATES_STEP'],
-                'to': log_metric_date_range['PROCESS_RS_SPLIT_CANDIDATES_STEP']
-                if "PROCESS_RS_SPLIT_CANDIDATES_STEP" in log_metric_date_range
-                else log_metric_date_range["last_timestamp"]
+        if 'PROCESS_RS_MERGE_CANDIDATES_STEP' in job_id_time_ranges:
+            ranges_per_assembly[assembly_accession]['metrics']['merged_rs'][job_id] = {
+                'from': job_id_time_ranges['PROCESS_RS_MERGE_CANDIDATES_STEP'],
+                'to': job_id_time_ranges['PROCESS_RS_SPLIT_CANDIDATES_STEP']
+                if "PROCESS_RS_SPLIT_CANDIDATES_STEP" in job_id_time_ranges
+                else job_id_time_ranges["last_timestamp"]
             }
         # split_rs
-        if 'PROCESS_RS_SPLIT_CANDIDATES_STEP' in log_metric_date_range:
-            ranges_per_assembly[assembly_accession]['metrics']['split_rs'][log_file] = {
-                'from': log_metric_date_range['PROCESS_RS_SPLIT_CANDIDATES_STEP'],
-                'to': log_metric_date_range['CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP']
-                if "CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP" in log_metric_date_range
-                else log_metric_date_range["last_timestamp"]
+        if 'PROCESS_RS_SPLIT_CANDIDATES_STEP' in job_id_time_ranges:
+            ranges_per_assembly[assembly_accession]['metrics']['split_rs'][job_id] = {
+                'from': job_id_time_ranges['PROCESS_RS_SPLIT_CANDIDATES_STEP'],
+                'to': job_id_time_ranges['CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP']
+                if "CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP" in job_id_time_ranges
+                else job_id_time_ranges["last_timestamp"]
             }
         # new_ss_clustered
-        if 'CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP' in log_metric_date_range:
-            ranges_per_assembly[assembly_accession]['metrics']['new_ss_clustered'][log_file] = {
-                'from': log_metric_date_range['CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP'],
-                'to': log_metric_date_range['CLUSTER_UNCLUSTERED_VARIANTS_JOB']["completed"]
-                if "completed" in log_metric_date_range['CLUSTER_UNCLUSTERED_VARIANTS_JOB']
-                else log_metric_date_range["last_timestamp"]
+        if 'CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP' in job_id_time_ranges:
+            ranges_per_assembly[assembly_accession]['metrics']['new_ss_clustered'][job_id] = {
+                'from': job_id_time_ranges['CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP'],
+                'to': job_id_time_ranges['CLUSTER_UNCLUSTERED_VARIANTS_JOB']["completed"]
+                if "completed" in job_id_time_ranges['CLUSTER_UNCLUSTERED_VARIANTS_JOB']
+                else job_id_time_ranges["last_timestamp"]
             }
         # new_ss_clustered
-        if study_clustering_step_name in log_metric_date_range:
-            ranges_per_assembly[assembly_accession]['metrics']['new_ss_clustered'][log_file] = {
-                'from': log_metric_date_range[study_clustering_step_name],
-                'to': log_metric_date_range[study_clustering_job_name]["completed"]
-                if "completed" in log_metric_date_range[study_clustering_job_name]
-                else log_metric_date_range["last_timestamp"]
+        if study_clustering_step_name in job_id_time_ranges:
+            ranges_per_assembly[assembly_accession]['metrics']['new_ss_clustered'][job_id] = {
+                'from': job_id_time_ranges[study_clustering_step_name],
+                'to': job_id_time_ranges[study_clustering_job_name]["completed"]
+                if "completed" in job_id_time_ranges[study_clustering_job_name]
+                else job_id_time_ranges["last_timestamp"]
             }
     return ranges_per_assembly
+
+
+def get_time_ranges_by_job_id_from_job_tracker(assembly_accession, private_config_xml_file,
+                                               prev_release_end_timestamp_for_assembly: datetime = None):
+    # Job and step start/end times by job ID
+    time_ranges_by_job_id = defaultdict(dict)
+    url, username, password = get_accession_pg_creds_for_profile("production_processing", private_config_xml_file)
+    accessioning_job_tracker_handle = psycopg2.connect(urlsplit(url).path, user=username, password=password,
+                                                       cursor_factory=psycopg2.extras.RealDictCursor)
+    # See clustering jobs here: https://github.com/EBIvariation/eva-accession/blob/5f827ae8f062ae923a83c16070f6ebf08c544e31/eva-accession-clustering/src/main/java/uk/ac/ebi/eva/accession/clustering/configuration/BeanNames.java#L76
+    jobs = ["CLUSTERING_FROM_MONGO_JOB", "STUDY_CLUSTERING_JOB", "PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB",
+            "CLUSTER_UNCLUSTERED_VARIANTS_JOB"]
+    jobs_comma_separated = ",".join([f"'{job}'" for job in jobs])
+    query_to_get_step_start_end_times = f"""
+    SELECT DISTINCT
+      i.JOB_NAME as job_name,
+      j.JOB_EXECUTION_ID as job_id,
+      s.STEP_EXECUTION_ID as step_id,
+      s.STEP_NAME as step_name,
+      j.START_TIME::timestamp AT TIME ZONE 'Europe/London' as job_start_time,
+      j.END_TIME::timestamp AT TIME ZONE 'Europe/London' as job_end_time,
+      s.START_TIME::timestamp AT TIME ZONE 'Europe/London' as step_start_time,
+      s.END_TIME::timestamp AT TIME ZONE 'Europe/London' as step_end_time,
+      p.STRING_VAL as assembly
+    FROM 
+      BATCH_JOB_EXECUTION j
+      JOIN BATCH_STEP_EXECUTION s ON j.JOB_EXECUTION_ID = s.JOB_EXECUTION_ID
+      JOIN BATCH_JOB_INSTANCE i ON j.JOB_INSTANCE_ID = i.JOB_INSTANCE_ID
+      JOIN BATCH_JOB_EXECUTION_PARAMS p ON j.JOB_EXECUTION_ID = p.JOB_EXECUTION_ID
+    WHERE 
+      i.JOB_NAME in ({jobs_comma_separated})
+      AND p.KEY_NAME = 'assemblyAccession'
+      AND p.STRING_VAL = '{assembly_accession}'
+    """
+    if prev_release_end_timestamp_for_assembly:
+        release_end_timestamp_for_assembly_str = prev_release_end_timestamp_for_assembly.strftime('%Y-%m-%d %H:%M:%S')
+        query_to_get_step_start_end_times += f" AND j.start_time > " \
+                                             f"to_timestamp('{release_end_timestamp_for_assembly_str}', " \
+                                             f"'YYYY-MM-DD HH24:MI:SS')"
+    all_results = get_all_results_for_query(accessioning_job_tracker_handle, query_to_get_step_start_end_times)
+    if all_results:
+        for job_id in set([result["job_id"] for result in all_results]):
+            time_ranges_by_job_id[job_id] = defaultdict(dict)
+            time_ranges_by_job_id[job_id]["last_timestamp"] = \
+                max([result["job_end_time"] for result in all_results
+                     if result["job_id"] == job_id and result["job_end_time"]] +
+                    [result["job_start_time"] for result in all_results
+                     if result["job_id"] == job_id and result["job_start_time"]] +
+                    [result["step_end_time"] for result in all_results
+                     if result["job_id"] == job_id and result["step_end_time"]] +
+                    [result["step_start_time"] for result in all_results
+                     if result["job_id"] == job_id and result["step_start_time"]])
+        # Fill in start/end times for clustering jobs
+        for job_info in set([(result["job_id"], result["job_name"], result["job_start_time"], result["job_end_time"])
+                             for result in all_results]):
+            time_ranges_by_job_id[job_info[0]][job_info[1]] = {"launched": job_info[2]}
+            # Fill out completed time only if it is not null
+            if job_info[3] is not None:
+                time_ranges_by_job_id[job_info[0]][job_info[1]]["completed"] = job_info[3]
+        # Fill in start/end times for clustering steps
+        for step_info in set([(result["job_id"], result["step_name"], result["step_start_time"])
+                              for result in all_results]):
+            time_ranges_by_job_id[step_info[0]][step_info[1]] = step_info[2]
+        return time_ranges_by_job_id
+    else:
+        return {}
 
 
 def get_metrics_per_assembly(mongo_source, ranges_per_assembly):
@@ -201,24 +296,27 @@ def query_mongo(mongo_source, filter_criteria, metric):
     return total_count
 
 
-def insert_counts_in_db(private_config_xml_file, metrics_per_assembly, ranges_per_assembly, release_version):
+def insert_counts_in_db(private_config_xml_file, metrics_for_assembly, ranges_per_assembly, release_version):
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
                           user="evapro") as metadata_connection_handle:
-        fill_data_for_current_release(metadata_connection_handle, metrics_per_assembly, ranges_per_assembly, release_version)
+        fill_data_for_current_release(metadata_connection_handle, metrics_for_assembly, ranges_per_assembly,
+                                      release_version)
         fill_data_from_previous_release(metadata_connection_handle, ranges_per_assembly, release_version)
 
 
-def fill_data_for_current_release(metadata_connection_handle, metrics_per_assembly, ranges_per_assembly, release_version):
+def fill_data_for_current_release(metadata_connection_handle, metrics_per_assembly, ranges_per_assembly,
+                                  release_version):
     """Insert metrics for taxonomies and assemblies processed during the current release."""
     for asm in metrics_per_assembly:
         # get last release data for assembly
-        query_last_release = f"select * from {assembly_table_name} "\
-                             f"where assembly_accession = '{asm}' and release_version = {release_version-1}"
+        query_last_release = f"select * from {assembly_table_name} " \
+                             f"where assembly_accession = '{asm}' and release_version = {release_version - 1}"
         logger.info(query_last_release)
         asm_last_release_data = get_all_results_for_query(metadata_connection_handle, query_last_release)
         # asm_last_release_data can have multiple rows (if multiple taxids are associated with the same assembly),
         # but we assume though metrics are same as that's how we're currently releasing.
-        assert len(set(row[4:] for row in asm_last_release_data)) == 1
+        if asm_last_release_data:
+            assert len(set(row[4:] for row in asm_last_release_data)) == 1
 
         # insert data for current release - common to all taxonomies that share this assembly
         new_remapped_current_rs = metrics_per_assembly[asm]['new_remapped_current_rs']
@@ -292,9 +390,9 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
 
         # Finally perform inserts, once for each taxonomy but otherwise identical
         for taxid, scientific_name in ranges_per_assembly[asm]['species_info']:
-            folder = f"{scientific_name}/{asm}"
-            formatted_name = scientific_name.capitalize().replace('_', ' ')
-            insert_query = f"insert into {assembly_table_name} "\
+            folder = f"{scientific_name}/{asm}".replace("'", "''")
+            formatted_name = scientific_name.capitalize().replace('_', ' ').replace("'", "''")
+            insert_query = f"insert into {assembly_table_name} " \
                            f"(taxonomy_id, scientific_name, assembly_accession, release_folder, release_version, " \
                            f"current_rs, multi_mapped_rs, merged_rs, deprecated_rs, merged_deprecated_rs, " \
                            f"new_current_rs, new_multi_mapped_rs, new_merged_rs, new_deprecated_rs, " \
@@ -311,10 +409,11 @@ def fill_data_from_previous_release(metadata_connection_handle, ranges_per_assem
     """Insert metrics for taxonomies and assemblies *not* processed during the current release, but present in a
     previous release."""
     assemblies_in_logs = {a for a in ranges_per_assembly.keys()}
-    asm_tax_in_logs = {(asm, int(tax)) for asm in assemblies_in_logs for tax, _ in ranges_per_assembly[asm]['species_info']}
+    asm_tax_in_logs = {(asm, int(tax)) for asm in assemblies_in_logs for tax, _ in
+                       ranges_per_assembly[asm]['species_info']}
     previous_release_stats = get_all_results_for_query(metadata_connection_handle,
                                                        f"select * from {assembly_table_name} "
-                                                       f"where release_version = {release_version-1}")
+                                                       f"where release_version = {release_version - 1}")
     for previous_assembly_stats in previous_release_stats:
         taxonomy_id = previous_assembly_stats[0]
         scientific_name = previous_assembly_stats[1]
@@ -393,70 +492,22 @@ collections = {
 }
 
 
-def parse_remapping_log_file_path(log_file_path):
-    taxid = log_file_path.split('/')[-4]
-    # Parse the filename to get the *target* assembly
-    m = re.search(r'GCA_[0-9.]+_to_(GCA_[0-9.]+)_clustering\.log', os.path.basename(log_file_path))
-    assembly_accession = m.group(1)
-    scientific_name = taxonomy_scientific_name_map[taxid]
-    return scientific_name, taxid, assembly_accession
-
-
-def parse_log_file_path(log_file_path):
-    # See https://github.com/EBIvariation/eva-tools/blob/9bed9547c73d35a475d06bf6fff58b1bb6af2140/variant-remapping-automation/remapping_process.nf#L245
-    remapping_log_file_pattern = re.compile("^(GCA_.*)+_to_(GCA_.*)+_clustering.log$")
-    if remapping_log_file_pattern.match(os.path.basename(log_file_path)):
-        return parse_remapping_log_file_path(log_file_path)
-    scientific_name_taxonomy_id, assembly_accession, file_name = log_file_path.split('/')[-3:]
-    scientific_name = '_'.join(scientific_name_taxonomy_id.split('_')[:-1])
-    taxid = scientific_name_taxonomy_id.split('_')[-1]
-    return scientific_name, taxid, assembly_accession
-
-
-def parse_one_log(log_file):
-    # identify the clustering job/step
-    # identify the start end of run
-    # find the count lines and extract metrics
-    results = {}
-    with open(log_file) as open_file:
-        for line in open_file:
-            sp_line = line.strip().split()
-            if len(sp_line) < 8:
-                continue
-
-            # get last timestamp
-            try:
-                timestamp = datetime.strptime(f"{sp_line[0]}T{sp_line[1]}Z", '%Y-%m-%dT%H:%M:%S.%fZ')
-                timestamp = timezone('Europe/London').localize(timestamp)
-            except ValueError:
-                pass
-
-            # Jobs
-            if sp_line[7] == 'o.s.b.c.l.support.SimpleJobLauncher':
-                if sp_line[12] == "launched" or sp_line[12] == "completed":
-                    current_job = sp_line[11].rstrip(']').lstrip('[name=')
-                    job_status = sp_line[12]
-                    if current_job not in results:
-                        results[current_job] = {}
-                    if job_status not in results[current_job]:
-                        results[current_job][job_status] = {}
-                    results[current_job][job_status] = timestamp
-            # Steps
-            if sp_line[7] == 'o.s.batch.core.job.SimpleStepHandler':
-                current_step = sp_line[11].rstrip(']').lstrip('[')
-                if current_step not in results:
-                    results[current_step] = {}
-                results[current_step] = timestamp
-
-    results["last_timestamp"] = timestamp
-    return results
+def populate_assembly_taxonomy_map(private_config_xml_file, release_version):
+    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
+                          user="evapro") as metadata_connection_handle:
+        query_taxonomy_assembly_assoc = f"select distinct cast(taxonomy as varchar(10)) as taxid, assembly_accession " \
+                                        f"from {tracker_table_name} " \
+                                        f"where release_version = {release_version}"
+        for taxonomy, assembly_accession in get_all_results_for_query(metadata_connection_handle,
+                                                                      query_taxonomy_assembly_assoc):
+            assembly_taxonomy_map[assembly_accession].add(taxonomy)
 
 
 def populate_taxonomy_scientific_name_association(private_config_xml_file, release_version):
     with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
                           user="evapro") as metadata_connection_handle:
         query_taxonomy_scientific_name = f"select distinct cast(taxonomy as varchar(10)) as taxid, scientific_name " \
-                                         f"from eva_progress_tracker.clustering_release_tracker " \
+                                         f"from {tracker_table_name} " \
                                          f"where release_version = {release_version}"
         for taxonomy, scientific_name in get_all_results_for_query(metadata_connection_handle,
                                                                    query_taxonomy_scientific_name):
@@ -467,10 +518,6 @@ def populate_taxonomy_scientific_name_association(private_config_xml_file, relea
 def main():
     parser = argparse.ArgumentParser(
         description='Parse all the clustering logs to get date ranges and query mongo to get metrics counts')
-    parser.add_argument("--clustering-root-path", type=str,
-                        help="base directory where all the clustering was run.", required=True)
-    parser.add_argument("--remapping-root-path", type=str,
-                        help="base directory where all the remapping was run.", required=True)
     parser.add_argument("--mongo-source-uri",
                         help="Mongo Source URI (ex: mongodb://user:@mongos-source-host:27017/admin)", required=True)
     parser.add_argument("--mongo-source-secrets-file",
@@ -482,9 +529,9 @@ def main():
     args = parser.parse_args()
     mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
                                  db_name="eva_accession_sharded")
+    populate_assembly_taxonomy_map(args.private_config_xml_file, args.release_version)
     populate_taxonomy_scientific_name_association(args.private_config_xml_file, args.release_version)
-    gather_count_from_mongo(args.clustering_root_path, args.remapping_root_path, mongo_source,
-                            args.private_config_xml_file, args.release_version)
+    gather_count_from_mongo(mongo_source, args.private_config_xml_file, args.release_version)
 
 
 if __name__ == '__main__':
