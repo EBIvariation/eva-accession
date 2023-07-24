@@ -9,8 +9,9 @@ from datetime import datetime
 
 from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_common_pyutils.mongodb import MongoDatabase
-from ebi_eva_common_pyutils.config_utils import get_pg_metadata_uri_for_eva_profile, get_accession_pg_creds_for_profile
+from ebi_eva_common_pyutils.config_utils import get_accession_pg_creds_for_profile
 from ebi_eva_common_pyutils.pg_utils import execute_query, get_all_results_for_query
+from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from gather_clustering_counts.gather_per_species_clustering_counts import assembly_table_name, tracker_table_name
 from urllib.parse import urlsplit
 
@@ -25,8 +26,7 @@ def get_release_end_timestamps_from_last_release(private_config_xml_file, curren
     Get release end timestamps from last release for all assemblies
     """
     assembly_timestamp_map = {}
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
-                          user="evapro") as metadata_connection_handle:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as metadata_connection_handle:
         prev_release_end_timestamp_query = "select assembly_accession, " \
                                            "max(release_end)::timestamp AT TIME ZONE 'Europe/London' " \
                                            "as last_release_end_timestamp from " \
@@ -40,8 +40,7 @@ def get_release_end_timestamps_from_last_release(private_config_xml_file, curren
 
 
 def get_all_assemblies_for_current_release(private_config_xml_file, current_release_version):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
-                          user="evapro") as metadata_connection_handle:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as metadata_connection_handle:
         query_to_get_release_end_timestamp = "select distinct assembly_accession from " \
                                              f"{tracker_table_name} " \
                                              f"where release_version = {current_release_version} "
@@ -178,65 +177,66 @@ def get_time_ranges_by_job_id_from_job_tracker(assembly_accession, private_confi
     # Job and step start/end times by job ID
     time_ranges_by_job_id = defaultdict(dict)
     url, username, password = get_accession_pg_creds_for_profile("production_processing", private_config_xml_file)
-    accessioning_job_tracker_handle = psycopg2.connect(urlsplit(url).path, user=username, password=password,
-                                                       cursor_factory=psycopg2.extras.RealDictCursor)
-    # See clustering jobs here: https://github.com/EBIvariation/eva-accession/blob/5f827ae8f062ae923a83c16070f6ebf08c544e31/eva-accession-clustering/src/main/java/uk/ac/ebi/eva/accession/clustering/configuration/BeanNames.java#L76
-    jobs = ["CLUSTERING_FROM_MONGO_JOB", "STUDY_CLUSTERING_JOB", "PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB",
-            "CLUSTER_UNCLUSTERED_VARIANTS_JOB"]
-    jobs_comma_separated = ",".join([f"'{job}'" for job in jobs])
-    query_to_get_step_start_end_times = f"""
-    SELECT DISTINCT
-      i.JOB_NAME as job_name,
-      j.JOB_EXECUTION_ID as job_id,
-      s.STEP_EXECUTION_ID as step_id,
-      s.STEP_NAME as step_name,
-      j.START_TIME::timestamp AT TIME ZONE 'Europe/London' as job_start_time,
-      j.END_TIME::timestamp AT TIME ZONE 'Europe/London' as job_end_time,
-      s.START_TIME::timestamp AT TIME ZONE 'Europe/London' as step_start_time,
-      s.END_TIME::timestamp AT TIME ZONE 'Europe/London' as step_end_time,
-      p.STRING_VAL as assembly
-    FROM 
-      BATCH_JOB_EXECUTION j
-      JOIN BATCH_STEP_EXECUTION s ON j.JOB_EXECUTION_ID = s.JOB_EXECUTION_ID
-      JOIN BATCH_JOB_INSTANCE i ON j.JOB_INSTANCE_ID = i.JOB_INSTANCE_ID
-      JOIN BATCH_JOB_EXECUTION_PARAMS p ON j.JOB_EXECUTION_ID = p.JOB_EXECUTION_ID
-    WHERE 
-      i.JOB_NAME in ({jobs_comma_separated})
-      AND p.KEY_NAME = 'assemblyAccession'
-      AND p.STRING_VAL = '{assembly_accession}'
-    """
-    if prev_release_end_timestamp_for_assembly:
-        release_end_timestamp_for_assembly_str = prev_release_end_timestamp_for_assembly.strftime('%Y-%m-%d %H:%M:%S')
-        query_to_get_step_start_end_times += f" AND j.start_time > " \
-                                             f"to_timestamp('{release_end_timestamp_for_assembly_str}', " \
-                                             f"'YYYY-MM-DD HH24:MI:SS')"
-    all_results = get_all_results_for_query(accessioning_job_tracker_handle, query_to_get_step_start_end_times)
-    if all_results:
-        for job_id in set([result["job_id"] for result in all_results]):
-            time_ranges_by_job_id[job_id] = defaultdict(dict)
-            time_ranges_by_job_id[job_id]["last_timestamp"] = \
-                max([result["job_end_time"] for result in all_results
-                     if result["job_id"] == job_id and result["job_end_time"]] +
-                    [result["job_start_time"] for result in all_results
-                     if result["job_id"] == job_id and result["job_start_time"]] +
-                    [result["step_end_time"] for result in all_results
-                     if result["job_id"] == job_id and result["step_end_time"]] +
-                    [result["step_start_time"] for result in all_results
-                     if result["job_id"] == job_id and result["step_start_time"]])
-        # Fill in start/end times for clustering jobs
-        for job_info in set([(result["job_id"], result["job_name"], result["job_start_time"], result["job_end_time"])
-                             for result in all_results]):
-            time_ranges_by_job_id[job_info[0]][job_info[1]] = {"launched": job_info[2]}
-            # Fill out completed time only if it is not null
-            if job_info[3] is not None:
-                time_ranges_by_job_id[job_info[0]][job_info[1]]["completed"] = job_info[3]
-        # Fill in start/end times for clustering steps
-        for step_info in set([(result["job_id"], result["step_name"], result["step_start_time"])
-                              for result in all_results]):
-            time_ranges_by_job_id[step_info[0]][step_info[1]] = step_info[2]
-        return time_ranges_by_job_id
-    else:
-        return {}
+    with psycopg2.connect(urlsplit(url).path, user=username, password=password,
+                          cursor_factory=psycopg2.extras.RealDictCursor) as accessioning_job_tracker_handle:
+        # See clustering jobs here: https://github.com/EBIvariation/eva-accession/blob/5f827ae8f062ae923a83c16070f6ebf08c544e31/eva-accession-clustering/src/main/java/uk/ac/ebi/eva/accession/clustering/configuration/BeanNames.java#L76
+        jobs = ["CLUSTERING_FROM_MONGO_JOB", "STUDY_CLUSTERING_JOB", "PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB",
+                "CLUSTER_UNCLUSTERED_VARIANTS_JOB"]
+        jobs_comma_separated = ",".join([f"'{job}'" for job in jobs])
+        query_to_get_step_start_end_times = f"""
+        SELECT DISTINCT
+          i.JOB_NAME as job_name,
+          j.JOB_EXECUTION_ID as job_id,
+          s.STEP_EXECUTION_ID as step_id,
+          s.STEP_NAME as step_name,
+          j.START_TIME::timestamp AT TIME ZONE 'Europe/London' as job_start_time,
+          j.END_TIME::timestamp AT TIME ZONE 'Europe/London' as job_end_time,
+          s.START_TIME::timestamp AT TIME ZONE 'Europe/London' as step_start_time,
+          s.END_TIME::timestamp AT TIME ZONE 'Europe/London' as step_end_time,
+          p.STRING_VAL as assembly
+        FROM 
+          BATCH_JOB_EXECUTION j
+          JOIN BATCH_STEP_EXECUTION s ON j.JOB_EXECUTION_ID = s.JOB_EXECUTION_ID
+          JOIN BATCH_JOB_INSTANCE i ON j.JOB_INSTANCE_ID = i.JOB_INSTANCE_ID
+          JOIN BATCH_JOB_EXECUTION_PARAMS p ON j.JOB_EXECUTION_ID = p.JOB_EXECUTION_ID
+        WHERE 
+          i.JOB_NAME in ({jobs_comma_separated})
+          AND p.KEY_NAME = 'assemblyAccession'
+          AND p.STRING_VAL = '{assembly_accession}'
+        """
+        if prev_release_end_timestamp_for_assembly:
+            release_end_timestamp_for_assembly_str = \
+                prev_release_end_timestamp_for_assembly.strftime('%Y-%m-%d %H:%M:%S')
+            query_to_get_step_start_end_times += f" AND j.start_time > " \
+                                                 f"to_timestamp('{release_end_timestamp_for_assembly_str}', " \
+                                                 f"'YYYY-MM-DD HH24:MI:SS')"
+        all_results = get_all_results_for_query(accessioning_job_tracker_handle, query_to_get_step_start_end_times)
+        if all_results:
+            for job_id in set([result["job_id"] for result in all_results]):
+                time_ranges_by_job_id[job_id] = defaultdict(dict)
+                time_ranges_by_job_id[job_id]["last_timestamp"] = \
+                    max([result["job_end_time"] for result in all_results
+                         if result["job_id"] == job_id and result["job_end_time"]] +
+                        [result["job_start_time"] for result in all_results
+                         if result["job_id"] == job_id and result["job_start_time"]] +
+                        [result["step_end_time"] for result in all_results
+                         if result["job_id"] == job_id and result["step_end_time"]] +
+                        [result["step_start_time"] for result in all_results
+                         if result["job_id"] == job_id and result["step_start_time"]])
+            # Fill in start/end times for clustering jobs
+            for job_info in set([(result["job_id"], result["job_name"], result["job_start_time"],
+                                  result["job_end_time"]) for result in all_results]):
+                time_ranges_by_job_id[job_info[0]][job_info[1]] = {"launched": job_info[2]}
+                # Fill out completed time only if it is not null
+                if job_info[3] is not None:
+                    time_ranges_by_job_id[job_info[0]][job_info[1]]["completed"] = job_info[3]
+            # Fill in start times for clustering steps
+            for step_info in set([(result["job_id"], result["step_name"], result["step_start_time"])
+                                  for result in all_results]):
+                time_ranges_by_job_id[step_info[0]][step_info[1]] = step_info[2]
+            return time_ranges_by_job_id
+        else:
+            return {}
 
 
 def get_metrics_per_assembly(mongo_source, ranges_per_assembly):
@@ -297,8 +297,7 @@ def query_mongo(mongo_source, filter_criteria, metric):
 
 
 def insert_counts_in_db(private_config_xml_file, metrics_for_assembly, ranges_per_assembly, release_version):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
-                          user="evapro") as metadata_connection_handle:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as metadata_connection_handle:
         fill_data_for_current_release(metadata_connection_handle, metrics_for_assembly, ranges_per_assembly,
                                       release_version)
         fill_data_from_previous_release(metadata_connection_handle, ranges_per_assembly, release_version)
@@ -434,7 +433,8 @@ def fill_data_from_previous_release(metadata_connection_handle, ranges_per_assem
             current_release_stats = get_all_results_for_query(metadata_connection_handle, query_current_release)
             # again this can have multiple rows, but we assume they contain the same metrics
             # copy these metrics exactly but using this taxonomy, scientific name, and release folder
-            insert_query_values = f"values ({taxonomy_id}, '{formatted_name}', '{assembly_accession}', '{release_folder}', " \
+            insert_query_values = f"values ({taxonomy_id}, '{formatted_name}', '{assembly_accession}', " \
+                                  f"'{release_folder}', " \
                                   f"{', '.join((str(x) for x in current_release_stats[0][4:]))});"
 
         # Otherwise we copy previous assembly stats exactly
@@ -493,8 +493,7 @@ collections = {
 
 
 def populate_assembly_taxonomy_map(private_config_xml_file, release_version):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
-                          user="evapro") as metadata_connection_handle:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as metadata_connection_handle:
         query_taxonomy_assembly_assoc = f"select distinct cast(taxonomy as varchar(10)) as taxid, assembly_accession " \
                                         f"from {tracker_table_name} " \
                                         f"where release_version = {release_version}"
@@ -504,8 +503,7 @@ def populate_assembly_taxonomy_map(private_config_xml_file, release_version):
 
 
 def populate_taxonomy_scientific_name_association(private_config_xml_file, release_version):
-    with psycopg2.connect(get_pg_metadata_uri_for_eva_profile("production_processing", private_config_xml_file),
-                          user="evapro") as metadata_connection_handle:
+    with get_metadata_connection_handle("production_processing", private_config_xml_file) as metadata_connection_handle:
         query_taxonomy_scientific_name = f"select distinct cast(taxonomy as varchar(10)) as taxid, scientific_name " \
                                          f"from {tracker_table_name} " \
                                          f"where release_version = {release_version}"
