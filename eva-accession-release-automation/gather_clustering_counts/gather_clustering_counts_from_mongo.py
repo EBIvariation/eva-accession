@@ -41,10 +41,10 @@ def get_release_end_timestamps_from_last_release(private_config_xml_file, curren
 
 def get_all_assemblies_for_current_release(private_config_xml_file, current_release_version):
     with get_metadata_connection_handle("production_processing", private_config_xml_file) as metadata_connection_handle:
-        query_to_get_release_end_timestamp = "select distinct assembly_accession from " \
-                                             f"{tracker_table_name} " \
-                                             f"where release_version = {current_release_version} "
-    return [x[0] for x in get_all_results_for_query(metadata_connection_handle, query_to_get_release_end_timestamp)]
+        query_to_get_assemblies_for_release = "select distinct assembly_accession from " \
+                                              f"{tracker_table_name} " \
+                                              f"where release_version = {current_release_version} "
+    return [x[0] for x in get_all_results_for_query(metadata_connection_handle, query_to_get_assemblies_for_release)]
 
 
 def gather_count_from_mongo(mongo_source, private_config_xml_file, release_version):
