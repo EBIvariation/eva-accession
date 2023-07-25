@@ -35,7 +35,6 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,36 +66,54 @@ public class DeprecatedVariantMongoReader extends VariantMongoAggregationReader 
     @Override
     protected List<Bson> buildAggregation() {
         Bson matchAssembly = Aggregates.match(Filters.eq(getInactiveField(REFERENCE_ASSEMBLY_FIELD),
-                                                         assemblyAccession));
-        Bson matchMerged = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.DEPRECATED.toString()));
+                assemblyAccession));
+        Bson matchDeprecated = Aggregates.match(Filters.eq(EVENT_TYPE_FIELD, EventType.DEPRECATED.toString()));
         Bson sort = Aggregates.sort(orderBy(ascending(getInactiveField(CONTIG_FIELD), getInactiveField(START_FIELD))));
-        List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchMerged, sort));
+        List<Bson> aggregation = new ArrayList<>(Arrays.asList(matchAssembly, matchDeprecated, sort));
 
         for (String submittedVariantOperationCollectionName : allSubmittedVariantOperationCollectionNames) {
             Bson lookup = Aggregates.lookup(submittedVariantOperationCollectionName, ACCESSION_FIELD,
                                                           getInactiveField(CLUSTERED_VARIANT_ACCESSION_FIELD),
                                                           submittedVariantOperationCollectionName);
             aggregation.add(lookup);
+
+            Bson asmTaxEventFilter = new Document("$and", Arrays.asList(
+                    new Document("$in", Arrays.asList("$$item.eventType",
+                            Arrays.asList(EventType.UPDATED.toString(), EventType.DEPRECATED.toString()))),
+                    new Document("$in", Arrays.asList(taxonomyAccession, new Document("$map",
+                            new Document("input", "$$item.inactiveObjects").append("in", "$$this.tax")))),
+                    new Document("$in", Arrays.asList(assemblyAccession, new Document("$map",
+                            new Document("input", "$$item.inactiveObjects").append("in", "$$this.seq"))))
+            ));
+            // update lookup collection array such that the array contains just one value
+            // (a single element that matches all the conditions or null)
+            Bson addField = Aggregates.addFields(new Field<>(submittedVariantOperationCollectionName,
+                    Arrays.asList(new Document("$arrayElemAt",
+                            Arrays.asList(new Document("$filter",
+                                    new Document("input", "$" + submittedVariantOperationCollectionName)
+                                            .append("as", "item")
+                                            .append("cond", asmTaxEventFilter)
+                            ), 0)
+                    ))));
+
+            aggregation.add(addField);
         }
-        // Concat entries from all submitted variant operation collections
+
+        List<String> concatArrayList = allSubmittedVariantOperationCollectionNames.stream()
+                .map(v -> "$" + v).collect(Collectors.toList());
+        // Concat entries from all submitted variant operation collections (discard null values)
         Bson ssConcat = Aggregates.addFields(new Field<>(SS_INFO_FIELD,
-                                                         new Document("$concatArrays", allSubmittedVariantOperationCollectionNames
-                                                                 .stream().map(v -> "$" + v)
-                                                                 .collect(Collectors.toList()))));
+                new Document("$filter",
+                        new Document("input",
+                                new Document("$concatArrays", concatArrayList))
+                                .append("as", "item")
+                                .append("cond", new Document("$ne", Arrays.asList("$$item", null)))
+                )
+        ));
+
         aggregation.add(ssConcat);
-        // Ensure that we are only retrieving the variants with the relevant taxonomy
-        // and event type in the Submitted operations collections
-        Bson matchTaxonomyAndEventType = Aggregates.match(Filters.and(
-                Filters.ne(SS_INFO_FIELD, Collections.emptyList()),
-                Filters.eq(SS_INFO_FIELD + "." +
-                                   getInactiveField(REFERENCE_ASSEMBLY_FIELD_IN_SUBMITTED_COLLECTIONS),
-                           this.assemblyAccession),
-                Filters.eq(SS_INFO_FIELD + "." + getInactiveField(TAXONOMY_FIELD), this.taxonomyAccession),
-                Filters.in(SS_INFO_FIELD + "." + EVENT_TYPE_FIELD,
-                           Arrays.asList(EventType.UPDATED.toString(), EventType.DEPRECATED.toString()))));
-        aggregation.add(matchTaxonomyAndEventType);
         logger.info("Issuing aggregation: {}", aggregation);
-        logger.info(aggregation.toString());
+
         return aggregation;
     }
 
