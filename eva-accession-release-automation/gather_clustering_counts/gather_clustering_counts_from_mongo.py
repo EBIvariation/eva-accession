@@ -19,6 +19,7 @@ logger = logging_config.get_logger(__name__)
 logging_config.add_stdout_handler()
 taxonomy_scientific_name_map = {}
 assembly_taxonomy_map = defaultdict(set)
+prev_release_end_timestamp_per_assembly = {}
 
 
 def get_release_end_timestamps_from_last_release(private_config_xml_file, current_release_version) -> dict:
@@ -50,8 +51,6 @@ def get_all_assemblies_for_current_release(private_config_xml_file, current_rele
 def gather_count_from_mongo(mongo_source, private_config_xml_file, release_version):
     ranges_per_assembly = defaultdict(dict)
     current_release_assemblies = get_all_assemblies_for_current_release(private_config_xml_file, release_version)
-    prev_release_end_timestamp_per_assembly = get_release_end_timestamps_from_last_release(private_config_xml_file,
-                                                                                           release_version)
     # Only run if dump files don't already exist
     ranges_fp = f'ranges_release_{release_version}.pkl'
     metrics_fp = f'metrics_release_{release_version}.pkl'
@@ -282,7 +281,16 @@ def get_metrics_per_assembly(mongo_source, ranges_per_assembly):
         metrics_per_assembly[asm]["merged_rs"] = merged_rs
         metrics_per_assembly[asm]["split_rs"] = split_rs
         metrics_per_assembly[asm]["new_ss_clustered"] = new_ss_clustered
+        metrics_per_assembly[asm]["new_deprecated_rs"] = get_deprecated_counts_for_assembly(mongo_source, asm)
     return metrics_per_assembly
+
+
+def get_deprecated_counts_for_assembly(mongo_source, assembly_accession):
+    prev_release_end_for_assembly = prev_release_end_timestamp_per_assembly.get(assembly_accession, None)
+    filter_criteria = {"inactiveObjects.asm": assembly_accession, "eventType": "DEPRECATED"}
+    if prev_release_end_for_assembly:
+        filter_criteria["createdDate"] = {"$gt": prev_release_end_for_assembly}
+    return query_mongo(mongo_source, filter_criteria, "new_deprecated_rs")
 
 
 def query_mongo(mongo_source, filter_criteria, metric):
@@ -325,6 +333,7 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
         new_merged_rs = metrics_per_assembly[asm]['merged_rs']
         new_split_rs = metrics_per_assembly[asm]['split_rs']
         new_ss_clustered = metrics_per_assembly[asm]['new_ss_clustered']
+        new_deprecated_rs = metrics_per_assembly[asm]['new_deprecated_rs']
 
         if asm_last_release_data:
             prev_release_current_rs = asm_last_release_data[0][5]
@@ -347,16 +356,17 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
             total_merged_rs_in_release = prev_release_merged_rs + new_merged_rs
             # current_rs in previous releases + newly clustered
             total_clustered_current_rs_in_release = prev_release_current_rs + new_clustered_current_rs
+            total_deprecated_rs = prev_release_deprecated_rs + new_deprecated_rs
 
             insert_query_values = f"{total_current_rs_in_release}, " \
                                   f"{prev_release_multi_mapped_rs}, " \
                                   f"{total_merged_rs_in_release}, " \
-                                  f"{prev_release_deprecated_rs}, " \
+                                  f"{total_deprecated_rs}, " \
                                   f"{prev_release_merged_deprecated_rs}, " \
                                   f"{new_current_rs}, " \
                                   f"0, " \
                                   f"{new_merged_rs}, " \
-                                  f"0, " \
+                                  f"{new_deprecated_rs}, " \
                                   f"0, " \
                                   f"{new_ss_clustered}, " \
                                   f"{new_remapped_current_rs}, " \
@@ -371,12 +381,12 @@ def fill_data_for_current_release(metadata_connection_handle, metrics_per_assemb
             insert_query_values = f"{new_current_rs}, " \
                                   f"0, " \
                                   f"{new_merged_rs}, " \
-                                  f"0, " \
+                                  f"{new_deprecated_rs}, " \
                                   f"0, " \
                                   f"{new_current_rs}, " \
                                   f"0, " \
                                   f"{new_merged_rs}, " \
-                                  f"0, " \
+                                  f"{new_deprecated_rs}, " \
                                   f"0, " \
                                   f"{new_ss_clustered}, " \
                                   f"{new_remapped_current_rs}, " \
@@ -488,6 +498,10 @@ collections = {
     "new_ss_clustered": [
         "submittedVariantOperationEntity",
         "dbsnpSubmittedVariantOperationEntity"
+    ],
+    "new_deprecated_rs": [
+        "clusteredVariantOperationEntity",
+        "dbsnpClusteredVariantOperationEntity"
     ]
 }
 
@@ -514,6 +528,7 @@ def populate_taxonomy_scientific_name_association(private_config_xml_file, relea
 
 
 def main():
+    global prev_release_end_timestamp_per_assembly
     parser = argparse.ArgumentParser(
         description='Parse all the clustering logs to get date ranges and query mongo to get metrics counts')
     parser.add_argument("--mongo-source-uri",
@@ -527,6 +542,8 @@ def main():
     args = parser.parse_args()
     mongo_source = MongoDatabase(uri=args.mongo_source_uri, secrets_file=args.mongo_source_secrets_file,
                                  db_name="eva_accession_sharded")
+    prev_release_end_timestamp_per_assembly = get_release_end_timestamps_from_last_release(args.private_config_xml_file,
+                                                                                           args.release_version)
     populate_assembly_taxonomy_map(args.private_config_xml_file, args.release_version)
     populate_taxonomy_scientific_name_association(args.private_config_xml_file, args.release_version)
     gather_count_from_mongo(mongo_source, args.private_config_xml_file, args.release_version)
