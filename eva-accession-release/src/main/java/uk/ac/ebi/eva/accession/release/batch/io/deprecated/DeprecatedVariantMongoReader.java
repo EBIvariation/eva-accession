@@ -77,6 +77,23 @@ public class DeprecatedVariantMongoReader extends VariantMongoAggregationReader 
                                                           submittedVariantOperationCollectionName);
             aggregation.add(lookup);
 
+        /*
+            Example of Stage (addFields) of aggregate pipeline that we are building below:
+
+           {"$addFields": {"submittedVariantOperationCollectionName": [{
+               "$arrayElemAt": [{
+                    "$filter": {
+                        "input": "$submittedVariantOperationCollectionName",
+                        "as":"item",
+                        "cond": {"$and": [
+                            {"$in": ["$$item.eventType", ["UPDATED", "DEPRECATED"]]},
+                            {"$in": [{taxonomy}, {"$map": {"input": "$$item.inactiveObjects", "in": "$$this.tax"}}]},
+                            {"$in": [{assembly}, {"$map": {"input": "$$item.inactiveObjects", "in": "$$this.seq"}}]}
+                                ]}
+                            }
+                        },0]
+                }]}}
+            */
             Bson asmTaxEventFilter = new Document("$and", Arrays.asList(
                     new Document("$in", Arrays.asList("$$item.eventType",
                             Arrays.asList(EventType.UPDATED.toString(), EventType.DEPRECATED.toString()))),
