@@ -38,8 +38,7 @@ workflow_process_arguments_map = collections.OrderedDict(
                         "release-species-inventory-table", "release-version", "dump-dir"]),
         ("run_release_for_assembly", ["private-config-xml-file", "profile", "taxonomy-id",
                                       "assembly-accession", "release-species-inventory-table",
-                                      "release-version", "species-release-folder", "release-jar-path",
-                                      "memory"]),
+                                      "release-version", "species-release-folder", "release-jar-path"]),
         ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "profile", "bgzip-path", "bcftools-path",
                                            "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
                                            "release-species-inventory-table", "release-version",
@@ -59,7 +58,7 @@ workflow_process_arguments_map = collections.OrderedDict(
         ('update_sequence_names_to_ena', ["taxonomy-id", "assembly-accession", "species-release-folder",
                                           'sequence-name-converter-path', 'bcftools-path']),
         ("update_release_status_for_assembly", ["private-config-xml-file", "profile", "release-species-inventory-table",
-                                                "taxonomy-id", "assembly-accession", "release-version", "status"])
+                                                "taxonomy-id", "assembly-accession", "release-version"])
      ])
 
 workflow_process_template_for_nextflow = """
