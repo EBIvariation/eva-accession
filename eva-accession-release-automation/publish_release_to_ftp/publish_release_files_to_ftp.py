@@ -33,8 +33,9 @@ by_species_folder_name = "by_species"
 release_file_types_to_be_checksummed = ("vcf.gz", "txt.gz", "csi")
 readme_general_info_file = "README_release_general_info.txt"
 readme_known_issues_file = "README_release_known_issues.txt"
+readme_changelog_file = "README_release_changelog.txt"
 species_name_mapping_file = "species_name_mapping.tsv"
-release_top_level_files_to_copy = (readme_known_issues_file, readme_general_info_file, species_name_mapping_file)
+release_top_level_files_to_copy = (readme_known_issues_file, readme_general_info_file)
 unmapped_ids_file_regex = "*_unmapped_ids.txt.gz"
 logger = logging_config.get_logger(__name__)
 
@@ -63,9 +64,9 @@ def get_current_release_folder_for_taxonomy(taxonomy_id, release_properties, met
 
     def info_for_release_version(version):
         results = get_all_results_for_query(metadata_connection_handle,
-                                            f"""select distinct release_folder_name  
-                                            from {release_properties.release_species_inventory_table}  
-                                            where taxonomy = '{taxonomy_id}' 
+                                            f"""select distinct release_folder_name
+                                            from {release_properties.release_species_inventory_table}
+                                            where taxonomy = '{taxonomy_id}'
                                             and release_version = {version}""")
         return results[0][0] if len(results) > 0 else None
 
@@ -79,10 +80,10 @@ def get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties, me
     Get info on current and previous release assemblies for the given taxonomy
     """
     results = get_all_results_for_query(metadata_connection_handle,
-                                        f"""select row_to_json(row) from 
-                                        (select * from {release_properties.release_species_inventory_table} 
-                                        where taxonomy = '{taxonomy_id}' 
-                                        and release_version in ({release_properties.release_version}, 
+                                        f"""select row_to_json(row) from
+                                        (select * from {release_properties.release_species_inventory_table}
+                                        where taxonomy = '{taxonomy_id}'
+                                        and release_version in ({release_properties.release_version},
                                         {release_properties.release_version} - 1)) row""")
 
     if len(results) == 0:
@@ -124,7 +125,7 @@ def create_symlink_to_species_folder_from_assembly_folder(current_release_assemb
     public_release_species_assembly_folder = os.path.join(release_properties.public_ftp_current_release_folder,
                                                           by_species_folder_name, species_release_folder_name,
                                                           assembly_accession)
-    run_command_with_output(f"""Creating symlink from assembly folder {public_release_assembly_species_folder} to 
+    run_command_with_output(f"""Creating symlink from assembly folder {public_release_assembly_species_folder} to
                             species folder {public_release_species_assembly_folder}""",
                             'bash -c "cd {0} && ln -sfT {1} {2}"'.format(public_release_assembly_folder,
                                             os.path.relpath(public_release_species_assembly_folder,
@@ -180,7 +181,7 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
 
     # Symlink to release README_general_info file - See layout in the link below:
     # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
-    run_command_with_output(f"""Symlinking to release level {readme_general_info_file} and 
+    run_command_with_output(f"""Symlinking to release level {readme_general_info_file} and
                             {readme_known_issues_file} files for assembly {assembly_accession}""",
                             'bash -c "cd {1} && ln -sfT {0}/{2} {1}/{2} && ln -sfT {0}/{3} {1}/{3}"'
                             .format(os.path.relpath(release_properties.public_ftp_current_release_folder,
@@ -258,10 +259,10 @@ def publish_species_level_files_to_ftp(release_properties, species_current_relea
 def publish_release_top_level_files_to_ftp(release_properties):
     grep_command_for_release_level_files = "grep " + " ".join(['-e "{0}"'.format(filename) for filename in
                                                                release_top_level_files_to_copy])
-    run_command_with_output(f"""Copying release level files from {release_properties.staging_release_folder} to 
+    run_command_with_output(f"""Copying release level files from {release_properties.staging_release_folder} to
                                 {release_properties.public_ftp_current_release_folder}....""",
-                            f"""(find {release_properties.staging_release_folder} -maxdepth 1 -type f | 
-                            {grep_command_for_release_level_files} | 
+                            f"""(find {release_properties.staging_release_folder} -maxdepth 1 -type f |
+                            {grep_command_for_release_level_files} |
                             xargs -i rsync -av {{}} {release_properties.public_ftp_current_release_folder})""")
 
 

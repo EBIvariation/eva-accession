@@ -1,10 +1,8 @@
-EVA RefSNP release 4
+EVA RefSNP release 5
 
 Feedback
 ==================================
-If you access and use the data stored in the release we would love to hear from you.
-Please fill in this short survey to let us know what you think.
-https://tinyurl.com/evarelease4survey
+If you access and use the data stored in the release and have feedback, please contact EVA helpdesk eva-helpdesk@ebi.ac.uk
 
 Definitions
 ==================================
@@ -50,9 +48,6 @@ Folder structure
 The top folder contains folders for browsing the release files by species or by
 assembly accession.
 
-The "species_name_mapping.tsv" file in
-the top-level release folder lists the FTP directory names for the various species and provides cross-references for the common and scientific names.
-
 In each species folder, there are links to the folders of the assemblies
 available for that species, both by assembly name (e.g. GRCm38.p4) and by
 assembly accession (e.g. GCA_000001635.6).
@@ -69,7 +64,6 @@ be present in the RS release:
 - GCA_000002305.1_merged_ids.vcf.gz
 - GCA_000002305.1_deprecated_ids.txt.gz
 - GCA_000002305.1_merged_deprecated_ids.txt.gz
-- GCA_000002305.1_multimap_ids.vcf.gz
 
 The "unmapped_ids" files is located in the species folder, while the others are
 located in the assembly folders.
@@ -138,6 +132,12 @@ deprecated due to the following reason(s):
 - The information was incomplete (Missing orientation, reference not among the
   alleles, RS ID variant type does not match type deducted from its SS IDs)
 
+- The position of the variant went beyond the chromosome length
+
+- The position of the variant was imprecise (formerly called multimapped i.e. multiple genomic locations)
+
+- The reference allele provided does not match the reference genome
+
 - Other factors that prevent us from describing the variants with certainty
 
 
@@ -148,9 +148,3 @@ Contains RS IDs that should NOT be used because they have been merged into an
 RS ID that was deprecated later on. The deprecated RS ID is listed in the
 second column.
 
-
-Multimap RS IDs - ex: GCA_000002305.1_multimap_ids.vcf.gz
------------------------------------------------------------------
-
-Contains RS IDs for variants that were mapped to more than one locus on same or different chromosomes.
-See https://www.ncbi.nlm.nih.gov/books/NBK44455/#Build.Mapping_Weight.
