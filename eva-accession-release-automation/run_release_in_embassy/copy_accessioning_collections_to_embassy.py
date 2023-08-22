@@ -40,15 +40,11 @@ collections_assembly_attribute_map = {
     "clusteredVariantOperationEntity": "inactiveObjects.asm"
 }
 
-collections_taxonomy_attribute_map = {
+submitted_collections_taxonomy_attribute_map = {
     "dbsnpSubmittedVariantEntity": "tax",
     "dbsnpSubmittedVariantOperationEntity": "inactiveObjects.tax",
     "submittedVariantEntity": "tax",
-    "submittedVariantOperationEntity": "inactiveObjects.tax",
-    "dbsnpClusteredVariantEntity": "tax",
-    "dbsnpClusteredVariantOperationEntity": "inactiveObjects.tax",
-    "clusteredVariantEntity": "tax",
-    "clusteredVariantOperationEntity": "inactiveObjects.tax"
+    "submittedVariantOperationEntity": "inactiveObjects.tax"
 }
 
 
@@ -66,8 +62,12 @@ def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file
 
     for collection, collection_assembly_attribute_name in sorted(collections_to_copy_map.items()):
         logger.info("Begin processing collection: " + collection)
-        taxonomy_attribute_path = collections_taxonomy_attribute_map[collection]
-        query = """'{{"{0}": {{"$in":["{1}"]}}, "{2}": {{"$in":[{3}]}}}}'""".format(
+        if "clustered" in collection.lower():
+            # Curly braces when they are not positional parameters
+            query = """'{{"{0}": {{"$in":["{1}"]}}}}'""".format(collection_assembly_attribute_name, assembly_accession)
+        else:
+            taxonomy_attribute_path = submitted_collections_taxonomy_attribute_map[collection]
+            query = """'{{"{0}": {{"$in":["{1}"]}}, "{2}": {{"$in":[{3}]}}}}'""".format(
                 collection_assembly_attribute_name, assembly_accession, taxonomy_attribute_path, taxonomy_id)
         sharded_db_name = "eva_accession_sharded"
         mongodump_args = {"db": sharded_db_name, "host": mongo_host,

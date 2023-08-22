@@ -29,7 +29,7 @@ from ebi_eva_common_pyutils.file_utils import file_diff, FileDiffOption
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
     get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.copy_accessioning_collections_to_embassy import collections_assembly_attribute_map, \
-    collections_taxonomy_attribute_map
+    submitted_collections_taxonomy_attribute_map
 from pymongo import MongoClient
 
 logger = logging.getLogger(__name__)
@@ -425,7 +425,7 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, taxonomy_id, assembly
             collection_rs_ids_file = mongo_unique_rs_ids_file.replace(".txt", "_{0}.txt".format(collection))
             agg_pipeline = []
             for sve_coll in (sve_collection_name, dbsnp_sve_collection_name):
-                taxonomy_attribute_path = collections_taxonomy_attribute_map[sve_coll]
+                taxonomy_attribute_path = submitted_collections_taxonomy_attribute_map[sve_coll]
                 assembly_attribute_path = collections_assembly_attribute_map[sve_coll]
                 agg_pipeline.append({
                     "$lookup": {
