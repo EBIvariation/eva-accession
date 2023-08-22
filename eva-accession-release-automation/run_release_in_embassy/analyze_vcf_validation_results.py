@@ -51,7 +51,8 @@ def analyze_vcf_validation_files(vcf_validation_report_files):
 
 def analyze_asm_report_files(asm_report_files):
     exit_code = 0
-    assembly_report_error_classes_to_ignore = ["not present in FASTA file", "does not match the reference sequence"]
+    assembly_report_error_classes_to_ignore = ["not present in FASTA file", "does not match the reference sequence",
+                                               "Multiple synonyms  found for contig"]
 
     asm_report_error_grep_command_chain = " | ".join(['grep -v "{0}"'.format(error_class) for error_class in
                                                       assembly_report_error_classes_to_ignore])

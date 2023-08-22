@@ -33,9 +33,16 @@ def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_pa
                                                                         assembly_accession, vcf_file_category)
         sorted_release_file_name = get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id,
                                                                      assembly_accession, vcf_file_category)
-        commands.append("rm -f {2} && {0} -f {1} {2}".format(vcf_sort_script_path,
-                                                             unsorted_release_file_name,
-                                                             sorted_release_file_name))
+        if vcf_file_category == 'current':
+            commands.append(
+                f"rm -f {sorted_release_file_name} && "
+                f"{bcftools_path} sort -T {species_release_folder} -S 2G -o {sorted_release_file_name} "
+                f"{unsorted_release_file_name}"
+            )
+        else:
+            commands.append("rm -f {2} && {0} -f {1} {2}".format(vcf_sort_script_path,
+                                                                 unsorted_release_file_name,
+                                                                 sorted_release_file_name))
         commands.extend(get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, sorted_release_file_name))
     for text_release_file_category in release_text_file_categories:
         unsorted_release_file_name = get_unsorted_release_text_file_name(species_release_folder, taxonomy_id,
