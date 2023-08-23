@@ -17,7 +17,6 @@ tracker_table_name = 'eva_progress_tracker.clustering_release_tracker'
 
 id_to_column = {
     'current': 'current_rs',
-    'multimap': 'multi_mapped_rs',
     'merged': 'merged_rs',
     'deprecated': 'deprecated_rs',
     'merged_deprecated': 'merged_deprecated_rs',
@@ -102,9 +101,13 @@ def gather_counts(private_config_xml_file, release_version, release_dir):
             'new_ss_clustered': new_ss_clustered
         }
 
+        # Put 0 for multi_mapped_rs (file shold not exist for these)
+        per_species_results['multi_mapped_rs'] = 0
+        per_species_results['new_multi_mapped_rs'] = 0
+
         # Get metrics from release files
         for metric_id in id_to_column.keys():
-            if metric_id in {'current', 'merged', 'multimap'}:
+            if metric_id in {'current', 'merged'}:
                 output_log = run_count_script('count_rs_for_release.sh', full_species_dir, metric_id, taxid)
             elif metric_id in {'deprecated', 'merged_deprecated'}:
                 output_log = run_count_script('count_rs_for_release_for_txt.sh', full_species_dir, metric_id, taxid)
