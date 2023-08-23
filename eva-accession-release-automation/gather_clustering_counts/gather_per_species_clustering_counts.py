@@ -134,7 +134,7 @@ def main():
 
     args = parser.parse_args()
     counts = gather_counts(args.private_config_xml_file, args.release_version, args.release_root_path)
-    # write_counts_to_table(args.private_config_xml_file, counts)
+    write_counts_to_table(args.private_config_xml_file, counts)
 
 
 if __name__ == '__main__':
