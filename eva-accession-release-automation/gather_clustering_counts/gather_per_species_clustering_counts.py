@@ -74,12 +74,12 @@ def get_taxonomy_and_scientific_name(private_config_xml_file, release_version, s
     return results[0][0], results[0][1]
 
 
-def run_count_script(script_name, species_dir, metric_id):
+def run_count_script(script_name, species_dir, metric_id, taxid=''):
     log_file = f'{os.path.basename(species_dir)}_count_{metric_id}_rsid.log'
     if not os.path.exists(log_file):
         run_command_with_output(
             f'Run {script_name}',
-            f'{os.path.join(shell_script_dir, script_name)} {species_dir} {metric_id}'
+            f'{os.path.join(shell_script_dir, script_name)} {species_dir} {metric_id} {taxid}'
         )
     return log_file
 
@@ -105,9 +105,9 @@ def gather_counts(private_config_xml_file, release_version, release_dir):
         # Get metrics from release files
         for metric_id in id_to_column.keys():
             if metric_id in {'current', 'merged', 'multimap'}:
-                output_log = run_count_script('count_rs_for_release.sh', full_species_dir, metric_id)
+                output_log = run_count_script('count_rs_for_release.sh', full_species_dir, metric_id, taxid)
             elif metric_id in {'deprecated', 'merged_deprecated'}:
-                output_log = run_count_script('count_rs_for_release_for_txt.sh', full_species_dir, metric_id)
+                output_log = run_count_script('count_rs_for_release_for_txt.sh', full_species_dir, metric_id, taxid)
             else:
                 output_log = run_count_script('count_rs_for_release_unmapped.sh', full_species_dir, metric_id)
 
@@ -134,7 +134,7 @@ def main():
 
     args = parser.parse_args()
     counts = gather_counts(args.private_config_xml_file, args.release_version, args.release_root_path)
-    write_counts_to_table(args.private_config_xml_file, counts)
+    # write_counts_to_table(args.private_config_xml_file, counts)
 
 
 if __name__ == '__main__':
