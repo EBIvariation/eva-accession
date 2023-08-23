@@ -36,7 +36,7 @@ def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_pa
         if vcf_file_category == 'current_ids':
             commands.append(
                 f"rm -f {sorted_release_file_name} && "
-                f"{bcftools_path} sort -T {species_release_folder} -S 2G -o {sorted_release_file_name} "
+                f"{bcftools_path} sort -T {species_release_folder} -m 2G -o {sorted_release_file_name} "
                 f"{unsorted_release_file_name}"
             )
         else:
