@@ -50,8 +50,9 @@ public class ContigReaderConfiguration {
                                                      MongoProperties mongoProperties) throws Exception {
         logger.info("Injecting {} with parameters: {}, {}", Thread.currentThread().getStackTrace()[1].getMethodName(),
                     parameters.getAssemblyAccession(), mongoProperties.getDatabase());
-        return ContigMongoReader.activeContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                    mongoProperties.getDatabase(), new DbsnpCollectionNames());
+        return ContigMongoReader.activeContigReader(parameters.getAssemblyAccession(),
+                parameters.getTaxonomyAccession(), mongoClient, mongoProperties.getDatabase(),
+                new DbsnpCollectionNames());
     }
 
     @Bean(DBSNP_MERGED_CONTIG_READER)
@@ -80,8 +81,8 @@ public class ContigReaderConfiguration {
                                                    MongoProperties mongoProperties) throws Exception {
         logger.info("Injecting {} with parameters: {}, {}", Thread.currentThread().getStackTrace()[1].getMethodName(),
                     parameters.getAssemblyAccession(), mongoProperties.getDatabase());
-        return ContigMongoReader.activeContigReader(parameters.getAssemblyAccession(), mongoClient,
-                                                    mongoProperties.getDatabase(), new EvaCollectionNames());
+        return ContigMongoReader.activeContigReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(),
+                mongoClient, mongoProperties.getDatabase(), new EvaCollectionNames());
     }
 
     @Bean(EVA_MERGED_CONTIG_READER)

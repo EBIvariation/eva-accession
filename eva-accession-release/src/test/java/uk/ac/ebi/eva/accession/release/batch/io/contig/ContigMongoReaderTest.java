@@ -55,6 +55,8 @@ public class ContigMongoReaderTest {
 
     private static final String ASSEMBLY_ACCESSION = "GCA_000409795.2";
 
+    private static final int TAXONOMY_ACCESSION = 60711;
+
     @Autowired
     private MongoClient mongoClient;
 
@@ -68,8 +70,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicActiveContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, mongoClient,
-                                                                        TEST_DB, new DbsnpCollectionNames());
+        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
+                mongoClient, TEST_DB, new DbsnpCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();

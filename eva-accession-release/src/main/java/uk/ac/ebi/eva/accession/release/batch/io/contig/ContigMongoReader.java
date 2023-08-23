@@ -49,6 +49,8 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final String ACTIVE_REFERENCE_ASSEMBLY_FIELD = "asm";
 
+    private static final String ACTIVE_REFERENCE_TAXONOMY_FIELD = "tax";
+
     private static final String INACTIVE_REFERENCE_ASSEMBLY_FIELD = "inactiveObjects.asm";
 
     private static final String EVENT_TYPE_FIELD = "eventType";
@@ -75,11 +77,12 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private final List<Bson> aggregation;
 
-    public static ContigMongoReader activeContigReader(String assemblyAccession, MongoClient mongoClient,
-                                                       String database, CollectionNames names) {
+    public static ContigMongoReader activeContigReader(String assemblyAccession, int taxonomyAccession,
+                                                       MongoClient mongoClient, String database,
+                                                       CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
                                      names.getClusteredVariantEntity(),
-                                     buildAggregationForActiveContigs(assemblyAccession));
+                                     buildAggregationForActiveContigs(assemblyAccession, taxonomyAccession));
     }
 
     public static ContigMongoReader mergedContigReader(String assemblyAccession, MongoClient mongoClient,
@@ -105,8 +108,9 @@ public class ContigMongoReader implements ItemStreamReader<String> {
         this.aggregation = aggregation;
     }
 
-    private static List<Bson> buildAggregationForActiveContigs(String assemblyAccession) {
-        Bson match = Aggregates.match(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession));
+    private static List<Bson> buildAggregationForActiveContigs(String assemblyAccession, int taxonomyAccession) {
+        Bson match = Aggregates.match(Filters.and(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+                Filters.eq(ACTIVE_REFERENCE_TAXONOMY_FIELD, taxonomyAccession)));
         Bson uniqueContigs = Aggregates.group(ACTIVE_CONTIG_KEY);
         List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
         logger.info("Issuing aggregation: {}", aggregation);
