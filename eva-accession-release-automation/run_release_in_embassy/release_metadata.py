@@ -15,7 +15,7 @@ import datetime
 
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
-release_vcf_file_categories = ["current_ids", "merged_ids", "multimap_ids"]
+release_vcf_file_categories = ["current_ids", "merged_ids"]
 release_text_file_categories = ["deprecated_ids", "merged_deprecated_ids"]
 vcf_validation_output_file_pattern = "*.vcf.errors_summary.*"
 asm_report_output_file_pattern = "*.vcf.text_assembly_report.*"
