@@ -47,6 +47,8 @@ public class ContigMongoReader implements ItemStreamReader<String> {
 
     private static final Logger logger = LoggerFactory.getLogger(ContigMongoReader.class);
 
+    private static final String ACTIVE_SUBMITTED_ASSEMBLY_FIELD = "seq";
+
     private static final String ACTIVE_REFERENCE_ASSEMBLY_FIELD = "asm";
 
     private static final String ACTIVE_REFERENCE_TAXONOMY_FIELD = "tax";
@@ -81,7 +83,7 @@ public class ContigMongoReader implements ItemStreamReader<String> {
                                                        MongoClient mongoClient, String database,
                                                        CollectionNames names) {
         return new ContigMongoReader(assemblyAccession, mongoClient, database,
-                                     names.getClusteredVariantEntity(),
+                                     names.getSubmittedVariantEntity(),
                                      buildAggregationForActiveContigs(assemblyAccession, taxonomyAccession));
     }
 
@@ -109,7 +111,7 @@ public class ContigMongoReader implements ItemStreamReader<String> {
     }
 
     private static List<Bson> buildAggregationForActiveContigs(String assemblyAccession, int taxonomyAccession) {
-        Bson match = Aggregates.match(Filters.and(Filters.eq(ACTIVE_REFERENCE_ASSEMBLY_FIELD, assemblyAccession),
+        Bson match = Aggregates.match(Filters.and(Filters.eq(ACTIVE_SUBMITTED_ASSEMBLY_FIELD, assemblyAccession),
                 Filters.eq(ACTIVE_REFERENCE_TAXONOMY_FIELD, taxonomyAccession)));
         Bson uniqueContigs = Aggregates.group(ACTIVE_CONTIG_KEY);
         List<Bson> aggregation = Arrays.asList(match, uniqueContigs);
