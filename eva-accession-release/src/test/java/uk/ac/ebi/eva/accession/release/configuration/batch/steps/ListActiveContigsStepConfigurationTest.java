@@ -56,7 +56,9 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_A
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @UsingDataSet(locations = {"/test-data/dbsnpClusteredVariantEntity.json",
-                           "/test-data/clusteredVariantEntity.json"})
+                           "/test-data/clusteredVariantEntity.json",
+                            "/test-data/submittedVariantEntity.json",
+                            "/test-data/dbsnpSubmittedVariantEntity.json"})
 @TestPropertySource("classpath:application.properties")
 public class ListActiveContigsStepConfigurationTest {
 
