@@ -36,6 +36,7 @@ readme_known_issues_file = "README_release_known_issues.txt"
 readme_changelog_file = "README_release_changelog.txt"
 species_name_mapping_file = "species_name_mapping.tsv"
 release_top_level_files_to_copy = (readme_known_issues_file, readme_general_info_file)
+script_dir = os.path.dirname(__file__)
 unmapped_ids_file_regex = "*_unmapped_ids.txt.gz"
 logger = logging_config.get_logger(__name__)
 
@@ -181,12 +182,16 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
 
     # Symlink to release README_general_info file - See layout in the link below:
     # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
-    run_command_with_output(f"""Symlinking to release level {readme_general_info_file} and
-                            {readme_known_issues_file} files for assembly {assembly_accession}""",
-                            'bash -c "cd {1} && ln -sfT {0}/{2} {1}/{2} && ln -sfT {0}/{3} {1}/{3}"'
-                            .format(os.path.relpath(release_properties.public_ftp_current_release_folder,
-                                                    public_release_assembly_folder), public_release_assembly_folder,
-                                    readme_general_info_file, readme_known_issues_file))
+    run_command_with_output(
+        f"""Symlinking to release level {readme_general_info_file} and {readme_known_issues_file} files for 
+        assembly {assembly_accession}""",
+        'bash -c "cd {1} && ln -sfT {0}/{2} {1}/{2} && ln -sfT {0}/{3} {1}/{3}"'.format(
+            os.path.relpath(release_properties.public_ftp_current_release_folder, public_release_species_assembly_folder),
+            public_release_species_assembly_folder,
+            readme_general_info_file,
+            readme_known_issues_file
+        )
+    )
 
     # Create a link from assembly folder to species_folder ex: by_assembly/GCA_000005005.5/zea_mays to by_species/zea_mays/GCA_000005005.5
     create_symlink_to_species_folder_from_assembly_folder(current_release_assembly_info, release_properties,
@@ -261,8 +266,8 @@ def publish_release_top_level_files_to_ftp(release_properties):
                                                                release_top_level_files_to_copy])
     run_command_with_output(f"""Copying release level files from {release_properties.staging_release_folder} to
                                 {release_properties.public_ftp_current_release_folder}....""",
-                            f"""(find {release_properties.staging_release_folder} -maxdepth 1 -type f |
-                            {grep_command_for_release_level_files} |
+                            f"""(find {script_dir} -maxdepth 1 -type f | 
+                            {grep_command_for_release_level_files} | 
                             xargs -i rsync -av {{}} {release_properties.public_ftp_current_release_folder})""")
 
 
