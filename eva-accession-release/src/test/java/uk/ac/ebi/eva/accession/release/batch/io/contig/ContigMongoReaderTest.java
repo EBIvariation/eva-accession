@@ -32,6 +32,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.collectionNames.DbsnpCollectionNames;
+import uk.ac.ebi.eva.accession.release.collectionNames.EvaCollectionNames;
 import uk.ac.ebi.eva.accession.release.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 
@@ -46,7 +47,8 @@ import static org.junit.Assert.assertEquals;
 @TestPropertySource("classpath:application.properties")
 @UsingDataSet(locations = {
         "/test-data/dbsnpClusteredVariantEntity.json",
-        "/test-data/dbsnpClusteredVariantOperationEntity.json"
+        "/test-data/dbsnpClusteredVariantOperationEntity.json",
+        "/test-data/submittedVariantEntity.json"
 })
 @ContextConfiguration(classes = {MongoConfiguration.class, MongoTestConfiguration.class})
 public class ContigMongoReaderTest {
@@ -54,6 +56,8 @@ public class ContigMongoReaderTest {
     private static final String TEST_DB = "test-db";
 
     private static final String ASSEMBLY_ACCESSION = "GCA_000409795.2";
+
+    private static final int TAXONOMY_ACCESSION = 60711;
 
     @Autowired
     private MongoClient mongoClient;
@@ -68,8 +72,8 @@ public class ContigMongoReaderTest {
 
     @Test
     public void basicActiveContigsRead() {
-        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, mongoClient,
-                                                                        TEST_DB, new DbsnpCollectionNames());
+        ContigMongoReader reader = ContigMongoReader.activeContigReader(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
+                mongoClient, TEST_DB, new EvaCollectionNames());
         reader.open(new ExecutionContext());
         String contig;
         List<String> contigs = new ArrayList<>();
