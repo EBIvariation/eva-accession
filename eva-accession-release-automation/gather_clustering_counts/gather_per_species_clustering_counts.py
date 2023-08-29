@@ -92,6 +92,9 @@ def gather_counts(private_config_xml_file, release_version, release_dir):
         taxid, sci_name = get_taxonomy_and_scientific_name(private_config_xml_file, release_version, species_dir)
         if not taxid or not sci_name:
             continue
+        if "'" in sci_name:
+            # some scientific names in db has single quote (') in name causing issues while inserting
+            sci_name = sci_name.replace("'", "\''")
         new_ss_clustered = get_new_ss_clustered(private_config_xml_file, release_version, taxid)
         per_species_results = {
             'taxonomy_id': taxid,

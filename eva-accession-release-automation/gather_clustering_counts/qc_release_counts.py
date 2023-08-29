@@ -47,9 +47,12 @@ def get_counts_from_release_files(private_config_xml_file, release_version, rele
             for count_line in counts:
                 if len(count_line) < 2:
                     continue
-                m = re.match(r'^GCA_[0-9.]+_(.*?)_ids.*?$', count_line[0])
+                m = re.match(r'^[0-9]+_GCA_[0-9.]+_(.*?)_ids.*?$', count_line[0])
                 if m and m.group(1):
-                    tax_asm_counts[id_to_column[m.group(1)]] = int(count_line[1])
+                    if m.group(1) == 'multimap':
+                        tax_asm_counts['multi_mapped_rs'] = 0
+                    else:
+                        tax_asm_counts[id_to_column[m.group(1)]] = int(count_line[1])
 
             results[taxid][assembly_accession] = tax_asm_counts
     return results
