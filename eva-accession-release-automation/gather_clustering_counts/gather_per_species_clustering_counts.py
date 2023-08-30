@@ -83,9 +83,11 @@ def run_count_script(script_name, species_dir, metric_id, taxid=''):
     return log_file
 
 
-def gather_counts(private_config_xml_file, release_version, release_dir):
+def gather_counts(private_config_xml_file, release_version, release_dir, species_directories=None):
     results = []
-    for species_dir in os.listdir(release_dir):
+    if not species_directories:
+        species_directories = os.listdir(release_dir)
+    for species_dir in species_directories:
         full_species_dir = os.path.join(release_dir, species_dir)
 
         # Get data from other tables
@@ -137,9 +139,12 @@ def main():
                         help="base directory where all the release was run.", required=True)
     parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", type=int, help="current release version", required=True)
+    parser.add_argument("--species-directories", type=str, nargs='+',
+                        help="set of directory names to process. Process all if missing")
 
     args = parser.parse_args()
-    counts = gather_counts(args.private_config_xml_file, args.release_version, args.release_root_path)
+    counts = gather_counts(args.private_config_xml_file, args.release_version, args.release_root_path,
+                           args.species_directories)
     write_counts_to_table(args.private_config_xml_file, counts)
 
 
