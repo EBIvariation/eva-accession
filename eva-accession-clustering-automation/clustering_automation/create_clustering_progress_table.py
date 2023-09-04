@@ -22,7 +22,7 @@ from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.mongodb import MongoDatabase
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
-from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name
+from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name, get_scientific_name_from_ensembl
 
 logger = logging_config.get_logger(__name__)
 
@@ -55,20 +55,6 @@ def create_table_if_not_exists(private_config_xml_file):
     )
     with get_metadata_connection_handle("production_processing", private_config_xml_file) as pg_conn:
         execute_query(pg_conn, query_create_table)
-
-
-def get_scientific_name(pg_conn, taxonomy):
-    query = f'SELECT scientific_name from evapro.taxonomy where taxonomy_id={taxonomy}'
-    results = get_all_results_for_query(pg_conn, query)
-    if not results:
-        raise Exception(f'No entry found in taxonomy table for taxonomy: {taxonomy}')
-    sc_name = results[0][0]
-    if "'" in sc_name:
-        # some scientific names in db has single quote (') in name causing issues while inserting
-        sc_name = sc_name.replace("'", "\''")
-        return sc_name
-    else:
-        return sc_name
 
 
 def fill_in_from_previous_release(private_config_xml_file, profile, curr_release_version, ref_dir):
@@ -112,7 +98,7 @@ def insert_entry_for_taxonomy_and_assembly(private_config_xml_file, profile, ref
                                            sources, sc_name=None, fasta_path=None, report_path=None,
                                            release_folder_name=None):
     with get_metadata_connection_handle(profile, private_config_xml_file) as pg_conn:
-        sc_name = sc_name if sc_name else get_scientific_name(pg_conn, tax)
+        sc_name = sc_name if sc_name else get_scientific_name_from_ensembl(tax)
         if asm_acc != 'Unmapped':
             ncbi_assembly = NCBIAssembly(asm_acc, sc_name, ref_dir)
         fasta_path = fasta_path if fasta_path else ncbi_assembly.assembly_fasta_path

@@ -24,7 +24,7 @@ from ebi_eva_common_pyutils.nextflow import LinearNextFlowPipeline, NextFlowProc
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
 from clustering_automation.create_clustering_properties import create_properties_file
-
+from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name
 
 logger = logging.getLogger(__name__)
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -56,7 +56,7 @@ def generate_linear_pipeline(taxonomy_id, scientific_name, assembly_list, common
     clustering_tracking_table = common_properties['clustering-release-tracker']
 
     pipeline = LinearNextFlowPipeline()
-    species_directory = os.path.join(clustering_folder, f"{scientific_name.lower().replace(' ', '_')}_{taxonomy_id}")
+    species_directory = os.path.join(clustering_folder, f"{normalise_taxon_scientific_name(scientific_name)}_{taxonomy_id}")
     for assembly in assembly_list:
         output_directory = os.path.join(species_directory, assembly)
         os.makedirs(output_directory, exist_ok=True)
