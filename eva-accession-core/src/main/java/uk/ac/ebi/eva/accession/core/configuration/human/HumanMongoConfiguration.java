@@ -35,6 +35,7 @@ import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+import org.springframework.data.mongodb.core.WriteResultChecking;
 import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
@@ -94,6 +95,7 @@ public class HumanMongoConfiguration {
                                             @Qualifier("humanMappingConverter") MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, converter);
+        mongoTemplate.setWriteResultChecking(WriteResultChecking.EXCEPTION);
         mongoTemplate.indexOps(DbsnpClusteredVariantOperationEntity.class).ensureIndex(
                 new Index().on(INACTIVE_OBJECTS_HASHED_MESSAGE, Sort.Direction.ASC).background());
         return mongoTemplate;
