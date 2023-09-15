@@ -22,7 +22,7 @@ from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.mongodb import MongoDatabase
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
-from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name, get_scientific_name_from_ensembl
+from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name, get_scientific_name_from_taxonomy
 
 logger = logging_config.get_logger(__name__)
 
@@ -98,7 +98,8 @@ def insert_entry_for_taxonomy_and_assembly(private_config_xml_file, profile, ref
                                            sources, sc_name=None, fasta_path=None, report_path=None,
                                            release_folder_name=None):
     with get_metadata_connection_handle(profile, private_config_xml_file) as pg_conn:
-        sc_name = sc_name if sc_name else get_scientific_name_from_ensembl(tax)
+        sc_name = sc_name if sc_name else get_scientific_name_from_taxonomy(tax,
+                                                                        private_config_xml_file=private_config_xml_file)
         if asm_acc != 'Unmapped':
             ncbi_assembly = NCBIAssembly(asm_acc, sc_name, ref_dir)
         fasta_path = fasta_path if fasta_path else ncbi_assembly.assembly_fasta_path
