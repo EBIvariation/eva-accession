@@ -80,7 +80,8 @@ process {workflow-process-name} {{
 def get_release_properties_for_current_species(common_release_properties, taxonomy_id):
     release_properties = {"taxonomy-id": taxonomy_id,
                           "species-release-folder": os.path.join(common_release_properties["release-folder"],
-                                                                 get_release_folder_name(taxonomy_id))}
+                            get_release_folder_name(taxonomy_id, common_release_properties["private-config-xml-file"],
+                                                    common_release_properties["profile"]))}
     os.makedirs(release_properties["species-release-folder"], exist_ok=True)
     release_properties["timestamp"] = timestamp
     release_properties["dump-dir"] = os.path.join(release_properties["species-release-folder"], "dumps")

@@ -90,5 +90,6 @@ def get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession):
     return "acc_" + str(taxonomy_id) + "_" + assembly_accession.replace('.', '_')
 
 
-def get_release_folder_name(taxonomy_id):
-    return taxonomy.get_normalized_scientific_name_from_ensembl(taxonomy_id)
+def get_release_folder_name(taxonomy_id, private_config_xml_file, profile):
+    return taxonomy.get_normalized_scientific_name(taxonomy_id, private_config_xml_file=private_config_xml_file,
+                                                   profile=profile)
