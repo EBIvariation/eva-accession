@@ -12,6 +12,7 @@ from ebi_eva_common_pyutils.mongodb import MongoDatabase
 from ebi_eva_common_pyutils.config_utils import get_accession_pg_creds_for_profile
 from ebi_eva_common_pyutils.pg_utils import execute_query, get_all_results_for_query
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name
 from gather_clustering_counts.gather_per_species_clustering_counts import assembly_table_name, tracker_table_name
 from urllib.parse import urlsplit
 
@@ -524,7 +525,7 @@ def populate_taxonomy_scientific_name_association(private_config_xml_file, relea
         for taxonomy, scientific_name in get_all_results_for_query(metadata_connection_handle,
                                                                    query_taxonomy_scientific_name):
             # Use similar approach to what is used in clustering automation: https://github.com/EBIvariation/eva-accession/blob/85371091fe5bcc56545ec2d7ccb73baa8a793c92/eva-accession-clustering-automation/clustering_automation/cluster_from_mongo.py#L59
-            taxonomy_scientific_name_map[taxonomy] = scientific_name.lower().replace(' ', '_')
+            taxonomy_scientific_name_map[taxonomy] = normalise_taxon_scientific_name(scientific_name)
 
 
 def main():
