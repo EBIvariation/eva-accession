@@ -1,9 +1,12 @@
 import argparse
 import glob
 import os
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.logger import logging_config
+
+logger = logging_config.get_logger(__name__)
 
 shell_script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bash')
 
@@ -38,11 +41,15 @@ def find_link(key_set, dict1, dict2, source_linked_set1=None, source_linked_set2
 def gather_assemblies_and_species_from_directories(release_directory):
     all_assemblies_2_species = defaultdict(list)
     all_species_2_assemblies = defaultdict(list)
-    for assembly_dir in  glob.glob(os.path.join(release_directory, '*', "GCA_*")):
+    for assembly_dir in glob.glob(os.path.join(release_directory, '*', "GCA_*")):
         assembly_accession = os.path.basename(assembly_dir)
         species_name = os.path.basename(os.path.dirname(assembly_dir))
         all_assemblies_2_species[assembly_accession].append(species_name)
         all_species_2_assemblies[species_name].append(assembly_accession)
+    for unmapped_file in glob.glob(os.path.join(release_directory, '*', "*unmapped_ids.txt.gz")):
+        species_name = os.path.basename(os.path.dirname(unmapped_file))
+        if species_name not in all_species_2_assemblies:
+            all_species_2_assemblies[species_name] = []
     return all_assemblies_2_species, all_species_2_assemblies
 
 
@@ -76,8 +83,33 @@ def collect_files_to_count(release_directory, set_of_species):
             txt_files = [f for f in txt_files if 'dbsnp_' not in f and 'eva_' not in f]
             all_files.extend(vcf_files)
             all_files.extend(txt_files)
-        all_files.extend(glob.glob(os.path.join(species_dir,'*_unmapped_ids.txt.gz')))
+        all_files.extend(glob.glob(os.path.join(species_dir, '*_unmapped_ids.txt.gz')))
     return all_files
+
+
+def parse_logs(all_logs):
+    species_counts = defaultdict(Counter)
+    assembly_counts = defaultdict(Counter)
+    species_assembly_counts = defaultdict(Counter)
+    for logs in all_logs:
+        with open(logs) as open_file:
+            for line in open_file:
+                sp_line = line.strip().split()
+                count = int(sp_line[0])
+                set_of_annotations = sp_line[1].split(',')[:-1]
+                for annotation in set_of_annotations:
+                    assembly, sc_name, idtype = annotation.split('-')
+                    species_counts[sc_name][idtype] += count
+                    assembly_counts[assembly][idtype] += count
+                    species_assembly_counts[sc_name + '\t' + assembly][idtype] += count
+    return species_counts, assembly_counts, species_assembly_counts
+
+
+def generate_output_tsv(dict_of_counter, output_file):
+    with open(output_file, 'w') as open_file:
+        for annotation1 in dict_of_counter:
+            for annotation2 in dict_of_counter[annotation1]:
+                open_file.write("\t".join([annotation1, annotation2, str(dict_of_counter[annotation1][annotation2])]))
 
 
 def main():
@@ -94,18 +126,28 @@ def main():
                              "Process all if missing")
 
     args = parser.parse_args()
+
+    logging_config.add_stdout_handler()
+    logger.info(f'Analyse {args.release_root_path}')
     all_assemblies_2_species, all_species_2_assemblies = gather_assemblies_and_species_from_directories(args.release_root_path)
     all_sets_of_species = set()
     # Determine the species that needs to be counted together because they share assemblies
     species_to_search = args.species_directories
     if not species_to_search:
         species_to_search = all_species_2_assemblies.keys()
+    logger.info(f'Process {len(species_to_search)} species')
     for species in species_to_search:
         set_of_species, set_of_assemblies = find_link({species}, all_species_2_assemblies, all_assemblies_2_species)
         all_sets_of_species.add(set_of_species)
-
+    logger.info(f'Aggregate species in {len(all_sets_of_species)} groups')
+    all_logs = []
     for set_of_species in all_sets_of_species:
-        count_log = gather_count_for_set_species(args.release_root_path, set_of_species, args.output_dir)
+        logger.info(f'Process files for {",".join(set_of_species)} groups')
+        all_logs.append(gather_count_for_set_species(args.release_root_path, set_of_species, args.output_dir))
+    species_counts, assembly_counts, species_assembly_counts = parse_logs(all_logs)
+    generate_output_tsv(species_counts, os.path.join(args.output_dir, 'species_counts.tsv'))
+    generate_output_tsv(assembly_counts, os.path.join(args.output_dir, 'assembly_counts.tsv'))
+    generate_output_tsv(species_assembly_counts, os.path.join(args.output_dir, 'species_assembly_counts.tsv'))
 
 
 if __name__ == "__main__":
