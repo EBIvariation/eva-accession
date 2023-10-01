@@ -124,11 +124,14 @@ def calculate_all_logs(release_dir, output_dir, species_directories=None):
     return all_logs
 
 
-def generate_output_tsv(dict_of_counter, output_file):
+def generate_output_tsv(dict_of_counter, output_file, header):
     with open(output_file, 'w') as open_file:
+        open_file.write("\t".join([header, 'Metric', 'Count']) + '\n')
         for annotation1 in dict_of_counter:
             for annotation2 in dict_of_counter[annotation1]:
-                open_file.write("\t".join([str(annotation1), str(annotation2), str(dict_of_counter[annotation1][annotation2])]))
+                open_file.write("\t".join([
+                    str(annotation1), str(annotation2), str(dict_of_counter[annotation1][annotation2])
+                ]) + '\n')
 
 
 class ReleaseCounter(AppLogger):
@@ -247,7 +250,6 @@ class ReleaseCounter(AppLogger):
         rows = []
         count_per_assembly_from_files = self.generate_per_assembly_counts()
         counts_per_assembly_from_db = self.get_counts_assembly_from_database()
-        print(count_per_assembly_from_files)
         all_asms = set(count_per_assembly_from_files.keys()).union(counts_per_assembly_from_db.keys())
         for asm in all_asms:
             asm_counts_from_files = count_per_assembly_from_files.get(asm, {})
@@ -287,9 +289,9 @@ def main():
     logs = calculate_all_logs(args.release_root_path, args.output_dir, args.species_directories)
     counter = ReleaseCounter(args.private_config_xml_file, args.release_version, logs)
     counter.detect_inconsistent_types()
-    generate_output_tsv(counter.generate_per_species_counts(), os.path.join(args.output_dir, 'species_counts.tsv'))
-    generate_output_tsv(counter.generate_per_assembly_counts(), os.path.join(args.output_dir, 'assembly_counts.tsv'))
-    generate_output_tsv(counter.generate_per_species_assembly_counts(), os.path.join(args.output_dir, 'species_assembly_counts.tsv'))
+    generate_output_tsv(counter.generate_per_species_counts(), os.path.join(args.output_dir, 'species_counts.tsv'), 'Taxonomy')
+    generate_output_tsv(counter.generate_per_assembly_counts(), os.path.join(args.output_dir, 'assembly_counts.tsv'), 'Assembly')
+    generate_output_tsv(counter.generate_per_species_assembly_counts(), os.path.join(args.output_dir, 'species_assembly_counts.tsv'), 'Taxonomy\tAssembly')
     counter.compare_assembly_counts_with_db(output_csv=os.path.join(args.output_dir, 'comparison_assembly_counts.csv'))
 
 
