@@ -34,10 +34,11 @@ def find_link(key_set, dict1, dict2, source_linked_set1=None, source_linked_set2
     linked_set1 = source_linked_set1.copy()
     linked_set2 = source_linked_set2.copy()
     for key1 in key_set:
-        for value1 in dict1.get(key1):
-            linked_set2.add(value1)
-            if value1 in dict2:
-                linked_set1.update(dict2.get(value1))
+        if key1 in dict1:
+            for value1 in dict1.get(key1):
+                linked_set2.add(value1)
+                if value1 in dict2:
+                    linked_set1.update(dict2.get(value1))
     # if one of the set is still growing we check again
     if linked_set1 != source_linked_set1 or linked_set2 != source_linked_set2:
         tmp_linked_set1, tmp_linked_set2 = find_link(linked_set1, dict1, dict2, linked_set1, linked_set2)

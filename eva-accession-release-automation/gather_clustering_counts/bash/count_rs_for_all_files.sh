@@ -14,7 +14,7 @@ do
     echo "Process $INPUT"
     ASSEMBLY=$(basename $(dirname ${INPUT}));
     SC_NAME=$(basename $(dirname $(dirname ${INPUT})));
-    TYPE=$(echo $(basename ${INPUT}) | cut -f 4 -d '_')
+    TYPE=$(echo $(basename ${INPUT}) | cut -f 4- -d '_' | awk '{print substr($0,1,length($0)-11)}')
     OUTPUT=tmp_${SC_NAME}_${ASSEMBLY}_${TYPE}.txt
     if [[ ${INPUT} == *.vcf.gz ]]
     then
