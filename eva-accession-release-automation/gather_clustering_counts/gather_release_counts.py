@@ -70,7 +70,7 @@ def gather_assemblies_and_species_from_directory(release_directory):
 
 
 def gather_count_for_set_species(release_directory, set_of_species, output_dir):
-    """This function find al the release files for a set of species and pass them to the counting bash script."""
+    """This function finds all the release files for a set of species and passes them to the counting bash script."""
     all_files = collect_files_to_count(release_directory, set_of_species)
     script_name = 'count_rs_for_all_files.sh'
     input_file_list = os.path.join(output_dir, f'input_for_{"_".join(sorted(set_of_species))}.list')
@@ -166,7 +166,7 @@ class ReleaseCounter(AppLogger):
                 count_dict['taxonomy'] = taxonomy
                 count_dict['scientific_name'] = scientific_name
 
-    def get_counts_assembly_from_database(self):
+    def get_assembly_counts_from_database(self):
         """
         DB counts are loaded to the per-assembly counts table by gather_clustering_counts_from_mongo,
         so just read them directly.
