@@ -2,8 +2,8 @@
 
 set -e
 
-OUTPUT_FILE=$1
-FILE_WITH_ALL_INPUTS=$2
+FILE_WITH_ALL_INPUTS=$1
+OUTPUT_FILE=$2
 
 #Initialise list of tmp output
 ALL_TMP_OUTPUT=""

@@ -19,6 +19,7 @@ shell_script_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bas
 
 assembly_table_name = 'eva_stats.release_rs_statistics_per_assembly'
 
+
 def find_link(key_set, dict1, dict2, source_linked_set1=None, source_linked_set2=None):
     """
     Assuming 2 dictionaries providing respectively the list of values linked to a key, and a list of keys linked to a
@@ -41,7 +42,7 @@ def find_link(key_set, dict1, dict2, source_linked_set1=None, source_linked_set2
                     linked_set1.update(dict2.get(value1))
     # if one of the set is still growing we check again
     if linked_set1 != source_linked_set1 or linked_set2 != source_linked_set2:
-        tmp_linked_set1, tmp_linked_set2 = find_link(linked_set1, dict1, dict2, linked_set1, linked_set2)
+        tmp_linked_set1, tmp_linked_set2 = find_link(linked_set1-key_set, dict1, dict2, linked_set1, linked_set2)
         linked_set1.update(tmp_linked_set1)
         linked_set2.update(tmp_linked_set2)
     return frozenset(linked_set1), frozenset(linked_set2)
@@ -80,7 +81,7 @@ def gather_count_for_set_species(release_directory, set_of_species, output_dir):
     if not os.path.exists(output_file):
         run_command_with_output(
             f'Run {script_name} for {", ".join(set_of_species)}',
-            f'{os.path.join(shell_script_dir, script_name)} {output_file} {input_file_list} '
+            f'{os.path.join(shell_script_dir, script_name)} {input_file_list} {output_file}'
         )
     else:
         logger.warning(f'output {output_file} already exists. Remove it to perform the count again')
@@ -114,9 +115,14 @@ def calculate_all_logs(release_dir, output_dir, species_directories=None):
     if not species_to_search:
         species_to_search = all_species_2_assemblies.keys()
     logger.info(f'Process {len(species_to_search)} species')
+
+    # To keep track of the species already added
+    all_species_added = set()
     for species in species_to_search:
-        set_of_species, set_of_assemblies = find_link({species}, all_species_2_assemblies, all_assemblies_2_species)
-        all_sets_of_species.add(set_of_species)
+        if species not in all_species_added:
+            set_of_species, set_of_assemblies = find_link({species}, all_species_2_assemblies, all_assemblies_2_species)
+            all_sets_of_species.add(set_of_species)
+            all_species_added.update(set_of_species)
     logger.info(f'Aggregate species in {len(all_sets_of_species)} groups')
     all_logs = []
     for set_of_species in all_sets_of_species:
@@ -128,10 +134,10 @@ def calculate_all_logs(release_dir, output_dir, species_directories=None):
 def generate_output_tsv(dict_of_counter, output_file, header):
     with open(output_file, 'w') as open_file:
         open_file.write("\t".join([header, 'Metric', 'Count']) + '\n')
-        for annotation1 in dict_of_counter:
-            for annotation2 in dict_of_counter[annotation1]:
+        for assembly_or_species in dict_of_counter:
+            for metric in dict_of_counter[assembly_or_species]:
                 open_file.write("\t".join([
-                    str(annotation1), str(annotation2), str(dict_of_counter[annotation1][annotation2])
+                    str(assembly_or_species), str(metric), str(dict_of_counter[assembly_or_species][metric])
                 ]) + '\n')
 
 
