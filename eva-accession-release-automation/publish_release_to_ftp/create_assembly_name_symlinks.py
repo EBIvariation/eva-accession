@@ -21,8 +21,8 @@ def get_assembly_name_for_accession(assembly_accession):
     if assembly_accession == "GCA_000003745.2":
         return "Genoscope.12X"
     ENA_XML_API_URL = "https://www.ebi.ac.uk/ena/browser/api/xml/" + assembly_accession
-    response = requests.get(ENA_XML_API_URL)
     try:
+        response = requests.get(ENA_XML_API_URL)
         if response.ok:
             return xml.etree.ElementTree.fromstring(response.content.decode(encoding="utf-8"))\
                 .find("ASSEMBLY").find("NAME").text

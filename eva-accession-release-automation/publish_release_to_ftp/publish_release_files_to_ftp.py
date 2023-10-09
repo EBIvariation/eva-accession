@@ -180,18 +180,18 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
         copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
                                           public_release_species_assembly_folder)
 
-    # Symlink to release README_general_info file - See layout in the link below:
-    # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
-    run_command_with_output(
-        f"""Symlinking to release level {readme_general_info_file} and {readme_known_issues_file} files for 
-        assembly {assembly_accession}""",
-        'bash -c "cd {1} && ln -sfT {0}/{2} {1}/{2} && ln -sfT {0}/{3} {1}/{3}"'.format(
-            os.path.relpath(release_properties.public_ftp_current_release_folder, public_release_species_assembly_folder),
-            public_release_species_assembly_folder,
-            readme_general_info_file,
-            readme_known_issues_file
+        # Symlink to release README_general_info file - See layout in the link below:
+        # https://docs.google.com/presentation/d/1cishRa6P6beIBTP8l1SgJfz71vQcCm5XLmSA8Hmf8rw/edit#slide=id.g63fd5cd489_0_0
+        run_command_with_output(
+            f"""Symlinking to release level {readme_general_info_file} and {readme_known_issues_file} files for 
+            assembly {assembly_accession}""",
+            'bash -c "cd {1} && ln -sfT {0}/{2} {1}/{2} && ln -sfT {0}/{3} {1}/{3}"'.format(
+                os.path.relpath(release_properties.public_ftp_current_release_folder, public_release_species_assembly_folder),
+                public_release_species_assembly_folder,
+                readme_general_info_file,
+                readme_known_issues_file
+            )
         )
-    )
 
     # Create a link from assembly folder to species_folder ex: by_assembly/GCA_000005005.5/zea_mays to by_species/zea_mays/GCA_000005005.5
     create_symlink_to_species_folder_from_assembly_folder(current_release_assembly_info, release_properties,
