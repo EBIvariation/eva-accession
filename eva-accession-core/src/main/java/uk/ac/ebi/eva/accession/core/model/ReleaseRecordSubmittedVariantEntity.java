@@ -20,6 +20,8 @@ package uk.ac.ebi.eva.accession.core.model;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.Objects;
+
 @Document
 public class ReleaseRecordSubmittedVariantEntity {
 
@@ -70,10 +72,12 @@ public class ReleaseRecordSubmittedVariantEntity {
         this.projectAccession = projectAccession;
         this.contig = contig;
         this.start = start;
-        this.referenceAllele = referenceAllele;
-        this.alternateAllele = alternateAllele;
-        this.referenceAlleleWithContextBase = referenceAlleleWithContextBase;
-        this.alternateAlleleWithContextBase = alternateAlleleWithContextBase;
+        this.referenceAllele = Objects.nonNull(referenceAllele) ? referenceAllele.toUpperCase() : null;
+        this.alternateAllele = Objects.nonNull(alternateAllele) ? alternateAllele.toUpperCase() : null;
+        this.referenceAlleleWithContextBase = Objects.nonNull(referenceAlleleWithContextBase) ?
+                referenceAlleleWithContextBase.toUpperCase() : null;
+        this.alternateAlleleWithContextBase = Objects.nonNull(alternateAlleleWithContextBase) ?
+                alternateAlleleWithContextBase.toUpperCase() : null;
         this.supportedByEvidence = supportedByEvidence;
         this.assemblyMatch = assemblyMatch;
         this.allelesMatch = allelesMatch;

@@ -115,8 +115,8 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
         this.projectAccession = projectAccession;
         this.contig = contig;
         this.start = start;
-        this.referenceAllele = referenceAllele;
-        this.alternateAllele = alternateAllele;
+        this.referenceAllele = Objects.nonNull(referenceAllele) ? referenceAllele.toUpperCase() : null;
+        this.alternateAllele = Objects.nonNull(alternateAllele) ? alternateAllele.toUpperCase() : null;
         this.clusteredVariantAccession = clusteredVariantAccession;
 
         setSupportedByEvidence(supportedByEvidence);
@@ -204,7 +204,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     }
 
     public void setReferenceAllele(String referenceAllele) {
-        this.referenceAllele = referenceAllele;
+        this.referenceAllele = Objects.nonNull(referenceAllele) ? referenceAllele.toUpperCase() : null;
     }
 
     @Override
@@ -213,7 +213,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     }
 
     public void setAlternateAllele(String alternateAllele) {
-        this.alternateAllele = alternateAllele;
+        this.alternateAllele = Objects.nonNull(alternateAllele) ? alternateAllele.toUpperCase() : null;
     }
 
     @Override
