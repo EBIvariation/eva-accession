@@ -99,4 +99,23 @@ public class SubmittedVariantEntityTest {
         SubmittedVariantEntity entity = new SubmittedVariantEntity(UNUSED_ACCESSION, UNUSED_HASHED_MESSAGE, variant, 1);
         assertEquals(createdDate, entity.getModel().getCreatedDate());
     }
+
+    @Test
+    public void testChangeSVERefAltToUpperCase() {
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
+                PROJECT_ACCESSION, CONTIG, START, "a", "t", CLUSTERED_VARIANT, false,
+                false, false, false, LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0));
+        SubmittedVariantEntity submittedVariantEntity = new SubmittedVariantEntity(123L, "hashedMessage", submittedVariant,1 );
+        assertEquals("A", submittedVariantEntity.getReferenceAllele());
+        assertEquals("T", submittedVariantEntity.getAlternateAllele());
+    }
+
+    @Test
+    public void testChangeSVRefAltToUpperCase() {
+        SubmittedVariant submittedVariant = new SubmittedVariant(ASSEMBLY_ACCESSION, TAXONOMY_ACCESSION,
+                PROJECT_ACCESSION, CONTIG, START, "a", "t", CLUSTERED_VARIANT, false,
+                false, false, false, LocalDateTime.of(2018, Month.SEPTEMBER, 18, 9, 0));
+        assertEquals("A", submittedVariant.getReferenceAllele());
+        assertEquals("T", submittedVariant.getAlternateAllele());
+    }
 }
