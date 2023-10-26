@@ -118,8 +118,8 @@ public class SubmittedVariant implements ISubmittedVariant {
         this.projectAccession = projectAccession;
         this.contig = contig;
         this.start = start;
-        this.referenceAllele = referenceAllele;
-        this.alternateAllele = alternateAllele;
+        this.referenceAllele = referenceAllele.toUpperCase();
+        this.alternateAllele = alternateAllele.toUpperCase();
         this.clusteredVariantAccession = clusteredVariantAccession;
         this.supportedByEvidence = supportedByEvidence;
         this.assemblyMatch = assemblyMatch;
@@ -179,7 +179,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     public void setReferenceAllele(String referenceAllele) {
-        this.referenceAllele = referenceAllele;
+        this.referenceAllele = Objects.nonNull(referenceAllele) ? referenceAllele.toUpperCase() : null;
     }
 
     @Override
@@ -188,7 +188,7 @@ public class SubmittedVariant implements ISubmittedVariant {
     }
 
     public void setAlternateAllele(String alternateAllele) {
-        this.alternateAllele = alternateAllele;
+        this.alternateAllele = Objects.nonNull(alternateAllele) ? alternateAllele.toUpperCase() : null;
     }
 
     @Override
