@@ -168,14 +168,14 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals(1, processedVariant.getStart());
         assertEquals(1, processedVariant.getEnd());
         assertEquals("T", processedVariant.getReference());
-        assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
+        assertEquals("<100_BP_INSERTION>", processedVariant.getAlternate());
 
         variant = new Variant(CONTIG, 2, 2, "A", "<100_BP_insertion>");
         processedVariant = contextNucleotideAdditionProcessor.process(variant);
         assertEquals(2, processedVariant.getStart());
         assertEquals(2, processedVariant.getEnd());
         assertEquals("A", processedVariant.getReference());
-        assertEquals("<100_BP_insertion>", processedVariant.getAlternate());
+        assertEquals("<100_BP_INSERTION>", processedVariant.getAlternate());
     }
 
     @Test(expected = PositionOutsideOfContigException.class)
