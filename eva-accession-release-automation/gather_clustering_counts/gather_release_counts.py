@@ -3,14 +3,18 @@ import csv
 import glob
 import os
 from collections import defaultdict, Counter
-from functools import lru_cache
+from functools import lru_cache, cached_property
+from typing import List
+from urllib.parse import urlsplit
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.common_utils import pretty_print
+from ebi_eva_common_pyutils.config_utils import get_metadata_creds_for_profile
 from ebi_eva_common_pyutils.logger import logging_config, AppLogger
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
-
+from sqlalchemy import Column, String, Integer, BigInteger, ForeignKey, Engine, create_engine, URL
+from sqlalchemy.orm import declarative_base, Mapped, relationship, mapped_column, Session
 
 logger = logging_config.get_logger(__name__)
 
@@ -141,10 +145,37 @@ def generate_output_tsv(dict_of_counter, output_file, header):
                 ]) + '\n')
 
 
+Base = declarative_base()
+
+
+class RSCountCategory(Base):
+    """
+    Table that provide the metadata associated with a number of RS id
+     """
+    __tablename__ = 'rscountcatergory'
+
+    assembly = Column(String, primary_key=True)
+    taxonomy = Column(Integer, primary_key=True)
+    rs_type = Column(String, primary_key=True)
+    release_version = Column(Integer, primary_key=True)
+    rs_count_id: Mapped[int] = mapped_column(ForeignKey("rscount.id"))
+    rs_count = Mapped["RSCount"] = relationship(back_populates="count_categories")
+    schema = 'eva_stats'
+
+
+class RSCount(Base):
+    __tablename__ = 'eva_stats.rscount'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    count = Column(BigInteger)
+    count_categories: Mapped[List["RSCountCategory"]] = relationship(back_populates="parent")
+    schema = 'eva_stats'
+
+
 class ReleaseCounter(AppLogger):
 
-    def __init__(self, private_config_xml_file, release_version, logs):
+    def __init__(self, private_config_xml_file, config_profile, release_version, logs):
         self.private_config_xml_file = private_config_xml_file
+        self.config_profile = config_profile
         self.release_version = release_version
         self.all_counts_grouped = []
         self.parse_logs(logs)
@@ -158,12 +189,26 @@ class ReleaseCounter(AppLogger):
             f"join evapro.taxonomy t on c.taxonomy=t.taxonomy_id "
             f"where release_version={self.release_version} AND release_folder_name='{species_folder}'"
         )
-        with get_metadata_connection_handle('production_processing', self.private_config_xml_file) as db_conn:
+        with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
             results = get_all_results_for_query(db_conn, query)
         if len(results) < 1:
             logger.warning(f'Failed to get scientific name and taxonomy for {species_folder}')
             return None, None
         return results[0][0], results[0][1]
+
+    @cached_property
+    def sqlalchemy_engine(self):
+        pg_url, pg_user, pg_pass = get_metadata_creds_for_profile(self.config_profile, self.private_config_xml_file)
+        dbtype, host_url, port_and_db = urlsplit(pg_url).path.split(':')
+        port, db = port_and_db.split('/')
+        return create_engine(URL.create(
+            dbtype + '+psycopg2',
+            username=pg_user,
+            password=pg_pass,
+            host=host_url.split('/')[-1],
+            database=db,
+            port=port
+        ))
 
     def add_annotations(self):
         for count_groups in self.all_counts_grouped:
@@ -171,6 +216,28 @@ class ReleaseCounter(AppLogger):
                 taxonomy, scientific_name = self.get_taxonomy_and_scientific_name(count_dict['release_folder'])
                 count_dict['taxonomy'] = taxonomy
                 count_dict['scientific_name'] = scientific_name
+
+    def write_to_db(self):
+        session = Session(self.sqlalchemy_engine)
+        with session.begin():
+            try:
+                for count_groups in self.all_counts_grouped:
+                    for count_dict in count_groups:
+                        session.add(RSCountCategory(
+                            assembly=count_dict['assembly'],
+                            taxonomy=count_dict['taxonomy'],
+                            rs_type=count_dict['idtype'],
+                            rs_count=count_dict['count']
+                        ))
+                        session.commit()
+                session.flush()
+            except:
+                session.rollback()
+            finally:
+                session.close()
+
+
+
 
     def get_assembly_counts_from_database(self):
         """
@@ -186,7 +253,7 @@ class ReleaseCounter(AppLogger):
                 f" FROM {assembly_table_name} "
                 f"WHERE release_version={self.release_version}"
         )
-        with get_metadata_connection_handle('production_processing', self.private_config_xml_file) as db_conn:
+        with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
             for row in get_all_results_for_query(db_conn, query):
                 assembly = row[0]
                 for index, metric in enumerate(all_metrics):
@@ -284,17 +351,22 @@ def main():
                         help="base directory where all the release was run.", required=True)
     parser.add_argument("--output-dir", type=str,
                         help="Output directory where all count logs will be created.", required=True)
-    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
     parser.add_argument("--release-version", type=int, help="current release version", required=True)
     parser.add_argument("--species-directories", type=str, nargs='+',
                         help="set of directory names to process. It will process all the related one as well. "
                              "Process all if missing")
+    parser.add_argument("--private-config-xml-file", help="ex: /path/to/eva-maven-settings.xml", required=True)
+    parser.add_argument("--config-profile", help="profile to use in the config xml", required=False,
+                        default='production_processing')
+
 
     args = parser.parse_args()
     logging_config.add_stdout_handler()
     logger.info(f'Analyse {args.release_root_path}')
     logs = calculate_all_logs(args.release_root_path, args.output_dir, args.species_directories)
-    counter = ReleaseCounter(args.private_config_xml_file, args.release_version, logs)
+    counter = ReleaseCounter(args.private_config_xml_file,
+                             config_profile=args.config_profile, release_version=args.release_version, logs=logs)
+    counter.write_to_db()
     counter.detect_inconsistent_types()
     generate_output_tsv(counter.generate_per_species_counts(), os.path.join(args.output_dir, 'species_counts.tsv'), 'Taxonomy')
     generate_output_tsv(counter.generate_per_assembly_counts(), os.path.join(args.output_dir, 'assembly_counts.tsv'), 'Assembly')
