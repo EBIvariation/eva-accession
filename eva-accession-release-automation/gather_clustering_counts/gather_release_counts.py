@@ -99,9 +99,9 @@ def collect_files_to_count(release_directory, set_of_species):
         species_dir = os.path.join(release_directory, species)
         assembly_directories = glob.glob(os.path.join(species_dir, "GCA_*"))
         for assembly_dir in assembly_directories:
-            vcf_pattern = f'*_GCA_*_ids.vcf.gz'
+            vcf_pattern = f'*GCA_*_ids.vcf.gz'
             vcf_files = glob.glob(os.path.join(assembly_dir, vcf_pattern))
-            txt_pattern = f'*_GCA_*_ids.txt.gz'
+            txt_pattern = f'*GCA_*_ids.txt.gz'
             txt_files = glob.glob(os.path.join(assembly_dir, txt_pattern))
             # I don't have the taxonomy to add to the bash pattern so remove the file that start with eva_ or dbsnp_
             vcf_files = [f for f in vcf_files if 'dbsnp_' not in f and 'eva_' not in f]
