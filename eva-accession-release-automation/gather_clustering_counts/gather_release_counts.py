@@ -230,8 +230,21 @@ class ReleaseCounter(AppLogger):
         for count_groups in self.all_counts_grouped:
             for count_dict in count_groups:
                 taxonomy, scientific_name = self.get_taxonomy_and_scientific_name(count_dict['release_folder'])
-                count_dict['taxonomy'] = taxonomy
-                count_dict['scientific_name'] = scientific_name
+                if taxonomy:
+                    count_dict['taxonomy'] = taxonomy
+                if scientific_name:
+                    count_dict['scientific_name'] = scientific_name
+
+    def count_descriptor(self, count_dict):
+        if 'taxonomy' in count_dict:
+            return f"{count_dict['assembly']},{count_dict['taxonomy']},{count_dict['idtype']}"
+
+    def group_descriptor(self, count_groups):
+        group_descriptor_list = [
+            self.count_descriptor(count_dict)
+            for count_dict in sorted(count_groups, key=self.count_descriptor)]
+        if None not in group_descriptor_list:
+            return '_'.join(group_descriptor_list) + f'_release_{self.release_version}'
 
     def write_to_db(self):
         session = Session(self.sqlalchemy_engine)
@@ -241,14 +254,12 @@ class ReleaseCounter(AppLogger):
                 count_set = set((count_dict['count'] for count_dict in count_groups))
                 assert len(count_set) == 1
                 count = count_set.pop()
-
-                def count_descriptor(count_dict):
-                    return f"{count_dict['assembly']},{count_dict['taxonomy']},{count_dict['idtype']}"
                 # This is used to uniquely identify the count for this group so that loading the same value twice does
-                # not results in duplicates
-                group_description = '_'.join([
-                    count_descriptor(count_dict)
-                    for count_dict in sorted(count_groups, key=count_descriptor)]) + f'_release_{self.release_version}'
+                # not result in duplicates
+                group_description = self.group_descriptor(count_groups)
+                if not group_description:
+                    # One of the taxonomy annotation is missing, we should not load that count
+                    continue
                 query = select(RSCount).where(RSCount.group_description == group_description)
                 result = session.execute(query).fetchone()
                 if result:
@@ -412,11 +423,13 @@ def main():
     counter = ReleaseCounter(args.private_config_xml_file,
                              config_profile=args.config_profile, release_version=args.release_version, logs=log_files)
     counter.write_to_db()
-    counter.detect_inconsistent_types()
-    generate_output_tsv(counter.generate_per_species_counts(), os.path.join(args.output_dir, 'species_counts.tsv'), 'Taxonomy')
-    generate_output_tsv(counter.generate_per_assembly_counts(), os.path.join(args.output_dir, 'assembly_counts.tsv'), 'Assembly')
-    generate_output_tsv(counter.generate_per_species_assembly_counts(), os.path.join(args.output_dir, 'species_assembly_counts.tsv'), 'Taxonomy\tAssembly')
-    counter.compare_assembly_counts_with_db(output_csv=os.path.join(args.output_dir, 'comparison_assembly_counts.csv'))
+
+    # TODO: Other analysis should be performed on the database counts
+    # counter.detect_inconsistent_types()
+    # generate_output_tsv(counter.generate_per_species_counts(), os.path.join(args.output_dir, 'species_counts.tsv'), 'Taxonomy')
+    # generate_output_tsv(counter.generate_per_assembly_counts(), os.path.join(args.output_dir, 'assembly_counts.tsv'), 'Assembly')
+    # generate_output_tsv(counter.generate_per_species_assembly_counts(), os.path.join(args.output_dir, 'species_assembly_counts.tsv'), 'Taxonomy\tAssembly')
+    # counter.compare_assembly_counts_with_db(output_csv=os.path.join(args.output_dir, 'comparison_assembly_counts.csv'))
 
 
 if __name__ == "__main__":
