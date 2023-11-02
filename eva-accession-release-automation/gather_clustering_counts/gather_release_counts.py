@@ -41,6 +41,8 @@ def find_link(key_set, dict1, dict2, source_linked_set1=None, source_linked_set2
     linked_set2 = source_linked_set2.copy()
     for key1 in key_set:
         if key1 in dict1:
+            # first set should at least contain the query
+            linked_set1.update(key1)
             for value1 in dict1.get(key1):
                 linked_set2.add(value1)
                 if value1 in dict2:
@@ -126,8 +128,10 @@ def run_calculation_script_for_species(release_dir, output_dir, species_director
     for species in species_to_search:
         if species not in all_species_added:
             set_of_species, set_of_assemblies = find_link({species}, all_species_2_assemblies, all_assemblies_2_species)
+
             all_sets_of_species.add(set_of_species)
             all_species_added.update(set_of_species)
+    set_of_species
     logger.info(f'Aggregate species in {len(all_sets_of_species)} groups')
     all_logs = []
     for set_of_species in all_sets_of_species:

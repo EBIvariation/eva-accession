@@ -6,7 +6,8 @@ def test_find_links():
         'A': ['1', '2'],
         'B': ['2', '5'],
         'C': ['3', '4'],
-        'D': ['5']
+        'D': ['5'],
+        'E': []
     }
     d2 = {
         '1': ['A', 'B'],
@@ -19,3 +20,4 @@ def test_find_links():
     assert find_link({'B'}, d1, d2) == (frozenset({'A', 'B', 'D'}), frozenset({'1', '2', '5'}))
     assert find_link({'C'}, d1, d2) == (frozenset({'C'}), frozenset({'3', '4'}))
     assert find_link({'D'}, d1, d2) == (frozenset({'A', 'B', 'D'}), frozenset({'1', '2', '5'}))
+    assert find_link({'E'}, d1, d2) == (frozenset({'E'}), frozenset({}))
