@@ -244,7 +244,7 @@ class ReleaseCounter(AppLogger):
 
     def count_descriptor(self, count_dict):
         if 'taxonomy' in count_dict:
-            return f"{count_dict['assembly']},{count_dict['taxonomy']},{count_dict['idtype']}"
+            return f"{count_dict['taxonomy']}, {count_dict['assembly']},{count_dict['idtype']}"
 
     def group_descriptor(self, count_groups):
         group_descriptor_list = [
