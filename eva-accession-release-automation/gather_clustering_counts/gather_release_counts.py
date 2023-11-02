@@ -436,8 +436,11 @@ def main():
 
     args = parser.parse_args()
     logging_config.add_stdout_handler()
+    output_dir = os.path.abspath(args.output_dir)
+    # Move to the output dir to make sure the bash tmp dir are written their
+    os.chdir(output_dir)
     logger.info(f'Analyse {args.release_root_path}')
-    log_files = run_calculation_script_for_species(args.release_root_path, args.output_dir, args.species_directories)
+    log_files = run_calculation_script_for_species(args.release_root_path, output_dir, args.species_directories)
     counter = ReleaseCounter(args.private_config_xml_file,
                              config_profile=args.config_profile, release_version=args.release_version, logs=log_files)
     counter.write_counts_to_db()
