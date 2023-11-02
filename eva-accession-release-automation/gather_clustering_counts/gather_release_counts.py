@@ -42,7 +42,7 @@ def find_link(key_set, dict1, dict2, source_linked_set1=None, source_linked_set2
     for key1 in key_set:
         if key1 in dict1:
             # first set should at least contain the query
-            linked_set1.update(key1)
+            linked_set1.add(key1)
             for value1 in dict1.get(key1):
                 linked_set2.add(value1)
                 if value1 in dict2:
