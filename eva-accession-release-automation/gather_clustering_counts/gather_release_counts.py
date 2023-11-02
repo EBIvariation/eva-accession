@@ -128,10 +128,8 @@ def run_calculation_script_for_species(release_dir, output_dir, species_director
     for species in species_to_search:
         if species not in all_species_added:
             set_of_species, set_of_assemblies = find_link({species}, all_species_2_assemblies, all_assemblies_2_species)
-
             all_sets_of_species.add(set_of_species)
             all_species_added.update(set_of_species)
-    set_of_species
     logger.info(f'Aggregate species in {len(all_sets_of_species)} groups')
     all_logs = []
     for set_of_species in all_sets_of_species:
@@ -205,6 +203,15 @@ class ReleaseCounter(AppLogger):
         with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
             results = get_all_results_for_query(db_conn, query)
         if len(results) < 1:
+            # Rely only on the clustering_release_tracker when taxonomy is not available in EVAPRO
+            query = (
+                f"select distinct taxonomy, scientific_name "
+                f"from eva_progress_tracker.clustering_release_tracker "
+                f"where release_version={self.release_version} AND release_folder_name='{species_folder}'"
+            )
+            with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
+                results = get_all_results_for_query(db_conn, query)
+        if len(results) < 1:
             logger.warning(f'Failed to get scientific name and taxonomy for {species_folder}')
             return None, None
         return results[0][0], results[0][1]
@@ -242,9 +249,9 @@ class ReleaseCounter(AppLogger):
     def group_descriptor(self, count_groups):
         group_descriptor_list = [
             self.count_descriptor(count_dict)
-            for count_dict in sorted(count_groups, key=self.count_descriptor)]
+            for count_dict in count_groups]
         if None not in group_descriptor_list:
-            return '_'.join(group_descriptor_list) + f'_release_{self.release_version}'
+            return '_'.join(sorted(group_descriptor_list)) + f'_release_{self.release_version}'
 
     def write_to_db(self):
         session = Session(self.sqlalchemy_engine)
