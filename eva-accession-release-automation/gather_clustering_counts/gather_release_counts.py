@@ -96,6 +96,7 @@ def gather_count_for_set_species(release_directory, set_of_species, output_dir):
 
 
 def collect_files_to_count(release_directory, set_of_species):
+    """Collect all the (final) release files for a set of species"""
     all_files = []
     for species in set_of_species:
         species_dir = os.path.join(release_directory, species)
@@ -115,6 +116,10 @@ def collect_files_to_count(release_directory, set_of_species):
 
 
 def run_calculation_script_for_species(release_dir, output_dir, species_directories=None):
+    """
+    Run the bash script that count the number of RS for all the specified species directories (all if not set)
+    and return the logs
+    """
     all_assemblies_2_species, all_species_2_assemblies = gather_assemblies_and_species_from_directory(release_dir)
     all_sets_of_species = set()
     # Determine the species that needs to be counted together because they share assemblies
@@ -243,17 +248,23 @@ class ReleaseCounter(AppLogger):
                     count_dict['scientific_name'] = scientific_name
 
     def count_descriptor(self, count_dict):
+        """Description for associated with specific taxonomy, assembly and type of RS"""
         if 'taxonomy' in count_dict:
-            return f"{count_dict['taxonomy']}, {count_dict['assembly']},{count_dict['idtype']}"
+            return f"{count_dict['taxonomy']},{count_dict['assembly']},{count_dict['idtype']}"
 
     def group_descriptor(self, count_groups):
+        """Description for associated with group of taxonomy, assembly and type of RS that have the same RS count"""
         group_descriptor_list = [
             self.count_descriptor(count_dict)
             for count_dict in count_groups]
         if None not in group_descriptor_list:
             return '|'.join(sorted(group_descriptor_list)) + f'_release_{self.release_version}'
 
-    def write_to_db(self):
+    def write_counts_to_db(self):
+        """
+        For all the counts gathered in this self.all_counts_grouped, write them to the db if they do not exist already.
+        Warn if the count already exists and are different.
+        """
         session = Session(self.sqlalchemy_engine)
         with session.begin():
             for count_groups in self.all_counts_grouped:
@@ -297,9 +308,9 @@ class ReleaseCounter(AppLogger):
                         rs_category = result.RSCountCategory
                         # Check if we were just loading the same value as a previous run
                         if rs_category.rs_count.count != count_dict['count']:
-                            self.warning(f"{count_descriptor(count_dict)} already has a count entry in the table "
-                                         f"({rs_category.rs_count.count}) different from the one being loaded "
-                                         f"{count_dict['count']}")
+                            self.error(f"{self.count_descriptor(count_dict)} already has a count entry in the table "
+                                       f"({rs_category.rs_count.count}) different from the one being loaded "
+                                       f"{count_dict['count']}")
 
     def get_assembly_counts_from_database(self):
         """
@@ -429,7 +440,7 @@ def main():
     log_files = run_calculation_script_for_species(args.release_root_path, args.output_dir, args.species_directories)
     counter = ReleaseCounter(args.private_config_xml_file,
                              config_profile=args.config_profile, release_version=args.release_version, logs=log_files)
-    counter.write_to_db()
+    counter.write_counts_to_db()
 
     # TODO: Other analysis should be performed on the database counts
     # counter.detect_inconsistent_types()
