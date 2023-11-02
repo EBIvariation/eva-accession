@@ -251,7 +251,7 @@ class ReleaseCounter(AppLogger):
             self.count_descriptor(count_dict)
             for count_dict in count_groups]
         if None not in group_descriptor_list:
-            return '_'.join(sorted(group_descriptor_list)) + f'_release_{self.release_version}'
+            return '|'.join(sorted(group_descriptor_list)) + f'_release_{self.release_version}'
 
     def write_to_db(self):
         session = Session(self.sqlalchemy_engine)
