@@ -290,7 +290,7 @@ def get_deprecated_counts_for_assembly(mongo_source, assembly_accession):
     filter_criteria = {"inactiveObjects.asm": assembly_accession, "eventType": "DEPRECATED"}
     if prev_release_end_for_assembly:
         filter_criteria["createdDate"] = {"$gt": prev_release_end_for_assembly}
-    return query_mongo(mongo_source, filter_criteria, "new_deprecated_rs")
+    return query_mongo_distinct(mongo_source, filter_criteria, "new_deprecated_rs", "accession")
 
 
 def query_mongo(mongo_source, filter_criteria, metric):
@@ -302,6 +302,16 @@ def query_mongo(mongo_source, filter_criteria, metric):
         total_count += count
         logger.info(f'{count}')
     return total_count
+
+
+def query_mongo_distinct(mongo_source, filter_criteria, metric, distinct_field):
+    distinct_documents = set()
+    for collection_name in collections[metric]:
+        logger.info(f'Querying mongo: db.{collection_name}.distinct({distinct_field}, {filter_criteria})')
+        collection = mongo_source.mongo_handle[mongo_source.db_name][collection_name]
+        documents = collection.distinct(distinct_field, filter_criteria)
+        distinct_documents.update(documents)
+    return len(distinct_documents)
 
 
 def insert_counts_in_db(private_config_xml_file, metrics_for_assembly, ranges_per_assembly, release_version):
