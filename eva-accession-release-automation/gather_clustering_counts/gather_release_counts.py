@@ -199,11 +199,12 @@ class ReleaseCounter(AppLogger):
 
     @lru_cache
     def get_taxonomy_and_scientific_name(self, species_folder):
+        # TODO: Restore this function to only retrieve the taxonomy and scientific name using the taxonomy table in release 6
         query = (
             f"select distinct c.taxonomy, t.scientific_name "
             f"from eva_progress_tracker.clustering_release_tracker c "
             f"join evapro.taxonomy t on c.taxonomy=t.taxonomy_id "
-            f"where release_version={self.release_version} AND release_folder_name='{species_folder}'"
+            f"where release_folder_name='{species_folder}'"
         )
         with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
             results = get_all_results_for_query(db_conn, query)
@@ -212,10 +213,21 @@ class ReleaseCounter(AppLogger):
             query = (
                 f"select distinct taxonomy, scientific_name "
                 f"from eva_progress_tracker.clustering_release_tracker "
-                f"where release_version={self.release_version} AND release_folder_name='{species_folder}'"
+                f"where release_folder_name='{species_folder}'"
             )
             with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
                 results = get_all_results_for_query(db_conn, query)
+        if len(results) < 1:
+            # Support for directory from release 1
+            if species_folder.split('_')[-1].isdigit():
+                taxonomy = int(species_folder.split('_')[-1])
+                query = (
+                    f"select distinct taxonomy, scientific_name "
+                    f"from eva_progress_tracker.clustering_release_tracker "
+                    f"where taxonomy={taxonomy}"
+                )
+                with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
+                    results = get_all_results_for_query(db_conn, query)
         if len(results) < 1:
             logger.warning(f'Failed to get scientific name and taxonomy for {species_folder}')
             return None, None
