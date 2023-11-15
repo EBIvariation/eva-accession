@@ -34,7 +34,6 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateDeprecatedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMergedDeprecatedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMergedReleaseStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMultimapReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ListContigsStepConfiguration;
 
@@ -43,20 +42,16 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_FLOW
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_FLOW;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MERGED_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_MERGED_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EVA_MULTIMAP_VARIANTS_STEP;
 
 @Configuration
 @EnableBatchProcessing
@@ -64,8 +59,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_EV
          CreateReleaseStepConfiguration.class,
          CreateDeprecatedReleaseStepConfiguration.class,
          CreateMergedDeprecatedReleaseStepConfiguration.class,
-         CreateMergedReleaseStepConfiguration.class,
-         CreateMultimapReleaseStepConfiguration.class})
+         CreateMergedReleaseStepConfiguration.class})
 public class AccessionReleaseJobConfiguration {
 
     /**
@@ -89,21 +83,17 @@ public class AccessionReleaseJobConfiguration {
     public Flow dbsnpFlow(
             @Qualifier(LIST_DBSNP_ACTIVE_CONTIGS_STEP) Step listActiveContigsStep,
             @Qualifier(LIST_DBSNP_MERGED_CONTIGS_STEP) Step listMergedContigsStep,
-            @Qualifier(LIST_DBSNP_MULTIMAP_CONTIGS_STEP) Step listMultimapContigsStep,
             @Qualifier(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP) Step createReleaseStep,
             @Qualifier(RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP) Step createMergedReleaseStep,
             @Qualifier(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP) Step createDeprecatedReleaseStep,
-            @Qualifier(RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP) Step createMergedDeprecatedReleaseStep,
-            @Qualifier(RELEASE_DBSNP_MULTIMAP_VARIANTS_STEP) Step createMultimapReleaseStep) {
+            @Qualifier(RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP) Step createMergedDeprecatedReleaseStep) {
         return new FlowBuilder<Flow>(DBSNP_FLOW)
                 .start(listActiveContigsStep)
                 .next(listMergedContigsStep)
-                .next(listMultimapContigsStep)
                 .next(createReleaseStep)
                 .next(createMergedReleaseStep)
                 .next(createDeprecatedReleaseStep)
                 .next(createMergedDeprecatedReleaseStep)
-                .next(createMultimapReleaseStep)
                 .build();
     }
 
@@ -111,21 +101,17 @@ public class AccessionReleaseJobConfiguration {
     public Flow evaFlow(
             @Qualifier(LIST_EVA_ACTIVE_CONTIGS_STEP) Step listActiveContigsStep,
             @Qualifier(LIST_EVA_MERGED_CONTIGS_STEP) Step listMergedContigsStep,
-            @Qualifier(LIST_EVA_MULTIMAP_CONTIGS_STEP) Step listMultimapContigsStep,
             @Qualifier(RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP) Step createReleaseStep,
             @Qualifier(RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP) Step createMergedReleaseStep,
             @Qualifier(RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP) Step createDeprecatedReleaseStep,
-            @Qualifier(RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP) Step createMergedDeprecatedReleaseStep,
-            @Qualifier(RELEASE_EVA_MULTIMAP_VARIANTS_STEP) Step createMultimapReleaseStep) {
+            @Qualifier(RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP) Step createMergedDeprecatedReleaseStep) {
         return new FlowBuilder<Flow>(EVA_FLOW)
                 .start(listActiveContigsStep)
                 .next(listMergedContigsStep)
-                .next(listMultimapContigsStep)
                 .next(createReleaseStep)
                 .next(createMergedReleaseStep)
                 .next(createDeprecatedReleaseStep)
                 .next(createMergedDeprecatedReleaseStep)
-                .next(createMultimapReleaseStep)
                 .build();
     }
 }

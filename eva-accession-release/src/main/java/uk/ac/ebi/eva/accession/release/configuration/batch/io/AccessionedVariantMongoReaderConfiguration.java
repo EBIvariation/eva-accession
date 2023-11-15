@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
 import uk.ac.ebi.eva.accession.release.batch.io.active.AccessionedVariantMongoReader;
@@ -46,22 +47,24 @@ public class AccessionedVariantMongoReaderConfiguration {
     @Bean(DBSNP_ACCESSIONED_VARIANT_READER)
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderDbsnp(InputParameters parameters, MongoClient mongoClient,
+                                                          MongoTemplate mongoTemplate,
                                                           MongoProperties mongoProperties) {
         logger.info("Injecting Dbsnp AccessionedVariantMongoReader with parameters: {}", parameters.toJobParameters());
         return new UnwindingItemStreamReader<>(
                 new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(),
-                        mongoClient, mongoProperties.getDatabase(), parameters.getChunkSize(),
+                        mongoClient, mongoTemplate, mongoProperties.getDatabase(), parameters.getChunkSize(),
                         new DbsnpCollectionNames()));
     }
 
     @Bean(EVA_ACCESSIONED_VARIANT_READER)
     @StepScope
     public ItemStreamReader<Variant> unwindingReaderEva(InputParameters parameters, MongoClient mongoClient,
+                                                        MongoTemplate mongoTemplate,
                                                         MongoProperties mongoProperties) {
         logger.info("Injecting Eva AccessionedVariantMongoReader with parameters: {}", parameters.toJobParameters());
         return new UnwindingItemStreamReader<>(
                 new AccessionedVariantMongoReader(parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(),
-                        mongoClient, mongoProperties.getDatabase(), parameters.getChunkSize(),
+                        mongoClient, mongoTemplate, mongoProperties.getDatabase(), parameters.getChunkSize(),
                         new EvaCollectionNames()));
     }
 }
