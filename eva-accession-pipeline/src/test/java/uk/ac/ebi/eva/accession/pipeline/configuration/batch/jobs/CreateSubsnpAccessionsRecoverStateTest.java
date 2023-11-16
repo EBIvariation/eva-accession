@@ -145,6 +145,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         verifyEndDBState();
 
         assertCountsInVcfReport(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF);
+        assertCountsInMongo(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF + 30);
     }
 
     private void verifyInitialDBState() {
@@ -202,10 +203,4 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(expected, numVariantsInReport);
     }
 
-    private void assertCountsInBlockService(int expected) {
-        assertEquals(1, blockRepository.count());
-        ContiguousIdBlock block = blockRepository.findAll().iterator().next();
-        long committedAccessionsCount = block.getLastCommitted() - block.getFirstValue() + 1; // +1: inclusive interval
-        assertEquals(expected, committedAccessionsCount);
-    }
 }
