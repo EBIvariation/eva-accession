@@ -81,6 +81,15 @@ public class RecoverTestAccessioningConfiguration {
             submittedVariantEntityList.add(entity);
         }
 
+        for(long i=5000000060l;i<5000000070l;i++){
+            SubmittedVariant model = new SubmittedVariant("assembly", 1111,
+                    "project", "contig", 100, "A", "T",
+                    null, false, false, false,
+                    false, null);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            submittedVariantEntityList.add(entity);
+        }
+
         repository.saveAll(submittedVariantEntityList);
 
         return new MonotonicAccessionGenerator<>(properties.getSubmitted().getCategoryId(),
