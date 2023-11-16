@@ -76,7 +76,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
     private static final String TEST_DB = "test-db";
 
     @Autowired
-    private SubmittedVariantAccessioningRepository repository;
+    private SubmittedVariantAccessioningRepository mongoRepository;
 
     @Autowired
     private ContiguousIdBlockRepository blockRepository;
@@ -140,17 +140,23 @@ public class CreateSubsnpAccessionsRecoverStateTest {
     public void accessionJobShouldRecoverUncommittedAccessions() throws Exception {
         verifyInitialDBState();
 
-        runJob();
+        runAccessioningJob();
 
         verifyEndDBState();
 
         assertCountsInVcfReport(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF);
-        assertCountsInMongo(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF + 30);
+        assertCountsInMongo(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF + 40);
     }
 
+    /**
+     * We initialize DB for the test by inserting sves in {@link RecoverTestAccessioningConfiguration}.
+     * The range of accession inserted is 5000000000 - 5000000029 and 5000000060 - 5000000069
+     */
     private void verifyInitialDBState() {
-        assertEquals(30, repository.count());
-        assertEquals(2, blockRepository.count());
+        // Initial state is 3 blocks are "reserved" but not "committed" in postgresql
+        // 45 accessions have been used in mongoDB but are not reflected in the block allocation table
+        assertEquals(40, mongoRepository.count());
+        assertEquals(3, blockRepository.count());
 
         ContiguousIdBlock block1 = blockRepository.findById(1l).get();
         assertEquals(5000000000l, block1.getFirstValue());
@@ -161,25 +167,36 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000030l, block2.getFirstValue());
         assertEquals(5000000029l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
+
+        ContiguousIdBlock block3 = blockRepository.findById(3l).get();
+        assertEquals(5000000060l, block3.getFirstValue());
+        assertEquals(5000000059l, block3.getLastCommitted());
+        assertEquals(5000000089l, block3.getLastValue());
     }
 
     private void verifyEndDBState() {
-        assertEquals(52, repository.count());
-        assertEquals(2, blockRepository.count());
+        assertEquals(62, mongoRepository.count());
+        assertEquals(3, blockRepository.count());
 
-        //TODO: recover could not update the last committed, should be fixed in accession-commons
+        //TODO: recover should update the last committed to 5000000029l
         ContiguousIdBlock block1 = blockRepository.findById(1l).get();
         assertEquals(5000000000l, block1.getFirstValue());
-        assertEquals(4999999999l, block1.getLastCommitted());
+        assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
 
         ContiguousIdBlock block2 = blockRepository.findById(2l).get();
         assertEquals(5000000030l, block2.getFirstValue());
         assertEquals(5000000051l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
+
+        //TODO: recover should update the last committed to 5000000069l
+        ContiguousIdBlock block3 = blockRepository.findById(3l).get();
+        assertEquals(5000000060l, block3.getFirstValue());
+        assertEquals(5000000069l, block3.getLastCommitted());
+        assertEquals(5000000089l, block3.getLastValue());
     }
 
-    private void runJob() throws Exception {
+    private void runAccessioningJob() throws Exception {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         assertStepNames(jobExecution.getStepExecutions());
@@ -194,7 +211,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
     }
 
     private void assertCountsInMongo(int expected) {
-        long numVariantsInMongo = repository.count();
+        long numVariantsInMongo = mongoRepository.count();
         assertEquals(expected, numVariantsInMongo);
     }
 
