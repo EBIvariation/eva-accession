@@ -145,55 +145,91 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         verifyEndDBState();
 
         assertCountsInVcfReport(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF);
-        assertCountsInMongo(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF + 40);
+        assertCountsInMongo(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF + 85);
     }
 
     /**
      * We initialize DB for the test by inserting sves in {@link RecoverTestAccessioningConfiguration}.
-     * The range of accession inserted is 5000000000 - 5000000029 and 5000000060 - 5000000069
      */
     private void verifyInitialDBState() {
-        // Initial state is 3 blocks are "reserved" but not "committed" in postgresql
-        // 45 accessions have been used in mongoDB but are not reflected in the block allocation table
-        assertEquals(40, mongoRepository.count());
-        assertEquals(3, blockRepository.count());
+        // Contiguous Id Block DB:
+        // Initial state of DB is 4 blocks are "reserved" but not "committed" in postgresql
+        // block id     first value     last value      last committed
+        //  1           5000000000      5000000029      4999999999
+        //  2           5000000030      5000000059      5000000029
+        //  3           5000000060      5000000089      5000000059
+        //  4           5000000090      5000000119      5000000089
 
-        ContiguousIdBlock block1 = blockRepository.findById(1l).get();
-        assertEquals(5000000000l, block1.getFirstValue());
-        assertEquals(4999999999l, block1.getLastCommitted());
-        assertEquals(5000000029l, block1.getLastValue());
+        // Mongo DB
+        // 85 accessions have been used in mongoDB but are not reflected in the block allocation table
+        // 30 accessions belong to 1st block (5000000000 to 5000000029),
+        // 25 to the 2nd block (5000000035 to 5000000059)
+        // 30 to the 3rd block (5000000060 to 5000000089)
+        // None in 4th block
+        assertEquals(85, mongoRepository.count());   // 30 + 25 + 30
+        assertEquals(4, blockRepository.count());
 
-        ContiguousIdBlock block2 = blockRepository.findById(2l).get();
-        assertEquals(5000000030l, block2.getFirstValue());
-        assertEquals(5000000029l, block2.getLastCommitted());
-        assertEquals(5000000059l, block2.getLastValue());
+        //recover state run in constructor of the MonotonicAccessionGenerator,
+        // so will run when objects are being created even before job starts and will try to recover the blocks
+        // The below stage of DB is after the recover state has already ran
 
-        ContiguousIdBlock block3 = blockRepository.findById(3l).get();
-        assertEquals(5000000060l, block3.getFirstValue());
-        assertEquals(5000000059l, block3.getLastCommitted());
-        assertEquals(5000000089l, block3.getLastValue());
-    }
-
-    private void verifyEndDBState() {
-        assertEquals(62, mongoRepository.count());
-        assertEquals(3, blockRepository.count());
-
-        //TODO: recover should update the last committed to 5000000029l
+        // 1st block is recovered and last committed updated to 5000000029 as all are present in mongo
         ContiguousIdBlock block1 = blockRepository.findById(1l).get();
         assertEquals(5000000000l, block1.getFirstValue());
         assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
 
+        // 2nd block's committed is not updated as some accessions (5000000030 to 5000000034) are still available to use
         ContiguousIdBlock block2 = blockRepository.findById(2l).get();
         assertEquals(5000000030l, block2.getFirstValue());
-        assertEquals(5000000051l, block2.getLastCommitted());
+        assertEquals(5000000029l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
 
-        //TODO: recover should update the last committed to 5000000069l
+        // 3rd block is not updated even though it is full (all accessions of this block are present in mongo)
+        // the current algorithm takes the uncompleted blocks in ascending order of last value
+        // and stops updating blocks as soon as it finds a block which should not be updated
+        // In our case 1st is picked and updated,
+        // 2nd is picked but should not be updated as it still has few accessions at the beginning which can be allotted
+        // the algorithm stops at this point and did not bother to check the 3rd block
         ContiguousIdBlock block3 = blockRepository.findById(3l).get();
         assertEquals(5000000060l, block3.getFirstValue());
-        assertEquals(5000000069l, block3.getLastCommitted());
+        assertEquals(5000000059l, block3.getLastCommitted());
         assertEquals(5000000089l, block3.getLastValue());
+
+        ContiguousIdBlock block4 = blockRepository.findById(4l).get();
+        assertEquals(5000000090l, block4.getFirstValue());
+        assertEquals(5000000089l, block4.getLastCommitted());
+        assertEquals(5000000119l, block4.getLastValue());
+    }
+
+    private void verifyEndDBState() {
+        // VCF has 22 variants that needs to be accessioned
+
+        assertEquals(107, mongoRepository.count());  // 85 (already present) + 22  (accessioned)
+        assertEquals(4, blockRepository.count());
+
+        ContiguousIdBlock block1 = blockRepository.findById(1l).get();
+        assertEquals(5000000000l, block1.getFirstValue());
+        assertEquals(5000000029l, block1.getLastCommitted());
+        assertEquals(5000000029l, block1.getLastValue());
+
+        // used the 5 unused accessions 5000000030 to 5000000034
+        ContiguousIdBlock block2 = blockRepository.findById(2l).get();
+        assertEquals(5000000030l, block2.getFirstValue());
+        assertEquals(5000000059l, block2.getLastCommitted());
+        assertEquals(5000000059l, block2.getLastValue());
+
+        // Now that the 2nd block is full and committed, 3rd blocks also get's picked up and its last committed updated
+        ContiguousIdBlock block3 = blockRepository.findById(3l).get();
+        assertEquals(5000000060l, block3.getFirstValue());
+        assertEquals(5000000089l, block3.getLastCommitted());
+        assertEquals(5000000089l, block3.getLastValue());
+
+        // used the remaining 17 (22 - 5 (2nd block)) from 4th block
+        ContiguousIdBlock block4 = blockRepository.findById(4l).get();
+        assertEquals(5000000090l, block4.getFirstValue());
+        assertEquals(5000000106l, block4.getLastCommitted());
+        assertEquals(5000000119l, block4.getLastValue());
     }
 
     private void runAccessioningJob() throws Exception {

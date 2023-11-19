@@ -72,7 +72,8 @@ public class RecoverTestAccessioningConfiguration {
         repository.deleteAll();
 
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
-        for(long i=5000000000l;i<5000000030l;i++){
+        // Entries for 1st block
+        for(long i=5000000000l;i<=5000000029l;i++){
             SubmittedVariant model = new SubmittedVariant("assembly", 1111,
                     "project", "contig", 100, "A", "T",
                     null, false, false, false,
@@ -81,7 +82,18 @@ public class RecoverTestAccessioningConfiguration {
             submittedVariantEntityList.add(entity);
         }
 
-        for(long i=5000000060l;i<5000000070l;i++){
+        // Entries for 2nd block
+        for(long i=5000000035l;i<=5000000059l;i++){
+            SubmittedVariant model = new SubmittedVariant("assembly", 1111,
+                    "project", "contig", 100, "A", "T",
+                    null, false, false, false,
+                    false, null);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            submittedVariantEntityList.add(entity);
+        }
+
+        // Entries for 3rd block
+        for(long i=5000000060l;i<=5000000089l;i++){
             SubmittedVariant model = new SubmittedVariant("assembly", 1111,
                     "project", "contig", 100, "A", "T",
                     null, false, false, false,
