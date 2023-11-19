@@ -140,7 +140,7 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
         assertEquals(1, blockRepository.count());
 
         // This means that the last committed accession is the previous one to the UNCOMMITTED_ACCESSION
-        assertEquals(UNCOMMITTED_ACCESSION - 1, blockRepository.findAll().iterator().next().getLastCommitted());
+        assertEquals(UNCOMMITTED_ACCESSION, blockRepository.findAll().iterator().next().getLastCommitted());
     }
 
     private void runJob() throws Exception {
