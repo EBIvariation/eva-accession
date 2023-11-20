@@ -83,7 +83,15 @@ public class RecoverTestAccessioningConfiguration {
         }
 
         // Entries for 2nd block
-        for(long i=5000000035l;i<=5000000059l;i++){
+        for(long i=5000000030l;i<=5000000034l;i++){
+            SubmittedVariant model = new SubmittedVariant("assembly", 1111,
+                    "project", "contig", 100, "A", "T",
+                    null, false, false, false,
+                    false, null);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            submittedVariantEntityList.add(entity);
+        }
+        for(long i=5000000040l;i<=5000000059l;i++){
             SubmittedVariant model = new SubmittedVariant("assembly", 1111,
                     "project", "contig", 100, "A", "T",
                     null, false, false, false,
