@@ -163,7 +163,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         // Mongo DB
         // 85 accessions have been used in mongoDB but are not reflected in the block allocation table
         // 30 accessions belong to 1st block (5000000000 to 5000000029),
-        // 25 to the 2nd block (5000000035 to 5000000059)
+        // 25 to the 2nd block (5000000030 to 500000034 and 5000000040 to 5000000059)
         // 30 to the 3rd block (5000000060 to 5000000089)
         // None in 4th block
         assertEquals(85, mongoRepository.count());   // 30 + 25 + 30
@@ -179,17 +179,17 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
 
-        // 2nd block's committed is not updated as some accessions (5000000030 to 5000000034) are still available to use
+        // 2nd block's committed is updated 5000000034 as there are available accessions after that
         ContiguousIdBlock block2 = blockRepository.findById(2l).get();
         assertEquals(5000000030l, block2.getFirstValue());
-        assertEquals(5000000029l, block2.getLastCommitted());
+        assertEquals(5000000034l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
 
         // 3rd block is not updated even though it is full (all accessions of this block are present in mongo)
         // the current algorithm takes the uncompleted blocks in ascending order of last value
-        // and stops updating blocks as soon as it finds a block which should not be updated
+        // and stops updating blocks as soon as it finds a block which is not full
         // In our case 1st is picked and updated,
-        // 2nd is picked but should not be updated as it still has few accessions at the beginning which can be allotted
+        // 2nd is picked and updated but is not full
         // the algorithm stops at this point and did not bother to check the 3rd block
         ContiguousIdBlock block3 = blockRepository.findById(3l).get();
         assertEquals(5000000060l, block3.getFirstValue());
