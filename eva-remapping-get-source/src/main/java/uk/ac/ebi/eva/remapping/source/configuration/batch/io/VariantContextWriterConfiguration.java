@@ -32,14 +32,16 @@ public class VariantContextWriterConfiguration {
     @Bean(BeanNames.EVA_SUBMITTED_VARIANT_WRITER)
     public VariantContextWriter evaVariantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getEvaReportPath(parameters.getOutputFolder(),
-                                                              parameters.getAssemblyAccession());
+                                                              parameters.getAssemblyAccession(),
+                                                              parameters.getTaxonomy());
         return new VariantContextWriter(reportPath, parameters.getAssemblyAccession());
     }
 
     @Bean(BeanNames.DBSNP_SUBMITTED_VARIANT_WRITER)
     public VariantContextWriter dbsnpVariantContextWriter(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getDbsnpReportPath(parameters.getOutputFolder(),
-                                                                parameters.getAssemblyAccession());
+                                                                parameters.getAssemblyAccession(),
+                                                                parameters.getTaxonomy());
         return new VariantContextWriter(reportPath, parameters.getAssemblyAccession());
     }
 }

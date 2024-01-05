@@ -24,13 +24,13 @@ import java.nio.file.Paths;
  */
 public class ReportPathResolver {
 
-    public static Path getEvaReportPath(String outputFolder, String referenceAssembly) {
+    public static Path getEvaReportPath(String outputFolder, String referenceAssembly, int taxonomy) {
         final String FILE_SUFFIX = "_eva.vcf";
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(referenceAssembly + '_' + taxonomy + FILE_SUFFIX);
     }
 
-    public static Path getDbsnpReportPath(String outputFolder, String referenceAssembly) {
+    public static Path getDbsnpReportPath(String outputFolder, String referenceAssembly, int taxonomy) {
         final String FILE_SUFFIX = "_dbsnp.vcf";
-        return Paths.get(outputFolder).resolve(referenceAssembly + FILE_SUFFIX);
+        return Paths.get(outputFolder).resolve(referenceAssembly + '_' + taxonomy + FILE_SUFFIX);
     }
 }

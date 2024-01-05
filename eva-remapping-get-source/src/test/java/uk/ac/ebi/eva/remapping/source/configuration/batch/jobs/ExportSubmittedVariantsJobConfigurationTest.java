@@ -90,10 +90,12 @@ public class ExportSubmittedVariantsJobConfigurationTest {
 
     private void deleteOutputFiles() {
         ReportPathResolver.getDbsnpReportPath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession())
+                                              inputParameters.getAssemblyAccession(),
+                                              inputParameters.getTaxonomy())
                           .toFile().delete();
         ReportPathResolver.getEvaReportPath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession())
+                                            inputParameters.getAssemblyAccession(),
+                                            inputParameters.getTaxonomy())
                           .toFile().delete();
     }
 
@@ -125,13 +127,15 @@ public class ExportSubmittedVariantsJobConfigurationTest {
 
     private FileInputStream getExportedEva() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getEvaReportPath(inputParameters.getOutputFolder(),
-                                                                       inputParameters.getAssemblyAccession())
+                                                                       inputParameters.getAssemblyAccession(),
+                                                                       inputParameters.getTaxonomy())
                                                      .toFile());
     }
 
     private FileInputStream getExportedDbsnp() throws FileNotFoundException {
         return new FileInputStream(ReportPathResolver.getDbsnpReportPath(inputParameters.getOutputFolder(),
-                                                                         inputParameters.getAssemblyAccession())
+                                                                         inputParameters.getAssemblyAccession(),
+                                                                         inputParameters.getTaxonomy())
                                                      .toFile());
     }
 
