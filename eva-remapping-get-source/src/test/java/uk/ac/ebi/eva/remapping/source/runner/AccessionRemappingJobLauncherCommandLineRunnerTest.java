@@ -74,10 +74,12 @@ public class AccessionRemappingJobLauncherCommandLineRunnerTest {
 
     private void deleteOutputFiles() {
         ReportPathResolver.getDbsnpReportPath(inputParameters.getOutputFolder(),
-                                              inputParameters.getAssemblyAccession())
+                                              inputParameters.getAssemblyAccession(),
+                                              inputParameters.getTaxonomy())
                           .toFile().delete();
         ReportPathResolver.getEvaReportPath(inputParameters.getOutputFolder(),
-                                            inputParameters.getAssemblyAccession())
+                                            inputParameters.getAssemblyAccession(),
+                                            inputParameters.getTaxonomy())
                           .toFile().delete();
     }
 
