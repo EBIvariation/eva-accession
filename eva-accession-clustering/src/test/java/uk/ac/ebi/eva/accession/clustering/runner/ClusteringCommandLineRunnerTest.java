@@ -519,6 +519,15 @@ public class ClusteringCommandLineRunnerTest {
     }
 
     @Test
+    @UsingDataSet(locations = {"/test-data/clusteredVariantEntityForVcfJob.json"})
+    @DirtiesContext
+    public void runResolveMergeThenSplitCandidatesJobWithNoErrors() throws JobExecutionException {
+        runner.setJobNames(RESOLVE_MERGE_THEN_SPLIT_CANDIDATE_JOB);
+        runner.run();
+        assertEquals(ClusteringCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    }
+
+    @Test
     @DirtiesContext
     /*
       @see <a href="https://docs.google.com/spreadsheets/d/1KQLVCUy-vqXKgkCDt2czX6kuMfsjfCc9uBsS19MZ6dY/edit#rangeid=1510337153"/>
