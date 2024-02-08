@@ -1,7 +1,7 @@
 {
   "submittedVariantOperationEntity": [
     {
-      "_id" : "RSMC_GCA_000000001.1_",
+      "_id" : "RSMC_GCA_000000001.1_HASH",
       "eventType" : "RS_MERGE_CANDIDATES",
       "accession" : NumberLong("2222222222"),
       "reason" : "RS mismatch with 1111111111",
@@ -24,7 +24,7 @@
           "version" : 1,
           "createdDate" : ISODate("2022-04-26T08:33:26.562Z")
         },
-        {                                                                                                                                                             [0/1933]
+        {
         "seq" : "GCA_000000001.1",
         "tax" : 3000,
         "study" : "PRJEB00002",
