@@ -35,12 +35,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWrite
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.BackPropagateRSJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusterUnclusteredVariantsJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromMongoJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromVcfJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ProcessRemappedVariantsWithRSJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.StudyClusteringJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.*;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
@@ -57,6 +52,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.New
 
 @EnableAutoConfiguration
 @Import({ClusteringFromVcfJobConfiguration.class,
+        ResolveMergeThenSplitCandidatesJobConfiguration.class,
         ClusteringFromMongoJobConfiguration.class,
         StudyClusteringJobConfiguration.class,
         NewClusteredVariantsQCJobConfiguration.class,

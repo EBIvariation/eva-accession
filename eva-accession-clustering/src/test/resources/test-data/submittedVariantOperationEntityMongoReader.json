@@ -1,0 +1,69 @@
+{
+  "submittedVariantOperationEntity": [
+    {
+      "_id" : "RSMC_GCA_000000001.1_HASH",
+      "eventType" : "RS_MERGE_CANDIDATES",
+      "accession" : NumberLong("2222222222"),
+      "reason" : "RS mismatch with 1111111111",
+      "inactiveObjects" : [
+        {
+          "seq" : "GCA_000000001.1",
+          "tax" : 3000,
+          "study" : "PRJEB00001",
+          "contig" : "CM000001.2",
+          "start" : NumberLong(3000),
+          "ref" : "C",
+          "alt" : "T",
+          "rs" : NumberLong("2222222222"),
+          "evidence" : true,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "hashedMessage" : "45BD2A41D4C295DF0A85A54D6CB72C2BBABB0C7D",
+          "accession" : NumberLong(1000000000),
+          "version" : 1,
+          "createdDate" : ISODate("2022-04-26T08:33:26.562Z")
+        },
+        {
+        "seq" : "GCA_000000001.1",
+        "tax" : 3000,
+        "study" : "PRJEB00002",
+        "contig" : "CM000001.2",
+        "start" : NumberLong(3000),
+        "ref" : "C",
+        "alt" : "T",
+        "rs" : NumberLong("2222222222"),
+        "remappedFrom" : "GCA_000003205.6",
+        "remappedDate" : ISODate("2021-08-12T02:53:48.966Z"),
+        "remappingId" : "E076D09482EF2504D3168AABB13BC94172A92C27",
+        "hashedMessage" : "C2C9770AE529AFD445CC15458CBA2C71F7A82DB8",
+        "accession" : NumberLong(1000000001),
+        "version" : 1,
+        "createdDate" : ISODate("2014-11-10T14:58:00Z")
+        },
+        {
+          "seq" : "GCA_000000001.1",
+          "tax" : 3000,
+          "study" : "PRJEB38336",
+          "contig" : "CM000001.2",
+          "start" : NumberLong(3000),
+          "ref" : "C",
+          "alt" : "T",
+          "rs" : NumberLong("1111111111"),
+          "evidence" : true,
+          "asmMatch" : true,
+          "allelesMatch" : true,
+          "validated" : false,
+          "remappedFrom" : "GCA_000000000.1",
+          "remappedDate" : ISODate("2021-08-11T22:03:44.689Z"),
+          "remappingId" : "778BEEA595920286BA9CC9ECF13442A69F9DA73B",
+          "hashedMessage" : "581F717670A07D8D032E234212E0D74599943D44",
+          "accession" : NumberLong(1000000002),
+          "version" : 1,
+          "createdDate" : ISODate("2020-11-26T22:56:39.129Z")
+        }
+      ],
+      "createdDate" : ISODate("2023-05-07T04:52:59.110Z")
+    }
+  ]
+}
