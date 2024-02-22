@@ -76,6 +76,8 @@ public class DeprecatedVariantMongoReaderTest {
 
     private static final int TAXONOMY_2 = 3703;
 
+    private static final int TAXONOMY_3 = 3704;
+
     private static final int CHUNK_SIZE = 5;
 
     @Autowired
@@ -121,17 +123,20 @@ public class DeprecatedVariantMongoReaderTest {
         DbsnpSubmittedVariantEntity ss1 = createSS(ASSEMBLY, TAXONOMY_1, 1L, 1L, 100L, "C", "A");
         DbsnpSubmittedVariantEntity ss2 = createSS(ASSEMBLY, TAXONOMY_2, 2L, 2L, 101L, "A", "T");
         DbsnpSubmittedVariantEntity ss3 = createSS(ASSEMBLY, TAXONOMY_2, 3L, 3L, 102L, "T", "G");
-        DbsnpClusteredVariantEntity rs1 = createRS(ss1, null);
-        DbsnpClusteredVariantEntity rs2 = createRS(ss2, null);
-        DbsnpClusteredVariantEntity rs3 = createRS(ss3, TAXONOMY_1);
-        this.mongoTemplate.insert(Stream.of(ss1, ss2, ss3).map(ss -> {
+        DbsnpSubmittedVariantEntity ss4 = createSS(ASSEMBLY, TAXONOMY_3, 4L, 4L, 103L, "A", "C");
+        DbsnpClusteredVariantEntity rs1 = createRS(ss1, null, null);
+        DbsnpClusteredVariantEntity rs2 = createRS(ss2, null, null);
+        DbsnpClusteredVariantEntity rs3 = createRS(ss3, TAXONOMY_1, null);
+        DbsnpClusteredVariantEntity rs4 = createRS(ss4, TAXONOMY_3, ss4.getStart() + 2);
+        // create RS
+        this.mongoTemplate.insert(Stream.of(ss1, ss2, ss3, ss4).map(ss -> {
             DbsnpSubmittedVariantOperationEntity dbsnpSvoeObj = new DbsnpSubmittedVariantOperationEntity();
             dbsnpSvoeObj.fill( EventType.UPDATED, ss.getAccession(),
                               "Declustered: None of the variant alleles match the reference allele.",
                               Arrays.asList(new DbsnpSubmittedVariantInactiveEntity(ss)));
             return dbsnpSvoeObj;
         }).collect(Collectors.toList()), DbsnpSubmittedVariantOperationEntity.class);
-        this.mongoTemplate.insert(Stream.of(rs1, rs2, rs3).map(rs -> {
+        this.mongoTemplate.insert(Stream.of(rs1, rs2, rs3, rs4).map(rs -> {
             DbsnpClusteredVariantOperationEntity dbsnpCvoeObj = new DbsnpClusteredVariantOperationEntity();
             dbsnpCvoeObj.fill( EventType.DEPRECATED, rs.getAccession(),
                                "Clustered variant completely declustered",
@@ -157,6 +162,13 @@ public class DeprecatedVariantMongoReaderTest {
         assertEquals(2, deprecatedVariants.size());
         assertTrue(Arrays.asList("rs2", "rs3").contains(deprecatedVariants.get(0).getMainId()));
         assertTrue(Arrays.asList("rs2", "rs3").contains(deprecatedVariants.get(1).getMainId()));
+
+        this.reader = new DeprecatedVariantMongoReader(ASSEMBLY, TAXONOMY_3, mongoClient, TEST_DB, CHUNK_SIZE,
+                new DbsnpCollectionNames());
+        this.reader.open(new ExecutionContext());
+        deprecatedVariants = this.readIntoList();
+        assertEquals(1, deprecatedVariants.size());
+        assertEquals("rs4", deprecatedVariants.get(0).getMainId());
     }
 
     private DbsnpSubmittedVariantEntity createSS(String assembly, int taxonomy, Long ssAccession, Long rsAccession,
@@ -166,13 +178,14 @@ public class DeprecatedVariantMongoReaderTest {
                                                false, false, 1);
     }
 
-    private DbsnpClusteredVariantEntity createRS(SubmittedVariantEntity sve, Integer alternateTaxonomy) {
+    private DbsnpClusteredVariantEntity createRS(SubmittedVariantEntity sve, Integer alternateTaxonomy, Long start) {
         Function<IClusteredVariant, String> hashingFunction =  new ClusteredVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
         int taxonomyToUse = Objects.isNull(alternateTaxonomy)? sve.getTaxonomyAccession(): alternateTaxonomy;
+        long startToUse = Objects.isNull(start) ? sve.getStart() : start;
         ClusteredVariant cv = new ClusteredVariant(sve.getReferenceSequenceAccession(), taxonomyToUse,
                                                    sve.getContig(),
-                                                   sve.getStart(),
+                                                   startToUse,
                                                    new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
                                                                sve.getReferenceAllele(),
                                                                sve.getAlternateAllele()).getType(),
