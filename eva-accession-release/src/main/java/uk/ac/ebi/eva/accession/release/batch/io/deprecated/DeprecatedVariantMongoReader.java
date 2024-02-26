@@ -107,29 +107,19 @@ public class DeprecatedVariantMongoReader extends VariantMongoAggregationReader 
         Document inactiveEntity = inactiveObjects.iterator().next();
         String contig = inactiveEntity.getString(VariantMongoAggregationReader.CONTIG_FIELD);
         long start = inactiveEntity.getLong(VariantMongoAggregationReader.START_FIELD);
-        String type = inactiveEntity.getString(TYPE_FIELD);
+        // Since we only need evidence that at least one submitted variant agrees with the deprecated RS,
+        // we just return one variant record per RS
+        Collection<Document> inactiveEntitySubmittedVariant = (Collection<Document>) submittedVariantOperations
+                .iterator().next().get("inactiveObjects");
+        Document submittedVariant = inactiveEntitySubmittedVariant.iterator().next();
+        String reference = submittedVariant.getString("ref");
+        String alternate = submittedVariant.getString("alt");
 
-        for (Document submittedVariantOperation : submittedVariantOperations) {
-            Collection<Document> inactiveEntitySubmittedVariant = (Collection<Document>) submittedVariantOperation
-                    .get("inactiveObjects");
-            Document submittedVariant = inactiveEntitySubmittedVariant.iterator().next();
-            long submittedVariantStart = submittedVariant.getLong(START_FIELD);
-            String submittedVariantContig = submittedVariant.getString(CONTIG_FIELD);
-            String reference = submittedVariant.getString("ref");
-            String alternate = submittedVariant.getString("alt");
-
-            if (isSameLocation(contig, start, submittedVariantContig, submittedVariantStart, type)) {
-                // Since we only need evidence that at least one submitted variant agrees
-                // with the deprecated RS in locus, we just return one variant record per RS
-                Variant variantToReturn = new Variant(contig, start,
-                                                      start + Math.max(reference.length(), alternate.length()) - 1,
-                                                      reference, alternate);
-                variantToReturn.setMainId("rs" + deprecatedVariant.getLong("accession"));
-                return Arrays.asList(variantToReturn);
-            }
-        }
-
-        return new ArrayList<>();
+        Variant variantToReturn = new Variant(contig, start,
+                start + Math.max(reference.length(), alternate.length()) - 1,
+                reference, alternate);
+        variantToReturn.setMainId("rs" + deprecatedVariant.getLong("accession"));
+        return Arrays.asList(variantToReturn);
     }
 
     @Override
