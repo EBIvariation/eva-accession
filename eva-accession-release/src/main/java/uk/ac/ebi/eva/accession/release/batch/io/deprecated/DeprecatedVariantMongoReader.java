@@ -107,14 +107,14 @@ public class DeprecatedVariantMongoReader extends VariantMongoAggregationReader 
         Document inactiveEntity = inactiveObjects.iterator().next();
         String contig = inactiveEntity.getString(VariantMongoAggregationReader.CONTIG_FIELD);
         long start = inactiveEntity.getLong(VariantMongoAggregationReader.START_FIELD);
+        // Since we only need evidence that at least one submitted variant agrees with the deprecated RS,
+        // we just return one variant record per RS
         Collection<Document> inactiveEntitySubmittedVariant = (Collection<Document>) submittedVariantOperations
                 .iterator().next().get("inactiveObjects");
         Document submittedVariant = inactiveEntitySubmittedVariant.iterator().next();
         String reference = submittedVariant.getString("ref");
         String alternate = submittedVariant.getString("alt");
 
-        // Since we only need evidence that at least one submitted variant agrees
-        // with the deprecated RS in locus, we just return one variant record per RS
         Variant variantToReturn = new Variant(contig, start,
                 start + Math.max(reference.length(), alternate.length()) - 1,
                 reference, alternate);
