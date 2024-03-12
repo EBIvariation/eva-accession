@@ -1,4 +1,4 @@
-
+import sqlalchemy
 from sqlalchemy import MetaData, Column, Integer, String, ForeignKey, UniqueConstraint, BigInteger, TEXT, create_engine, \
     URL, text, schema, inspect
 from sqlalchemy.orm import declarative_base, mapped_column, relationship
@@ -27,13 +27,14 @@ ON current.release_version=previous.release_version+1 AND current.{aggregate}=pr
 
 
 def create_views_from_sql(engine):
-    tables = []
     for t in ['taxonomy', 'assembly']:
         with engine.begin() as conn:
-            conn.execute(text(drop_view_template.format(aggregate=t)))
+            try:
+                conn.execute(text(drop_view_template.format(aggregate=t)))
+            except sqlalchemy.exc.ProgrammingError:
+                pass
         with engine.begin() as conn:
             conn.execute(text(create_view_template.format(aggregate=t)))
-    return tables
 
 
 class RSCountCategory(Base):
@@ -80,9 +81,7 @@ def get_sql_alchemy_engine(dbtype, username, password, host_url, database, port)
         conn.execute(schema.CreateSchema(RSCount.schema, if_not_exists=True))
     RSCount.__table__.create(bind=engine, checkfirst=True)
     RSCountCategory.__table__.create(bind=engine, checkfirst=True)
-    tables = create_views_from_sql(engine)
-    insp = inspect(engine)
-    print(insp.get_table_names())
+    create_views_from_sql(engine)
     return engine
 
 

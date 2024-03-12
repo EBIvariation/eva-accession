@@ -259,7 +259,7 @@ class ReleaseCounter(AppLogger):
                         RSCountCategory.taxonomy == count_dict['taxonomy'],
                         RSCountCategory.rs_type == count_dict['idtype'],
                         RSCountCategory.release_version == self.release_version,
-                        RSCountCategory.rs_count_id == rs_count.id,
+                        RSCountCategory.rs_count_id == rs_count.rs_count_id,
                     )
                     result = session.execute(query).fetchone()
                     if not result:
