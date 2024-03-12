@@ -13,9 +13,10 @@ from ebi_eva_common_pyutils.logger import logging_config, AppLogger
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
 
-from sqlalchemy import Column, String, Integer, BigInteger, ForeignKey, create_engine, URL, MetaData, TEXT, \
-    UniqueConstraint, select
-from sqlalchemy.orm import declarative_base, relationship, mapped_column, Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from gather_clustering_counts.release_count_models import RSCountCategory, RSCount, get_sql_alchemy_engine
 
 logger = logging_config.get_logger(__name__)
 
@@ -152,41 +153,6 @@ def generate_output_tsv(dict_of_counter, output_file, header):
                     str(assembly_or_species), str(metric), str(dict_of_counter[assembly_or_species][metric])
                 ]) + '\n')
 
-
-Base = declarative_base(metadata=MetaData(schema="eva_stats"))
-
-
-class RSCountCategory(Base):
-    """
-    Table that provide the metadata associated with a number of RS id
-    """
-    __tablename__ = 'release_rs_count_category'
-
-    count_category_id = Column(Integer, primary_key=True, autoincrement=True)
-    assembly = Column(String)
-    taxonomy = Column(Integer)
-    rs_type = Column(String)
-    release_version = Column(Integer)
-    rs_count_id = mapped_column(ForeignKey("release_rs_count.id"))
-    rs_count = relationship("RSCount", back_populates="count_categories")
-    __table_args__ = (
-        UniqueConstraint('assembly', 'taxonomy', 'rs_type', 'release_version', 'rs_count_id', name='uix_1'),
-    )
-    schema = 'eva_stats'
-
-
-class RSCount(Base):
-    """
-    Table that provide the count associated with each category
-    """
-    __tablename__ = 'release_rs_count'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    count = Column(BigInteger)
-    group_description = Column(TEXT, unique=True)
-    count_categories = relationship("RSCountCategory", back_populates="rs_count")
-    schema = 'eva_stats'
-
-
 class ReleaseCounter(AppLogger):
 
     def __init__(self, private_config_xml_file, config_profile, release_version, logs):
@@ -238,17 +204,7 @@ class ReleaseCounter(AppLogger):
         pg_url, pg_user, pg_pass = get_metadata_creds_for_profile(self.config_profile, self.private_config_xml_file)
         dbtype, host_url, port_and_db = urlsplit(pg_url).path.split(':')
         port, db = port_and_db.split('/')
-        engine = create_engine(URL.create(
-            dbtype + '+psycopg2',
-            username=pg_user,
-            password=pg_pass,
-            host=host_url.split('/')[-1],
-            database=db,
-            port=port
-        ))
-        RSCount.__table__.create(bind=engine, checkfirst=True)
-        RSCountCategory.__table__.create(bind=engine, checkfirst=True)
-        return engine
+        return get_sql_alchemy_engine(dbtype, pg_user, pg_pass, host_url.split('/')[-1], db, port)
 
     def add_annotations(self):
         for count_groups in self.all_counts_grouped:
