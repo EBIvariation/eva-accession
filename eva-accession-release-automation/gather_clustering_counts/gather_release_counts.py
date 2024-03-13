@@ -255,8 +255,8 @@ class ReleaseCounter(AppLogger):
                     session.add(rs_count)
                 for count_dict in count_groups:
                     query = select(RSCountCategory).where(
-                        RSCountCategory.assembly == count_dict['assembly'],
-                        RSCountCategory.taxonomy == count_dict['taxonomy'],
+                        RSCountCategory.assembly_accession == count_dict['assembly'],
+                        RSCountCategory.taxonomy_id == count_dict['taxonomy'],
                         RSCountCategory.rs_type == count_dict['idtype'],
                         RSCountCategory.release_version == self.release_version,
                         RSCountCategory.rs_count_id == rs_count.rs_count_id,
@@ -265,8 +265,8 @@ class ReleaseCounter(AppLogger):
                     if not result:
                         self.info(f"Create persistence for {count_dict['assembly']}, {count_dict['taxonomy']}, {count_dict['idtype']}, {count_dict['count']}")
                         rs_category = RSCountCategory(
-                            assembly=count_dict['assembly'],
-                            taxonomy=count_dict['taxonomy'],
+                            assembly_accession=count_dict['assembly'],
+                            taxonomy_id=count_dict['taxonomy'],
                             rs_type=count_dict['idtype'],
                             release_version=self.release_version,
                             rs_count=rs_count
