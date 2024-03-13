@@ -15,10 +15,7 @@ def _pluralise(name):
         return f'{name}s'
 
 
-drop_view_template = """DROP VIEW eva_stats.release_rs_count_per_{aggregate}"""
-
-
-create_view_template = """CREATE VIEW eva_stats.release_rs_count_per_{aggregate} AS
+create_view_template = """CREATE OR REPLACE VIEW eva_stats.release_rs_count_per_{aggregate} AS
 WITH count_per_{aggregate} AS (
     SELECT {aggregate}, rs_type, release_version, ARRAY_AGG(DISTINCT {source}) AS {plural_source}, SUM(count) AS count 
     FROM eva_stats.release_rs_count_category cc 
@@ -39,11 +36,6 @@ ON current.release_version=previous.release_version+1 AND current.{aggregate}=pr
 
 def create_views_from_sql(engine):
     for aggregate, source in [('taxonomy_id', 'assembly_accession'), ('assembly_accession', 'taxonomy_id')]:
-        with engine.begin() as conn:
-            try:
-                conn.execute(text(drop_view_template.format(aggregate=aggregate)))
-            except sqlalchemy.exc.ProgrammingError:
-                pass
         with engine.begin() as conn:
             conn.execute(text(create_view_template.format(aggregate=aggregate, source=source,
                                                           plural_source=_pluralise(source))))
