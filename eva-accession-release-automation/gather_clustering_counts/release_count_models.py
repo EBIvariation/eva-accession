@@ -8,37 +8,51 @@ metadata = MetaData(schema="eva_stats")
 Base = declarative_base(metadata=metadata)
 
 
-def _pluralise(name):
-    if name.endswith('y'):
-        return f'{name[:-1]}ies'
-    else:
-        return f'{name}s'
-
-
-create_view_template = """CREATE OR REPLACE VIEW eva_stats.release_rs_count_per_{aggregate} AS
-WITH count_per_{aggregate} AS (
-    SELECT {aggregate}, rs_type, release_version, ARRAY_AGG(DISTINCT {source}) AS {plural_source}, SUM(count) AS count 
+create_view_taxonomy = """CREATE OR REPLACE VIEW eva_stats.release_rs_count_per_taxonomy AS
+WITH count_per_taxonomy AS (
+    SELECT taxonomy_id, t.scientific_name, t.common_name, rs_type, release_version, ARRAY_AGG(DISTINCT assembly_accession) AS assembly_accessions, SUM(count) AS count 
     FROM eva_stats.release_rs_count_category cc 
     JOIN eva_stats.release_rs_count c ON c.rs_count_id=cc.rs_count_id 
-    GROUP BY {aggregate}, release_version, rs_type
+    GROUP BY taxonomy_id, release_version, rs_type
 )
-SELECT current.{aggregate} AS {aggregate}, 
+SELECT current.taxonomy_id AS taxonomy_id, 
        current.rs_type AS rs_Type, 
        current.release_version AS release_version, 
-       current.{plural_source} as {plural_source}, 
+       current.assembly_accessions as assembly_accessions, 
        current.count AS count, 
        coalesce(current.count-previous.count, 0) as new 
-FROM count_per_{aggregate} current
-LEFT JOIN count_per_{aggregate} previous
-ON current.release_version=previous.release_version+1 AND current.{aggregate}=previous.{aggregate} AND current.rs_type=previous.rs_type;
+FROM count_per_taxonomy current
+LEFT JOIN count_per_taxonomy previous
+ON current.release_version=previous.release_version+1 AND current.taxonomy_id=previous.taxonomy_id AND current.rs_type=previous.rs_type
+LEFT JOIN evapro.taxonomy t
+ON current.taxonomy_id=t.taxonomy_id;
+
+"""
+
+create_view_assembly = """CREATE OR REPLACE VIEW eva_stats.release_rs_count_per_assembly AS
+WITH count_per_assembly AS (
+    SELECT assembly_accession, rs_type, release_version, ARRAY_AGG(DISTINCT taxonomy) AS taxonomy_ids, SUM(count) AS count 
+    FROM eva_stats.release_rs_count_category cc 
+    JOIN eva_stats.release_rs_count c ON c.rs_count_id=cc.rs_count_id 
+    GROUP BY assembly_accession, release_version, rs_type
+)
+SELECT current.assembly_accession AS assembly_accession, 
+       current.rs_type AS rs_Type, 
+       current.release_version AS release_version, 
+       current.taxonomy_ids as taxonomy_ids, 
+       current.count AS count, 
+       coalesce(current.count-previous.count, 0) as new 
+FROM count_per_assembly current
+LEFT JOIN count_per_assembly previous
+ON current.release_version=previous.release_version+1 AND current.assembly_accession=previous.assembly_accession AND current.rs_type=previous.rs_type;
 """
 
 
 def create_views_from_sql(engine):
-    for aggregate, source in [('taxonomy_id', 'assembly_accession'), ('assembly_accession', 'taxonomy_id')]:
-        with engine.begin() as conn:
-            conn.execute(text(create_view_template.format(aggregate=aggregate, source=source,
-                                                          plural_source=_pluralise(source))))
+    with engine.begin() as conn:
+        conn.execute(text(create_view_taxonomy))
+    with engine.begin() as conn:
+        conn.execute(text(create_view_assembly))
 
 
 class RSCountCategory(Base):
