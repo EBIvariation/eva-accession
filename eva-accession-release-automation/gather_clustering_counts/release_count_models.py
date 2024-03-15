@@ -10,12 +10,14 @@ Base = declarative_base(metadata=metadata)
 
 create_view_taxonomy = """CREATE OR REPLACE VIEW eva_stats.release_rs_count_per_taxonomy AS
 WITH count_per_taxonomy AS (
-    SELECT taxonomy_id, t.scientific_name, t.common_name, rs_type, release_version, ARRAY_AGG(DISTINCT assembly_accession) AS assembly_accessions, SUM(count) AS count 
+    SELECT taxonomy_id, rs_type, release_version, ARRAY_AGG(DISTINCT assembly_accession) AS assembly_accessions, SUM(count) AS count 
     FROM eva_stats.release_rs_count_category cc 
     JOIN eva_stats.release_rs_count c ON c.rs_count_id=cc.rs_count_id 
     GROUP BY taxonomy_id, release_version, rs_type
 )
 SELECT current.taxonomy_id AS taxonomy_id, 
+       t.scientific_name AS scientific_name, 
+       t.common_name AS common_name, 
        current.rs_type AS rs_Type, 
        current.release_version AS release_version, 
        current.assembly_accessions as assembly_accessions, 
