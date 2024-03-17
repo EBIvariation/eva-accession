@@ -33,7 +33,7 @@ ON current.taxonomy_id=t.taxonomy_id;
 
 create_view_assembly = """CREATE OR REPLACE VIEW eva_stats.release_rs_count_per_assembly AS
 WITH count_per_assembly AS (
-    SELECT assembly_accession, rs_type, release_version, ARRAY_AGG(DISTINCT taxonomy) AS taxonomy_ids, SUM(count) AS count 
+    SELECT assembly_accession, rs_type, release_version, ARRAY_AGG(DISTINCT taxonomy_id) AS taxonomy_ids, SUM(count) AS count 
     FROM eva_stats.release_rs_count_category cc 
     JOIN eva_stats.release_rs_count c ON c.rs_count_id=cc.rs_count_id 
     GROUP BY assembly_accession, release_version, rs_type
