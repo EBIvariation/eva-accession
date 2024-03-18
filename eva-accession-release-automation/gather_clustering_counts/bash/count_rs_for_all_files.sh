@@ -14,7 +14,8 @@ do
     echo "Process $INPUT"
     ASSEMBLY=$(basename $(dirname ${INPUT}));
     SC_NAME=$(basename $(dirname $(dirname ${INPUT})));
-    TYPE=$(echo $(basename ${INPUT}) | cut -f 4- -d '_' | awk '{print substr($0,1,length($0)-11)}')
+    # SPLIT by GCA is to support format that have a taxonomy prefix (release 5+) or the one that do not (release 4-)
+    TYPE=$(echo $(basename ${INPUT}) | awk -F 'GCA' '{print $2}' |cut -f 3- -d '_' | awk '{print substr($0,1,length($0)-11)}')
     OUTPUT=tmp_${SC_NAME}_${ASSEMBLY}_${TYPE}.txt
     if [[ ${INPUT} == *.vcf.gz ]]
     then
@@ -42,5 +43,5 @@ cat $ALL_TMP_OUTPUT | sort  \
             print ""; }' \
     | grep -v '^$' | sort | uniq -c | sort -nr > "$OUTPUT_FILE"
 
-rm  $ALL_TMP_OUTPUT
+rm -f $ALL_TMP_OUTPUT
 
