@@ -278,7 +278,7 @@ class ReleaseCounter(AppLogger):
 
     def _write_per_taxonomy_counts(self, session):
         """Load the aggregated count per taxonomy (assume previous version of the release was loaded already)"""
-        taxonomy_counts, assembly_lists = self.generate_per_taxonomy_counts()
+        taxonomy_counts, species_annotation = self.generate_per_taxonomy_counts()
         for taxonomy in taxonomy_counts:
             for rs_type in taxonomy_counts.get(taxonomy):
                 query = select(RSCountPerTaxonomy).where(
@@ -306,8 +306,9 @@ class ReleaseCounter(AppLogger):
                         count_new = 0
                     taxonomy_row = RSCountPerTaxonomy(
                         taxonomy_id=taxonomy,
-                        assembly_accessions=assembly_lists.get(taxonomy).get(rs_type),
+                        assembly_accessions=species_annotation.get(taxonomy).get(rs_type).get('assemblies'),
                         rs_type=rs_type,
+                        release_folder=species_annotation.get(taxonomy).get(rs_type).get('release_folder'),
                         release_version=self.release_version,
                         count=taxonomy_counts.get(taxonomy).get(rs_type),
                         new=count_new
@@ -323,7 +324,7 @@ class ReleaseCounter(AppLogger):
 
     def _write_per_assembly_counts(self, session):
         """Load the aggregated count per assembly (assume previous version of the release was loaded already)"""
-        assembly_counts, taxonomy_lists = self.generate_per_assembly_counts()
+        assembly_counts, assembly_annotations = self.generate_per_assembly_counts()
         for assembly in assembly_counts:
             for rs_type in assembly_counts.get(assembly):
                 query = select(RSCountPerAssembly).where(
@@ -351,8 +352,9 @@ class ReleaseCounter(AppLogger):
                         count_new = 0
                     assembly_row = RSCountPerAssembly(
                         assembly_accession=assembly,
-                        taxonomy_ids=taxonomy_lists.get(assembly).get(rs_type),
+                        taxonomy_ids=assembly_annotations.get(assembly).get(rs_type).get('taxonomies'),
                         rs_type=rs_type,
+                        release_folder=assembly_annotations.get(assembly).get(rs_type).get('release_folder'),
                         release_version=self.release_version,
                         count=assembly_counts.get(assembly).get(rs_type),
                         new=count_new
@@ -365,6 +367,7 @@ class ReleaseCounter(AppLogger):
                         self.error(f"Count for aggregate per assembly {assembly}, {rs_type} already has a count entry "
                                    f"in the table ({assembly_row.count}) different from the one being loaded "
                                    f"{assembly_counts.get(assembly).get(rs_type)}")
+
     def write_counts_to_db(self):
         """
         For all the counts gathered in this self.all_counts_grouped, write them to the db if they do not exist already.
@@ -415,32 +418,41 @@ class ReleaseCounter(AppLogger):
 
     def generate_per_taxonomy_counts(self):
         species_counts = defaultdict(Counter)
-        assembly_lists = defaultdict(dict)
+        species_annotations = defaultdict(dict)
         for count_groups in self.all_counts_grouped:
             for count_dict in count_groups:
                 species_counts[count_dict['taxonomy']][count_dict['idtype']] += count_dict['count']
-                if count_dict['idtype'] not in assembly_lists.get(count_dict['taxonomy'], {}):
-                    assembly_lists[count_dict['taxonomy']][count_dict['idtype']] = set()
-                assembly_lists[count_dict['taxonomy']][count_dict['idtype']].add(count_dict['assembly'])
-        return species_counts, assembly_lists
+                if count_dict['idtype'] not in species_annotations.get(count_dict['taxonomy'], {}):
+                    species_annotations[count_dict['taxonomy']][count_dict['idtype']] = {
+                        'assemblies': set(),
+                        'release_folder': None
+                    }
+
+                species_annotations[count_dict['taxonomy']][count_dict['idtype']]['assemblies'].add(count_dict['assembly'])
+                species_annotations[count_dict['taxonomy']][count_dict['idtype']]['release_folder'] = count_dict['release_folder']
+        return species_counts, species_annotations
 
     def generate_per_assembly_counts(self):
         assembly_counts = defaultdict(Counter)
-        taxonomy_lists = defaultdict(dict)
+        assembly_annotations = defaultdict(dict)
         for count_groups in self.all_counts_grouped:
             for count_dict in count_groups:
                 assembly_counts[count_dict['assembly']][count_dict['idtype']] += count_dict['count']
-                if count_dict['idtype'] not in taxonomy_lists.get(count_dict['assembly'], {}):
-                    taxonomy_lists[count_dict['assembly']][count_dict['idtype']] = set()
-                taxonomy_lists[count_dict['assembly']][count_dict['idtype']].add(count_dict['taxonomy'])
-        return assembly_counts, taxonomy_lists
+                if count_dict['idtype'] not in assembly_annotations.get(count_dict['assembly'], {}):
+                    assembly_annotations[count_dict['assembly']][count_dict['idtype']] = {
+                        'taxonomies': set(),
+                        'release_folder': None
+                    }
+                assembly_annotations[count_dict['assembly']][count_dict['idtype']]['taxonomies'].add(count_dict['taxonomy'])
+                assembly_annotations[count_dict['assembly']][count_dict['idtype']]['release_folder'] = count_dict['assembly']
+        return assembly_counts, assembly_annotations
 
-    def generate_per_species_assembly_counts(self):
-        species_assembly_counts = defaultdict(Counter)
-        for count_groups in self.all_counts_grouped:
-            for count_dict in count_groups:
-                species_assembly_counts[count_dict['assembly'] + '\t' + count_dict['assembly']][count_dict['idtype'] + '_rs'] += count_dict['count']
-        return species_assembly_counts
+    # def generate_per_species_assembly_counts(self):
+    #     species_assembly_counts = defaultdict(Counter)
+    #     for count_groups in self.all_counts_grouped:
+    #         for count_dict in count_groups:
+    #             species_assembly_counts[count_dict['assembly'] + '\t' + count_dict['assembly']][count_dict['idtype'] + '_rs'] += count_dict['count']
+    #     return species_assembly_counts
 
     def detect_inconsistent_types(self):
         inconsistent_types = []
