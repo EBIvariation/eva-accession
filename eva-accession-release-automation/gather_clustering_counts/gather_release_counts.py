@@ -196,6 +196,17 @@ class ReleaseCounter(AppLogger):
                 with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
                     results = get_all_results_for_query(db_conn, query)
         if len(results) < 1:
+            # Support for directory from release 1
+            if species_folder.split('_')[-1].isdigit():
+                taxonomy = int(species_folder.split('_')[-1])
+                query = (
+                    f"select distinct taxonomy_id, scientific_name "
+                    f"from evapro.taxonomy  "
+                    f"where taxonomy_id={taxonomy}"
+                )
+                with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
+                    results = get_all_results_for_query(db_conn, query)
+        if len(results) < 1:
             logger.warning(f'Failed to get scientific name and taxonomy for {species_folder}')
             return None, None
         return results[0][0], results[0][1]
@@ -213,8 +224,13 @@ class ReleaseCounter(AppLogger):
                 taxonomy, scientific_name = self.get_taxonomy_and_scientific_name(count_dict['release_folder'])
                 if taxonomy:
                     count_dict['taxonomy'] = taxonomy
+                else:
+                    self.error(f"Taxonomy cannot be resolved for release_folder {count_dict['release_folder']}")
                 if scientific_name:
                     count_dict['scientific_name'] = scientific_name
+                else:
+                    self.error(f"Scientific name cannot be resolved for release_folder {count_dict['release_folder']}")
+
 
     def count_descriptor(self, count_dict):
         """Description for associated with specific taxonomy, assembly and type of RS"""
