@@ -51,7 +51,7 @@ class TestReleaseCounter(TestCase):
         """This test require a postgres database running on localhost. See config_xml_file.xml for detail."""
         log_files_release1 = [os.path.join(self.resource_folder, 'count_for_release1.log')]
         log_files_release2 = [os.path.join(self.resource_folder, 'count_for_release2.log')]
-        list_cow_assemblies = ['GCA_000003055.3', 'GCA_000003055.5', 'GCA_000003205.1', 'GCA_000003205.4', 'GCA_000003205.6']
+        list_cow_assemblies = ['GCA_000003055.3', 'GCA_000003055.5', 'GCA_000003205.1', 'GCA_000003205.4', 'GCA_000003205.6', 'Unmapped']
         with patch.object(ReleaseCounter, 'get_taxonomy_and_scientific_name') as ptaxonomy:
             ptaxonomy.return_value = (9913, 'Bos taurus')
             counter = ReleaseCounter(self.private_config_xml_file, config_profile=self.config_profile,
@@ -63,32 +63,29 @@ class TestReleaseCounter(TestCase):
 
         session = Session(counter.sqlalchemy_engine)
         query = select(RSCountPerTaxonomy).where(RSCountPerTaxonomy.taxonomy_id == 9913,
-                                                 RSCountPerTaxonomy.rs_type == 'current',
                                                  RSCountPerTaxonomy.release_version == 1)
         result = session.execute(query).fetchone()
         rs_taxonomy_count = result.RSCountPerTaxonomy
         assert sorted(rs_taxonomy_count.assembly_accessions) == list_cow_assemblies
-        assert rs_taxonomy_count.count == 169904286
-        assert rs_taxonomy_count.new == 0
+        assert rs_taxonomy_count.current_rs == 169904286
+        assert rs_taxonomy_count.new_current_rs == 0
         assert rs_taxonomy_count.release_folder == 'Cow_9913'
 
         query = select(RSCountPerTaxonomy).where(RSCountPerTaxonomy.taxonomy_id == 9913,
-                                                 RSCountPerTaxonomy.rs_type == 'current',
                                                  RSCountPerTaxonomy.release_version == 2)
         result = session.execute(query).fetchone()
         rs_taxonomy_count = result.RSCountPerTaxonomy
         assert sorted(rs_taxonomy_count.assembly_accessions) == list_cow_assemblies
-        assert rs_taxonomy_count.count == 169101573
-        assert rs_taxonomy_count.new == -802713
+        assert rs_taxonomy_count.current_rs == 169101573
+        assert rs_taxonomy_count.new_current_rs == -802713
         assert rs_taxonomy_count.release_folder == 'bos_taurus'
 
         query = select(RSCountPerAssembly).where(RSCountPerAssembly.assembly_accession == 'GCA_000003205.6',
-                                                 RSCountPerAssembly.rs_type == 'current',
                                                  RSCountPerAssembly.release_version == 1)
         result = session.execute(query).fetchone()
         rs_assembly_count = result.RSCountPerAssembly
         assert sorted(rs_assembly_count.taxonomy_ids) == [9913]
-        assert rs_assembly_count.count == 61038394
-        assert rs_assembly_count.new == 0
+        assert rs_assembly_count.current_rs == 61038394
+        assert rs_assembly_count.new_current_rs == 0
         assert rs_assembly_count.release_folder == 'GCA_000003205.6'
 

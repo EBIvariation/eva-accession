@@ -231,7 +231,6 @@ class ReleaseCounter(AppLogger):
                 else:
                     self.error(f"Scientific name cannot be resolved for release_folder {count_dict['release_folder']}")
 
-
     def count_descriptor(self, count_dict):
         """Description for associated with specific taxonomy, assembly and type of RS"""
         if 'taxonomy' in count_dict:
@@ -244,6 +243,12 @@ class ReleaseCounter(AppLogger):
             for count_dict in count_groups]
         if None not in group_descriptor_list:
             return '|'.join(sorted(group_descriptor_list)) + f'_release_{self.release_version}'
+
+    def _type_to_column(self, rstype, is_new=False):
+        if is_new:
+            return 'new_' + rstype + '_rs'
+        else:
+            return rstype + '_rs'
 
     def _write_exploded_counts(self, session):
         for count_groups in self.all_counts_grouped:
@@ -295,94 +300,80 @@ class ReleaseCounter(AppLogger):
     def _write_per_taxonomy_counts(self, session):
         """Load the aggregated count per taxonomy (assume previous version of the release was loaded already)"""
         taxonomy_counts, species_annotation = self.generate_per_taxonomy_counts()
-        for taxonomy in taxonomy_counts:
-            for rs_type in taxonomy_counts.get(taxonomy):
-                query = select(RSCountPerTaxonomy).where(
-                    RSCountPerTaxonomy.taxonomy_id == taxonomy,
-                    RSCountPerTaxonomy.rs_type == rs_type,
-                    RSCountPerTaxonomy.release_version == self.release_version
+        for taxonomy_id in taxonomy_counts:
+            query = select(RSCountPerTaxonomy).where(
+                RSCountPerTaxonomy.taxonomy_id == taxonomy_id,
+                RSCountPerTaxonomy.release_version == self.release_version
+            )
+            result = session.execute(query).fetchone()
+            if result:
+                taxonomy_row = result.RSCountPerTaxonomy
+            else:
+                self.info(f"Create persistence for aggregate per taxonomy {taxonomy_id}")
+                taxonomy_row = RSCountPerTaxonomy(
+                    taxonomy_id=taxonomy_id,
+                    assembly_accessions=species_annotation.get(taxonomy_id).get('assemblies'),
+                    release_folder=species_annotation.get(taxonomy_id).get('release_folder'),
+                    release_version=self.release_version,
                 )
-                result = session.execute(query).fetchone()
-                if not result:
-                    self.info(
-                        f"Create persistence for aggregate per taxonomy {taxonomy}, {rs_type}: "
-                        f"{taxonomy_counts.get(taxonomy).get(rs_type)}"
-                    )
-                    # Get the entry from previous release
-                    query = select(RSCountPerTaxonomy).where(
-                        RSCountPerTaxonomy.taxonomy_id == taxonomy,
-                        RSCountPerTaxonomy.rs_type == rs_type,
-                        RSCountPerTaxonomy.release_version == self.release_version - 1
-                    )
-                    result = session.execute(query).fetchone()
-                    if result:
-                        prev_count_for_taxonomy = result.RSCountPerTaxonomy
-                        count_new = taxonomy_counts.get(taxonomy).get(rs_type) - prev_count_for_taxonomy.count
-                    else:
-                        count_new = 0
-                    taxonomy_row = RSCountPerTaxonomy(
-                        taxonomy_id=taxonomy,
-                        assembly_accessions=species_annotation.get(taxonomy).get(rs_type).get('assemblies'),
-                        rs_type=rs_type,
-                        release_folder=species_annotation.get(taxonomy).get(rs_type).get('release_folder'),
-                        release_version=self.release_version,
-                        count=taxonomy_counts.get(taxonomy).get(rs_type),
-                        new=count_new
-                    )
-                    session.add(taxonomy_row)
+            # Get the entry from previous release
+            query = select(RSCountPerTaxonomy).where(
+                RSCountPerTaxonomy.taxonomy_id == taxonomy_id,
+                RSCountPerTaxonomy.release_version == self.release_version - 1
+            )
+            result = session.execute(query).fetchone()
+            if result:
+                prev_count_for_taxonomy = result.RSCountPerTaxonomy
+            else:
+                prev_count_for_taxonomy = None
+            for rs_type in taxonomy_counts.get(taxonomy_id):
+                if prev_count_for_taxonomy:
+                    count_new = taxonomy_counts.get(taxonomy_id).get(rs_type) - getattr(prev_count_for_taxonomy,
+                                                                                        self._type_to_column(rs_type))
                 else:
-                    taxonomy_row = result.RSCountPerTaxonomy
-                    # Check if we were just loading the same value as a previous run
-                    if taxonomy_row.count != taxonomy_counts.get(taxonomy).get(rs_type):
-                        self.error(f"Count for aggregate per taxonomy {taxonomy}, {rs_type} already has a count entry "
-                                   f"in the table ({taxonomy_row.count}) different from the one being loaded "
-                                   f"{taxonomy_counts.get(taxonomy).get(rs_type)}")
+                    count_new = 0
+                setattr(taxonomy_row, self._type_to_column(rs_type), taxonomy_counts.get(taxonomy_id).get(rs_type))
+                setattr(taxonomy_row, self._type_to_column(rs_type, is_new=True), count_new)
+            session.add(taxonomy_row)
 
     def _write_per_assembly_counts(self, session):
         """Load the aggregated count per assembly (assume previous version of the release was loaded already)"""
         assembly_counts, assembly_annotations = self.generate_per_assembly_counts()
         for assembly in assembly_counts:
-            for rs_type in assembly_counts.get(assembly):
-                query = select(RSCountPerAssembly).where(
-                    RSCountPerAssembly.assembly_accession == assembly,
-                    RSCountPerAssembly.rs_type == rs_type,
-                    RSCountPerAssembly.release_version == self.release_version
+            query = select(RSCountPerAssembly).where(
+                RSCountPerAssembly.assembly_accession == assembly,
+                RSCountPerAssembly.release_version == self.release_version
+            )
+            result = session.execute(query).fetchone()
+            if result:
+                assembly_row = result.RSCountPerAssembly
+            else:
+                self.info(f"Create persistence for aggregate per assembly {assembly}")
+                assembly_row = RSCountPerAssembly(
+                    assembly_accession=assembly,
+                    taxonomy_ids=assembly_annotations.get(assembly).get('taxonomies'),
+                    release_folder=assembly_annotations.get(assembly).get('release_folder'),
+                    release_version=self.release_version,
                 )
-                result = session.execute(query).fetchone()
-                if not result:
-                    self.info(
-                        f"Create persistence for aggregate per assembly {assembly}, {rs_type}: "
-                        f"{assembly_counts.get(assembly).get(rs_type)}"
-                    )
-                    # Retrieve the count for the previous release
-                    query = select(RSCountPerAssembly).where(
-                        RSCountPerAssembly.assembly_accession == assembly,
-                        RSCountPerAssembly.rs_type == rs_type,
-                        RSCountPerAssembly.release_version == self.release_version - 1
-                    )
-                    result = session.execute(query).fetchone()
-                    if result:
-                        prev_count_for_assembly = result.RSCountPerAssembly
-                        count_new = assembly_counts.get(assembly).get(rs_type) - prev_count_for_assembly.count
-                    else:
-                        count_new = 0
-                    assembly_row = RSCountPerAssembly(
-                        assembly_accession=assembly,
-                        taxonomy_ids=assembly_annotations.get(assembly).get(rs_type).get('taxonomies'),
-                        rs_type=rs_type,
-                        release_folder=assembly_annotations.get(assembly).get(rs_type).get('release_folder'),
-                        release_version=self.release_version,
-                        count=assembly_counts.get(assembly).get(rs_type),
-                        new=count_new
-                    )
-                    session.add(assembly_row)
+            # Retrieve the count for the previous release
+            query = select(RSCountPerAssembly).where(
+                RSCountPerAssembly.assembly_accession == assembly,
+                RSCountPerAssembly.release_version == self.release_version - 1
+            )
+            result = session.execute(query).fetchone()
+            if result:
+                prev_count_for_assembly = result.RSCountPerAssembly
+            else:
+                prev_count_for_assembly = None
+            for rs_type in assembly_counts.get(assembly):
+                if prev_count_for_assembly:
+                    count_new = assembly_counts.get(assembly).get(rs_type) - getattr(prev_count_for_assembly,
+                                                                                     self._type_to_column(rs_type))
                 else:
-                    assembly_row = result.RSCountPerAssembly
-                    # Check if we were just loading the same value as a previous run
-                    if assembly_row.count != assembly_counts.get(assembly).get(rs_type):
-                        self.error(f"Count for aggregate per assembly {assembly}, {rs_type} already has a count entry "
-                                   f"in the table ({assembly_row.count}) different from the one being loaded "
-                                   f"{assembly_counts.get(assembly).get(rs_type)}")
+                    count_new = 0
+                setattr(assembly_row, self._type_to_column(rs_type), assembly_counts.get(assembly).get(rs_type))
+                setattr(assembly_row, self._type_to_column(rs_type, is_new=True), count_new)
+            session.add(assembly_row)
 
     def write_counts_to_db(self):
         """
@@ -438,29 +429,29 @@ class ReleaseCounter(AppLogger):
         for count_groups in self.all_counts_grouped:
             for count_dict in count_groups:
                 species_counts[count_dict['taxonomy']][count_dict['idtype']] += count_dict['count']
-                if count_dict['idtype'] not in species_annotations.get(count_dict['taxonomy'], {}):
-                    species_annotations[count_dict['taxonomy']][count_dict['idtype']] = {
+                if 'assemblies' not in species_annotations.get(count_dict['taxonomy'], {}):
+                    species_annotations[count_dict['taxonomy']] = {
                         'assemblies': set(),
                         'release_folder': None
                     }
 
-                species_annotations[count_dict['taxonomy']][count_dict['idtype']]['assemblies'].add(count_dict['assembly'])
-                species_annotations[count_dict['taxonomy']][count_dict['idtype']]['release_folder'] = count_dict['release_folder']
+                species_annotations[count_dict['taxonomy']]['assemblies'].add(count_dict['assembly'])
+                species_annotations[count_dict['taxonomy']]['release_folder'] = count_dict['release_folder']
         return species_counts, species_annotations
 
     def generate_per_assembly_counts(self):
         assembly_counts = defaultdict(Counter)
-        assembly_annotations = defaultdict(dict)
+        assembly_annotations = {}
         for count_groups in self.all_counts_grouped:
             for count_dict in count_groups:
                 assembly_counts[count_dict['assembly']][count_dict['idtype']] += count_dict['count']
-                if count_dict['idtype'] not in assembly_annotations.get(count_dict['assembly'], {}):
-                    assembly_annotations[count_dict['assembly']][count_dict['idtype']] = {
+                if 'taxonomies' not in assembly_annotations.get(count_dict['assembly'], {}):
+                    assembly_annotations[count_dict['assembly']] = {
                         'taxonomies': set(),
                         'release_folder': None
                     }
-                assembly_annotations[count_dict['assembly']][count_dict['idtype']]['taxonomies'].add(count_dict['taxonomy'])
-                assembly_annotations[count_dict['assembly']][count_dict['idtype']]['release_folder'] = count_dict['assembly']
+                assembly_annotations[count_dict['assembly']]['taxonomies'].add(count_dict['taxonomy'])
+                assembly_annotations[count_dict['assembly']]['release_folder'] = count_dict['assembly']
         return assembly_counts, assembly_annotations
 
     # def generate_per_species_assembly_counts(self):

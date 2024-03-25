@@ -46,12 +46,21 @@ class RSCountPerTaxonomy(Base):
     __tablename__ = 'release_rs_count_per_taxonomy'
 
     taxonomy_id = Column(Integer, primary_key=True)
-    rs_type = Column(String, primary_key=True)
     release_version = Column(Integer, primary_key=True)
     release_folder = Column(String)
     assembly_accessions = Column(ARRAY(String))
-    count = Column(BigInteger)
-    new = Column(BigInteger)
+    current_rs = Column(BigInteger, default=0)
+    multimap_rs = Column(BigInteger, default=0)
+    merged_rs = Column(BigInteger, default=0)
+    deprecated_rs = Column(BigInteger, default=0)
+    merged_deprecated_rs = Column(BigInteger, default=0)
+    unmapped_rs = Column(BigInteger, default=0)
+    new_current_rs = Column(BigInteger, default=0)
+    new_multimap_rs = Column(BigInteger, default=0)
+    new_merged_rs = Column(BigInteger, default=0)
+    new_deprecated_rs = Column(BigInteger, default=0)
+    new_merged_deprecated_rs = Column(BigInteger, default=0)
+    new_unmapped_rs = Column(BigInteger, default=0)
     schema = 'eva_stats'
 
 
@@ -62,12 +71,21 @@ class RSCountPerAssembly(Base):
     __tablename__ = 'release_rs_count_per_assembly'
 
     assembly_accession = Column(String, primary_key=True)
-    rs_type = Column(String, primary_key=True)
     release_version = Column(Integer, primary_key=True)
     release_folder = Column(String)
     taxonomy_ids = Column(ARRAY(Integer))
-    count = Column(BigInteger)
-    new = Column(BigInteger)
+    current_rs = Column(BigInteger, default=0)
+    multimap_rs = Column(BigInteger, default=0)
+    merged_rs = Column(BigInteger, default=0)
+    deprecated_rs = Column(BigInteger, default=0)
+    merged_deprecated_rs = Column(BigInteger, default=0)
+    unmapped_rs = Column(BigInteger, default=0)
+    new_current_rs = Column(BigInteger, default=0)
+    new_multimap_rs = Column(BigInteger, default=0)
+    new_merged_rs = Column(BigInteger, default=0)
+    new_deprecated_rs = Column(BigInteger, default=0)
+    new_merged_deprecated_rs = Column(BigInteger, default=0)
+    new_unmapped_rs = Column(BigInteger, default=0)
     schema = 'eva_stats'
 
 
