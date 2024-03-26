@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import re
 from collections import defaultdict
 from functools import cached_property
 from itertools import cycle
@@ -111,6 +112,7 @@ class ReleaseTracker(AppLogger):
     def _insert_entry_for_taxonomy_and_assembly(self, tax, asm_acc, sources, sc_name=None, fasta_path=None,
                                                 report_path=None, release_folder_name=None):
         sc_name = sc_name if sc_name else get_scientific_name_from_ensembl(tax)
+        sc_name = re.sub("'", "\\'", sc_name)  # a special fix to insert Ambystoma 'unisexual hybrid' verbatim
         if asm_acc != 'Unmapped':
             ncbi_assembly = NCBIAssembly(asm_acc, sc_name, self.ref_dir)
         fasta_path = fasta_path if fasta_path else ncbi_assembly.assembly_fasta_path
