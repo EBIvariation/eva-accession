@@ -165,51 +165,22 @@ class ReleaseCounter(AppLogger):
         self.add_annotations()
 
     @lru_cache
-    def get_taxonomy_and_scientific_name(self, species_folder):
-        # TODO: Restore this function to only retrieve the taxonomy and scientific name using the taxonomy table in release 6
+    def get_taxonomy(self, species_folder):
         query = (
-            f"select distinct c.taxonomy, t.scientific_name "
+            f"select distinct c.taxonomy "
             f"from eva_progress_tracker.clustering_release_tracker c "
-            f"join evapro.taxonomy t on c.taxonomy=t.taxonomy_id "
             f"where release_folder_name='{species_folder}'"
         )
         with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
             results = get_all_results_for_query(db_conn, query)
-        if len(results) < 1:
-            # Rely only on the clustering_release_tracker when taxonomy is not available in EVAPRO
-            query = (
-                f"select distinct taxonomy, scientific_name "
-                f"from eva_progress_tracker.clustering_release_tracker "
-                f"where release_folder_name='{species_folder}'"
-            )
-            with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
-                results = get_all_results_for_query(db_conn, query)
+
         if len(results) < 1:
             # Support for directory from release 1
             if species_folder.split('_')[-1].isdigit():
                 taxonomy = int(species_folder.split('_')[-1])
-                query = (
-                    f"select distinct taxonomy, scientific_name "
-                    f"from eva_progress_tracker.clustering_release_tracker "
-                    f"where taxonomy={taxonomy}"
-                )
-                with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
-                    results = get_all_results_for_query(db_conn, query)
-        if len(results) < 1:
-            # Support for directory from release 1
-            if species_folder.split('_')[-1].isdigit():
-                taxonomy = int(species_folder.split('_')[-1])
-                query = (
-                    f"select distinct taxonomy_id, scientific_name "
-                    f"from evapro.taxonomy  "
-                    f"where taxonomy_id={taxonomy}"
-                )
-                with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
-                    results = get_all_results_for_query(db_conn, query)
-        if len(results) < 1:
-            logger.warning(f'Failed to get scientific name and taxonomy for {species_folder}')
-            return None, None
-        return results[0][0], results[0][1]
+        else:
+            taxonomy = results[0][0]
+        return taxonomy
 
     @cached_property
     def sqlalchemy_engine(self):
@@ -221,15 +192,11 @@ class ReleaseCounter(AppLogger):
     def add_annotations(self):
         for count_groups in self.all_counts_grouped:
             for count_dict in count_groups:
-                taxonomy, scientific_name = self.get_taxonomy_and_scientific_name(count_dict['release_folder'])
+                taxonomy = self.get_taxonomy(count_dict['release_folder'])
                 if taxonomy:
                     count_dict['taxonomy'] = taxonomy
                 else:
                     self.error(f"Taxonomy cannot be resolved for release_folder {count_dict['release_folder']}")
-                if scientific_name:
-                    count_dict['scientific_name'] = scientific_name
-                else:
-                    self.error(f"Scientific name cannot be resolved for release_folder {count_dict['release_folder']}")
 
     def count_descriptor(self, count_dict):
         """Description for associated with specific taxonomy, assembly and type of RS"""
@@ -471,7 +438,7 @@ class ReleaseCounter(AppLogger):
                 count = next(iter(types_present.values()))[0]['count']
                 inconsistent_assembly_descriptions = [
                     ','.join([
-                        count_dict['scientific_name'] + '-' + count_dict['assembly'] + '-' + count_dict['idtype']
+                        count_dict['taxonomy'] + '-' + count_dict['assembly'] + '-' + count_dict['idtype']
                         for count_dict in count_dict_list
                     ])
                     for count_dict_list in types_present.values()
