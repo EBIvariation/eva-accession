@@ -55,10 +55,12 @@ public class RecoveringAccessioningConfiguration {
             @Autowired @Qualifier("testSubmittedVariantAccessionGenerator")
                     MonotonicAccessionGenerator<ISubmittedVariant> accessionGenerator,
             @Autowired SubmittedVariantAccessioningDatabaseService databaseService) {
-        return new SubmittedVariantMonotonicAccessioningService(accessionGenerator,
+        SubmittedVariantMonotonicAccessioningService submittedVariantMonotonicAccessioningService =  new SubmittedVariantMonotonicAccessioningService(accessionGenerator,
                                                                 databaseService,
                                                                 new SubmittedVariantSummaryFunction(),
                                                                 new SHA1HashingFunction());
+        submittedVariantMonotonicAccessioningService.shutDownAccessioning();
+        return submittedVariantMonotonicAccessioningService;
     }
 
     @Bean("testSubmittedVariantAccessionGenerator")

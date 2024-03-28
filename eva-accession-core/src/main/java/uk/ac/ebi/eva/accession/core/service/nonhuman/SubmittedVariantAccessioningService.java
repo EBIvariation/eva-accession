@@ -259,4 +259,9 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
         result.addAll(accessioningServiceDbsnp.getAllActiveByAssemblyAndAccessionIn(assembly, dbsnpAccessions));
         return result;
     }
+
+    public void shutDownAccessionGenerator(){
+        accessioningService.shutDownAccessioning();
+        accessioningServiceDbsnp.shutDownAccessioning();
+    }
 }
