@@ -31,6 +31,7 @@ import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.annotation.DirtiesContext;
@@ -41,6 +42,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
@@ -106,6 +108,9 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     @Qualifier("COUNT_STATS_REST_TEMPLATE")
     private RestTemplate restTemplate;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
     private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
 
     private MockRestServiceServer mockServer;
@@ -153,6 +158,8 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
+
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     @After
@@ -162,6 +169,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     }
 
     @Test
+    @DirtiesContext
     public void runJobWithNoErrors() throws Exception {
         runner.run();
 

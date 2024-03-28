@@ -34,5 +34,5 @@ public class BeanNames {
 
     public static final String CREATE_SUBSNP_ACCESSION_JOB = "CREATE_SUBSNP_ACCESSION_JOB";
 
-    public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
+    public static final String SUBSNP_ACCESSION_STEP_LISTENER = "SUBSNP_ACCESSION_STEP_LISTENER";
 }
