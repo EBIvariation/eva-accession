@@ -18,7 +18,6 @@ import shutil
 import sys
 import traceback
 
-from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile
 from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.mongo_utils import copy_db
@@ -47,13 +46,6 @@ submitted_collections_taxonomy_attribute_map = {
     "submittedVariantEntity": "tax",
     "submittedVariantOperationEntity": "inactiveObjects.tax"
 }
-
-def remote_db_is_empty(local_forwarded_port, assembly_accession, destination_db_name):
-    logger.info(f"check if: {assembly_accession} has been copied")
-    command = f"mongosh --eval 'use {destination_db_name}' --eval 'db.stats()' --port {local_forwarded_port} " \
-              "| grep 'dataSize' | awk '{print substr($2,1,length($2)-1)}'"
-    output = run_command_with_output(command)
-    return output.strip() == '0'
 
 
 def mongo_data_copy_to_remote_host(local_forwarded_port, private_config_xml_file, profile, assembly_accession,
@@ -127,8 +119,6 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
             mongo_data_copy_to_remote_host(mongo_port, private_config_xml_file, profile, assembly_accession,
                                            taxonomy_id, collections_to_copy_map, dump_dir, destination_db_name)
             exit_code = 0
-            if remote_db_is_empty(mongo_port, assembly_accession, destination_db_name):
-                raise Exception
     except Exception as ex:
         logger.error("Encountered an error while copying species data to Embassy for assemblies in "
                      + release_info["tempmongo_instance"] + "\n" + traceback.format_exc())
