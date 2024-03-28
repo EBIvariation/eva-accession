@@ -37,7 +37,7 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSION_WRITER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.COMPOSITE_VARIANT_PROCESSOR;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.PROGRESS_LISTENER;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_STEP_LISTENER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 
 @Configuration
@@ -57,8 +57,8 @@ public class CreateSubsnpAccessionsStepConfiguration {
     private AccessionWriter accessionWriter;
 
     @Autowired
-    @Qualifier(PROGRESS_LISTENER)
-    private StepExecutionListener progressListener;
+    @Qualifier(SUBSNP_ACCESSION_STEP_LISTENER)
+    private StepExecutionListener stepListener;
 
     @Autowired
     private InvalidVariantSkipPolicy invalidVariantSkipPolicy;
@@ -73,7 +73,7 @@ public class CreateSubsnpAccessionsStepConfiguration {
                 .writer(accessionWriter)
                 .faultTolerant()
                 .skipPolicy(invalidVariantSkipPolicy)
-                .listener(progressListener)
+                .listener(stepListener)
                 .build();
         return step;
     }
