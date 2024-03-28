@@ -165,6 +165,7 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
     }
 
     @Test
+    @DirtiesContext
     public void runJobWithNoErrors() throws Exception {
         runner.run();
 
