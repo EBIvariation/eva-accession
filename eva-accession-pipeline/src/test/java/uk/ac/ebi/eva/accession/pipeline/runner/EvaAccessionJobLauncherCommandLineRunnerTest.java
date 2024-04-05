@@ -65,13 +65,13 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.runner.runnerUtil.deleteTemporaryContigAndVariantFiles;
-import static uk.ac.ebi.eva.accession.pipeline.runner.runnerUtil.getOriginalVcfContent;
-import static uk.ac.ebi.eva.accession.pipeline.runner.runnerUtil.injectErrorIntoTempVcf;
-import static uk.ac.ebi.eva.accession.pipeline.runner.runnerUtil.remediateTempVcfError;
-import static uk.ac.ebi.eva.accession.pipeline.runner.runnerUtil.useOriginalVcfFile;
-import static uk.ac.ebi.eva.accession.pipeline.runner.runnerUtil.useTempVcfFile;
-import static uk.ac.ebi.eva.accession.pipeline.runner.runnerUtil.writeToTempVCFFile;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.deleteTemporaryContigAndVariantFiles;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.getOriginalVcfContent;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.injectErrorIntoTempVcf;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.remediateTempVcfError;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.useOriginalVcfFile;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.useTempVcfFile;
+import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.writeToTempVCFFile;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
