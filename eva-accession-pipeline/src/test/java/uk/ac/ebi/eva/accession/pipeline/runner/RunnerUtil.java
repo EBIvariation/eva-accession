@@ -17,7 +17,7 @@ import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class runnerUtil {
+public class RunnerUtil {
     public static void injectErrorIntoTempVcf(String modifiedVcfContent, File tempVcfInputFile) throws Exception {
         // Inject error in the VCF file to cause processing to stop at variant#9
         writeToTempVCFFile(modifiedVcfContent, tempVcfInputFile);
