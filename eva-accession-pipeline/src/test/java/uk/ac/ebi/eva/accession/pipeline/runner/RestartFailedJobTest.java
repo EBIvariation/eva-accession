@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.batch.core.JobInstance;
@@ -31,6 +30,7 @@ import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -43,6 +43,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
+import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.batch.io.VcfReader;
@@ -52,14 +53,11 @@ import javax.sql.DataSource;
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -77,7 +75,7 @@ import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.writeToTempVCFF
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 @SpringBatchTest
-public class EvaAccessionJobLauncherCommandLineRunnerTest {
+public class RestartFailedJobTest {
 
     @Autowired
     private InputParameters inputParameters;
@@ -125,6 +123,9 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
 
     private boolean originalInputParametersCaptured = false;
 
+    @SpyBean
+    private SubmittedVariantAccessioningService accessioningServiceSpy;
+
     @BeforeClass
     public static void initializeTempFile() throws Exception {
         tempVcfInputFileToTestFailingJobs = File.createTempFile("resumeFailingJob", ".vcf.gz");
@@ -156,6 +157,9 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
                 .andRespond(withStatus(HttpStatus.OK));
 
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        // Mock the behavior of shutDownAccessionGenerator method to do nothing
+        doNothing().when(accessioningServiceSpy).shutDownAccessionGenerator();
+
     }
 
     @After
@@ -164,35 +168,29 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
         inputParameters.setForceRestart(false);
     }
 
-    @Test
-    public void runJobWithNoErrors() throws Exception {
-        runner.run();
-
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-    @Test
-    public void runJobWithNoName() throws Exception {
-        runner.setJobNames(null);
-        runner.run();
-
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITH_ERRORS, runner.getExitCode());
-    }
-
+    /*
+    * Separated this test from the rest of the tests in EvaAccessionJobLauncherCommandLineRunnerTest,
+    * as we have to Mock(Spy to be exact) on the SubmittedVariantAccessioningService bean in order to reuse the same
+    * without shutting down its accession generator.
+    *
+    * Ideally, we should not be Spying but rather the jobs when restarting should be using a new instance of the service.
+    * but it was tricky to inject, hence the workaround.
+    * */
     @Test
     @DirtiesContext
-    @Ignore
-    public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
-        runner.run();
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+    public void restartFailedJobThatIsAlreadyInTheRepository() throws Exception {
+        useTempVcfFile(inputParameters, tempVcfInputFileToTestFailingJobs, vcfReader);
+        String modifiedVcfContent = originalVcfContent.replace("76852", "76852jibberish");
+        injectErrorIntoTempVcf(modifiedVcfContent, tempVcfInputFileToTestFailingJobs);
+        JobInstance failingJobInstance = runJobAandCheckResults();
 
-        deleteTemporaryContigAndVariantFiles(inputParameters, tempVcfOutputDir);
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
 
         inputParameters.setForceRestart(true);
-        runner.run();
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        remediateTempVcfError(originalVcfContent, tempVcfInputFileToTestFailingJobs);
+        deleteTemporaryContigAndVariantFiles(inputParameters, tempVcfOutputDir); //left behind by unsuccessful job A
+        runJobBAndCheckRestart(failingJobInstance);
     }
-
 
     private JobInstance runJobAandCheckResults() throws Exception {
         runner.run();
@@ -209,100 +207,14 @@ public class EvaAccessionJobLauncherCommandLineRunnerTest {
         return currentJobInstance;
     }
 
-    @Test
-    @DirtiesContext
-    public void forceRestartButNoJobInTheRepository() throws Exception {
-        inputParameters.setForceRestart(true);
-        assertEquals(Collections.EMPTY_LIST, jobExplorer.getJobNames());
-        runner.run();
-
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-    }
-
-    @Test
-    @DirtiesContext
-    @Ignore
-    public void resumeFailingJobFromCorrectChunk() throws Exception {
-        // Jobs A, B, C are run chronological order; A and C have SAME parameters;
-        // A is the job that is run after VCF fault injection (as part of the runTestWithFaultInjection method),
-        // therefore should fail.
-        // B is a job run with the original VCF without any faults (run separately), therefore should succeed.
-        // C is a job with the same parameters as A run after VCF fault remediation (as part of the
-        // runTestWithFaultInjection method), therefore should resume A and succeed.
-
-        useTempVcfFile(inputParameters, tempVcfInputFileToTestFailingJobs, vcfReader);
-        String modifiedVcfContent = originalVcfContent.replace("76852", "76852jibberish");
-        injectErrorIntoTempVcf(modifiedVcfContent, tempVcfInputFileToTestFailingJobs);
-        JobInstance failingJobInstance = runJobAandCheckResults();
-
-        runJobBAndCheckResults();
-
-        remediateTempVcfError(originalVcfContent, tempVcfInputFileToTestFailingJobs);
-        runJobCAndCheckResumption(failingJobInstance);
-    }
-
-    private void runJobBAndCheckResults() throws Exception {
-        useOriginalVcfFile(inputParameters, originalVcfInputFilePath, vcfReader);
-        // Back up contig and variant files (left behind by previous unsuccessful job A) to temp folder
-        // so as to not interfere with this job's execution which uses the original VCF file
-        backUpContigAndVariantFilesToTempFolder();
-
+    private void runJobBAndCheckRestart(JobInstance failingJobInstance) throws Exception {
         runner.run();
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
-
-        //Restore state so that Job C can continue running after fault remediation
-        useTempVcfFile(inputParameters, tempVcfInputFileToTestFailingJobs, vcfReader);
-        restoreContigAndVariantFilesFromTempFolder();
-    }
-
-    private void runJobCAndCheckResumption(JobInstance failingJobInstance) throws Exception {
-        runner.run();
         JobInstance currentJobInstance = CommandLineRunnerUtils.getLastJobExecution(CREATE_SUBSNP_ACCESSION_JOB,
                         jobExplorer,
                         inputParameters.toJobParameters())
                 .getJobInstance();
-        StepExecution stepExecution = jobRepository.getLastStepExecution(currentJobInstance,
-                CREATE_SUBSNP_ACCESSION_STEP);
-        // Did we resume the previous failed job instance?
-        assertEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
-
-        int numberOfLinesInVcf = getNumberOfLinesInVcfString(originalVcfContent);
-        int numberOfNonVariants = 1; //TBGI000010 is a non-variant
-        // Test resumption point - did we pick up where we left off?
-        // Ensure all the batches other than the first batch were processed
-        assertEquals(numberOfLinesInVcf - inputParameters.getChunkSize() - numberOfNonVariants,
-                stepExecution.getWriteCount());
-        assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
+        assertNotEquals(failingJobInstance.getInstanceId(), currentJobInstance.getInstanceId());
     }
 
-
-    private void backUpContigAndVariantFilesToTempFolder() {
-        moveFile(Paths.get(originalVcfOutputFilePath + ".contigs"),
-                Paths.get(tempVcfOutputDir + "/accession-output.vcf.contigs"));
-        moveFile(Paths.get(originalVcfOutputFilePath + ".variants"),
-                Paths.get(tempVcfOutputDir + "/accession-output.vcf.variants"));
-    }
-
-    private void restoreContigAndVariantFilesFromTempFolder() {
-        moveFile(Paths.get(tempVcfOutputDir + "/accession-output.vcf.contigs"),
-                Paths.get(Paths.get(originalVcfOutputFilePath).getParent() + "/accession-output.vcf.contigs"));
-        moveFile(Paths.get(tempVcfOutputDir + "/accession-output.vcf.variants"),
-                Paths.get(Paths.get(originalVcfOutputFilePath).getParent() + "/accession-output.vcf.variants"));
-    }
-
-    private void moveFile(Path source, Path destination) {
-        try {
-            Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception ex) {
-            if (!(ex instanceof NoSuchFileException)) {
-                throw new RuntimeException(ex);
-            }
-        }
-    }
-
-    private int getNumberOfLinesInVcfString(String vcfString) {
-        return (int) Arrays.stream(vcfString.split(System.lineSeparator()))
-                .filter(line -> !line.startsWith("#"))
-                .count();
-    }
 }

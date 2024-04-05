@@ -61,6 +61,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -178,12 +179,14 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000000l, block1.getFirstValue());
         assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
+        assertTrue(block1.isNotReserved());
 
         // 2nd block's committed is updated 5000000034 as there are available accessions after that
         ContiguousIdBlock block2 = blockRepository.findById(2l).get();
         assertEquals(5000000030l, block2.getFirstValue());
         assertEquals(5000000034l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
+        assertTrue(block2.isReserved());
 
         // 3rd block is not updated even though it is full (all accessions of this block are present in mongo)
         // the current algorithm takes the uncompleted blocks in ascending order of last value
@@ -195,11 +198,13 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000060l, block3.getFirstValue());
         assertEquals(5000000059l, block3.getLastCommitted());
         assertEquals(5000000089l, block3.getLastValue());
+        assertTrue(block3.isReserved());
 
         ContiguousIdBlock block4 = blockRepository.findById(4l).get();
         assertEquals(5000000090l, block4.getFirstValue());
         assertEquals(5000000089l, block4.getLastCommitted());
         assertEquals(5000000119l, block4.getLastValue());
+        assertTrue(block4.isReserved());
     }
 
     private void verifyEndDBState() {
@@ -212,24 +217,28 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000000l, block1.getFirstValue());
         assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
+        assertTrue(block1.isNotReserved());
 
         // used the 5 unused accessions 5000000030 to 5000000034
         ContiguousIdBlock block2 = blockRepository.findById(2l).get();
         assertEquals(5000000030l, block2.getFirstValue());
         assertEquals(5000000059l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
+        assertTrue(block2.isNotReserved());
 
         // Now that the 2nd block is full and committed, 3rd blocks also get's picked up and its last committed updated
         ContiguousIdBlock block3 = blockRepository.findById(3l).get();
         assertEquals(5000000060l, block3.getFirstValue());
         assertEquals(5000000089l, block3.getLastCommitted());
         assertEquals(5000000089l, block3.getLastValue());
+        assertTrue(block3.isNotReserved());
 
         // used the remaining 17 (22 - 5 (2nd block)) from 4th block
         ContiguousIdBlock block4 = blockRepository.findById(4l).get();
         assertEquals(5000000090l, block4.getFirstValue());
         assertEquals(5000000106l, block4.getLastCommitted());
         assertEquals(5000000119l, block4.getLastValue());
+        assertTrue(block4.isNotReserved());
     }
 
     private void runAccessioningJob() throws Exception {

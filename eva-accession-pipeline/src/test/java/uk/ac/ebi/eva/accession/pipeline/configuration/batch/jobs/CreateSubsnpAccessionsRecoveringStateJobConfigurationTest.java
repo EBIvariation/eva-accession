@@ -26,16 +26,20 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 
@@ -47,19 +51,21 @@ import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.pipeline.test.RecoveringAccessioningConfiguration;
-import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
+import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
@@ -75,6 +81,17 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     private static final int EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF = 22;
 
     private static final String TEST_DB = "test-db";
+
+    @Autowired
+    private CountServiceParameters countServiceParameters;
+
+    private final String URL_PATH_SAVE_COUNT = "/v1/bulk/count";
+
+    @Autowired
+    @Qualifier("COUNT_STATS_REST_TEMPLATE")
+    private RestTemplate restTemplate;
+
+    private MockRestServiceServer mockServer;
 
     @Autowired
     private SubmittedVariantAccessioningRepository repository;
@@ -102,6 +119,10 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     @Before
     public void setUp() throws Exception {
         this.cleanSlate();
+        mockServer = MockRestServiceServer.createServer(restTemplate);
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK));
     }
 
     @After
