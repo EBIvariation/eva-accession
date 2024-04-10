@@ -152,23 +152,25 @@ class ReleaseTracker(AppLogger):
             self.fill_should_be_released_for_taxonomy_and_assembly(tax, asm_acc, asm_sources[asm_acc])
 
     def fill_should_be_released_for_taxonomy_and_assembly(self, tax, asm, src):
-        """Fills should_be_released for a taxonomy/assembly pair based on whether there are current RS IDs,
-        and updates the sources column as well.
-        TODO Also check for deprecated (https://www.ebi.ac.uk/panda/jira/browse/EVA-3402)"""
+        """Fills should_be_released for a taxonomy/assembly pair based on whether there are current RS IDs or
+        deprecated RS IDs and updates the sources column as well."""
         should_be_released_eva = should_be_released_dbsnp = False
         if asm != 'Unmapped':
             ss_query = {'tax': tax, 'seq': asm, 'rs': {'$exists': True}}
             rs_query = {'tax': tax, 'asm': asm}
+            rs_opt_query = {'inactiveObjects.tax': tax, 'inactiveObjects.asm': asm, 'eventType': 'DEPRECATED'}
             if 'EVA' in src:
                 eva_ss_coll = 'submittedVariantEntity'
                 eva_rs_coll = 'clusteredVariantEntity'
+                eva_rs_opt_coll = "clusteredVariantOperationEntity"
                 should_be_released_eva = self._determine_should_be_released_for_collection(
-                    tax, asm, eva_ss_coll, eva_rs_coll, ss_query, rs_query)
+                    tax, asm, eva_ss_coll, eva_rs_coll, eva_rs_opt_coll, ss_query, rs_query, rs_opt_query)
             if 'DBSNP' in src:
                 dbsnp_ss_coll = 'dbsnpSubmittedVariantEntity'
                 dbsnp_rs_coll = 'dbsnpClusteredVariantEntity'
+                dbsnp_rs_opt_coll = "dbsnpClusteredVariantOperationEntity"
                 should_be_released_dbsnp = self._determine_should_be_released_for_collection(
-                    tax, asm, dbsnp_ss_coll, dbsnp_rs_coll, ss_query, rs_query)
+                    tax, asm, dbsnp_ss_coll, dbsnp_rs_coll, dbsnp_rs_opt_coll, ss_query, rs_query, rs_opt_query)
             should_be_released = should_be_released_eva or should_be_released_dbsnp
         else:
             should_be_released = False
@@ -202,7 +204,8 @@ class ReleaseTracker(AppLogger):
                             and release_version={self.release_version}"""
                 execute_query(self.metadata_conn, update_sources_query)
 
-    def _determine_should_be_released_for_collection(self, tax, asm, ss_coll, rs_coll, ss_query, rs_query):
+    def _determine_should_be_released_for_collection(self, tax, asm, ss_coll, rs_coll, rs_opt_coll, ss_query, rs_query,
+                                                     rs_opt_query):
         self.info(f"Looking for SS with RS for Taxonomy {tax} and Assembly {asm} in collection {ss_coll}")
         collection = self.mongo_conn.mongo_handle[self.mongo_conn.db_name][ss_coll]
         ss_with_rs = collection.find_one(ss_query)
@@ -224,7 +227,17 @@ class ReleaseTracker(AppLogger):
             self.info(f'Found RS with Taxonomy {tax} and Assembly {asm} in collection {rs_coll}, RS: {rs_with_tax_asm}')
             return True
         else:
-            self.warning(f'No RS found for Taxonomy {tax} and Assembly {asm} in collection {ss_coll}')
+            self.warning(f'No RS found for Taxonomy {tax} and Assembly {asm} in collection {rs_coll}')
+
+        # Looking for Deprecated RS for a tax and asm for cases where an assembly only contains deprecated RS
+        self.info(f"Looking for Deprecated RS with Taxonomy {tax} and Assembly {asm} in collection {rs_opt_coll}")
+        collection = self.mongo_conn.mongo_handle[self.mongo_conn.db_name][rs_opt_coll]
+        deprecated_rs_with_tax_asm = collection.find_one(rs_opt_query)
+        if deprecated_rs_with_tax_asm:
+            self.info(f'Found Deprecated RS with Taxonomy {tax} and Assembly {asm} in collection {rs_opt_coll}, RS: {deprecated_rs_with_tax_asm}')
+            return True
+        else:
+            self.warning(f'No Deprecated RS found for Taxonomy {tax} and Assembly {asm} in collection {rs_opt_coll}')
             return False
 
     def get_taxonomy_list_for_release(self):
