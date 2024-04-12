@@ -2,9 +2,9 @@ import argparse
 import os
 
 from ebi_eva_common_pyutils.logger import logging_config
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
 
 logger = logging_config.get_logger(__name__)
 logging_config.add_stdout_handler()

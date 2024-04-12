@@ -18,7 +18,7 @@ import glob
 import os
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
 from run_release_in_embassy.release_common_utils import get_bgzip_bcftools_index_commands_for_file, \

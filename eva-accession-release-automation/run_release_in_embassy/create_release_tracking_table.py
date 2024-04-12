@@ -18,11 +18,11 @@ from functools import cached_property
 from itertools import cycle
 
 from ebi_eva_common_pyutils.assembly import NCBIAssembly
-from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile
+from ebi_eva_internal_pyutils.config_utils import get_mongo_uri_for_eva_profile
 from ebi_eva_common_pyutils.logger import logging_config, AppLogger
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_common_pyutils.mongodb import MongoDatabase
-from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query, execute_query
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.mongodb import MongoDatabase
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query, execute_query
 from ebi_eva_common_pyutils.taxonomy.taxonomy import normalise_taxon_scientific_name, get_scientific_name_from_ensembl
 
 

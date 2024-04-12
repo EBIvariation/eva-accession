@@ -1,9 +1,9 @@
 import argparse
 import csv
 
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.logger import logging_config
-from ebi_eva_common_pyutils.pg_utils import execute_query
+from ebi_eva_internal_pyutils.pg_utils import execute_query
 
 from gather_clustering_counts.gather_per_species_clustering_counts import assembly_table_name
 

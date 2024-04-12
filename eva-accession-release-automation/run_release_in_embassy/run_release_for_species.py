@@ -21,7 +21,7 @@ import os
 import yaml
 
 from ebi_eva_common_pyutils.common_utils import merge_two_dicts
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy
 from run_release_in_embassy.release_common_utils import get_release_folder_name
 

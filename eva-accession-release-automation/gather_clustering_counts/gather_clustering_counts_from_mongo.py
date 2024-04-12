@@ -8,10 +8,10 @@ from collections import defaultdict
 from datetime import datetime
 
 from ebi_eva_common_pyutils.logger import logging_config
-from ebi_eva_common_pyutils.mongodb import MongoDatabase
-from ebi_eva_common_pyutils.config_utils import get_accession_pg_creds_for_profile
-from ebi_eva_common_pyutils.pg_utils import execute_query, get_all_results_for_query
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.mongodb import MongoDatabase
+from ebi_eva_internal_pyutils.config_utils import get_accession_pg_creds_for_profile
+from ebi_eva_internal_pyutils.pg_utils import execute_query, get_all_results_for_query
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from gather_clustering_counts.gather_per_species_clustering_counts import assembly_table_name, tracker_table_name
 from urllib.parse import urlsplit
 

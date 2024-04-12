@@ -19,9 +19,9 @@ import sys
 import traceback
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.config_utils import get_mongo_uri_for_eva_profile
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_common_pyutils.mongo_utils import copy_db
+from ebi_eva_internal_pyutils.config_utils import get_mongo_uri_for_eva_profile
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.mongo_utils import copy_db
 from pymongo import MongoClient
 from pymongo.uri_parser import parse_uri
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
