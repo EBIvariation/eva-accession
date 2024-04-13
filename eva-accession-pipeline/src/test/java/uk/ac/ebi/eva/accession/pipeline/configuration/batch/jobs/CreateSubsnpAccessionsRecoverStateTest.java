@@ -42,13 +42,13 @@ import org.springframework.web.client.RestTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.pipeline.test.RecoverTestAccessioningConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
@@ -57,8 +57,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -70,8 +72,7 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUB
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {RecoverTestAccessioningConfiguration.class, BatchTestConfiguration.class,
-        SubmittedVariantAccessioningConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-recover-state-test.properties")
 public class CreateSubsnpAccessionsRecoverStateTest {
     private static final String TEST_DB = "test-db";
@@ -134,11 +135,11 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
     }
 
-    /**
-     * Note that for this test to work, we prepare the Mongo database in {@link RecoverTestAccessioningConfiguration}.
-     */
     @Test
     public void accessionJobShouldRecoverUncommittedAccessions() throws Exception {
+        // Fill Uncommitted Accessions - accessions that are present in MongoDB but wasn't committed in the block service
+        initialize_mongo_db_with_uncommitted_accessions();
+
         verifyInitialDBState();
 
         runAccessioningJob();
@@ -149,12 +150,10 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertCountsInMongo(EXPECTED_VARIANTS_ACCESSIONED_FROM_VCF + 85);
     }
 
-    /**
-     * We initialize DB for the test by inserting sves in {@link RecoverTestAccessioningConfiguration}.
-     */
     private void verifyInitialDBState() {
         // Contiguous Id Block DB:
-        // Initial state of DB is 4 blocks are "reserved" but not "committed" in postgresql
+        // Initial state of DB is 4 blocks are present but not "committed" in postgresql
+        // Initialized using "resources/test-data/contiguous_id_blocks_recover_state_data.sql"
         // block id     first value     last value      last committed
         //  1           5000000000      5000000029      4999999999
         //  2           5000000030      5000000059      5000000029
@@ -170,41 +169,34 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(85, mongoRepository.count());   // 30 + 25 + 30
         assertEquals(4, blockRepository.count());
 
-        //recover state run in constructor of the MonotonicAccessionGenerator,
-        // so will run when objects are being created even before job starts and will try to recover the blocks
-        // The below stage of DB is after the recover state has already ran
-
-        // 1st block is recovered and last committed updated to 5000000029 as all are present in mongo
+        // Since none of the 4 blocks got committed - everyone's last committed value is first_value - 1
         ContiguousIdBlock block1 = blockRepository.findById(1l).get();
         assertEquals(5000000000l, block1.getFirstValue());
-        assertEquals(5000000029l, block1.getLastCommitted());
+        assertEquals(4999999999l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
+        assertEquals("test-instance-recover-state-00", block1.getApplicationInstanceId());
         assertTrue(block1.isNotReserved());
 
-        // 2nd block's committed is updated 5000000034 as there are available accessions after that
         ContiguousIdBlock block2 = blockRepository.findById(2l).get();
         assertEquals(5000000030l, block2.getFirstValue());
-        assertEquals(5000000034l, block2.getLastCommitted());
+        assertEquals(5000000029l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
-        assertTrue(block2.isReserved());
+        assertEquals("test-instance-recover-state-00", block1.getApplicationInstanceId());
+        assertTrue(block2.isNotReserved());
 
-        // 3rd block is not updated even though it is full (all accessions of this block are present in mongo)
-        // the current algorithm takes the uncompleted blocks in ascending order of last value
-        // and stops updating blocks as soon as it finds a block which is not full
-        // In our case 1st is picked and updated,
-        // 2nd is picked and updated but is not full
-        // the algorithm stops at this point and did not bother to check the 3rd block
         ContiguousIdBlock block3 = blockRepository.findById(3l).get();
         assertEquals(5000000060l, block3.getFirstValue());
         assertEquals(5000000059l, block3.getLastCommitted());
         assertEquals(5000000089l, block3.getLastValue());
-        assertTrue(block3.isReserved());
+        assertEquals("test-instance-recover-state-00", block1.getApplicationInstanceId());
+        assertTrue(block3.isNotReserved());
 
         ContiguousIdBlock block4 = blockRepository.findById(4l).get();
         assertEquals(5000000090l, block4.getFirstValue());
         assertEquals(5000000089l, block4.getLastCommitted());
         assertEquals(5000000119l, block4.getLastValue());
-        assertTrue(block4.isReserved());
+        assertEquals("test-instance-recover-state-00", block1.getApplicationInstanceId());
+        assertTrue(block4.isNotReserved());
     }
 
     private void verifyEndDBState() {
@@ -213,24 +205,32 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(107, mongoRepository.count());  // 85 (already present) + 22  (accessioned)
         assertEquals(4, blockRepository.count());
 
+        /*
+        * Accessions that were already present in mongo but not updated in block's last committed were recovered.
+        * */
+
+        // Block Recovered - (No accession used from this block as entire block was already used)
         ContiguousIdBlock block1 = blockRepository.findById(1l).get();
         assertEquals(5000000000l, block1.getFirstValue());
         assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
+        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
         assertTrue(block1.isNotReserved());
 
-        // used the 5 unused accessions 5000000030 to 5000000034
+        // Block Recovered - (used the 5 unused accessions 5000000035 to 5000000039 and recovered others)
         ContiguousIdBlock block2 = blockRepository.findById(2l).get();
         assertEquals(5000000030l, block2.getFirstValue());
         assertEquals(5000000059l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
+        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
         assertTrue(block2.isNotReserved());
 
-        // Now that the 2nd block is full and committed, 3rd blocks also get's picked up and its last committed updated
+        // Block Recovered - (No accession used from this block as entire block was already used)
         ContiguousIdBlock block3 = blockRepository.findById(3l).get();
         assertEquals(5000000060l, block3.getFirstValue());
         assertEquals(5000000089l, block3.getLastCommitted());
         assertEquals(5000000089l, block3.getLastValue());
+        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
         assertTrue(block3.isNotReserved());
 
         // used the remaining 17 (22 - 5 (2nd block)) from 4th block
@@ -238,6 +238,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000090l, block4.getFirstValue());
         assertEquals(5000000106l, block4.getLastCommitted());
         assertEquals(5000000119l, block4.getLastValue());
+        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
         assertTrue(block4.isNotReserved());
     }
 
@@ -263,6 +264,51 @@ public class CreateSubsnpAccessionsRecoverStateTest {
     private void assertCountsInVcfReport(int expected) throws IOException {
         long numVariantsInReport = FileUtils.countNonCommentLines(new FileInputStream(inputParameters.getOutputVcf()));
         assertEquals(expected, numVariantsInReport);
+    }
+
+    private void initialize_mongo_db_with_uncommitted_accessions() {
+        mongoRepository.deleteAll();
+
+        List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
+        // Entries for 1st block
+        for(long i=5000000000l;i<=5000000029l;i++){
+            SubmittedVariant model = new SubmittedVariant("assembly", 1111,
+                    "project", "contig", 100, "A", "T",
+                    null, false, false, false,
+                    false, null);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            submittedVariantEntityList.add(entity);
+        }
+
+        // Entries for 2nd block
+        for(long i=5000000030l;i<=5000000034l;i++){
+            SubmittedVariant model = new SubmittedVariant("assembly", 1111,
+                    "project", "contig", 100, "A", "T",
+                    null, false, false, false,
+                    false, null);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            submittedVariantEntityList.add(entity);
+        }
+        for(long i=5000000040l;i<=5000000059l;i++){
+            SubmittedVariant model = new SubmittedVariant("assembly", 1111,
+                    "project", "contig", 100, "A", "T",
+                    null, false, false, false,
+                    false, null);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            submittedVariantEntityList.add(entity);
+        }
+
+        // Entries for 3rd block
+        for(long i=5000000060l;i<=5000000089l;i++){
+            SubmittedVariant model = new SubmittedVariant("assembly", 1111,
+                    "project", "contig", 100, "A", "T",
+                    null, false, false, false,
+                    false, null);
+            SubmittedVariantEntity entity = new SubmittedVariantEntity(i, "hash"+i, model, 1);
+            submittedVariantEntityList.add(entity);
+        }
+
+        mongoRepository.saveAll(submittedVariantEntityList);
     }
 
 }
