@@ -19,7 +19,8 @@ do
     OUTPUT=tmp_${SC_NAME}_${ASSEMBLY}_${TYPE}.txt
     if [[ ${INPUT} == *.vcf.gz ]]
     then
-        zcat  "${INPUT}" | grep -v '^#' | awk -v annotation="${ASSEMBLY}-${SC_NAME}-${TYPE}" '{print $3" "annotation}' > ${OUTPUT}
+        # There are sometime multiple rs (separated by ;) in one line that needs to be split across multiple lines
+        zcat  "${INPUT}" | grep -v '^#' | awk -v annotation="${ASSEMBLY}-${SC_NAME}-${TYPE}" '{gsub(";","\n",$3); print $3" "annotation}' > ${OUTPUT}
     elif [[ ${INPUT} == *_unmapped_ids.txt.gz ]]
     then
         SC_NAME=$(basename $(dirname ${INPUT}));
