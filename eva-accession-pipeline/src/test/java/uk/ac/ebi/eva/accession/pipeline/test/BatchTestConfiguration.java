@@ -32,6 +32,7 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.InvalidVari
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.AccessioningShutdownStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CheckSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
@@ -46,7 +47,7 @@ import javax.sql.DataSource;
 @Import({CreateSubsnpAccessionsJobConfiguration.class,
          CreateSubsnpAccessionsStepConfiguration.class, CheckSubsnpAccessionsStepConfiguration.class,
          VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
-         BuildReportStepConfiguration.class,
+         BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
          ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
         EvaAccessionJobLauncherCommandLineRunner.class})
 public class BatchTestConfiguration {

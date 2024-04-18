@@ -13,7 +13,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.ACCESSI
 
 @Configuration
 @EnableBatchProcessing
-public class AccessioningShutdownStep {
+public class AccessioningShutdownStepConfiguration {
     @Autowired
     private SubmittedVariantAccessioningService submittedVariantAccessioningService;
 
@@ -22,7 +22,7 @@ public class AccessioningShutdownStep {
 
     @Bean(ACCESSIONING_SHUTDOWN_STEP)
     public Step accessioningShutDownStep(StepBuilderFactory stepBuilderFactory) {
-        return stepBuilderFactory.get("accessioningShutdownStep")
+        return stepBuilderFactory.get(ACCESSIONING_SHUTDOWN_STEP)
                 .tasklet((contribution, chunkContext) -> {
                     submittedVariantAccessioningService.shutDownAccessionGenerator();
                     clusteredVariantAccessioningService.shutDownAccessionGenerator();

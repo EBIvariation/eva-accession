@@ -67,6 +67,7 @@ import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
@@ -249,9 +250,10 @@ public class CreateSubsnpAccessionsRecoverStateTest {
     }
 
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
-        assertEquals(3, stepExecutions.size());
+        assertEquals(4, stepExecutions.size());
         Iterator<StepExecution> iterator = stepExecutions.iterator();
         assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
+        assertEquals(ACCESSIONING_SHUTDOWN_STEP, iterator.next().getStepName());
         assertEquals(BUILD_REPORT_STEP, iterator.next().getStepName());
         assertEquals(CHECK_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
     }

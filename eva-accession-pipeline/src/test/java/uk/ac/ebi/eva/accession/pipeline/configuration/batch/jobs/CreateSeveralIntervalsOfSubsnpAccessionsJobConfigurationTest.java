@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
@@ -111,9 +112,10 @@ public class CreateSeveralIntervalsOfSubsnpAccessionsJobConfigurationTest {
     }
 
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
-        assertEquals(3, stepExecutions.size());
+        assertEquals(4, stepExecutions.size());
         Iterator<StepExecution> iterator = stepExecutions.iterator();
         assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
+        assertEquals(ACCESSIONING_SHUTDOWN_STEP, iterator.next().getStepName());
         assertEquals(BUILD_REPORT_STEP, iterator.next().getStepName());
         assertEquals(CHECK_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
     }
