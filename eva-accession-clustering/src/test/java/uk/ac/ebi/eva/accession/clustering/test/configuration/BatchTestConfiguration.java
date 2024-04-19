@@ -40,6 +40,7 @@ import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewCluster
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.ListenersConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.ClusteringVariantProcessorConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.AccessioningShutdownStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromMongoStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromVcfStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.runner.ClusteringCommandLineRunner;
@@ -71,7 +72,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.New
         BackPropagatedRSWriterConfiguration.class,
         ListenersConfiguration.class,
         ClusteringCommandLineRunner.class,
-        ChunkSizeCompletionPolicyConfiguration.class})
+        ChunkSizeCompletionPolicyConfiguration.class,
+        AccessioningShutdownStepConfiguration.class})
 public class BatchTestConfiguration {
 
     public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";
