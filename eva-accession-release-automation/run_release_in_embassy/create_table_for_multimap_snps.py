@@ -19,7 +19,7 @@ import traceback
 from include_mapping_weight_from_dbsnp.snpmapinfo_metadata import \
     get_snpmapinfo_tables_with_overweight_snps_for_dbsnp_species, get_snpmapinfo_asm_columns
 from include_mapping_weight_from_dbsnp.dbsnp_mirror_metadata import get_db_conn_for_species, get_species_info
-from ebi_eva_common_pyutils.pg_utils import get_pg_connection_handle, execute_query, create_index_on_table, \
+from ebi_eva_internal_pyutils.pg_utils import get_pg_connection_handle, execute_query, create_index_on_table, \
     vacuum_analyze_table
 
 

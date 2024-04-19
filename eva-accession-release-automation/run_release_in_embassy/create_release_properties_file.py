@@ -14,8 +14,8 @@
 import os
 
 import click
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_common_pyutils.spring_properties import SpringPropertiesGenerator
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.spring_properties import SpringPropertiesGenerator
 
 from run_release_in_embassy.release_common_utils import get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly

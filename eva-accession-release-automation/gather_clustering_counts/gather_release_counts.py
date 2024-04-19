@@ -8,10 +8,10 @@ from urllib.parse import urlsplit
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.common_utils import pretty_print
-from ebi_eva_common_pyutils.config_utils import get_metadata_creds_for_profile
 from ebi_eva_common_pyutils.logger import logging_config, AppLogger
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_common_pyutils.pg_utils import get_all_results_for_query
+from ebi_eva_internal_pyutils.config_utils import get_metadata_creds_for_profile
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -279,7 +279,7 @@ class ReleaseCounter(AppLogger):
                 self.info(f"Create persistence for aggregate per taxonomy {taxonomy_id}")
                 taxonomy_row = RSCountPerTaxonomy(
                     taxonomy_id=taxonomy_id,
-                    assembly_accessions=species_annotation.get(taxonomy_id).get('assemblies'),
+                    assembly_accessions=list(species_annotation.get(taxonomy_id).get('assemblies')),
                     release_folder=species_annotation.get(taxonomy_id).get('release_folder'),
                     release_version=self.release_version,
                 )
@@ -375,6 +375,11 @@ class ReleaseCounter(AppLogger):
         return results
 
     def parse_count_script_logs(self, all_logs):
+        '''
+        Create a list  of grouped count
+        :param all_logs:
+        :return:
+        '''
         for log_file in all_logs:
             with open(log_file) as open_file:
                 for line in open_file:
@@ -394,31 +399,40 @@ class ReleaseCounter(AppLogger):
         species_counts = defaultdict(Counter)
         species_annotations = defaultdict(dict)
         for count_groups in self.all_counts_grouped:
-            for count_dict in count_groups:
-                species_counts[count_dict['taxonomy']][count_dict['idtype']] += count_dict['count']
-                if 'assemblies' not in species_annotations.get(count_dict['taxonomy'], {}):
-                    species_annotations[count_dict['taxonomy']] = {
-                        'assemblies': set(),
-                        'release_folder': None
-                    }
-
-                species_annotations[count_dict['taxonomy']]['assemblies'].add(count_dict['assembly'])
-                species_annotations[count_dict['taxonomy']]['release_folder'] = count_dict['release_folder']
+            taxonomy_and_types = set([(count_dict['taxonomy'], count_dict['idtype']) for count_dict in count_groups])
+            for taxonomy, rstype in taxonomy_and_types:
+                if taxonomy not in species_annotations:
+                    species_annotations[taxonomy] = {'assemblies': set(), 'release_folder': None}
+                # All count_dict have the same count in a group
+                species_counts[taxonomy][rstype] += count_groups[0]['count']
+                species_annotations[taxonomy]['assemblies'].update(
+                    set([
+                        count_dict['assembly']
+                        for count_dict in count_groups
+                        if count_dict['taxonomy'] is taxonomy and count_dict['idtype'] is rstype
+                    ])
+                )
+                species_annotations[taxonomy]['release_folder'] = count_groups[0]['release_folder']
         return species_counts, species_annotations
 
     def generate_per_assembly_counts(self):
         assembly_counts = defaultdict(Counter)
         assembly_annotations = {}
         for count_groups in self.all_counts_grouped:
-            for count_dict in count_groups:
-                assembly_counts[count_dict['assembly']][count_dict['idtype']] += count_dict['count']
-                if 'taxonomies' not in assembly_annotations.get(count_dict['assembly'], {}):
-                    assembly_annotations[count_dict['assembly']] = {
-                        'taxonomies': set(),
-                        'release_folder': None
-                    }
-                assembly_annotations[count_dict['assembly']]['taxonomies'].add(count_dict['taxonomy'])
-                assembly_annotations[count_dict['assembly']]['release_folder'] = count_dict['assembly']
+            assembly_and_types = set([(count_dict['assembly'], count_dict['idtype']) for count_dict in count_groups])
+            for assembly_accession, rstype in assembly_and_types:
+                if assembly_accession not in assembly_annotations:
+                    assembly_annotations[assembly_accession] = {'taxonomies': set(), 'release_folder': None}
+                # All count_dict have the same count in a group
+                assembly_counts[assembly_accession][rstype] += count_groups[0]['count']
+                assembly_annotations[assembly_accession]['taxonomies'].update(
+                    set([
+                        count_dict['taxonomy']
+                        for count_dict in count_groups
+                        if count_dict['assembly'] is assembly_accession and count_dict['idtype'] is rstype
+                    ]))
+
+                assembly_annotations[assembly_accession]['release_folder'] = assembly_accession
         return assembly_counts, assembly_annotations
 
     # def generate_per_species_assembly_counts(self):

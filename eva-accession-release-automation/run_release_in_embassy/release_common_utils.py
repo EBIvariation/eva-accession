@@ -18,7 +18,7 @@ import signal
 import traceback
 
 from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_assembly
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.network_utils import get_available_local_port, forward_remote_port_to_local_port
 from ebi_eva_common_pyutils.taxonomy import taxonomy
 

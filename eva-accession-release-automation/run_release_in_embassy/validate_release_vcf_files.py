@@ -19,7 +19,7 @@ from run_release_in_embassy.release_common_utils import get_release_vcf_file_nam
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
     release_vcf_file_categories, vcf_validation_output_file_pattern, asm_report_output_file_pattern
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 
 
 def remove_index_if_outdated(fasta_path):

@@ -19,14 +19,15 @@ do
     OUTPUT=tmp_${SC_NAME}_${ASSEMBLY}_${TYPE}.txt
     if [[ ${INPUT} == *.vcf.gz ]]
     then
-        zcat  "${INPUT}" | grep -v '^#' | awk -v annotation="${ASSEMBLY}-${SC_NAME}-${TYPE}" '{print $3" "annotation}' > ${OUTPUT}
+        # There are sometime multiple rs (separated by ;) in one line that needs to be split across multiple lines
+        gzip -d -c  "${INPUT}" | grep -v '^#' | awk '{gsub(";","\n",$3); print $3}' | awk -v annotation="${ASSEMBLY}-${SC_NAME}-${TYPE}" '{print $0" "annotation}' > ${OUTPUT}
     elif [[ ${INPUT} == *_unmapped_ids.txt.gz ]]
     then
         SC_NAME=$(basename $(dirname ${INPUT}));
         OUTPUT=tmp_${SC_NAME}_unmapped.txt
-        zcat  "${INPUT}" | grep -v '^#' | awk -v annotation="Unmapped-${SC_NAME}-unmapped" '{print $1" "annotation}' > ${OUTPUT}
+        gzip -d -c "${INPUT}" | grep -v '^#' | awk -v annotation="Unmapped-${SC_NAME}-unmapped" '{print $1" "annotation}' > ${OUTPUT}
     else
-        zcat  "${INPUT}" | grep -v '^#' | awk -v annotation="${ASSEMBLY}-${SC_NAME}-${TYPE}" '{print $1" "annotation}' > ${OUTPUT}
+        gzip -d -c "${INPUT}" | grep -v '^#' | awk -v annotation="${ASSEMBLY}-${SC_NAME}-${TYPE}" '{print $1" "annotation}' > ${OUTPUT}
     fi
     ALL_TMP_OUTPUT=$OUTPUT" "$ALL_TMP_OUTPUT
 done

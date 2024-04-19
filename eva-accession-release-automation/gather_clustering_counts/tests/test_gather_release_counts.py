@@ -1,4 +1,5 @@
 import os
+from itertools import cycle
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -52,8 +53,11 @@ class TestReleaseCounter(TestCase):
         log_files_release1 = [os.path.join(self.resource_folder, 'count_for_release1.log')]
         log_files_release2 = [os.path.join(self.resource_folder, 'count_for_release2.log')]
         list_cow_assemblies = ['GCA_000003055.3', 'GCA_000003055.5', 'GCA_000003205.1', 'GCA_000003205.4', 'GCA_000003205.6', 'Unmapped']
-        with patch.object(ReleaseCounter, 'get_taxonomy_and_scientific_name') as ptaxonomy:
-            ptaxonomy.return_value = (9913, 'Bos taurus')
+        folder_to_taxonomy = {'bos_taurus': 9913}
+
+        with patch.object(ReleaseCounter, 'get_taxonomy') as ptaxonomy:
+            # ptaxonomy.side_effect = lambda x: folder_to_taxonomy.get(x)
+            ptaxonomy.return_value = 9913
             counter = ReleaseCounter(self.private_config_xml_file, config_profile=self.config_profile,
                                      release_version=1, logs=log_files_release1)
             counter.write_counts_to_db()
@@ -67,7 +71,7 @@ class TestReleaseCounter(TestCase):
         result = session.execute(query).fetchone()
         rs_taxonomy_count = result.RSCountPerTaxonomy
         assert sorted(rs_taxonomy_count.assembly_accessions) == list_cow_assemblies
-        assert rs_taxonomy_count.current_rs == 169904286
+        assert rs_taxonomy_count.current_rs == 102813585
         assert rs_taxonomy_count.new_current_rs == 0
         assert rs_taxonomy_count.release_folder == 'Cow_9913'
 
@@ -76,8 +80,8 @@ class TestReleaseCounter(TestCase):
         result = session.execute(query).fetchone()
         rs_taxonomy_count = result.RSCountPerTaxonomy
         assert sorted(rs_taxonomy_count.assembly_accessions) == list_cow_assemblies
-        assert rs_taxonomy_count.current_rs == 169101573
-        assert rs_taxonomy_count.new_current_rs == -802713
+        assert rs_taxonomy_count.current_rs == 102605893
+        assert rs_taxonomy_count.new_current_rs == -207692
         assert rs_taxonomy_count.release_folder == 'bos_taurus'
 
         query = select(RSCountPerAssembly).where(RSCountPerAssembly.assembly_accession == 'GCA_000003205.6',
@@ -88,4 +92,22 @@ class TestReleaseCounter(TestCase):
         assert rs_assembly_count.current_rs == 61038394
         assert rs_assembly_count.new_current_rs == 0
         assert rs_assembly_count.release_folder == 'GCA_000003205.6'
+
+    def test_write_counts_to_db2(self):
+        log_files_release = [os.path.join(self.resource_folder, 'count_for_haplochromini_oreochromis_niloticus.log')]
+        folder_to_taxonomy = {'oreochromis_niloticus': 8128, 'haplochromini': 319058}
+
+        with patch.object(ReleaseCounter, 'get_taxonomy') as ptaxonomy:
+            ptaxonomy.side_effect = lambda x: folder_to_taxonomy.get(x)
+            counter = ReleaseCounter(self.private_config_xml_file, config_profile=self.config_profile,
+                                     release_version=4, logs=log_files_release)
+            counter.write_counts_to_db()
+            session = Session(counter.sqlalchemy_engine)
+
+            query = select(RSCountPerAssembly).where(RSCountPerAssembly.assembly_accession == 'GCA_000188235.2',
+                                                     RSCountPerAssembly.release_version == 4)
+            result = session.execute(query).fetchone()
+            rs_assembly_count = result.RSCountPerAssembly
+            assert rs_assembly_count.current_rs == 18747108  # 18746871 + 237
+            assert rs_assembly_count.release_folder == 'GCA_000188235.2'
 

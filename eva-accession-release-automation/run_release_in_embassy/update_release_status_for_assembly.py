@@ -17,7 +17,7 @@ import logging
 
 
 from run_release_in_embassy.release_metadata import update_release_progress_status
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 
 
 logger = logging.getLogger(__name__)
