@@ -139,7 +139,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
     @Test
     public void accessionJobShouldRecoverUncommittedAccessions() throws Exception {
         // Fill Uncommitted Accessions - accessions that are present in MongoDB but wasn't committed in the block service
-        initialize_mongo_db_with_uncommitted_accessions();
+        initializeMongoDbWithUncommittedAccessions();
 
         verifyInitialDBState();
 
@@ -268,7 +268,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(expected, numVariantsInReport);
     }
 
-    private void initialize_mongo_db_with_uncommitted_accessions() {
+    private void initializeMongoDbWithUncommittedAccessions() {
         mongoRepository.deleteAll();
 
         List<SubmittedVariantEntity> submittedVariantEntityList = new ArrayList<>();
