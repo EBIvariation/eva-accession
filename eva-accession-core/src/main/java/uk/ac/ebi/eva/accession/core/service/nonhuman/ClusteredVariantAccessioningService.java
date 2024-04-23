@@ -243,4 +243,9 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
         }
     }
 
+    public void shutDownAccessionGenerator(){
+        accessioningService.shutDownAccessioning();
+        accessioningServiceDbsnp.shutDownAccessioning();
+    }
+
 }

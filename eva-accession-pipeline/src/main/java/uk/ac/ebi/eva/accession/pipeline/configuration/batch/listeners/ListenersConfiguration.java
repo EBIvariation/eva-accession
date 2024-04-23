@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestTemplate;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.SubmittedVariantAccessioningService;
 import uk.ac.ebi.eva.accession.pipeline.batch.listeners.SubsnpAccessionsStepListener;
 import uk.ac.ebi.eva.accession.pipeline.metric.AccessioningMetricCompute;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
@@ -19,9 +18,8 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_AC
 @Import({MetricConfiguration.class})
 public class ListenersConfiguration {
     @Bean(SUBSNP_ACCESSION_STEP_LISTENER)
-    public SubsnpAccessionsStepListener clusteringProgressListener(InputParameters parameters, MetricCompute metricCompute,
-                                                                   SubmittedVariantAccessioningService submittedVariantAccessioningService) {
-        return new SubsnpAccessionsStepListener(parameters, metricCompute, submittedVariantAccessioningService);
+    public SubsnpAccessionsStepListener clusteringProgressListener(InputParameters parameters, MetricCompute metricCompute) {
+        return new SubsnpAccessionsStepListener(parameters, metricCompute);
     }
 
     @Bean

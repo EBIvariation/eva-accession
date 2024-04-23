@@ -30,7 +30,7 @@ public class DbsnpMonotonicAccessionGenerator<MODEL> extends MonotonicAccessionG
 
     public DbsnpMonotonicAccessionGenerator(String categoryId, String applicationInstanceId,
                                             ContiguousIdBlockService contiguousIdBlockService) {
-        super(categoryId, applicationInstanceId, contiguousIdBlockService, (long[])null);
+        super(categoryId, applicationInstanceId, contiguousIdBlockService, null);
     }
 
     @Override

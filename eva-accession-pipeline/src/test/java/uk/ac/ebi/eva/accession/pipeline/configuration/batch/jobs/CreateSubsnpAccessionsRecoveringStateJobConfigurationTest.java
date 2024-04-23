@@ -33,7 +33,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -44,13 +43,13 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.Con
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.test.FixSpringMongoDbRule;
-import uk.ac.ebi.eva.accession.pipeline.test.RecoveringAccessioningConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 import uk.ac.ebi.eva.metrics.count.CountServiceParameters;
 
@@ -66,13 +65,13 @@ import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {RecoveringAccessioningConfiguration.class, BatchTestConfiguration.class,
-        SubmittedVariantAccessioningConfiguration.class})
+@ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-recover-test.properties")
 public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
 
@@ -138,9 +137,6 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
     }
 
-    /**
-     * Note that for this test to work, we prepare the Mongo database in {@link RecoveringAccessioningConfiguration}.
-     */
     @Test
     public void accessionJobShouldRecoverUncommittedAccessions() throws Exception {
         startWithAnAccessionInMongoNotCommittedInTheBlockService();
@@ -156,12 +152,18 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     }
 
     private void startWithAnAccessionInMongoNotCommittedInTheBlockService() {
+        repository.deleteAll();
+        SubmittedVariant model = new SubmittedVariant("assembly", 1111, "project", "contig", 100, "A", "T", null, false,
+                false, false, false, null);
+        SubmittedVariantEntity entity = new SubmittedVariantEntity(UNCOMMITTED_ACCESSION, "hash-10", model, 1);
+        repository.save(entity);
+
         assertEquals(1, repository.count());
         assertEquals(1, repository.findByAccession(UNCOMMITTED_ACCESSION).size());
         assertEquals(1, blockRepository.count());
 
         // This means that the last committed accession is the previous one to the UNCOMMITTED_ACCESSION
-        assertEquals(UNCOMMITTED_ACCESSION, blockRepository.findAll().iterator().next().getLastCommitted());
+        assertEquals(UNCOMMITTED_ACCESSION-1, blockRepository.findAll().iterator().next().getLastCommitted());
     }
 
     private void runJob() throws Exception {
@@ -171,9 +173,10 @@ public class CreateSubsnpAccessionsRecoveringStateJobConfigurationTest {
     }
 
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
-        assertEquals(3, stepExecutions.size());
+        assertEquals(4, stepExecutions.size());
         Iterator<StepExecution> iterator = stepExecutions.iterator();
         assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
+        assertEquals(ACCESSIONING_SHUTDOWN_STEP, iterator.next().getStepName());
         assertEquals(BUILD_REPORT_STEP, iterator.next().getStepName());
         assertEquals(CHECK_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
     }

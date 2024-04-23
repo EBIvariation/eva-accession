@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
@@ -47,11 +48,16 @@ public class CreateSubsnpAccessionsJobConfiguration {
     @Qualifier(BUILD_REPORT_STEP)
     private Step buildReportStep;
 
+    @Autowired
+    @Qualifier(ACCESSIONING_SHUTDOWN_STEP)
+    private Step accessioningShutdownStep;
+
     @Bean(CREATE_SUBSNP_ACCESSION_JOB)
     public Job createSubsnpAccessionJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CREATE_SUBSNP_ACCESSION_JOB)
                                 .incrementer(new RunIdIncrementer())
                                 .start(createSubsnpAccessionStep)
+                                .next(accessioningShutdownStep)
                                 .next(buildReportStep)
                                 .next(checkSubsnpAccessionStep)
                                 .build();
