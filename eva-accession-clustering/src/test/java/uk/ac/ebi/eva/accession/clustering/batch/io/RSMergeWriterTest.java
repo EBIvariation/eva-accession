@@ -54,6 +54,7 @@ import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
@@ -430,6 +431,82 @@ public class RSMergeWriterTest {
         assertRSAssociatedWithSS(1L, ss2);
         assertRSAssociatedWithSS(1L, ss3);
         assertRSAssociatedWithSS(1L, ss4);
+    }
+
+    @Test
+    @DirtiesContext
+    public void testRSWithSameHashAsMergeDestinationAlreadyExistsInDBWithHigherAccession() throws Exception {
+        ss1 = createSS(1L, 1L, 100L, "C", "T");
+        ss2 = createSS(2L, 2L, 100L, "C", "A");
+        ss3 = createSS(3L, 3L, 100L, "A", "G");
+        this.mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3), DBSNP_SUBMITTED_VARIANT_COLLECTION);
+
+        DbsnpClusteredVariantEntity rs2 = this.createRS(ss2);
+        this.mongoTemplate.insert(rs2);
+
+        SubmittedVariantOperationEntity mergeOperation1 = new SubmittedVariantOperationEntity();
+        mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
+                ss1.getAccession(), null, "Different RS with matching loci",
+                Stream.of(ss1, ss2, ss3).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+        mergeOperation1.setId(ClusteringWriter.getMergeCandidateId(mergeOperation1));
+        this.mongoTemplate.insert(Arrays.asList(mergeOperation1), SUBMITTED_VARIANT_OPERATION_COLLECTION);
+
+        List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
+        SubmittedVariantOperationEntity temp;
+        rsMergeCandidatesReader.open(new ExecutionContext());
+        while ((temp = rsMergeCandidatesReader.read()) != null) {
+            submittedVariantOperationEntities.add(temp);
+        }
+
+        //Perform merge
+        rsMergeWriter.write(submittedVariantOperationEntities);
+
+        // Check rs2,rs3 merged into to rs1
+        assertMergeOp(ss2.getClusteredVariantAccession(), ss1.getClusteredVariantAccession(), ASSEMBLY);
+        assertMergeOp(ss3.getClusteredVariantAccession(), ss1.getClusteredVariantAccession(), ASSEMBLY);
+
+        // Check rs1 to rs3 all have same rs
+        assertRSAssociatedWithSS(1L, ss1);
+        assertRSAssociatedWithSS(1L, ss2);
+        assertRSAssociatedWithSS(1L, ss3);
+    }
+
+    @Test
+    @DirtiesContext
+    public void testRSWithSameHashAsMergeDestinationAlreadyExistsInDBWithLowerAccession() throws Exception {
+        ss1 = createSS(1L, 1L, 100L, "C", "T");
+        ss2 = createSS(2L, 2L, 100L, "C", "A");
+        ss3 = createSS(3L, 3L, 100L, "A", "G");
+        this.mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3), DBSNP_SUBMITTED_VARIANT_COLLECTION);
+
+        DbsnpClusteredVariantEntity rs1 = this.createRS(ss1);
+        this.mongoTemplate.insert(rs1);
+
+        SubmittedVariantOperationEntity mergeOperation1 = new SubmittedVariantOperationEntity();
+        mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
+                ss2.getAccession(), null, "Different RS with matching loci",
+                Stream.of(ss2, ss3).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+        mergeOperation1.setId(ClusteringWriter.getMergeCandidateId(mergeOperation1));
+        this.mongoTemplate.insert(Arrays.asList(mergeOperation1), SUBMITTED_VARIANT_OPERATION_COLLECTION);
+
+        List<SubmittedVariantOperationEntity> submittedVariantOperationEntities = new ArrayList<>();
+        SubmittedVariantOperationEntity temp;
+        rsMergeCandidatesReader.open(new ExecutionContext());
+        while ((temp = rsMergeCandidatesReader.read()) != null) {
+            submittedVariantOperationEntities.add(temp);
+        }
+
+        //Perform merge
+        rsMergeWriter.write(submittedVariantOperationEntities);
+
+        // Check rs2,rs3 merged into to rs1
+        assertMergeOp(ss2.getClusteredVariantAccession(), ss1.getClusteredVariantAccession(), ASSEMBLY);
+        assertMergeOp(ss3.getClusteredVariantAccession(), ss1.getClusteredVariantAccession(), ASSEMBLY);
+
+        // Check rs1 to rs3 all have same rs
+        assertRSAssociatedWithSS(1L, ss1);
+        assertRSAssociatedWithSS(1L, ss2);
+        assertRSAssociatedWithSS(1L, ss3);
     }
 
     private void assertMergeOp(Long mergee, Long merger, String assemblyToUse) {

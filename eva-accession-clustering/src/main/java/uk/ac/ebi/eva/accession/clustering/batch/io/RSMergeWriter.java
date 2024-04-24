@@ -35,6 +35,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.InactiveS
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
@@ -192,12 +193,37 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                 getMergeDestinationAndMergees(mergeCandidates);
         ClusteredVariantEntity mergeDestination = mergeDestinationAndMergees.getLeft();
 
+        // check if any variant with same hash as mergeDestination already exist in DB
+        ClusteredVariantEntity existingClusteredVariantEntity = getClusteredVariantEntityWithHash(mergeDestination);
+        if (existingClusteredVariantEntity != null && existingClusteredVariantEntity.getAccession()!=mergeDestination.getAccession()) {
+            if (mergeDestination.getAccession() == ClusteredVariantMergingPolicy.prioritise(mergeDestination.getAccession(),
+                    existingClusteredVariantEntity.getAccession()).accessionToKeep) {
+                merge(mergeDestination, existingClusteredVariantEntity, currentOperation);
+            } else {
+                merge(existingClusteredVariantEntity, mergeDestination, currentOperation);
+                mergeDestination = existingClusteredVariantEntity;
+            }
+        }
+
         List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
         for (ClusteredVariantEntity mergee: mergees) {
             logger.info("RS merge operation: Merging rs{} to rs{} due to hash collision...",
                         mergee.getAccession(), mergeDestination.getAccession());
             merge(mergeDestination, mergee, currentOperation);
         }
+    }
+
+    private ClusteredVariantEntity getClusteredVariantEntityWithHash(ClusteredVariantEntity cve) {
+        ClusteredVariantEntity existingClusteredVariantEntity = null;
+        existingClusteredVariantEntity = mongoTemplate.findOne(query(where(ID_ATTRIBUTE).is(cve.getHashedMessage())),
+                ClusteredVariantEntity.class);
+        if (existingClusteredVariantEntity != null) {
+            return existingClusteredVariantEntity;
+        } else {
+            existingClusteredVariantEntity = mongoTemplate.findOne(query(where(ID_ATTRIBUTE).is(cve.getHashedMessage())),
+                    DbsnpClusteredVariantEntity.class);
+        }
+        return existingClusteredVariantEntity;
     }
 
     private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
