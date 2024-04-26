@@ -483,8 +483,8 @@ public class RSMergeWriterTest {
 
         SubmittedVariantOperationEntity mergeOperation1 = new SubmittedVariantOperationEntity();
         mergeOperation1.fill(RSMergeAndSplitCandidatesReaderConfiguration.MERGE_CANDIDATES_EVENT_TYPE,
-                ss2.getAccession(), null, "Different RS with matching loci",
-                Stream.of(ss2, ss3).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
+                ss1.getAccession(), null, "Different RS with matching loci",
+                Stream.of(ss1, ss2, ss3).map(SubmittedVariantInactiveEntity::new).collect(Collectors.toList()));
         mergeOperation1.setId(ClusteringWriter.getMergeCandidateId(mergeOperation1));
         this.mongoTemplate.insert(Arrays.asList(mergeOperation1), SUBMITTED_VARIANT_OPERATION_COLLECTION);
 

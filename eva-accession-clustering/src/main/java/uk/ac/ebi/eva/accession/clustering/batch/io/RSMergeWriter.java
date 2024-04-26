@@ -192,20 +192,23 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         ImmutablePair<ClusteredVariantEntity, List<ClusteredVariantEntity>> mergeDestinationAndMergees =
                 getMergeDestinationAndMergees(mergeCandidates);
         ClusteredVariantEntity mergeDestination = mergeDestinationAndMergees.getLeft();
+        List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
 
-        // check if any variant with same hash as mergeDestination already exist in DB
-        ClusteredVariantEntity existingClusteredVariantEntity = getClusteredVariantEntityWithHash(mergeDestination);
-        if (existingClusteredVariantEntity != null && existingClusteredVariantEntity.getAccession()!=mergeDestination.getAccession()) {
-            if (mergeDestination.getAccession() == ClusteredVariantMergingPolicy.prioritise(mergeDestination.getAccession(),
-                    existingClusteredVariantEntity.getAccession()).accessionToKeep) {
-                merge(mergeDestination, existingClusteredVariantEntity, currentOperation);
-            } else {
-                merge(existingClusteredVariantEntity, mergeDestination, currentOperation);
-                mergeDestination = existingClusteredVariantEntity;
+        if (mergees.size() > 1) {
+            // check if any variant with same hash as mergeDestination already exist in DB
+            ClusteredVariantEntity existingClusteredVariantEntity = getClusteredVariantEntityWithHash(mergeDestination);
+            if (existingClusteredVariantEntity != null && existingClusteredVariantEntity.getAccession() != mergeDestination.getAccession()) {
+                if (mergeDestination.getAccession() == ClusteredVariantMergingPolicy.prioritise(mergeDestination.getAccession(),
+                        existingClusteredVariantEntity.getAccession()).accessionToKeep) {
+                    merge(mergeDestination, existingClusteredVariantEntity, currentOperation);
+                    mergees = mergees.stream()
+                            .filter(cve -> !(cve.equals(existingClusteredVariantEntity)
+                                    && cve.getAccession() == existingClusteredVariantEntity.getAccession()))
+                            .collect(Collectors.toList());
+                }
             }
         }
 
-        List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
         for (ClusteredVariantEntity mergee: mergees) {
             logger.info("RS merge operation: Merging rs{} to rs{} due to hash collision...",
                         mergee.getAccession(), mergeDestination.getAccession());
