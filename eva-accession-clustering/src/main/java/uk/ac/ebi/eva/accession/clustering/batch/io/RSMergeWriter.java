@@ -194,20 +194,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         ClusteredVariantEntity mergeDestination = mergeDestinationAndMergees.getLeft();
         List<ClusteredVariantEntity> mergees = mergeDestinationAndMergees.getRight();
 
-        if (mergees.size() > 1) {
-            // check if any variant with same hash as mergeDestination already exist in DB
-            ClusteredVariantEntity existingClusteredVariantEntity = getClusteredVariantEntityWithHash(mergeDestination);
-            if (existingClusteredVariantEntity != null && existingClusteredVariantEntity.getAccession() != mergeDestination.getAccession()) {
-                if (mergeDestination.getAccession() == ClusteredVariantMergingPolicy.prioritise(mergeDestination.getAccession(),
-                        existingClusteredVariantEntity.getAccession()).accessionToKeep) {
-                    merge(mergeDestination, existingClusteredVariantEntity, currentOperation);
-                    mergees = mergees.stream()
-                            .filter(cve -> !(cve.equals(existingClusteredVariantEntity)
-                                    && cve.getAccession() == existingClusteredVariantEntity.getAccession()))
-                            .collect(Collectors.toList());
-                }
-            }
-        }
+        removeMergeesAndInsertMergeDestination(mergeDestination, mergees);
 
         for (ClusteredVariantEntity mergee: mergees) {
             logger.info("RS merge operation: Merging rs{} to rs{} due to hash collision...",
@@ -216,17 +203,27 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         }
     }
 
-    private ClusteredVariantEntity getClusteredVariantEntityWithHash(ClusteredVariantEntity cve) {
-        ClusteredVariantEntity existingClusteredVariantEntity = null;
-        existingClusteredVariantEntity = mongoTemplate.findOne(query(where(ID_ATTRIBUTE).is(cve.getHashedMessage())),
-                ClusteredVariantEntity.class);
-        if (existingClusteredVariantEntity != null) {
-            return existingClusteredVariantEntity;
-        } else {
-            existingClusteredVariantEntity = mongoTemplate.findOne(query(where(ID_ATTRIBUTE).is(cve.getHashedMessage())),
-                    DbsnpClusteredVariantEntity.class);
+    private void removeMergeesAndInsertMergeDestination(ClusteredVariantEntity mergeDestination,
+                                                        List<ClusteredVariantEntity> mergeeList) {
+        List<Long> mergeeAccList = mergeeList.stream().map(cve->cve.getAccession()).collect(Collectors.toList());
+        Query queryForMergee = query(where(ID_ATTRIBUTE).is(mergeeList.get(0).getHashedMessage())
+                .and(ACCESSION_ATTRIBUTE).in(mergeeAccList))
+                .addCriteria(where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
+        mongoTemplate.remove(queryForMergee, ClusteredVariantEntity.class);
+        mongoTemplate.remove(queryForMergee, DbsnpClusteredVariantEntity.class);
+
+        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED, mergeeList.size());
+
+        Query queryForMergeDestination = query(where(ID_ATTRIBUTE).is(mergeDestination.getHashedMessage())
+                .and(ACCESSION_ATTRIBUTE).is(mergeDestination.getAccession()))
+                .addCriteria(where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
+        List<? extends ClusteredVariantEntity> clusteredVariantToKeep =
+                mongoTemplate.find(queryForMergeDestination, clusteringWriter.getClusteredVariantCollection(
+                        mergeDestination.getAccession()));
+        if (clusteredVariantToKeep.isEmpty()) {
+            // Insert RS record for destination RS
+            insertRSRecordForMergeDestination(mergeDestination);
         }
-        return existingClusteredVariantEntity;
     }
 
     private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
@@ -293,35 +290,6 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         Long accessionToBeMerged = mergee.getAccession();
         Long accessionToKeep = mergeDestination.getAccession();
 
-        //Confine merge updates to the particular assembly where clustering is being performed
-        Query queryForMergee = query(where(ACCESSION_ATTRIBUTE).is(accessionToBeMerged))
-                .addCriteria(
-                        where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-        Query queryForMergeTarget = query(where(ACCESSION_ATTRIBUTE).is(accessionToKeep))
-                .addCriteria(
-                        where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-
-        List<? extends ClusteredVariantEntity> clusteredVariantToMerge =
-                mongoTemplate.find(queryForMergee,
-                                   clusteringWriter.getClusteredVariantCollection(accessionToBeMerged));
-
-        List<? extends ClusteredVariantEntity> clusteredVariantToKeep =
-                mongoTemplate.find(queryForMergeTarget, clusteringWriter.getClusteredVariantCollection(
-                        accessionToKeep));
-
-        if (clusteringWriter.isMultimap(clusteredVariantToMerge) || clusteringWriter.isMultimap(clusteredVariantToKeep)) {
-            // multimap! don't merge. see isMultimap() below for more details
-            return;
-        }
-
-        // Mergee is no longer valid to be present in the main clustered variant collection
-        mongoTemplate.remove(queryForMergee, clusteringWriter.getClusteredVariantCollection(accessionToBeMerged));
-        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED, clusteredVariantToMerge.size());
-
-        if (clusteredVariantToKeep.isEmpty()) {
-            // Insert RS record for destination RS
-            insertRSRecordForMergeDestination(mergeDestination);
-        }
         // Record merge operation
         insertMergeOperation(mergeDestination, mergee);
 
