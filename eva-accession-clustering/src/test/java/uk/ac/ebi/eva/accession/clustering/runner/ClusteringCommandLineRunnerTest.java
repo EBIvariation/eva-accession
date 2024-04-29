@@ -127,6 +127,7 @@ import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestCon
 @ContextConfiguration(classes={BatchTestConfiguration.class})
 @TestPropertySource("classpath:clustering-pipeline-test.properties")
 public class ClusteringCommandLineRunnerTest {
+    private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
 
     private static final String TEST_DB = "test-db";
 
@@ -843,7 +844,7 @@ public class ClusteringCommandLineRunnerTest {
         // This is the easiest way to exhaust the accessions because
         // the monotonic accession generator will only create accessions in the EVA collection (ClusteredVariantEntity)
         // and not the dbSNP collection (DbsnpClusteredVariantEntity)
-        clusteredVariantAccessionGenerator.generateAccessions(10);
+        clusteredVariantAccessionGenerator.generateAccessions(10, TEST_APPLICATION_INSTANCE_ID);
     }
 
     private void createEVASS8InASM1WithUnassignedRS() {

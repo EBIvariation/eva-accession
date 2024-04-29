@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -67,9 +68,10 @@ public class RSMergeAndSplitWriterConfiguration {
             SubmittedVariantAccessioningService submittedVariantAccessioningService,
             MongoTemplate mongoTemplate,
             MetricCompute metricCompute,
-            File rsReportFile) throws IOException {
+            File rsReportFile,
+            JobExecution jobExecution) throws IOException {
         return new RSSplitWriter(clusteringWriter, clusteredVariantAccessioningService,
                                  submittedVariantAccessioningService, mongoTemplate, metricCompute,
-                                 rsReportFile);
+                                 rsReportFile, jobExecution);
     }
 }

@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.pipeline.batch.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamWriter;
@@ -48,19 +49,23 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
 
     private MetricCompute metricCompute;
 
+    private JobExecution jobExecution;
+
     public AccessionWriter(SubmittedVariantAccessioningService service, AccessionReportWriter accessionReportWriter,
-                           VariantConverter variantConverter, MetricCompute metricCompute) {
+                           VariantConverter variantConverter, MetricCompute metricCompute, JobExecution jobExecution) {
         this.service = service;
         this.accessionReportWriter = accessionReportWriter;
         this.variantConverter = variantConverter;
         this.metricCompute = metricCompute;
+        this.jobExecution = jobExecution;
     }
 
     @Override
     public void write(List<? extends IVariant> variants) throws Exception {
         List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
                                                             .collect(Collectors.toList());
-        List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants);
+        List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants,
+                jobExecution.getJobId().toString());
         metricCompute.addCount(AccessioningMetric.SUBMITTED_VARIANTS, variants.size());
         metricCompute.addCount(AccessioningMetric.ACCESSIONED_VARIANTS, accessions.size());
         accessionReportWriter.write(variants, accessions);

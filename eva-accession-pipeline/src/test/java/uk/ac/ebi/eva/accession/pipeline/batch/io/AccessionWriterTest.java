@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -132,6 +133,9 @@ public class AccessionWriterTest {
     @Autowired
     private MetricCompute metricCompute;
 
+    @Autowired
+    private JobExecution jobExecution;
+
     private ContigMapping contigMapping;
 
     @Rule
@@ -161,7 +165,7 @@ public class AccessionWriterTest {
                                                                                 contigMapping,
                                                                                 ContigNaming.SEQUENCE_NAME);
         variantConverter = new VariantConverter("assembly", TAXONOMY, "project");
-        accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute);
+        accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute, jobExecution);
         accessionReportWriter.open(new ExecutionContext());
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }

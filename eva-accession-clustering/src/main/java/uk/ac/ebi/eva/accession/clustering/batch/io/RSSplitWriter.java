@@ -21,6 +21,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -96,18 +97,22 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
 
     private FileWriter rsReportFileWriter;
 
+    private JobExecution jobExecution;
+
     public RSSplitWriter(ClusteringWriter clusteringWriter,
                          ClusteredVariantAccessioningService clusteredVariantAccessioningService,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
                          MongoTemplate mongoTemplate,
                          MetricCompute<ClusteringMetric> metricCompute,
-                         File rsReportFile) throws IOException {
+                         File rsReportFile,
+                         JobExecution jobExecution) throws IOException {
         this.clusteringWriter = clusteringWriter;
         this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
         this.metricCompute = metricCompute;
         this.rsReportFile = rsReportFile;
+        this.jobExecution = jobExecution;
     }
 
     @Override
@@ -194,7 +199,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                         rsHashAndAssociatedSS.get(rsHash).get(0));
                 Long newRSAccession =
                         this.clusteredVariantAccessioningService.getOrCreate(
-                                Collections.singletonList(clusteredVariantEntity)).get(0).getAccession();
+                                Collections.singletonList(clusteredVariantEntity), jobExecution.getJobId().toString())
+                                .get(0).getAccession();
                 ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, newRSAccession, rsHash);
                 metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
                 List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);

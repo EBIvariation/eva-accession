@@ -122,7 +122,6 @@ public class ClusteredVariantAccessioningConfiguration {
         logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(
                 properties.getClustered().getCategoryId(),
-                properties.getInstanceId(),
                 blockService,
                 clusteredVariantAccessioningDatabaseService());
     }

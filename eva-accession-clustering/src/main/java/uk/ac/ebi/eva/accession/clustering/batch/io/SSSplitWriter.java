@@ -19,6 +19,7 @@ import com.mongodb.MongoBulkWriteException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -71,14 +72,18 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private final MetricCompute<ClusteringMetric> metricCompute;
 
+    private JobExecution jobExecution;
+
     public SSSplitWriter(String assembly, ClusteringWriter clusteringWriter,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
-                         MongoTemplate mongoTemplate, MetricCompute<ClusteringMetric> metricCompute) {
+                         MongoTemplate mongoTemplate, MetricCompute<ClusteringMetric> metricCompute,
+                         JobExecution jobExecution) {
         this.assembly = assembly;
         this.clusteringWriter = clusteringWriter;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
         this.metricCompute = metricCompute;
+        this.jobExecution = jobExecution;
     }
 
     @Override
@@ -127,7 +132,8 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         excludeSSWithAlreadyUpdatedIDs(svesToCreateWithNewIDs);
         removeCurrentSSEntriesInDBForSplitCandidates(svesToCreateWithNewIDs.keySet());
         List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> newlyCreatedSVEs =
-                this.submittedVariantAccessioningService.getOrCreate(new ArrayList<>(svesToCreateWithNewIDs.values()));
+                this.submittedVariantAccessioningService.getOrCreate(new ArrayList<>(svesToCreateWithNewIDs.values()),
+                        jobExecution.getJobId().toString());
         this.metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_SS_SPLIT, newlyCreatedSVEs.size());
         this.metricCompute.saveMetricsCountsInDB();
         recordSplitOperation(svesToCreateWithNewIDs, newlyCreatedSVEs);

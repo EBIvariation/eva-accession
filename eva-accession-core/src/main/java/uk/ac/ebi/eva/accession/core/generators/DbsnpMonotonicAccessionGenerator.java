@@ -30,11 +30,11 @@ public class DbsnpMonotonicAccessionGenerator<MODEL> extends MonotonicAccessionG
 
     public DbsnpMonotonicAccessionGenerator(String categoryId, String applicationInstanceId,
                                             ContiguousIdBlockService contiguousIdBlockService) {
-        super(categoryId, applicationInstanceId, contiguousIdBlockService, null);
+        super(categoryId, contiguousIdBlockService, null);
     }
 
     @Override
-    public synchronized long[] generateAccessions(int numAccessionsToGenerate) {
+    public synchronized long[] generateAccessions(int numAccessionsToGenerate, String applicationInstanceId) {
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 
@@ -59,7 +59,8 @@ public class DbsnpMonotonicAccessionGenerator<MODEL> extends MonotonicAccessionG
     }
 
     @Override
-    public <HASH> List<AccessionWrapper<MODEL, HASH, Long>> generateAccessions(Map<HASH, MODEL> messages) {
+    public <HASH> List<AccessionWrapper<MODEL, HASH, Long>> generateAccessions(Map<HASH, MODEL> messages,
+                                                                               String applicationInstanceId) {
         throw new UnsupportedOperationException("New accessions cannot be issued for dbSNP variants");
     }
 }

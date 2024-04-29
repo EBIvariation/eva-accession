@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.io;
 
+import org.springframework.batch.core.JobExecution;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -48,8 +49,9 @@ public class AccessionWriterConfiguration {
     @Bean(ACCESSION_WRITER)
     public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service,
                                            AccessionReportWriter accessionReportWriter,
-                                           VariantConverter variantConverter, MetricCompute metricCompute){
-        return new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute);
+                                           VariantConverter variantConverter, MetricCompute metricCompute,
+                                           JobExecution jobExecution){
+        return new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute, jobExecution);
     }
 
     @Bean

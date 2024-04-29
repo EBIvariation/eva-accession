@@ -68,7 +68,7 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
 
     @Override
     public List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> getOrCreate(
-            List<? extends IClusteredVariant> variants)
+            List<? extends IClusteredVariant> variants, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
         List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> dbsnpVariants =
                 accessioningServiceDbsnp.get(variants).stream()
@@ -81,7 +81,7 @@ public class ClusteredVariantAccessioningService implements AccessioningService<
             return dbsnpVariants;
         } else {
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> clusteredVariants =
-                    accessioningService.getOrCreate(variantsNotInDbsnp);
+                    accessioningService.getOrCreate(variantsNotInDbsnp, applicationInstanceId);
 
             List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> allClusteredVariants = new ArrayList<>();
             allClusteredVariants.addAll(dbsnpVariants);

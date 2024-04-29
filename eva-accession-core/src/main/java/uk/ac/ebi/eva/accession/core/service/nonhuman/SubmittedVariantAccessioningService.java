@@ -67,7 +67,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
 
     @Override
     public List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> getOrCreate(
-            List<? extends ISubmittedVariant> variants)
+            List<? extends ISubmittedVariant> variants, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
         List<AccessionWrapper<ISubmittedVariant, String, Long>> dbsnpVariants = accessioningServiceDbsnp.get(variants);
         List<ISubmittedVariant> variantsNotInDbsnp = removeFromList(variants, dbsnpVariants);
@@ -80,7 +80,7 @@ public class SubmittedVariantAccessioningService implements AccessioningService<
                      d.getData(), false)).collect(Collectors.toList());
         } else {
             List<AccessionWrapper<ISubmittedVariant, String, Long>> submittedVariants = new ArrayList<>();
-            accessioningService.getOrCreate(variantsNotInDbsnp)
+            accessioningService.getOrCreate(variantsNotInDbsnp, applicationInstanceId)
                                .forEach(getOrCreateAccessionWrapperObj -> submittedVariants.add(
                                        new AccessionWrapper<ISubmittedVariant, String, Long>
                                                (getOrCreateAccessionWrapperObj.getAccession(),

@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -49,11 +50,12 @@ public class ClusteringWriterConfiguration {
                                                       Long accessioningMonotonicInitSs,
                                                       Long accessioningMonotonicInitRs,
                                                       MetricCompute metricCompute,
-                                                      File rsReportFile) throws IOException {
+                                                      File rsReportFile,
+                                                      JobExecution jobExecution) throws IOException {
         return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
                                     clusteredVariantAccessioningService, accessioningMonotonicInitSs,
                                     accessioningMonotonicInitRs, metricCompute, true,
-                                    rsReportFile);
+                                    rsReportFile, jobExecution);
     }
 
     @Bean(NON_CLUSTERED_CLUSTERING_WRITER)
@@ -64,10 +66,11 @@ public class ClusteringWriterConfiguration {
                                                          Long accessioningMonotonicInitSs,
                                                          Long accessioningMonotonicInitRs,
                                                          MetricCompute metricCompute,
-                                                         File rsReportFile) throws IOException {
+                                                         File rsReportFile,
+                                                         JobExecution jobExecution) throws IOException {
         return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
                                     clusteredVariantAccessioningService, accessioningMonotonicInitSs,
                                     accessioningMonotonicInitRs, metricCompute, false,
-                                    rsReportFile);
+                                    rsReportFile, jobExecution);
     }
 }

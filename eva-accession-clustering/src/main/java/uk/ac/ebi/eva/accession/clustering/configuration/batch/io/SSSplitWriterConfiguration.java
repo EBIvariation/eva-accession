@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -44,8 +45,8 @@ public class SSSplitWriterConfiguration {
             InputParameters inputParameters,
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
             SubmittedVariantAccessioningService submittedVariantAccessioningService,
-            MongoTemplate mongoTemplate, MetricCompute metricCompute) {
+            MongoTemplate mongoTemplate, MetricCompute metricCompute, JobExecution jobExecution) {
         return new SSSplitWriter(inputParameters.getAssemblyAccession(), clusteringWriter,
-                                 submittedVariantAccessioningService, mongoTemplate, metricCompute);
+                                 submittedVariantAccessioningService, mongoTemplate, metricCompute, jobExecution);
     }
 }

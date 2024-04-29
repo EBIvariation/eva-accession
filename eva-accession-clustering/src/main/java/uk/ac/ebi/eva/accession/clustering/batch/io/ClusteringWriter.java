@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
 import htsjdk.samtools.util.StringUtil;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -116,6 +117,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
 
     private Map<Long, SubmittedVariantOperationEntity> rsSplitCandidateSVOE;
 
+    private JobExecution jobExecution;
+
     public ClusteringWriter(MongoTemplate mongoTemplate,
                             String assembly,
                             ClusteredVariantAccessioningService clusteredVariantAccessioningService,
@@ -123,7 +126,8 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                             Long accessioningMonotonicInitRs,
                             MetricCompute metricCompute,
                             boolean processClusteredRemappedVariants,
-                            File rsReportFile) throws IOException {
+                            File rsReportFile,
+                            JobExecution jobExecution) throws IOException {
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.clusteredService = clusteredVariantAccessioningService;
@@ -135,6 +139,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         this.metricCompute = metricCompute;
         this.processClusteredRemappedVariants = processClusteredRemappedVariants;
         this.rsReportFile = rsReportFile;
+        this.jobExecution = jobExecution;
         getSVOEWithMergeAndRSSplitCandidates();
     }
 
@@ -194,7 +199,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                                                                                .collect(Collectors.toList());
             if (!clusteredVariants.isEmpty()) {
                 List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionWrappers =
-                        clusteredService.getOrCreate(clusteredVariants);
+                        clusteredService.getOrCreate(clusteredVariants, jobExecution.getJobId().toString());
                 for (GetOrCreateAccessionWrapper<IClusteredVariant, String, Long> result : accessionWrappers) {
                     if (result.isNewAccession()) {
                         ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, result.getAccession(),
