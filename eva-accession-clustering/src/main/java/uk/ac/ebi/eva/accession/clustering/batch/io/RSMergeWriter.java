@@ -17,6 +17,7 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
 
+import com.mongodb.client.result.DeleteResult;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -206,13 +207,13 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
     private void removeMergeesAndInsertMergeDestination(ClusteredVariantEntity mergeDestination,
                                                         List<ClusteredVariantEntity> mergeeList) {
         List<Long> mergeeAccList = mergeeList.stream().map(cve->cve.getAccession()).collect(Collectors.toList());
-        Query queryForMergee = query(where(ID_ATTRIBUTE).is(mergeeList.get(0).getHashedMessage())
-                .and(ACCESSION_ATTRIBUTE).in(mergeeAccList))
+        Query queryForMergee = query(where(ACCESSION_ATTRIBUTE).in(mergeeAccList))
                 .addCriteria(where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-        mongoTemplate.remove(queryForMergee, ClusteredVariantEntity.class);
-        mongoTemplate.remove(queryForMergee, DbsnpClusteredVariantEntity.class);
+        DeleteResult deleteResultCVE = mongoTemplate.remove(queryForMergee, ClusteredVariantEntity.class);
+        DeleteResult deleteResultDbsnpSVE = mongoTemplate.remove(queryForMergee, DbsnpClusteredVariantEntity.class);
 
-        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED, mergeeList.size());
+        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED,
+                deleteResultCVE.getDeletedCount() + deleteResultDbsnpSVE.getDeletedCount());
 
         Query queryForMergeDestination = query(where(ID_ATTRIBUTE).is(mergeDestination.getHashedMessage())
                 .and(ACCESSION_ATTRIBUTE).is(mergeDestination.getAccession()))
