@@ -129,8 +129,7 @@ public class ClusteredVariantAccessioningConfiguration {
     @Bean
     public DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
-        return new DbsnpMonotonicAccessionGenerator<>(properties.getClustered().getCategoryId(),
-                                                      properties.getInstanceId(), blockService);
+        return new DbsnpMonotonicAccessionGenerator<>(properties.getClustered().getCategoryId(), blockService);
     }
 
     @Bean

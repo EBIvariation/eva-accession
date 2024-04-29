@@ -28,8 +28,7 @@ import java.util.Map;
 
 public class DbsnpMonotonicAccessionGenerator<MODEL> extends MonotonicAccessionGenerator<MODEL> {
 
-    public DbsnpMonotonicAccessionGenerator(String categoryId, String applicationInstanceId,
-                                            ContiguousIdBlockService contiguousIdBlockService) {
+    public DbsnpMonotonicAccessionGenerator(String categoryId, ContiguousIdBlockService contiguousIdBlockService) {
         super(categoryId, contiguousIdBlockService, null);
     }
 

@@ -37,7 +37,6 @@ import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVaria
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.human.dbsnp.HumanDbsnpClusteredVariantOperationAccessioningService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantInactiveService;
-import uk.ac.ebi.eva.accession.core.service.nonhuman.dbsnp.DbsnpClusteredVariantMonotonicAccessioningService;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
 
 @Configuration
@@ -71,8 +70,7 @@ public class HumanClusteredVariantAccessioningConfiguration {
 
     private DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
-        return new DbsnpMonotonicAccessionGenerator<>(properties.getClustered().getCategoryId(),
-                                                      properties.getInstanceId(), service);
+        return new DbsnpMonotonicAccessionGenerator<>(properties.getClustered().getCategoryId(), service);
     }
 
     private HumanDbsnpClusteredVariantAccessioningDatabaseService humanDbsnpClusteredVariantAccessioningDatabaseService() {
