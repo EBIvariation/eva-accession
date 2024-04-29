@@ -45,8 +45,8 @@ public class SSSplitWriterConfiguration {
             InputParameters inputParameters,
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ClusteringWriter clusteringWriter,
             SubmittedVariantAccessioningService submittedVariantAccessioningService,
-            MongoTemplate mongoTemplate, MetricCompute metricCompute, JobExecution jobExecution) {
+            MongoTemplate mongoTemplate, MetricCompute metricCompute) {
         return new SSSplitWriter(inputParameters.getAssemblyAccession(), clusteringWriter,
-                                 submittedVariantAccessioningService, mongoTemplate, metricCompute, jobExecution);
+                                 submittedVariantAccessioningService, mongoTemplate, metricCompute);
     }
 }

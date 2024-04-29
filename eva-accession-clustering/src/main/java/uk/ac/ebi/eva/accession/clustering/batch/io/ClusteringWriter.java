@@ -126,8 +126,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                             Long accessioningMonotonicInitRs,
                             MetricCompute metricCompute,
                             boolean processClusteredRemappedVariants,
-                            File rsReportFile,
-                            JobExecution jobExecution) throws IOException {
+                            File rsReportFile) throws IOException {
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.clusteredService = clusteredVariantAccessioningService;
@@ -139,7 +138,6 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         this.metricCompute = metricCompute;
         this.processClusteredRemappedVariants = processClusteredRemappedVariants;
         this.rsReportFile = rsReportFile;
-        this.jobExecution = jobExecution;
         getSVOEWithMergeAndRSSplitCandidates();
     }
 
@@ -620,5 +618,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
         return String.format("%s_%s_%d", SPLIT_CANDIDATE_ID_PREFIX,
                              svoe.getInactiveObjects().get(0).getReferenceSequenceAccession(),
                              svoe.getInactiveObjects().get(0).getClusteredVariantAccession());
+    }
+
+    public void setJobExecution(JobExecution jobExecution) {
+        this.jobExecution = jobExecution;
     }
 }

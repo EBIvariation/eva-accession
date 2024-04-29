@@ -52,12 +52,11 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
     private JobExecution jobExecution;
 
     public AccessionWriter(SubmittedVariantAccessioningService service, AccessionReportWriter accessionReportWriter,
-                           VariantConverter variantConverter, MetricCompute metricCompute, JobExecution jobExecution) {
+                           VariantConverter variantConverter, MetricCompute metricCompute) {
         this.service = service;
         this.accessionReportWriter = accessionReportWriter;
         this.variantConverter = variantConverter;
         this.metricCompute = metricCompute;
-        this.jobExecution = jobExecution;
     }
 
     @Override
@@ -135,5 +134,9 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
     @Override
     public void close() throws ItemStreamException {
         accessionReportWriter.close();
+    }
+
+    public void setJobExecution(JobExecution jobExecution) {
+        this.jobExecution = jobExecution;
     }
 }

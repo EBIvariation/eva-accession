@@ -104,15 +104,13 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
                          MongoTemplate mongoTemplate,
                          MetricCompute<ClusteringMetric> metricCompute,
-                         File rsReportFile,
-                         JobExecution jobExecution) throws IOException {
+                         File rsReportFile) throws IOException {
         this.clusteringWriter = clusteringWriter;
         this.clusteredVariantAccessioningService = clusteredVariantAccessioningService;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
         this.metricCompute = metricCompute;
         this.rsReportFile = rsReportFile;
-        this.jobExecution = jobExecution;
     }
 
     @Override
@@ -341,5 +339,9 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                               .map(SplitDeterminants::getRsHash)
                               .filter(rsHash -> !(rsHash.equals(hashThatShouldRetainOldRS.getRsHash())))
                               .collect(Collectors.toList());
+    }
+
+    public void setJobExecution(JobExecution jobExecution) {
+        this.jobExecution = jobExecution;
     }
 }

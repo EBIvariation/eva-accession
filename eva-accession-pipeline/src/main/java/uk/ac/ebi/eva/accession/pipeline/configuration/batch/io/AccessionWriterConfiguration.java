@@ -49,9 +49,8 @@ public class AccessionWriterConfiguration {
     @Bean(ACCESSION_WRITER)
     public AccessionWriter accessionWriter(SubmittedVariantAccessioningService service,
                                            AccessionReportWriter accessionReportWriter,
-                                           VariantConverter variantConverter, MetricCompute metricCompute,
-                                           JobExecution jobExecution){
-        return new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute, jobExecution);
+                                           VariantConverter variantConverter, MetricCompute metricCompute){
+        return new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute);
     }
 
     @Bean

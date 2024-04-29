@@ -15,9 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.JobExecution;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -31,7 +28,6 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
@@ -50,12 +46,11 @@ public class ClusteringWriterConfiguration {
                                                       Long accessioningMonotonicInitSs,
                                                       Long accessioningMonotonicInitRs,
                                                       MetricCompute metricCompute,
-                                                      File rsReportFile,
-                                                      JobExecution jobExecution) throws IOException {
+                                                      File rsReportFile) throws IOException {
         return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
                                     clusteredVariantAccessioningService, accessioningMonotonicInitSs,
                                     accessioningMonotonicInitRs, metricCompute, true,
-                                    rsReportFile, jobExecution);
+                                    rsReportFile);
     }
 
     @Bean(NON_CLUSTERED_CLUSTERING_WRITER)
@@ -66,11 +61,10 @@ public class ClusteringWriterConfiguration {
                                                          Long accessioningMonotonicInitSs,
                                                          Long accessioningMonotonicInitRs,
                                                          MetricCompute metricCompute,
-                                                         File rsReportFile,
-                                                         JobExecution jobExecution) throws IOException {
+                                                         File rsReportFile) throws IOException {
         return new ClusteringWriter(mongoTemplate, inputParameters.getAssemblyAccession(),
                                     clusteredVariantAccessioningService, accessioningMonotonicInitSs,
                                     accessioningMonotonicInitRs, metricCompute, false,
-                                    rsReportFile, jobExecution);
+                                    rsReportFile);
     }
 }

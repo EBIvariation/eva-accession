@@ -76,14 +76,12 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
 
     public SSSplitWriter(String assembly, ClusteringWriter clusteringWriter,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
-                         MongoTemplate mongoTemplate, MetricCompute<ClusteringMetric> metricCompute,
-                         JobExecution jobExecution) {
+                         MongoTemplate mongoTemplate, MetricCompute<ClusteringMetric> metricCompute) {
         this.assembly = assembly;
         this.clusteringWriter = clusteringWriter;
         this.submittedVariantAccessioningService = submittedVariantAccessioningService;
         this.mongoTemplate = mongoTemplate;
         this.metricCompute = metricCompute;
-        this.jobExecution = jobExecution;
     }
 
     @Override
@@ -309,5 +307,9 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                 .map(SplitDeterminants::getSubmittedVariantEntity)
                 .filter(sve -> !(sve.getHashedMessage().equals(hashThatShouldRetainOldSS.getSSHash())))
                 .collect(Collectors.toList());
+    }
+
+    public void setJobExecution(JobExecution jobExecution) {
+        this.jobExecution = jobExecution;
     }
 }

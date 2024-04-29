@@ -89,4 +89,6 @@ public class BeanNames {
     public static final String BACK_PROPAGATE_NEW_RS_JOB = "BACK_PROPAGATE_NEW_RS_JOB";
 
     public static final String BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB = "BACK_PROPAGATE_SPLIT_OR_MERGED_RS_JOB";
+
+    public static final String JOB_EXECUTION_LISTENER = "JOB_EXECUTION_LISTENER";
 }

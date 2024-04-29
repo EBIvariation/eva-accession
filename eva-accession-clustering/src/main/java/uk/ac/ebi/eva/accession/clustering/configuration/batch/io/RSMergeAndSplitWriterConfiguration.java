@@ -68,10 +68,9 @@ public class RSMergeAndSplitWriterConfiguration {
             SubmittedVariantAccessioningService submittedVariantAccessioningService,
             MongoTemplate mongoTemplate,
             MetricCompute metricCompute,
-            File rsReportFile,
-            JobExecution jobExecution) throws IOException {
+            File rsReportFile) throws IOException {
         return new RSSplitWriter(clusteringWriter, clusteredVariantAccessioningService,
                                  submittedVariantAccessioningService, mongoTemplate, metricCompute,
-                                 rsReportFile, jobExecution);
+                                 rsReportFile);
     }
 }
