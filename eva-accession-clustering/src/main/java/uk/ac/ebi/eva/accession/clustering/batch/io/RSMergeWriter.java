@@ -200,31 +200,34 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         for (ClusteredVariantEntity mergee: mergees) {
             logger.info("RS merge operation: Merging rs{} to rs{} due to hash collision...",
                         mergee.getAccession(), mergeDestination.getAccession());
-            merge(mergeDestination, mergee, currentOperation);
+            recordMergeOperations(mergeDestination, mergee, currentOperation);
         }
     }
 
     private void removeMergeesAndInsertMergeDestination(ClusteredVariantEntity mergeDestination,
                                                         List<ClusteredVariantEntity> mergeeList) {
-        List<Long> mergeeAccList = mergeeList.stream().map(cve->cve.getAccession()).collect(Collectors.toList());
-        Query queryForMergee = query(where(ACCESSION_ATTRIBUTE).in(mergeeAccList))
-                .addCriteria(where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-        DeleteResult deleteResultCVE = mongoTemplate.remove(queryForMergee, ClusteredVariantEntity.class);
-        DeleteResult deleteResultDbsnpSVE = mongoTemplate.remove(queryForMergee, DbsnpClusteredVariantEntity.class);
-
-        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED,
-                deleteResultCVE.getDeletedCount() + deleteResultDbsnpSVE.getDeletedCount());
-
-        Query queryForMergeDestination = query(where(ID_ATTRIBUTE).is(mergeDestination.getHashedMessage())
-                .and(ACCESSION_ATTRIBUTE).is(mergeDestination.getAccession()))
-                .addCriteria(where(REFERENCE_ASSEMBLY_FIELD_IN_CLUSTERED_VARIANT_COLLECTION).is(this.assemblyAccession));
-        List<? extends ClusteredVariantEntity> clusteredVariantToKeep =
-                mongoTemplate.find(queryForMergeDestination, clusteringWriter.getClusteredVariantCollection(
-                        mergeDestination.getAccession()));
-        if (clusteredVariantToKeep.isEmpty()) {
-            // Insert RS record for destination RS
-            insertRSRecordForMergeDestination(mergeDestination);
+        Query queryForCheckingExistingCVE = query(where(ID_ATTRIBUTE).is(mergeDestination.getHashedMessage()));
+        List<ClusteredVariantEntity> existingCVEList = mongoTemplate.find(queryForCheckingExistingCVE, ClusteredVariantEntity.class);
+        List<DbsnpClusteredVariantEntity> existingDbsnpCVEList = mongoTemplate.find(queryForCheckingExistingCVE, DbsnpClusteredVariantEntity.class);
+        ClusteredVariantEntity existingCVE = null;
+        if (existingCVEList != null && !existingCVEList.isEmpty()) {
+            existingCVE = existingCVEList.get(0);
         }
+        if (existingDbsnpCVEList != null && !existingDbsnpCVEList.isEmpty()) {
+            existingCVE = existingDbsnpCVEList.get(0);
+        }
+
+        if (existingCVE == null) {
+            insertRSRecordForMergeDestination(mergeDestination);
+        } else {
+            if (existingCVE.getAccession() != mergeDestination.getAccession()) {
+                mongoTemplate.remove(query(where(ID_ATTRIBUTE).is(existingCVE.getHashedMessage())),
+                        clusteringWriter.getClusteredVariantCollection(existingCVE.getAccession()));
+                insertRSRecordForMergeDestination(mergeDestination);
+            }
+        }
+
+        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED, mergeeList.size());
     }
 
     private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
@@ -286,7 +289,7 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         return new ImmutablePair<>(targetRS, mergees);
     }
 
-    protected void merge(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee,
+    protected void recordMergeOperations(ClusteredVariantEntity mergeDestination, ClusteredVariantEntity mergee,
                          SubmittedVariantOperationEntity currentOperation) {
         Long accessionToBeMerged = mergee.getAccession();
         Long accessionToKeep = mergeDestination.getAccession();
