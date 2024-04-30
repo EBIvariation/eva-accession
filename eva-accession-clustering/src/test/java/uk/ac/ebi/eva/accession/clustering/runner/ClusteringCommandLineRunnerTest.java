@@ -26,6 +26,8 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.StepExecution;
@@ -37,6 +39,7 @@ import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -61,6 +64,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.DatabaseState;
@@ -224,7 +228,10 @@ public class ClusteringCommandLineRunnerTest {
 
     @Autowired
     @Qualifier(RS_SPLIT_WRITER)
-    private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
+    private RSSplitWriter rsSplitWriter;
+
+    @MockBean
+    private JobExecution jobExecution;
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
@@ -316,6 +323,9 @@ public class ClusteringCommandLineRunnerTest {
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
         mongoTemplate.getDb().drop();
+
+        Mockito.when(jobExecution.getJobId()).thenReturn(1L);
+        rsSplitWriter.setJobExecution(jobExecution);
     }
 
     @After

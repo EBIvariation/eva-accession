@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROGRESS_LISTENER;
@@ -48,6 +49,7 @@ public class ClusteringFromVcfStepConfiguration {
             @Qualifier(VARIANT_TO_SUBMITTED_VARIANT_ENTITY_PROCESSOR) ItemProcessor<Variant, SubmittedVariantEntity> processor,
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            @Qualifier(CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener clusteredClusteringWriterJobExecutionSetter,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_FROM_VCF_STEP)
@@ -56,6 +58,7 @@ public class ClusteringFromVcfStepConfiguration {
                 .processor(processor)
                 .writer(submittedVariantWriter)
                 .listener(progressListener)
+                .listener(clusteredClusteringWriterJobExecutionSetter)
                 .build();
         return step;
     }

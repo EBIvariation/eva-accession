@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
-import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;

@@ -16,7 +16,6 @@
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -29,7 +28,6 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.ACCESSI
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTER_UNCLUSTERED_VARIANTS_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.JOB_EXECUTION_LISTENER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 
@@ -46,7 +44,6 @@ public class ClusterUnclusteredVariantsJobConfiguration {
             @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES_STEP) Step clearRSMergeAndSplitCandidatesStep,
             @Qualifier(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP) Step clusteringNonClusteredVariantsFromMongoStep,
             @Qualifier(ACCESSIONING_SHUTDOWN_STEP) Step accessioningShutdownStep,
-            @Qualifier(JOB_EXECUTION_LISTENER) JobExecutionListener jobExecutionListener,
             JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CLUSTER_UNCLUSTERED_VARIANTS_JOB)
                                 .incrementer(new RunIdIncrementer())
@@ -55,7 +52,6 @@ public class ClusterUnclusteredVariantsJobConfiguration {
                                 .next(clearRSMergeAndSplitCandidatesStep)
                                 .next(clusteringNonClusteredVariantsFromMongoStep)
                                 .next(accessioningShutdownStep)
-                                .listener(jobExecutionListener)
                                 .build();
     }
 }

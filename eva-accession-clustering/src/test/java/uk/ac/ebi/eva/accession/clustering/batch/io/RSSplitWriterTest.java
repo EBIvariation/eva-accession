@@ -25,9 +25,11 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
-import org.springframework.batch.item.ItemWriter;
+import org.mockito.Mockito;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
@@ -96,11 +98,14 @@ public class RSSplitWriterTest {
 
     @Autowired
     @Qualifier(RS_SPLIT_WRITER)
-    private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
+    private RSSplitWriter rsSplitWriter;
 
     @Autowired
     @Qualifier(CLUSTERED_CLUSTERING_WRITER)
     private ClusteringWriter clusteringWriter;
+
+    @MockBean
+    private JobExecution jobExecution;
 
     //Required by nosql-unit
     @Autowired
@@ -121,6 +126,10 @@ public class RSSplitWriterTest {
     @Before
     public void setUp() throws IOException {
         cleanup();
+
+        Mockito.when(jobExecution.getJobId()).thenReturn(1L);
+        rsSplitWriter.setJobExecution(jobExecution);
+        clusteringWriter.setJobExecution(jobExecution);
     }
 
     @After
