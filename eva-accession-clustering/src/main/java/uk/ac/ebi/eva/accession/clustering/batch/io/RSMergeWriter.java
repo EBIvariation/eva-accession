@@ -17,7 +17,6 @@ package uk.ac.ebi.eva.accession.clustering.batch.io;
 
 import com.mongodb.MongoBulkWriteException;
 
-import com.mongodb.client.result.DeleteResult;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -220,14 +219,13 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
         if (existingCVE == null) {
             insertRSRecordForMergeDestination(mergeDestination);
         } else {
-            if (existingCVE.getAccession() != mergeDestination.getAccession()) {
+            if (!existingCVE.getAccession().equals(mergeDestination.getAccession())) {
                 mongoTemplate.remove(query(where(ID_ATTRIBUTE).is(existingCVE.getHashedMessage())),
                         clusteringWriter.getClusteredVariantCollection(existingCVE.getAccession()));
+                metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED, 1);
                 insertRSRecordForMergeDestination(mergeDestination);
             }
         }
-
-        metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_UPDATED, mergeeList.size());
     }
 
     private ImmutablePair<String, Long> getHashedMessageAndAccessionForSVIE(SubmittedVariantInactiveEntity svie) {
