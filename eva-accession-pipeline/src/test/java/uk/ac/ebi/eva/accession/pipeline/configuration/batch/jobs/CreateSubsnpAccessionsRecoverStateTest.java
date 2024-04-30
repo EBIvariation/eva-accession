@@ -215,7 +215,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000000l, block1.getFirstValue());
         assertEquals(5000000029l, block1.getLastCommitted());
         assertEquals(5000000029l, block1.getLastValue());
-        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
+        assertEquals("0", block1.getApplicationInstanceId());
         assertTrue(block1.isNotReserved());
 
         // Block Recovered - (used the 5 unused accessions 5000000035 to 5000000039 and recovered others)
@@ -223,7 +223,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000030l, block2.getFirstValue());
         assertEquals(5000000059l, block2.getLastCommitted());
         assertEquals(5000000059l, block2.getLastValue());
-        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
+        assertEquals("0", block1.getApplicationInstanceId());
         assertTrue(block2.isNotReserved());
 
         // Block Recovered - (No accession used from this block as entire block was already used)
@@ -231,7 +231,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000060l, block3.getFirstValue());
         assertEquals(5000000089l, block3.getLastCommitted());
         assertEquals(5000000089l, block3.getLastValue());
-        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
+        assertEquals("0", block1.getApplicationInstanceId());
         assertTrue(block3.isNotReserved());
 
         // used the remaining 17 (22 - 5 (2nd block)) from 4th block
@@ -239,7 +239,7 @@ public class CreateSubsnpAccessionsRecoverStateTest {
         assertEquals(5000000090l, block4.getFirstValue());
         assertEquals(5000000106l, block4.getLastCommitted());
         assertEquals(5000000119l, block4.getLastValue());
-        assertEquals("test-instance-recover-state-01", block1.getApplicationInstanceId());
+        assertEquals("0", block1.getApplicationInstanceId());
         assertTrue(block4.isNotReserved());
     }
 
