@@ -27,6 +27,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.SubsnpAccessionJobExecutionListener;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.policies.InvalidVariantSkipPolicyConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
@@ -49,7 +50,7 @@ import javax.sql.DataSource;
          VcfReaderConfiguration.class, VariantProcessorConfiguration.class, AccessionWriterConfiguration.class,
          BuildReportStepConfiguration.class, AccessioningShutdownStepConfiguration.class,
          ChunkSizeCompletionPolicyConfiguration.class, InvalidVariantSkipPolicyConfiguration.class,
-        EvaAccessionJobLauncherCommandLineRunner.class})
+        EvaAccessionJobLauncherCommandLineRunner.class, SubsnpAccessionJobExecutionListener.class})
 public class BatchTestConfiguration {
 
     @Autowired

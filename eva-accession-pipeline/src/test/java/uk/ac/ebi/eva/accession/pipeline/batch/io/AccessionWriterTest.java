@@ -23,10 +23,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -46,7 +48,9 @@ import uk.ac.ebi.eva.accession.core.batch.io.FastaSequenceReader;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.batch.processors.VariantConverter;
 import uk.ac.ebi.eva.accession.pipeline.configuration.InputParametersConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.ListenersConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.SubsnpAccessionJobExecutionListener;
 import uk.ac.ebi.eva.accession.pipeline.metric.AccessioningMetric;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
@@ -76,7 +80,8 @@ import static uk.ac.ebi.eva.accession.pipeline.batch.processors.ContigToGenbankR
 
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration
-@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, ListenersConfiguration.class, InputParametersConfiguration.class})
+@ContextConfiguration(classes = {SubmittedVariantAccessioningConfiguration.class, ListenersConfiguration.class,
+        InputParametersConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
 public class AccessionWriterTest {
 
@@ -135,6 +140,9 @@ public class AccessionWriterTest {
 
     private ContigMapping contigMapping;
 
+    @MockBean
+    private JobExecution jobExecution;
+
     @Rule
     public TemporaryFolder temporaryFolderRule = new TemporaryFolder();
 
@@ -165,6 +173,8 @@ public class AccessionWriterTest {
         accessionWriter = new AccessionWriter(service, accessionReportWriter, variantConverter, metricCompute);
         accessionReportWriter.open(new ExecutionContext());
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        Mockito.when(jobExecution.getJobId()).thenReturn(1L);
+        accessionWriter.setJobExecution(jobExecution);
     }
 
     @After
