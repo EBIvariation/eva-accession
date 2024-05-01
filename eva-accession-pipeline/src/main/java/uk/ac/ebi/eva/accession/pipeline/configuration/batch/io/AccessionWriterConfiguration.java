@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.pipeline.configuration.batch.io;
 
-import org.springframework.batch.core.JobExecution;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
