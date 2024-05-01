@@ -122,7 +122,6 @@ public class ClusteredVariantAccessioningConfiguration {
         logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(
                 properties.getClustered().getCategoryId(),
-                properties.getInstanceId(),
                 blockService,
                 clusteredVariantAccessioningDatabaseService());
     }
@@ -130,8 +129,7 @@ public class ClusteredVariantAccessioningConfiguration {
     @Bean
     public DbsnpMonotonicAccessionGenerator<IClusteredVariant> dbsnpClusteredVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
-        return new DbsnpMonotonicAccessionGenerator<>(properties.getClustered().getCategoryId(),
-                                                      properties.getInstanceId(), blockService);
+        return new DbsnpMonotonicAccessionGenerator<>(properties.getClustered().getCategoryId(), blockService);
     }
 
     @Bean

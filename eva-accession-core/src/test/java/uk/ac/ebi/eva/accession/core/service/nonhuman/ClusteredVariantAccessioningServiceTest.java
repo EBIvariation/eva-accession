@@ -60,6 +60,8 @@ import static org.junit.Assert.assertEquals;
 @ContextConfiguration(classes = {ClusteredVariantAccessioningConfiguration.class, MongoTestConfiguration.class})
 public class ClusteredVariantAccessioningServiceTest {
 
+    private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
+
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
@@ -91,9 +93,9 @@ public class ClusteredVariantAccessioningServiceTest {
                 new ClusteredVariant("assembly", 1111, "contig_1", 200, VariantType.SNV, false, null));
 
         List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> generatedAccessions =
-                service.getOrCreate(variants);
+                service.getOrCreate(variants, TEST_APPLICATION_INSTANCE_ID);
         List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> retrievedAccessions =
-                service.getOrCreate(variants);
+                service.getOrCreate(variants, TEST_APPLICATION_INSTANCE_ID);
 
         assertEquals(new HashSet<>(generatedAccessions), new HashSet<>(retrievedAccessions));
     }

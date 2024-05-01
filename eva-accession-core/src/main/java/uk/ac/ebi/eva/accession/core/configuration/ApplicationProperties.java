@@ -19,16 +19,9 @@ package uk.ac.ebi.eva.accession.core.configuration;
 
 public class ApplicationProperties {
 
-    private String instanceId;
-
     private VariantAccessioningProperties submitted;
 
     private VariantAccessioningProperties clustered;
-
-
-    public String getInstanceId() {
-        return instanceId;
-    }
 
     public VariantAccessioningProperties getSubmitted() {
         return submitted;
@@ -36,10 +29,6 @@ public class ApplicationProperties {
 
     public VariantAccessioningProperties getClustered() {
         return clustered;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
     }
 
     public void setSubmitted(VariantAccessioningProperties submitted) {
@@ -53,8 +42,7 @@ public class ApplicationProperties {
     @Override
     public String toString() {
         return "ApplicationProperties{" +
-                "instanceId='" + instanceId + '\'' +
-                ", submitted=" + submitted +
+                "submitted=" + submitted +
                 ", clustered=" + clustered +
                 '}';
     }

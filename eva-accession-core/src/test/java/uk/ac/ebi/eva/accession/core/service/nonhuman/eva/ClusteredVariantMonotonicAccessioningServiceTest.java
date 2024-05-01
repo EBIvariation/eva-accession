@@ -52,7 +52,7 @@ public class ClusteredVariantMonotonicAccessioningServiceTest {
         ClusteredVariant clusteredVariant2 = new ClusteredVariant("asm1", 100, "chr1", 5, VariantType.SNV, false, null);
         List<GetOrCreateAccessionWrapper<IClusteredVariant, String, Long>> accessionedWrappers =
                 clusteredVariantMonotonicAccessioningService.getOrCreate(Arrays.asList(clusteredVariant1,
-                                                                                       clusteredVariant2));
+                                                                                       clusteredVariant2), "test-application-instance-id");
         assertEquals(2, accessionedWrappers.size());
         assertTrue(isAccessionInResults(accessionedWrappers, 3000000000L));
         assertTrue(isAccessionInResults(accessionedWrappers, 3000000001L));

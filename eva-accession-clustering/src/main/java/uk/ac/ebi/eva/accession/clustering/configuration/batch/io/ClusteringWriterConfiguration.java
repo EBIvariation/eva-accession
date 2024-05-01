@@ -15,8 +15,6 @@
  */
 package uk.ac.ebi.eva.accession.clustering.configuration.batch.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -30,7 +28,6 @@ import uk.ac.ebi.eva.accession.core.service.nonhuman.ClusteredVariantAccessionin
 import uk.ac.ebi.eva.metrics.metric.MetricCompute;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER;

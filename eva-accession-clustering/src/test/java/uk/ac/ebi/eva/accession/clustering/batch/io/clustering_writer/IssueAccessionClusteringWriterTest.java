@@ -26,11 +26,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -43,6 +46,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -146,11 +150,14 @@ public class IssueAccessionClusteringWriterTest {
 
     @Autowired
     @Qualifier(RS_SPLIT_WRITER)
-    private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
+    private RSSplitWriter rsSplitWriter;
 
     @Autowired
     @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
     private ItemWriter clearRSMergeAndSplitCandidates;
+
+    @MockBean
+    private JobExecution jobExecution;
 
     private Function<ISubmittedVariant, String> hashingFunction;
 
@@ -165,6 +172,11 @@ public class IssueAccessionClusteringWriterTest {
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         Files.deleteIfExists(this.rsReportFile.toPath());
+
+        Mockito.when(jobExecution.getJobId()).thenReturn(1L);
+        rsSplitWriter.setJobExecution(jobExecution);
+        clusteringWriterPostMergeAndSplit.setJobExecution(jobExecution);
+        clusteringWriterPreMergeAndSplit.setJobExecution(jobExecution);
     }
 
     @After

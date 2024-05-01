@@ -121,7 +121,6 @@ public class SubmittedVariantAccessioningConfiguration {
         logger.debug("Using application properties: " + properties.toString());
         return new MonotonicAccessionGenerator<>(
                 properties.getSubmitted().getCategoryId(),
-                properties.getInstanceId(),
                 blockService,
                 submittedVariantAccessioningDatabaseService());
     }
@@ -130,7 +129,6 @@ public class SubmittedVariantAccessioningConfiguration {
     public DbsnpMonotonicAccessionGenerator<ISubmittedVariant> dbsnpSubmittedVariantAccessionGenerator() {
         ApplicationProperties properties = applicationProperties;
         return new DbsnpMonotonicAccessionGenerator<>(properties.getSubmitted().getCategoryId(),
-                                                      properties.getInstanceId(),
                                                       blockService);
     }
 

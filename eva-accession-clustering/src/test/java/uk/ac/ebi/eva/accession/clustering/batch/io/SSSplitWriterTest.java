@@ -24,9 +24,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
@@ -91,7 +92,7 @@ public class SSSplitWriterTest {
 
     @Autowired
     @Qualifier(SS_SPLIT_WRITER)
-    private ItemWriter<SubmittedVariantEntity> ssSplitWriter;
+    private SSSplitWriter ssSplitWriter;
 
     //Required by nosql-unit
     @Autowired
@@ -114,6 +115,9 @@ public class SSSplitWriterTest {
     @Autowired
     private CountServiceParameters countServiceParameters;
 
+    @MockBean
+    private JobExecution jobExecution;
+
     private MockRestServiceServer mockServer;
 
     @Autowired
@@ -130,6 +134,9 @@ public class SSSplitWriterTest {
                           requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
                   .andExpect(method(HttpMethod.POST))
                   .andRespond(withStatus(HttpStatus.OK));
+        Mockito.when(jobExecution.getJobId()).thenReturn(1L);
+        ssSplitWriter.setJobExecution(jobExecution);
+
     }
 
     @After

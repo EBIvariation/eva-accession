@@ -35,6 +35,9 @@ import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
 
 import java.util.List;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER_JOB_EXECUTION_SETTER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_MONGO_READER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.TARGET_SS_READER_FOR_NEW_BACKPROP_RS;
@@ -67,6 +70,7 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(CLUSTERED_VARIANTS_MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
             @Qualifier(CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            @Qualifier(CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener clusteredClusteringWriterJobExecutionSetter,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
@@ -74,6 +78,7 @@ public class ClusteringFromMongoStepConfiguration {
                 .reader(mongoReader)
                 .writer(submittedVariantWriter)
                 .listener(progressListener)
+                .listener(clusteredClusteringWriterJobExecutionSetter)
                 .build();
         return step;
     }
@@ -102,6 +107,7 @@ public class ClusteringFromMongoStepConfiguration {
                     ItemReader<SubmittedVariantOperationEntity> rsSplitCandidatesReader,
             @Qualifier(RS_SPLIT_WRITER) ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            @Qualifier(RS_SPLIT_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener rsSplitWriterJobExecutionSetter,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(PROCESS_RS_SPLIT_CANDIDATES_STEP)
@@ -110,6 +116,7 @@ public class ClusteringFromMongoStepConfiguration {
                                              .reader(rsSplitCandidatesReader)
                                              .writer(rsSplitWriter)
                                              .listener(progressListener)
+                                             .listener(rsSplitWriterJobExecutionSetter)
                                              .build();
         return step;
     }
@@ -147,6 +154,7 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(NON_CLUSTERED_VARIANTS_MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener nonClusteredClusteringWriterJobExecutionSetter,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP)
@@ -154,6 +162,7 @@ public class ClusteringFromMongoStepConfiguration {
                 .reader(mongoReader)
                 .writer(submittedVariantWriter)
                 .listener(progressListener)
+                .listener(nonClusteredClusteringWriterJobExecutionSetter)
                 .build();
         return step;
     }
@@ -200,6 +209,7 @@ public class ClusteringFromMongoStepConfiguration {
             @Qualifier(STUDY_CLUSTERING_MONGO_READER) ItemStreamReader<SubmittedVariantEntity> mongoReader,
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ItemWriter<SubmittedVariantEntity> submittedVariantWriter,
             @Qualifier(PROGRESS_LISTENER) StepExecutionListener progressListener,
+            @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER) StepExecutionListener nonClusteredClusteringWriterJobExecutionSetter,
             StepBuilderFactory stepBuilderFactory,
             SimpleCompletionPolicy chunkSizeCompletionPolicy) {
         TaskletStep step = stepBuilderFactory.get(STUDY_CLUSTERING_STEP)
@@ -207,6 +217,7 @@ public class ClusteringFromMongoStepConfiguration {
                                              .reader(mongoReader)
                                              .writer(submittedVariantWriter)
                                              .listener(progressListener)
+                                             .listener(nonClusteredClusteringWriterJobExecutionSetter)
                                              .build();
         return step;
     }

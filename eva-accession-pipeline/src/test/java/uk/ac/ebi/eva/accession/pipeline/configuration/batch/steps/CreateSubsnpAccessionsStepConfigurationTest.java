@@ -20,10 +20,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -34,6 +36,7 @@ import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAcces
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
+import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
@@ -62,6 +65,12 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     private SubmittedVariantAccessioningRepository repository;
 
     @Autowired
+    private AccessionWriter accessionWriter;
+
+    @MockBean
+    private JobExecution jobExecution;
+
+    @Autowired
     private InputParameters inputParameters;
 
     @Autowired
@@ -70,6 +79,8 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     @Before
     public void setUp() {
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+        Mockito.when(jobExecution.getJobId()).thenReturn(1L);
+        accessionWriter.setJobExecution(jobExecution);
     }
 
     @After

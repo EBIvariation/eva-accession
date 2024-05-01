@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import uk.ac.ebi.eva.accession.clustering.batch.listeners.JobExecutionSetter;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.TargetSSReaderForBackPropRSConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringMongoReaderConfiguration;
@@ -73,7 +74,8 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.New
         ListenersConfiguration.class,
         ClusteringCommandLineRunner.class,
         ChunkSizeCompletionPolicyConfiguration.class,
-        AccessioningShutdownStepConfiguration.class})
+        AccessioningShutdownStepConfiguration.class,
+        JobExecutionSetter.class})
 public class BatchTestConfiguration {
 
     public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";

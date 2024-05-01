@@ -21,6 +21,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -95,6 +96,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
     private final File rsReportFile;
 
     private FileWriter rsReportFileWriter;
+
+    private JobExecution jobExecution;
 
     public RSSplitWriter(ClusteringWriter clusteringWriter,
                          ClusteredVariantAccessioningService clusteredVariantAccessioningService,
@@ -194,7 +197,8 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                         rsHashAndAssociatedSS.get(rsHash).get(0));
                 Long newRSAccession =
                         this.clusteredVariantAccessioningService.getOrCreate(
-                                Collections.singletonList(clusteredVariantEntity)).get(0).getAccession();
+                                Collections.singletonList(clusteredVariantEntity), jobExecution.getJobId().toString())
+                                .get(0).getAccession();
                 ClusteringWriter.writeRSReportEntry(this.rsReportFileWriter, newRSAccession, rsHash);
                 metricCompute.addCount(ClusteringMetric.CLUSTERED_VARIANTS_CREATED, 1);
                 List<SubmittedVariantEntity> associatedSSEntries = rsHashAndAssociatedSS.get(rsHash);
@@ -335,5 +339,9 @@ public class RSSplitWriter implements ItemWriter<SubmittedVariantOperationEntity
                               .map(SplitDeterminants::getRsHash)
                               .filter(rsHash -> !(rsHash.equals(hashThatShouldRetainOldRS.getRsHash())))
                               .collect(Collectors.toList());
+    }
+
+    public void setJobExecution(JobExecution jobExecution) {
+        this.jobExecution = jobExecution;
     }
 }

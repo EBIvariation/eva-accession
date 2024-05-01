@@ -19,6 +19,7 @@ import com.mongodb.MongoBulkWriteException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -70,6 +71,8 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
     private final List<SubmittedVariantOperationEntity> allSplitCandidatesForCurrentBatch = new ArrayList<>();
 
     private final MetricCompute<ClusteringMetric> metricCompute;
+
+    private JobExecution jobExecution;
 
     public SSSplitWriter(String assembly, ClusteringWriter clusteringWriter,
                          SubmittedVariantAccessioningService submittedVariantAccessioningService,
@@ -127,7 +130,8 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
         excludeSSWithAlreadyUpdatedIDs(svesToCreateWithNewIDs);
         removeCurrentSSEntriesInDBForSplitCandidates(svesToCreateWithNewIDs.keySet());
         List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> newlyCreatedSVEs =
-                this.submittedVariantAccessioningService.getOrCreate(new ArrayList<>(svesToCreateWithNewIDs.values()));
+                this.submittedVariantAccessioningService.getOrCreate(new ArrayList<>(svesToCreateWithNewIDs.values()),
+                        jobExecution.getJobId().toString());
         this.metricCompute.addCount(ClusteringMetric.SUBMITTED_VARIANTS_SS_SPLIT, newlyCreatedSVEs.size());
         this.metricCompute.saveMetricsCountsInDB();
         recordSplitOperation(svesToCreateWithNewIDs, newlyCreatedSVEs);
@@ -303,5 +307,9 @@ public class SSSplitWriter implements ItemWriter<SubmittedVariantEntity> {
                 .map(SplitDeterminants::getSubmittedVariantEntity)
                 .filter(sve -> !(sve.getHashedMessage().equals(hashThatShouldRetainOldSS.getSSHash())))
                 .collect(Collectors.toList());
+    }
+
+    public void setJobExecution(JobExecution jobExecution) {
+        this.jobExecution = jobExecution;
     }
 }

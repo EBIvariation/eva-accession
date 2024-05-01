@@ -93,7 +93,7 @@ import static uk.ac.ebi.eva.accession.core.model.ISubmittedVariant.DEFAULT_VALID
 @Import({SubmittedVariantAccessioningConfiguration.class})
 @TestPropertySource("classpath:accession-ws-test.properties")
 public class SubmittedVariantsRestControllerTest {
-
+    private static String TEST_APPLICATION_INSTANCE_ID = "test-application-instance-id";
     private static final String URL = "/v1/submitted-variants/";
 
     // Used to test contig translation capability
@@ -151,7 +151,7 @@ public class SubmittedVariantsRestControllerTest {
         variant1 = new SubmittedVariant("ASMACC01", 1101, "PROJACC01", "CHROM1", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         variant2 = new SubmittedVariant("ASMACC02", 1102, "PROJACC02", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
         variant3 = new SubmittedVariant("ASMACC02", 1102, "PROJACC03", "CHROM2", 1234, "REF", "ALT", CLUSTERED_VARIANT);
-        generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2, variant3));
+        generatedAccessions = service.getOrCreate(Arrays.asList(variant1, variant2, variant3), TEST_APPLICATION_INSTANCE_ID);
 
         SubmittedVariantsBeaconService mockSubmittedVariantsBeaconService = Mockito.spy(new SubmittedVariantsBeaconService(service));
         Mockito.doThrow(new RuntimeException("Some unexpected error")).when(mockSubmittedVariantsBeaconService).queryBeacon(null, "alt", "ref",
@@ -473,7 +473,7 @@ public class SubmittedVariantsRestControllerTest {
         SubmittedVariant variant2 = new SubmittedVariant("ASMACC02", 2000, "PROJACC02", "CHROM2", 1234, "REF", "ALT",
                                                          CLUSTERED_VARIANT);
         List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(
-                Arrays.asList(variant1, variant2));
+                Arrays.asList(variant1, variant2), TEST_APPLICATION_INSTANCE_ID);
 
         Long outdatedAccession = accessions.get(0).getAccession();
         Long currentAccession = accessions.get(1).getAccession();

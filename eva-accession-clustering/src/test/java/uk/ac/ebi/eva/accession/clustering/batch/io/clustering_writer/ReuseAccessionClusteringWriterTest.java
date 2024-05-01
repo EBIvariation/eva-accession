@@ -22,11 +22,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -39,6 +42,7 @@ import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringMongoReader;
 import uk.ac.ebi.eva.accession.clustering.batch.io.ClusteringWriter;
+import uk.ac.ebi.eva.accession.clustering.batch.io.RSSplitWriter;
 import uk.ac.ebi.eva.accession.clustering.metric.ClusteringMetric;
 import uk.ac.ebi.eva.accession.clustering.parameters.InputParameters;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
@@ -139,11 +143,14 @@ public class ReuseAccessionClusteringWriterTest {
 
     @Autowired
     @Qualifier(RS_SPLIT_WRITER)
-    private ItemWriter<SubmittedVariantOperationEntity> rsSplitWriter;
+    private RSSplitWriter rsSplitWriter;
 
     @Autowired
     @Qualifier(CLEAR_RS_MERGE_AND_SPLIT_CANDIDATES)
     private ItemWriter clearRSMergeAndSplitCandidates;
+
+    @MockBean
+    private JobExecution jobExecution;
 
     @Autowired
     @Qualifier(BACK_PROPAGATED_RS_WRITER)
@@ -165,6 +172,11 @@ public class ReuseAccessionClusteringWriterTest {
         hashingFunction = new SubmittedVariantSummaryFunction().andThen(new SHA1HashingFunction());
         clusteredHashingFunction = new ClusteredVariantSummaryFunction().andThen(new SHA1HashingFunction());
         metricCompute.clearCount();
+
+        Mockito.when(jobExecution.getJobId()).thenReturn(1L);
+        rsSplitWriter.setJobExecution(jobExecution);
+        clusteringWriterPostMergeAndSplit.setJobExecution(jobExecution);
+        clusteringWriterPostMergeAndSplit.setJobExecution(jobExecution);
     }
 
     @After

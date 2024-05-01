@@ -37,4 +37,6 @@ public class BeanNames {
     public static final String SUBSNP_ACCESSION_STEP_LISTENER = "SUBSNP_ACCESSION_STEP_LISTENER";
 
     public static final String ACCESSIONING_SHUTDOWN_STEP = "ACCESSIONING_SHUTDOWN_STEP";
+
+    public static final String SUBSNP_ACCESSION_JOB_LISTENER = "SUBSNP_ACCESSION_JOB_LISTENER";
 }
