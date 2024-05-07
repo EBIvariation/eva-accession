@@ -64,7 +64,8 @@ workflow_process_arguments_map = collections.OrderedDict(
 workflow_process_template_for_nextflow = """
 process {workflow-process-name} {{
 
-    {cluster-options}
+    label: '{label-time}', '{label-memory}'
+    
     input:
         val flag from {previous-process-output-flag}
     output:
@@ -109,8 +110,8 @@ def get_nextflow_process_definition(assembly_release_properties, workflow_proces
                                                                " ".join(["--{0} {1}"
                                                                         .format(arg, release_properties[arg])
                                                                          for arg in workflow_process_args]))
-    release_properties["cluster-options"] = 'clusterOptions "-g /accession"' if "run_release_for_assembly" \
-                                                                                in workflow_process_name else ""
+    release_properties['label-time'] = 'long_time'
+    release_properties['label-memory'] = 'med_mem'
     return workflow_process_template_for_nextflow.format(**release_properties)
 
 
@@ -141,9 +142,13 @@ def prepare_release_workflow_file_for_species(common_release_properties, taxonom
             release_assembly_properties["current-process-output-flag"] = "flag" + str(process_index)
 
             workflow_file_handle.write(
-                get_nextflow_process_definition(release_assembly_properties, workflow_process_name,
-                                                workflow_process_args,
-                                                process_name_suffix=assembly_accession.replace(".", "_")))
+                get_nextflow_process_definition(
+                    release_assembly_properties,
+                    workflow_process_name,
+                    workflow_process_args,
+                    process_name_suffix=assembly_accession.replace(".", "_")
+                )
+            )
             workflow_file_handle.write("\n")
             process_index += 1
             # Set the flag that will capture the output status of the current process
