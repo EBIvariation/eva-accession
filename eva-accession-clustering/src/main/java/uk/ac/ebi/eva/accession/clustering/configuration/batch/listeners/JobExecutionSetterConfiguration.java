@@ -1,4 +1,4 @@
-package uk.ac.ebi.eva.accession.clustering.batch.listeners;
+package uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners;
 
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
@@ -17,7 +17,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLI
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_SPLIT_WRITER_JOB_EXECUTION_SETTER;
 
 @Configuration
-public class JobExecutionSetter {
+public class JobExecutionSetterConfiguration {
     @Bean(NON_CLUSTERED_CLUSTERING_WRITER_JOB_EXECUTION_SETTER)
     public StepExecutionListener getNonClusteredClusteringWriterJobExecutionSetter(
             @Qualifier(NON_CLUSTERED_CLUSTERING_WRITER) ClusteringWriter nonClusteredClusteringWriter) {

@@ -55,6 +55,8 @@ public class BeanNames {
 
     public static final String PROGRESS_LISTENER = "PROGRESS_LISTENER";
 
+    public static final String JOB_EXECUTION_LISTENER = "JOB_EXECUTION_LISTENER";
+
     public static final String ACCESSIONING_SHUTDOWN_STEP = "ACCESSIONING_SHUTDOWN_STEP";
 
     public static final String CLUSTERING_FROM_VCF_STEP = "CLUSTERING_FROM_VCF_STEP";
