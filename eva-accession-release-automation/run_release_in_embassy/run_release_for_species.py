@@ -31,35 +31,64 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 copy_process = "copy_accessioning_collections_to_embassy"
 # Processes, in order, that make up the workflow and the arguments that they take
 workflow_process_arguments_map = collections.OrderedDict(
-    [
-        ("initiate_release_status_for_assembly", ["private-config-xml-file", "profile", "release-species-inventory-table",
-                                                  "taxonomy-id", "assembly-accession", "release-version"]),
-        (copy_process, ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
-                        "release-species-inventory-table", "release-version", "dump-dir"]),
-        ("run_release_for_assembly", ["private-config-xml-file", "profile", "taxonomy-id",
-                                      "assembly-accession", "release-species-inventory-table",
-                                      "release-version", "species-release-folder", "release-jar-path"]),
-        ("merge_dbsnp_eva_release_files", ["private-config-xml-file", "profile", "bgzip-path", "bcftools-path",
-                                           "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
-                                           "release-species-inventory-table", "release-version",
-                                           "species-release-folder"]),
-        ("sort_bgzip_index_release_files", ["bgzip-path", "bcftools-path",
-                                            "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
-                                            "species-release-folder"]),
-        ("validate_release_vcf_files", ["private-config-xml-file", "profile", "taxonomy-id",
-                                        "assembly-accession", "release-species-inventory-table", "release-version",
-                                        "species-release-folder",
-                                        "vcf-validator-path", "assembly-checker-path"]),
-        ("analyze_vcf_validation_results", ["species-release-folder", "assembly-accession"]),
-        ("count_rs_ids_in_release_files", ["count-ids-script-path", "taxonomy-id", "assembly-accession",
-                                           "species-release-folder"]),
-        ("validate_rs_release_files", ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
-                                       "release-species-inventory-table", "release-version", "species-release-folder"]),
-        ('update_sequence_names_to_ena', ["taxonomy-id", "assembly-accession", "species-release-folder",
-                                          'sequence-name-converter-path', 'bcftools-path']),
-        ("update_release_status_for_assembly", ["private-config-xml-file", "profile", "release-species-inventory-table",
-                                                "taxonomy-id", "assembly-accession", "release-version"])
-     ])
+    {
+        "initiate_release_status_for_assembly": (
+            ["private-config-xml-file", "profile", "release-species-inventory-table", "taxonomy-id",
+             "assembly-accession", "release-version"],
+            'short_time', 'small_mem'
+        ),
+        copy_process: (
+            ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
+             "release-species-inventory-table", "release-version", "dump-dir"],
+            'long_time', 'small_mem'
+        ),
+        "run_release_for_assembly":(
+            ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
+             "release-species-inventory-table", "release-version", "species-release-folder", "release-jar-path"],
+            'long_time', 'med_mem'
+        ),
+        "merge_dbsnp_eva_release_files": (
+            ["private-config-xml-file", "profile", "bgzip-path", "bcftools-path", "vcf-sort-script-path",
+             "taxonomy-id", "assembly-accession", "release-species-inventory-table", "release-version",
+             "species-release-folder"],
+            'long_time', 'med_mem'
+        ),
+        "sort_bgzip_index_release_files": (
+            ["bgzip-path", "bcftools-path", "vcf-sort-script-path", "taxonomy-id", "assembly-accession",
+             "species-release-folder"],
+            'long_time', 'med_mem'
+        ),
+        "validate_release_vcf_files": (
+            ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
+             "release-species-inventory-table", "release-version", "species-release-folder",
+             "vcf-validator-path", "assembly-checker-path"],
+            'long_time', 'med_mem'
+        ),
+        "analyze_vcf_validation_results": (
+            ["species-release-folder", "assembly-accession"],
+            'long_time', 'med_mem'
+        ),
+        "count_rs_ids_in_release_files": (
+            ["count-ids-script-path", "taxonomy-id", "assembly-accession", "species-release-folder"],
+            'long_time', 'med_mem'
+        ),
+        "validate_rs_release_files": (
+            ["private-config-xml-file", "profile", "taxonomy-id", "assembly-accession",
+             "release-species-inventory-table", "release-version", "species-release-folder"],
+            'long_time', 'med_mem'
+        ),
+        'update_sequence_names_to_ena': (
+            ["taxonomy-id", "assembly-accession", "species-release-folder",'sequence-name-converter-path',
+             'bcftools-path'],
+            'long_time', 'med_mem'
+        ),
+        "update_release_status_for_assembly": (
+            ["private-config-xml-file", "profile", "release-species-inventory-table", "taxonomy-id",
+             "assembly-accession", "release-version"],
+            'short_time', 'small_mem'
+        )
+    }
+)
 
 workflow_process_template_for_nextflow = """
 process {workflow-process-name} {{
@@ -100,7 +129,7 @@ def get_release_properties_for_current_assembly(species_release_properties, asse
 
 
 def get_nextflow_process_definition(assembly_release_properties, workflow_process_name, workflow_process_args,
-                                    process_name_suffix=None):
+                                    process_name_suffix=None, label_time=None, label_memory=None):
     if process_name_suffix is None:
         process_name_suffix = assembly_release_properties["assembly-accession"].replace('.', '_')
     release_properties = copy.deepcopy(assembly_release_properties)
@@ -110,8 +139,8 @@ def get_nextflow_process_definition(assembly_release_properties, workflow_proces
                                                                " ".join(["--{0} {1}"
                                                                         .format(arg, release_properties[arg])
                                                                          for arg in workflow_process_args]))
-    release_properties['label-time'] = 'long_time'
-    release_properties['label-memory'] = 'med_mem'
+    release_properties['label-time'] = label_time or 'long_time'
+    release_properties['label-memory'] = label_memory or 'med_mem'
     return workflow_process_template_for_nextflow.format(**release_properties)
 
 
@@ -138,7 +167,13 @@ def prepare_release_workflow_file_for_species(common_release_properties, taxonom
         header = "#!/usr/bin/env nextflow"
         workflow_file_handle.write(header + "\n")
 
-        for workflow_process_name, workflow_process_args in workflow_process_arguments_map.items():
+        for workflow_process_name, workflow_process_info in workflow_process_arguments_map.items():
+            workflow_process_args = workflow_process_info[0]
+            label_time = label_memory = None
+            if len(workflow_process_info) > 1:
+                label_time = workflow_process_info[1]
+            if len(workflow_process_info) > 2:
+                label_memory = workflow_process_info[2]
             release_assembly_properties["current-process-output-flag"] = "flag" + str(process_index)
 
             workflow_file_handle.write(
@@ -146,7 +181,9 @@ def prepare_release_workflow_file_for_species(common_release_properties, taxonom
                     release_assembly_properties,
                     workflow_process_name,
                     workflow_process_args,
-                    process_name_suffix=assembly_accession.replace(".", "_")
+                    process_name_suffix=assembly_accession.replace(".", "_"),
+                    label_time=label_time,
+                    label_memory=label_memory
                 )
             )
             workflow_file_handle.write("\n")
