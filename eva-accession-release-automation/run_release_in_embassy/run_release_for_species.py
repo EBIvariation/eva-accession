@@ -64,7 +64,7 @@ workflow_process_arguments_map = collections.OrderedDict(
 workflow_process_template_for_nextflow = """
 process {workflow-process-name} {{
 
-    label: '{label-time}', '{label-memory}'
+    label '{label-time}', '{label-memory}'
     
     input:
         val flag from {previous-process-output-flag}
