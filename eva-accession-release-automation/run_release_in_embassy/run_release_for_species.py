@@ -65,7 +65,7 @@ def get_release_log_file_name(taxonomy_id, assembly_accession):
 
 
 def get_species_release_folder(taxonomy_id):
-    return os.path.join(cfg["release-folder"], get_release_folder_name(taxonomy_id))
+    return os.path.join(cfg["release_output"], get_release_folder_name(taxonomy_id))
 
 
 def get_assembly_release_folder(taxonomy_id, assembly_accession):
