@@ -16,6 +16,7 @@ import logging
 import os
 import signal
 import traceback
+from functools import lru_cache
 
 from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_assembly
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
@@ -90,5 +91,6 @@ def get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession):
     return "acc_" + str(taxonomy_id) + "_" + assembly_accession.replace('.', '_')
 
 
+@lru_cache
 def get_release_folder_name(taxonomy_id):
     return taxonomy.get_normalized_scientific_name_from_ensembl(taxonomy_id)
