@@ -27,7 +27,7 @@ from run_release_in_embassy.release_common_utils import get_release_folder_name
 logger = logging_config.getLogger(__name__)
 
 
-def get_nextflow_config_param(taxonomy_id, assembly_accession, release_version):
+def get_nextflow_params(taxonomy_id, assembly_accession, release_version):
     dump_dir = os.path.join(get_species_release_folder(taxonomy_id), 'dumps')
     release_dir = get_release_log_file_name(taxonomy_id, assembly_accession)
     config_param = os.path.join(release_dir, f'nextflow_params_{taxonomy_id}_{assembly_accession}.yaml')
@@ -36,12 +36,6 @@ def get_nextflow_config_param(taxonomy_id, assembly_accession, release_version):
         'assembly': assembly_accession,
         'dump_dir': dump_dir,
         'executable': cfg['executable'],
-        # 'executable.bgzip':
-        # 'executable.convert_vcf_file':
-        # 'executable.count_ids_in_vcf':
-        # 'executable.sort_vcf_sorted_chromosomes':
-        # 'executable.vcf_assembly_checker':
-        # 'executable.vcf_validator':
         'jar': cfg['jar'],
         'log_file': get_release_log_file_name(taxonomy_id, assembly_accession),
         'maven': cfg['maven'],
@@ -54,6 +48,11 @@ def get_nextflow_config_param(taxonomy_id, assembly_accession, release_version):
     with open(config_param, 'w') as open_file:
         yaml.safe_dump(yaml_data, open_file)
     return config_param
+
+
+def get_nextflow_config():
+    if 'RELEASE_NEXTFLOW_CONFIG' in os.environ and os.path.isfile(os.environ['RELEASE_NEXTFLOW_CONFIG']):
+        return os.environ['RELEASE_NEXTFLOW_CONFIG']
 
 
 def get_run_release_for_assembly_nextflow():
@@ -73,10 +72,10 @@ def get_assembly_release_folder(taxonomy_id, assembly_accession):
     return os.path.join(get_species_release_folder(taxonomy_id), assembly_accession)
 
 
-def run_release_for_species(taxonomy_id, release_assemblies, release_version):
+def run_release_for_species(taxonomy_id, release_assemblies, release_version, resume=False):
     private_config_xml_file = cfg.query("maven", "settings_file")
     profile = cfg.query("maven", "environment")
-    release_species_inventory_table = cfg["release-species-inventory-table"]
+    release_species_inventory_table = cfg.query('release', 'inventory_table')
     with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         if not release_assemblies:
             release_assemblies = get_release_assemblies_for_taxonomy(
@@ -84,36 +83,48 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version):
             )
 
         for assembly_accession in release_assemblies:
-            nextflow_params = get_nextflow_config_param(taxonomy_id, assembly_accession, release_version)
+            nextflow_params = get_nextflow_params(taxonomy_id, assembly_accession, release_version)
             workflow_file_path = get_run_release_for_assembly_nextflow()
             release_dir = get_assembly_release_folder(taxonomy_id, assembly_accession)
-            workflow_command = (
+            nextflow_config = get_nextflow_config()
+            workflow_command = ' '.join((
                 f"cd {release_dir} && "
                 f"{cfg.query('executable', 'nextflow')} run {workflow_file_path} "
-                f"-params-file {nextflow_params}"
-            )
+                f"-params-file {nextflow_params} "
+                f'-c {nextflow_config}' if nextflow_config else ''
+                '-resume' if resume else ''
+            ))
             logger.info(f"Running workflow file {workflow_file_path} with the following command: "
                         f"\n {workflow_command} \n")
             run_command_with_output(f"Running workflow file {workflow_file_path}", workflow_command)
 
 
-def load_config(config_file):
-    cfg.load_config_file(config_file)
+def load_config(*args):
+    cfg.load_config_file(
+        *args,
+        os.environ.get('RELEASE_CONFIG'),
+        '~/.release_config.yml'
+    )
 
 
 def main():
     argparse = ArgumentParser()
-    argparse.add_argument("--common-release-properties-file", help="ex: /path/to/release/properties.yml", required=True)
     argparse.add_argument("--taxonomy-id", help="ex: 9913", required=True)
     argparse.add_argument("--assembly-accessions", nargs='+', help="ex: GCA_000003055.3")
     argparse.add_argument("--release_version", required=True)
+    argparse.add_argument("--resume", default=False, required=False,
+                          help="Resume the nextflow pipeline for the specified taxonomy and assembly")
+    argparse.add_argument("--release_config-properties-file",
+                          help="Path to the release configuration file. That will override the config specified with "
+                               "RELEASE_CONFIG variable or placed in ~/.release_config.yml.",
+                          required=False)
     args = argparse.parse_args()
 
     logging_config.add_stdout_handler()
 
     load_config(args.common_release_properties_file)
 
-    run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version)
+    run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
 
 
 if __name__ == "__main__":
