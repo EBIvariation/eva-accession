@@ -13,16 +13,17 @@
 # limitations under the License.
 
 import click
-import logging
 import sys
 import traceback
+
+from ebi_eva_common_pyutils.logger import logging_config
 
 from run_release_in_embassy.create_release_properties_file import create_release_properties_file_for_assembly
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 
 
-logger = logging.getLogger(__name__)
+logger = logging_config.get_logger(__name__)
 
 
 def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,

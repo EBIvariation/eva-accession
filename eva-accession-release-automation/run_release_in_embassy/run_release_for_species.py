@@ -14,6 +14,7 @@
 from argparse import ArgumentParser
 
 import os
+from functools import lru_cache
 
 import yaml
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
@@ -24,12 +25,12 @@ from run_release_in_embassy.release_metadata import get_release_assemblies_for_t
 from run_release_in_embassy.release_common_utils import get_release_folder_name
 
 
-logger = logging_config.getLogger(__name__)
+logger = logging_config.get_logger(__name__)
 
 
 def get_nextflow_params(taxonomy_id, assembly_accession, release_version):
     dump_dir = os.path.join(get_species_release_folder(taxonomy_id), 'dumps')
-    release_dir = get_release_log_file_name(taxonomy_id, assembly_accession)
+    release_dir = get_assembly_release_folder(taxonomy_id, assembly_accession)
     config_param = os.path.join(release_dir, f'nextflow_params_{taxonomy_id}_{assembly_accession}.yaml')
     os.makedirs(dump_dir, exist_ok=True)
     yaml_data = {
@@ -52,7 +53,7 @@ def get_nextflow_params(taxonomy_id, assembly_accession, release_version):
 
 def get_nextflow_config():
     if 'RELEASE_NEXTFLOW_CONFIG' in os.environ and os.path.isfile(os.environ['RELEASE_NEXTFLOW_CONFIG']):
-        return os.environ['RELEASE_NEXTFLOW_CONFIG']
+        return os.path.abspath(os.environ['RELEASE_NEXTFLOW_CONFIG'])
 
 
 def get_run_release_for_assembly_nextflow():
@@ -61,15 +62,21 @@ def get_run_release_for_assembly_nextflow():
 
 
 def get_release_log_file_name(taxonomy_id, assembly_accession):
-    return f"{cfg['species-release-folder']}/{assembly_accession}/release_{taxonomy_id}_{assembly_accession}.log"
+    return f"{get_assembly_release_folder(taxonomy_id, assembly_accession)}/release_{taxonomy_id}_{assembly_accession}.log"
 
 
+@lru_cache
 def get_species_release_folder(taxonomy_id):
-    return os.path.join(cfg["release_output"], get_release_folder_name(taxonomy_id))
+    folder = os.path.join(cfg.query('release', 'release_output'), get_release_folder_name(taxonomy_id))
+    os.makedirs(folder, exist_ok=True)
+    return folder
 
 
+@lru_cache
 def get_assembly_release_folder(taxonomy_id, assembly_accession):
-    return os.path.join(get_species_release_folder(taxonomy_id), assembly_accession)
+    folder = os.path.join(get_species_release_folder(taxonomy_id), assembly_accession)
+    os.makedirs(folder, exist_ok=True)
+    return folder
 
 
 def run_release_for_species(taxonomy_id, release_assemblies, release_version, resume=False):
@@ -88,11 +95,11 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
             release_dir = get_assembly_release_folder(taxonomy_id, assembly_accession)
             nextflow_config = get_nextflow_config()
             workflow_command = ' '.join((
-                f"cd {release_dir} && "
-                f"{cfg.query('executable', 'nextflow')} run {workflow_file_path} "
-                f"-params-file {nextflow_params} "
-                f'-c {nextflow_config}' if nextflow_config else ''
-                '-resume' if resume else ''
+                f"cd {release_dir} &&",
+                f"{cfg.query('executable', 'nextflow')} run {workflow_file_path}",
+                f"-params-file {nextflow_params}",
+                f'-c {nextflow_config}' if nextflow_config else '',
+                '-resume' if resume else '',
             ))
             logger.info(f"Running workflow file {workflow_file_path} with the following command: "
                         f"\n {workflow_command} \n")
@@ -109,12 +116,12 @@ def load_config(*args):
 
 def main():
     argparse = ArgumentParser()
-    argparse.add_argument("--taxonomy-id", help="ex: 9913", required=True)
-    argparse.add_argument("--assembly-accessions", nargs='+', help="ex: GCA_000003055.3")
+    argparse.add_argument("--taxonomy_id", help="ex: 9913", required=True)
+    argparse.add_argument("--assembly_accessions", nargs='+', help="ex: GCA_000003055.3")
     argparse.add_argument("--release_version", required=True)
     argparse.add_argument("--resume", default=False, required=False,
                           help="Resume the nextflow pipeline for the specified taxonomy and assembly")
-    argparse.add_argument("--release_config-properties-file",
+    argparse.add_argument("--release_config_file",
                           help="Path to the release configuration file. That will override the config specified with "
                                "RELEASE_CONFIG variable or placed in ~/.release_config.yml.",
                           required=False)
@@ -122,7 +129,7 @@ def main():
 
     logging_config.add_stdout_handler()
 
-    load_config(args.common_release_properties_file)
+    load_config(args.release_config_file)
 
     run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
 
