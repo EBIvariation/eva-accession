@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Import;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.MonotonicAccessionRecoveryAgentCategorySSJobConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.MonotonicAccessionRecoveryAgentCategorySSJobListenerConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.recovery.MonotonicAccessionRecoveryAgentCategorySSServiceConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.MonotonicAccessionRecoveryAgentCategorySSStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
@@ -38,7 +39,8 @@ import javax.sql.DataSource;
         MonotonicAccessionRecoveryAgentCategorySSStepConfiguration.class,
         MonotonicAccessionRecoveryAgentCategorySSServiceConfiguration.class,
         MonotonicAccessionRecoveryAgentCategorySSJobListenerConfiguration.class,
-        AccessionWriterConfiguration.class, EvaAccessionJobLauncherCommandLineRunner.class})
+        AccessionWriterConfiguration.class, VariantProcessorConfiguration.class,
+        EvaAccessionJobLauncherCommandLineRunner.class})
 public class RecoveryAgentCategorySSTestConfiguration {
     @Bean
     public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
