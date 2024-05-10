@@ -71,6 +71,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_R
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_STEP;
@@ -78,6 +79,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeA
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration.SPLIT_CANDIDATE_ID_PREFIX;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_VCF;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT;
 import static uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_STUDY_FROM_MONGO;
 
 @RunWith(SpringRunner.class)
@@ -98,6 +100,10 @@ public class ClusteringVariantJobConfigurationTest {
     @Autowired
     @Qualifier(JOB_LAUNCHER_STUDY_FROM_MONGO)
     private JobLauncherTestUtils jobLauncherTestUtilsStudyFromMongo;
+
+    @Autowired
+    @Qualifier(JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT)
+    private JobLauncherTestUtils jobLauncherTestUtilsMonotonicAccessionRecoveryAgent;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -217,6 +223,16 @@ public class ClusteringVariantJobConfigurationTest {
                                  .filter(stepExecution -> stepExecution.getStepName()
                                                                        .equals(PROCESS_RS_MERGE_CANDIDATES_STEP))
                                  .findFirst().get().getReadCount());
+    }
+
+    @Test
+    @DirtiesContext
+    public void testJobMonotonicAccessionRecoveryAgent() throws Exception{
+        JobExecution jobExecution = jobLauncherTestUtilsMonotonicAccessionRecoveryAgent.launchJob();
+        List<String> expectedSteps = new ArrayList<>();
+        expectedSteps.add(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_STEP);
+        assertStepsExecuted(expectedSteps, jobExecution);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
     }
 
     private void createMergeCandidateEntriesThatExceedChunkSize(int numSplitCandidateOperations) {
