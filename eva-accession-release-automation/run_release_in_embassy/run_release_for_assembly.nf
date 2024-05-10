@@ -14,9 +14,11 @@ process initiate_release_status_for_assembly {
     label 'short_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -29,9 +31,11 @@ process copy_accessioning_collections_to_embassy {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -44,9 +48,11 @@ process run_release_for_assembly {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -59,9 +65,11 @@ process merge_dbsnp_eva_release_files {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -74,9 +82,11 @@ process sort_bgzip_index_release_files {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -89,9 +99,11 @@ process validate_release_vcf_files {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -104,9 +116,11 @@ process analyze_vcf_validation_results {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -119,9 +133,11 @@ process count_rs_ids_in_release_files {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -134,9 +150,11 @@ process validate_rs_release_files {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -149,9 +167,11 @@ process update_sequence_names_to_ena {
     label 'long_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag
+    val true, emit: flag
+
     script:
     """
     export PYTHONPATH=$params.python_path
@@ -164,9 +184,11 @@ process update_release_status_for_assembly {
     label 'short_time', 'med_mem'
 
     input:
-        val flag
+    val flag
+
     output:
-        val true, emit: flag11
+    val true, emit: flag11
+
     script:
     """
     export PYTHONPATH=$params.python_path

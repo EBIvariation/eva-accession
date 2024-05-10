@@ -40,7 +40,6 @@ def get_nextflow_params(taxonomy_id, assembly_accession, release_version):
         'jar': cfg['jar'],
         'log_file': get_release_log_file_name(taxonomy_id, assembly_accession),
         'maven': cfg['maven'],
-        'python_script': cfg.query('python', 'interpreter'),
         'python_path': os.environ['PYTHONPATH'],
         'release_version': release_version,
         'assembly_folder': release_dir,
@@ -121,15 +120,9 @@ def main():
     argparse.add_argument("--release_version", required=True)
     argparse.add_argument("--resume", default=False, required=False,
                           help="Resume the nextflow pipeline for the specified taxonomy and assembly")
-    argparse.add_argument("--release_config_file",
-                          help="Path to the release configuration file. That will override the config specified with "
-                               "RELEASE_CONFIG variable or placed in ~/.release_config.yml.",
-                          required=False)
     args = argparse.parse_args()
-
+    load_config()
     logging_config.add_stdout_handler()
-
-    load_config(args.release_config_file)
 
     run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
 
