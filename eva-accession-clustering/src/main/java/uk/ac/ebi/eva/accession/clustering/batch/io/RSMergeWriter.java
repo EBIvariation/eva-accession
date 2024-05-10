@@ -423,13 +423,11 @@ public class RSMergeWriter implements ItemWriter<SubmittedVariantOperationEntity
                                             .collect(Collectors.toSet());
             // Condition for generating split operation: ensure that there is more than one locus sharing the target RS
             if (targetRSDistinctLoci.size() > 1) {
-                // Use a convention of lowest SS for testability
-                Long lowestSS = ssClusteredUnderTargetRS.stream().map(InactiveSubDocument::getAccession)
-                                                        .min(Comparator.naturalOrder()).get();
+                // The new SPLIT candidate is for rs prioritised.accessionToKeep
                 SubmittedVariantOperationEntity newSplitCandidateRecord = new SubmittedVariantOperationEntity();
                 // TODO: Refactor to use common fill method for split candidates generation
                 // to avoid duplicating reason text and call semantics
-                newSplitCandidateRecord.fill(EventType.RS_SPLIT_CANDIDATES, lowestSS,
+                newSplitCandidateRecord.fill(EventType.RS_SPLIT_CANDIDATES, prioritised.accessionToKeep,
                         "Hash mismatch with " + prioritised.accessionToKeep,
                         ssClusteredUnderTargetRS);
                 newSplitCandidateRecord.setId(ClusteringWriter.getSplitCandidateId(newSplitCandidateRecord));
