@@ -84,7 +84,7 @@ public class MonotonicAccessionRecoveryAgentCategoryRSTest {
             clusteredVariantEntityList.add(entity);
         }
 
-        // Entries for 2nd block
+        // Entries for 2nd block - Missing 5 RS (3000000035l - 3000000039l)
         for (long i = 3000000030l; i <= 3000000034l; i++) {
             ClusteredVariant model = new ClusteredVariant("assembly", 1111,
                     "contig", 100, VariantType.SNV, false, LocalDateTime.now());
@@ -119,7 +119,7 @@ public class MonotonicAccessionRecoveryAgentCategoryRSTest {
 
     private void verifyInitialDBState() {
         // Initial state of Contiguous Id Block DB is 5 blocks are present but their "last_committed" is not updated
-        // (Initialized using "resources/test-data/monotonic_accession_recovery_agent_test_data.sql")
+        // (Initialized using "resources/test-data/monotonic_accession_recovery_agent_category_rs_test_data.sql")
 
         // block id  first value  last value  last committed  reserved  last_updated_timestamp | remarks
         //  1        3000000000   3000000029  2999999999      true      1970-01-01 00:00:00    | should be recovered
@@ -129,7 +129,7 @@ public class MonotonicAccessionRecoveryAgentCategoryRSTest {
         //  5        3000000120   3000000149  3000000119      true      2099-01-01 00:00:00    | should not be recovered
 
         // Mongo DB
-        // 85 accessions have been used in mongoDB but are not reflected in the block allocation table
+        // 95 accessions have been used in mongoDB but are not reflected in the block allocation table
         // 30 accessions belong to 1st block (3000000000 to 3000000029),
         // 25 to the 2nd block (3000000030 to 300000034 and 3000000040 to 3000000059)
         // 30 to the 3rd block (3000000060 to 3000000089)
