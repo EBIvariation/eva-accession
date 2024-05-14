@@ -52,7 +52,7 @@ def remote_db_is_empty(local_forwarded_port, assembly_accession, destination_db_
     logger.info(f"check if: {assembly_accession} has been copied")
     command = f"mongosh --eval 'use {destination_db_name}' --eval 'db.stats()' --port {local_forwarded_port} " \
               "| grep 'dataSize' | awk '{print substr($2,1,length($2)-1)}'"
-    output = run_command_with_output(command)
+    output = run_command_with_output('Check that data exists in mongodb', command, return_process_output=True)
     return output.strip() == '0'
 
 

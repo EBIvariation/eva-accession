@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import os
 import signal
 import traceback
+from functools import lru_cache
+
+from ebi_eva_common_pyutils.logger import logging_config
 
 from run_release_in_embassy.release_metadata import get_target_mongo_instance_for_assembly
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.network_utils import get_available_local_port, forward_remote_port_to_local_port
 from ebi_eva_common_pyutils.taxonomy import taxonomy
 
-logger = logging.getLogger(__name__)
+logger = logging_config.get_logger(__name__)
 
 
 def open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id, assembly,
@@ -90,5 +92,6 @@ def get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession):
     return "acc_" + str(taxonomy_id) + "_" + assembly_accession.replace('.', '_')
 
 
+@lru_cache
 def get_release_folder_name(taxonomy_id):
     return taxonomy.get_normalized_scientific_name_from_ensembl(taxonomy_id)

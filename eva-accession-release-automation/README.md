@@ -9,7 +9,6 @@ pip install -e /path/to/eva-accession/eva-accession-release-automation
 The release automation script `run_release_for_species.py` has the following parameters:
 * **common-release-properties-file:** Path to yaml config file, see below
 * **taxonomy-id:** Taxonomy to release
-* **memory:** Amount of memory to use when running the release jobs
 
 You also need to set `PYTHONPATH=/path/to/eva-accession/eva-accession-release-automation/run_release_in_embassy`.
 
