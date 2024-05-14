@@ -30,7 +30,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
-import uk.ac.ebi.eva.accession.clustering.test.configuration.RecoveryAgentCategoryRSTestConfiguration;
+import uk.ac.ebi.eva.accession.clustering.test.configuration.RSAccessionRecoveryTestConfiguration;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.ClusteredVariantAccessioningRepository;
@@ -42,13 +42,13 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.clustering.test.configuration.RecoveryAgentCategoryRSTestConfiguration.JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS;
+import static uk.ac.ebi.eva.accession.clustering.test.configuration.RSAccessionRecoveryTestConfiguration.JOB_LAUNCHER_RS_ACCESSION_RECOVERY;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {RecoveryAgentCategoryRSTestConfiguration.class,})
-@TestPropertySource("classpath:monotonic-accession-recovery-agent-category-rs.properties")
+@ContextConfiguration(classes = {RSAccessionRecoveryTestConfiguration.class,})
+@TestPropertySource("classpath:rs-accession-recovery.properties")
 @SpringBatchTest
-public class MonotonicAccessionRecoveryAgentCategoryRSTest {
+public class RSAccessionRecoveryTest {
     @Autowired
     private ContiguousIdBlockRepository blockRepository;
 
@@ -56,16 +56,16 @@ public class MonotonicAccessionRecoveryAgentCategoryRSTest {
     private ClusteredVariantAccessioningRepository mongoRepository;
 
     @Autowired
-    @Qualifier(JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS)
+    @Qualifier(JOB_LAUNCHER_RS_ACCESSION_RECOVERY)
     private JobLauncherTestUtils jobLauncherTestUtilsMonotonicAccessionRecoveryAgent;
 
     @Test
     @DirtiesContext
-    public void testContiguousBlocksAreReleasedInCaseOfJobFailures() throws Exception {
+    public void testContiguousBlocksForCategoryRSAreRecovered() throws Exception {
         initializeMongoDbWithUncommittedAccessions();
         verifyInitialDBState();
 
-        // recovery cut off time is -14 days (provided in monotonic-accession-recovery-agent-category-rs.properties)
+        // recovery cut off time is -14 days (provided in rs-accession-recovery.properties)
         JobExecution jobExecution = jobLauncherTestUtilsMonotonicAccessionRecoveryAgent.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
@@ -119,7 +119,7 @@ public class MonotonicAccessionRecoveryAgentCategoryRSTest {
 
     private void verifyInitialDBState() {
         // Initial state of Contiguous Id Block DB is 5 blocks are present but their "last_committed" is not updated
-        // (Initialized using "resources/test-data/monotonic_accession_recovery_agent_category_rs_test_data.sql")
+        // (Initialized using "resources/test-data/rs_accession_recovery_test_data.sql")
 
         // block id  first value  last value  last committed  reserved  last_updated_timestamp | remarks
         //  1        3000000000   3000000029  2999999999      true      1970-01-01 00:00:00    | should be recovered

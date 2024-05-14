@@ -29,20 +29,20 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories
 import uk.ac.ebi.eva.accession.core.model.SubmittedVariant;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
-import uk.ac.ebi.eva.accession.pipeline.test.RecoveryAgentCategorySSTestConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.test.SSAccessionRecoveryTestConfiguration;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_SS_JOB;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SS_ACCESSION_RECOVERY_JOB;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {RecoveryAgentCategorySSTestConfiguration.class})
-@TestPropertySource("classpath:monotonic-accession-recovery-agent-category-ss.properties")
+@ContextConfiguration(classes = {SSAccessionRecoveryTestConfiguration.class})
+@TestPropertySource("classpath:ss-accession-recovery.properties")
 @SpringBatchTest
-public class MonotonicAccessionRecoveryAgentCategorySSTest {
+public class SSAccessionRecoveryTest {
     @Autowired
     private EvaAccessionJobLauncherCommandLineRunner runner;
 
@@ -54,12 +54,12 @@ public class MonotonicAccessionRecoveryAgentCategorySSTest {
 
     @Test
     @DirtiesContext
-    public void testContiguousBlocksAreReleasedInCaseOfJobFailures() throws Exception {
+    public void testContiguousBlocksForCategorySSAreRecovered() throws Exception {
         initializeMongoDbWithUncommittedAccessions();
         verifyInitialDBState();
 
-        // recovery cut off time is -14 days (provided in monotonic-accession-recovery-agent-category-ss.properties)
-        runner.setJobNames(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_SS_JOB);
+        // recovery cut off time is -14 days (provided in ss-accession-recovery.properties)
+        runner.setJobNames(SS_ACCESSION_RECOVERY_JOB);
         runner.run();
         assertEquals(EvaAccessionJobLauncherCommandLineRunner.EXIT_WITHOUT_ERRORS, runner.getExitCode());
 
@@ -123,7 +123,7 @@ public class MonotonicAccessionRecoveryAgentCategorySSTest {
 
     private void verifyInitialDBState() {
         // Initial state of Contiguous Id Block DB is 5 blocks are present but their "last_committed" is not updated
-        // (Initialized using "resources/test-data/monotonic_accession_recovery_agent_category_ss_test_data.sql")
+        // (Initialized using "resources/test-data/ss_accession_recovery_test_data.sql")
 
         // block id  first value  last value  last committed  reserved  last_updated_timestamp | remarks
         //  1        5000000000   5000000029  4999999999      true      1970-01-01 00:00:00    | should be recovered

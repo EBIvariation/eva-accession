@@ -27,32 +27,42 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.JobExecutionSetterConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.TargetSSReaderForBackPropRSConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.BackPropagatedRSWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringMongoReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.ClusteringWriterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitCandidatesReaderConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.RSMergeAndSplitWriterConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.TargetSSReaderForBackPropRSConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.io.VcfReaderConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.*;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.BackPropagateRSJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusterUnclusteredVariantsJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromMongoJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ClusteringFromVcfJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ProcessRemappedVariantsWithRSJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.RSAccessionRecoveryJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.ResolveMergeThenSplitCandidatesJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.StudyClusteringJobConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.JobExecutionSetterConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.ListenersConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.MonotonicAccessionRecoveryAgentCategoryRSJobListenerConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.RSAccessionRecoveryJobListenerConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.processors.ClusteringVariantProcessorConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.recovery.MonotonicAccessionRecoveryAgentCategoryRSServiceConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.recovery.RSAccessionRecoveryServiceConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.AccessioningShutdownStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromMongoStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.ClusteringFromVcfStepConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.MonotonicAccessionRecoveryAgentCategoryRSStepConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.RSAccessionRecoveryStepConfiguration;
 import uk.ac.ebi.eva.accession.clustering.runner.ClusteringCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.sql.DataSource;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.*;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_VCF_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_REMAPPED_VARIANTS_WITH_RS_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCESSION_RECOVERY_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.STUDY_CLUSTERING_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.NewClusteredVariantsQCJobConfiguration.NEW_CLUSTERED_VARIANTS_QC_JOB;
 
 @EnableAutoConfiguration
@@ -79,10 +89,10 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc.New
         ChunkSizeCompletionPolicyConfiguration.class,
         AccessioningShutdownStepConfiguration.class,
         JobExecutionSetterConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategoryRSJobConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategoryRSStepConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategoryRSServiceConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategoryRSJobListenerConfiguration.class})
+        RSAccessionRecoveryJobConfiguration.class,
+        RSAccessionRecoveryStepConfiguration.class,
+        RSAccessionRecoveryServiceConfiguration.class,
+        RSAccessionRecoveryJobListenerConfiguration.class})
 public class BatchTestConfiguration {
 
     public static final String JOB_LAUNCHER_FROM_VCF = "JOB_LAUNCHER_FROM_VCF";
@@ -95,7 +105,7 @@ public class BatchTestConfiguration {
 
     public static final String JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP = "JOB_LAUNCHER_FROM_MONGO_ONLY_FIRST_STEP";
 
-    public static final String JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT = "JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT";
+    public static final String JOB_LAUNCHER_RS_ACCESSION_RECOVERY = "JOB_LAUNCHER_RS_ACCESSION_RECOVERY";
 
     @Autowired
     private BatchProperties properties;
@@ -145,13 +155,13 @@ public class BatchTestConfiguration {
         };
     }
 
-    @Bean(JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT)
-    public JobLauncherTestUtils jobLauncherTestUtilsMonotonicAccessionRecoveryAgent() {
+    @Bean(JOB_LAUNCHER_RS_ACCESSION_RECOVERY)
+    public JobLauncherTestUtils jobLauncherTestUtilsRSAccessionRecoveryJob() {
 
         return new JobLauncherTestUtils() {
             @Override
             @Autowired
-            public void setJob(@Qualifier(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB) Job job) {
+            public void setJob(@Qualifier(RS_ACCESSION_RECOVERY_JOB) Job job) {
                 super.setJob(job);
             }
         };

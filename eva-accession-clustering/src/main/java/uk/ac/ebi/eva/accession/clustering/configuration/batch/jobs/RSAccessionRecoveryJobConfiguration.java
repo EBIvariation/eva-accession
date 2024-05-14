@@ -11,25 +11,25 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB_LISTENER;
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCESSION_RECOVERY_JOB;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCESSION_RECOVERY_JOB_LISTENER;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCESSION_RECOVERY_STEP;
 
 @Configuration
 @EnableBatchProcessing
-public class MonotonicAccessionRecoveryAgentCategoryRSJobConfiguration {
+public class RSAccessionRecoveryJobConfiguration {
 
     @Autowired
-    @Qualifier(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_STEP)
+    @Qualifier(RS_ACCESSION_RECOVERY_STEP)
     private Step monotonicAccessionRecoveryAgentCategoryRSStep;
 
     @Autowired
-    @Qualifier(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB_LISTENER)
+    @Qualifier(RS_ACCESSION_RECOVERY_JOB_LISTENER)
     private JobExecutionListener monotonicAccessionRecoveryAgentCategoryRSJobListener;
 
-    @Bean(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB)
+    @Bean(RS_ACCESSION_RECOVERY_JOB)
     public Job createMonotonicAccessionRecoveryAgentCategoryRSJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB)
+        return jobBuilderFactory.get(RS_ACCESSION_RECOVERY_JOB)
                 .incrementer(new RunIdIncrementer())
                 .start(monotonicAccessionRecoveryAgentCategoryRSStep)
                 .listener(monotonicAccessionRecoveryAgentCategoryRSJobListener)

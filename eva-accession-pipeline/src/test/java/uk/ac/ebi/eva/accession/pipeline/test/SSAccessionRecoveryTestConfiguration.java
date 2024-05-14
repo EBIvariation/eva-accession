@@ -14,39 +14,34 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.clustering.test.configuration;
+package uk.ac.ebi.eva.accession.pipeline.test;
 
-import org.springframework.batch.core.Job;
 import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.MonotonicAccessionRecoveryAgentCategoryRSJobConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.MonotonicAccessionRecoveryAgentCategoryRSJobListenerConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.recovery.MonotonicAccessionRecoveryAgentCategoryRSServiceConfiguration;
-import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.MonotonicAccessionRecoveryAgentCategoryRSStepConfiguration;
-import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.SSAccessionRecoveryJobConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.SSAccessionRecoveryJobListenerConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.recovery.SSAccessionRecoveryServiceConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.SSAccessionRecoveryStepConfiguration;
+import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB;
-
 @EnableAutoConfiguration
-@Import({MonotonicAccessionRecoveryAgentCategoryRSJobConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategoryRSStepConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategoryRSServiceConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategoryRSJobListenerConfiguration.class,
-        ClusteredVariantAccessioningConfiguration.class
-})
-public class RecoveryAgentCategoryRSTestConfiguration {
-    public static final String JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS = "JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS";
-
+@Import({SSAccessionRecoveryJobConfiguration.class,
+        SSAccessionRecoveryStepConfiguration.class,
+        SSAccessionRecoveryServiceConfiguration.class,
+        SSAccessionRecoveryJobListenerConfiguration.class,
+        AccessionWriterConfiguration.class, VariantProcessorConfiguration.class,
+        EvaAccessionJobLauncherCommandLineRunner.class})
+public class SSAccessionRecoveryTestConfiguration {
     @Bean
     public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
             throws Exception {
@@ -65,17 +60,5 @@ public class RecoveryAgentCategoryRSTestConfiguration {
     @Bean
     public JobExecutionApplicationListener jobExecutionApplicationListener() {
         return new JobExecutionApplicationListener();
-    }
-
-    @Bean(JOB_LAUNCHER_MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS)
-    public JobLauncherTestUtils jobLauncherTestUtilsMonotonicAccessionRecoveryAgent() {
-
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
     }
 }

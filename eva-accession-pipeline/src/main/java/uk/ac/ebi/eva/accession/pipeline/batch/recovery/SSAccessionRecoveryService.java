@@ -5,14 +5,14 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessio
 
 import java.time.LocalDateTime;
 
-public class MonotonicAccessionRecoveryAgentCategorySSService {
+public class SSAccessionRecoveryService {
     private final static String CATEGORY_ID = "ss";
     private MonotonicAccessionRecoveryAgent monotonicAccessionRecoveryAgent;
     private JobExecution jobExecution;
     private long recoveryCutOffDays;
 
-    public MonotonicAccessionRecoveryAgentCategorySSService(MonotonicAccessionRecoveryAgent monotonicAccessionRecoveryAgent,
-                                                            long recoveryCutOffDays) {
+    public SSAccessionRecoveryService(MonotonicAccessionRecoveryAgent monotonicAccessionRecoveryAgent,
+                                      long recoveryCutOffDays) {
         this.monotonicAccessionRecoveryAgent = monotonicAccessionRecoveryAgent;
         this.recoveryCutOffDays = recoveryCutOffDays;
     }

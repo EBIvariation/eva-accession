@@ -14,34 +14,39 @@
  * limitations under the License.
  */
 
-package uk.ac.ebi.eva.accession.pipeline.test;
+package uk.ac.ebi.eva.accession.clustering.test.configuration;
 
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.MonotonicAccessionRecoveryAgentCategorySSJobConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.listeners.MonotonicAccessionRecoveryAgentCategorySSJobListenerConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.processors.VariantProcessorConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.recovery.MonotonicAccessionRecoveryAgentCategorySSServiceConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.MonotonicAccessionRecoveryAgentCategorySSStepConfiguration;
-import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.RSAccessionRecoveryJobConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.listeners.RSAccessionRecoveryJobListenerConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.recovery.RSAccessionRecoveryServiceConfiguration;
+import uk.ac.ebi.eva.accession.clustering.configuration.batch.steps.RSAccessionRecoveryStepConfiguration;
+import uk.ac.ebi.eva.accession.core.configuration.nonhuman.ClusteredVariantAccessioningConfiguration;
 import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCESSION_RECOVERY_JOB;
+
 @EnableAutoConfiguration
-@Import({MonotonicAccessionRecoveryAgentCategorySSJobConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategorySSStepConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategorySSServiceConfiguration.class,
-        MonotonicAccessionRecoveryAgentCategorySSJobListenerConfiguration.class,
-        AccessionWriterConfiguration.class, VariantProcessorConfiguration.class,
-        EvaAccessionJobLauncherCommandLineRunner.class})
-public class RecoveryAgentCategorySSTestConfiguration {
+@Import({RSAccessionRecoveryJobConfiguration.class,
+        RSAccessionRecoveryStepConfiguration.class,
+        RSAccessionRecoveryServiceConfiguration.class,
+        RSAccessionRecoveryJobListenerConfiguration.class,
+        ClusteredVariantAccessioningConfiguration.class
+})
+public class RSAccessionRecoveryTestConfiguration {
+    public static final String JOB_LAUNCHER_RS_ACCESSION_RECOVERY = "JOB_LAUNCHER_RS_ACCESSION_RECOVERY";
+
     @Bean
     public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
             throws Exception {
@@ -60,5 +65,17 @@ public class RecoveryAgentCategorySSTestConfiguration {
     @Bean
     public JobExecutionApplicationListener jobExecutionApplicationListener() {
         return new JobExecutionApplicationListener();
+    }
+
+    @Bean(JOB_LAUNCHER_RS_ACCESSION_RECOVERY)
+    public JobLauncherTestUtils jobLauncherTestUtilsMonotonicAccessionRecoveryAgent() {
+
+        return new JobLauncherTestUtils() {
+            @Override
+            @Autowired
+            public void setJob(@Qualifier(RS_ACCESSION_RECOVERY_JOB) Job job) {
+                super.setJob(job);
+            }
+        };
     }
 }

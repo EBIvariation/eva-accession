@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionRecoveryAgent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
-import uk.ac.ebi.eva.accession.clustering.batch.recovery.MonotonicAccessionRecoveryAgentCategoryRSService;
+import uk.ac.ebi.eva.accession.clustering.batch.recovery.RSAccessionRecoveryService;
 import uk.ac.ebi.eva.accession.core.service.nonhuman.eva.ClusteredVariantAccessioningDatabaseService;
 
-import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_SERVICE;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.RS_ACCESSION_RECOVERY_SERVICE;
 
 @Configuration
-public class MonotonicAccessionRecoveryAgentCategoryRSServiceConfiguration {
+public class RSAccessionRecoveryServiceConfiguration {
     @Autowired
     private ContiguousIdBlockService blockService;
     @Autowired
@@ -21,9 +21,9 @@ public class MonotonicAccessionRecoveryAgentCategoryRSServiceConfiguration {
     @Value("${recovery.cutoff.days}")
     private long recoveryCutOffDays;
 
-    @Bean(MONOTONIC_ACCESSION_RECOVERY_AGENT_CATEGORY_RS_SERVICE)
-    public MonotonicAccessionRecoveryAgentCategoryRSService getMonotonicAccessionRecoveryAgentCategoryRSService() {
-        return new MonotonicAccessionRecoveryAgentCategoryRSService(getMonotonicAccessionRecoveryAgent(), recoveryCutOffDays);
+    @Bean(RS_ACCESSION_RECOVERY_SERVICE)
+    public RSAccessionRecoveryService getMonotonicAccessionRecoveryAgentCategoryRSService() {
+        return new RSAccessionRecoveryService(getMonotonicAccessionRecoveryAgent(), recoveryCutOffDays);
     }
 
     private MonotonicAccessionRecoveryAgent getMonotonicAccessionRecoveryAgent() {
