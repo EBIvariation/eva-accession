@@ -18,6 +18,7 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs;
 import htsjdk.samtools.util.StringUtil;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
@@ -47,6 +48,7 @@ import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLEAR_R
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_FROM_MONGO_JOB;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.CLUSTERING_NON_CLUSTERED_VARIANTS_FROM_MONGO_STEP;
+import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.JOB_EXECUTION_LISTENER;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_MERGE_CANDIDATES_STEP;
 import static uk.ac.ebi.eva.accession.clustering.configuration.BeanNames.PROCESS_RS_SPLIT_CANDIDATES_STEP;
 
@@ -86,6 +88,7 @@ public class ClusteringFromMongoJobConfiguration {
                                       // Back-propagate RS in the remapped assembly that were split or merged
                                       @Qualifier(BACK_PROPAGATE_SPLIT_OR_MERGED_RS_STEP)
                                                   Step backPropagateSplitMergedRSStep,
+                                      @Qualifier(JOB_EXECUTION_LISTENER) JobExecutionListener jobExecutionListener,
                                       StepBuilderFactory stepBuilderFactory,
                                       JobBuilderFactory jobBuilderFactory,
                                       InputParameters inputParameters) {
@@ -95,6 +98,7 @@ public class ClusteringFromMongoJobConfiguration {
                 .incrementer(new RunIdIncrementer())
                 //We need the dummy step here because Spring won't conditionally start the first step
                 .start(dummyStep)
+                .listener(jobExecutionListener)
                 .next(jobExecutionDecider)
                     .on("TRUE")
                     .to(new FlowBuilder<SimpleFlow>("remappedAssemblyClusteringFlow")
@@ -105,7 +109,8 @@ public class ClusteringFromMongoJobConfiguration {
                             .next(clusteringNonClusteredVariantsFromMongoStep)
                             .next(accessioningShutdownStep)
                             .next(backPropagateNewRSStep)
-                            .next(backPropagateSplitMergedRSStep).build())
+                            .next(backPropagateSplitMergedRSStep)
+                            .build())
                     .on("*").end()
                 .from(jobExecutionDecider)
                     .on("FALSE")
