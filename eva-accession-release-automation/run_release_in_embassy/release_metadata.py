@@ -92,11 +92,23 @@ def get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession, rel
     return results[0][0]
 
 
-def get_release_pending(release_species_inventory_table, metadata_connection_handle):
-    results = get_all_results_for_query(metadata_connection_handle,
-                                        "select taxonomy, assembly_accession, release_version from {0} "
-                                        "where should_be_released "
-                                        "and num_rs_to_release > 0"
-                                        "ORDER BY release_version, taxonomy, assembly_accession"
-                                        .format(release_species_inventory_table))
+def get_release_pending(release_species_inventory_table, metadata_connection_handle, status=None):
+    def format_status(status_list):
+        return f"({str(status_list).strip('[]')})"
+
+    if 'Pending' in status:
+        status.remove('Pending')
+        if status:
+            status_statement = f"and (release_status in {format_status(status)} or release_status is null)"
+        else:
+            status_statement = f"and release_status is null"
+    else:
+        status_statement = f"and release_status in {format_status(status)}"
+
+    query = (f"select taxonomy, assembly_accession, release_version from {release_species_inventory_table} "
+              "where should_be_released "
+              "and num_rs_to_release > 0 "
+              f"{status_statement}" if status_statement else ''
+              "ORDER BY release_version, taxonomy, assembly_accession")
+    results = get_all_results_for_query(metadata_connection_handle, query)
     yield results

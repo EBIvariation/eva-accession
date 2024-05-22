@@ -106,7 +106,7 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
             run_command_with_output(f"Running workflow file {workflow_file_path}", workflow_command)
 
 
-def list_pending_release():
+def list_pending_release(status):
     private_config_xml_file = cfg.query("maven", "settings_file")
     profile = cfg.query("maven", "environment")
     release_species_inventory_table = cfg.query('release', 'inventory_table')
@@ -114,7 +114,7 @@ def list_pending_release():
         header = ['taxonomy', 'assembly_accession', 'release_version']
         table = []
         for taxonomy, assembly_accession, release_version in get_release_pending(release_species_inventory_table,
-                                                                                 metadata_connection_handle):
+                                                                                 metadata_connection_handle, status):
             table.append((taxonomy, assembly_accession, release_version))
         pretty_print(header, table)
 
@@ -129,7 +129,9 @@ def load_config(*args):
 
 def main():
     argparse = ArgumentParser()
-    argparse.add_argument("--list", help="Generate the list of species and assembly that needs to be released", action='store_true', default=False)
+    argparse.add_argument("--list", nargs='+',
+                          help="Generate the list of species and assembly that needs to be released",
+                          choices=['Pending', 'Started', 'Completed'])
     argparse.add_argument("--taxonomy_id", help="ex: 9913", required=True)
     argparse.add_argument("--assembly_accessions", nargs='+', help="ex: GCA_000003055.3")
     argparse.add_argument("--release_version", required=True)
@@ -139,7 +141,7 @@ def main():
     load_config()
     logging_config.add_stdout_handler()
     if args.list:
-        list_pending_release()
+        list_pending_release(args.list)
     else:
         run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
 
