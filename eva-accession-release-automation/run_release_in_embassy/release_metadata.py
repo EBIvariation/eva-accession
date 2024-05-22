@@ -90,3 +90,13 @@ def get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession, rel
         raise Exception("Could not find release inventory pertaining to taxonomy ID: {0} and assembly: {1} "
                         .format(taxonomy_id, assembly_accession))
     return results[0][0]
+
+
+def get_release_pending(release_species_inventory_table, metadata_connection_handle):
+    results = get_all_results_for_query(metadata_connection_handle,
+                                        "select taxonomy, assembly_accession, release_version from {0} "
+                                        "where should_be_released "
+                                        "and num_rs_to_release > 0"
+                                        "ORDER BY release_version, taxonomy, assembly_accession"
+                                        .format(release_species_inventory_table))
+    yield results

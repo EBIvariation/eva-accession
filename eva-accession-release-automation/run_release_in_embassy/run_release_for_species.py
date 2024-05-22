@@ -18,10 +18,11 @@ from functools import lru_cache
 
 import yaml
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.common_utils import pretty_print
 from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.config import cfg
-from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy
+from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy, get_release_pending
 from run_release_in_embassy.release_common_utils import get_release_folder_name
 
 
@@ -105,6 +106,19 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
             run_command_with_output(f"Running workflow file {workflow_file_path}", workflow_command)
 
 
+def list_pending_release():
+    private_config_xml_file = cfg.query("maven", "settings_file")
+    profile = cfg.query("maven", "environment")
+    release_species_inventory_table = cfg.query('release', 'inventory_table')
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
+        header = ['taxonomy', 'assembly_accession', 'release_version']
+        table = []
+        for taxonomy, assembly_accession, release_version in get_release_pending(release_species_inventory_table,
+                                                                                 metadata_connection_handle):
+            table.append((taxonomy, assembly_accession, release_version))
+        pretty_print(header, table)
+
+
 def load_config(*args):
     cfg.load_config_file(
         *args,
@@ -115,6 +129,7 @@ def load_config(*args):
 
 def main():
     argparse = ArgumentParser()
+    argparse.add_argument("--list", help="Generate the list of species and assembly that needs to be released", action='store_true', default=False)
     argparse.add_argument("--taxonomy_id", help="ex: 9913", required=True)
     argparse.add_argument("--assembly_accessions", nargs='+', help="ex: GCA_000003055.3")
     argparse.add_argument("--release_version", required=True)
@@ -123,8 +138,10 @@ def main():
     args = argparse.parse_args()
     load_config()
     logging_config.add_stdout_handler()
-
-    run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
+    if args.list:
+        list_pending_release()
+    else:
+        run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
 
 
 if __name__ == "__main__":
