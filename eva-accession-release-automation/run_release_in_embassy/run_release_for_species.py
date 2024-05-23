@@ -145,7 +145,7 @@ def main():
     load_config()
     logging_config.add_stdout_handler()
     if args.list_status:
-        list_pending_release(args.list, args.release_version, args.taxonomy_id, args.assembly_accessions)
+        list_pending_release(args.list_status, args.release_version, args.taxonomy_id, args.assembly_accessions)
     else:
         if not args.taxonomy_id:
             logger.error('--taxonomy_id is required when running the release')

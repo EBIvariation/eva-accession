@@ -117,5 +117,4 @@ def get_release_for_status_and_version(release_species_inventory_table, metadata
              f"and taxonomy={taxonomy_id} " if taxonomy_id else ''
              f"and assembly_accessions in {format_list(assembly_accessions)} " if assembly_accessions else ''
              "ORDER BY release_version, taxonomy, assembly_accession")
-    results = get_all_results_for_query(metadata_connection_handle, query)
-    yield results
+    return get_all_results_for_query(metadata_connection_handle, query)
