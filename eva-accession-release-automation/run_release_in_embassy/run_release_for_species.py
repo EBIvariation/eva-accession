@@ -112,13 +112,13 @@ def list_pending_release(status, release_version, taxonomy_id, assembly_accessio
     profile = cfg.query("maven", "environment")
     release_species_inventory_table = cfg.query('release', 'inventory_table')
     with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
-        header = ['taxonomy', 'assembly_accession', 'release_version']
+        header = ['taxonomy', 'assembly_accession', 'release_version', 'release_status']
         table = []
-        for taxonomy, assembly_accession, release_version in get_release_for_status_and_version(
-                release_species_inventory_table, metadata_connection_handle, status, release_version,
-                taxonomy_id, assembly_accessions
+        for taxonomy, assembly_accession, release_version, release_status in get_release_for_status_and_version(
+                release_species_inventory_table, metadata_connection_handle, status, release_version=release_version,
+                taxonomy_id=taxonomy_id, assembly_accessions=assembly_accessions
         ):
-            table.append((taxonomy, assembly_accession, release_version))
+            table.append((taxonomy, assembly_accession, release_version, release_status))
         pretty_print(header, table)
 
 
