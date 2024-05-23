@@ -92,23 +92,30 @@ def get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession, rel
     return results[0][0]
 
 
-def get_release_pending(release_species_inventory_table, metadata_connection_handle, status=None):
-    def format_status(status_list):
-        return f"({str(status_list).strip('[]')})"
+def get_release_for_status_and_version(release_species_inventory_table, metadata_connection_handle, status=None,
+                                       release_version=None, taxonomy_id=None, assembly_accessions=None):
+    def format_list(list_to_format):
+        return f"({str(list_to_format).strip('[]')})"
 
-    if 'Pending' in status:
-        status.remove('Pending')
-        if status:
-            status_statement = f"and (release_status in {format_status(status)} or release_status is null)"
+    if status:
+        if 'Pending' in status:
+            status.remove('Pending')
+            if status:
+                status_statement = f"and (release_status in {format_list(status)} or release_status is null)"
+            else:
+                status_statement = f"and release_status is null"
         else:
-            status_statement = f"and release_status is null"
+            status_statement = f"and release_status in {format_list(status)}"
     else:
-        status_statement = f"and release_status in {format_status(status)}"
+        status_statement = None
 
     query = (f"select taxonomy, assembly_accession, release_version from {release_species_inventory_table} "
-              "where should_be_released "
-              "and num_rs_to_release > 0 "
-              f"{status_statement}" if status_statement else ''
-              "ORDER BY release_version, taxonomy, assembly_accession")
+             f"where should_be_released "
+             f"and num_rs_to_release > 0 "
+             f"{status_statement}" if status_statement else ''
+             f"and release_version={release_version} " if release_version else ''
+             f"and taxonomy={taxonomy_id} " if taxonomy_id else ''
+             f"and assembly_accessions in {format_list(assembly_accessions)} " if assembly_accessions else ''
+             "ORDER BY release_version, taxonomy, assembly_accession")
     results = get_all_results_for_query(metadata_connection_handle, query)
     yield results
