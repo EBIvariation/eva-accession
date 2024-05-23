@@ -107,7 +107,7 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
             run_command_with_output(f"Running workflow file {workflow_file_path}", workflow_command)
 
 
-def list_pending_release(status, release_version, taxonomy_id, assembly_accessions):
+def list_release_per_status(status, release_version, taxonomy_id, assembly_accessions):
     private_config_xml_file = cfg.query("maven", "settings_file")
     profile = cfg.query("maven", "environment")
     release_species_inventory_table = cfg.query('release', 'inventory_table')
@@ -118,6 +118,8 @@ def list_pending_release(status, release_version, taxonomy_id, assembly_accessio
                 release_species_inventory_table, metadata_connection_handle, status, release_version=release_version,
                 taxonomy_id=taxonomy_id, assembly_accessions=assembly_accessions
         ):
+            if release_status is None:
+                release_status = 'Pending'
             table.append((taxonomy, assembly_accession, release_version, release_status))
         pretty_print(header, table)
 
@@ -145,7 +147,7 @@ def main():
     load_config()
     logging_config.add_stdout_handler()
     if args.list_status:
-        list_pending_release(args.list_status, args.release_version, args.taxonomy_id, args.assembly_accessions)
+        list_release_per_status(args.list_status, args.release_version, args.taxonomy_id, args.assembly_accessions)
     else:
         if not args.taxonomy_id:
             logger.error('--taxonomy_id is required when running the release')
