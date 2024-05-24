@@ -48,7 +48,8 @@ class ReleaseProperties:
         """
         Get release properties from common release properties file
         """
-        self.private_config_xml_file = cfg["private-config-xml-file"]
+        self.private_config_xml_file = cfg.query('maven', 'settings_file')
+        self.profile = cfg.query('maven', 'environment')
         self.release_version = release_version
         self.release_species_inventory_table = cfg["inventory_table"]
         self.staging_release_folder = cfg["release_output"]
@@ -297,7 +298,7 @@ def publish_release_files_to_ftp(release_version, taxonomy_id):
     publish_release_top_level_files_to_ftp(release_properties)
 
     with get_metadata_connection_handle(
-            "production_processing", release_properties.private_config_xml_file) as metadata_connection_handle:
+            release_properties.profile, release_properties.private_config_xml_file) as metadata_connection_handle:
         assemblies_to_process = get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties,
                                                                          metadata_connection_handle)
         species_has_unmapped_data = "Unmapped" in set([assembly_info["assembly_accession"] for assembly_info in
