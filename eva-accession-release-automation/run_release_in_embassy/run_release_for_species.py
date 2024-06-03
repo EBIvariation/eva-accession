@@ -134,7 +134,6 @@ def load_config(*args):
 
 def main():
     argparse = ArgumentParser()
-    argparse.add_argument_group()
     argparse.add_argument("--list_status", nargs='+',
                           help="Generate the list of species and assembly that needs to be released",
                           choices=['Pending', 'Started', 'Completed'])
