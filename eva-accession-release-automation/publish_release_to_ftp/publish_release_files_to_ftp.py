@@ -20,12 +20,14 @@ import glob
 import os
 from argparse import ArgumentParser
 
+from ebi_eva_common_pyutils.config import cfg
+
 from publish_release_to_ftp.create_assembly_name_symlinks import create_assembly_name_symlinks
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
-from run_release_in_embassy.run_release_for_species import get_common_release_properties
+from run_release_in_embassy.run_release_for_species import load_config
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories
 
 by_assembly_folder_name = "by_assembly"
@@ -42,16 +44,16 @@ logger = logging_config.get_logger(__name__)
 
 
 class ReleaseProperties:
-    def __init__(self, common_release_properties_file):
+    def __init__(self, release_version):
         """
         Get release properties from common release properties file
         """
-        common_release_properties = get_common_release_properties(common_release_properties_file)
-        self.private_config_xml_file = common_release_properties["private-config-xml-file"]
-        self.release_version = common_release_properties["release-version"]
-        self.release_species_inventory_table = common_release_properties["release-species-inventory-table"]
-        self.staging_release_folder = common_release_properties["release-folder"]
-        self.public_ftp_release_base_folder = common_release_properties["public-ftp-release-base-folder"]
+        self.private_config_xml_file = cfg.query('maven', 'settings_file')
+        self.profile = cfg.query('maven', 'environment')
+        self.release_version = release_version
+        self.release_species_inventory_table = cfg["inventory_table"]
+        self.staging_release_folder = cfg["release_output"]
+        self.public_ftp_release_base_folder = cfg["public_ftp_release_base_folder"]
         self.public_ftp_current_release_folder = os.path.join(self.public_ftp_release_base_folder,
                                                               f"release_{self.release_version}")
         self.public_ftp_previous_release_folder = os.path.join(self.public_ftp_release_base_folder,
@@ -289,14 +291,14 @@ def create_species_folder(release_properties, species_current_release_folder_nam
                             f"rm -rf {species_current_release_folder_path} && mkdir {species_current_release_folder_path}")
 
 
-def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
-    release_properties = ReleaseProperties(common_release_properties_file)
+def publish_release_files_to_ftp(release_version, taxonomy_id):
+    release_properties = ReleaseProperties(release_version)
     create_requisite_folders(release_properties)
     # Release README, known issues etc.,
     publish_release_top_level_files_to_ftp(release_properties)
 
     with get_metadata_connection_handle(
-            "production_processing", release_properties.private_config_xml_file) as metadata_connection_handle:
+            release_properties.profile, release_properties.private_config_xml_file) as metadata_connection_handle:
         assemblies_to_process = get_release_assemblies_info_for_taxonomy(taxonomy_id, release_properties,
                                                                          metadata_connection_handle)
         species_has_unmapped_data = "Unmapped" in set([assembly_info["assembly_accession"] for assembly_info in
@@ -333,13 +335,14 @@ def publish_release_files_to_ftp(common_release_properties_file, taxonomy_id):
 
 def main():
     argparse = ArgumentParser(description='Publish release files to FTP')
-    argparse.add_argument('--common_release_properties_file', required=True, type=str,
-                          help='ex: /path/to/release/properties.yml')
+    argparse.add_argument("--release_version", type=int, required=True)
     argparse.add_argument('--taxonomy_id', required=True, type=int, help='ex: 9913')
 
     args = argparse.parse_args()
+    load_config()
+    logging_config.add_stdout_handler()
 
-    publish_release_files_to_ftp(args.common_release_properties_file, args.taxonomy_id)
+    publish_release_files_to_ftp(args.release_version, args.taxonomy_id)
 
 
 if __name__ == "__main__":
