@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import sys
 from argparse import ArgumentParser
 
 import os
@@ -18,10 +19,11 @@ from functools import lru_cache
 
 import yaml
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.common_utils import pretty_print
 from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_common_pyutils.config import cfg
-from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy
+from run_release_in_embassy.release_metadata import get_release_assemblies_for_taxonomy, get_release_for_status_and_version
 from run_release_in_embassy.release_common_utils import get_release_folder_name
 
 
@@ -105,6 +107,23 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
             run_command_with_output(f"Running workflow file {workflow_file_path}", workflow_command)
 
 
+def list_release_per_status(status, release_version, taxonomy_id, assembly_accessions):
+    private_config_xml_file = cfg.query("maven", "settings_file")
+    profile = cfg.query("maven", "environment")
+    release_species_inventory_table = cfg.query('release', 'inventory_table')
+    with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
+        header = ['taxonomy', 'assembly_accession', 'release_version', 'release_status']
+        table = []
+        for taxonomy, assembly_accession, release_version, release_status in get_release_for_status_and_version(
+                release_species_inventory_table, metadata_connection_handle, status, release_version=release_version,
+                taxonomy_id=taxonomy_id, assembly_accessions=assembly_accessions
+        ):
+            if release_status is None:
+                release_status = 'Pending'
+            table.append((taxonomy, assembly_accession, release_version, release_status))
+        pretty_print(header, table)
+
+
 def load_config(*args):
     cfg.load_config_file(
         *args,
@@ -115,16 +134,27 @@ def load_config(*args):
 
 def main():
     argparse = ArgumentParser()
-    argparse.add_argument("--taxonomy_id", help="ex: 9913", required=True)
+    argparse.add_argument("--list_status", nargs='+',
+                          help="Generate the list of species and assembly that needs to be released",
+                          choices=['Pending', 'Started', 'Completed'])
+    argparse.add_argument("--taxonomy_id", help="ex: 9913")
     argparse.add_argument("--assembly_accessions", nargs='+', help="ex: GCA_000003055.3")
-    argparse.add_argument("--release_version", required=True)
-    argparse.add_argument("--resume", default=False, required=False,
+    argparse.add_argument("--release_version")
+    argparse.add_argument("--resume", default=False,
                           help="Resume the nextflow pipeline for the specified taxonomy and assembly")
     args = argparse.parse_args()
     load_config()
     logging_config.add_stdout_handler()
-
-    run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
+    if args.list_status:
+        list_release_per_status(args.list_status, args.release_version, args.taxonomy_id, args.assembly_accessions)
+    else:
+        if not args.taxonomy_id:
+            logger.error('--taxonomy_id is required when running the release')
+            sys.exit(1)
+        if not args.release_version:
+            logger.error('--release_version is required when running the release')
+            sys.exit(1)
+        run_release_for_species(args.taxonomy_id, args.assembly_accessions, args.release_version, args.resume)
 
 
 if __name__ == "__main__":

@@ -90,3 +90,33 @@ def get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession, rel
         raise Exception("Could not find release inventory pertaining to taxonomy ID: {0} and assembly: {1} "
                         .format(taxonomy_id, assembly_accession))
     return results[0][0]
+
+
+def get_release_for_status_and_version(release_species_inventory_table, metadata_connection_handle, status=None,
+                                       release_version=None, taxonomy_id=None, assembly_accessions=None):
+    def format_list(list_to_format):
+        return f"({str(list_to_format).strip('[]')})"
+
+    if status:
+        if 'Pending' in status:
+            status.remove('Pending')
+            if status:
+                status_statement = f"and (release_status in {format_list(status)} or release_status is null) "
+            else:
+                status_statement = f"and release_status is null "
+        else:
+            status_statement = f"and release_status in {format_list(status)} "
+    else:
+        status_statement = None
+
+    query = ''.join((
+        f"select taxonomy, assembly_accession, release_version, release_status from {release_species_inventory_table} ",
+        f"where should_be_released ",
+        f"and num_rs_to_release > 0 ",
+        f"{status_statement}" if status_statement else '',
+        f"and release_version={release_version} " if release_version else '',
+        f"and taxonomy={taxonomy_id} " if taxonomy_id else '',
+        f"and assembly_accessions in {format_list(assembly_accessions)} " if assembly_accessions else '',
+        "ORDER BY release_version, taxonomy, assembly_accession"
+    ))
+    return get_all_results_for_query(metadata_connection_handle, query)
