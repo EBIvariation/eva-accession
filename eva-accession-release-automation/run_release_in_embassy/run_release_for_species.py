@@ -42,7 +42,7 @@ def get_nextflow_params(taxonomy_id, assembly_accession, release_version):
         'dump_dir': dump_dir,
         'executable': cfg['executable'],
         'jar': cfg['jar'],
-        'log_file': get_release_log_file_name(taxonomy_id, assembly_accession),
+        'log_file': get_release_log_file_name(release_version, taxonomy_id, assembly_accession),
         'maven': cfg['maven'],
         'python_path': os.environ['PYTHONPATH'],
         'release_version': release_version,
