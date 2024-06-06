@@ -25,20 +25,20 @@ from run_release_in_embassy.release_common_utils import get_release_vcf_file_nam
 
 
 def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id, assembly_accession,
-                                   species_release_folder):
+                                   assembly_release_folder):
     commands = []
     # These files are left behind by the sort_vcf_sorted_chromosomes.sh script
     # To be idempotent, remove such files
-    commands.append("rm -f {0}/{1}/*.chromosomes".format(species_release_folder, assembly_accession))
+    commands.append("rm -f {0}/*.chromosomes".format(assembly_release_folder))
     for vcf_file_category in release_vcf_file_categories:
-        unsorted_release_file_name = get_unsorted_release_vcf_file_name(species_release_folder, taxonomy_id,
+        unsorted_release_file_name = get_unsorted_release_vcf_file_name(assembly_release_folder, taxonomy_id,
                                                                         assembly_accession, vcf_file_category)
-        sorted_release_file_name = get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id,
+        sorted_release_file_name = get_release_vcf_file_name_genbank(assembly_release_folder, taxonomy_id,
                                                                      assembly_accession, vcf_file_category)
         if vcf_file_category == 'current_ids':
             commands.append(
                 f"rm -f {sorted_release_file_name} && "
-                f"{bcftools_path} sort -T {species_release_folder} -m 2G -o {sorted_release_file_name} "
+                f"{bcftools_path} sort -T {assembly_release_folder} -m 2G -o {sorted_release_file_name} "
                 f"{unsorted_release_file_name}"
             )
         else:
@@ -47,9 +47,9 @@ def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_pa
                                                                  sorted_release_file_name))
         commands.extend(get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, sorted_release_file_name))
     for text_release_file_category in release_text_file_categories:
-        unsorted_release_file_name = get_unsorted_release_text_file_name(species_release_folder, taxonomy_id,
+        unsorted_release_file_name = get_unsorted_release_text_file_name(assembly_release_folder, taxonomy_id,
                                                                          assembly_accession, text_release_file_category)
-        sorted_release_file_name = get_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession,
+        sorted_release_file_name = get_release_text_file_name(assembly_release_folder, taxonomy_id, assembly_accession,
                                                               text_release_file_category)
         commands.append("(sort -V {1} | uniq > {2})".format(vcf_sort_script_path,
                                                             unsorted_release_file_name,
@@ -65,12 +65,12 @@ def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_pa
 @click.option("--vcf-sort-script-path", help="ex: /path/to/vcf/sort/script", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.command()
-def main(bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id, assembly_accession, species_release_folder):
+def main(bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id, assembly_accession, assembly_release_folder):
     logging_config.add_stdout_handler()
     sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id, assembly_accession,
-                                   species_release_folder)
+                                   assembly_release_folder)
 
 
 if __name__ == "__main__":

@@ -22,19 +22,19 @@ from run_release_in_embassy.release_metadata import release_vcf_file_categories,
 from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank, get_release_text_file_name
 
 
-def count_rs_ids_in_release_files(count_ids_script_path, taxonomy_id, assembly_accession, species_release_folder):
-    release_count_filename = os.path.join(species_release_folder, assembly_accession, "README_rs_ids_counts.txt")
+def count_rs_ids_in_release_files(count_ids_script_path, taxonomy_id, assembly_accession, assembly_release_folder):
+    release_count_filename = os.path.join(assembly_release_folder, assembly_accession, "README_rs_ids_counts.txt")
     with open(release_count_filename, "w") as release_count_file_handle:
         release_count_file_handle.write("# Unique RS ID counts\n")
         for vcf_file_category in release_vcf_file_categories:
-            release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id, assembly_accession,
+            release_vcf_file_name = get_release_vcf_file_name_genbank(assembly_release_folder, taxonomy_id, assembly_accession,
                                                               vcf_file_category)
             num_ids_in_file = run_command_with_output("Counting RS IDs in file: " + release_vcf_file_name,
                                                       "{0} {1}.gz".format(count_ids_script_path, release_vcf_file_name),
                                                       return_process_output=True)
             release_count_file_handle.write(num_ids_in_file)
         for text_release_file_category in release_text_file_categories:
-            text_release_file_name = get_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession,
+            text_release_file_name = get_release_text_file_name(assembly_release_folder, taxonomy_id, assembly_accession,
                                                                 text_release_file_category)
             num_ids_in_file = run_command_with_output("Counting RS IDs in file: " + text_release_file_name,
                                                       "zcat {0}.gz | cut -f1 | uniq | wc -l"
@@ -46,11 +46,11 @@ def count_rs_ids_in_release_files(count_ids_script_path, taxonomy_id, assembly_a
 @click.option("--count-ids-script-path", help="ex: /path/to/count/ids/script", required=True)
 @click.option("--taxonomy-id", help="ex: 9913", required=True)
 @click.option("--assembly-accession", help="ex: GCA_000003055.6", required=True)
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.command()
-def main(count_ids_script_path, taxonomy_id, assembly_accession, species_release_folder):
+def main(count_ids_script_path, taxonomy_id, assembly_accession, assembly_release_folder):
     logging_config.add_stdout_handler()
-    count_rs_ids_in_release_files(count_ids_script_path, taxonomy_id, assembly_accession, species_release_folder)
+    count_rs_ids_in_release_files(count_ids_script_path, taxonomy_id, assembly_accession, assembly_release_folder)
 
 
 if __name__ == "__main__":

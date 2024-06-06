@@ -64,14 +64,14 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
 @click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
-         release_version, species_release_folder):
+         release_version, assembly_release_folder):
     logging_config.add_stdout_handler()
     create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
-                                                species_release_folder)
+                                                assembly_release_folder)
 
 
 if __name__ == "__main__":
