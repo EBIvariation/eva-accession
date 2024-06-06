@@ -23,7 +23,7 @@ from run_release_in_embassy.release_metadata import get_release_inventory_info_f
 
 
 def get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
-                                        release_species_inventory_table, release_version, species_release_folder):
+                                        release_species_inventory_table, release_version):
     with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                                       release_species_inventory_table,
@@ -36,13 +36,13 @@ def get_release_properties_for_assembly(private_config_xml_file, profile, taxono
 
 def create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
-                                                species_release_folder):
-    assembly_species_release_folder = os.path.join(species_release_folder, assembly_accession)
-    os.makedirs(assembly_species_release_folder, exist_ok=True)
-    output_file = "{0}/{1}_release.properties".format(assembly_species_release_folder, assembly_accession)
-    release_properties = get_release_properties_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
-                                                             release_species_inventory_table, release_version,
-                                                             species_release_folder)
+                                                assembly_release_folder):
+    os.makedirs(assembly_release_folder, exist_ok=True)
+    output_file = "{0}/{1}_release.properties".format(assembly_release_folder, assembly_accession)
+    release_properties = get_release_properties_for_assembly(
+        private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
+        release_version
+    )
     properties_string = SpringPropertiesGenerator(profile, private_config_xml_file).get_release_properties(
         temp_mongo_db=release_properties['mongo_accessioning_db'],
         job_name='ACCESSION_RELEASE_JOB',
@@ -51,7 +51,7 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
         fasta=release_properties['fasta_path'],
         assembly_report=release_properties['report_path'],
         contig_naming='SEQUENCE_NAME',
-        output_folder=assembly_species_release_folder
+        output_folder=assembly_release_folder
     )
     open(output_file, "w").write(properties_string)
     return output_file
