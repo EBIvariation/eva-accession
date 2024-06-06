@@ -15,6 +15,8 @@
 import click
 import os
 
+from ebi_eva_common_pyutils.logger import logging_config
+
 from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
     release_vcf_file_categories, vcf_validation_output_file_pattern, asm_report_output_file_pattern
@@ -79,6 +81,7 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
          species_release_folder, vcf_validator_path, assembly_checker_path):
+    logging_config.add_stdout_handler()
     validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                release_species_inventory_table, release_version, species_release_folder,
                                vcf_validator_path, assembly_checker_path)

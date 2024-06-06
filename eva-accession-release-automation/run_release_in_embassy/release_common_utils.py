@@ -46,9 +46,8 @@ def open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id, 
 
 def close_mongo_port_to_tempmongo(port_forwarding_process_id):
     os.kill(port_forwarding_process_id, signal.SIGTERM)
-    os.system('echo -e "Killed port forwarding from remote port with signal 1 - SIGTERM. '
-              '\\033[31;1;4mIGNORE OS MESSAGE '  # escape sequences for bold red and underlined text
-              '\'Killed by Signal 1\' in the preceding/following text\\033[0m".')
+    logger.info('Killed port forwarding from remote port with signal 1 - SIGTERM. '
+                'IGNORE OS MESSAGE \'Killed by Signal 1\' in the preceding/following text.')
 
 
 def get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, file):

@@ -26,6 +26,8 @@ import traceback
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.file_utils import file_diff, FileDiffOption
+from ebi_eva_common_pyutils.logger import logging_config
+
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
     get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.copy_accessioning_collections_to_embassy import collections_assembly_attribute_map, \
@@ -498,6 +500,7 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
          release_version, species_release_folder):
+    logging_config.add_stdout_handler()
     validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                               release_species_inventory_table, release_version, species_release_folder)
 

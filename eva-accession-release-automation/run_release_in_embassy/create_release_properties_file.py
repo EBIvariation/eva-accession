@@ -14,6 +14,7 @@
 import os
 
 import click
+from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.spring_properties import SpringPropertiesGenerator
 
@@ -67,6 +68,7 @@ def create_release_properties_file_for_assembly(private_config_xml_file, profile
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
          release_version, species_release_folder):
+    logging_config.add_stdout_handler()
     create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
                                                 species_release_folder)

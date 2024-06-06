@@ -19,7 +19,7 @@ import glob
 import sys
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.logger import logging_config as log_cfg
+from ebi_eva_common_pyutils.logger import logging_config as log_cfg, logging_config
 from run_release_in_embassy.release_metadata import vcf_validation_output_file_pattern, asm_report_output_file_pattern
 
 logger = log_cfg.get_logger(__name__)
@@ -84,6 +84,7 @@ def analyze_vcf_validation_results(species_release_folder, assembly_accession):
 @click.option("--assembly-accession", required=True)
 @click.command()
 def main(species_release_folder, assembly_accession):
+    logging_config.add_stdout_handler()
     analyze_vcf_validation_results(species_release_folder, assembly_accession)
 
 

@@ -14,6 +14,7 @@
 
 
 import click
+from ebi_eva_common_pyutils.logger import logging_config
 
 from run_release_in_embassy.release_common_utils import get_release_vcf_file_name, get_release_vcf_file_name_genbank
 from run_release_in_embassy.release_metadata import release_vcf_file_categories
@@ -44,6 +45,7 @@ def update_sequence_name(taxonomy_id, assembly_accession, species_release_folder
 @click.option("--bcftools-path", help="ex: /path/to/bcftools/binary", required=True)
 @click.command()
 def main(taxonomy_id, assembly_accession, species_release_folder, sequence_name_converter_path, bcftools_path):
+    logging_config.add_stdout_handler()
     update_sequence_name(taxonomy_id, assembly_accession, species_release_folder, sequence_name_converter_path, bcftools_path)
 
 

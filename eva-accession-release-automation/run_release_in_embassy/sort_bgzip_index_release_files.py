@@ -16,6 +16,8 @@
 import click
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.logger import logging_config
+
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories
 from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank, \
     get_unsorted_release_vcf_file_name, get_release_text_file_name, get_unsorted_release_text_file_name, \
@@ -66,6 +68,7 @@ def sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_pa
 @click.option("--species-release-folder", required=True)
 @click.command()
 def main(bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id, assembly_accession, species_release_folder):
+    logging_config.add_stdout_handler()
     sort_bgzip_index_release_files(bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id, assembly_accession,
                                    species_release_folder)
 

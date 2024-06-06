@@ -18,6 +18,7 @@ import glob
 import os
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
@@ -205,6 +206,7 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
 @click.command()
 def main(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id,
          assembly_accession, release_species_inventory_table, release_version, species_release_folder):
+    logging_config.add_stdout_handler()
     merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
                                   species_release_folder)
