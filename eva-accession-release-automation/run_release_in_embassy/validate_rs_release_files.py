@@ -258,7 +258,7 @@ def read_next_batch_of_missing_ids(missing_rs_ids_file_handle):
 
 
 def get_unique_release_rs_ids(assembly_release_folder, taxonomy_id, assembly_accession):
-    folder_prefix = os.path.join(assembly_release_folder, assembly_accession, f'{taxonomy_id}_{assembly_accession}')
+    folder_prefix = os.path.join(assembly_release_folder, f'{taxonomy_id}_{assembly_accession}')
     active_rs_ids_file = folder_prefix + "_current_ids_with_genbank.vcf.gz"
     merged_rs_ids_file = folder_prefix + "_merged_ids_with_genbank.vcf.gz"
     multimap_rs_ids_file = folder_prefix + "_multimap_ids_with_genbank.vcf.gz"
@@ -469,7 +469,7 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
         db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
         with MongoClient(port=mongo_port) as client:
             db_handle = client[db_name_in_tempmongo_instance]
-            mongo_unique_rs_ids_file = os.path.join(assembly_release_folder, assembly_accession,
+            mongo_unique_rs_ids_file = os.path.join(assembly_release_folder,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))
             export_unique_rs_ids_from_mongo(db_handle, taxonomy_id, assembly_accession, mongo_unique_rs_ids_file)
             unique_release_rs_ids_file = get_unique_release_rs_ids(assembly_release_folder, taxonomy_id,

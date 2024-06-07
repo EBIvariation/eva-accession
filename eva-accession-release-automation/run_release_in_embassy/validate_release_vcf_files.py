@@ -35,9 +35,8 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
                                release_species_inventory_table, release_version, assembly_release_folder,
                                vcf_validator_path, assembly_checker_path):
     run_command_with_output("Remove existing VCF validation and assembly report outputs...",
-                            "rm -f {0}/{1}/{2} {0}/{1}/{3}".format(assembly_release_folder, assembly_accession,
-                                                                   vcf_validation_output_file_pattern,
-                                                                   asm_report_output_file_pattern))
+                            "rm -f {0}/{1} {0}/{2}".format(assembly_release_folder, vcf_validation_output_file_pattern,
+                                                           asm_report_output_file_pattern))
     validate_release_vcf_files_commands = []
     with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,

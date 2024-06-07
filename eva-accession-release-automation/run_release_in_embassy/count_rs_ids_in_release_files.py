@@ -23,7 +23,7 @@ from run_release_in_embassy.release_common_utils import get_release_vcf_file_nam
 
 
 def count_rs_ids_in_release_files(count_ids_script_path, taxonomy_id, assembly_accession, assembly_release_folder):
-    release_count_filename = os.path.join(assembly_release_folder, assembly_accession, "README_rs_ids_counts.txt")
+    release_count_filename = os.path.join(assembly_release_folder, "README_rs_ids_counts.txt")
     with open(release_count_filename, "w") as release_count_file_handle:
         release_count_file_handle.write("# Unique RS ID counts\n")
         for vcf_file_category in release_vcf_file_categories:
