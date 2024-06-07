@@ -18,6 +18,7 @@ import glob
 import os
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories, \
     get_release_inventory_info_for_assembly
@@ -25,10 +26,10 @@ from run_release_in_embassy.release_common_utils import get_bgzip_bcftools_index
     get_release_vcf_file_name, get_unsorted_release_vcf_file_name, get_unsorted_release_text_file_name
 
 
-def move_release_files_to_unsorted_category(taxonomy_id, assembly_accession, species_release_folder, vcf_file_category,
+def move_release_files_to_unsorted_category(taxonomy_id, assembly_accession, assembly_release_folder, vcf_file_category,
                                             unsorted_release_file_path):
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
-    release_file_path = get_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession,
+    release_file_path = get_release_vcf_file_name(assembly_release_folder, taxonomy_id, assembly_accession,
                                                   vcf_file_category)
     release_file_name = os.path.basename(release_file_path)
     for variant_source in ["eva", "dbsnp"]:
@@ -86,17 +87,17 @@ def merge_dbsnp_eva_vcf_headers(file1, file2, output_file):
 
 
 def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id, assembly_accession,
-                              species_release_folder, vcf_file_category, data_sources):
+                              assembly_release_folder, vcf_file_category, data_sources):
     vcf_merge_commands = []
     # This is the desired post-merge output file name in the format <assembly>_<category>.vcf
     # ex: 60711_GCA_000409795.2_merged_ids.vcf
-    unsorted_release_file_path = get_unsorted_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession,
+    unsorted_release_file_path = get_unsorted_release_vcf_file_name(assembly_release_folder, taxonomy_id, assembly_accession,
                                                                     vcf_file_category)
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
     # After release pipeline is run on a species, the default VCF output files are in the formats like below
     # ex: eva_GCA_000409795.2_merged_ids.vcf and dbsnp_GCA_000409795.2_merged_ids.vcf
     # Move them to files with _unsorted suffix to avoid confusion
-    move_release_files_to_unsorted_category(taxonomy_id, assembly_accession, species_release_folder, vcf_file_category,
+    move_release_files_to_unsorted_category(taxonomy_id, assembly_accession, assembly_release_folder, vcf_file_category,
                                             unsorted_release_file_path)
     dbsnp_vcf_file_pattern = unsorted_release_file_path.replace(unsorted_release_file_name,
                                                                 "dbsnp*_" + unsorted_release_file_name.replace(f'{str(taxonomy_id)}_', ''))
@@ -133,10 +134,10 @@ def merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path, t
     return vcf_merge_commands
 
 
-def merge_dbsnp_eva_text_files(taxonomy_id, assembly_accession, species_release_folder, text_release_file_category,
+def merge_dbsnp_eva_text_files(taxonomy_id, assembly_accession, assembly_release_folder, text_release_file_category,
                                data_sources):
     text_release_file_merge_commands = []
-    unsorted_release_file_path = get_unsorted_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession,
+    unsorted_release_file_path = get_unsorted_release_text_file_name(assembly_release_folder, taxonomy_id, assembly_accession,
                                                                      text_release_file_category)
     unsorted_release_file_name = os.path.basename(unsorted_release_file_path)
     # After release is run on a species, the default text (i.e., non-vcf) output files have ".unsorted.txt" file suffix
@@ -173,7 +174,7 @@ def merge_dbsnp_eva_text_files(taxonomy_id, assembly_accession, species_release_
 
 def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-                                  species_release_folder):
+                                  assembly_release_folder):
     with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_info = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
                                                                release_species_inventory_table,
@@ -181,10 +182,10 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
         merge_commands = []
         for vcf_file_category in release_vcf_file_categories:
             merge_commands.extend(merge_dbsnp_eva_vcf_files(bgzip_path, bcftools_path, vcf_sort_script_path,
-                                                            taxonomy_id, assembly_accession, species_release_folder,
+                                                            taxonomy_id, assembly_accession, assembly_release_folder,
                                                             vcf_file_category, release_info["sources"]))
         for text_release_file_category in release_text_file_categories:
-            merge_commands.extend(merge_dbsnp_eva_text_files(taxonomy_id, assembly_accession, species_release_folder,
+            merge_commands.extend(merge_dbsnp_eva_text_files(taxonomy_id, assembly_accession, assembly_release_folder,
                                                              text_release_file_category, release_info["sources"]))
         final_merge_command = " && ".join(merge_commands)
         run_command_with_output(f"Merging dbSNP and EVA release files for taxonomy {taxonomy_id} and assembly {assembly_accession}",
@@ -201,13 +202,14 @@ def merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, 
 @click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.command()
 def main(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path, taxonomy_id,
-         assembly_accession, release_species_inventory_table, release_version, species_release_folder):
+         assembly_accession, release_species_inventory_table, release_version, assembly_release_folder):
+    logging_config.add_stdout_handler()
     merge_dbsnp_eva_release_files(private_config_xml_file, profile, bgzip_path, bcftools_path, vcf_sort_script_path,
                                   taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-                                  species_release_folder)
+                                  assembly_release_folder)
 
 
 if __name__ == "__main__":

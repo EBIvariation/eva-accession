@@ -27,7 +27,7 @@ logger = logging_config.get_logger(__name__)
 
 
 def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
-                             release_species_inventory_table, release_version, species_release_folder, release_jar_path,
+                             release_species_inventory_table, release_version, assembly_release_folder, release_jar_path,
                              memory):
     exit_code = -1
     try:
@@ -38,7 +38,7 @@ def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, asse
         release_properties_file = create_release_properties_file_for_assembly(private_config_xml_file, profile,
                                                                               taxonomy_id, assembly_accession,
                                                                               release_species_inventory_table,
-                                                                              release_version, species_release_folder)
+                                                                              release_version, assembly_release_folder)
         release_command = 'java -Xmx{0}g -jar {1} --spring.config.location=file:{2} -Dspring.data.mongodb.port={3}'\
             .format(memory, release_jar_path, release_properties_file, mongo_port)
         run_command_with_output("Running release pipeline for assembly: " + assembly_accession, release_command)
@@ -60,14 +60,15 @@ def run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, asse
 @click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.option("--release-jar-path", required=True)
 @click.option("--memory",  help="Memory in GB. ex: 8", default=8, type=int, required=False)
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
-         release_version, species_release_folder, release_jar_path, memory):
+         release_version, assembly_release_folder, release_jar_path, memory):
+    logging_config.add_stdout_handler()
     run_release_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
-                             release_species_inventory_table, release_version, species_release_folder, release_jar_path,
+                             release_species_inventory_table, release_version, assembly_release_folder, release_jar_path,
                              memory)
 
 

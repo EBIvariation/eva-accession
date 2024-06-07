@@ -31,16 +31,18 @@ logger = logging_config.get_logger(__name__)
 
 
 def get_nextflow_params(taxonomy_id, assembly_accession, release_version):
-    dump_dir = os.path.join(get_species_release_folder(taxonomy_id), 'dumps')
-    release_dir = get_assembly_release_folder(taxonomy_id, assembly_accession)
+    dump_dir = os.path.join(get_species_release_folder(release_version, taxonomy_id), 'dumps')
+    release_dir = get_assembly_release_folder(release_version, taxonomy_id, assembly_accession)
     config_param = os.path.join(release_dir, f'nextflow_params_{taxonomy_id}_{assembly_accession}.yaml')
     os.makedirs(dump_dir, exist_ok=True)
+    # Add the same python interpreter as the one we're using to use with the python step scripts
+    cfg['executable']['python_interpreter'] = sys.executable
     yaml_data = {
         'assembly': assembly_accession,
         'dump_dir': dump_dir,
         'executable': cfg['executable'],
         'jar': cfg['jar'],
-        'log_file': get_release_log_file_name(taxonomy_id, assembly_accession),
+        'log_file': get_release_log_file_name(release_version, taxonomy_id, assembly_accession),
         'maven': cfg['maven'],
         'python_path': os.environ['PYTHONPATH'],
         'release_version': release_version,
@@ -62,20 +64,25 @@ def get_run_release_for_assembly_nextflow():
     return os.path.join(curr_dir, 'run_release_for_assembly.nf')
 
 
-def get_release_log_file_name(taxonomy_id, assembly_accession):
-    return f"{get_assembly_release_folder(taxonomy_id, assembly_accession)}/release_{taxonomy_id}_{assembly_accession}.log"
-
+def get_release_log_file_name(release_version, taxonomy_id, assembly_accession):
+    return f"{get_assembly_release_folder(release_version, taxonomy_id, assembly_accession)}/release_{taxonomy_id}_{assembly_accession}.log"
 
 @lru_cache
-def get_species_release_folder(taxonomy_id):
-    folder = os.path.join(cfg.query('release', 'release_output'), get_release_folder_name(taxonomy_id))
+def get_release_folder(release_version):
+    folder = os.path.join(cfg.query('release', 'release_output'), f'release_{release_version}')
+    os.makedirs(folder, exist_ok=True)
+    return folder
+
+@lru_cache
+def get_species_release_folder(release_version, taxonomy_id):
+    folder = os.path.join(get_release_folder(release_version), get_release_folder_name(taxonomy_id))
     os.makedirs(folder, exist_ok=True)
     return folder
 
 
 @lru_cache
-def get_assembly_release_folder(taxonomy_id, assembly_accession):
-    folder = os.path.join(get_species_release_folder(taxonomy_id), assembly_accession)
+def get_assembly_release_folder(release_version, taxonomy_id, assembly_accession):
+    folder = os.path.join(get_species_release_folder(release_version, taxonomy_id), assembly_accession)
     os.makedirs(folder, exist_ok=True)
     return folder
 
@@ -93,7 +100,7 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
         for assembly_accession in release_assemblies:
             nextflow_params = get_nextflow_params(taxonomy_id, assembly_accession, release_version)
             workflow_file_path = get_run_release_for_assembly_nextflow()
-            release_dir = get_assembly_release_folder(taxonomy_id, assembly_accession)
+            release_dir = get_assembly_release_folder(release_version, taxonomy_id, assembly_accession)
             nextflow_config = get_nextflow_config()
             workflow_command = ' '.join((
                 f"cd {release_dir} &&",
@@ -128,7 +135,7 @@ def load_config(*args):
     cfg.load_config_file(
         *args,
         os.environ.get('RELEASE_CONFIG'),
-        '~/.release_config.yml'
+        os.path.expanduser('~/.release_config.yml')
     )
 
 

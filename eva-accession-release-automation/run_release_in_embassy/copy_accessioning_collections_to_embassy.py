@@ -19,6 +19,7 @@ import sys
 import traceback
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
+from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.config_utils import get_mongo_uri_for_eva_profile
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.mongo_utils import copy_db
@@ -153,6 +154,7 @@ def copy_accessioning_collections_to_embassy(private_config_xml_file, profile, t
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, collections_to_copy, release_species_inventory_table,
          release_version, dump_dir):
+    logging_config.add_stdout_handler()
     copy_accessioning_collections_to_embassy(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                              collections_to_copy, release_species_inventory_table, release_version,
                                              dump_dir)

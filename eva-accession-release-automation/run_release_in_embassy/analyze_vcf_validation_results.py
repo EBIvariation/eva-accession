@@ -19,7 +19,7 @@ import glob
 import sys
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
-from ebi_eva_common_pyutils.logger import logging_config as log_cfg
+from ebi_eva_common_pyutils.logger import logging_config as log_cfg, logging_config
 from run_release_in_embassy.release_metadata import vcf_validation_output_file_pattern, asm_report_output_file_pattern
 
 logger = log_cfg.get_logger(__name__)
@@ -70,21 +70,21 @@ def analyze_asm_report_files(asm_report_files):
     return exit_code
 
 
-def analyze_vcf_validation_results(species_release_folder, assembly_accession):
-    vcf_validation_report_files = glob.glob("{0}/{1}/{2}".format(species_release_folder, assembly_accession,
-                                                                 vcf_validation_output_file_pattern))
+def analyze_vcf_validation_results(assembly_release_folder, assembly_accession):
+    vcf_validation_report_files = glob.glob("{0}/{1}".format(assembly_release_folder,
+                                                             vcf_validation_output_file_pattern))
     exit_code = analyze_vcf_validation_files(vcf_validation_report_files)
-    asm_report_files = glob.glob("{0}/{1}/{2}".format(species_release_folder, assembly_accession,
-                                                      asm_report_output_file_pattern))
+    asm_report_files = glob.glob("{0}/{1}".format(assembly_release_folder,  asm_report_output_file_pattern))
     exit_code = exit_code or analyze_asm_report_files(asm_report_files)
     sys.exit(exit_code)
 
 
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.option("--assembly-accession", required=True)
 @click.command()
-def main(species_release_folder, assembly_accession):
-    analyze_vcf_validation_results(species_release_folder, assembly_accession)
+def main(assembly_release_folder, assembly_accession):
+    logging_config.add_stdout_handler()
+    analyze_vcf_validation_results(assembly_release_folder, assembly_accession)
 
 
 if __name__ == '__main__':

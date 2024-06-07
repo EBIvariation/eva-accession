@@ -46,9 +46,8 @@ def open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id, 
 
 def close_mongo_port_to_tempmongo(port_forwarding_process_id):
     os.kill(port_forwarding_process_id, signal.SIGTERM)
-    os.system('echo -e "Killed port forwarding from remote port with signal 1 - SIGTERM. '
-              '\\033[31;1;4mIGNORE OS MESSAGE '  # escape sequences for bold red and underlined text
-              '\'Killed by Signal 1\' in the preceding/following text\\033[0m".')
+    logger.info('Killed port forwarding from remote port with signal 1 - SIGTERM. '
+                'IGNORE OS MESSAGE \'Killed by Signal 1\' in the preceding/following text.')
 
 
 def get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, file):
@@ -57,32 +56,31 @@ def get_bgzip_bcftools_index_commands_for_file(bgzip_path, bcftools_path, file):
     return commands
 
 
-def get_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
-    return os.path.join(species_release_folder, assembly_accession, "{0}_{1}_{2}.vcf".format(taxonomy_id,
-                                                                                             assembly_accession,
-                                                                                             vcf_file_category))
+def get_release_vcf_file_name(assembly_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
+    return os.path.join(assembly_release_folder,  "{0}_{1}_{2}.vcf".format(taxonomy_id, assembly_accession,
+                                                                           vcf_file_category))
 
 
-def get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
+def get_release_vcf_file_name_genbank(assembly_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
     return os.path.join(
-        species_release_folder, assembly_accession,
+        assembly_release_folder,
         "{0}_{1}_{2}_with_genbank.vcf".format(taxonomy_id, assembly_accession, vcf_file_category)
     )
 
 
-def get_unsorted_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
-    vcf_file_path = get_release_vcf_file_name(species_release_folder, taxonomy_id, assembly_accession, vcf_file_category)
+def get_unsorted_release_vcf_file_name(assembly_release_folder, taxonomy_id, assembly_accession, vcf_file_category):
+    vcf_file_path = get_release_vcf_file_name(assembly_release_folder, taxonomy_id, assembly_accession, vcf_file_category)
     filename = os.path.basename(vcf_file_path)
     return vcf_file_path.replace(filename, filename.replace(".vcf", "_unsorted.vcf"))
 
 
-def get_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession, release_text_file_category):
-    return os.path.join(species_release_folder, assembly_accession,
+def get_release_text_file_name(assembly_release_folder, taxonomy_id, assembly_accession, release_text_file_category):
+    return os.path.join(assembly_release_folder,
                         "{0}_{1}_{2}.txt".format(taxonomy_id, assembly_accession, release_text_file_category))
 
 
-def get_unsorted_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession, release_text_file_category):
-    release_text_file_path = get_release_text_file_name(species_release_folder, taxonomy_id, assembly_accession,
+def get_unsorted_release_text_file_name(assembly_release_folder, taxonomy_id, assembly_accession, release_text_file_category):
+    release_text_file_path = get_release_text_file_name(assembly_release_folder, taxonomy_id, assembly_accession,
                                                         release_text_file_category)
     filename = os.path.basename(release_text_file_path)
     return release_text_file_path.replace(filename, filename.replace(".txt", ".unsorted.txt"))

@@ -26,6 +26,8 @@ import traceback
 
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.file_utils import file_diff, FileDiffOption
+from ebi_eva_common_pyutils.logger import logging_config
+
 from run_release_in_embassy.release_common_utils import open_mongo_port_to_tempmongo, close_mongo_port_to_tempmongo, \
     get_release_db_name_in_tempmongo_instance
 from run_release_in_embassy.copy_accessioning_collections_to_embassy import collections_assembly_attribute_map, \
@@ -255,8 +257,8 @@ def read_next_batch_of_missing_ids(missing_rs_ids_file_handle):
         yield lines_read
 
 
-def get_unique_release_rs_ids(species_release_folder, taxonomy_id, assembly_accession):
-    folder_prefix = os.path.join(species_release_folder, assembly_accession, f'{taxonomy_id}_{assembly_accession}')
+def get_unique_release_rs_ids(assembly_release_folder, taxonomy_id, assembly_accession):
+    folder_prefix = os.path.join(assembly_release_folder, f'{taxonomy_id}_{assembly_accession}')
     active_rs_ids_file = folder_prefix + "_current_ids_with_genbank.vcf.gz"
     merged_rs_ids_file = folder_prefix + "_merged_ids_with_genbank.vcf.gz"
     multimap_rs_ids_file = folder_prefix + "_multimap_ids_with_genbank.vcf.gz"
@@ -458,7 +460,7 @@ def export_unique_rs_ids_from_mongo(mongo_database_handle, taxonomy_id, assembly
 
 
 def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
-                              release_version, species_release_folder):
+                              release_version, assembly_release_folder):
     port_forwarding_process_id, mongo_port, exit_code = None, None, -1
     try:
         port_forwarding_process_id, mongo_port = open_mongo_port_to_tempmongo(private_config_xml_file, profile, taxonomy_id,
@@ -467,10 +469,10 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
         db_name_in_tempmongo_instance = get_release_db_name_in_tempmongo_instance(taxonomy_id, assembly_accession)
         with MongoClient(port=mongo_port) as client:
             db_handle = client[db_name_in_tempmongo_instance]
-            mongo_unique_rs_ids_file = os.path.join(species_release_folder, assembly_accession,
+            mongo_unique_rs_ids_file = os.path.join(assembly_release_folder,
                                                     "{0}_mongo_unique_rs_ids.txt".format(assembly_accession))
             export_unique_rs_ids_from_mongo(db_handle, taxonomy_id, assembly_accession, mongo_unique_rs_ids_file)
-            unique_release_rs_ids_file = get_unique_release_rs_ids(species_release_folder, taxonomy_id,
+            unique_release_rs_ids_file = get_unique_release_rs_ids(assembly_release_folder, taxonomy_id,
                                                                    assembly_accession)
             missing_rs_ids_file = os.path.join(os.path.dirname(unique_release_rs_ids_file),
                                                assembly_accession + "_missing_ids.txt")
@@ -494,12 +496,13 @@ def validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, ass
 @click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
-         release_version, species_release_folder):
+         release_version, assembly_release_folder):
+    logging_config.add_stdout_handler()
     validate_rs_release_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
-                              release_species_inventory_table, release_version, species_release_folder)
+                              release_species_inventory_table, release_version, assembly_release_folder)
 
 
 if __name__ == '__main__':

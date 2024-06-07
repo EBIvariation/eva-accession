@@ -15,6 +15,8 @@
 import click
 import os
 
+from ebi_eva_common_pyutils.logger import logging_config
+
 from run_release_in_embassy.release_common_utils import get_release_vcf_file_name_genbank
 from run_release_in_embassy.release_metadata import get_release_inventory_info_for_assembly, \
     release_vcf_file_categories, vcf_validation_output_file_pattern, asm_report_output_file_pattern
@@ -30,12 +32,11 @@ def remove_index_if_outdated(fasta_path):
 
 
 def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
-                               release_species_inventory_table, release_version, species_release_folder,
+                               release_species_inventory_table, release_version, assembly_release_folder,
                                vcf_validator_path, assembly_checker_path):
     run_command_with_output("Remove existing VCF validation and assembly report outputs...",
-                            "rm -f {0}/{1}/{2} {0}/{1}/{3}".format(species_release_folder, assembly_accession,
-                                                                   vcf_validation_output_file_pattern,
-                                                                   asm_report_output_file_pattern))
+                            "rm -f {0}/{1} {0}/{2}".format(assembly_release_folder, vcf_validation_output_file_pattern,
+                                                           asm_report_output_file_pattern))
     validate_release_vcf_files_commands = []
     with get_metadata_connection_handle(profile, private_config_xml_file) as metadata_connection_handle:
         release_inventory_info_for_assembly = get_release_inventory_info_for_assembly(taxonomy_id, assembly_accession,
@@ -50,7 +51,7 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
 
         for vcf_file_category in release_vcf_file_categories:
 
-            release_vcf_file_name = get_release_vcf_file_name_genbank(species_release_folder, taxonomy_id,
+            release_vcf_file_name = get_release_vcf_file_name_genbank(assembly_release_folder, taxonomy_id,
                                                                       assembly_accession, vcf_file_category)
             release_vcf_dir = os.path.dirname(release_vcf_file_name)
             if "multimap" not in vcf_file_category:
@@ -73,14 +74,15 @@ def validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, as
 @click.option("--release-species-inventory-table", default="eva_progress_tracker.clustering_release_tracker",
               required=False)
 @click.option("--release-version", help="ex: 2", type=int, required=True)
-@click.option("--species-release-folder", required=True)
+@click.option("--assembly-release-folder", required=True)
 @click.option("--vcf-validator-path", help="/path/to/vcf/validator/binary", required=True)
 @click.option("--assembly-checker-path", help="/path/to/assembly/checker/binary", required=True)
 @click.command()
 def main(private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table, release_version,
-         species_release_folder, vcf_validator_path, assembly_checker_path):
+         assembly_release_folder, vcf_validator_path, assembly_checker_path):
+    logging_config.add_stdout_handler()
     validate_release_vcf_files(private_config_xml_file, profile, taxonomy_id, assembly_accession,
-                               release_species_inventory_table, release_version, species_release_folder,
+                               release_species_inventory_table, release_version, assembly_release_folder,
                                vcf_validator_path, assembly_checker_path)
 
 
