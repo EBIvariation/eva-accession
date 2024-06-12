@@ -147,7 +147,7 @@ def main():
     argparse.add_argument("--taxonomy_id", help="ex: 9913")
     argparse.add_argument("--assembly_accessions", nargs='+', help="ex: GCA_000003055.3")
     argparse.add_argument("--release_version")
-    argparse.add_argument("--resume", default=False,
+    argparse.add_argument("--resume", default=False, action='store_true',
                           help="Resume the nextflow pipeline for the specified taxonomy and assembly")
     args = argparse.parse_args()
     load_config()
