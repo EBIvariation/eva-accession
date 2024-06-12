@@ -41,8 +41,6 @@ public class ContigWriter implements ItemStreamWriter<String> {
 
     private static final String MERGED_FILE_PREFIX = "merged_contigs_";
 
-    private static final String MULTIMAP_FILE_PREFIX = "multimap_contigs_";
-
     private static final String EVA_PREFIX = "/eva_";
 
     private static final String DBSNP_PREFIX = "/dbsnp_";
@@ -103,19 +101,11 @@ public class ContigWriter implements ItemStreamWriter<String> {
         return Paths.get(outputFolder) + (DBSNP_PREFIX + MERGED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 
-    public static String getDbsnpMultimapContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + (DBSNP_PREFIX + MULTIMAP_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
-    }
-
     public static String getEvaActiveContigsFilePath(String outputFolder, String referenceAssembly) {
         return Paths.get(outputFolder) + (EVA_PREFIX + ACTIVE_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 
     public static String getEvaMergedContigsFilePath(String outputFolder, String referenceAssembly) {
         return Paths.get(outputFolder) + (EVA_PREFIX + MERGED_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
-    }
-
-    public static String getEvaMultimapContigsFilePath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder) + (EVA_PREFIX + MULTIMAP_FILE_PREFIX + referenceAssembly + FILE_EXTENSION);
     }
 }

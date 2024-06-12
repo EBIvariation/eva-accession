@@ -32,8 +32,6 @@ public class ReportPathResolver {
 
     public static final String MERGED_DEPRECATED_FILE_SUFFIX = "_merged_deprecated_ids.unsorted.txt";
 
-    public static final String MULTIMAP_FILE_SUFFIX = "_multimap_ids.vcf";
-
     public static final String DBSNP_PREFIX = "dbsnp_";
 
     public static final String EVA_PREFIX = "eva_";
@@ -55,10 +53,6 @@ public class ReportPathResolver {
         return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + MERGED_DEPRECATED_FILE_SUFFIX);
     }
 
-    public static Path getDbsnpMultimapIdsReportPath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(DBSNP_PREFIX + referenceAssembly + MULTIMAP_FILE_SUFFIX);
-    }
-
     public static Path getEvaCurrentIdsReportPath(String outputFolder, String referenceAssembly) {
         return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + CURRENT_FILE_SUFFIX);
     }
@@ -73,9 +67,5 @@ public class ReportPathResolver {
 
     public static Path getEvaMergedDeprecatedIdsReportPath(String outputFolder, String referenceAssembly) {
         return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + MERGED_DEPRECATED_FILE_SUFFIX);
-    }
-
-    public static Path getEvaMultimapIdsReportPath(String outputFolder, String referenceAssembly) {
-        return Paths.get(outputFolder).resolve(EVA_PREFIX + referenceAssembly + MULTIMAP_FILE_SUFFIX);
     }
 }
