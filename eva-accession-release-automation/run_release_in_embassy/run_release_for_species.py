@@ -102,9 +102,11 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
             workflow_file_path = get_run_release_for_assembly_nextflow()
             release_dir = get_assembly_release_folder(release_version, taxonomy_id, assembly_accession)
             nextflow_config = get_nextflow_config()
+            run_name = f'release_{release_version}_{taxonomy_id}_{assembly_accession}'
             workflow_command = ' '.join((
                 f"cd {release_dir} &&",
                 f"{cfg.query('executable', 'nextflow')} run {workflow_file_path}",
+                f"-name {run_name}",
                 f"-params-file {nextflow_params}",
                 f'-c {nextflow_config}' if nextflow_config else '',
                 '-resume' if resume else '',
