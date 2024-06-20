@@ -99,6 +99,7 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
 
     @Before
     public void setUp() throws Exception {
+        this.cleanSlate();
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(new URI(countServiceParameters.getUrl() + URL_PATH_SAVE_COUNT)))
@@ -108,11 +109,15 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
 
     @After
     public void tearDown() throws Exception {
+        this.cleanSlate();
+        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
+    }
+
+    public void cleanSlate() throws Exception {
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
-        mongoTemplate.dropCollection(SubmittedVariantEntity.class);
     }
 
     @Test
