@@ -36,16 +36,17 @@ def get_release_properties_for_assembly(private_config_xml_file, profile, taxono
 
 def create_release_properties_file_for_assembly(private_config_xml_file, profile, taxonomy_id, assembly_accession,
                                                 release_species_inventory_table, release_version,
-                                                assembly_release_folder):
+                                                assembly_release_folder, job_name='ACCESSION_RELEASE_JOB',
+                                                file_name='release'):
     os.makedirs(assembly_release_folder, exist_ok=True)
-    output_file = "{0}/{1}_release.properties".format(assembly_release_folder, assembly_accession)
+    output_file = f"{assembly_release_folder}/{assembly_accession}_{file_name}.properties"
     release_properties = get_release_properties_for_assembly(
         private_config_xml_file, profile, taxonomy_id, assembly_accession, release_species_inventory_table,
         release_version
     )
     properties_string = SpringPropertiesGenerator(profile, private_config_xml_file).get_release_properties(
         temp_mongo_db=release_properties['mongo_accessioning_db'],
-        job_name='ACCESSION_RELEASE_JOB',
+        job_name=job_name,
         assembly_accession=assembly_accession,
         taxonomy_accession=taxonomy_id,
         fasta=release_properties['fasta_path'],

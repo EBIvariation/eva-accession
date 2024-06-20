@@ -18,6 +18,14 @@ package uk.ac.ebi.eva.accession.release.configuration;
 public class BeanNames {
 
 // common beans
+    public static final String ACTIVE_ACCESSION_RELEASE_JOB = "ACTIVE_ACCESSION_RELEASE_JOB";
+
+    public static final String MERGED_ACCESSION_RELEASE_JOB = "MERGED_ACCESSION_RELEASE_JOB";
+
+    public static final String DEPRECATED_ACCESSION_RELEASE_JOB = "DEPRECATED_ACCESSION_RELEASE_JOB";
+
+    public static final String MERGED_DEPRECATED_ACCESSION_RELEASE_JOB = "MERGED_DEPRECATED_ACCESSION_RELEASE_JOB";
+
     public static final String ACCESSION_RELEASE_JOB = "ACCESSION_RELEASE_JOB";
 
     public static final String CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB = "CREATE_INCREMENTAL_ACCESSION_RELEASE_JOB";
