@@ -86,7 +86,6 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-
     @Autowired
     private CountServiceParameters countServiceParameters;
 
