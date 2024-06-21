@@ -28,11 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateDeprecatedReleaseStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMergedDeprecatedReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMergedReleaseStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateMultimapReleaseStepConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.batch.steps.CreateReleaseStepConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.steps.ListContigsStepConfiguration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.*;
@@ -45,8 +41,8 @@ public class MergedAccessionReleaseJobConfiguration {
 
     @Bean(MERGED_ACCESSION_RELEASE_JOB)
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory,
-                                   Flow dbsnpFlow,
-                                   Flow evaFlow) {
+                                   @Qualifier(MERGED_ACCESSION_RELEASE_DBSNP_FLOW) Flow dbsnpFlow,
+                                   @Qualifier(MERGED_ACCESSION_RELEASE_EVA_FLOW)Flow evaFlow) {
         FlowBuilder<FlowJobBuilder> flowBuilder = jobBuilderFactory.get(MERGED_ACCESSION_RELEASE_JOB)
                                                                    .incrementer(new RunIdIncrementer())
                                                                    .start(dbsnpFlow)
@@ -55,7 +51,7 @@ public class MergedAccessionReleaseJobConfiguration {
         return jobBuilder.build();
     }
 
-    @Bean
+    @Bean(MERGED_ACCESSION_RELEASE_DBSNP_FLOW)
     public Flow dbsnpFlow(
             @Qualifier(LIST_DBSNP_MERGED_CONTIGS_STEP) Step listMergedContigsStep,
             @Qualifier(RELEASE_DBSNP_MAPPED_MERGED_VARIANTS_STEP) Step createMergedReleaseStep) {
@@ -65,7 +61,7 @@ public class MergedAccessionReleaseJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(MERGED_ACCESSION_RELEASE_EVA_FLOW)
     public Flow evaFlow(
             @Qualifier(LIST_EVA_MERGED_CONTIGS_STEP) Step listMergedContigsStep,
             @Qualifier(RELEASE_EVA_MAPPED_MERGED_VARIANTS_STEP) Step createMergedReleaseStep) {

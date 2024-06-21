@@ -39,12 +39,7 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.*;
 
 @Configuration
 @EnableBatchProcessing
-@Import({ListContigsStepConfiguration.class,
-         CreateReleaseStepConfiguration.class,
-         CreateDeprecatedReleaseStepConfiguration.class,
-         CreateMergedDeprecatedReleaseStepConfiguration.class,
-         CreateMergedReleaseStepConfiguration.class,
-         CreateMultimapReleaseStepConfiguration.class})
+@Import({CreateMergedDeprecatedReleaseStepConfiguration.class})
 public class MergedDeprecatedAccessionReleaseJobConfiguration {
 
     /**
@@ -54,8 +49,8 @@ public class MergedDeprecatedAccessionReleaseJobConfiguration {
      */
     @Bean(MERGED_DEPRECATED_ACCESSION_RELEASE_JOB)
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory,
-                                   Flow dbsnpFlow,
-                                   Flow evaFlow) {
+                                   @Qualifier(MERGED_DEPRECATED_ACCESSION_RELEASE_DBSNP_FLOW) Flow dbsnpFlow,
+                                   @Qualifier(MERGED_DEPRECATED_ACCESSION_RELEASE_EVA_FLOW) Flow evaFlow) {
         FlowBuilder<FlowJobBuilder> flowBuilder = jobBuilderFactory.get(MERGED_DEPRECATED_ACCESSION_RELEASE_JOB)
                                                                    .incrementer(new RunIdIncrementer())
                                                                    .start(dbsnpFlow)
@@ -64,7 +59,7 @@ public class MergedDeprecatedAccessionReleaseJobConfiguration {
         return jobBuilder.build();
     }
 
-    @Bean
+    @Bean(MERGED_DEPRECATED_ACCESSION_RELEASE_DBSNP_FLOW)
     public Flow dbsnpFlow(
             @Qualifier(RELEASE_DBSNP_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP) Step createMergedDeprecatedReleaseStep) {
         return new FlowBuilder<Flow>(DBSNP_FLOW)
@@ -72,7 +67,7 @@ public class MergedDeprecatedAccessionReleaseJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(MERGED_DEPRECATED_ACCESSION_RELEASE_EVA_FLOW)
     public Flow evaFlow(
             @Qualifier(RELEASE_EVA_MAPPED_MERGED_DEPRECATED_VARIANTS_STEP) Step createMergedDeprecatedReleaseStep) {
         return new FlowBuilder<Flow>(EVA_FLOW)

@@ -46,8 +46,8 @@ public class DeprecatedAccessionReleaseJobConfiguration {
      */
     @Bean(DEPRECATED_ACCESSION_RELEASE_JOB)
     public Job accessionReleaseJob(JobBuilderFactory jobBuilderFactory,
-                                   Flow dbsnpFlow,
-                                   Flow evaFlow) {
+                                   @Qualifier(DEPRECATED_ACCESSION_RELEASE_DBSNP_FLOW) Flow dbsnpFlow,
+                                   @Qualifier(DEPRECATED_ACCESSION_RELEASE_EVA_FLOW) Flow evaFlow) {
         FlowBuilder<FlowJobBuilder> flowBuilder = jobBuilderFactory.get(DEPRECATED_ACCESSION_RELEASE_JOB)
                                                                    .incrementer(new RunIdIncrementer())
                                                                    .start(dbsnpFlow)
@@ -56,7 +56,7 @@ public class DeprecatedAccessionReleaseJobConfiguration {
         return jobBuilder.build();
     }
 
-    @Bean
+    @Bean(DEPRECATED_ACCESSION_RELEASE_DBSNP_FLOW)
     public Flow dbsnpFlow(
             @Qualifier(RELEASE_DBSNP_MAPPED_DEPRECATED_VARIANTS_STEP) Step createDeprecatedReleaseStep) {
         return new FlowBuilder<Flow>(DBSNP_FLOW)
@@ -64,7 +64,7 @@ public class DeprecatedAccessionReleaseJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(DEPRECATED_ACCESSION_RELEASE_EVA_FLOW)
     public Flow evaFlow(@Qualifier(RELEASE_EVA_MAPPED_DEPRECATED_VARIANTS_STEP) Step createDeprecatedReleaseStep) {
         return new FlowBuilder<Flow>(EVA_FLOW)
                 .start(createDeprecatedReleaseStep)

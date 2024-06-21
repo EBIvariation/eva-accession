@@ -46,8 +46,8 @@ public class ActiveAccessionReleaseJobConfiguration {
 
     @Bean(ACTIVE_ACCESSION_RELEASE_JOB)
     public Job ActiveAccessionReleaseJob(JobBuilderFactory jobBuilderFactory,
-                                   Flow dbsnpFlow,
-                                   Flow evaFlow) {
+                                         @Qualifier(ACTIVE_ACCESSION_RELEASE_DBSNP_FLOW) Flow dbsnpFlow,
+                                         @Qualifier(ACTIVE_ACCESSION_RELEASE_EVA_FLOW) Flow evaFlow) {
         FlowBuilder<FlowJobBuilder> flowBuilder = jobBuilderFactory.get(ACTIVE_ACCESSION_RELEASE_JOB)
                                                                    .incrementer(new RunIdIncrementer())
                                                                    .start(dbsnpFlow)
@@ -56,7 +56,7 @@ public class ActiveAccessionReleaseJobConfiguration {
         return jobBuilder.build();
     }
 
-    @Bean
+    @Bean(ACTIVE_ACCESSION_RELEASE_DBSNP_FLOW)
     public Flow dbsnpFlow(
             @Qualifier(LIST_DBSNP_ACTIVE_CONTIGS_STEP) Step listActiveContigsStep,
             @Qualifier(RELEASE_DBSNP_MAPPED_ACTIVE_VARIANTS_STEP) Step createReleaseStep) {
@@ -66,7 +66,7 @@ public class ActiveAccessionReleaseJobConfiguration {
                 .build();
     }
 
-    @Bean
+    @Bean(ACTIVE_ACCESSION_RELEASE_EVA_FLOW)
     public Flow evaFlow(
             @Qualifier(LIST_EVA_ACTIVE_CONTIGS_STEP) Step listActiveContigsStep,
             @Qualifier(RELEASE_EVA_MAPPED_ACTIVE_VARIANTS_STEP) Step createReleaseStep) {
