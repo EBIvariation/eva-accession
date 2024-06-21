@@ -16,6 +16,8 @@ from argparse import ArgumentParser
 
 import os
 from functools import lru_cache
+from random import choice
+from string import ascii_lowercase
 
 import yaml
 from ebi_eva_common_pyutils.command_utils import run_command_with_output
@@ -102,7 +104,8 @@ def run_release_for_species(taxonomy_id, release_assemblies, release_version, re
             workflow_file_path = get_run_release_for_assembly_nextflow()
             release_dir = get_assembly_release_folder(release_version, taxonomy_id, assembly_accession)
             nextflow_config = get_nextflow_config()
-            run_name = f'release_{release_version}_{taxonomy_id}_{assembly_accession}'
+            random_string = ''.join(choice(ascii_lowercase) for i in range(4))
+            run_name = f'release_{release_version}_{taxonomy_id}_{assembly_accession}_{random_string}'.replace('.', '_')
             workflow_command = ' '.join((
                 f"cd {release_dir} &&",
                 f"{cfg.query('executable', 'nextflow')} run {workflow_file_path}",
