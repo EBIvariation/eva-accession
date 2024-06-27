@@ -27,6 +27,7 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
+from run_release_in_embassy.release_common_utils import get_release_folder_name
 from run_release_in_embassy.run_release_for_species import load_config, get_release_folder
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories
 
@@ -53,7 +54,7 @@ class ReleaseProperties:
         self.release_version = release_version
         self.release_species_inventory_table = cfg.query('release', 'inventory_table')
         self.staging_release_folder = get_release_folder(release_version)
-        self.public_ftp_release_base_folder = cfg["public_ftp_release_base_folder"]
+        self.public_ftp_release_base_folder = cfg.query('release', 'public_ftp_release_base_folder')
         self.public_ftp_current_release_folder = os.path.join(self.public_ftp_release_base_folder,
                                                               f"release_{self.release_version}")
         self.public_ftp_previous_release_folder = os.path.join(self.public_ftp_release_base_folder,
@@ -147,7 +148,7 @@ def recreate_public_release_species_assembly_folder(assembly_accession, public_r
 def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_properties,
                                       public_release_species_assembly_folder):
     assembly_accession = current_release_assembly_info["assembly_accession"]
-    species_release_folder_name = current_release_assembly_info["release_folder_name"]
+    species_release_source_folder_name = get_release_folder_name(current_release_assembly_info['taxonomy'])
     md5sum_output_file = os.path.join(public_release_species_assembly_folder, "md5checksums.txt")
     run_command_with_output(f"Removing md5 checksum file {md5sum_output_file} for assembly if it exists...",
                             f"rm -f {md5sum_output_file}")
@@ -155,7 +156,7 @@ def copy_current_assembly_data_to_ftp(current_release_assembly_info, release_pro
     recreate_public_release_species_assembly_folder(assembly_accession, public_release_species_assembly_folder)
 
     for filename in get_release_file_list_for_assembly(current_release_assembly_info):
-        source_file_path = os.path.join(release_properties.staging_release_folder, species_release_folder_name,
+        source_file_path = os.path.join(release_properties.staging_release_folder, species_release_source_folder_name,
                                         assembly_accession, filename)
         run_command_with_output(f"Copying {filename} to {public_release_species_assembly_folder}...",
                                 f"cp {source_file_path} {public_release_species_assembly_folder}")
