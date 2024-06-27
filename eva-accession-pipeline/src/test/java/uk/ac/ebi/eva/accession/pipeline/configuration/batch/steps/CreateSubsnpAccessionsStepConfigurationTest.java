@@ -77,7 +77,11 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     private MongoTemplate mongoTemplate;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
+        Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
+        Files.deleteIfExists(Paths.get(inputParameters.getFasta() + ".fai"));
         mongoTemplate.dropCollection(SubmittedVariantEntity.class);
         Mockito.when(jobExecution.getJobId()).thenReturn(1L);
         accessionWriter.setJobExecution(jobExecution);

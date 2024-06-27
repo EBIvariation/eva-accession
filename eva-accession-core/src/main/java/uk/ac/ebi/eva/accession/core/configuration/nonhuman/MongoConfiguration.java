@@ -18,6 +18,8 @@ package uk.ac.ebi.eva.accession.core.configuration.nonhuman;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -91,6 +93,8 @@ public class MongoConfiguration {
                                        MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, converter);
+        mongoTemplate.setWriteConcern(WriteConcern.MAJORITY);
+        mongoTemplate.setReadPreference(ReadPreference.valueOf(readPreference));
         mongoTemplate.setWriteResultChecking(WriteResultChecking.EXCEPTION);
         return mongoTemplate;
     }
