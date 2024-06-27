@@ -1,5 +1,11 @@
 This document describes technical changes associated with the EVA RefSNP release.
 
+EVA RefSNP release 6
+====================
+
+- No significant changes compare to release 5
+
+
 EVA RefSNP release 5
 ====================
 
