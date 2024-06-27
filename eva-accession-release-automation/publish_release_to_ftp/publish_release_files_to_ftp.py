@@ -130,9 +130,11 @@ def create_symlink_to_species_folder_from_assembly_folder(current_release_assemb
                                                           assembly_accession)
     run_command_with_output(f"""Creating symlink from assembly folder {public_release_assembly_species_folder} to
                             species folder {public_release_species_assembly_folder}""",
-                            'bash -c "cd {0} && ln -sfT {1} {2}"'.format(public_release_assembly_folder,
-                                                                         os.path.relpath(public_release_species_assembly_folder,
-                                                                                         public_release_assembly_folder), public_release_assembly_species_folder))
+                            'bash -c "cd {0} && ln -sfT {1} {2}"'.format(
+                                public_release_assembly_folder,
+                                os.path.relpath(public_release_species_assembly_folder,
+                                public_release_assembly_folder),
+                                public_release_assembly_species_folder))
 
 
 def recreate_public_release_species_assembly_folder(assembly_accession, public_release_species_assembly_folder):
