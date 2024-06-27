@@ -1,4 +1,4 @@
-EVA RefSNP release 5
+EVA RefSNP release 6
 
 Feedback
 ==================================

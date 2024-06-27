@@ -27,7 +27,7 @@ from ebi_eva_common_pyutils.command_utils import run_command_with_output
 from ebi_eva_common_pyutils.logger import logging_config
 from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
 from ebi_eva_internal_pyutils.pg_utils import get_all_results_for_query
-from run_release_in_embassy.run_release_for_species import load_config
+from run_release_in_embassy.run_release_for_species import load_config, get_release_folder
 from run_release_in_embassy.release_metadata import release_vcf_file_categories, release_text_file_categories
 
 by_assembly_folder_name = "by_assembly"
@@ -51,8 +51,8 @@ class ReleaseProperties:
         self.private_config_xml_file = cfg.query('maven', 'settings_file')
         self.profile = cfg.query('maven', 'environment')
         self.release_version = release_version
-        self.release_species_inventory_table = cfg["inventory_table"]
-        self.staging_release_folder = cfg["release_output"]
+        self.release_species_inventory_table = cfg.query('release', 'inventory_table')
+        self.staging_release_folder = get_release_folder(release_version)
         self.public_ftp_release_base_folder = cfg["public_ftp_release_base_folder"]
         self.public_ftp_current_release_folder = os.path.join(self.public_ftp_release_base_folder,
                                                               f"release_{self.release_version}")
