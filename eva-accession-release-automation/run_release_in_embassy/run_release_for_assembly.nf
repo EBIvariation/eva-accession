@@ -3,10 +3,11 @@
 nextflow.enable.dsl=2
 
 workflow {
-    initiate_release_status_for_assembly('initiate') | copy_accessioning_collections_to_embassy | run_release_for_assembly | \
-    merge_dbsnp_eva_release_files | sort_bgzip_index_release_files | validate_release_vcf_files | \
-    analyze_vcf_validation_results | count_rs_ids_in_release_files | validate_rs_release_files | \
-    update_sequence_names_to_ena | update_release_status_for_assembly
+    initiate_release_status_for_assembly('initiate') | copy_accessioning_collections_to_embassy | \
+    run_release_active_for_assembly | run_release_merged_for_assembly | run_release_deprecated_for_assembly | \
+    run_release_merged_deprecated_for_assembly | merge_dbsnp_eva_release_files | sort_bgzip_index_release_files | \
+    validate_release_vcf_files | analyze_vcf_validation_results | count_rs_ids_in_release_files | \
+    validate_rs_release_files | update_sequence_names_to_ena | update_release_status_for_assembly
 }
 
 process initiate_release_status_for_assembly {
@@ -43,7 +44,7 @@ process copy_accessioning_collections_to_embassy {
     """
 }
 
-process run_release_for_assembly {
+process run_release_active_for_assembly {
 
     label 'long_time', 'med_mem'
 
@@ -56,7 +57,58 @@ process run_release_for_assembly {
     script:
     """
     export PYTHONPATH=$params.python_path
-    $params.executable.python_interpreter -m run_release_in_embassy.run_release_for_assembly --private-config-xml-file $params.maven.settings_file --profile $params.maven.environment --taxonomy-id $params.taxonomy --assembly-accession $params.assembly --release-species-inventory-table eva_progress_tracker.clustering_release_tracker --release-version $params.release_version --assembly-release-folder $params.assembly_folder --release-jar-path $params.jar.release_pipeline 1>> $params.log_file 2>&1
+    $params.executable.python_interpreter -m run_release_in_embassy.run_release_active_for_assembly --private-config-xml-file $params.maven.settings_file --profile $params.maven.environment --taxonomy-id $params.taxonomy --assembly-accession $params.assembly --release-species-inventory-table eva_progress_tracker.clustering_release_tracker --release-version $params.release_version --assembly-release-folder $params.assembly_folder --release-jar-path $params.jar.release_pipeline 1>> $params.log_file 2>&1
+    """
+}
+
+process run_release_merged_for_assembly {
+
+    label 'long_time', 'med_mem'
+
+    input:
+    val flag
+
+    output:
+    val true, emit: flag
+
+    script:
+    """
+    export PYTHONPATH=$params.python_path
+    $params.executable.python_interpreter -m run_release_in_embassy.run_release_merged_for_assembly --private-config-xml-file $params.maven.settings_file --profile $params.maven.environment --taxonomy-id $params.taxonomy --assembly-accession $params.assembly --release-species-inventory-table eva_progress_tracker.clustering_release_tracker --release-version $params.release_version --assembly-release-folder $params.assembly_folder --release-jar-path $params.jar.release_pipeline 1>> $params.log_file 2>&1
+    """
+}
+
+process run_release_deprecated_for_assembly {
+
+    label 'long_time', 'med_mem'
+
+    input:
+    val flag
+
+    output:
+    val true, emit: flag
+
+    script:
+    """
+    export PYTHONPATH=$params.python_path
+    $params.executable.python_interpreter -m run_release_in_embassy.run_release_deprecated_for_assembly --private-config-xml-file $params.maven.settings_file --profile $params.maven.environment --taxonomy-id $params.taxonomy --assembly-accession $params.assembly --release-species-inventory-table eva_progress_tracker.clustering_release_tracker --release-version $params.release_version --assembly-release-folder $params.assembly_folder --release-jar-path $params.jar.release_pipeline 1>> $params.log_file 2>&1
+    """
+}
+
+process run_release_merged_deprecated_for_assembly {
+
+    label 'long_time', 'med_mem'
+
+    input:
+    val flag
+
+    output:
+    val true, emit: flag
+
+    script:
+    """
+    export PYTHONPATH=$params.python_path
+    $params.executable.python_interpreter -m run_release_in_embassy.run_release_merged_deprecated_for_assembly --private-config-xml-file $params.maven.settings_file --profile $params.maven.environment --taxonomy-id $params.taxonomy --assembly-accession $params.assembly --release-species-inventory-table eva_progress_tracker.clustering_release_tracker --release-version $params.release_version --assembly-release-folder $params.assembly_folder --release-jar-path $params.jar.release_pipeline 1>> $params.log_file 2>&1
     """
 }
 
