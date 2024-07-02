@@ -89,6 +89,31 @@ class RSCountPerAssembly(Base):
     schema = 'eva_stats'
 
 
+class RSCountPerTaxonomyAssembly(Base):
+    """
+    Table that provide the aggregated count per taxonomy and  assembly
+    """
+    __tablename__ = 'release_rs_count_per_taxonomy_assembly'
+
+    taxonomy_id = Column(Integer, primary_key=True)
+    assembly_accession = Column(String, primary_key=True)
+    release_version = Column(Integer, primary_key=True)
+    release_folder = Column(String)
+    current_rs = Column(BigInteger, default=0)
+    multimap_rs = Column(BigInteger, default=0)
+    merged_rs = Column(BigInteger, default=0)
+    deprecated_rs = Column(BigInteger, default=0)
+    merged_deprecated_rs = Column(BigInteger, default=0)
+    unmapped_rs = Column(BigInteger, default=0)
+    new_current_rs = Column(BigInteger, default=0)
+    new_multimap_rs = Column(BigInteger, default=0)
+    new_merged_rs = Column(BigInteger, default=0)
+    new_deprecated_rs = Column(BigInteger, default=0)
+    new_merged_deprecated_rs = Column(BigInteger, default=0)
+    new_unmapped_rs = Column(BigInteger, default=0)
+    schema = 'eva_stats'
+
+
 def get_sql_alchemy_engine(dbtype, username, password, host_url, database, port):
     engine = create_engine(URL.create(
         dbtype + '+psycopg2',
