@@ -294,11 +294,11 @@ class ReleaseCounter(AppLogger):
             else:
                 prev_count_for_taxonomy = None
             for rs_type in taxonomy_counts.get(taxonomy_id):
+                count_prev = 0
                 if prev_count_for_taxonomy:
-                    count_new = taxonomy_counts.get(taxonomy_id).get(rs_type) - getattr(prev_count_for_taxonomy,
-                                                                                        self._type_to_column(rs_type))
-                else:
-                    count_new = 0
+                    count_prev = getattr(prev_count_for_taxonomy, self._type_to_column(rs_type))
+
+                count_new = taxonomy_counts.get(taxonomy_id).get(rs_type) - count_prev
                 setattr(taxonomy_row, self._type_to_column(rs_type), taxonomy_counts.get(taxonomy_id).get(rs_type))
                 setattr(taxonomy_row, self._type_to_column(rs_type, is_new=True), count_new)
             session.add(taxonomy_row)
@@ -333,11 +333,10 @@ class ReleaseCounter(AppLogger):
             else:
                 prev_count_for_assembly = None
             for rs_type in assembly_counts.get(assembly):
+                count_prev = 0
                 if prev_count_for_assembly:
-                    count_new = assembly_counts.get(assembly).get(rs_type) - getattr(prev_count_for_assembly,
-                                                                                     self._type_to_column(rs_type))
-                else:
-                    count_new = 0
+                    count_prev = getattr(prev_count_for_assembly, self._type_to_column(rs_type))
+                count_new = assembly_counts.get(assembly).get(rs_type) -count_prev
                 setattr(assembly_row, self._type_to_column(rs_type), assembly_counts.get(assembly).get(rs_type))
                 setattr(assembly_row, self._type_to_column(rs_type, is_new=True), count_new)
             session.add(assembly_row)
@@ -374,11 +373,11 @@ class ReleaseCounter(AppLogger):
             else:
                 prev_count_for_taxonomy_assembly = None
             for rs_type in species_assembly_counts.get((taxonomy, assembly)):
+                count_prev = 0
                 if prev_count_for_taxonomy_assembly:
-                    count_new = species_assembly_counts.get((taxonomy, assembly)).get(rs_type) - \
-                                getattr(prev_count_for_taxonomy_assembly, self._type_to_column(rs_type))
-                else:
-                    count_new = 0
+                    count_prev = getattr(prev_count_for_taxonomy_assembly, self._type_to_column(rs_type))
+
+                count_new = species_assembly_counts.get((taxonomy, assembly)).get(rs_type) - count_prev
                 setattr(taxonomy_assembly_row, self._type_to_column(rs_type),
                         species_assembly_counts.get((taxonomy, assembly)).get(rs_type))
                 setattr(taxonomy_assembly_row, self._type_to_column(rs_type, is_new=True), count_new)
@@ -475,7 +474,6 @@ class ReleaseCounter(AppLogger):
                         for count_dict in count_groups
                         if count_dict['assembly'] is assembly_accession and count_dict['idtype'] is rstype
                     ]))
-
                 assembly_annotations[assembly_accession]['release_folder'] = assembly_accession
         return assembly_counts, assembly_annotations
 
@@ -490,7 +488,11 @@ class ReleaseCounter(AppLogger):
                     species_assembly_annotations[(taxonomy, assembly)] = {'release_folder': None}
                 # All count_dict have the same count in a group
                 species_assembly_counts[(taxonomy, assembly)][rstype] += count_groups[0]['count']
-                species_assembly_annotations[(taxonomy, assembly)]['release_folder'] = release_folder_map[taxonomy] + '/' + assembly
+                if assembly != 'Unmapped':
+                    species_assembly_annotations[(taxonomy, assembly)]['release_folder'] = \
+                        release_folder_map[taxonomy] + '/' + assembly
+                else:
+                    species_assembly_annotations[(taxonomy, assembly)]['release_folder'] = release_folder_map[taxonomy]
         return species_assembly_counts, species_assembly_annotations
 
     def detect_inconsistent_types(self):
