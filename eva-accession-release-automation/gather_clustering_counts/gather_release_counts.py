@@ -353,10 +353,10 @@ class ReleaseCounter(AppLogger):
             )
             result = session.execute(query).fetchone()
             if result:
-                taxonomy_assembly_row = result.RSCountPerAssembly
+                taxonomy_assembly_row = result.RSCountPerTaxonomyAssembly
             else:
-                self.info(f"Create persistence for aggregate per assembly {assembly}")
-                taxonomy_assembly_row = RSCountPerAssembly(
+                self.info(f"Create persistence for aggregate per taxonomy {taxonomy} and assembly {assembly}")
+                taxonomy_assembly_row = RSCountPerTaxonomyAssembly(
                     taxonomy_id=taxonomy,
                     assembly_accession=assembly,
                     release_folder=species_assembly_annotations.get((taxonomy, assembly)).get('release_folder'),

@@ -129,6 +129,7 @@ def get_sql_alchemy_engine(dbtype, username, password, host_url, database, port)
     RSCountCategory.__table__.create(bind=engine, checkfirst=True)
     RSCountPerAssembly.__table__.create(bind=engine, checkfirst=True)
     RSCountPerTaxonomy.__table__.create(bind=engine, checkfirst=True)
+    RSCountPerTaxonomyAssembly.__table__.create(bind=engine, checkfirst=True)
     return engine
 
 
