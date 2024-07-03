@@ -275,6 +275,7 @@ class ReleaseCounter(AppLogger):
             result = session.execute(query).fetchone()
             if result:
                 taxonomy_row = result.RSCountPerTaxonomy
+                self.info(f"Update counts for aggregate per taxonomy {taxonomy_id}")
             else:
                 self.info(f"Create persistence for aggregate per taxonomy {taxonomy_id}")
                 taxonomy_row = RSCountPerTaxonomy(
@@ -314,6 +315,7 @@ class ReleaseCounter(AppLogger):
             result = session.execute(query).fetchone()
             if result:
                 assembly_row = result.RSCountPerAssembly
+                self.info(f"Update counts for aggregate per assembly {assembly}")
             else:
                 self.info(f"Create persistence for aggregate per assembly {assembly}")
                 assembly_row = RSCountPerAssembly(
@@ -353,6 +355,7 @@ class ReleaseCounter(AppLogger):
             result = session.execute(query).fetchone()
             if result:
                 taxonomy_assembly_row = result.RSCountPerTaxonomyAssembly
+                self.info(f"Update counts for aggregate per taxonomy {taxonomy} and assembly {assembly}")
             else:
                 self.info(f"Create persistence for aggregate per taxonomy {taxonomy} and assembly {assembly}")
                 taxonomy_assembly_row = RSCountPerTaxonomyAssembly(
