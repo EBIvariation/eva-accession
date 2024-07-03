@@ -1,16 +1,15 @@
 import os
-from itertools import cycle
 from unittest import TestCase
 from unittest.mock import patch
 
-from ebi_eva_common_pyutils.metadata_utils import get_metadata_connection_handle
-from ebi_eva_common_pyutils.pg_utils import execute_query
+from ebi_eva_internal_pyutils.metadata_utils import get_metadata_connection_handle
+from ebi_eva_internal_pyutils.pg_utils import execute_query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from gather_clustering_counts.gather_release_counts import find_link, ReleaseCounter
 from gather_clustering_counts.release_count_models import RSCountPerTaxonomy, RSCountPerAssembly, RSCountCategory, \
-    RSCount
+    RSCount, RSCountPerTaxonomyAssembly
 
 
 def test_find_links():
@@ -35,7 +34,6 @@ def test_find_links():
     assert find_link({'E'}, d1, d2) == (frozenset({'E'}), frozenset({}))
 
 
-
 class TestReleaseCounter(TestCase):
 
     resource_folder = os.path.dirname(__file__)
@@ -43,10 +41,15 @@ class TestReleaseCounter(TestCase):
     def setUp(self):
         self.private_config_xml_file = os.path.join(self.resource_folder, 'config_xml_file.xml')
         self.config_profile = "localhost"
+
+    def tearDown(self):
         with get_metadata_connection_handle(self.config_profile, self.private_config_xml_file) as db_conn:
-            for sqlalchemy_class in [RSCountCategory, RSCount, RSCountPerTaxonomy, RSCountPerAssembly]:
-                query = f'DROP TABLE {sqlalchemy_class.schema}.{sqlalchemy_class.__tablename__}'
-                execute_query(db_conn, query)
+            table_names = ','.join(f'{sqlalchemy_class.schema}.{sqlalchemy_class.__tablename__}' for sqlalchemy_class in
+                                   [RSCountCategory, RSCount, RSCountPerTaxonomy, RSCountPerAssembly,
+                                    RSCountPerTaxonomyAssembly])
+            query = f'DROP TABLE IF EXISTS {table_names};'
+            print(query)
+            execute_query(db_conn, query)
 
     def test_write_counts_to_db(self):
         """This test require a postgres database running on localhost. See config_xml_file.xml for detail."""
@@ -92,6 +95,17 @@ class TestReleaseCounter(TestCase):
         assert rs_assembly_count.current_rs == 61038394
         assert rs_assembly_count.new_current_rs == 0
         assert rs_assembly_count.release_folder == 'GCA_000003205.6'
+
+        query = select(RSCountPerTaxonomyAssembly).where(
+            RSCountPerTaxonomyAssembly.assembly_accession == 'GCA_000003205.6',
+            RSCountPerTaxonomyAssembly.taxonomy_id == 9913,
+            RSCountPerTaxonomyAssembly.release_version == 1
+        )
+        result = session.execute(query).fetchone()
+        rs_count_per_taxonomy_assembly = result.RSCountPerTaxonomyAssembly
+        assert rs_count_per_taxonomy_assembly.current_rs == 61038394
+        assert rs_count_per_taxonomy_assembly.new_current_rs == 0
+        assert rs_count_per_taxonomy_assembly.release_folder == 'Cow_9913/GCA_000003205.6'
 
     def test_write_counts_to_db2(self):
         """This test require a postgres database running on localhost. See config_xml_file.xml for detail."""
