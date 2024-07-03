@@ -443,7 +443,7 @@ class ReleaseCounter(AppLogger):
         species_annotations = defaultdict(dict)
         for count_groups in self.all_counts_grouped:
             taxonomy_and_types = set([(count_dict['taxonomy'], count_dict['idtype']) for count_dict in count_groups])
-            release_folder_map = dict((count_dict['taxonomy'], count_dict['release_folder'] for count_dict in count_groups))
+            release_folder_map = dict((count_dict['taxonomy'], count_dict['release_folder']) for count_dict in count_groups)
             for taxonomy, rstype in taxonomy_and_types:
                 if taxonomy not in species_annotations:
                     species_annotations[taxonomy] = {'assemblies': set(), 'release_folder': None}
@@ -464,7 +464,6 @@ class ReleaseCounter(AppLogger):
         assembly_annotations = {}
         for count_groups in self.all_counts_grouped:
             assembly_and_types = set([(count_dict['assembly'], count_dict['idtype']) for count_dict in count_groups])
-            release_folder_map = dict((count_dict['taxonomy'], count_dict['release_folder'] for count_dict in count_groups))
             for assembly_accession, rstype in assembly_and_types:
                 if assembly_accession not in assembly_annotations:
                     assembly_annotations[assembly_accession] = {'taxonomies': set(), 'release_folder': None}
@@ -485,7 +484,7 @@ class ReleaseCounter(AppLogger):
         species_assembly_annotations = defaultdict(dict)
         for count_groups in self.all_counts_grouped:
             taxonomy_assembly_and_types = set([(count_dict['taxonomy'], count_dict['assembly'], count_dict['idtype']) for count_dict in count_groups])
-            release_folder_map = dict((count_dict['taxonomy'], count_dict['release_folder'] for count_dict in count_groups))
+            release_folder_map = dict((count_dict['taxonomy'], count_dict['release_folder']) for count_dict in count_groups)
             for taxonomy, assembly, rstype in taxonomy_assembly_and_types:
                 if (taxonomy, assembly) not in species_assembly_annotations:
                     species_assembly_annotations[(taxonomy, assembly)] = {'release_folder': None}

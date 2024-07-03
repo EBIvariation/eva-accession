@@ -94,6 +94,7 @@ class TestReleaseCounter(TestCase):
         assert rs_assembly_count.release_folder == 'GCA_000003205.6'
 
     def test_write_counts_to_db2(self):
+        """This test require a postgres database running on localhost. See config_xml_file.xml for detail."""
         log_files_release = [os.path.join(self.resource_folder, 'count_for_haplochromini_oreochromis_niloticus.log')]
         folder_to_taxonomy = {'oreochromis_niloticus': 8128, 'haplochromini': 319058}
 
