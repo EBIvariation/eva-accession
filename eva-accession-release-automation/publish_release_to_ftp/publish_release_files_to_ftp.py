@@ -129,13 +129,16 @@ def create_symlink_to_species_folder_from_assembly_folder(current_release_assemb
     public_release_species_assembly_folder = os.path.join(release_properties.public_ftp_current_release_folder,
                                                           by_species_folder_name, species_release_folder_name,
                                                           assembly_accession)
-    run_command_with_output(f"""Creating symlink from assembly folder {public_release_assembly_species_folder} to
-                            species folder {public_release_species_assembly_folder}""",
-                            'bash -c "cd {0} && ln -sfT {1} {2}"'.format(
-                                public_release_assembly_folder,
-                                os.path.relpath(public_release_species_assembly_folder,
-                                public_release_assembly_folder),
-                                public_release_assembly_species_folder))
+    if os.path.isdir(public_release_assembly_species_folder):
+        run_command_with_output(f"""Creating symlink from assembly folder {public_release_assembly_species_folder} to
+                                species folder {public_release_species_assembly_folder}""",
+                                'bash -c "cd {0} && ln -sfT {1} {2}"'.format(
+                                    public_release_assembly_folder,
+                                    os.path.relpath(public_release_species_assembly_folder,
+                                    public_release_assembly_folder),
+                                    public_release_assembly_species_folder))
+    else:
+        raise Exception(f'The species folder {public_release_assembly_species_folder} were linking to does not exist')
 
 
 def recreate_public_release_species_assembly_folder(assembly_accession, public_release_species_assembly_folder):
@@ -198,9 +201,10 @@ def publish_assembly_release_files_to_ftp(current_release_assembly_info, release
             )
         )
 
-    # Create a link from assembly folder to species_folder ex: by_assembly/GCA_000005005.5/zea_mays to by_species/zea_mays/GCA_000005005.5
-    create_symlink_to_species_folder_from_assembly_folder(current_release_assembly_info, release_properties,
-                                                          public_release_assembly_folder)
+    if current_release_assembly_info["num_rs_to_release"] > 0:
+        # Create a link from assembly folder to species_folder ex: by_assembly/GCA_000005005.5/zea_mays to by_species/zea_mays/GCA_000005005.5
+        create_symlink_to_species_folder_from_assembly_folder(current_release_assembly_info, release_properties,
+                                                              public_release_assembly_folder)
 
 
 def get_release_assemblies_for_release_version(assemblies_to_process, release_version):
