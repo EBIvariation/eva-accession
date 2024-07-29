@@ -138,7 +138,7 @@ def create_symlink_to_species_folder_from_assembly_folder(current_release_assemb
                                     public_release_assembly_folder),
                                     public_release_assembly_species_folder))
     else:
-        raise Exception(f'The species folder {public_release_assembly_species_folder} were linking to does not exist')
+        raise Exception(f'The species folder {public_release_assembly_species_folder} we're linking to does not exist')
 
 
 def recreate_public_release_species_assembly_folder(assembly_accession, public_release_species_assembly_folder):
