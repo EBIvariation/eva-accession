@@ -19,9 +19,9 @@ import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
-import uk.ac.ebi.eva.remapping.ingest.parameters.InputParameters;
 
 public class StoreRemappingMetadataTasklet implements Tasklet {
 
@@ -36,7 +36,12 @@ public class StoreRemappingMetadataTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-        mongoTemplate.save(remappingMetadata, "remappingMetadata");
+        try {
+            // Save will insert if not present
+            mongoTemplate.save(remappingMetadata, "remappingMetadata");
+        } catch (DuplicateKeyException e) {
+            // Do nothing if already present (only in race condition)
+        }
         return RepeatStatus.FINISHED;
     }
 }
