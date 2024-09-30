@@ -4,7 +4,7 @@
 
     <groupId>uk.ac.ebi.eva</groupId>
     <artifactId>eva-accession</artifactId>
-    <version>0.6.42-SNAPSHOT</version>
+    <version>0.6.42</version>
     <packaging>pom</packaging>
 
     <name>eva-accession</name>
@@ -28,7 +28,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.13</junit.version>
         <variation-commons-version>0.8.5</variation-commons-version>
-        <accession-commons-version>0.7.15</accession-commons-version>
+        <accession-commons-version>0.7.16</accession-commons-version>
     </properties>
 
     <parent>
@@ -42,17 +42,17 @@
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-accession-core</artifactId>
-                <version>0.6.42-SNAPSHOT</version>
+                <version>0.6.42</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-accession-clustering</artifactId>
-                <version>0.6.42-SNAPSHOT</version>
+                <version>0.6.42</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.eva</groupId>
                 <artifactId>eva-remapping-get-source</artifactId>
-                <version>0.6.42-SNAPSHOT</version>
+                <version>0.6.42</version>
             </dependency>
             <dependency>
                 <groupId>uk.ac.ebi.ampt2d</groupId>
