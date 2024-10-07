@@ -26,15 +26,16 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.SubmittedVariantAccessioningConfiguration;
-import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
+import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAccessioningRepository;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionReportWriter;
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
@@ -47,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 
 @RunWith(SpringRunner.class)
@@ -76,8 +78,19 @@ public class CreateSubsnpAccessionsStepConfigurationTest {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @SpyBean
+    private ContiguousIdBlockService contiguousIdBlockService;
+
     @Before
     public void setUp() throws Exception {
+        // if a new transaction is not created it will fail
+        when(contiguousIdBlockService.getBlockParameters("test-pipeline-ss"))
+                .thenThrow(RuntimeException.class)
+                .thenThrow(RuntimeException.class)
+                .thenThrow(RuntimeException.class)
+                .thenThrow(RuntimeException.class)
+                .thenCallRealMethod();
+
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf()));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.VARIANTS_FILE_SUFFIX));
         Files.deleteIfExists(Paths.get(inputParameters.getOutputVcf() + AccessionReportWriter.CONTIGS_FILE_SUFFIX));
