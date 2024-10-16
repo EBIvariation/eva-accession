@@ -27,6 +27,8 @@ public class InputParameters {
 
     private String deprecationReason;
 
+    private String variantIdFile;
+
     public int getChunkSize() {
         return chunkSize;
     }
@@ -65,5 +67,13 @@ public class InputParameters {
 
     public void setDeprecationReason(String deprecationReason) {
         this.deprecationReason = deprecationReason;
+    }
+
+    public String getVariantIdFile() {
+        return variantIdFile;
+    }
+
+    public void setVariantIdFile(String variantIdFile) {
+        this.variantIdFile = variantIdFile;
     }
 }

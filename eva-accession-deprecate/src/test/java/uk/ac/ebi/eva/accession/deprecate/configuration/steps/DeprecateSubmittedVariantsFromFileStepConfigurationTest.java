@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 EMBL - European Bioinformatics Institute
+ * Copyright 2024 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import uk.ac.ebi.eva.accession.deprecate.MongoTestDatabaseSetup;
 import uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames;
 import uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration;
@@ -41,18 +40,18 @@ import uk.ac.ebi.eva.accession.deprecate.test.configuration.MongoTestConfigurati
 import uk.ac.ebi.eva.accession.deprecate.test.rule.FixSpringMongoDbRule;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
+import static uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_FILE;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
-@TestPropertySource("classpath:study-submitted-variants-test.properties")
-public class DeprecateStudySubmittedVariantsStepConfigurationTest {
+@TestPropertySource("classpath:deprecate-submitted-variants-from-file-test.properties")
+public class DeprecateSubmittedVariantsFromFileStepConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
     @Autowired
-    @Qualifier(JOB_LAUNCHER_FROM_MONGO)
-    private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
+    @Qualifier(JOB_LAUNCHER_FROM_FILE)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromFile;
 
     @Autowired
     private MongoClient mongoClient;
@@ -71,7 +70,7 @@ public class DeprecateStudySubmittedVariantsStepConfigurationTest {
     @Before
     public void setUp() {
         this.mongoClient.dropDatabase(TEST_DB);
-        MongoTestDatabaseSetup.populateTestDB(this.mongoTemplate);
+        MongoTestDatabaseSetup.populateTestDBForFile(this.mongoTemplate);
     }
 
     @After
@@ -86,7 +85,7 @@ public class DeprecateStudySubmittedVariantsStepConfigurationTest {
 
     @Test
     public void variantsDeprecated() {
-        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchStep(BeanNames.DEPRECATE_STUDY_SUBMITTED_VARIANTS_STEP);
+        JobExecution jobExecution = jobLauncherTestUtilsFromFile.launchStep(BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         MongoTestDatabaseSetup.assertPostDeprecationDatabaseState(this.mongoTemplate);
     }

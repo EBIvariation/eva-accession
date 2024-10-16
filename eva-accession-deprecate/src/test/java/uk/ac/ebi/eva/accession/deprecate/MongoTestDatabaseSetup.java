@@ -83,6 +83,22 @@ public class MongoTestDatabaseSetup {
         mongoTemplate.save(rs2, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
     }
 
+    public static void populateTestDBForFile(MongoTemplate mongoTemplate) {
+        // rs1 -> ss1,ss2
+        // rs2 -> ss3,ss4
+        ss1 = createSS(STUDY1, 5L, 1L, 100L, "C", "T");
+        ss2 = createSS(STUDY1, 6L, 1L, 100L, "C", "A");
+        ss3 = createSS(STUDY2, 7L, 5L, 102L, "T", "G");
+        ss4 = createSS(STUDY2, 8L, 5L, 102L, "T", "A");
+
+        rs1 = createRS(ss1);
+        mongoTemplate.save(rs1, mongoTemplate.getCollectionName(DbsnpClusteredVariantEntity.class));
+
+        mongoTemplate.insert(Arrays.asList(ss1, ss2, ss3, ss4), SubmittedVariantEntity.class);
+        rs2 = createRS(ss3);
+        mongoTemplate.save(rs2, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
+    }
+
     public static void assertPostDeprecationDatabaseState(MongoTemplate mongoTemplate) {
         // ss4 was not deprecated and still remains
         assertEquals(1, mongoTemplate.findAll(SubmittedVariantEntity.class).size());
