@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 EMBL - European Bioinformatics Institute
+ * Copyright 2024 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
 import uk.ac.ebi.eva.accession.core.runner.CommandLineRunnerUtils;
 import uk.ac.ebi.eva.accession.deprecate.MongoTestDatabaseSetup;
 import uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration;
@@ -53,22 +52,20 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.springframework.data.mongodb.core.query.Criteria.where;
-import static org.springframework.data.mongodb.core.query.Query.query;
-import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_STUDY_SUBMITTED_VARIANTS_JOB;
-import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_STUDY_SUBMITTED_VARIANTS_STEP;
-import static uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_MONGO;
+import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB;
+import static uk.ac.ebi.eva.accession.deprecate.configuration.BeanNames.DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP;
+import static uk.ac.ebi.eva.accession.deprecate.test.configuration.BatchTestConfiguration.JOB_LAUNCHER_FROM_FILE;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, MongoTestConfiguration.class})
-@TestPropertySource("classpath:study-submitted-variants-test.properties")
-public class DeprecateStudySubmittedVariantsJobConfigurationTest {
+@TestPropertySource("classpath:deprecate-submitted-variants-from-file-test.properties")
+public class DeprecateSubmittedVariantsFromFileJobConfigurationTest {
 
     private static final String TEST_DB = "test-db";
 
     @Autowired
-    @Qualifier(JOB_LAUNCHER_FROM_MONGO)
-    private JobLauncherTestUtils jobLauncherTestUtilsFromMongo;
+    @Qualifier(JOB_LAUNCHER_FROM_FILE)
+    private JobLauncherTestUtils jobLauncherTestUtilsFromFile;
 
     @Autowired
     private JobExplorer jobExplorer;
@@ -103,7 +100,7 @@ public class DeprecateStudySubmittedVariantsJobConfigurationTest {
     @Before
     public void setUp() throws Exception {
         this.mongoClient.dropDatabase(TEST_DB);
-        MongoTestDatabaseSetup.populateTestDB(this.mongoTemplate);
+        MongoTestDatabaseSetup.populateTestDBForFile(this.mongoTemplate);
         jobRepositoryTestUtils = new JobRepositoryTestUtils(jobRepository, datasource);
         jobRepositoryTestUtils.removeJobExecutions();
     }
@@ -116,9 +113,9 @@ public class DeprecateStudySubmittedVariantsJobConfigurationTest {
 
     @Test
     public void basicJobCompletion() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
+        JobExecution jobExecution = jobLauncherTestUtilsFromFile.launchJob();
 
-        List<String> expectedSteps = Collections.singletonList(DEPRECATE_STUDY_SUBMITTED_VARIANTS_STEP);
+        List<String> expectedSteps = Collections.singletonList(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
 
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
@@ -134,26 +131,26 @@ public class DeprecateStudySubmittedVariantsJobConfigurationTest {
     @Test
     @DirtiesContext
     public void restartCompletedJobThatIsAlreadyInTheRepository() throws Exception {
-        JobExecution jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
+        JobExecution jobExecution = jobLauncherTestUtilsFromFile.launchJob();
 
-        List<String> expectedSteps = Collections.singletonList(DEPRECATE_STUDY_SUBMITTED_VARIANTS_STEP);
+        List<String> expectedSteps = Collections.singletonList(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         MongoTestDatabaseSetup.assertPostDeprecationDatabaseState(this.mongoTemplate);
 
-        long instanceIdFirstJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_STUDY_SUBMITTED_VARIANTS_JOB,
-                                                                             jobExplorer,
-                                                                             jobExecution.getJobParameters())
-                                                        .getJobInstance().getInstanceId();
+        long instanceIdFirstJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB,
+                        jobExplorer,
+                        jobExecution.getJobParameters())
+                .getJobInstance().getInstanceId();
 
-        jobExecution = jobLauncherTestUtilsFromMongo.launchJob();
-        expectedSteps = Collections.singletonList(DEPRECATE_STUDY_SUBMITTED_VARIANTS_STEP);
+        jobExecution = jobLauncherTestUtilsFromFile.launchJob();
+        expectedSteps = Collections.singletonList(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_STEP);
         assertStepsExecuted(expectedSteps, jobExecution);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        long instanceIdSecondJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_STUDY_SUBMITTED_VARIANTS_JOB,
-                                                                              jobExplorer,
-                                                                              jobExecution.getJobParameters())
-                                                         .getJobInstance().getInstanceId();
+        long instanceIdSecondJob = CommandLineRunnerUtils.getLastJobExecution(DEPRECATE_SUBMITTED_VARIANTS_FROM_FILE_JOB,
+                        jobExplorer,
+                        jobExecution.getJobParameters())
+                .getJobInstance().getInstanceId();
         assertNotEquals(instanceIdSecondJob, instanceIdFirstJob);
         MongoTestDatabaseSetup.assertPostDeprecationDatabaseState(this.mongoTemplate);
     }
