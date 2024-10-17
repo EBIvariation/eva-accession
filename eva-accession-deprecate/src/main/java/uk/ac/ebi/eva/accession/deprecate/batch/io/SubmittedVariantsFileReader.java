@@ -100,12 +100,12 @@ public class SubmittedVariantsFileReader implements ItemStreamReader<SubmittedVa
     }
 
     private void loadNextBatchAndQuery() {
-        List<Integer> variantIds = new ArrayList<>();
+        List<Long> variantIds = new ArrayList<>();
         String line;
 
         try {
             while (variantIds.size() < chunkSize && (line = reader.readLine()) != null) {
-                variantIds.add(Integer.parseInt(line.trim()));
+                variantIds.add(Long.parseLong(line.trim()));
             }
             if (variantIds.isEmpty()) {
                 endOfFile = true;
