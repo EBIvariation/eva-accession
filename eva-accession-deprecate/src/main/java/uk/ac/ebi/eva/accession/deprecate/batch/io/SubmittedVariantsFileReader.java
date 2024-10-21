@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Read all SubmittedVariants for a given study whose ids are given in the input file
+ * Read all SubmittedVariants for a given assembly whose ids are given in the input file
  */
 public class SubmittedVariantsFileReader implements ItemStreamReader<SubmittedVariantEntity> {
 
