@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.backoff.ExponentialBackOffPolicy;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.MissingUnsavedAccessionsException;
 
 import uk.ac.ebi.eva.accession.pipeline.batch.io.AccessionWriter;
 import uk.ac.ebi.eva.accession.pipeline.batch.policies.InvalidVariantSkipPolicy;
@@ -72,6 +74,9 @@ public class CreateSubsnpAccessionsStepConfiguration {
                 .processor(variantProcessor)
                 .writer(accessionWriter)
                 .faultTolerant()
+                .retry(MissingUnsavedAccessionsException.class)
+                .retryLimit(3)
+                .backOffPolicy(new ExponentialBackOffPolicy())
                 .skipPolicy(invalidVariantSkipPolicy)
                 .listener(stepListener)
                 .build();
