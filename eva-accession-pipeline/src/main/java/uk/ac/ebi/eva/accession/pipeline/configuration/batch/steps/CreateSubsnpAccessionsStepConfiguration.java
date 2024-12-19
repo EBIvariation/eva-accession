@@ -74,6 +74,8 @@ public class CreateSubsnpAccessionsStepConfiguration {
                 .processor(variantProcessor)
                 .writer(accessionWriter)
                 .faultTolerant()
+                // Exception can arise from running parallel accessioning jobs for a single study, hence the retry.
+                // See EVA-3719 for details.
                 .retry(MissingUnsavedAccessionsException.class)
                 .retryLimit(3)
                 .backOffPolicy(new ExponentialBackOffPolicy())
