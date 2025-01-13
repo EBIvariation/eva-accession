@@ -43,6 +43,10 @@ public class InputParameters {
 
     private boolean allowRetry;
 
+    private String rsAccFile;
+
+    private String duplicateRSAccFile;
+
     public String getVcf() {
         return vcf;
     }
@@ -132,5 +136,21 @@ public class InputParameters {
 
     public void setRemappedFrom(String remappedFrom) {
         this.remappedFrom = remappedFrom;
+    }
+
+    public String getRsAccFile() {
+        return rsAccFile;
+    }
+
+    public void setRsAccFile(String rsAccFile) {
+        this.rsAccFile = rsAccFile;
+    }
+
+    public String getDuplicateRSAccFile() {
+        return duplicateRSAccFile;
+    }
+
+    public void setDuplicateRSAccFile(String duplicateRSAccFile) {
+        this.duplicateRSAccFile = duplicateRSAccFile;
     }
 }
