@@ -111,14 +111,32 @@ public class DuplicateRSAccQCStepConfigurationTest {
     }
 
     @Test
-    public void duplicateRSAccQCTest_DuplicateNoChainExists() throws IOException {
-        populateTestDataDuplicateNoChainExists(this.mongoTemplate);
+    public void duplicateRSAccQCTest_Duplicate() throws IOException {
+        populateTestDataDuplicate(this.mongoTemplate);
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         Set<Long> expectedRSAccs = new HashSet<>();
         expectedRSAccs.add(2L);
         assertDuplicateRSAccFileContains(expectedRSAccs);
+    }
+
+    @Test
+    public void duplicateRSAccQCTest_NoDuplicate_1() throws IOException {
+        populateTestDataNoDuplicate1(this.mongoTemplate);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertDuplicateRSAccFileIsEmpty();
+    }
+
+    @Test
+    public void duplicateRSAccQCTest_NoDuplicate_2() throws IOException {
+        populateTestDataNoDuplicate2(this.mongoTemplate);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertDuplicateRSAccFileIsEmpty();
     }
 
     public static void populateTestDataOnlyOneDocument(MongoTemplate mongoTemplate) {
@@ -129,13 +147,43 @@ public class DuplicateRSAccQCStepConfigurationTest {
         mongoTemplate.save(rs1, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
     }
 
-    public static void populateTestDataDuplicateNoChainExists(MongoTemplate mongoTemplate) {
-        SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study11", "chr1", 11L, 2L, 100L, "C", "T");
-        SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study12", "chr1", 12L, 2L, 100L, "C", "T");
-        SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study21", "chr1", 21L, 2L, 100L, "C", "T");
-        SubmittedVariantEntity ss22 = createSS("GCA_000000001.2", 60711, "hash" + 22, "study22", "chr1", 22L, 2L, 100L, "C", "T");
-        SubmittedVariantEntity ss31 = createSS("GCA_000000001.3", 60711, "hash" + 31, "study31", "chr1", 31L, 2L, 100L, "C", "T");
-        SubmittedVariantEntity ss32 = createSS("GCA_000000001.3", 60711, "hash" + 32, "study32", "chr1", 32L, 2L, 100L, "C", "T");
+    public static void populateTestDataDuplicate(MongoTemplate mongoTemplate) {
+        SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study1", "chr1", 21L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss22 = createSS("GCA_000000001.2", 60711, "hash" + 22, "study2", "chr1", 22L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss31 = createSS("GCA_000000001.3", 60711, "hash" + 31, "study1", "chr1", 31L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss32 = createSS("GCA_000000001.3", 60711, "hash" + 32, "study2", "chr1", 32L, 2L, 100L, "C", "T");
+        ClusteredVariantEntity rs11 = createRS(ss11);
+        ClusteredVariantEntity rs21 = createRS(ss21);
+        ClusteredVariantEntity rs31 = createRS(ss31);
+
+        mongoTemplate.insert(Arrays.asList(ss11, ss12, ss21, ss22, ss31, ss32), SubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(rs11, rs21, rs31), ClusteredVariantEntity.class);
+    }
+
+    public static void populateTestDataNoDuplicate1(MongoTemplate mongoTemplate) {
+        SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study1", "chr1", 11L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss22 = createSS("GCA_000000001.2", 60711, "hash" + 22, "study2", "chr1", 22L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss31 = createSS("GCA_000000001.3", 60711, "hash" + 31, "study1", "chr1", 31L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss32 = createSS("GCA_000000001.3", 60711, "hash" + 32, "study2", "chr1", 22L, 2L, 100L, "C", "T");
+        ClusteredVariantEntity rs11 = createRS(ss11);
+        ClusteredVariantEntity rs21 = createRS(ss21);
+        ClusteredVariantEntity rs31 = createRS(ss31);
+
+        mongoTemplate.insert(Arrays.asList(ss11, ss12, ss21, ss22, ss31, ss32), SubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(rs11, rs21, rs31), ClusteredVariantEntity.class);
+    }
+
+    public static void populateTestDataNoDuplicate2(MongoTemplate mongoTemplate) {
+        SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 3L, 100L, "C", "T");
+        SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 3L, 100L, "C", "T");
+        SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study1", "chr1", 21L, 3L, 100L, "C", "T");
+        SubmittedVariantEntity ss22 = createSS("GCA_000000001.2", 60711, "hash" + 22, "study2", "chr1", 12L, 3L, 100L, "C", "T");
+        SubmittedVariantEntity ss31 = createSS("GCA_000000001.3", 60711, "hash" + 31, "study1", "chr1", 11L, 3L, 100L, "C", "T");
+        SubmittedVariantEntity ss32 = createSS("GCA_000000001.3", 60711, "hash" + 32, "study2", "chr1", 32L, 3L, 100L, "C", "T");
         ClusteredVariantEntity rs11 = createRS(ss11);
         ClusteredVariantEntity rs21 = createRS(ss21);
         ClusteredVariantEntity rs31 = createRS(ss31);

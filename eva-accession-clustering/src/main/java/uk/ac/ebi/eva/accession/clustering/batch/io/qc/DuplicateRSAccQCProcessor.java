@@ -87,7 +87,11 @@ public class DuplicateRSAccQCProcessor implements ItemProcessor<List<Long>, List
     }
 
     private boolean listsIntersect(List<SubmittedVariantEntity> list1, List<SubmittedVariantEntity> list2) {
-        return list1.stream().anyMatch(list2::contains);
+        return list1.stream()
+                .map(SubmittedVariantEntity::getAccession)
+                .anyMatch(field -> list2.stream()
+                        .map(SubmittedVariantEntity::getAccession)
+                        .anyMatch(field::equals));
     }
 
     private boolean isSingleConnectedComponent(MutableGraph<String> graph) {
