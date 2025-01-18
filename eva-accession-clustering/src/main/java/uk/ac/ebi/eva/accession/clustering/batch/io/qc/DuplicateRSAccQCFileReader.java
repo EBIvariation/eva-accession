@@ -44,7 +44,8 @@ public class DuplicateRSAccQCFileReader implements ItemStreamReader<List<Long>> 
 
         try {
             while (clusteredVariantIds.size() < chunkSize && (line = reader.readLine()) != null) {
-                clusteredVariantIds.add(Long.parseLong(line.trim()));
+                String rsAcc = line.split(" ")[0].trim();
+                clusteredVariantIds.add(Long.parseLong(rsAcc));
             }
             if (clusteredVariantIds.isEmpty()) {
                 return null;

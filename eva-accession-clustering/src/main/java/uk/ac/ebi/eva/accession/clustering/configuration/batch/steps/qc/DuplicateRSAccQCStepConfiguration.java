@@ -7,7 +7,6 @@ import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemStreamReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.repeat.policy.SimpleCompletionPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -37,9 +36,10 @@ public class DuplicateRSAccQCStepConfiguration {
     private ItemWriter<List<Long>> duplicateRSAccQCWriter;
 
     @Bean(DUPLICATE_RS_ACC_QC_STEP)
-    public Step duplicateRSAccQCStep(StepBuilderFactory stepBuilderFactory,
-                                     SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+    public Step duplicateRSAccQCStep(StepBuilderFactory stepBuilderFactory) {
         TaskletStep step = stepBuilderFactory.get(DUPLICATE_RS_ACC_QC_STEP)
+                // hardcoded the chunk size as 1, as the reader takes care of accumulating
+                // and sending the chunk size (defined in properties file) elements to the processor
                 .<List<Long>, List<Long>>chunk(1)
                 .reader(duplicateRSAccFileReader)
                 .processor(duplicateRSAccQCProcessor)

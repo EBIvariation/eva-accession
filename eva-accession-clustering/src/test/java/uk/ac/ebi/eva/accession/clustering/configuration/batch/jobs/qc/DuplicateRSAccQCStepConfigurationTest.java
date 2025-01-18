@@ -39,6 +39,8 @@ import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfigurat
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.accession.core.model.ClusteredVariant;
 import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantEntity;
 import uk.ac.ebi.eva.accession.core.summary.ClusteredVariantSummaryFunction;
@@ -111,6 +113,17 @@ public class DuplicateRSAccQCStepConfigurationTest {
     }
 
     @Test
+    public void duplicateRSAccQCTest_DuplicateSameAssembly() throws IOException {
+        populateTestDataDuplicateSameAssembly(this.mongoTemplate);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        Set<Long> expectedRSAccs = new HashSet<>();
+        expectedRSAccs.add(2L);
+        assertDuplicateRSAccFileContains(expectedRSAccs);
+    }
+
+    @Test
     public void duplicateRSAccQCTest_Duplicate() throws IOException {
         populateTestDataDuplicate(this.mongoTemplate);
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
@@ -132,7 +145,19 @@ public class DuplicateRSAccQCStepConfigurationTest {
 
     @Test
     public void duplicateRSAccQCTest_NoDuplicate_2() throws IOException {
+        // set1->intersect->set2
+        // set1->intersect->set3
         populateTestDataNoDuplicate2(this.mongoTemplate);
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
+        assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+
+        assertDuplicateRSAccFileIsEmpty();
+    }
+
+    @Test
+    public void duplicateRSAccQCTest_NoDuplicate_3() throws IOException {
+        // testing with some documents in dbsnp collections
+        populateTestDataNoDuplicate3(this.mongoTemplate);
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
@@ -145,6 +170,15 @@ public class DuplicateRSAccQCStepConfigurationTest {
 
         mongoTemplate.save(ss1, mongoTemplate.getCollectionName(SubmittedVariantEntity.class));
         mongoTemplate.save(rs1, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
+    }
+
+    public static void populateTestDataDuplicateSameAssembly(MongoTemplate mongoTemplate) {
+        SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 2L, 100L, "C", "T");
+        SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 2L, 101L, "A", "G");
+        ClusteredVariantEntity rs11 = createRS(ss11);
+        ClusteredVariantEntity rs12 = createRS(ss12);
+        mongoTemplate.insert(Arrays.asList(ss11, ss12), SubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(rs11, rs12), ClusteredVariantEntity.class);
     }
 
     public static void populateTestDataDuplicate(MongoTemplate mongoTemplate) {
@@ -163,6 +197,8 @@ public class DuplicateRSAccQCStepConfigurationTest {
     }
 
     public static void populateTestDataNoDuplicate1(MongoTemplate mongoTemplate) {
+        // set1(ss11,ss12)->intersect->set2(ss21,ss22)
+        // set2(ss21,ss22)->intersect->set3(ss31,ss32)
         SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 2L, 100L, "C", "T");
         SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 2L, 100L, "C", "T");
         SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study1", "chr1", 11L, 2L, 100L, "C", "T");
@@ -178,6 +214,8 @@ public class DuplicateRSAccQCStepConfigurationTest {
     }
 
     public static void populateTestDataNoDuplicate2(MongoTemplate mongoTemplate) {
+        // set1(ss11,ss12)->intersect->set2(ss21,ss22)
+        // set1(ss11,ss12)->intersect->set3(ss31,ss32)
         SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 3L, 100L, "C", "T");
         SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 3L, 100L, "C", "T");
         SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study1", "chr1", 21L, 3L, 100L, "C", "T");
@@ -190,6 +228,27 @@ public class DuplicateRSAccQCStepConfigurationTest {
 
         mongoTemplate.insert(Arrays.asList(ss11, ss12, ss21, ss22, ss31, ss32), SubmittedVariantEntity.class);
         mongoTemplate.insert(Arrays.asList(rs11, rs21, rs31), ClusteredVariantEntity.class);
+    }
+
+    public static void populateTestDataNoDuplicate3(MongoTemplate mongoTemplate) {
+        // contains some documents in dbsnp collections
+
+        // set1(ss11,ss12)->intersect->set2(ss21,ss22)
+        // set1(ss11,ss12)->intersect->set3(ss31,ss32)
+        SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 3L, 100L, "C", "T");
+        DbsnpSubmittedVariantEntity ss12 = createDbsnpSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 3L, 100L, "C", "T");
+        SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study1", "chr1", 21L, 3L, 100L, "C", "T");
+        DbsnpSubmittedVariantEntity ss22 = createDbsnpSS("GCA_000000001.2", 60711, "hash" + 22, "study2", "chr1", 12L, 3L, 100L, "C", "T");
+        SubmittedVariantEntity ss31 = createSS("GCA_000000001.3", 60711, "hash" + 31, "study1", "chr1", 11L, 3L, 100L, "C", "T");
+        DbsnpSubmittedVariantEntity ss32 = createDbsnpSS("GCA_000000001.3", 60711, "hash" + 32, "study2", "chr1", 32L, 3L, 100L, "C", "T");
+        ClusteredVariantEntity rs11 = createRS(ss11);
+        DbsnpClusteredVariantEntity rs21 = createDbsnpRS(ss21);
+        DbsnpClusteredVariantEntity rs31 = createDbsnpRS(ss31);
+
+        mongoTemplate.insert(Arrays.asList(ss11, ss21, ss31), SubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(ss12, ss22, ss32), DbsnpSubmittedVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(rs11), ClusteredVariantEntity.class);
+        mongoTemplate.insert(Arrays.asList(rs21, rs31), DbsnpClusteredVariantEntity.class);
     }
 
     public void assertDuplicateRSAccFileIsEmpty() throws IOException {
@@ -211,6 +270,14 @@ public class DuplicateRSAccQCStepConfigurationTest {
                 rsAccession, false, false, false, false, 1);
     }
 
+    public static DbsnpSubmittedVariantEntity createDbsnpSS(String asm, int tax, String hash, String study, String contig,
+                                                            Long ssAccession, Long rsAccession, Long start,
+                                                            String reference, String alternate) {
+        return new DbsnpSubmittedVariantEntity(ssAccession, hash, asm, tax, study, contig, start, reference, alternate,
+                rsAccession, false, false, false, false, 1);
+    }
+
+
     public static ClusteredVariantEntity createRS(SubmittedVariantEntity sve) {
         Function<IClusteredVariant, String> hashingFunction = new ClusteredVariantSummaryFunction().andThen(
                 new SHA1HashingFunction());
@@ -223,5 +290,19 @@ public class DuplicateRSAccQCStepConfigurationTest {
                 true, null);
         String hash = hashingFunction.apply(cv);
         return new ClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
+    }
+
+    public static DbsnpClusteredVariantEntity createDbsnpRS(SubmittedVariantEntity sve) {
+        Function<IClusteredVariant, String> hashingFunction = new ClusteredVariantSummaryFunction().andThen(
+                new SHA1HashingFunction());
+        ClusteredVariant cv = new ClusteredVariant(sve.getReferenceSequenceAccession(), sve.getTaxonomyAccession(),
+                sve.getContig(),
+                sve.getStart(),
+                new Variant(sve.getContig(), sve.getStart(), sve.getStart(),
+                        sve.getReferenceAllele(),
+                        sve.getAlternateAllele()).getType(),
+                true, null);
+        String hash = hashingFunction.apply(cv);
+        return new DbsnpClusteredVariantEntity(sve.getClusteredVariantAccession(), hash, cv);
     }
 }
