@@ -105,4 +105,14 @@ public class BeanNames {
     public static final String RS_ACCESSION_RECOVERY_JOB = "RS_ACCESSION_RECOVERY_JOB";
 
     public static final String RS_ACCESSION_RECOVERY_JOB_LISTENER = "RS_ACCESSION_RECOVERY_JOB_LISTENER";
+
+    public static final String DUPLICATE_RS_ACC_QC_FILE_READER = "DUPLICATE_RS_ACC_QC_FILE_READER";
+
+    public static final String DUPLICATE_RS_ACC_QC_PROCESSOR = "DUPLICATE_RS_ACC_QC_PROCESSOR";
+
+    public static final String DUPLICATE_RS_ACC_QC_WRITER = "DUPLICATE_RS_ACC_QC_WRITER";
+
+    public static final String DUPLICATE_RS_ACC_QC_JOB = "DUPLICATE_RS_ACC_QC_JOB";
+
+    public static final String DUPLICATE_RS_ACC_QC_STEP = "DUPLICATE_RS_ACC_QC_STEP";
 }
