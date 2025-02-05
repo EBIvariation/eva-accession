@@ -127,6 +127,7 @@ public class InputParameters {
                 .addString("projects", projectsString)
                 .addString("vcf", vcf)
                 .addLong("chunkSize", (long) chunkSize, false)
+                .addString("rsAccFile", rsAccFile)
                 .toJobParameters();
     }
 
