@@ -1,5 +1,7 @@
 package uk.ac.ebi.eva.accession.clustering.batch.io.qc;
 
+import gherkin.deps.com.google.gson.Gson;
+import gherkin.deps.com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemStreamException;
@@ -10,10 +12,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-public class DuplicateRSAccQCWriter implements ItemStreamWriter<List<Long>> {
+public class DuplicateRSAccQCWriter implements ItemStreamWriter<List<DuplicateRSAccQCResult>> {
     private static final Logger logger = LoggerFactory.getLogger(DuplicateRSAccQCWriter.class);
     private String duplicateRSAccFile;
     private BufferedWriter writer;
+    private final Gson gson = new GsonBuilder().create();
 
     public DuplicateRSAccQCWriter(String duplicateRSAccFile) {
         this.duplicateRSAccFile = duplicateRSAccFile;
@@ -44,21 +47,21 @@ public class DuplicateRSAccQCWriter implements ItemStreamWriter<List<Long>> {
     }
 
     @Override
-    public void write(List<? extends List<Long>> items) throws Exception {
-        for (List<Long> list : items) {
-            if (list != null && !list.isEmpty()) {
-                appendToFile(list);
+    public void write(List<? extends List<DuplicateRSAccQCResult>> listOfDuplicateRSAccQCResultLists) throws Exception {
+        for (List<DuplicateRSAccQCResult> duplicateRSAccQCResultList : listOfDuplicateRSAccQCResultLists) {
+            if (duplicateRSAccQCResultList != null && !duplicateRSAccQCResultList.isEmpty()) {
+                appendToFile(duplicateRSAccQCResultList);
             } else {
                 logger.info("No duplicate RS IDs in the batch to append");
             }
         }
     }
 
-    private void appendToFile(List<Long> duplicateRSIdList) throws IOException {
-        for (Long rsId : duplicateRSIdList) {
-            writer.write(rsId.toString());
+    private void appendToFile(List<DuplicateRSAccQCResult> duplicateRSAccQCResultsList) throws IOException {
+        for (DuplicateRSAccQCResult duplicateRSAccQCResult : duplicateRSAccQCResultsList) {
+            writer.write(duplicateRSAccQCResult.getCveAccession().toString() + " " + gson.toJson(duplicateRSAccQCResult));
             writer.newLine();
         }
-        logger.warn("Appended " + duplicateRSIdList.size() + " duplicate RS IDs to the file");
+        logger.warn("Appended {} duplicate RS IDs to the file", duplicateRSAccQCResultsList.size());
     }
 }

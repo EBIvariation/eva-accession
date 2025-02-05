@@ -18,6 +18,9 @@ package uk.ac.ebi.eva.accession.clustering.configuration.batch.jobs.qc;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
 import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
 import com.mongodb.MongoClient;
+import gherkin.deps.com.google.gson.Gson;
+import gherkin.deps.com.google.gson.GsonBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,6 +37,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.eva.accession.clustering.batch.io.qc.DuplicateRSAccQCResult;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.BatchTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.configuration.MongoTestConfiguration;
 import uk.ac.ebi.eva.accession.clustering.test.rule.FixSpringMongoDbRule;
@@ -51,6 +55,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,6 +87,8 @@ public class DuplicateRSAccQCStepConfigurationTest {
     //Required by nosql-unit
     @Autowired
     private ApplicationContext applicationContext;
+
+    private final Gson gson = new GsonBuilder().create();
 
     @Rule
     public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(
@@ -114,24 +122,26 @@ public class DuplicateRSAccQCStepConfigurationTest {
 
     @Test
     public void duplicateRSAccQCTest_DuplicateSameAssembly() throws IOException {
-        populateTestDataDuplicateSameAssembly(this.mongoTemplate);
+        Pair<List<ClusteredVariantEntity>, List<SubmittedVariantEntity>> dataCveSve = populateTestDataDuplicateSameAssembly(this.mongoTemplate);
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         Set<Long> expectedRSAccs = new HashSet<>();
         expectedRSAccs.add(2L);
-        assertDuplicateRSAccFileContains(expectedRSAccs);
+
+        assertDuplicateRSAccFileContains(expectedRSAccs, dataCveSve);
     }
 
     @Test
     public void duplicateRSAccQCTest_Duplicate() throws IOException {
-        populateTestDataDuplicate(this.mongoTemplate);
+        Pair<List<ClusteredVariantEntity>, List<SubmittedVariantEntity>> dataCveSve = populateTestDataDuplicate(this.mongoTemplate);
         JobExecution jobExecution = jobLauncherTestUtils.launchStep(DUPLICATE_RS_ACC_QC_STEP);
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
         Set<Long> expectedRSAccs = new HashSet<>();
         expectedRSAccs.add(2L);
-        assertDuplicateRSAccFileContains(expectedRSAccs);
+
+        assertDuplicateRSAccFileContains(expectedRSAccs, dataCveSve);
     }
 
     @Test
@@ -172,16 +182,22 @@ public class DuplicateRSAccQCStepConfigurationTest {
         mongoTemplate.save(rs1, mongoTemplate.getCollectionName(ClusteredVariantEntity.class));
     }
 
-    public static void populateTestDataDuplicateSameAssembly(MongoTemplate mongoTemplate) {
+    public static Pair<List<ClusteredVariantEntity>, List<SubmittedVariantEntity>> populateTestDataDuplicateSameAssembly(MongoTemplate mongoTemplate) {
         SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 2L, 100L, "C", "T");
         SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 2L, 101L, "A", "G");
         ClusteredVariantEntity rs11 = createRS(ss11);
         ClusteredVariantEntity rs12 = createRS(ss12);
-        mongoTemplate.insert(Arrays.asList(ss11, ss12), SubmittedVariantEntity.class);
-        mongoTemplate.insert(Arrays.asList(rs11, rs12), ClusteredVariantEntity.class);
+
+        List<SubmittedVariantEntity> submittedVariantEntityList = Arrays.asList(ss11, ss12);
+        List<ClusteredVariantEntity> clusteredVariantEntityList = Arrays.asList(rs11, rs12);
+
+        mongoTemplate.insert(submittedVariantEntityList, SubmittedVariantEntity.class);
+        mongoTemplate.insert(clusteredVariantEntityList, ClusteredVariantEntity.class);
+
+        return Pair.of(clusteredVariantEntityList, submittedVariantEntityList);
     }
 
-    public static void populateTestDataDuplicate(MongoTemplate mongoTemplate) {
+    public static Pair<List<ClusteredVariantEntity>, List<SubmittedVariantEntity>> populateTestDataDuplicate(MongoTemplate mongoTemplate) {
         SubmittedVariantEntity ss11 = createSS("GCA_000000001.1", 60711, "hash" + 11, "study1", "chr1", 11L, 2L, 100L, "C", "T");
         SubmittedVariantEntity ss12 = createSS("GCA_000000001.1", 60711, "hash" + 12, "study2", "chr1", 12L, 2L, 100L, "C", "T");
         SubmittedVariantEntity ss21 = createSS("GCA_000000001.2", 60711, "hash" + 21, "study1", "chr1", 21L, 2L, 100L, "C", "T");
@@ -192,8 +208,13 @@ public class DuplicateRSAccQCStepConfigurationTest {
         ClusteredVariantEntity rs21 = createRS(ss21);
         ClusteredVariantEntity rs31 = createRS(ss31);
 
-        mongoTemplate.insert(Arrays.asList(ss11, ss12, ss21, ss22, ss31, ss32), SubmittedVariantEntity.class);
-        mongoTemplate.insert(Arrays.asList(rs11, rs21, rs31), ClusteredVariantEntity.class);
+        List<SubmittedVariantEntity> submittedVariantEntityList = Arrays.asList(ss11, ss12, ss21, ss22, ss31, ss32);
+        List<ClusteredVariantEntity> clusteredVariantEntityList = Arrays.asList(rs11, rs21, rs31);
+
+        mongoTemplate.insert(submittedVariantEntityList, SubmittedVariantEntity.class);
+        mongoTemplate.insert(clusteredVariantEntityList, ClusteredVariantEntity.class);
+
+        return Pair.of(clusteredVariantEntityList, submittedVariantEntityList);
     }
 
     public static void populateTestDataNoDuplicate1(MongoTemplate mongoTemplate) {
@@ -261,6 +282,34 @@ public class DuplicateRSAccQCStepConfigurationTest {
                 .collect(Collectors.toSet());
 
         assertEquals(expectedDuplicateAcc, rsAccInDuplicateFile);
+    }
+
+    public void assertDuplicateRSAccFileContains(Set<Long> duplicateCVEAccessions,
+                                                 Pair<List<ClusteredVariantEntity>, List<SubmittedVariantEntity>> dataCveSve) throws IOException {
+        Map<Long, List<ClusteredVariantEntity>> mapOfCveAccAndCveEntities = dataCveSve.getLeft().stream()
+                .collect(Collectors.groupingBy(ClusteredVariantEntity::getAccession));
+
+        Map<Long, Map<String, Set<SubmittedVariantEntity>>> mapOfSveGroupByCveAccAndThenByAsmLoc = dataCveSve.getRight().stream()
+                .collect(Collectors.groupingBy(
+                        SubmittedVariantEntity::getClusteredVariantAccession,
+                        Collectors.groupingBy(sve ->
+                                        String.join("_", sve.getReferenceSequenceAccession(), sve.getContig(), String.valueOf(sve.getStart())),
+                                Collectors.toSet()
+                        )
+                ));
+
+        Map<String, String> fileDataGroupByCveAcc = Files.lines(Paths.get(duplicateRsAccFile))
+                .map(l -> l.split(" "))
+                .filter(split -> duplicateCVEAccessions.contains(Long.parseLong(split[0])))
+                .collect(Collectors.toMap(split -> split[0], split -> split[1]));
+
+        for (Long cveAcc : duplicateCVEAccessions) {
+            String fileJsonData = fileDataGroupByCveAcc.get(String.valueOf(cveAcc));
+            String expectedJsonData = gson.toJson(new DuplicateRSAccQCResult(cveAcc, mapOfCveAccAndCveEntities.get(cveAcc),
+                    mapOfSveGroupByCveAccAndThenByAsmLoc.get(cveAcc)));
+
+            assertEquals(expectedJsonData, fileJsonData);
+        }
     }
 
     public static SubmittedVariantEntity createSS(String asm, int tax, String hash, String study, String contig,
