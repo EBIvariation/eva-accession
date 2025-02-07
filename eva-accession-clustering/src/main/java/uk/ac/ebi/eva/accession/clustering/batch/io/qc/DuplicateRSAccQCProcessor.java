@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.convert.MongoConverter;
 import org.springframework.data.mongodb.core.query.Query;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantEntity;
@@ -25,29 +24,29 @@ import java.util.stream.Stream;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
 
-public class DuplicateRSAccQCProcessor implements ItemProcessor<List<Long>, List<Long>> {
+public class DuplicateRSAccQCProcessor implements ItemProcessor<List<Long>, List<DuplicateRSAccQCResult>> {
     private static final Logger logger = LoggerFactory.getLogger(DuplicateRSAccQCProcessor.class);
 
     private static final String ACCESSION_FIELD = "accession";
     private static final String SVE_RS_FIELD = "rs";
     private MongoTemplate mongoTemplate;
-    private MongoConverter converter;
 
     public DuplicateRSAccQCProcessor(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
-        this.converter = mongoTemplate.getConverter();
     }
 
     @Override
-    public List<Long> process(List<Long> cveAccessions) {
+    public List<DuplicateRSAccQCResult> process(List<Long> cveAccessions) {
         // get all the CVE documents for the given accessions
         List<ClusteredVariantEntity> clusteredVariantEntitiesList = getClusteredVariantEntityList(cveAccessions);
 
-        // filter CVE accessions with more than one document
-        Set<Long> cveAccessionsWithMultipleDocs = clusteredVariantEntitiesList.stream()
-                .collect(Collectors.groupingBy(ClusteredVariantEntity::getAccession, Collectors.counting()))
-                .entrySet().stream()
-                .filter(entry -> entry.getValue() > 1)
+        // Group CVE documents by accession
+        Map<Long, List<ClusteredVariantEntity>> cveAccessionToEntitiesMap = clusteredVariantEntitiesList.stream()
+                .collect(Collectors.groupingBy(ClusteredVariantEntity::getAccession));
+
+        // Filter CVE accessions with more than one document
+        Set<Long> cveAccessionsWithMultipleDocs = cveAccessionToEntitiesMap.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
 
@@ -64,7 +63,7 @@ public class DuplicateRSAccQCProcessor implements ItemProcessor<List<Long>, List
                         )
                 ));
 
-        List<Long> duplicateCVEAccessions = new ArrayList<>();
+        List<DuplicateRSAccQCResult> duplicateRSAccQCResultList = new ArrayList<>();
 
         /**
          Duplicate RS Accession defined in EVA-3671:
@@ -98,11 +97,11 @@ public class DuplicateRSAccQCProcessor implements ItemProcessor<List<Long>, List
 
             if (!isSingleConnectedComponent(graph)) {
                 logger.warn("Found Duplicate RS Accession {}", cveAcc);
-                duplicateCVEAccessions.add(cveAcc);
+                duplicateRSAccQCResultList.add(new DuplicateRSAccQCResult(cveAcc, cveAccessionToEntitiesMap.get(cveAcc), groupMap));
             }
         });
 
-        return duplicateCVEAccessions;
+        return duplicateRSAccQCResultList;
     }
 
     private boolean isSingleConnectedComponent(MutableGraph<String> graph) {
