@@ -41,6 +41,10 @@ public class InputParameters {
 
     private ContigNaming contigNaming;
 
+    private String rsAccFile;
+
+    private String rsAccDumpFile;
+
     public JobParameters toJobParameters() {
         return new JobParametersBuilder()
                 .addString("assemblyAccession", assemblyAccession)
@@ -48,6 +52,8 @@ public class InputParameters {
                 .addString("fasta", fasta)
                 .addString("assemblyReportUrl", assemblyReportUrl)
                 .addString("outputFolder", outputFolder)
+                .addString("rsAccFile", rsAccFile)
+                .addString("rsAccDumpFile", rsAccDumpFile)
                 .toJobParameters();
     }
 
@@ -121,5 +127,21 @@ public class InputParameters {
 
     public void setContigNaming(ContigNaming contigNaming) {
         this.contigNaming = contigNaming;
+    }
+
+    public String getRsAccFile() {
+        return rsAccFile;
+    }
+
+    public void setRsAccFile(String rsAccFile) {
+        this.rsAccFile = rsAccFile;
+    }
+
+    public String getRsAccDumpFile() {
+        return rsAccDumpFile;
+    }
+
+    public void setRsAccDumpFile(String rsAccDumpFile) {
+        this.rsAccDumpFile = rsAccDumpFile;
     }
 }
