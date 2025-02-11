@@ -27,7 +27,6 @@ import uk.ac.ebi.eva.accession.core.repository.nonhuman.eva.SubmittedVariantAcce
 import uk.ac.ebi.eva.accession.release.batch.io.ReleaseRecordWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.contig.ContigWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.merged.MergedVariantContextWriter;
-import uk.ac.ebi.eva.accession.release.batch.io.multimap.MultimapVariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.io.active.VariantContextWriter;
 import uk.ac.ebi.eva.accession.release.batch.processors.ContextNucleotideAdditionProcessor;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
@@ -36,10 +35,8 @@ import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import java.nio.file.Path;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_RELEASE_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_RELEASE_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_RELEASE_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.INCREMENTAL_RELEASE_WRITER;
 
@@ -64,15 +61,6 @@ public class VariantContextWriterConfiguration {
         return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession(), mergedContigsFilePath);
     }
 
-    @Bean(DBSNP_MULTIMAP_RELEASE_WRITER)
-    public MultimapVariantContextWriter multimapVariantContextWriter(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getDbsnpMultimapIdsReportPath(parameters.getOutputFolder(),
-                                                                           parameters.getAssemblyAccession());
-        String activeContigsFilePath = ContigWriter.getDbsnpMultimapContigsFilePath(reportPath.toFile().getParent(),
-                                                                                    parameters.getAssemblyAccession());
-        return new MultimapVariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
-    }
-
     @Bean(EVA_RELEASE_WRITER)
     public VariantContextWriter variantContextWriterEva(InputParameters parameters) {
         Path reportPath = ReportPathResolver.getEvaCurrentIdsReportPath(parameters.getOutputFolder(),
@@ -89,15 +77,6 @@ public class VariantContextWriterConfiguration {
         String mergedContigsFilePath = ContigWriter.getEvaMergedContigsFilePath(reportPath.toFile().getParent(),
                                                                                 parameters.getAssemblyAccession());
         return new MergedVariantContextWriter(reportPath, parameters.getAssemblyAccession(), mergedContigsFilePath);
-    }
-
-    @Bean(EVA_MULTIMAP_RELEASE_WRITER)
-    public MultimapVariantContextWriter multimapVariantContextWriterEva(InputParameters parameters) {
-        Path reportPath = ReportPathResolver.getEvaMultimapIdsReportPath(parameters.getOutputFolder(),
-                                                                         parameters.getAssemblyAccession());
-        String activeContigsFilePath = ContigWriter.getEvaMultimapContigsFilePath(reportPath.toFile().getParent(),
-                                                                                  parameters.getAssemblyAccession());
-        return new MultimapVariantContextWriter(reportPath, parameters.getAssemblyAccession(), activeContigsFilePath);
     }
 
     @Bean(INCREMENTAL_RELEASE_WRITER)

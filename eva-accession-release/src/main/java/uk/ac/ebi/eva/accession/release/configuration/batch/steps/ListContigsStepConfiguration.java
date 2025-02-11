@@ -37,18 +37,12 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_ACTIVE
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_ACTIVE_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MULTIMAP_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MERGED_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_DBSNP_MULTIMAP_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_CONTIG_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MERGED_CONTIG_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_CONTIG_READER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DBSNP_MULTIMAP_CONTIG_WRITER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_ACTIVE_CONTIGS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_MERGED_CONTIGS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.LIST_EVA_MULTIMAP_CONTIGS_STEP;
 
 /**
  * Creates a file with the contigs in INSDC (GenBank) when possible. The file will be used in
@@ -86,19 +80,6 @@ public class ListContigsStepConfiguration {
         return step;
     }
 
-    @Bean(LIST_DBSNP_MULTIMAP_CONTIGS_STEP)
-    public Step multimapContigsStepDbsnp(
-            StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy,
-            @Qualifier(DBSNP_MULTIMAP_CONTIG_READER) ItemStreamReader<String> multimapContigReader,
-            @Qualifier(DBSNP_MULTIMAP_CONTIG_WRITER) ItemStreamWriter<String> multimapContigWriter) {
-        TaskletStep step = stepBuilderFactory.get(LIST_DBSNP_MULTIMAP_CONTIGS_STEP)
-                .<String, String>chunk(chunkSizeCompletionPolicy)
-                .reader(multimapContigReader)
-                .writer(multimapContigWriter)
-                .build();
-        return step;
-    }
-
     @Bean(LIST_EVA_ACTIVE_CONTIGS_STEP)
     public Step activeContigsStepEva(
             StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy,
@@ -121,19 +102,6 @@ public class ListContigsStepConfiguration {
                 .<String, String>chunk(chunkSizeCompletionPolicy)
                 .reader(mergedContigReader)
                 .writer(mergedContigWriter)
-                .build();
-        return step;
-    }
-
-    @Bean(LIST_EVA_MULTIMAP_CONTIGS_STEP)
-    public Step multimapContigsStepEva(
-            StepBuilderFactory stepBuilderFactory, SimpleCompletionPolicy chunkSizeCompletionPolicy,
-            @Qualifier(EVA_MULTIMAP_CONTIG_READER) ItemStreamReader<String> multimapContigReader,
-            @Qualifier(EVA_MULTIMAP_CONTIG_WRITER) ItemStreamWriter<String> multimapContigWriter) {
-        TaskletStep step = stepBuilderFactory.get(LIST_EVA_MULTIMAP_CONTIGS_STEP)
-                .<String, String>chunk(chunkSizeCompletionPolicy)
-                .reader(multimapContigReader)
-                .writer(multimapContigWriter)
                 .build();
         return step;
     }
