@@ -51,8 +51,8 @@ public class ContextNucleotideAdditionProcessor implements ItemProcessor<Variant
                 throw new IllegalArgumentException("Contig '" + contig + "' does not appear in the FASTA file ");
             }
         } catch (PositionOutsideOfContigException e) {
-            logger.warn(e.getMessage() + ". " + variant.toString());
-            throw e;
+            logger.error("Position Outside Of Contig Exception: " + e.getMessage() + ". " + variant.toString());
+            return null;
         }
     }
 
