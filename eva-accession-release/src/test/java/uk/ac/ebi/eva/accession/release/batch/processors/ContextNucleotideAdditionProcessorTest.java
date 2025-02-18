@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public class ContextNucleotideAdditionProcessorTest {
@@ -178,13 +179,13 @@ public class ContextNucleotideAdditionProcessorTest {
         assertEquals("<100_BP_INSERTION>", processedVariant.getAlternate());
     }
 
-    @Test(expected = PositionOutsideOfContigException.class)
+    @Test
     public void testStartPositionGreaterThanChromosomeEnd() throws Exception {
         Variant variant1 = new Variant(CONTIG, START_OUTSIDE_CHOMOSOME, START_OUTSIDE_CHOMOSOME, "", "A");
         String rs1000 = "rs1000";
         variant1.setMainId(rs1000);
         variant1.setIds(Collections.singleton(rs1000));
-        contextNucleotideAdditionProcessor.process(variant1);
+        assertNull(contextNucleotideAdditionProcessor.process(variant1));
     }
 
     @Test
