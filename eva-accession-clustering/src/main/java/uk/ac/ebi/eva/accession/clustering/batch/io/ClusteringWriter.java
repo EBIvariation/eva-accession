@@ -21,8 +21,6 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Aggregation;
-import org.springframework.data.mongodb.core.aggregation.AggregationOptions;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.util.CloseableIterator;
@@ -144,18 +142,14 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private void getSVOEWithMergeAndRSSplitCandidates() {
         List<String> MERGE_AND_SPLIT_EVENTS = Arrays.asList(EventType.RS_MERGE_CANDIDATES.name(),
                                                             EventType.RS_SPLIT_CANDIDATES.name());
-        AggregationOptions aggregationOptions = Aggregation.newAggregationOptions().cursorBatchSize(1000)
-                .allowDiskUse(true).build();
+        Query queryOperations = query(where("eventType").in(MERGE_AND_SPLIT_EVENTS)
+                                                        .and("inactiveObjects").elemMatch(where("seq").is(assembly)));
         mergeCandidateSVOE = new HashMap<>();
         rsSplitCandidateSVOE = new HashMap<>();
 
         try (
-                CloseableIterator<SubmittedVariantOperationEntity> svoes = mongoTemplate.aggregateStream(
-                        Aggregation.newAggregation(
-                                Aggregation.match(where("eventType").in(MERGE_AND_SPLIT_EVENTS)
-                                        .and("inactiveObjects").elemMatch(where("seq").is(assembly))))
-                        .withOptions(aggregationOptions), SubmittedVariantOperationEntity.class.getSimpleName(),
-                SubmittedVariantOperationEntity.class)) {
+                CloseableIterator<SubmittedVariantOperationEntity> svoes = mongoTemplate.stream(
+                        queryOperations, SubmittedVariantOperationEntity.class)) {
             svoes.forEachRemaining(svoe -> {
                 if (svoe.getEventType().equals(EventType.RS_MERGE_CANDIDATES)) {
                     mergeCandidateSVOE.put(getClusteredVariantHash(svoe.getInactiveObjects().get(0).getModel()), svoe);
@@ -246,7 +240,7 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
     private void processClusteredRemappedVariants(List<? extends SubmittedVariantEntity> submittedVariants)
             throws IOException {
         List<SubmittedVariantEntity> clusteredRemappedSubmittedVariants = getClusteredAndRemappedVariants(submittedVariants);
-        if(clusteredRemappedSubmittedVariants.isEmpty()) {
+        if (clusteredRemappedSubmittedVariants.isEmpty()) {
             return;
         }
 
@@ -351,6 +345,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         submittedVariantOperationEntity.getInactiveObjects();
                 if (!doesSubmittedVariantAlreadyExistInSVOE(submittedVariantEntity, inactiveEntities)) {
                     inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
+                } else {
+                    // We've already created a merge candidate operation containing this SVE (probably due to
+                    // resumed processing) - in this case don't add this operation to the list of operations to update
+                    submittedVariantOperationEntity = null;
                 }
             } else {
                 List<SubmittedVariantInactiveEntity> inactiveObjects =
@@ -364,7 +362,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         "RS mismatch with " + accessionInDB, inactiveObjects);
                 mergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
             }
-            updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
+            if (submittedVariantOperationEntity != null) {
+                updateMergeCandidateSVOE.put(variantHash, submittedVariantOperationEntity);
+            }
             return true;
         }
         return false;
@@ -386,6 +386,10 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         submittedVariantOperationEntity.getInactiveObjects();
                 if (!doesSubmittedVariantAlreadyExistInSVOE(submittedVariantEntity, inactiveEntities)) {
                     inactiveEntities.add(new SubmittedVariantInactiveEntity(submittedVariantEntity));
+                } else {
+                    // We've already created a split candidate operation containing this SVE (probably due to
+                    // resumed processing) - in this case don't add this operation to the list of operations to update
+                    submittedVariantOperationEntity = null;
                 }
             } else {
                 submittedVariantOperationEntity = new SubmittedVariantOperationEntity();
@@ -397,7 +401,9 @@ public class ClusteringWriter implements ItemWriter<SubmittedVariantEntity> {
                         "Hash mismatch with " + variantAccession, inactiveEntities);
                 rsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
             }
-            updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
+            if (submittedVariantOperationEntity != null) {
+                updateRsSplitCandidateSVOE.put(variantAccession, submittedVariantOperationEntity);
+            }
         }
     }
 
