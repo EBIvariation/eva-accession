@@ -1,0 +1,398 @@
+package uk.ac.ebi.eva.accession.release.batch.io;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.ItemStreamException;
+import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document.EventDocument;
+import uk.ac.ebi.eva.accession.core.model.IClusteredVariant;
+import uk.ac.ebi.eva.accession.core.model.ISubmittedVariant;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpSubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.commons.core.models.VariantType;
+import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
+import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
+import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
+
+/**
+ * Read all ClusteredVariant Accessions from file in batches
+ */
+public class MergedAccessionsVariantReader implements ItemStreamReader<List<Variant>> {
+    private static final Logger logger = LoggerFactory.getLogger(MergedAccessionsVariantReader.class);
+
+    public static final String CVE_ACC_FIELD = "accession";
+
+    public static final String CVE_OPS_ACCESSION_FIELD = "accession";
+    public static final String CVE_OPS_EVENT_TYPE_FIELD = "eventType";
+    public static final String CVE_OPS_ASM_FIELD = "inactiveObjects.asm";
+
+    public static final String SVE_OPS_RS_FIELD = "inactiveObjects.rs";
+    public static final String SVE_OPS_EVENT_ASM_FIELD = "inactiveObjects.seq";
+    public static final String SVE_OPS_EVENT_TAX_FIELD = "inactiveObjects.tax";
+    public static final String SVE_OPS_EVENT_TYPE_FIELD = "eventType";
+
+    private static final String MERGE_OPERATION_REASON_FIRST_WORD = "Original";
+    private static final String DECLUSTER_OPERATION_REASON_FIRST_WORD = "Declustered: ";
+    public static final String MERGED_INTO_KEY = "CURR";
+
+    public static final String VARIANT_CLASS_KEY = "VC";
+    public static final String STUDY_ID_KEY = "SID";
+    public static final String CLUSTERED_VARIANT_VALIDATED_KEY = "RS_VALIDATED";
+    public static final String SUBMITTED_VARIANT_VALIDATED_KEY = "SS_VALIDATED";
+    public static final String ASSEMBLY_MATCH_KEY = "ASMM";
+    public static final String ALLELES_MATCH_KEY = "ALMM";
+    public static final String REMAPPED_KEY = "REMAPPED";
+    public static final String SUPPORTED_BY_EVIDENCE_KEY = "LOE";
+    private static final String RS_PREFIX = "rs";
+
+    private MongoTemplate mongoTemplate;
+    private String rsAccFile;
+    private String assembly;
+    private int taxonomy;
+    private int chunkSize;
+
+    private BufferedReader reader;
+
+    public MergedAccessionsVariantReader(MongoTemplate mongoTemplate, String rsAccFile, String assembly, int taxonomy,
+                                         int chunkSize) {
+        this.mongoTemplate = mongoTemplate;
+        this.assembly = assembly;
+        this.taxonomy = taxonomy;
+        this.rsAccFile = rsAccFile;
+        this.chunkSize = chunkSize;
+    }
+
+    @Override
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
+        try {
+            reader = new BufferedReader(new FileReader(rsAccFile));
+        } catch (IOException e) {
+            throw new ItemStreamException("Failed to open the file (" + rsAccFile + ") with clustered variant accessions", e);
+        }
+    }
+
+
+    @Override
+    public List<Variant> read() {
+        List<Long> cveAccList = new ArrayList<>();
+        String line;
+
+        try {
+            while (cveAccList.size() < chunkSize && (line = reader.readLine()) != null) {
+                String rsAcc = line.split("[ \t]+")[0].trim();
+                if (!rsAcc.isEmpty()) {
+                    cveAccList.add(Long.parseLong(rsAcc));
+                }
+            }
+            if (cveAccList.isEmpty()) {
+                return null;
+            } else {
+                return processCveAccession(cveAccList);
+            }
+        } catch (IOException e) {
+            throw new ItemStreamException("Error reading variant Accessions from file", e);
+        }
+    }
+
+    public List<Variant> processCveAccession(List<Long> cveAccList) {
+        Set<Long> cveAccSet = new HashSet<>(cveAccList);
+        Set<Long> mergedAccSet = new HashSet<>();
+        Set<Long> mergedDeprecatedAccSet = new HashSet<>();
+
+        // Get all CVE Ops documents
+        Map<Long, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>> cveMergedOpsEntitiesMap =
+                getMergedClusteredVariantOperationEntities(cveAccSet)
+                        .stream()
+                        .collect(Collectors.groupingBy(EventDocument::getAccession));
+        // get all SVE Ops documents for the merged CVE accessions
+        Map<Long, List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>> sveOpsEntitiesMap =
+                getSubmittedVariantOperationEntities(cveAccSet)
+                        .stream()
+                        .collect(Collectors.groupingBy(sveOps -> sveOps.getInactiveObjects().iterator().next().getClusteredVariantAccession()));
+
+        // Mapping of original merged Cve accession to its mergeInto accession in the chain at any point
+        Map<Long, Long> orgCveCurrAccMergeIntoMap = cveMergedOpsEntitiesMap.values()
+                .stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toMap(EventDocument::getAccession, EventDocument::getMergedInto));
+
+        Set<Long> processingAccSet = new HashSet<>(orgCveCurrAccMergeIntoMap.values());
+
+        while (!processingAccSet.isEmpty()) {
+            // Check for active accessions
+            Set<Long> activeAccessions = getClusteredVariantEntities(processingAccSet)
+                    .stream()
+                    .map(ClusteredVariantEntity::getAccession).collect(Collectors.toSet());
+            // Add to merged accessions list
+            orgCveCurrAccMergeIntoMap.forEach((acc, mergedAcc) -> {
+                if (activeAccessions.contains(mergedAcc)) {
+                    mergedAccSet.add(acc);
+                }
+            });
+            // Remove from curr processing list
+            processingAccSet.removeAll(activeAccessions);
+
+            // check if all processed
+            if (!processingAccSet.isEmpty()) {
+                // Get operations for remaining accessions (merged and deprecated)
+                List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> cveOpsEntities =
+                        getMergedOrDeprecatedClusteredVariantOperationEntities(processingAccSet);
+                // Find deprecated accessions
+                Set<Long> deprecatedAccSet = cveOpsEntities
+                        .stream()
+                        .filter(eventDoc -> eventDoc.getEventType().equals(EventType.DEPRECATED))
+                        .map(EventDocument::getAccession).collect(Collectors.toSet());
+                // if deprecated add to the merged deprecated list
+                if (!deprecatedAccSet.isEmpty()) {
+                    // Add to merged deprecated accessions list
+                    orgCveCurrAccMergeIntoMap.forEach((acc, mergedInto) -> {
+                        if (deprecatedAccSet.contains(mergedInto)) {
+                            mergedDeprecatedAccSet.add(acc);
+                        }
+                    });
+                }
+
+                // check if all processed
+                if (!processingAccSet.isEmpty()) {
+                    // Find further merged accessions and update processing set
+                    Map<Long, Long> furtherMergedAccMap = cveOpsEntities
+                            .stream()
+                            .filter(eventDoc -> eventDoc.getEventType().equals(EventType.MERGED))
+                            .filter(eventDoc -> Objects.nonNull(eventDoc.getMergedInto()))
+                            .collect(Collectors.toMap(EventDocument::getAccession, EventDocument::getMergedInto));
+                    // Update the org accession to its curr mergeInto into the chain
+                    orgCveCurrAccMergeIntoMap.replaceAll((acc, mergedAcc) -> furtherMergedAccMap.getOrDefault(mergedAcc, mergedAcc));
+
+                    // Update processingAccSet with the new mergedInto values
+                    processingAccSet = new HashSet<>(furtherMergedAccMap.values());
+                }
+            }
+
+        }
+
+        List<Variant> variantList = new ArrayList<>();
+        for (Long acc : mergedAccSet) {
+            EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> cveOps = cveMergedOpsEntitiesMap.get(acc).iterator().next();
+            List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> sveOpsEntityList = sveOpsEntitiesMap.get(acc);
+            if (sveOpsEntityList != null) {
+                variantList.addAll(getVariants(cveOps, sveOpsEntityList));
+            }
+        }
+
+        return variantList;
+    }
+
+    private List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> getMergedClusteredVariantOperationEntities(Set<Long> cveAccList) {
+        Query query = query(where(CVE_OPS_EVENT_TYPE_FIELD).is(EventType.MERGED.toString())
+                .and(CVE_OPS_ASM_FIELD).is(assembly)
+                .and(CVE_OPS_ACCESSION_FIELD).in(cveAccList));
+        List<ClusteredVariantOperationEntity> evaOpsResults = mongoTemplate.find(query, ClusteredVariantOperationEntity.class);
+        List<DbsnpClusteredVariantOperationEntity> dbsnpOpsResults = mongoTemplate.find(query, DbsnpClusteredVariantOperationEntity.class);
+        return Stream.concat(evaOpsResults.stream(), dbsnpOpsResults.stream()).collect(Collectors.toList());
+    }
+
+    private List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> getMergedOrDeprecatedClusteredVariantOperationEntities(Set<Long> cveAccList) {
+        Query query = query(where(CVE_OPS_EVENT_TYPE_FIELD).in(EventType.MERGED.toString(), EventType.DEPRECATED.toString())
+                .and(CVE_OPS_ACCESSION_FIELD).in(cveAccList));
+        List<ClusteredVariantOperationEntity> evaOpsResults = mongoTemplate.find(query, ClusteredVariantOperationEntity.class);
+        List<DbsnpClusteredVariantOperationEntity> dbsnpOpsResults = mongoTemplate.find(query, DbsnpClusteredVariantOperationEntity.class);
+        return Stream.concat(evaOpsResults.stream(), dbsnpOpsResults.stream()).collect(Collectors.toList());
+    }
+
+    private List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> getSubmittedVariantOperationEntities(Set<Long> cveAccs) {
+        Query query = query(where(SVE_OPS_EVENT_TYPE_FIELD).is(EventType.UPDATED.toString())
+                .and(SVE_OPS_RS_FIELD).in(cveAccs)
+                .and(SVE_OPS_EVENT_ASM_FIELD).is(assembly)
+                .and(SVE_OPS_EVENT_TAX_FIELD).is(taxonomy));
+        List<SubmittedVariantOperationEntity> evaOpsResults = mongoTemplate.find(query, SubmittedVariantOperationEntity.class);
+        List<DbsnpSubmittedVariantOperationEntity> dbsnpOpsResults = mongoTemplate.find(query, DbsnpSubmittedVariantOperationEntity.class);
+        return Stream.concat(evaOpsResults.stream(), dbsnpOpsResults.stream()).collect(Collectors.toList());
+    }
+
+    private List<ClusteredVariantEntity> getClusteredVariantEntities(Set<Long> cveAccs) {
+        Query query = query(where(CVE_ACC_FIELD).in(cveAccs));
+        List<ClusteredVariantEntity> evaResults = mongoTemplate.find(query, ClusteredVariantEntity.class);
+        List<DbsnpClusteredVariantEntity> dbsnpResults = mongoTemplate.find(query, DbsnpClusteredVariantEntity.class);
+        return Stream.concat(evaResults.stream(), dbsnpResults.stream()).collect(Collectors.toList());
+    }
+
+    protected List<Variant> getVariants(EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> cveOps,
+                                        List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> sveOpsEntityList) {
+        List<? extends ClusteredVariantInactiveEntity> inactiveObjects = cveOps.getInactiveObjects();
+        if (inactiveObjects.size() > 1) {
+            throw new AssertionError("The class '" + this.getClass().getSimpleName()
+                    + "' was designed assuming there's only one element in the field " + "'inactiveObjects'. " +
+                    "Found " + inactiveObjects.size() + " elements in _id=" + cveOps.getAccession());
+        }
+        ClusteredVariantInactiveEntity inactiveEntity = inactiveObjects.iterator().next();
+        String contig = inactiveEntity.getContig();
+        long start = inactiveEntity.getStart();
+        long rs = inactiveEntity.getAccession();
+        long mergedInto = cveOps.getMergedInto();
+        String type = inactiveEntity.getType().toString();
+        String sequenceOntology = VariantTypeToSOAccessionMap.getSequenceOntologyAccession(VariantType.valueOf(type));
+        boolean validated = inactiveEntity.isValidated();
+
+        Map<String, Variant> mergedVariants = new HashMap<>();
+
+        boolean remappedRS = sveOpsEntityList
+                .stream()
+                .map(e -> e.getInactiveObjects())
+                .flatMap(Collection::stream)
+                .allMatch(sve -> Objects.nonNull(sve.getRemappedFrom()));
+
+        boolean hasSubmittedVariantsDeclustered = false;
+        for (EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity> submittedVariantOperation : sveOpsEntityList) {
+            if (submittedVariantOperation.getEventType().equals(EventType.UPDATED)
+                    && submittedVariantOperation.getReason().startsWith(MERGE_OPERATION_REASON_FIRST_WORD)) {
+                List<? extends SubmittedVariantInactiveEntity> inactiveEntitySubmittedVariant = submittedVariantOperation.getInactiveObjects();
+                SubmittedVariantInactiveEntity submittedVariant = inactiveEntitySubmittedVariant.iterator().next();
+                long submittedVariantStart = submittedVariant.getStart();
+                String submittedVariantContig = submittedVariant.getContig();
+
+                if (!isSameLocation(contig, start, submittedVariantContig, submittedVariantStart, type)) {
+                    continue;
+                }
+
+                String reference = submittedVariant.getReferenceAllele();
+                String alternate = submittedVariant.getAlternateAllele();
+                String study = submittedVariant.getProjectAccession();
+                boolean submittedVariantValidated = submittedVariant.isValidated();
+                boolean allelesMatch = submittedVariant.isAllelesMatch();
+                boolean assemblyMatch = submittedVariant.isAssemblyMatch();
+                boolean evidence = submittedVariant.isSupportedByEvidence();
+
+                VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
+                        submittedVariantValidated, allelesMatch, assemblyMatch, evidence, remappedRS, mergedInto);
+
+                addToVariants(mergedVariants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
+            } else if (submittedVariantOperation.getEventType().equals(EventType.UPDATED)
+                    && submittedVariantOperation.getReason().startsWith(DECLUSTER_OPERATION_REASON_FIRST_WORD)) {
+                hasSubmittedVariantsDeclustered = true;
+            }
+        }
+
+        if (!hasSubmittedVariantsDeclustered && mergedVariants.isEmpty()) {
+            logger.warn("Found merge operation for rs" + rs + " but no SS IDs updates "
+                    + "(merge/update) in the collection containing operations. "
+                    + "This could have possibly happened on a remapped variant "
+                    + "because there was a subsequent split issued for this RS due to loci disagreement "
+                    + "between the RS and the SS.");
+            return Collections.emptyList();
+        }
+
+        return new ArrayList<>(mergedVariants.values());
+    }
+
+    protected VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
+                                                         boolean submittedVariantValidated, boolean allelesMatch,
+                                                         boolean assemblyMatch, boolean evidence, boolean remappedRS,
+                                                         Long mergedInto) {
+        VariantSourceEntry variantSourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
+                submittedVariantValidated, allelesMatch,
+                assemblyMatch, evidence, remappedRS);
+        if (Objects.nonNull(mergedInto)) {
+            variantSourceEntry.addAttribute(MERGED_INTO_KEY, buildId(mergedInto));
+        }
+        return variantSourceEntry;
+    }
+
+
+    protected VariantSourceEntry buildVariantSourceEntry(String study, String sequenceOntology, boolean validated,
+                                                         boolean submittedVariantValidated, boolean allelesMatch,
+                                                         boolean assemblyMatch, boolean evidence, boolean remappedRS) {
+        VariantSourceEntry sourceEntry = new VariantSourceEntry(study, study);
+        sourceEntry.addAttribute(VARIANT_CLASS_KEY, sequenceOntology);
+        sourceEntry.addAttribute(STUDY_ID_KEY, study);
+        sourceEntry.addAttribute(CLUSTERED_VARIANT_VALIDATED_KEY, Boolean.toString(validated));
+        sourceEntry.addAttribute(SUBMITTED_VARIANT_VALIDATED_KEY, Boolean.toString(submittedVariantValidated));
+        sourceEntry.addAttribute(ALLELES_MATCH_KEY, Boolean.toString(allelesMatch));
+        sourceEntry.addAttribute(ASSEMBLY_MATCH_KEY, Boolean.toString(assemblyMatch));
+        sourceEntry.addAttribute(SUPPORTED_BY_EVIDENCE_KEY, Boolean.toString(evidence));
+        sourceEntry.addAttribute(REMAPPED_KEY, Boolean.toString(remappedRS));
+        return sourceEntry;
+    }
+
+    private void addToVariants(Map<String, Variant> variants, String contig, long start, long rs, String reference,
+                               String alternate, VariantSourceEntry sourceEntry) {
+        String variantId = (contig + "_" + start + "_" + reference + "_" + alternate).toUpperCase();
+        if (variants.containsKey(variantId)) {
+            variants.get(variantId).addSourceEntry(sourceEntry);
+        } else {
+            long end = calculateEnd(reference, alternate, start);
+            Variant variant = new Variant(contig, start, end, reference, alternate);
+            variant.setMainId(buildId(rs));
+            variant.setIds(Collections.singleton(buildId(rs)));
+            variant.addSourceEntry(sourceEntry);
+            variants.put(variantId, variant);
+        }
+    }
+
+    private long calculateEnd(String reference, String alternate, long start) {
+        long length = Math.max(reference.length(), alternate.length());
+        return start + length - 1;
+    }
+
+
+    private String buildId(long rs) {
+        return RS_PREFIX + rs;
+    }
+
+    protected boolean isSameLocation(String contig, long start, String submittedVariantContig, long submittedVariantStart, String type) {
+        return contig.equals(submittedVariantContig) && isSameStart(start, submittedVariantStart, type);
+    }
+
+    private boolean isSameStart(long clusteredVariantStart, long submittedVariantStart, String type) {
+        return clusteredVariantStart == submittedVariantStart || (isIndel(type) && Math.abs(clusteredVariantStart - submittedVariantStart) == 1L);
+    }
+
+    private boolean isIndel(String type) {
+        return type.equals(VariantType.INS.toString()) || type.equals(VariantType.DEL.toString());
+    }
+
+
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+
+    }
+
+    @Override
+    public void close() throws ItemStreamException {
+        try {
+            if (reader != null) {
+                reader.close();
+            }
+        } catch (IOException e) {
+            throw new ItemStreamException("Failed to close file: " + rsAccFile, e);
+        }
+    }
+}
+

@@ -8,8 +8,11 @@ import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.dbsnp.DbsnpClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantEntity;
+import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -20,6 +23,8 @@ import static uk.ac.ebi.eva.accession.release.batch.io.VariantMongoAggregationRe
 public class DumpRSAccessionsInFile {
     private static Logger logger = LoggerFactory.getLogger(DumpRSAccessionsInFile.class);
     public static final String CVE_ASSEMBLY_FIELD = "asm";
+    public static final String CVE_OPS_EVENT_TYPE_FIELD = "eventType";
+    public static final String CVE_OPS_INACTIVE_OBJ_ASSEMBLY_FIELD = "inactiveObjects.asm";
 
     private MongoTemplate mongoTemplate;
     private String rsAccDumpFile;
@@ -36,14 +41,14 @@ public class DumpRSAccessionsInFile {
 
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(rsAccDumpFile, true))) {
             logger.info("Issuing find in CVE collection: {}", query);
-            FindIterable<Document> clusteredVariants = getClusteredVariants(query, ClusteredVariantEntity.class);
+            FindIterable<Document> clusteredVariants = getClusteredVariants(query, rsDumpType.getCveClass());
             MongoCursor<Document> evaCursor = clusteredVariants.iterator();
             writeDataToFile(evaCursor, bufferedWriter);
 
             evaCursor.close();
 
-            logger.info("Issuing find in DBSNP CVE collection: {}", query);
-            FindIterable<Document> dbsnpClusteredVariants = getClusteredVariants(query, DbsnpClusteredVariantEntity.class);
+            logger.info("Issuing find in DBSNP collection: {}", query);
+            FindIterable<Document> dbsnpClusteredVariants = getClusteredVariants(query, rsDumpType.getDbsnpCveClass());
             MongoCursor<Document> dbsnpCursor = dbsnpClusteredVariants.iterator();
             writeDataToFile(dbsnpCursor, bufferedWriter);
 
@@ -78,7 +83,9 @@ public class DumpRSAccessionsInFile {
             if (count >= chunkSize) {
                 bufferedWriter.write(batch.toString());
                 totalDocuments += count;
-                logger.info("Total document written till now: {}", totalDocuments);
+                if (totalDocuments % 100000 == 0) {
+                    logger.info("Total document written till now: {}", totalDocuments);
+                }
                 batch.setLength(0);
                 count = 0;
             }
@@ -93,7 +100,13 @@ public class DumpRSAccessionsInFile {
 
     public Bson getQueryforRSDumpType(RSDumpType rsDumpType, String assembly) {
         if (rsDumpType == RSDumpType.ACTIVE) {
-            return Filters.in(CVE_ASSEMBLY_FIELD, assembly);
+            return Filters.eq(CVE_ASSEMBLY_FIELD, assembly);
+        } else if (rsDumpType == RSDumpType.MERGED) {
+            return Filters.and(Filters.eq(CVE_OPS_INACTIVE_OBJ_ASSEMBLY_FIELD, assembly),
+                    Filters.eq(CVE_OPS_EVENT_TYPE_FIELD, EventType.MERGED.toString()));
+        } else if (rsDumpType == RSDumpType.DEPRECATED) {
+            return Filters.and(Filters.eq(CVE_OPS_INACTIVE_OBJ_ASSEMBLY_FIELD, assembly),
+                    Filters.eq(CVE_OPS_EVENT_TYPE_FIELD, EventType.DEPRECATED.toString()));
         }
 
         return null;
@@ -101,7 +114,25 @@ public class DumpRSAccessionsInFile {
 
 
     public enum RSDumpType {
-        ACTIVE
+        ACTIVE(ClusteredVariantEntity.class, DbsnpClusteredVariantEntity.class),
+        MERGED(ClusteredVariantOperationEntity.class, DbsnpClusteredVariantOperationEntity.class),
+        DEPRECATED(ClusteredVariantOperationEntity.class, DbsnpClusteredVariantOperationEntity.class);
+
+        private Class cveClass;
+        private Class dbsnpCveClass;
+
+        RSDumpType(Class cveClass, Class dbsnpCveClass) {
+            this.cveClass = cveClass;
+            this.dbsnpCveClass = dbsnpCveClass;
+        }
+
+        public Class getCveClass() {
+            return cveClass;
+        }
+
+        public Class getDbsnpCveClass() {
+            return dbsnpCveClass;
+        }
     }
 
 }
