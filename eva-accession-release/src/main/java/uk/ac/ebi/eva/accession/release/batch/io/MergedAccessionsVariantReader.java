@@ -19,13 +19,16 @@ import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.ClusteredVariantOperationEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantInactiveEntity;
 import uk.ac.ebi.eva.accession.core.model.eva.SubmittedVariantOperationEntity;
+import uk.ac.ebi.eva.accession.release.parameters.ReportPathResolver;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.models.VariantTypeToSOAccessionMap;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import uk.ac.ebi.eva.commons.core.models.pipeline.VariantSourceEntry;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -78,24 +81,29 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     private String assembly;
     private int taxonomy;
     private int chunkSize;
+    private String outputDir;
 
     private BufferedReader reader;
+    private BufferedWriter writer;
 
     public MergedAccessionsVariantReader(MongoTemplate mongoTemplate, String rsAccFile, String assembly, int taxonomy,
-                                         int chunkSize) {
+                                         int chunkSize, String outputDir) {
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.taxonomy = taxonomy;
         this.rsAccFile = rsAccFile;
         this.chunkSize = chunkSize;
+        this.outputDir = outputDir;
     }
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         try {
             reader = new BufferedReader(new FileReader(rsAccFile));
+            writer = new BufferedWriter(new FileWriter(ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(outputDir, assembly)
+                    .toFile()));
         } catch (IOException e) {
-            throw new ItemStreamException("Failed to open the file (" + rsAccFile + ") with clustered variant accessions", e);
+            throw new ItemStreamException("Error opening file: ", e);
         }
     }
 
@@ -195,7 +203,10 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
                     processingAccSet = new HashSet<>(furtherMergedAccMap.values());
                 }
             }
+        }
 
+        if (!mergedDeprecatedAccSet.isEmpty()) {
+            writeMergeDeprecatedAccessionsToFile(mergedDeprecatedAccSet);
         }
 
         List<Variant> variantList = new ArrayList<>();
@@ -384,11 +395,24 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
 
     }
 
+    private void writeMergeDeprecatedAccessionsToFile(Set<Long> mergedDeprecatedAccessions) {
+        for (Long acc : mergedDeprecatedAccessions) {
+            try {
+                writer.write(acc + "\n");
+            } catch (IOException e) {
+                throw new RuntimeException("Error writing Merged Deprecated Accessions to File");
+            }
+        }
+    }
+
     @Override
     public void close() throws ItemStreamException {
         try {
             if (reader != null) {
                 reader.close();
+            }
+            if (writer != null) {
+                writer.close();
             }
         } catch (IOException e) {
             throw new ItemStreamException("Failed to close file: " + rsAccFile, e);
