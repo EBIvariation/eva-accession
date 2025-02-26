@@ -72,9 +72,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration.TEST_RELEASE_ACTIVE_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration.TEST_RELEASE_DEPRECATED_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration.TEST_RELEASE_MERGED_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_RELEASE_ACTIVE_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_RELEASE_DEPRECATED_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_RELEASE_MERGED_ACCESSIONS_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MongoTestConfiguration.class, ReleaseFromDBTestConfiguration.class})

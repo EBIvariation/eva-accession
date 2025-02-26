@@ -59,9 +59,9 @@ import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_ACTIVE_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_DEPRECATED_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration.TEST_DUMP_ACTIVE_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration.TEST_DUMP_DEPRECATED_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.test.configuration.BatchTestConfiguration.TEST_DUMP_MERGED_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_ACTIVE_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_DEPRECATED_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_MERGED_ACCESSIONS_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MongoTestConfiguration.class, ReleaseFromDBTestConfiguration.class})

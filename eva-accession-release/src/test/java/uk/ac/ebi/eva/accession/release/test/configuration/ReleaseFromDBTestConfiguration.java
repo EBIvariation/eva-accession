@@ -52,7 +52,6 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_ACC
         MergedAccessionsVariantReaderConfiguration.class
 })
 public class ReleaseFromDBTestConfiguration {
-
     public static final String TEST_DUMP_ACTIVE_ACCESSIONS_JOB = "TEST_DUMP_ACTIVE_ACCESSIONS_JOB";
     public static final String TEST_DUMP_DEPRECATED_ACCESSIONS_JOB = "TEST_DUMP_DEPRECATED_ACCESSIONS_JOB";
     public static final String TEST_DUMP_MERGED_ACCESSIONS_JOB = "TEST_DUMP_MERGED_ACCESSIONS_JOB";
