@@ -155,7 +155,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
 
         // check and report accessions if an accession is both active and also has merged/deprecated operations
         if (!activeAccessionsSet.isEmpty()) {
-            logger.error("Accession is both Active and has Merged/Deprecated operations: The following accessions are active as well as have merged/deprecated operations: {}", activeAccessionsSet);
+            logger.warn("Accession is both Active and has Merged/Deprecated operations: The following accessions are active as well as have merged/deprecated operations: {}", activeAccessionsSet);
             // update active accession map
             activeAccessionsSet.forEach(acc -> activeAccessionsMap.get(acc).add(acc));
         }
@@ -222,13 +222,17 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
                         .collect(Collectors.toSet());
                 Set<Long> deprecatedAccessions = listOfEventDocs.stream()
                         .filter(eventDoc -> eventDoc.getEventType().equals(EventType.DEPRECATED))
-                        .map(eventDoc -> eventDoc.getMergedInto())
+                        .map(eventDoc -> eventDoc.getAccession())
                         .collect(Collectors.toSet());
 
                 // filter out already processed accessions before adding them for processing
                 newMergedIntoAcc.removeAll(alreadyProcessedAccessionsMap.get(orgAcc));
-                temp2OrgAccMergeIntoMap.put(orgAcc, newMergedIntoAcc);
-                deprecatedAccessionsMap.get(orgAcc).addAll(deprecatedAccessions);
+                if (!newMergedIntoAcc.isEmpty()) {
+                    temp2OrgAccMergeIntoMap.put(orgAcc, newMergedIntoAcc);
+                }
+                if (!deprecatedAccessions.isEmpty()) {
+                    deprecatedAccessionsMap.get(orgAcc).addAll(deprecatedAccessions);
+                }
             });
 
             // check and report accessions if an accession is both active and also has merged/deprecated operations
@@ -236,14 +240,14 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
                     .filter(acc -> activeAccSet.contains(acc))
                     .collect(Collectors.toSet());
             if (!bothActiveMergedDeprecatedAcc.isEmpty()) {
-                logger.error("Accession is both Active and has Merged/Deprecated operations: The following accessions are active as well as have merged/deprecated operations: {}", bothActiveMergedDeprecatedAcc);
+                logger.warn("Accession is both Active and has Merged/Deprecated operations: The following accessions are active as well as have merged/deprecated operations: {}", bothActiveMergedDeprecatedAcc);
             }
 
             // check and log accessions which are neither active nor has any further merge/deprecated operations
             orgAccMergeIntoMap.forEach((orgAcc, mergeIntoSet) -> {
                 mergeIntoSet.forEach(acc -> {
                     if (!activeAccSet.contains(acc) && !cveOps.containsKey(acc)) {
-                        logger.error("Accession {} is Neither Active nor has any further Merged/Deprecated Operations. Original Accessions {}", acc, orgAcc);
+                        logger.warn("Accession {} is Neither Active nor has any further Merged/Deprecated Operations. Original Accessions {}", acc, orgAcc);
                     }
                 });
             });
@@ -256,8 +260,10 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
         }
 
         // deprecated accessions set
-        Set<Long> mergedDeprecatedAccSet = deprecatedAccessionsMap.keySet().stream()
-                .filter(acc -> activeAccessionsMap.get(acc).isEmpty())
+        Set<Long> mergedDeprecatedAccSet = deprecatedAccessionsMap.entrySet().stream()
+                .filter(entry -> !entry.getValue().isEmpty())
+                .filter(entry -> activeAccessionsMap.get(entry.getKey()).isEmpty())
+                .map(entry -> entry.getKey())
                 .collect(Collectors.toSet());
         if (!mergedDeprecatedAccSet.isEmpty()) {
             writeMergeDeprecatedAccessionsToFile(mergedDeprecatedAccSet);
@@ -268,6 +274,14 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
                 .filter(entry -> !entry.getValue().isEmpty())
                 .map(entry -> entry.getKey())
                 .collect(Collectors.toSet());
+
+        // log accessions for which we could not determine if they are merged into active or deprecated
+        Set<Long> couldNotDetermineSet = cveAccSet.stream()
+                .filter(acc -> !mergedAccSet.contains(acc) && !mergedDeprecatedAccSet.contains(acc))
+                .collect(Collectors.toSet());
+        if (!couldNotDetermineSet.isEmpty()) {
+            logger.error("Could not determine the status of following accessions: {}", couldNotDetermineSet);
+        }
 
         Map<Long, List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>>> sveOpsEntitiesMap =
                 getSubmittedVariantOperationEntities(mergedAccSet)
