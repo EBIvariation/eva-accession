@@ -40,15 +40,15 @@ public class DumpRSAccessionsInFile {
         Bson query = getQueryforRSDumpType(rsDumpType, assembly);
 
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(rsAccDumpFile, true))) {
-            logger.info("Issuing find in CVE collection: {}", query);
-            FindIterable<Document> clusteredVariants = getClusteredVariants(query, rsDumpType.getCveClass());
+            logger.info("Issuing find in EVA collection: {}", query);
+            FindIterable<Document> clusteredVariants = getClusteredVariants(query, rsDumpType.getEvaClass());
             MongoCursor<Document> evaCursor = clusteredVariants.iterator();
             writeDataToFile(evaCursor, bufferedWriter);
 
             evaCursor.close();
 
             logger.info("Issuing find in DBSNP collection: {}", query);
-            FindIterable<Document> dbsnpClusteredVariants = getClusteredVariants(query, rsDumpType.getDbsnpCveClass());
+            FindIterable<Document> dbsnpClusteredVariants = getClusteredVariants(query, rsDumpType.getDbsnpClass());
             MongoCursor<Document> dbsnpCursor = dbsnpClusteredVariants.iterator();
             writeDataToFile(dbsnpCursor, bufferedWriter);
 
@@ -118,20 +118,20 @@ public class DumpRSAccessionsInFile {
         MERGED(ClusteredVariantOperationEntity.class, DbsnpClusteredVariantOperationEntity.class),
         DEPRECATED(ClusteredVariantOperationEntity.class, DbsnpClusteredVariantOperationEntity.class);
 
-        private Class cveClass;
-        private Class dbsnpCveClass;
+        private Class evaClass;
+        private Class dbsnpClass;
 
-        RSDumpType(Class cveClass, Class dbsnpCveClass) {
-            this.cveClass = cveClass;
-            this.dbsnpCveClass = dbsnpCveClass;
+        RSDumpType(Class evaClass, Class dbsnpClass) {
+            this.evaClass = evaClass;
+            this.dbsnpClass = dbsnpClass;
         }
 
-        public Class getCveClass() {
-            return cveClass;
+        public Class getEvaClass() {
+            return evaClass;
         }
 
-        public Class getDbsnpCveClass() {
-            return dbsnpCveClass;
+        public Class getDbsnpClass() {
+            return dbsnpClass;
         }
     }
 

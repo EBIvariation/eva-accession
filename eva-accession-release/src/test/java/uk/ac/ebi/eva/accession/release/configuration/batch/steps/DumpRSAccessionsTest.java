@@ -183,8 +183,16 @@ public class DumpRSAccessionsTest {
         ClusteredVariantOperationEntity dbsnpOps2 = new ClusteredVariantOperationEntity();
         dbsnpOps2.fill(EventType.DEPRECATED, 6L, 8L, "DEPRECATED", Arrays.asList(dbsnpInactive2));
 
+        ClusteredVariantEntity cve1 = new ClusteredVariantEntity(10L, "Hash-10",
+                "GCA_000409795.2", 60711, "contig", 100010,
+                VariantType.SNV, false, LocalDateTime.now(), 1);
+        ClusteredVariantEntity cve2 = new ClusteredVariantEntity(11L, "Hash-11",
+                "GCA_000409795.2", 60711, "contig", 100011,
+                VariantType.SNV, false, LocalDateTime.now(), 1);
+
         mongoTemplate.insert(Arrays.asList(cveOps1, cveOps2), ClusteredVariantOperationEntity.class);
         mongoTemplate.insert(Arrays.asList(dbsnpOps1, dbsnpOps2), DbsnpClusteredVariantOperationEntity.class);
+        mongoTemplate.insert(Arrays.asList(cve1, cve2), ClusteredVariantEntity.class);
     }
 
     public void populateDataForMergedAccessions() {
@@ -210,8 +218,16 @@ public class DumpRSAccessionsTest {
         ClusteredVariantOperationEntity dbsnpOps2 = new ClusteredVariantOperationEntity();
         dbsnpOps2.fill(EventType.MERGED, 6L, 8L, "MERGED", Arrays.asList(dbsnpInactive2));
 
+        ClusteredVariantEntity cve1 = new ClusteredVariantEntity(10L, "Hash-10",
+                "GCA_000409795.2", 60711, "contig", 100010,
+                VariantType.SNV, false, LocalDateTime.now(), 1);
+        ClusteredVariantEntity cve2 = new ClusteredVariantEntity(11L, "Hash-11",
+                "GCA_000409795.2", 60711, "contig", 100011,
+                VariantType.SNV, false, LocalDateTime.now(), 1);
+
         mongoTemplate.insert(Arrays.asList(cveOps1, cveOps2), ClusteredVariantOperationEntity.class);
         mongoTemplate.insert(Arrays.asList(dbsnpOps1, dbsnpOps2), DbsnpClusteredVariantOperationEntity.class);
+        mongoTemplate.insert(Arrays.asList(cve1, cve2), ClusteredVariantEntity.class);
     }
 
     public void assertDumpRSAccFileContains(Set<Long> expectedAccSet) throws IOException {
