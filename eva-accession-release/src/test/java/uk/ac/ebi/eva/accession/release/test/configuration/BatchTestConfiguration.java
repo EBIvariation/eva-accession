@@ -20,24 +20,23 @@ import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-
 import uk.ac.ebi.eva.accession.core.configuration.nonhuman.MongoConfiguration;
+import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.io.ContigReaderConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.jobs.AccessionReleaseJobConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.policies.ChunkSizeCompletionPolicyConfiguration;
-import uk.ac.ebi.eva.accession.release.configuration.InputParametersConfiguration;
 import uk.ac.ebi.eva.accession.release.configuration.batch.policies.IllegalStartSkipPolicyConfiguration;
 import uk.ac.ebi.eva.accession.release.runner.AccessionReleaseJobLauncherCommandLineRunner;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
 
 @EnableAutoConfiguration
 @Import({MongoConfiguration.class,
-         InputParametersConfiguration.class,
-         AccessionReleaseJobConfiguration.class,
-         ChunkSizeCompletionPolicyConfiguration.class,
-         IllegalStartSkipPolicyConfiguration.class,
-         AccessionReleaseJobLauncherCommandLineRunner.class,
-         ContigReaderConfiguration.class
+        InputParametersConfiguration.class,
+        AccessionReleaseJobConfiguration.class,
+        ChunkSizeCompletionPolicyConfiguration.class,
+        IllegalStartSkipPolicyConfiguration.class,
+        AccessionReleaseJobLauncherCommandLineRunner.class,
+        ContigReaderConfiguration.class
 })
 public class BatchTestConfiguration {
 
