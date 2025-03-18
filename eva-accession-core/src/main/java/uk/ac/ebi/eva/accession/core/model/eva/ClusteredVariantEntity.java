@@ -32,7 +32,7 @@ import java.time.LocalDateTime;
 public class ClusteredVariantEntity extends AccessionedDocument<IClusteredVariant, Long> implements IClusteredVariant {
 
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("asm")
     private String assemblyAccession;
 

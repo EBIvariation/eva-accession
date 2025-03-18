@@ -37,7 +37,7 @@ public class ReleaseRecordEntity {
 
     private final String hashedMessage;
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("asm")
     private final String assemblyAccession;
 

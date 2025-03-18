@@ -31,7 +31,7 @@ import java.time.LocalDateTime;
 public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmittedVariant, Long>
         implements ISubmittedVariant {
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("seq")
     private String referenceSequenceAccession;
 
@@ -51,7 +51,7 @@ public class SubmittedVariantInactiveEntity extends InactiveSubDocument<ISubmitt
     @Field("alt")
     private String alternateAllele;
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("rs")
     private Long clusteredVariantAccession;
 
