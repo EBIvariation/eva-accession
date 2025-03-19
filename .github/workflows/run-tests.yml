@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mongodb-version: [4.0.18]
+        mongodb-version: [6.0.6]
         java-version: [1.8]
         python-version: [3.8]
 
@@ -33,9 +33,9 @@ jobs:
           pip install numpy pandas psycopg2-binary pgpasslib
       - name: Install and Start MongoDB
         run: |
-          wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${{ matrix.mongodb-version }}.tgz
-          tar xfz mongodb-linux-x86_64-${{ matrix.mongodb-version }}.tgz
-          export PATH=`pwd`/mongodb-linux-x86_64-${{ matrix.mongodb-version }}/bin:$PATH
+          wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${{ matrix.mongodb-version }}.tgz
+          tar xfz mongodb-linux-x86_64-ubuntu2204-${{ matrix.mongodb-version }}.tgz
+          export PATH=`pwd`/mongodb-linux-x86_64-ubuntu2204-${{ matrix.mongodb-version }}/bin:$PATH
           mkdir -p data/db
           mongod --dbpath=data/db &
           mongod --version
