@@ -28,7 +28,7 @@ import uk.ac.ebi.eva.commons.core.models.VariantType;
 
 public class ClusteredVariantInactiveEntity extends InactiveSubDocument<IClusteredVariant, Long> implements IClusteredVariant {
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("asm")
     private String assemblyAccession;
 
