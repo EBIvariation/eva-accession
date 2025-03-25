@@ -31,14 +31,14 @@ import java.util.Objects;
 @Document
 public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVariant, Long> implements ISubmittedVariant {
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("seq")
     private String referenceSequenceAccession;
 
     @Field("tax")
     private int taxonomyAccession;
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("study")
     private String projectAccession;
 
@@ -52,7 +52,7 @@ public class SubmittedVariantEntity extends AccessionedDocument<ISubmittedVarian
     @Field("alt")
     private String alternateAllele;
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     @Field("rs")
     private Long clusteredVariantAccession;
 
