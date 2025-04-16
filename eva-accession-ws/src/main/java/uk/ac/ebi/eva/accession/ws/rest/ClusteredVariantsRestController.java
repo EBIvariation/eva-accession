@@ -261,7 +261,7 @@ public class ClusteredVariantsRestController {
     public BeaconAlleleResponse doesVariantExist(
             @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name, e.g.: chr16")
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name, e.g.: 16")
                     String chromosome,
             @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType,
