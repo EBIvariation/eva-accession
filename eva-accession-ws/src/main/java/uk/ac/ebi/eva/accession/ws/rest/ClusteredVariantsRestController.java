@@ -127,7 +127,7 @@ public class ClusteredVariantsRestController {
             + "variants (RS) represented by the given identifier. ")
     @GetMapping(value = "/{identifier}/history", produces = "application/json")
     public ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantHistory(
-            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 43678406",
                     required = true) Long identifier,
             @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
                     ContigNamingConvention contigNamingConvention) throws AccessionDoesNotExistException {
