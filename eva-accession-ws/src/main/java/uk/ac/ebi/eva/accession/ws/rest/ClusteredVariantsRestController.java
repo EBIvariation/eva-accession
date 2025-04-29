@@ -127,7 +127,7 @@ public class ClusteredVariantsRestController {
             + "variants (RS) represented by the given identifier. ")
     @GetMapping(value = "/{identifier}/history", produces = "application/json")
     public ResponseEntity<VariantHistory<ClusteredVariant, IClusteredVariant, String, Long>> getVariantHistory(
-            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 3000000000",
+            @PathVariable @ApiParam(value = "Numerical identifier of a clustered variant, e.g.: 43678406",
                     required = true) Long identifier,
             @RequestParam(required = false) @ApiParam(value = "Contig naming convention desired, default is INSDC")
                     ContigNamingConvention contigNamingConvention) throws AccessionDoesNotExistException {
@@ -261,7 +261,7 @@ public class ClusteredVariantsRestController {
     public BeaconAlleleResponse doesVariantExist(
             @RequestParam(name = "assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
-            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name, e.g.: chr16")
+            @RequestParam(name = "referenceName") @ApiParam(value = "chromosome name, e.g.: 16")
                     String chromosome,
             @RequestParam(name = "start") @ApiParam(value = "start position, e.g.: 66275332") long start,
             @RequestParam(name = "variantType") VariantType variantType,

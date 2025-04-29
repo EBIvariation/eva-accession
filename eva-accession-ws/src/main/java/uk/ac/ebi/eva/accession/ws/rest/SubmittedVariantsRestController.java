@@ -115,11 +115,11 @@ public class SubmittedVariantsRestController {
     public BeaconAlleleResponse doesVariantExist(
             @RequestParam(name="assemblyId") @ApiParam(value = "assembly accession in GCA format, e.g.: GCA_000002305.1")
                     String assembly,
-            @RequestParam(name="referenceName") @ApiParam(value = "chromosome name, e.g.: chr16") String chromosome,
-            @RequestParam(name="datasetIds") List<String> studies,
-            @RequestParam(name="start") long start,
-            @RequestParam(name="referenceBases") String reference,
-            @RequestParam(name="alternateBases") String alternate,
+            @RequestParam(name="referenceName") @ApiParam(value = "chromosome name, e.g.: 16") String chromosome,
+            @RequestParam(name="datasetIds") @ApiParam(value = "study accession, e.g.: PRJEB30116") List<String> studies,
+            @RequestParam(name="start") @ApiParam(value = "start position, e.g.: 12856868") long start,
+            @RequestParam(name="referenceBases") @ApiParam(value = "reference base(s), e.g.: C") String reference,
+            @RequestParam(name="alternateBases") @ApiParam(value = "alternate base(s), e.g.: T") String alternate,
             HttpServletResponse response) {
         if (start < 1) {
             int responseStatus = HttpServletResponse.SC_BAD_REQUEST;
@@ -162,10 +162,10 @@ public class SubmittedVariantsRestController {
                     String assembly,
             @RequestParam(name="referenceName") @ApiParam(value = "chromosome name or accession, e.g.: CM000392.2")
                     String chromosome,
-            @RequestParam(name="datasetIds") List<String> studies,
-            @RequestParam(name="start") long start,
-            @RequestParam(name="referenceBases") String reference,
-            @RequestParam(name="alternateBases") String alternate,
+            @RequestParam(name="datasetIds") @ApiParam(value = "study accession, e.g.: PRJEB30116") List<String> studies,
+            @RequestParam(name="start") @ApiParam(value = "start position, e.g.: 12856868") long start,
+            @RequestParam(name="referenceBases") @ApiParam(value = "reference base(s), e.g.: C") String reference,
+            @RequestParam(name="alternateBases") @ApiParam(value = "alternate base(s), e.g.: T") String alternate,
             @RequestParam(required = false) @ApiParam(value = "Chromosome naming convention used, default is INSDC")
                     ContigNamingConvention contigNamingConvention) {
         try {
