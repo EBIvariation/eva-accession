@@ -146,7 +146,6 @@ public class AccessionReportWriter {
                     boolean append = false;
                     this.contigsWriter = new BufferedWriter(new FileWriter(this.contigsOutput, append));
                     this.variantsWriter = new BufferedWriter(new FileWriter(this.variantsOutput, append));
-                    executionContext.put(IS_HEADER_WRITTEN_KEY, IS_HEADER_WRITTEN_VALUE);
                 }
             }
         } catch (IOException e) {
@@ -176,7 +175,7 @@ public class AccessionReportWriter {
     }
 
     public void update(ExecutionContext executionContext) throws ItemStreamException {
-
+        executionContext.put(IS_HEADER_WRITTEN_KEY, IS_HEADER_WRITTEN_VALUE);
     }
 
     public void close() throws ItemStreamException {
