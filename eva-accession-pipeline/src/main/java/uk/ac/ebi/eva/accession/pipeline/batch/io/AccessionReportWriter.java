@@ -77,8 +77,6 @@ public class AccessionReportWriter {
 
     private String accessionPrefix;
 
-    private ContigNaming contigNaming;
-
     private Set<String> loggedUnreplaceableContigs;
 
     private Map<String, String> inputContigsToInsdc;
@@ -89,13 +87,11 @@ public class AccessionReportWriter {
 
     private Map<String, Set<String>> duplicatedInsdcToInputContigs;
 
-    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping,
-                                 ContigNaming contigNaming) throws IOException {
+    public AccessionReportWriter(File output, FastaSequenceReader fastaSequenceReader, ContigMapping contigMapping) throws IOException {
         this.fastaSequenceReader = fastaSequenceReader;
         this.contigsOutput = new File(output.getPath() + CONTIGS_FILE_SUFFIX);
         this.variantsOutput = new File(output.getPath() + VARIANTS_FILE_SUFFIX);
         this.contigMapping = contigMapping;
-        this.contigNaming = contigNaming;
         this.accessionPrefix = SUBSNP_ACCESSION_PREFIX;
         this.loggedUnreplaceableContigs = new HashSet<>();
         this.inputContigsToInsdc = new HashMap<>();
@@ -324,10 +320,8 @@ public class AccessionReportWriter {
     private void writeSortedVariant(AccessionWrapper<ISubmittedVariant, String, Long> denormalizedVariant,
                                     Map<String, String> insdcToInputContigs) throws IOException {
         String originalChromosome = insdcToInputContigs.get(denormalizedVariant.getData().getContig());
-        String contigFromRequestedContigNaming = getEquivalentContig(originalChromosome, contigNaming);
-
         String variantLine = String.join("\t",
-                                         contigFromRequestedContigNaming,
+                                         originalChromosome,
                                          Long.toString(denormalizedVariant.getData().getStart()),
                                          accessionPrefix + denormalizedVariant.getAccession(),
                                          denormalizedVariant.getData().getReferenceAllele(),
@@ -335,54 +329,6 @@ public class AccessionReportWriter {
                                          VCF_MISSING_VALUE, VCF_MISSING_VALUE, VCF_MISSING_VALUE);
         variantsWriter.write(variantLine);
         variantsWriter.newLine();
-    }
-
-    /**
-     * Note that we can't use {@link ContigToGenbankReplacerProcessor} here because we allow other replacements than
-     * GenBank, while that class is used to replace to GenBank only (for writing in Mongo and for comparing input and
-     * report VCFs).
-     */
-    private String getEquivalentContig(String oldContig, ContigNaming contigNaming) {
-        ContigSynonyms contigSynonyms = contigMapping.getContigSynonyms(oldContig);
-        if (contigSynonyms == null) {
-            if (!loggedUnreplaceableContigs.contains(oldContig)) {
-                loggedUnreplaceableContigs.add(oldContig);
-                logger.warn("Will not replace contig '" + oldContig
-                            + "' (in the current variant or any subsequent one) as requested because there are no "
-                            + "synonyms available. (Hint: Is the assembly report correct and complete?)");
-            }
-            return oldContig;
-        }
-
-        String contigReplacement = contigMapping.getContigSynonym(oldContig, contigSynonyms, contigNaming);
-        if (contigReplacement == null) {
-            if (!loggedUnreplaceableContigs.contains(oldContig)) {
-                loggedUnreplaceableContigs.add(oldContig);
-                logger.warn("Will not replace contig '" + oldContig
-                            + "' (in the current variant or any subsequent one) as requested because there is no "
-                            + contigNaming + " synonym for it.");
-            }
-            return oldContig;
-        }
-
-        boolean genbankReplacedWithRefseq = oldContig.equals(contigSynonyms.getGenBank())
-                                            && contigReplacement.equals(contigSynonyms.getRefSeq());
-
-        boolean refseqReplacedWithGenbank = oldContig.equals(contigSynonyms.getRefSeq())
-                                            && contigReplacement.equals(contigSynonyms.getGenBank());
-
-        if (!contigSynonyms.isIdenticalGenBankAndRefSeq() && (genbankReplacedWithRefseq || refseqReplacedWithGenbank)) {
-            if (!loggedUnreplaceableContigs.contains(oldContig)) {
-                loggedUnreplaceableContigs.add(oldContig);
-                logger.warn(
-                        "Will not replace contig '" + oldContig + "' with " + contigNaming + " '" + contigReplacement
-                        + "' (in the current variant or any subsequent one) as requested because those contigs "
-                        + "are not identical according to the assembly report provided.");
-            }
-            return oldContig;
-        }
-
-        return contigReplacement;
     }
 
 }

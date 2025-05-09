@@ -58,8 +58,7 @@ public class AccessionWriterConfiguration {
         return new AccessionReportWriter(new File(inputParameters.getOutputVcf()),
                                          new FastaSynonymSequenceReader(contigMapping,
                                                                         Paths.get(inputParameters.getFasta())),
-                                         contigMapping,
-                                         inputParameters.getContigNaming());
+                                         contigMapping);
     }
 
     @Bean
