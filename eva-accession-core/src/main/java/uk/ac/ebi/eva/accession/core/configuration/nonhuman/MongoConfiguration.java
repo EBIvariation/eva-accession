@@ -54,7 +54,7 @@ public class MongoConfiguration {
     @Value("${mongodb.read-preference}")
     private String readPreference;
 
-    @Value("${mongodb.write-concern:#{null}}")
+    @Value("${parameters.mongodb.writeConcern:#{null}}")
     private String writeConcern;
 
     @Primary
