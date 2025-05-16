@@ -54,6 +54,9 @@ public class MongoConfiguration {
     @Value("${mongodb.read-preference}")
     private String readPreference;
 
+    @Value("${parameters.mongodb.writeConcern:#{null}}")
+    private String writeConcern;
+
     @Primary
     @Bean
     @ConfigurationProperties(prefix = "spring.data.mongodb")
@@ -93,8 +96,14 @@ public class MongoConfiguration {
                                        MappingMongoConverter converter) {
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
         MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory, converter);
-        mongoTemplate.setWriteConcern(WriteConcern.MAJORITY);
         mongoTemplate.setReadPreference(ReadPreference.valueOf(readPreference));
+
+        if (writeConcern != null && !writeConcern.isEmpty() && WriteConcern.valueOf(writeConcern) != null) {
+            mongoTemplate.setWriteConcern(WriteConcern.valueOf(writeConcern));
+        } else {
+            mongoTemplate.setWriteConcern(WriteConcern.MAJORITY);
+        }
+
         mongoTemplate.setWriteResultChecking(WriteResultChecking.EXCEPTION);
         return mongoTemplate;
     }
