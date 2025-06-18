@@ -61,14 +61,16 @@ public class AccessionWriter implements ItemStreamWriter<IVariant> {
 
     @Override
     public void write(List<? extends IVariant> variants) throws Exception {
-        List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
-                                                            .collect(Collectors.toList());
-        List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants,
-                jobExecution.getJobId().toString());
-        metricCompute.addCount(AccessioningMetric.SUBMITTED_VARIANTS, variants.size());
-        metricCompute.addCount(AccessioningMetric.ACCESSIONED_VARIANTS, accessions.size());
-        accessionReportWriter.write(variants, accessions);
-        checkCountsMatch(submittedVariants, accessions);
+        if (!variants.isEmpty()) {
+            List<ISubmittedVariant> submittedVariants = variants.stream().map(variantConverter::convert)
+                    .collect(Collectors.toList());
+            List<GetOrCreateAccessionWrapper<ISubmittedVariant, String, Long>> accessions = service.getOrCreate(submittedVariants,
+                    jobExecution.getJobId().toString());
+            metricCompute.addCount(AccessioningMetric.SUBMITTED_VARIANTS, variants.size());
+            metricCompute.addCount(AccessioningMetric.ACCESSIONED_VARIANTS, accessions.size());
+            accessionReportWriter.write(variants, accessions);
+            checkCountsMatch(submittedVariants, accessions);
+        }
     }
 
     void checkCountsMatch(List<? extends ISubmittedVariant> variants,
