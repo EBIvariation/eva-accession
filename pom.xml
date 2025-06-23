@@ -27,7 +27,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.13</junit.version>
-        <variation-commons-version>0.8.6-SNAPSHOT</variation-commons-version>
+        <variation-commons-version>0.8.6</variation-commons-version>
         <accession-commons-version>0.7.19-SNAPSHOT</accession-commons-version>
     </properties>
 
