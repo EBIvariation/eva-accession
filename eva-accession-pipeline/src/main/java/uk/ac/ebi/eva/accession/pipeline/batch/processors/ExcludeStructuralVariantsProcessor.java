@@ -46,7 +46,9 @@ public class ExcludeStructuralVariantsProcessor implements ItemProcessor<IVarian
 
     private static String positionRegEx = "([\\p{Digit}]+)";
 
-    private static String basesRegEx = "([ACTGNactgn]+)";
+    private static String basesRegEx = "([ACTGNactgn]*)";
+
+    private static String nonEmptyBasesRegEx = "([ACTGNactgn]+)";
 
     private static String altIDRegEx_positive_match = "([\\p{Alnum}|[\\p{Punct}&&[^,<>]]]+)";
 
@@ -75,8 +77,8 @@ public class ExcludeStructuralVariantsProcessor implements ItemProcessor<IVarian
                                                                  positionRegEx),
                                                    String.format("(%s\\[%s:%s\\[)", basesRegEx, chromosomeRegEx,
                                                                  positionRegEx),
-                                                   String.format("(\\.%s)", basesRegEx),
-                                                   String.format("(%s\\.)", basesRegEx));
+                                                   String.format("(\\.%s)", nonEmptyBasesRegEx),
+                                                   String.format("(%s\\.)", nonEmptyBasesRegEx));
 
     private static String altGVCFRegEx = "(<\\*>)";
 

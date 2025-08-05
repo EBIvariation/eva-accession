@@ -38,6 +38,8 @@ public class ExcludeStructuralVariantsProcessorTest {
 
     private String ALT_WITH_EMPTY_ALLELE = "";
 
+    private String ALT_WITH_EMPTY_ALLELE_DOT_ANNOTATION = ".";
+
     private String[] ALTS_WITH_SYMBOLIC_INDEL = new String[]{"<DEL>", "<INS>", "<DUP>", "<INV>", "<CNV>",
             "<DUP:TANDEM>", "<DEL:ME:C1#>", "<INS:ME:C1#>"};
 
@@ -47,9 +49,9 @@ public class ExcludeStructuralVariantsProcessorTest {
      * See <a href="https://github.com/EBIvariation/vcf-validator/blob/be6cf8e2b35f2260166c1e6ffa1258a985a99ba3/src/vcf/vcf_v43.ragel#L187">here</a>.
      */
     private String[] ALTS_WITH_BREAK_END_NOTATION = new String[]{
-            "G]2:421681]", "]2:421681]G", "]<contig1#>:1234]ATG",
-            "G[2:421681[", "[2:421681[G", "[<contig1#>:1234[ATG",
-            ".AGT", "AGT."};
+            "G]2:421681]", "]2:421681]G", "]2:421681]", "]<contig1#>:1234]ATG",
+            "G[2:421681[", "[2:421681[G", "[2:421681[", "[<contig1#>:1234[ATG",
+            ".A", "A.", ".AG", "AG.", ".AGT", "AGT.",};
 
     private String ALT_GVCF_NOTATION_FOR_REF_ONLY_RECORDS = "<*>";
 
@@ -79,6 +81,12 @@ public class ExcludeStructuralVariantsProcessorTest {
     @Test
     public void altWithEmptyAllele() {
         IVariant variant = newVariant(ALT_WITH_EMPTY_ALLELE);
+        assertEquals(variant, processor.process(variant));
+    }
+
+    @Test
+    public void altWithEmptyAlleleDotNotation() {
+        IVariant variant = newVariant(ALT_WITH_EMPTY_ALLELE_DOT_ANNOTATION);
         assertEquals(variant, processor.process(variant));
     }
 
