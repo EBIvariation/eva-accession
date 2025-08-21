@@ -52,6 +52,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     private static final Logger logger = LoggerFactory.getLogger(MergedAccessionsVariantReader.class);
 
     public static final String CVE_ACC_FIELD = "accession";
+    public static final String CVE_ASM_FIELD = "asm";
 
     public static final String CVE_OPS_ACCESSION_FIELD = "accession";
     public static final String CVE_OPS_EVENT_TYPE_FIELD = "eventType";
@@ -320,7 +321,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
 
     private List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> getMergedAndDeprecatedCVEOps(Set<Long> cveAccList) {
         Query query = query(where(CVE_OPS_EVENT_TYPE_FIELD).in(EventType.MERGED.toString(), EventType.DEPRECATED.toString())
-                .and(CVE_OPS_ACCESSION_FIELD).in(cveAccList));
+                .and(CVE_OPS_ACCESSION_FIELD).in(cveAccList).and(CVE_OPS_ASM_FIELD).is(assembly));
         List<ClusteredVariantOperationEntity> evaOpsResults = mongoTemplate.find(query, ClusteredVariantOperationEntity.class);
         List<DbsnpClusteredVariantOperationEntity> dbsnpOpsResults = mongoTemplate.find(query, DbsnpClusteredVariantOperationEntity.class);
         return Stream.concat(evaOpsResults.stream(), dbsnpOpsResults.stream()).collect(Collectors.toList());
@@ -344,7 +345,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     }
 
     private List<ClusteredVariantEntity> getClusteredVariantEntities(Set<Long> cveAccs) {
-        Query query = query(where(CVE_ACC_FIELD).in(cveAccs));
+        Query query = query(where(CVE_ACC_FIELD).in(cveAccs).and(CVE_ASM_FIELD).is(assembly));
         List<ClusteredVariantEntity> evaResults = mongoTemplate.find(query, ClusteredVariantEntity.class);
         List<DbsnpClusteredVariantEntity> dbsnpResults = mongoTemplate.find(query, DbsnpClusteredVariantEntity.class);
         return Stream.concat(evaResults.stream(), dbsnpResults.stream()).collect(Collectors.toList());
@@ -493,7 +494,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     private void writeMergeDeprecatedAccessionsToFile(Set<Long> mergedDeprecatedAccessions) {
         for (Long acc : mergedDeprecatedAccessions) {
             try {
-                writer.write(acc + "\n");
+                writer.write("rs" + acc + "\n");
             } catch (IOException e) {
                 throw new RuntimeException("Error writing Merged Deprecated Accessions to File");
             }

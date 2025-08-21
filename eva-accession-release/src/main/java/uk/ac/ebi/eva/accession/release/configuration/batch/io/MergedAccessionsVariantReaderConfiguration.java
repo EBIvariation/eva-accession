@@ -16,10 +16,10 @@ import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_ACC
 public class MergedAccessionsVariantReaderConfiguration {
     @Bean(MERGED_ACCESSIONS_VARIANT_READER)
     @StepScope
-    public ItemStreamReader<Variant> mergedAccessionsVariantUnwindingReader(MongoTemplate mongoTemplate, InputParameters parameters, InputParameters inputParameters) {
+    public ItemStreamReader<Variant> mergedAccessionsVariantUnwindingReader(MongoTemplate mongoTemplate, InputParameters parameters) {
         return new UnwindingItemStreamReader<>(
                 new MergedAccessionsVariantReader(mongoTemplate, parameters.getRsAccFile(),
                         parameters.getAssemblyAccession(), parameters.getTaxonomyAccession(), parameters.getChunkSize(),
-                        inputParameters.getOutputFolder()));
+                        parameters.getOutputFolder()));
     }
 }

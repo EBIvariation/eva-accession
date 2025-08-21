@@ -55,10 +55,12 @@ import uk.ac.ebi.eva.accession.release.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.eva.commons.core.models.VariantType;
 import uk.ac.ebi.eva.commons.core.utils.FileUtils;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -172,8 +174,12 @@ public class RSAccessionsReleaseFromDBTest {
         FileInputStream mergedDeprecatedInputStream = new FileInputStream(ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(
                         inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession())
                 .toFile());
-        long mergedDeprecatedVariants = FileUtils.countNonCommentLines(mergedDeprecatedInputStream);
-        assertEquals(2, mergedDeprecatedVariants);
+        List<String> mergedDeprecatedRSIdsList = new BufferedReader(new InputStreamReader(mergedDeprecatedInputStream))
+                .lines().collect(Collectors.toList());
+        assertEquals(2, mergedDeprecatedRSIdsList.size());
+        assertEquals("rs1", mergedDeprecatedRSIdsList.get(0));
+        assertEquals("rs2", mergedDeprecatedRSIdsList.get(1));
+
 
         FileInputStream mergedInputStream = new FileInputStream(ReportPathResolver.getEvaMergedIdsReportPath(
                         inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession())
