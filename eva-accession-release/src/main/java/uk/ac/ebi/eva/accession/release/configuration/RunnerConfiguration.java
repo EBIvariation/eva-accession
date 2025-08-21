@@ -17,14 +17,14 @@
 package uk.ac.ebi.eva.accession.release.configuration;
 
 import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
+import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
+import org.springframework.batch.core.explore.JobExplorer;
+import org.springframework.batch.core.explore.support.MapJobExplorerFactoryBean;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
-
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 
 @Configuration
 public class RunnerConfiguration {
@@ -35,9 +35,17 @@ public class RunnerConfiguration {
     }
 
     @Bean
-    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
-            throws Exception {
-        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
-                entityManagerFactory);
+    public BatchConfigurer configurer() {
+        return new DefaultBatchConfigurer() {
+            @Override
+            protected JobRepository createJobRepository() throws Exception {
+                return new MapJobRepositoryFactoryBean().getObject();
+            }
+
+            @Override
+            protected JobExplorer createJobExplorer() throws Exception {
+                return new MapJobExplorerFactoryBean((MapJobRepositoryFactoryBean) new MapJobRepositoryFactoryBean()).getObject();
+            }
+        };
     }
 }
