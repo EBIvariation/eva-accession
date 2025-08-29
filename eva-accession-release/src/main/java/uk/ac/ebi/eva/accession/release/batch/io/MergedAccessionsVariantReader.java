@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -134,23 +135,32 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     public List<Variant> processCveAccessions(List<Long> cveAccList) {
         Set<Long> cveAccSet = new HashSet<>(cveAccList);
 
-        Map<Long, Set<Long>> activeAccessionsMap = new HashMap<>();
-        Map<Long, Set<Long>> deprecatedAccessionsMap = new HashMap<>();
-        cveAccSet.forEach(acc -> activeAccessionsMap.put(acc, new HashSet<>()));
-        cveAccSet.forEach(acc -> deprecatedAccessionsMap.put(acc, new HashSet<>()));
+        // Get active accessions
+        Set<Long> activeAccessionsSet = getClusteredVariantEntities(cveAccSet).stream()
+                .map(ClusteredVariantEntity::getAccession)
+                .collect(Collectors.toSet());
 
-        // Get all Merged and Deprecated CVE Ops for the given CVE accessions
-        Map<Long, Map<Boolean, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>>> cveMergedDeprecatedOps = getMergedAndDeprecatedCVEOpsMap(cveAccSet);
+        // check and report accessions if an accession is both active and also has merged/deprecated operations
+        if (!activeAccessionsSet.isEmpty()) {
+            logger.warn("Accession is both Active and has Merged/Deprecated operations: The following accessions are active as well as have merged/deprecated operations: {}", activeAccessionsSet);
+            // remove all the accessions which are active currently. These will be released in the current RS file
+            cveAccSet.removeAll(activeAccessionsSet);
+        }
+
+        Map<Long, Set<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>> mergedIntoActiveAccessionsMap = new HashMap<>();
+        Map<Long, Set<Long>> mergedIntoDeprecatedAccessionsMap = new HashMap<>();
+        cveAccSet.forEach(acc -> mergedIntoActiveAccessionsMap.put(acc, new HashSet<>()));
+        cveAccSet.forEach(acc -> mergedIntoDeprecatedAccessionsMap.put(acc, new HashSet<>()));
 
         // Iterates through merge chains to determine if the resulting CVE is active, deprecated, or in an undefined state
-        iterateThroughMergeChainAndResolveCVEStatus(cveAccSet, cveMergedDeprecatedOps, activeAccessionsMap, deprecatedAccessionsMap);
+        iterateThroughMergeChainAndResolveCVEStatus(cveAccSet, mergedIntoActiveAccessionsMap, mergedIntoDeprecatedAccessionsMap);
 
         // Compute Results
 
         // deprecated accessions set - cve accessions which are deprecated and not present in active accessions set
-        Set<Long> mergedDeprecatedAccSet = deprecatedAccessionsMap.entrySet().stream()
+        Set<Long> mergedDeprecatedAccSet = mergedIntoDeprecatedAccessionsMap.entrySet().stream()
                 .filter(entry -> !entry.getValue().isEmpty())
-                .filter(entry -> activeAccessionsMap.get(entry.getKey()).isEmpty())
+                .filter(entry -> mergedIntoActiveAccessionsMap.get(entry.getKey()).isEmpty())
                 .map(entry -> entry.getKey())
                 .collect(Collectors.toSet());
         if (!mergedDeprecatedAccSet.isEmpty()) {
@@ -159,7 +169,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
 
         // active accessions set - find accession which resolved to active, also log ones which resolves to multiple active ones
         Set<Long> mergedAccSet = new HashSet<>();
-        activeAccessionsMap.forEach((acc, accSet) -> {
+        mergedIntoActiveAccessionsMap.forEach((acc, accSet) -> {
             if (!accSet.isEmpty()) {
                 mergedAccSet.add(acc);
                 if (accSet.size() > 1) {
@@ -180,11 +190,11 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
 
         List<Variant> variantList = new ArrayList<>();
         for (Long acc : mergedAccSet) {
-            EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> cveOps = cveMergedDeprecatedOps.get(acc).get(Boolean.TRUE).iterator().next();
             List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> sveOpsEntityList = sveOpsEntitiesMap.get(acc);
             if (sveOpsEntityList != null) {
-                Long mergedInto = activeAccessionsMap.get(acc).stream().sorted().findFirst().get();
-                variantList.addAll(getVariants(cveOps, sveOpsEntityList, mergedInto));
+                EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> cveOp = mergedIntoActiveAccessionsMap.get(acc)
+                        .stream().sorted(Comparator.comparing(EventDocument::getMergedInto)).findFirst().get();
+                variantList.addAll(getVariants(cveOp, sveOpsEntityList));
             }
         }
 
@@ -192,31 +202,20 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     }
 
     private void iterateThroughMergeChainAndResolveCVEStatus(Set<Long> cveAccSet,
-                                                             Map<Long, Map<Boolean, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>>> cveMergedDeprecatedOps,
-                                                             Map<Long, Set<Long>> activeAccessionsMap,
-                                                             Map<Long, Set<Long>> deprecatedAccessionsMap) {
-        // Get active accessions
-        Set<Long> activeAccessionsSet = getClusteredVariantEntities(cveAccSet).stream()
-                .map(ClusteredVariantEntity::getAccession)
-                .collect(Collectors.toSet());
-
-        // check and report accessions if an accession is both active and also has merged/deprecated operations
-        if (!activeAccessionsSet.isEmpty()) {
-            logger.warn("Accession is both Active and has Merged/Deprecated operations: The following accessions are active as well as have merged/deprecated operations: {}", activeAccessionsSet);
-            // update active accession map
-            activeAccessionsSet.forEach(acc -> activeAccessionsMap.get(acc).add(acc));
-        }
+                                                             Map<Long, Set<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>> mergedIntoActiveAccessionsMap,
+                                                             Map<Long, Set<Long>> mergedIntoDeprecatedAccessionsMap) {
+        // Get all Merged and Deprecated CVE Ops for the given CVE accessions
+        Map<Long, Map<Boolean, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>>> cveMergedDeprecatedOps = getMergedAndDeprecatedCVEOpsMap(cveAccSet);
 
         // update mergedInto and deprecated accessions map
-        Map<Long, Set<Long>> orgAccMergeIntoMap = new HashMap<>();
+        Map<Long, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>> orgAccMergeIntoMap = new HashMap<>();
 
         for (Map.Entry<Long, Map<Boolean, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>>> entry : cveMergedDeprecatedOps.entrySet()) {
-            Set<Long> mergedInto = entry.getValue().getOrDefault(Boolean.TRUE, Collections.emptyList()).stream()
-                    .map(EventDocument::getMergedInto).collect(Collectors.toSet());
+            orgAccMergeIntoMap.put(entry.getKey(), entry.getValue().getOrDefault(Boolean.TRUE, Collections.emptyList()));
+
             Set<Long> deprecated = entry.getValue().getOrDefault(Boolean.FALSE, Collections.emptyList()).stream()
                     .map(EventDocument::getAccession).collect(Collectors.toSet());
-            orgAccMergeIntoMap.put(entry.getKey(), mergedInto);
-            deprecatedAccessionsMap.get(entry.getKey()).addAll(deprecated);
+            mergedIntoDeprecatedAccessionsMap.get(entry.getKey()).addAll(deprecated);
         }
 
         // create a map to keep track of processed accession in the merge chain for each accession
@@ -226,6 +225,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
         // initialize processing set with mergeInto accessions
         Set<Long> processingAccSet = orgAccMergeIntoMap.values().stream()
                 .flatMap(Collection::stream)
+                .map(EventDocument::getMergedInto)
                 .collect(Collectors.toSet());
 
         while (!processingAccSet.isEmpty()) {
@@ -233,20 +233,20 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
             Set<Long> activeAccSet = getClusteredVariantEntities(processingAccSet).stream()
                     .map(ClusteredVariantEntity::getAccession)
                     .collect(Collectors.toSet());
-            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoSet) -> {
-                mergeIntoSet.forEach(acc -> {
-                    if (activeAccSet.contains(acc)) {
-                        activeAccessionsMap.get(orgAcc).add(acc);
+            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoList) -> {
+                mergeIntoList.forEach(eventDoc -> {
+                    if (activeAccSet.contains(eventDoc.getMergedInto())) {
+                        mergedIntoActiveAccessionsMap.get(orgAcc).add(eventDoc);
                     }
                 });
             });
 
             // update already processed
             Set<Long> tempProcessingAccSet = processingAccSet.stream().collect(Collectors.toSet());
-            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoSet) -> {
-                mergeIntoSet.forEach(acc -> {
-                    if (tempProcessingAccSet.contains(acc)) {
-                        alreadyProcessedAccessionsMap.get(orgAcc).add(acc);
+            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoList) -> {
+                mergeIntoList.forEach(eventDoc -> {
+                    if (tempProcessingAccSet.contains(eventDoc.getMergedInto())) {
+                        alreadyProcessedAccessionsMap.get(orgAcc).add(eventDoc.getMergedInto());
                     }
                 });
             });
@@ -254,34 +254,35 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
             // Get all Merged and Deprecated CVE Ops for the given CVE accession
             Map<Long, Map<Boolean, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>>> cveOps = getMergedAndDeprecatedCVEOpsMap(processingAccSet);
 
-            Map<Long, Set<Long>> temp2OrgAccMergeIntoMap = new HashMap<>();
+            Map<Long, List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>>> temp2OrgAccMergeIntoMap = new HashMap<>();
             // update mergedInto and deprecated
-            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoSet) -> {
+            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoList) -> {
+                List<Long> mergeIntoListAcc = mergeIntoList.stream().map(ed -> ed.getMergedInto()).collect(Collectors.toList());
                 List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> listOfEventDocs = cveOps.entrySet().stream()
-                        .filter(entry -> mergeIntoSet.contains(entry.getKey()))
+                        .filter(entry -> mergeIntoListAcc.contains(entry.getKey()))
                         .flatMap(entry -> entry.getValue().values().stream().flatMap(Collection::stream))
                         .collect(Collectors.toList());
-                Set<Long> newMergedIntoAcc = listOfEventDocs.stream()
+                List<EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity>> newMergedIntoAcc = listOfEventDocs.stream()
                         .filter(eventDoc -> eventDoc.getEventType().equals(EventType.MERGED))
-                        .map(eventDoc -> eventDoc.getMergedInto())
-                        .collect(Collectors.toSet());
+                        .collect(Collectors.toList());
                 Set<Long> deprecatedAccessions = listOfEventDocs.stream()
                         .filter(eventDoc -> eventDoc.getEventType().equals(EventType.DEPRECATED))
                         .map(eventDoc -> eventDoc.getAccession())
                         .collect(Collectors.toSet());
 
                 // log and remove already processed accessions from further processing to avoid loops/circular paths
-                Set<Long> alreadyProcessedAcc = alreadyProcessedAccessionsMap.get(orgAcc).stream().filter(newMergedIntoAcc::contains).collect(Collectors.toSet());
+                Set<Long> newMergedIntoAccessions = newMergedIntoAcc.stream().map(ed -> ed.getMergedInto()).collect(Collectors.toSet());
+                Set<Long> alreadyProcessedAcc = alreadyProcessedAccessionsMap.get(orgAcc).stream().filter(acc -> newMergedIntoAccessions.contains(acc)).collect(Collectors.toSet());
                 if (!alreadyProcessedAcc.isEmpty()) {
                     logger.error("Loop Found in the merge chain for accession {}. Duplicate accessions {}", orgAcc, alreadyProcessedAcc);
-                    newMergedIntoAcc.removeAll(alreadyProcessedAcc);
+                    newMergedIntoAcc = newMergedIntoAcc.stream().filter(ed -> !alreadyProcessedAcc.contains(ed.getMergedInto())).collect(Collectors.toList());
                 }
 
                 if (!newMergedIntoAcc.isEmpty()) {
                     temp2OrgAccMergeIntoMap.put(orgAcc, newMergedIntoAcc);
                 }
                 if (!deprecatedAccessions.isEmpty()) {
-                    deprecatedAccessionsMap.get(orgAcc).addAll(deprecatedAccessions);
+                    mergedIntoDeprecatedAccessionsMap.get(orgAcc).addAll(deprecatedAccessions);
                 }
             });
 
@@ -294,10 +295,10 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
             }
 
             // check and log accessions which are neither active nor has any further merge/deprecated operations
-            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoSet) -> {
-                mergeIntoSet.forEach(acc -> {
-                    if (!activeAccSet.contains(acc) && !cveOps.containsKey(acc)) {
-                        logger.warn("Accession {} is Neither Active nor has any further Merged/Deprecated Operations. Original Accessions {}", acc, orgAcc);
+            orgAccMergeIntoMap.forEach((orgAcc, mergeIntoList) -> {
+                mergeIntoList.forEach(eventDoc -> {
+                    if (!activeAccSet.contains(eventDoc.getMergedInto()) && !cveOps.containsKey(eventDoc.getMergedInto())) {
+                        logger.warn("Accession is Neither Active nor has any further Merged/Deprecated Operations. Original Accessions {}, Accession for which nothing found: {}", orgAcc, eventDoc.getMergedInto());
                     }
                 });
             });
@@ -306,7 +307,9 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
             orgAccMergeIntoMap = temp2OrgAccMergeIntoMap;
             processingAccSet = orgAccMergeIntoMap.values().stream()
                     .flatMap(Collection::stream)
+                    .map(EventDocument::getMergedInto)
                     .collect(Collectors.toSet());
+
         } // end of processing loop
 
     }
@@ -351,14 +354,13 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
         return Stream.concat(evaResults.stream(), dbsnpResults.stream()).collect(Collectors.toList());
     }
 
-    protected List<Variant> getVariants(EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> cveOps,
-                                        List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> sveOpsEntityList,
-                                        Long mergedInto) {
-        List<? extends ClusteredVariantInactiveEntity> inactiveObjects = cveOps.getInactiveObjects();
+    protected List<Variant> getVariants(EventDocument<IClusteredVariant, Long, ? extends ClusteredVariantInactiveEntity> cveOp,
+                                        List<EventDocument<ISubmittedVariant, Long, ? extends SubmittedVariantInactiveEntity>> sveOpsEntityList) {
+        List<? extends ClusteredVariantInactiveEntity> inactiveObjects = cveOp.getInactiveObjects();
         if (inactiveObjects.size() > 1) {
             throw new AssertionError("The class '" + this.getClass().getSimpleName()
                     + "' was designed assuming there's only one element in the field " + "'inactiveObjects'. " +
-                    "Found " + inactiveObjects.size() + " elements in _id=" + cveOps.getAccession());
+                    "Found " + inactiveObjects.size() + " elements in _id=" + cveOp.getAccession());
         }
         ClusteredVariantInactiveEntity inactiveEntity = inactiveObjects.iterator().next();
         String contig = inactiveEntity.getContig();
@@ -398,7 +400,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
                 boolean evidence = submittedVariant.isSupportedByEvidence();
 
                 VariantSourceEntry sourceEntry = buildVariantSourceEntry(study, sequenceOntology, validated,
-                        submittedVariantValidated, allelesMatch, assemblyMatch, evidence, remappedRS, mergedInto);
+                        submittedVariantValidated, allelesMatch, assemblyMatch, evidence, remappedRS, cveOp.getMergedInto());
 
                 addToVariants(mergedVariants, contig, submittedVariantStart, rs, reference, alternate, sourceEntry);
             } else if (submittedVariantOperation.getEventType().equals(EventType.UPDATED)
