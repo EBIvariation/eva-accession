@@ -165,7 +165,7 @@ public class RSAccessionsReleaseFromDBTest {
 
     @Test
     public void testReleaseMergedRSAccessionsStep() throws Exception {
-        createRSAccFileWithAccessions(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L));
+        createRSAccFileWithAccessions(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L));
         populateDataForMergedAccessions();
 
         JobExecution jobExecution = jobLauncherReleaseMergedAccessions.launchJob();
@@ -176,9 +176,10 @@ public class RSAccessionsReleaseFromDBTest {
                 .toFile());
         List<String> mergedDeprecatedRSIdsList = new BufferedReader(new InputStreamReader(mergedDeprecatedInputStream))
                 .lines().collect(Collectors.toList());
-        assertEquals(2, mergedDeprecatedRSIdsList.size());
+        assertEquals(3, mergedDeprecatedRSIdsList.size());
         assertEquals("rs1", mergedDeprecatedRSIdsList.get(0));
         assertEquals("rs2", mergedDeprecatedRSIdsList.get(1));
+        assertEquals("rs8", mergedDeprecatedRSIdsList.get(2));
 
 
         FileInputStream mergedInputStream = new FileInputStream(ReportPathResolver.getEvaMergedIdsReportPath(
@@ -459,6 +460,14 @@ public class RSAccessionsReleaseFromDBTest {
         cveOpsList.add(cveOps_Merge_7_71);
         cveOpsList.add(cveOps_Merge_7_72);
         cveList.add(cve_71);
+
+        // cve 8 is deprecated and has no merged operations
+        ClusteredVariantInactiveEntity cveInactive_8 = new ClusteredVariantInactiveEntity(new ClusteredVariantEntity(8L, "Hash-8",
+                "GCA_000409795.2", 60711, "CM001941.2", 100008,
+                VariantType.SNV, false, LocalDateTime.now(), 1));
+        ClusteredVariantOperationEntity cveOps_Deprecate_8 = new ClusteredVariantOperationEntity();
+        cveOps_Deprecate_8.fill(EventType.DEPRECATED, 8L, null, "Deprecated", Arrays.asList(cveInactive_8));
+        cveOpsList.add(cveOps_Deprecate_8);
 
 
         SubmittedVariantInactiveEntity sveInactive_3 = new SubmittedVariantInactiveEntity(new SubmittedVariantEntity(3L, "SVE-Hash-3",
