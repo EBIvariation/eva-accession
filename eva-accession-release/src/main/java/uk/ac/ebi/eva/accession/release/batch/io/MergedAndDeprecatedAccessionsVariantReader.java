@@ -49,8 +49,8 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 /**
  * Read all ClusteredVariant Accessions from file in batches
  */
-public class MergedAccessionsVariantReader implements ItemStreamReader<List<Variant>> {
-    private static final Logger logger = LoggerFactory.getLogger(MergedAccessionsVariantReader.class);
+public class MergedAndDeprecatedAccessionsVariantReader implements ItemStreamReader<List<Variant>> {
+    private static final Logger logger = LoggerFactory.getLogger(MergedAndDeprecatedAccessionsVariantReader.class);
 
     public static final String CVE_ACC_FIELD = "accession";
     public static final String CVE_ASM_FIELD = "asm";
@@ -88,8 +88,8 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     private BufferedReader reader;
     private BufferedWriter writer;
 
-    public MergedAccessionsVariantReader(MongoTemplate mongoTemplate, String rsAccFile, String assembly, int taxonomy,
-                                         int chunkSize, String outputDir) {
+    public MergedAndDeprecatedAccessionsVariantReader(MongoTemplate mongoTemplate, String rsAccFile, String assembly, int taxonomy,
+                                                      int chunkSize, String outputDir) {
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.taxonomy = taxonomy;

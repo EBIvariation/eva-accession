@@ -13,10 +13,8 @@ import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_ACTIVE_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_ACTIVE_ACCESSIONS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_DEPRECATED_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_DEPRECATED_ACCESSIONS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_ACCESSIONS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_STEP;
 
 @Configuration
 @EnableBatchProcessing
@@ -27,12 +25,8 @@ public class DumpRSAccessionsJobConfiguration {
     private Step dumpActiveAccessionsStep;
 
     @Autowired
-    @Qualifier(DUMP_MERGED_ACCESSIONS_STEP)
-    private Step dumpMergedAccessionsStep;
-
-    @Autowired
-    @Qualifier(DUMP_DEPRECATED_ACCESSIONS_STEP)
-    private Step dumpDeprecatedAccessionsStep;
+    @Qualifier(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_STEP)
+    private Step dumpMergedAndDeprecatedAccessionsStep;
 
     @Bean(DUMP_ACTIVE_ACCESSIONS_JOB)
     public Job dumpActiveAccessionJob(JobBuilderFactory jobBuilderFactory) {
@@ -42,19 +36,11 @@ public class DumpRSAccessionsJobConfiguration {
                 .build();
     }
 
-    @Bean(DUMP_MERGED_ACCESSIONS_JOB)
-    public Job dumpMergedAccessionJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(DUMP_MERGED_ACCESSIONS_JOB)
+    @Bean(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
+    public Job dumpMergedAndDeprecatedAccessionJob(JobBuilderFactory jobBuilderFactory) {
+        return jobBuilderFactory.get(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
                 .incrementer(new RunIdIncrementer())
-                .start(dumpMergedAccessionsStep)
-                .build();
-    }
-
-    @Bean(DUMP_DEPRECATED_ACCESSIONS_JOB)
-    public Job dumpDeprecatedAccessionJob(JobBuilderFactory jobBuilderFactory) {
-        return jobBuilderFactory.get(DUMP_DEPRECATED_ACCESSIONS_JOB)
-                .incrementer(new RunIdIncrementer())
-                .start(dumpDeprecatedAccessionsStep)
+                .start(dumpMergedAndDeprecatedAccessionsStep)
                 .build();
     }
 
