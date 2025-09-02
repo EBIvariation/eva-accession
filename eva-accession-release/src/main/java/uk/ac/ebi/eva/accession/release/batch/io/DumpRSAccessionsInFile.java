@@ -101,12 +101,9 @@ public class DumpRSAccessionsInFile {
     public Bson getQueryforRSDumpType(RSDumpType rsDumpType, String assembly) {
         if (rsDumpType == RSDumpType.ACTIVE) {
             return Filters.eq(CVE_ASSEMBLY_FIELD, assembly);
-        } else if (rsDumpType == RSDumpType.MERGED) {
+        } else if (rsDumpType == RSDumpType.MERGED_AND_DEPRECATED) {
             return Filters.and(Filters.eq(CVE_OPS_INACTIVE_OBJ_ASSEMBLY_FIELD, assembly),
-                    Filters.eq(CVE_OPS_EVENT_TYPE_FIELD, EventType.MERGED.toString()));
-        } else if (rsDumpType == RSDumpType.DEPRECATED) {
-            return Filters.and(Filters.eq(CVE_OPS_INACTIVE_OBJ_ASSEMBLY_FIELD, assembly),
-                    Filters.eq(CVE_OPS_EVENT_TYPE_FIELD, EventType.DEPRECATED.toString()));
+                    Filters.in(CVE_OPS_EVENT_TYPE_FIELD, EventType.MERGED.toString(), EventType.DEPRECATED.toString()));
         }
 
         return null;
@@ -115,8 +112,7 @@ public class DumpRSAccessionsInFile {
 
     public enum RSDumpType {
         ACTIVE(ClusteredVariantEntity.class, DbsnpClusteredVariantEntity.class),
-        MERGED(ClusteredVariantOperationEntity.class, DbsnpClusteredVariantOperationEntity.class),
-        DEPRECATED(ClusteredVariantOperationEntity.class, DbsnpClusteredVariantOperationEntity.class);
+        MERGED_AND_DEPRECATED(ClusteredVariantOperationEntity.class, DbsnpClusteredVariantOperationEntity.class);
 
         private Class evaClass;
         private Class dbsnpClass;

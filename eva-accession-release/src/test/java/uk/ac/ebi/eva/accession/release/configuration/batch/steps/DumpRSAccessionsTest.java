@@ -57,11 +57,9 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_ACTIVE_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_DEPRECATED_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
 import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_ACTIVE_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_DEPRECATED_ACCESSIONS_JOB;
-import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_MERGED_ACCESSIONS_JOB;
+import static uk.ac.ebi.eva.accession.release.test.configuration.ReleaseFromDBTestConfiguration.TEST_DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MongoTestConfiguration.class, ReleaseFromDBTestConfiguration.class})
@@ -75,12 +73,8 @@ public class DumpRSAccessionsTest {
     private JobLauncherTestUtils jobLauncherDumpActiveAccessions;
 
     @Autowired
-    @Qualifier(TEST_DUMP_DEPRECATED_ACCESSIONS_JOB)
-    private JobLauncherTestUtils jobLauncherDumpDeprecatedAccessions;
-
-    @Autowired
-    @Qualifier(TEST_DUMP_MERGED_ACCESSIONS_JOB)
-    private JobLauncherTestUtils jobLauncherDumpMergedAccessions;
+    @Qualifier(TEST_DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
+    private JobLauncherTestUtils jobLauncherDumpMergedAndDeprecatedAccessions;
 
     @Autowired
     private MongoClient mongoClient;
@@ -118,20 +112,11 @@ public class DumpRSAccessionsTest {
     }
 
     @Test
-    public void testDumpDeprecatedRSAccessionsStep() throws Exception {
-        populateDataForDeprecatedAccessions();
-        jobLauncherDumpDeprecatedAccessions.launchJob();
+    public void testDumpMergedAndDeprecatedRSAccessionsStep() throws Exception {
+        populateDataForMergedAndDeprecatedAccessions();
+        jobLauncherDumpMergedAndDeprecatedAccessions.launchJob();
 
-        Set<Long> expectedAccSet = new HashSet<>(Arrays.asList(1L, 2L, 5L, 6L));
-        assertDumpRSAccFileContains(expectedAccSet);
-    }
-
-    @Test
-    public void testDumpMergedRSAccessionsStep() throws Exception {
-        populateDataForMergedAccessions();
-        jobLauncherDumpMergedAccessions.launchJob();
-
-        Set<Long> expectedAccSet = new HashSet<>(Arrays.asList(1L, 2L, 5L, 6L));
+        Set<Long> expectedAccSet = new HashSet<>(Arrays.asList(1L, 2L, 5L, 6L, 21L, 22L, 25L, 26L));
         assertDumpRSAccFileContains(expectedAccSet);
     }
 
@@ -160,42 +145,8 @@ public class DumpRSAccessionsTest {
         mongoTemplate.insert(Arrays.asList(dbsnp1, dbsnp2, dbsnp3), DbsnpClusteredVariantEntity.class);
     }
 
-    public void populateDataForDeprecatedAccessions() {
-        ClusteredVariantInactiveEntity cveInactive1 = new ClusteredVariantInactiveEntity(new ClusteredVariantEntity(1L, "Hash-1",
-                "GCA_000409795.2", 60711, "contig", 100001,
-                VariantType.SNV, false, LocalDateTime.now(), 1));
-        ClusteredVariantInactiveEntity cveInactive2 = new ClusteredVariantInactiveEntity(new ClusteredVariantEntity(2L, "Hash-2",
-                "GCA_000409795.2", 60711, "contig", 100002,
-                VariantType.SNV, false, LocalDateTime.now(), 1));
-        ClusteredVariantOperationEntity cveOps1 = new ClusteredVariantOperationEntity();
-        cveOps1.fill(EventType.DEPRECATED, 1L, 3L, "DEPRECATED", Arrays.asList(cveInactive1));
-        ClusteredVariantOperationEntity cveOps2 = new ClusteredVariantOperationEntity();
-        cveOps2.fill(EventType.DEPRECATED, 2L, 4L, "DEPRECATED", Arrays.asList(cveInactive2));
-
-        DbsnpClusteredVariantInactiveEntity dbsnpInactive1 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(5L, "Hash-5",
-                "GCA_000409795.2", 60711, "contig", 100005,
-                VariantType.SNV, false, LocalDateTime.now(), 1));
-        DbsnpClusteredVariantInactiveEntity dbsnpInactive2 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(6L, "Hash-6",
-                "GCA_000409795.2", 60711, "contig", 100006,
-                VariantType.SNV, false, LocalDateTime.now(), 1));
-        ClusteredVariantOperationEntity dbsnpOps1 = new ClusteredVariantOperationEntity();
-        dbsnpOps1.fill(EventType.DEPRECATED, 5L, 7L, "DEPRECATED", Arrays.asList(dbsnpInactive1));
-        ClusteredVariantOperationEntity dbsnpOps2 = new ClusteredVariantOperationEntity();
-        dbsnpOps2.fill(EventType.DEPRECATED, 6L, 8L, "DEPRECATED", Arrays.asList(dbsnpInactive2));
-
-        ClusteredVariantEntity cve1 = new ClusteredVariantEntity(10L, "Hash-10",
-                "GCA_000409795.2", 60711, "contig", 100010,
-                VariantType.SNV, false, LocalDateTime.now(), 1);
-        ClusteredVariantEntity cve2 = new ClusteredVariantEntity(11L, "Hash-11",
-                "GCA_000409795.2", 60711, "contig", 100011,
-                VariantType.SNV, false, LocalDateTime.now(), 1);
-
-        mongoTemplate.insert(Arrays.asList(cveOps1, cveOps2), ClusteredVariantOperationEntity.class);
-        mongoTemplate.insert(Arrays.asList(dbsnpOps1, dbsnpOps2), DbsnpClusteredVariantOperationEntity.class);
-        mongoTemplate.insert(Arrays.asList(cve1, cve2), ClusteredVariantEntity.class);
-    }
-
-    public void populateDataForMergedAccessions() {
+    public void populateDataForMergedAndDeprecatedAccessions() {
+        // data for merged accessions
         ClusteredVariantInactiveEntity cveInactive1 = new ClusteredVariantInactiveEntity(new ClusteredVariantEntity(1L, "Hash-1",
                 "GCA_000409795.2", 60711, "contig", 100001,
                 VariantType.SNV, false, LocalDateTime.now(), 1));
@@ -207,27 +158,51 @@ public class DumpRSAccessionsTest {
         ClusteredVariantOperationEntity cveOps2 = new ClusteredVariantOperationEntity();
         cveOps2.fill(EventType.MERGED, 2L, 4L, "MERGED", Arrays.asList(cveInactive2));
 
-        DbsnpClusteredVariantInactiveEntity dbsnpInactive1 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(5L, "Hash-5",
+        DbsnpClusteredVariantInactiveEntity dbsnpInactive5 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(5L, "Hash-5",
                 "GCA_000409795.2", 60711, "contig", 100005,
                 VariantType.SNV, false, LocalDateTime.now(), 1));
-        DbsnpClusteredVariantInactiveEntity dbsnpInactive2 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(6L, "Hash-6",
+        DbsnpClusteredVariantInactiveEntity dbsnpInactive6 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(6L, "Hash-6",
                 "GCA_000409795.2", 60711, "contig", 100006,
                 VariantType.SNV, false, LocalDateTime.now(), 1));
-        ClusteredVariantOperationEntity dbsnpOps1 = new ClusteredVariantOperationEntity();
-        dbsnpOps1.fill(EventType.MERGED, 5L, 7L, "MERGED", Arrays.asList(dbsnpInactive1));
-        ClusteredVariantOperationEntity dbsnpOps2 = new ClusteredVariantOperationEntity();
-        dbsnpOps2.fill(EventType.MERGED, 6L, 8L, "MERGED", Arrays.asList(dbsnpInactive2));
+        ClusteredVariantOperationEntity dbsnpOps5 = new ClusteredVariantOperationEntity();
+        dbsnpOps5.fill(EventType.MERGED, 5L, 7L, "MERGED", Arrays.asList(dbsnpInactive5));
+        ClusteredVariantOperationEntity dbsnpOps6 = new ClusteredVariantOperationEntity();
+        dbsnpOps6.fill(EventType.MERGED, 6L, 8L, "MERGED", Arrays.asList(dbsnpInactive6));
 
-        ClusteredVariantEntity cve1 = new ClusteredVariantEntity(10L, "Hash-10",
+        // data for active accessions
+        ClusteredVariantEntity cve10 = new ClusteredVariantEntity(10L, "Hash-10",
                 "GCA_000409795.2", 60711, "contig", 100010,
                 VariantType.SNV, false, LocalDateTime.now(), 1);
-        ClusteredVariantEntity cve2 = new ClusteredVariantEntity(11L, "Hash-11",
+        ClusteredVariantEntity cve11 = new ClusteredVariantEntity(11L, "Hash-11",
                 "GCA_000409795.2", 60711, "contig", 100011,
                 VariantType.SNV, false, LocalDateTime.now(), 1);
 
-        mongoTemplate.insert(Arrays.asList(cveOps1, cveOps2), ClusteredVariantOperationEntity.class);
-        mongoTemplate.insert(Arrays.asList(dbsnpOps1, dbsnpOps2), DbsnpClusteredVariantOperationEntity.class);
-        mongoTemplate.insert(Arrays.asList(cve1, cve2), ClusteredVariantEntity.class);
+        // data for deprecated accessions
+        ClusteredVariantInactiveEntity cveInactive21 = new ClusteredVariantInactiveEntity(new ClusteredVariantEntity(21L, "Hash-21",
+                "GCA_000409795.2", 60711, "contig", 100021,
+                VariantType.SNV, false, LocalDateTime.now(), 1));
+        ClusteredVariantInactiveEntity cveInactive22 = new ClusteredVariantInactiveEntity(new ClusteredVariantEntity(22L, "Hash-22",
+                "GCA_000409795.2", 60711, "contig", 100022,
+                VariantType.SNV, false, LocalDateTime.now(), 1));
+        ClusteredVariantOperationEntity cveOps21 = new ClusteredVariantOperationEntity();
+        cveOps21.fill(EventType.DEPRECATED, 21L, 23L, "DEPRECATED", Arrays.asList(cveInactive21));
+        ClusteredVariantOperationEntity cveOps22 = new ClusteredVariantOperationEntity();
+        cveOps22.fill(EventType.DEPRECATED, 22L, 24L, "DEPRECATED", Arrays.asList(cveInactive22));
+
+        DbsnpClusteredVariantInactiveEntity dbsnpInactive25 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(25L, "Hash-25",
+                "GCA_000409795.2", 60711, "contig", 100025,
+                VariantType.SNV, false, LocalDateTime.now(), 1));
+        DbsnpClusteredVariantInactiveEntity dbsnpInactive26 = new DbsnpClusteredVariantInactiveEntity(new DbsnpClusteredVariantEntity(26L, "Hash-26",
+                "GCA_000409795.2", 60711, "contig", 100026,
+                VariantType.SNV, false, LocalDateTime.now(), 1));
+        ClusteredVariantOperationEntity dbsnpOps25 = new ClusteredVariantOperationEntity();
+        dbsnpOps25.fill(EventType.DEPRECATED, 25L, 27L, "DEPRECATED", Arrays.asList(dbsnpInactive25));
+        ClusteredVariantOperationEntity dbsnpOps26 = new ClusteredVariantOperationEntity();
+        dbsnpOps26.fill(EventType.DEPRECATED, 26L, 28L, "DEPRECATED", Arrays.asList(dbsnpInactive26));
+
+        mongoTemplate.insert(Arrays.asList(cveOps1, cveOps2, cveOps21, cveOps22), ClusteredVariantOperationEntity.class);
+        mongoTemplate.insert(Arrays.asList(dbsnpOps5, dbsnpOps6, dbsnpOps25, dbsnpOps26), DbsnpClusteredVariantOperationEntity.class);
+        mongoTemplate.insert(Arrays.asList(cve10, cve11), ClusteredVariantEntity.class);
     }
 
     public void assertDumpRSAccFileContains(Set<Long> expectedAccSet) throws IOException {
@@ -250,23 +225,12 @@ public class DumpRSAccessionsTest {
         };
     }
 
-    @Bean(TEST_DUMP_DEPRECATED_ACCESSIONS_JOB)
-    public JobLauncherTestUtils jobLauncherTestUtilsDeprecatedAccessions() {
-        return new JobLauncherTestUtils() {
-            @Override
-            @Autowired
-            public void setJob(@Qualifier(DUMP_DEPRECATED_ACCESSIONS_JOB) Job job) {
-                super.setJob(job);
-            }
-        };
-    }
-
-    @Bean(TEST_DUMP_MERGED_ACCESSIONS_JOB)
+    @Bean(TEST_DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB)
     public JobLauncherTestUtils jobLauncherTestUtilsMergedAccessions() {
         return new JobLauncherTestUtils() {
             @Override
             @Autowired
-            public void setJob(@Qualifier(DUMP_MERGED_ACCESSIONS_JOB) Job job) {
+            public void setJob(@Qualifier(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_JOB) Job job) {
                 super.setJob(job);
             }
         };

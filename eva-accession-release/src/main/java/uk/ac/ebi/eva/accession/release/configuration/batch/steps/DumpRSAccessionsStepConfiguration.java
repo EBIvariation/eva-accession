@@ -11,8 +11,7 @@ import uk.ac.ebi.eva.accession.release.batch.io.DumpRSAccessionsInFile;
 import uk.ac.ebi.eva.accession.release.parameters.InputParameters;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_ACTIVE_ACCESSIONS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_DEPRECATED_ACCESSIONS_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_ACCESSIONS_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_STEP;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.DUMP_RS_ACCESSIONS_IN_FILE;
 
 @Configuration
@@ -34,22 +33,11 @@ public class DumpRSAccessionsStepConfiguration {
                 .build();
     }
 
-    @Bean(DUMP_MERGED_ACCESSIONS_STEP)
-    public Step dumpMergedAccessionStep(StepBuilderFactory stepBuilderFactory, InputParameters inputParameters) {
-        return stepBuilderFactory.get(DUMP_MERGED_ACCESSIONS_STEP)
+    @Bean(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_STEP)
+    public Step dumpMergedAndDeprecatedAccessionStep(StepBuilderFactory stepBuilderFactory, InputParameters inputParameters) {
+        return stepBuilderFactory.get(DUMP_MERGED_AND_DEPRECATED_ACCESSIONS_STEP)
                 .tasklet((contribution, chunkContext) -> {
-                    dumpRSAccessionsInFile.dumpAccessions(DumpRSAccessionsInFile.RSDumpType.MERGED,
-                            inputParameters.getAssemblyAccession());
-                    return null;
-                })
-                .build();
-    }
-
-    @Bean(DUMP_DEPRECATED_ACCESSIONS_STEP)
-    public Step dumpDeprecatedAccessionStep(StepBuilderFactory stepBuilderFactory, InputParameters inputParameters) {
-        return stepBuilderFactory.get(DUMP_DEPRECATED_ACCESSIONS_STEP)
-                .tasklet((contribution, chunkContext) -> {
-                    dumpRSAccessionsInFile.dumpAccessions(DumpRSAccessionsInFile.RSDumpType.DEPRECATED,
+                    dumpRSAccessionsInFile.dumpAccessions(DumpRSAccessionsInFile.RSDumpType.MERGED_AND_DEPRECATED,
                             inputParameters.getAssemblyAccession());
                     return null;
                 })
