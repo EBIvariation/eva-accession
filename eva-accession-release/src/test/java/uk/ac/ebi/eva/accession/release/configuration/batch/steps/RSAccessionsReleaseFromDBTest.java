@@ -147,15 +147,15 @@ public class RSAccessionsReleaseFromDBTest {
         JobExecution jobExecution = jobLauncherReleaseMergedAndDeprecatedAccessions.launchJob();
         assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
 
-        FileInputStream mergedDeprecatedInputStream = new FileInputStream(ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(
+        FileInputStream deprecatedInputStream = new FileInputStream(ReportPathResolver.getEvaDeprecatedIdsReportPath(
                         inputParameters.getOutputFolder(), inputParameters.getAssemblyAccession())
                 .toFile());
-        List<String> mergedDeprecatedRSIdsList = new BufferedReader(new InputStreamReader(mergedDeprecatedInputStream))
+        List<String> deprecatedRSIdsList = new BufferedReader(new InputStreamReader(deprecatedInputStream))
                 .lines().collect(Collectors.toList());
-        assertEquals(3, mergedDeprecatedRSIdsList.size());
-        assertEquals("rs1", mergedDeprecatedRSIdsList.get(0));
-        assertEquals("rs2", mergedDeprecatedRSIdsList.get(1));
-        assertEquals("rs8", mergedDeprecatedRSIdsList.get(2));
+        assertEquals(3, deprecatedRSIdsList.size());
+        assertEquals("rs1", deprecatedRSIdsList.get(0));
+        assertEquals("rs2", deprecatedRSIdsList.get(1));
+        assertEquals("rs8", deprecatedRSIdsList.get(2));
 
 
         FileInputStream mergedInputStream = new FileInputStream(ReportPathResolver.getEvaMergedIdsReportPath(

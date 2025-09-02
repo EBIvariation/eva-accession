@@ -86,7 +86,7 @@ public class MergedAndDeprecatedAccessionsVariantReader implements ItemStreamRea
     private String outputDir;
 
     private BufferedReader reader;
-    private BufferedWriter writer;
+    private BufferedWriter deprecatedAccWriter;
 
     public MergedAndDeprecatedAccessionsVariantReader(MongoTemplate mongoTemplate, String rsAccFile, String assembly, int taxonomy,
                                                       int chunkSize, String outputDir) {
@@ -102,7 +102,7 @@ public class MergedAndDeprecatedAccessionsVariantReader implements ItemStreamRea
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         try {
             reader = new BufferedReader(new FileReader(rsAccFile));
-            writer = new BufferedWriter(new FileWriter(ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(outputDir, assembly)
+            deprecatedAccWriter = new BufferedWriter(new FileWriter(ReportPathResolver.getEvaDeprecatedIdsReportPath(outputDir, assembly)
                     .toFile()));
         } catch (IOException e) {
             throw new ItemStreamException("Error opening file: ", e);
@@ -496,7 +496,7 @@ public class MergedAndDeprecatedAccessionsVariantReader implements ItemStreamRea
     private void writeMergeDeprecatedAccessionsToFile(Set<Long> mergedDeprecatedAccessions) {
         for (Long acc : mergedDeprecatedAccessions) {
             try {
-                writer.write("rs" + acc + "\n");
+                deprecatedAccWriter.write("rs" + acc + "\n");
             } catch (IOException e) {
                 throw new RuntimeException("Error writing Merged Deprecated Accessions to File");
             }
@@ -509,8 +509,8 @@ public class MergedAndDeprecatedAccessionsVariantReader implements ItemStreamRea
             if (reader != null) {
                 reader.close();
             }
-            if (writer != null) {
-                writer.close();
+            if (deprecatedAccWriter != null) {
+                deprecatedAccWriter.close();
             }
         } catch (IOException e) {
             throw new ItemStreamException("Failed to close file: " + rsAccFile, e);
