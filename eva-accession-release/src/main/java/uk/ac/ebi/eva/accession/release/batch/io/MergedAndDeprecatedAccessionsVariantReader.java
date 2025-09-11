@@ -49,8 +49,8 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 /**
  * Read all ClusteredVariant Accessions from file in batches
  */
-public class MergedAccessionsVariantReader implements ItemStreamReader<List<Variant>> {
-    private static final Logger logger = LoggerFactory.getLogger(MergedAccessionsVariantReader.class);
+public class MergedAndDeprecatedAccessionsVariantReader implements ItemStreamReader<List<Variant>> {
+    private static final Logger logger = LoggerFactory.getLogger(MergedAndDeprecatedAccessionsVariantReader.class);
 
     public static final String CVE_ACC_FIELD = "accession";
     public static final String CVE_ASM_FIELD = "asm";
@@ -86,10 +86,10 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     private String outputDir;
 
     private BufferedReader reader;
-    private BufferedWriter writer;
+    private BufferedWriter deprecatedAccWriter;
 
-    public MergedAccessionsVariantReader(MongoTemplate mongoTemplate, String rsAccFile, String assembly, int taxonomy,
-                                         int chunkSize, String outputDir) {
+    public MergedAndDeprecatedAccessionsVariantReader(MongoTemplate mongoTemplate, String rsAccFile, String assembly, int taxonomy,
+                                                      int chunkSize, String outputDir) {
         this.mongoTemplate = mongoTemplate;
         this.assembly = assembly;
         this.taxonomy = taxonomy;
@@ -102,7 +102,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         try {
             reader = new BufferedReader(new FileReader(rsAccFile));
-            writer = new BufferedWriter(new FileWriter(ReportPathResolver.getEvaMergedDeprecatedIdsReportPath(outputDir, assembly)
+            deprecatedAccWriter = new BufferedWriter(new FileWriter(ReportPathResolver.getEvaDeprecatedIdsReportPath(outputDir, assembly)
                     .toFile()));
         } catch (IOException e) {
             throw new ItemStreamException("Error opening file: ", e);
@@ -496,7 +496,7 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
     private void writeMergeDeprecatedAccessionsToFile(Set<Long> mergedDeprecatedAccessions) {
         for (Long acc : mergedDeprecatedAccessions) {
             try {
-                writer.write("rs" + acc + "\n");
+                deprecatedAccWriter.write("rs" + acc + "\n");
             } catch (IOException e) {
                 throw new RuntimeException("Error writing Merged Deprecated Accessions to File");
             }
@@ -509,8 +509,8 @@ public class MergedAccessionsVariantReader implements ItemStreamReader<List<Vari
             if (reader != null) {
                 reader.close();
             }
-            if (writer != null) {
-                writer.close();
+            if (deprecatedAccWriter != null) {
+                deprecatedAccWriter.close();
             }
         } catch (IOException e) {
             throw new ItemStreamException("Failed to close file: " + rsAccFile, e);

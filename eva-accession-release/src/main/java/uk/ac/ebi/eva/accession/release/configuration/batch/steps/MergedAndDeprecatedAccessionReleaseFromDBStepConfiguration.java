@@ -16,16 +16,16 @@ import org.springframework.context.annotation.Configuration;
 import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.EVA_MERGED_RELEASE_WRITER;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_ACCESSIONS_RELEASE_FROM_DB_STEP;
-import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_ACCESSIONS_VARIANT_READER;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_STEP;
+import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.MERGED_AND_DEPRECATED_ACCESSIONS_VARIANT_READER;
 import static uk.ac.ebi.eva.accession.release.configuration.BeanNames.RELEASE_PROCESSOR;
 
 @Configuration
 @EnableBatchProcessing
-public class MergedAccessionReleaseFromDBStepConfiguration {
+public class MergedAndDeprecatedAccessionReleaseFromDBStepConfiguration {
 
     @Autowired
-    @Qualifier(MERGED_ACCESSIONS_VARIANT_READER)
+    @Qualifier(MERGED_AND_DEPRECATED_ACCESSIONS_VARIANT_READER)
     ItemReader<Variant> variantReader;
 
     @Autowired
@@ -36,10 +36,10 @@ public class MergedAccessionReleaseFromDBStepConfiguration {
     @Qualifier(EVA_MERGED_RELEASE_WRITER)
     ItemStreamWriter<VariantContext> accessionWriter;
 
-    @Bean(MERGED_ACCESSIONS_RELEASE_FROM_DB_STEP)
-    public Step mergedAccessionsReleaseFromDBStep(StepBuilderFactory stepBuilderFactory,
-                                                  SimpleCompletionPolicy chunkSizeCompletionPolicy) {
-        TaskletStep step = stepBuilderFactory.get(MERGED_ACCESSIONS_RELEASE_FROM_DB_STEP)
+    @Bean(MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_STEP)
+    public Step mergedAndDeprecatedAccessionsReleaseFromDBStep(StepBuilderFactory stepBuilderFactory,
+                                                               SimpleCompletionPolicy chunkSizeCompletionPolicy) {
+        TaskletStep step = stepBuilderFactory.get(MERGED_AND_DEPRECATED_ACCESSIONS_RELEASE_FROM_DB_STEP)
                 .<Variant, VariantContext>chunk(chunkSizeCompletionPolicy)
                 .reader(variantReader)
                 .processor(variantProcessor)
