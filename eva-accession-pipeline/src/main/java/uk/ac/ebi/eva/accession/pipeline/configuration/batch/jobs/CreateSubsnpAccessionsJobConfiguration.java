@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Configuration;
 
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.SUBSNP_ACCESSION_JOB_LISTENER;
@@ -41,10 +40,6 @@ public class CreateSubsnpAccessionsJobConfiguration {
     @Autowired
     @Qualifier(CREATE_SUBSNP_ACCESSION_STEP)
     private Step createSubsnpAccessionStep;
-
-    @Autowired
-    @Qualifier(CHECK_SUBSNP_ACCESSION_STEP)
-    private Step checkSubsnpAccessionStep;
 
     @Autowired
     @Qualifier(BUILD_REPORT_STEP)
@@ -61,12 +56,11 @@ public class CreateSubsnpAccessionsJobConfiguration {
     @Bean(CREATE_SUBSNP_ACCESSION_JOB)
     public Job createSubsnpAccessionJob(JobBuilderFactory jobBuilderFactory) {
         return jobBuilderFactory.get(CREATE_SUBSNP_ACCESSION_JOB)
-                                .incrementer(new RunIdIncrementer())
-                                .start(createSubsnpAccessionStep)
-                                .next(accessioningShutdownStep)
-                                .next(buildReportStep)
-                                .next(checkSubsnpAccessionStep)
-                                .listener(subsnpAccessionJobListener)
-                                .build();
+                .incrementer(new RunIdIncrementer())
+                .start(createSubsnpAccessionStep)
+                .next(accessioningShutdownStep)
+                .next(buildReportStep)
+                .listener(subsnpAccessionJobListener)
+                .build();
     }
 }

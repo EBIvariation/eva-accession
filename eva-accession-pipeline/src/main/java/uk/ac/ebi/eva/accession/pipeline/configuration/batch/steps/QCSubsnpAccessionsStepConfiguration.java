@@ -25,9 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.core.batch.io.AccessionedVcfLineMapper;
+import uk.ac.ebi.eva.accession.core.contig.ContigMapping;
 import uk.ac.ebi.eva.accession.pipeline.batch.tasklets.reportCheck.ReportCheckTasklet;
 import uk.ac.ebi.eva.accession.pipeline.parameters.InputParameters;
 import uk.ac.ebi.eva.commons.batch.io.UnwindingItemStreamReader;
@@ -37,13 +36,13 @@ import uk.ac.ebi.eva.commons.core.models.pipeline.Variant;
 import java.io.File;
 import java.io.IOException;
 
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.REPORT_READER;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.VARIANT_READER;
 
 @Configuration
 @EnableBatchProcessing
-public class CheckSubsnpAccessionsStepConfiguration {
+public class QCSubsnpAccessionsStepConfiguration {
 
     @Autowired
     private InputParameters inputParameters;
@@ -62,13 +61,13 @@ public class CheckSubsnpAccessionsStepConfiguration {
         return new UnwindingItemStreamReader<>(vcfReader);
     }
 
-    @Bean(CHECK_SUBSNP_ACCESSION_STEP)
-    public Step checkSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory) throws IOException {
+    @Bean(QC_SUBSNP_ACCESSION_STEP)
+    public Step qcSubsnpAccessionStep(StepBuilderFactory stepBuilderFactory) throws IOException {
         ReportCheckTasklet tasklet = new ReportCheckTasklet(inputReader, reportReader(),
-                                                            inputParameters.getChunkSize() * 2, contigMapping);
-        TaskletStep step = stepBuilderFactory.get(CHECK_SUBSNP_ACCESSION_STEP)
-                                             .tasklet(tasklet)
-                                             .build();
+                inputParameters.getChunkSize() * 2, contigMapping);
+        TaskletStep step = stepBuilderFactory.get(QC_SUBSNP_ACCESSION_STEP)
+                .tasklet(tasklet)
+                .build();
         return step;
     }
 }

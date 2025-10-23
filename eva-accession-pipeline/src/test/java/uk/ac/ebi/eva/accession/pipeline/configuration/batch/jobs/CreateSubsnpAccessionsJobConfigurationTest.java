@@ -64,8 +64,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.ACCESSIONING_SHUTDOWN_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.BUILD_REPORT_STEP;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.test.BatchTestConfiguration.JOB_LAUNCHER_CREATE_SUBSNP_JOB;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class, SubmittedVariantAccessioningConfiguration.class})
@@ -75,6 +75,7 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
     private static final int EXPECTED_VARIANTS = 22;
 
     @Autowired
+    @Qualifier(JOB_LAUNCHER_CREATE_SUBSNP_JOB)
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
@@ -160,11 +161,10 @@ public class CreateSubsnpAccessionsJobConfigurationTest {
     }
 
     private void assertStepNames(Collection<StepExecution> stepExecutions) {
-        assertEquals(4, stepExecutions.size());
+        assertEquals(3, stepExecutions.size());
         Iterator<StepExecution> iterator = stepExecutions.iterator();
         assertEquals(CREATE_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
         assertEquals(ACCESSIONING_SHUTDOWN_STEP, iterator.next().getStepName());
         assertEquals(BUILD_REPORT_STEP, iterator.next().getStepName());
-        assertEquals(CHECK_SUBSNP_ACCESSION_STEP, iterator.next().getStepName());
     }
 }
