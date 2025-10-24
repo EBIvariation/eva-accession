@@ -17,16 +17,12 @@
 package uk.ac.ebi.eva.accession.pipeline.test;
 
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.batch.BatchProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.transaction.PlatformTransactionManager;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.AccessionWriterConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.io.VcfReaderConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.jobs.CreateSubsnpAccessionsJobConfiguration;
@@ -40,11 +36,7 @@ import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.BuildReportSte
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.CreateSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.configuration.batch.steps.QCSubsnpAccessionsStepConfiguration;
 import uk.ac.ebi.eva.accession.pipeline.runner.EvaAccessionJobLauncherCommandLineRunner;
-import uk.ac.ebi.eva.commons.batch.configuration.SpringBoot1CompatibilityConfiguration;
 import uk.ac.ebi.eva.commons.batch.job.JobExecutionApplicationListener;
-
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CREATE_SUBSNP_ACCESSION_JOB;
 import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_JOB;
@@ -59,21 +51,6 @@ import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP
 public class BatchTestConfiguration {
     public static final String JOB_LAUNCHER_CREATE_SUBSNP_JOB = "JOB_LAUNCHER_CREATE_SUBSNP_JOB";
     public static final String JOB_LAUNCHER_QC_SUBSNP_JOB = "JOB_LAUNCHER_QC_SUBSNP_JOB";
-
-    @Autowired
-    private BatchProperties properties;
-
-    @Autowired
-    private ResourceLoader resourceLoader;
-
-    @Autowired
-    private DataSource dataSource;
-
-    @Autowired
-    private EntityManagerFactory entityManagerFactory;
-
-    @Autowired
-    private PlatformTransactionManager platformTransactionManager;
 
     @Bean(JOB_LAUNCHER_CREATE_SUBSNP_JOB)
     public JobLauncherTestUtils jobLauncherTestUtilsCreate() {
@@ -95,13 +72,6 @@ public class BatchTestConfiguration {
                 super.setJob(job);
             }
         };
-    }
-
-    @Bean
-    public BatchConfigurer configurer(DataSource dataSource, EntityManagerFactory entityManagerFactory)
-            throws Exception {
-        return SpringBoot1CompatibilityConfiguration.getSpringBoot1CompatibleBatchConfigurer(dataSource,
-                entityManagerFactory);
     }
 
     @Bean
