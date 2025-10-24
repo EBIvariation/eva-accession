@@ -44,7 +44,7 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
-import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.CHECK_SUBSNP_ACCESSION_STEP;
+import static uk.ac.ebi.eva.accession.pipeline.configuration.BeanNames.QC_SUBSNP_ACCESSION_STEP;
 
 public class ReportCheckTaskletTest {
 
@@ -62,7 +62,7 @@ public class ReportCheckTaskletTest {
 
         // when
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
@@ -97,7 +97,7 @@ public class ReportCheckTaskletTest {
 
         // when
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
@@ -116,7 +116,7 @@ public class ReportCheckTaskletTest {
 
         // when
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
@@ -135,7 +135,7 @@ public class ReportCheckTaskletTest {
 
         // when
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
@@ -167,7 +167,7 @@ public class ReportCheckTaskletTest {
 
         // when
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
@@ -189,7 +189,7 @@ public class ReportCheckTaskletTest {
 
         // when
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
@@ -234,7 +234,7 @@ public class ReportCheckTaskletTest {
 
         // when
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         // then
@@ -255,7 +255,7 @@ public class ReportCheckTaskletTest {
 
         ReportCheckTasklet reportCheckTasklet = new ReportCheckTasklet(inputReader, reportReader, 100, contigMapping);
         StepContribution stepContribution = new StepContribution(
-                new StepExecution(CHECK_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
+                new StepExecution(QC_SUBSNP_ACCESSION_STEP, new JobExecution(JOB_ID)));
         reportCheckTasklet.execute(stepContribution, null);
 
         assertEquals(0, reportCheckTasklet.getUnmatchedVariantsInInputVcf());

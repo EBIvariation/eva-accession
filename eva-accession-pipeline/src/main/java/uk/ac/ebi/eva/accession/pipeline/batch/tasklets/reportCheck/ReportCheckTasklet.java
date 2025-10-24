@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Compares the the original VCF and accession report VCF, and logs the differences.
+ * Compares the original VCF and accession report VCF, and logs the differences.
  * <p>
  * Terminology: The original VCF contains variants, and it will be loaded into the 'variant buffer'. The accession
  * report VCF contains the accessioned variants, and it will be loaded into the 'accession buffer'.

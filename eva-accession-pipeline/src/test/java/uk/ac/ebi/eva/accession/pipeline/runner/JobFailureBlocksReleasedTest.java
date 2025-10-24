@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
@@ -51,7 +50,6 @@ import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.writeToTempVCFF
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
-@SpringBatchTest
 public class JobFailureBlocksReleasedTest {
     @Autowired
     private InputParameters inputParameters;

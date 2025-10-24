@@ -59,7 +59,6 @@ public class VcfReaderConfiguration {
      * @throws IOException if the file doesn't exist, because it has to be read to see if it's compressed.
      */
     @Bean
-    @StepScope
     public VcfReader vcfReader() throws IOException {
         String fileId = inputParameters.getProjectAccession();
         String studyId = inputParameters.getProjectAccession();

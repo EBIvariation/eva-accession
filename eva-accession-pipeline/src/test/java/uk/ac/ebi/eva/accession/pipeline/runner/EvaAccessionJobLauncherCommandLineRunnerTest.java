@@ -28,7 +28,6 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.test.JobRepositoryTestUtils;
-import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -76,7 +75,6 @@ import static uk.ac.ebi.eva.accession.pipeline.runner.RunnerUtil.writeToTempVCFF
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {BatchTestConfiguration.class})
 @TestPropertySource("classpath:accession-pipeline-test.properties")
-@SpringBatchTest
 public class EvaAccessionJobLauncherCommandLineRunnerTest {
 
     @Autowired
